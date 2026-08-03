@@ -1,0 +1,27 @@
+# Build output
+/bin/
+/dist/
+*.test
+/orangecount
+
+# Go tooling
+coverage.out
+coverage.html
+vendor/
+
+# Development-only reference environment and reports.
+.reference/
+.private/
+testdata/private/
+
+# Local editor and OS files
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Pi coding agent runtime artifacts
+.pi-subagents/
+
+# Generated frontend assets
+web/dist/

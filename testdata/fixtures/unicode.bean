@@ -1,0 +1,6 @@
+; UTF-8 and source-position regression fixture.
+2000-01-01 open Assets:现金 USD
+2000-01-02 open Equity:起点 USD
+2000-01-03 * "初始化" #标签 ^链接
+  Assets:现金 1 USD
+  Equity:起点 -1 USD

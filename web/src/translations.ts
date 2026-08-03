@@ -1,0 +1,49 @@
+// Copyright 2026 OrangeCount contributors
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
+export type Locale = "en" | "zh-CN";
+
+/** Labels used by the read-only workbench. Keep both catalogs complete. */
+export const translations: Record<Locale, Record<string, string>> = {
+  en: {
+    subtitle: "Read-only local ledger view.", language: "Language", overview: "Overview", accounts: "Accounts",
+    journal: "Journal", trialBalance: "Trial balance", balanceSheet: "Balance sheet",
+    incomeStatement: "Income statement", holdings: "Holdings", prices: "Prices", commodities: "Commodities", events: "Events",
+    documents: "Documents", statistics: "Statistics", diagnostics: "Diagnostics", query: "Query", status: "Status", snapshot: "Snapshot",
+    valid: "Valid", accountsCount: "Accounts", diagnosticsCount: "Diagnostics", publishedAt: "Published",
+    yes: "yes", no: "no", loading: "Loading…", unavailable: "No valid snapshot.", rows: "rows", columns: "columns",
+    run: "Run query", queryHint: "SELECT account, balance FROM accounts ORDER BY account", empty: "No rows.",
+    requestFailed: "Request failed", source: "Source", file: "File", content: "Content",
+    sourceHint: "Browse files in the resolved include graph.",
+    documentsHint: "Document attachments are served only from configured roots.",
+    from: "From", to: "To", apply: "Apply", reset: "Reset", approximate: "approximate", exact: "Exact value",
+    period: "Period", valuation: "Valuation", allPeriods: "All periods", monthly: "Monthly", quarterly: "Quarterly", yearly: "Yearly",
+    atCost: "At cost", marketValue: "Market value", exportCSV: "Export CSV", chart: "Chart", tree: "Account tree",
+    flag: "Flag", tag: "Tag", link: "Link", payee: "Payee", narration: "Narration", expand: "Expand details",
+    save: "Save", saved: "Saved queries", queryName: "Query name", download: "Download", previewDiagnostics: "Preview diagnostics; commit will revalidate", previousPage: "Previous page", nextPage: "Next page", pageOf: "of",
+    editor: "Editor", import: "Import", options: "Options", help: "Help", files: "Files", validate: "Validate", time: "Time", currency: "Currency", adapter: "Adapter", offset: "Offset",
+    commit: "Commit", preview: "Preview", target: "Target ledger", chooseFile: "Choose a local file", backup: "Backup",
+    discard: "Discard", syntax: "Syntax preview", noFile: "Select a file", searchHelp: "Search help", back: "Back",
+  },
+  "zh-CN": {
+    subtitle: "只读本地账本视图。", language: "语言", overview: "概览", accounts: "账户", journal: "日记账",
+    trialBalance: "试算平衡", balanceSheet: "资产负债表", incomeStatement: "损益表", holdings: "持仓",
+    prices: "价格", commodities: "商品", events: "事件", documents: "文档", statistics: "统计", diagnostics: "诊断", query: "查询", status: "状态",
+    snapshot: "快照", valid: "有效", accountsCount: "账户数", diagnosticsCount: "诊断数", publishedAt: "发布时间",
+    yes: "是", no: "否", loading: "加载中…", unavailable: "没有有效快照。", rows: "行", columns: "列",
+    run: "运行查询", queryHint: "SELECT account, balance FROM accounts ORDER BY account", empty: "没有数据。",
+    requestFailed: "请求失败", source: "源文件", file: "文件", content: "内容",
+    sourceHint: "浏览已解析 include 图中的文件。",
+    documentsHint: "文档附件仅从已配置的根目录提供。",
+    from: "起始日期", to: "结束日期", apply: "应用", reset: "重置", approximate: "近似值", exact: "精确值",
+    period: "期间", valuation: "估值", allPeriods: "全部期间", monthly: "按月", quarterly: "按季度", yearly: "按年",
+    atCost: "按成本", marketValue: "按市值", exportCSV: "导出 CSV", chart: "图表", tree: "账户树",
+    flag: "标记", tag: "标签", link: "链接", payee: "收款方", narration: "摘要", expand: "展开详情",
+    save: "保存", saved: "已保存查询", queryName: "查询名称", download: "下载", previewDiagnostics: "预览存在诊断；提交时会重新验证", previousPage: "上一页", nextPage: "下一页", pageOf: "/",
+    editor: "编辑器", import: "导入", options: "选项", help: "帮助", files: "文件", validate: "验证", time: "时间", currency: "货币", adapter: "适配器", offset: "抵销账户",
+    commit: "提交", preview: "预览", target: "目标账本", chooseFile: "选择本地文件", backup: "备份",
+    discard: "丢弃", syntax: "语法预览", noFile: "选择文件", searchHelp: "搜索帮助", back: "返回",
+  },
+};

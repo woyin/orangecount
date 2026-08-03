@@ -1,0 +1,39 @@
+{
+  "contract": "beancount-v3-core",
+  "status": "development",
+  "fixture_policy": "Only sanitized fixtures are committed; owner ledgers stay outside the repository.",
+  "approved_differences": [
+    {
+      "id": "plugins-not-executed",
+      "area": "plugins",
+      "reference": "Beancount may load Python plugins.",
+      "orangecount": "Plugin declarations are preserved and diagnosed; Python is never executed.",
+      "rationale": "The release is a self-contained offline Go binary.",
+      "status": "intentional-boundary"
+    },
+    {
+      "id": "local-api",
+      "area": "web",
+      "reference": "Fava and Beancount integrations expose ecosystem-specific APIs.",
+      "orangecount": "The read-only API is internal, versioned, and loopback-only.",
+      "rationale": "The compatibility target is ledger meaning and workflows, not HTTP or plugin internals.",
+      "status": "intentional-boundary"
+    },
+    {
+      "id": "fraction-output",
+      "area": "decimal-display",
+      "reference": "JSON clients may receive decimal numbers through a host serializer.",
+      "orangecount": "Exact decimals and non-terminating rationals are serialized as canonical strings.",
+      "rationale": "Avoid silent floating-point rounding in a local API.",
+      "status": "intentional-display-only"
+    }
+  ],
+  "sanitized_fixtures": [
+    "testdata/fixtures/core.bean",
+    "testdata/fixtures/invalid.bean",
+    "testdata/fixtures/unicode.bean",
+    "testdata/fixtures/include/main.bean",
+    "testdata/fixtures/include/missing.bean",
+    "testdata/fixtures/include/cycle-a.bean"
+  ]
+}

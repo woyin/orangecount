@@ -1,0 +1,7 @@
+OrangeCount
+Copyright 2026 OrangeCount contributors
+
+OrangeCount is an independent clean-room implementation of the public
+Beancount v3 language and accounting behavior. It does not include or link
+to Beancount source code. Beancount is a separate project with its own
+license and is used only as an optional development-time compatibility oracle.

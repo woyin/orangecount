@@ -1,0 +1,184 @@
+// Copyright 2026 OrangeCount contributors
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
+package ledger
+
+import (
+	"os"
+	"path/filepath"
+	"testing"
+
+	"orangecount/internal/diagnostic"
+	"orangecount/internal/source"
+)
+
+func TestParseCoreDirectivesAndTransaction(t *testing.T) {
+	text := `option "title" "Demo"
+plugin "example.plugin" "cfg"
+include "other.bean"
+pushtag #global
+2000-01-01 open Assets:Cash USD, EUR
+2000-01-01 commodity USD
+2000-01-01 * "Payee" "Lunch" #food ^id
+  Assets:Cash  -12.50 USD {12.50 USD} @ 1 USD
+    source: "fixture"
+  Expenses:Food  12.50 USD
+2000-01-02 balance Assets:Cash 100 USD ~ 0.01 USD
+2000-01-03 close Assets:Cash
+2000-01-04 pad Assets:Cash Equity:Opening-Balances
+2000-01-05 event "location" "home"
+2000-01-06 query "q" "SELECT 1"
+2000-01-07 price USD 1.2 EUR
+2000-01-08 document Assets:Cash "receipt.pdf" #tag ^link
+2000-01-09 note Assets:Cash "memo"
+2000-01-10 custom "foo" 1 USD TRUE 2000-01-01
+`
+	f, bag := ParseText("fixture.bean", []byte(text))
+	if bag.Len() == 0 {
+		t.Fatalf("expected plugin migration warning at minimum")
+	}
+	if !bagHasCode(bag.All(), "W-PLUGIN-MIGRATION") {
+		t.Fatalf("diagnostics=%+v", bag.All())
+	}
+	if len(f.Directives) != 16 {
+		t.Fatalf("directives=%d %#v", len(f.Directives), f.Directives)
+	}
+	if got, ok := f.Directives[3].(TagDirective); !ok || got.Kind() != KindPushTag {
+		t.Fatalf("pushtag=%#v", f.Directives[3])
+	}
+	txPtr, ok := f.Directives[6].(*Transaction)
+	var tx Transaction
+	if ok {
+		tx = *txPtr
+	}
+	if !ok || len(tx.Postings) != 2 || tx.Payee != "Payee" || tx.Narration != "Lunch" || len(tx.Postings[0].Meta) != 1 {
+		t.Fatalf("transaction=%#v", f.Directives[6])
+	}
+	event, ok := f.Directives[10].(Event)
+	if !ok || event.Type != "location" || event.Value != "home" {
+		t.Fatalf("event=%#v", f.Directives[10])
+	}
+	query, ok := f.Directives[11].(Query)
+	if !ok || query.Name != "q" || query.Query != "SELECT 1" {
+		t.Fatalf("query=%#v", f.Directives[11])
+	}
+}
+
+func TestParseRecovery(t *testing.T) {
+	text := `2000-01-01 open
+2000-01-02 open Assets:Cash USD
+not a directive
+2000-01-03 close Assets:Cash
+`
+	f, bag := ParseText("bad.bean", []byte(text))
+	if len(f.Directives) != 2 || bag.Len() < 2 {
+		t.Fatalf("directives=%d diagnostics=%+v", len(f.Directives), bag.All())
+	}
+}
+
+func TestParserAcceptsEmptyPayeeTransaction(t *testing.T) {
+	file, diagnostics := ParseText("empty-payee.bean", []byte("2000-01-01 \"\" \"narration\" #tag\n"))
+	if diagnostics.HasErrors() || len(file.Directives) != 1 {
+		t.Fatalf("diagnostics=%+v directives=%d", diagnostics.All(), len(file.Directives))
+	}
+}
+
+func TestParserAcceptsDateFlagWithoutWhitespace(t *testing.T) {
+	file, diagnostics := ParseText("compact-flag.bean", []byte("2000-01-01* \"narration\"\n"))
+	if diagnostics.HasErrors() || len(file.Directives) != 1 {
+		t.Fatalf("diagnostics=%+v directives=%d", diagnostics.All(), len(file.Directives))
+	}
+}
+
+func TestParserKeepsGroupedNumberAsOneAmount(t *testing.T) {
+	file, diagnostics := ParseText("grouped-number.bean", []byte("2000-01-01 * \"narration\"\n  Assets:Cash 1,234.56 USD\n"))
+	if diagnostics.HasErrors() || len(file.Directives) != 1 {
+		t.Fatalf("diagnostics=%+v directives=%d", diagnostics.All(), len(file.Directives))
+	}
+	tx, ok := file.Directives[0].(*Transaction)
+	if !ok || len(tx.Postings) != 1 || tx.Postings[0].Units == nil || tx.Postings[0].Units.Number.Raw != "1234.56" {
+		t.Fatalf("transaction=%#v", file.Directives[0])
+	}
+}
+
+func TestParserKeepsIncompletePostingAmountSides(t *testing.T) {
+	text := `2000-01-01 * "narration"
+  Assets:Cash USD {} @ 1 USD
+  Assets:Shares 1 {} @ 2 USD
+  Equity:Opening -100 USD
+`
+	file, diagnostics := ParseText("incomplete-amount.bean", []byte(text))
+	if diagnostics.HasErrors() || len(file.Directives) != 1 {
+		t.Fatalf("directives=%#v diagnostics=%+v", file.Directives, diagnostics.All())
+	}
+	tx, ok := file.Directives[0].(*Transaction)
+	if !ok || len(tx.Postings) != 3 {
+		t.Fatalf("transaction=%#v", file.Directives[0])
+	}
+	if units := tx.Postings[0].Units; units == nil || units.Number.Raw != "" || units.Currency != "USD" {
+		t.Fatalf("currency-only units=%#v", units)
+	}
+	if units := tx.Postings[1].Units; units == nil || units.Number.Raw != "1" || units.Currency != "" {
+		t.Fatalf("number-only units=%#v", units)
+	}
+}
+
+func TestParseCommentsAndEscapedStrings(t *testing.T) {
+	f, bag := ParseText("comments.bean", []byte("; header\noption \"title\" \"a; b\\n\" ; inline\n"))
+	if bag.Len() != 0 || len(f.Comments) != 2 {
+		t.Fatalf("comments=%+v diagnostics=%+v", f.Comments, bag.All())
+	}
+	option, ok := f.Directives[0].(Option)
+	if !ok || option.Value != "a; b\n" {
+		t.Fatalf("option=%#v", f.Directives[0])
+	}
+}
+
+func TestDirectiveMetadata(t *testing.T) {
+	f, bag := ParseText("meta.bean", []byte("2000-01-01 open Assets:Cash USD\n  owner: \"cash\"\n"))
+	if bag.Len() != 0 || len(f.Directives) != 1 {
+		t.Fatalf("directives=%#v diagnostics=%+v", f.Directives, bag.All())
+	}
+	open, ok := f.Directives[0].(Open)
+	if !ok || len(open.Meta) != 1 || open.Meta[0].Key != "owner" || open.Span().EndLine != 2 {
+		t.Fatalf("open=%#v", f.Directives[0])
+	}
+}
+
+func TestParseGraph(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	child := filepath.Join(dir, "child.bean")
+	if err := os.WriteFile(entry, []byte("include \"child.bean\"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(child, []byte("option \"title\" \"ok\"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	graph, err := source.LoadGraph(entry)
+	if err != nil {
+		t.Fatal(err)
+	}
+	parsed, bag := ParseGraph(graph)
+	if len(parsed) != 2 || bag.Len() != 0 {
+		t.Fatalf("parsed=%d diagnostics=%+v", len(parsed), bag.All())
+	}
+}
+
+func TestParseRejectsInvalidUTF8(t *testing.T) {
+	_, bag := ParseText("invalid.bean", []byte{0xff, '\n'})
+	if !bagHasCode(bag.All(), "E-SOURCE-UTF8") {
+		t.Fatalf("diagnostics=%+v", bag.All())
+	}
+}
+
+func bagHasCode(ds []diagnostic.Diagnostic, code string) bool {
+	for _, d := range ds {
+		if d.Code == code {
+			return true
+		}
+	}
+	return false
+}

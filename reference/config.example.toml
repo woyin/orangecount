@@ -1,0 +1,6 @@
+# Copy to .reference/config.toml for an owner-local validation setup.
+# Keep the real ledger path outside this repository. This file is only a
+# template and is intentionally free of personal account or transaction data.
+ledger = ""
+locale = "en"
+json = true
