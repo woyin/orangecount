@@ -53,7 +53,7 @@ export function parseRoute(input, basePath = "") {
   if (basePath && pathname.startsWith(basePath)) {
     pathname = pathWithoutTrailingSlash(pathname.slice(basePath.length));
   }
-  let route = Object.entries(PATHS).find(([, path]) => path === pathname)?.[0] || "journal";
+  let route = pathname === "/" ? "income_statement" : Object.entries(PATHS).find(([, path]) => path === pathname)?.[0] || "journal";
   let account = "";
   const accountPrefix = "/account/";
   if (pathname.startsWith(accountPrefix)) {

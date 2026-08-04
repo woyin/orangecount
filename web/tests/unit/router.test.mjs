@@ -3,6 +3,10 @@ import test from "node:test";
 
 import { parseRoute, routeHref, updateQuery } from "../../src/fava/router.mjs";
 
+test("uses Fava's default income statement route at the shell root", () => {
+  assert.equal(parseRoute("https://orange-count.invalid/").route, "income_statement");
+});
+
 test("parses standard report routes and supported query state", () => {
   const parsed = parseRoute("https://orange-count.invalid/balance_sheet?time=year&filter=%23seed");
   assert.equal(parsed.route, "balance_sheet");
