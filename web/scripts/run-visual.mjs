@@ -23,7 +23,7 @@ const args = binary
 
 const server = spawn(command, args, {
   cwd: repoRoot,
-  env: { ...process.env, ORANGECOUNT_VISUAL_RUN: runName },
+  env: { ...process.env, ORANGECOUNT_VISUAL_RUN: runName, ORANGECOUNT_TRANSPLANTED_UI: process.env.ORANGECOUNT_TRANSPLANTED_UI || "" },
   detached: true,
   stdio: ["ignore", "pipe", "pipe"],
 });

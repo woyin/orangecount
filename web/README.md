@@ -2,7 +2,7 @@
 
 ## Current state
 
-`internal/web/assets/` still contains the legacy checked-in frontend consumed by the Go binary. `web/src/fava/` now contains the first Fava-derived shell transplant: pinned global CSS, fonts, header, mobile aside, page-title structure, and an OrangeCount adapter seam. Report routes remain staged-only until their adapter contracts and acceptance gates pass; do not mix the legacy and transplanted component trees.
+`internal/web/assets/` contains the legacy checked-in frontend plus a deterministic `transplanted/` bundle. The Go server selects the latter only with `ORANGECOUNT_TRANSPLANTED_UI=1` until route gates and visual approval authorize final cutover. `web/src/fava/` contains the Fava-derived shell, report, Journal, Query, Editor, Import, and adapter surfaces; route-specific acceptance is still tracked separately.
 
 The authoritative migration plan is [`../docs/fava-frontend-transplant-plan.md`](../docs/fava-frontend-transplant-plan.md).
 
@@ -51,8 +51,9 @@ npm --prefix web run check:reference-output
 
 Reference screenshots are candidate-only files under
 `testdata/visual-candidates/fava-reference/`; they never update
-`testdata/visual-baselines/`. Current prototype output is staged under
-`web/staging/` and is not an accepted embedded asset.
+`testdata/visual-baselines/`. The current transplant output is staged under `web/staging/` and copied to
+`internal/web/assets/transplanted/` by `npm --prefix web run build:embedded`; it
+is still opt-in and is not an approved visual baseline.
 
 ## Route cutover rule
 

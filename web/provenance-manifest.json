@@ -391,6 +391,11 @@
       "current_kind": "original",
       "upstream": null,
       "notes": "Generated development artifact metadata for the transplanted bundle."
+    },
+    "web/tests/visual/fava-transplanted.spec.mjs": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Development-only browser smoke gate for the explicit transplanted UI asset flag."
     }
   }
 }

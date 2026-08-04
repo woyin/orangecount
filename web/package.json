@@ -11,6 +11,7 @@
     "build:check": "node scripts/check-build.mjs",
     "test": "node --test tests/unit/*.test.mjs",
     "visual:test": "node scripts/run-visual.mjs",
+    "visual:transplanted": "ORANGECOUNT_TRANSPLANTED_UI=1 node scripts/run-visual.mjs tests/visual/fava-transplanted.spec.mjs",
     "visual:reference": "node scripts/run-reference.mjs",
     "visual:update": "node scripts/run-visual.mjs --update-snapshots",
     "check:route-manifest": "node scripts/check-route-manifest.mjs",
