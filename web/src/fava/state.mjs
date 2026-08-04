@@ -13,6 +13,8 @@ export function initialShellState(route) {
     sidebarOpen: false,
     ledgerTitle: "OrangeCount",
     query: {},
+    revision: 0,
+    errors: [],
   };
 }
 
@@ -42,8 +44,10 @@ export function reduceShellState(state, action) {
         ledgerTitle: action.ledgerTitle || state.ledgerTitle,
         locale: action.locale === "zh-CN" ? "zh-CN" : state.locale,
         theme: ["system", "dark", "light"].includes(action.theme) ? action.theme : state.theme,
+        errors: Array.isArray(action.errors) ? action.errors : state.errors,
         error: null,
         loading: false,
+        revision: state.revision + 1,
       };
     default:
       return state;

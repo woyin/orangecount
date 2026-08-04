@@ -203,6 +203,10 @@ func TestPrivateFavaAdapterBootstrapAndMetadata(t *testing.T) {
 		server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
 		return recorder
 	}
+	changedResponse := request("/__orangecount/fava/changed")
+	if changedResponse.Code != http.StatusOK || !strings.Contains(changedResponse.Body.String(), `"data":false`) {
+		t.Fatalf("changed status=%d body=%q", changedResponse.Code, changedResponse.Body.String())
+	}
 	bootstrapResponse := request("/__orangecount/fava/ledger_data")
 	if bootstrapResponse.Code != http.StatusOK {
 		t.Fatalf("bootstrap status=%d body=%q", bootstrapResponse.Code, bootstrapResponse.Body.String())

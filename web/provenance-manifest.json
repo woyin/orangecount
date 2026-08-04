@@ -357,6 +357,14 @@
       "upstream_hash": "817452864e968f3edac395d75c4fbe9d6d2debea9494f6a4a0e7deea945e5b18",
       "notice": "NOTICE",
       "notes": "Adapted Fava Import route with native OrangeCount preview/commit workflows; Python importers excluded."
+    },
+    "web/src/fava/reports/AccountReport.svelte": {
+      "current_kind": "derived",
+      "upstream": "frontend/src/reports/accounts/AccountReport.svelte",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "40fbf531a43c65bf7ee3a42b364b09edb9b1478171b45a47d1dfaa2ab87aca7c",
+      "notice": "NOTICE",
+      "notes": "Adapted Fava account report with OrangeCount account-scoped balance and Journal projections."
     }
   }
 }

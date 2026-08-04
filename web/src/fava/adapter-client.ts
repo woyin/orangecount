@@ -15,10 +15,12 @@ export interface BootstrapPayload {
   accounts: string[];
   currencies: string[];
   errors: unknown[];
+  mtime?: string;
 }
 
 export interface AdapterClient {
   bootstrap(): Promise<BootstrapPayload>;
+  changed(): Promise<boolean>;
   load(route: string, query?: Record<string, string>): Promise<unknown>;
 }
 
@@ -37,7 +39,7 @@ interface BootstrapWire {
   fava_options?: Record<string, string>;
 }
 
-function bootstrapPayload(wire: BootstrapWire): BootstrapPayload {
+function bootstrapPayload(wire: BootstrapWire, mtime = ""): BootstrapPayload {
   const title = wire.options?.title?.trim() || "OrangeCount";
   const locale = wire.fava_options?.locale === "zh-CN" ? "zh-CN" : "en";
   return {
@@ -49,6 +51,7 @@ function bootstrapPayload(wire: BootstrapWire): BootstrapPayload {
     accounts: wire.accounts || [],
     currencies: wire.currencies || [],
     errors: wire.errors || [],
+    mtime,
   };
 }
 
@@ -56,6 +59,8 @@ export function createAdapterClient(
   fetcher: typeof fetch = fetch,
   base = PRIVATE_ADAPTER_BASE,
 ): AdapterClient {
+  let lastMtime = "";
+
   async function get<T>(resource: string, query: Record<string, string> = {}): Promise<T> {
     const params = new URLSearchParams(query);
     const response = await fetcher(`${base}/${resource}${params.size ? `?${params}` : ""}`, {
@@ -63,15 +68,24 @@ export function createAdapterClient(
     });
     const payload = await response.json() as AdapterEnvelope<T> & { error?: string };
     if (!response.ok) throw new Error(payload.error || `Adapter request failed (${response.status})`);
+    if (payload.mtime) lastMtime = payload.mtime;
     return payload.data;
   }
 
   return {
-    bootstrap: async () => bootstrapPayload(await get<BootstrapWire>("ledger_data")),
+    bootstrap: async () => {
+      const wire = await get<BootstrapWire>("ledger_data");
+      return bootstrapPayload(wire, lastMtime);
+    },
+    changed: async () => get<boolean>("changed", lastMtime ? { mtime: lastMtime } : {}),
     load: (route, query = {}) => {
       const treeRoutes = new Set(["income_statement", "balance_sheet", "trial_balance"]);
       const directRoutes = new Set(["options", "help", "diagnostics", "source", "editor", "import"]);
-      const resource = treeRoutes.has(route) || directRoutes.has(route) ? route : `reports/${route}`;
+      const resource = treeRoutes.has(route) || directRoutes.has(route)
+        ? route
+        : route.startsWith("holdings_by_")
+          ? "reports/holdings"
+          : `reports/${route}`;
       return get(resource, query);
     },
   };
@@ -91,6 +105,7 @@ export function createSyntheticAdapter(): AdapterClient {
   };
   return {
     bootstrap: async () => bootstrap,
+    changed: async () => false,
     load: async () => ({ state: "shell-only", rows: [] }),
   };
 }

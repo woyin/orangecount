@@ -258,6 +258,10 @@ func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	switch resource {
+	case "changed":
+		previous := strings.TrimSpace(r.URL.Query().Get("mtime"))
+		currentMtime := favaadapter.NewEnvelope(nil, current.BuiltAt).Mtime
+		writeJSON(w, favaadapter.NewEnvelope(previous != "" && previous != currentMtime, current.BuiltAt))
 	case "ledger_data":
 		projection := favaadapter.BootstrapProjection(favaadapter.BootstrapOptions{Snapshot: current, BaseURL: "/"})
 		writeJSON(w, favaadapter.NewEnvelope(projection, current.BuiltAt))
@@ -373,6 +377,9 @@ func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 		valuation := strings.TrimSpace(r.URL.Query().Get("valuation"))
 		if valuation == "" {
 			valuation = "at-cost"
+			if strings.EqualFold(strings.TrimSpace(r.URL.Query().Get("conversion")), "market_value") {
+				valuation = "market-value"
+			}
 		}
 		projection := favaadapter.ProjectTreeReport(
 			current.Evaluation(),

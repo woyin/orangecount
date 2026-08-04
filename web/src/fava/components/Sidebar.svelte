@@ -3,6 +3,7 @@
 
   export let route: string;
   export let open = false;
+  export let errors: unknown[] = [];
   export let onMenu: () => void;
   export let onNavigate: (href: string) => void;
 
@@ -22,7 +23,7 @@
   <a class="button" href="#add-transaction" aria-label="Add transaction">+</a>
 </div>
 <aside id="sidebar" class:active={open} aria-label="Primary navigation">
-  {#each sections as [heading, items]}
+  {#each sections as [heading, items], sectionIndex}
     <ul class="navigation" aria-label={heading || "Reports"}>
       {#each items as item}
         {#if known.has(item)}
@@ -38,6 +39,11 @@
         {/if}
       {/each}
     </ul>
+    {#if sectionIndex === sections.length - 1 && errors.length}
+      <ul class="navigation">
+        <li><a href={routeHref("errors")} class:selected={route === "errors"} aria-current={route === "errors" ? "page" : undefined} onclick={(event) => { event.preventDefault(); onNavigate(routeHref("errors")); }}>Errors ({errors.length})</a></li>
+      </ul>
+    {/if}
   {/each}
 </aside>
 

@@ -9,12 +9,16 @@
   export let time = "";
   export let accountFilter = "";
   export let filter = "";
+  export let conversion = "at_cost";
+  export let interval = "month";
   export let onNavigate: (href: string) => void;
   export let onLocale: (value: string) => void;
   export let onTheme: (value: string) => void;
   export let onTime: (value: string) => void;
   export let onAccount: (value: string) => void;
   export let onQuery: (value: string) => void;
+  export let onConversion: (value: string) => void;
+  export let onInterval: (value: string) => void;
 </script>
 
 <header>
@@ -49,6 +53,23 @@
       on:change={(event) => onQuery((event.currentTarget as HTMLInputElement).value)}
     />
   </form>
+  <label class="header-select">
+    <span>Conversion</span>
+    <select id="conversion" value={conversion} on:change={(event) => onConversion((event.currentTarget as HTMLSelectElement).value)}>
+      <option value="at_cost">At cost</option>
+      <option value="market_value">Market value</option>
+      <option value="units">Units</option>
+      <option value="currency">Currency</option>
+    </select>
+  </label>
+  <label class="header-select">
+    <span>Interval</span>
+    <select id="interval" value={interval} on:change={(event) => onInterval((event.currentTarget as HTMLSelectElement).value)}>
+      <option value="month">Monthly</option>
+      <option value="quarter">Quarterly</option>
+      <option value="year">Yearly</option>
+    </select>
+  </label>
   <label class="header-select">
     <span>Language</span>
     <select id="locale" value={locale} on:change={(event) => onLocale((event.currentTarget as HTMLSelectElement).value)}>

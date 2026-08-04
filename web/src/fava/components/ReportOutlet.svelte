@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { AdapterClient } from "../adapter-client";
+  import AccountReport from "../reports/AccountReport.svelte";
   import GenericReport from "../reports/GenericReport.svelte";
   import ImportReport from "../reports/ImportReport.svelte";
   import JournalReport from "../reports/JournalReport.svelte";
@@ -31,7 +32,7 @@
     error = null;
     report = null;
     table = null;
-    if (["query", "options", "help", "diagnostics", "source", "editor", "import"].includes(route) || !["income_statement", "balance_sheet", "trial_balance", "accounts", "account", "journal", "holdings", "commodities", "events", "documents", "statistics", "errors"].includes(route)) {
+    if (["query", "options", "help", "diagnostics", "source", "editor", "import"].includes(route) || !["income_statement", "balance_sheet", "trial_balance", "accounts", "account", "journal", "holdings", "holdings_by_account", "holdings_by_currency", "holdings_by_root_account", "holdings_by_commodity", "commodities", "events", "documents", "statistics", "errors"].includes(route)) {
       loading = false;
       return;
     }
@@ -58,6 +59,8 @@
   <section class="state-panel error-panel" role="alert">{error}</section>
 {:else if route === "query"}
   <QueryReport {adapter} />
+{:else if route === "account"}
+  <AccountReport adapter={adapter} account={query.account || ""} />
 {:else if route === "editor"}
   <EditorReport {adapter} />
 {:else if route === "import"}

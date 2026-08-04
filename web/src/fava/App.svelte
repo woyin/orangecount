@@ -50,6 +50,20 @@
     shell.dispatch({ type: "query", query: { time: value } });
   }
 
+  function setConversion(value: string) {
+    const href = updateQuery(window.location.href, { conversion: value });
+    const target = new URL(href, window.location.href);
+    window.history.replaceState({}, "", target.href);
+    shell.dispatch({ type: "query", query: { conversion: value } });
+  }
+
+  function setInterval(value: string) {
+    const href = updateQuery(window.location.href, { interval: value });
+    const target = new URL(href, window.location.href);
+    window.history.replaceState({}, "", target.href);
+    shell.dispatch({ type: "query", query: { interval: value } });
+  }
+
   function setLocale(locale: string) {
     shell.dispatch({ type: "locale", locale });
   }
@@ -62,7 +76,7 @@
     shell.dispatch({ type: "loading", value: true });
     try {
       const payload = await adapter.bootstrap();
-      shell.dispatch({ type: "bootstrap", ledgerTitle: payload.ledger_title, locale: payload.locale, theme: payload.theme });
+      shell.dispatch({ type: "bootstrap", ledgerTitle: payload.ledger_title, locale: payload.locale, theme: payload.theme, errors: payload.errors });
     } catch (error) {
       shell.dispatch({ type: "error", message: error instanceof Error ? error.message : "The local adapter could not load this view." });
     }
@@ -76,7 +90,17 @@
     };
     window.addEventListener("popstate", onPopState);
     void bootstrap();
-    return () => window.removeEventListener("popstate", onPopState);
+    const poll = window.setInterval(async () => {
+      try {
+        if (await adapter.changed()) await bootstrap();
+      } catch {
+        // A transient poll failure must not replace the last usable report.
+      }
+    }, 5000);
+    return () => {
+      window.removeEventListener("popstate", onPopState);
+      window.clearInterval(poll);
+    };
   });
 
   function retry() {
@@ -103,17 +127,23 @@
   onTheme={setTheme}
   onTime={setTime}
   onAccount={setAccount}
+  conversion={current.query.conversion || "at_cost"}
+  interval={current.query.interval || "month"}
+  onConversion={setConversion}
+  onInterval={setInterval}
   onQuery={setQuery}
 />
-<Sidebar route={current.route} open={current.sidebarOpen} onMenu={() => shell.dispatch({ type: "menu" })} onNavigate={navigate} />
+<Sidebar route={current.route} open={current.sidebarOpen} errors={current.errors} onMenu={() => shell.dispatch({ type: "menu" })} onNavigate={navigate} />
 <article id="main-content" tabindex="-1">
   <LoadingBoundary active={current.loading}>
     <ErrorBoundary message={current.error} onRetry={retry}>
-      <ReportOutlet
-        adapter={adapter}
-        route={current.route}
-        query={{ ...current.query, ...(current.account ? { account: current.account } : {}) }}
-      />
+      {#key current.revision}
+        <ReportOutlet
+          adapter={adapter}
+          route={current.route}
+          query={{ ...current.query, ...(current.account ? { account: current.account } : {}) }}
+        />
+      {/key}
     </ErrorBoundary>
   </LoadingBoundary>
 </article>

@@ -5,6 +5,10 @@ export const ROUTES = Object.freeze([
   "journal",
   "query",
   "holdings",
+  "holdings_by_account",
+  "holdings_by_currency",
+  "holdings_by_root_account",
+  "holdings_by_commodity",
   "commodities",
   "documents",
   "events",
@@ -13,6 +17,9 @@ export const ROUTES = Object.freeze([
   "import",
   "options",
   "help",
+  "source",
+  "diagnostics",
+  "errors",
 ]);
 
 const PATHS = Object.freeze({
@@ -22,6 +29,10 @@ const PATHS = Object.freeze({
   journal: "/journal",
   query: "/query",
   holdings: "/holdings",
+  holdings_by_account: "/holdings/by_account",
+  holdings_by_currency: "/holdings/by_currency",
+  holdings_by_root_account: "/holdings/by_root_account",
+  holdings_by_commodity: "/holdings/by_commodity",
   commodities: "/commodities",
   documents: "/documents",
   events: "/events",
@@ -30,6 +41,9 @@ const PATHS = Object.freeze({
   import: "/import",
   options: "/options",
   help: "/help",
+  source: "/source",
+  diagnostics: "/diagnostics",
+  errors: "/errors",
 });
 
 const QUERY_KEYS = Object.freeze(["time", "account", "filter", "conversion", "interval"]);
@@ -54,6 +68,7 @@ export function parseRoute(input, basePath = "") {
     pathname = pathWithoutTrailingSlash(pathname.slice(basePath.length));
   }
   let route = pathname === "/" ? "income_statement" : Object.entries(PATHS).find(([, path]) => path === pathname)?.[0] || "journal";
+  if (pathname.startsWith("/help/")) route = "help";
   let account = "";
   const accountPrefix = "/account/";
   if (pathname.startsWith(accountPrefix)) {
@@ -99,6 +114,10 @@ export function pageLabel(route) {
     journal: "Journal",
     query: "Query",
     holdings: "Holdings",
+    holdings_by_account: "Holdings by account",
+    holdings_by_currency: "Holdings by currency",
+    holdings_by_root_account: "Holdings by root account",
+    holdings_by_commodity: "Holdings by commodity",
     commodities: "Commodities",
     documents: "Documents",
     events: "Events",
@@ -107,6 +126,9 @@ export function pageLabel(route) {
     import: "Import",
     options: "Options",
     help: "Help",
+    source: "Source",
+    diagnostics: "Diagnostics",
+    errors: "Errors",
     account: "Account",
   };
   return labels[route] || "Journal";
