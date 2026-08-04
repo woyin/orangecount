@@ -42,6 +42,83 @@
 </aside>
 
 <style>
+  aside {
+    grid-area: aside;
+    padding-top: 0.5rem;
+    margin: 0;
+    overflow-y: auto;
+    color: var(--sidebar-color);
+    background-color: var(--sidebar-background);
+    border-right: 1px solid var(--sidebar-border);
+  }
+
+  .aside-buttons {
+    display: none;
+  }
+
+  @media (width <= 767px) {
+    :global(:root) {
+      --aside-width: 200px;
+    }
+
+    aside {
+      position: fixed;
+      top: 0;
+      bottom: 0;
+      z-index: var(--z-index-floating-ui);
+      width: 200px;
+      margin-left: -200px;
+      transition: var(--transitions);
+    }
+
+    .overlay {
+      position: fixed;
+      inset: 0;
+      z-index: var(--z-index-floating-ui);
+      cursor: pointer;
+      background: var(--overlay-wrapper-background);
+      transition: var(--transitions);
+    }
+
+    aside.active {
+      margin-left: 0;
+    }
+
+    .aside-buttons {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: var(--z-index-floating-ui);
+      display: flex;
+      flex-direction: column;
+      transition: var(--transitions);
+    }
+
+    .active.aside-buttons {
+      left: 200px;
+    }
+
+    .aside-buttons > * {
+      width: 42px;
+      height: 42px;
+      color: var(--mobile-button-text);
+      text-align: center;
+      background-color: var(--sidebar-background);
+      border: 1px solid var(--sidebar-border);
+    }
+
+    .aside-buttons a {
+      font-size: 28px;
+    }
+  }
+
+  @media print {
+    aside,
+    .aside-buttons {
+      display: none;
+    }
+  }
+
   .navigation {
     padding-bottom: 0.5rem;
     margin: 0;
