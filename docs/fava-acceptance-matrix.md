@@ -1,9 +1,16 @@
-# Fava-alignment acceptance matrix
+# Historical Fava-alignment acceptance matrix
 
-This matrix records structural and interaction acceptance criteria for the local
-OrangeCount UI. It deliberately contains no ledger values, account names,
-source text, screenshots, or private URLs. Fava is used only as a visual and
-interaction reference; no Fava implementation code is copied.
+> **Superseded acceptance evidence.** This document records the 2026-08-02
+> clean-room legacy-UI QA and explains why that approach produced false
+> confidence. It does not satisfy the rendering-fidelity route gates and must
+> not be updated as the current acceptance authority. Canonical coverage lives
+> in `docs/fava-route-state-manifest.md`; current requirements live in
+> `docs/fava-ux-spec.md` and `docs/fava-frontend-transplant-plan.md`.
+
+At the time of this historical run, no Fava implementation code was copied and
+no screenshots were retained. The accepted strategy now selectively adapts
+Fava-derived frontend source and commits approved screenshots generated only
+from the synthetic reference ledger.
 
 ## Shared shell
 
@@ -53,11 +60,12 @@ localized, but the URL state must remain stable and bookmarkable.
   emits aggregate counts/error classes and never stores source data or
   screenshots.
 
-## Parity evidence
+## Historical evidence policy
 
-For each route, record only structural outcomes (route, control labels,
-status, row/tree counts, and pass/fail). Do not commit screenshots, private
-ledger values, source paths, narration, account names, or raw browser dumps.
+This run recorded only structural outcomes. The current policy additionally
+requires approved Fava synthetic-ledger screenshots in the strict English
+matrix. Private screenshots, ledger values, source paths, narrations, account
+names, and raw private browser dumps remain forbidden.
 
 ## Sanitized parity status (2026-08-02)
 

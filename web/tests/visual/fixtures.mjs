@@ -6,13 +6,12 @@ const motionReset = `
     transition: none !important;
     caret-color: transparent !important;
   }
-  html { font-family: Arial, sans-serif !important; }
 `;
 
 export const test = base.extend({
   page: async ({ page, baseURL }, use) => {
     if (!baseURL) {
-      throw new Error("ORANGECOUNT_BASE_URL is required; use npm run visual:test");
+      throw new Error("A visual base URL is required; use visual:test or visual:reference");
     }
     const origin = new URL(baseURL).origin;
     page.on("request", (request) => {

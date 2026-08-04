@@ -1,0 +1,99 @@
+; Accounts and commodities are generated from fixed synthetic inputs.
+2024-01-01 commodity USD
+2024-01-01 commodity EUR
+2024-01-01 commodity JPY
+2024-01-01 commodity GBP
+2024-01-01 commodity CAD
+2024-01-01 commodity CHF
+2024-01-01 commodity AUD
+2024-01-01 commodity SHARES
+2024-01-01 commodity BTC
+2024-01-01 commodity GOLD
+
+2024-01-01 open Equity:Opening-Balances USD, EUR, JPY, GBP, CAD, CHF, AUD, SHARES, BTC, GOLD
+2024-01-01 open Equity:Adjustments USD
+2024-01-01 open Equity:Imported USD
+2024-01-01 open Assets:Cash:Wallet01 USD, EUR, JPY, CHF
+2024-01-01 open Assets:Cash:Wallet02 USD, EUR, JPY, CHF
+2024-01-01 open Assets:Cash:Wallet03 USD, EUR, JPY, CHF
+2024-01-01 open Assets:Cash:Wallet04 USD, EUR, JPY, CHF
+2024-01-01 open Assets:Cash:Wallet05 USD, EUR, JPY, CHF
+2024-01-01 open Assets:Cash:Wallet06 USD, EUR, JPY, CHF
+2024-01-01 open Assets:Cash:Wallet07 USD, EUR, JPY, CHF
+2024-01-01 open Assets:Cash:Wallet08 USD, EUR, JPY, CHF
+2024-01-01 open Assets:Cash:Wallet09 USD, EUR, JPY, CHF
+2024-01-01 open Assets:Cash:Wallet10 USD, EUR, JPY, CHF
+2024-01-01 open Assets:Cash:Wallet11 USD, EUR, JPY, CHF
+2024-01-01 open Assets:Cash:Wallet12 USD, EUR, JPY, CHF
+2024-01-01 open Assets:Cash:Wallet13 USD, EUR, JPY, CHF
+2024-01-01 open Assets:Cash:Wallet14 USD, EUR, JPY, CHF
+2024-01-01 open Assets:Cash:Wallet15 USD, EUR, JPY, CHF
+2024-01-01 open Assets:Cash:Wallet16 USD, EUR, JPY, CHF
+2024-01-01 open Assets:Cash:Reserve01 USD, CAD, GBP
+2024-01-01 open Assets:Cash:Reserve02 USD, CAD, GBP
+2024-01-01 open Assets:Cash:Reserve03 USD, CAD, GBP
+2024-01-01 open Assets:Cash:Reserve04 USD, CAD, GBP
+2024-01-01 open Assets:Cash:Reserve05 USD, CAD, GBP
+2024-01-01 open Assets:Cash:Reserve06 USD, CAD, GBP
+2024-01-01 open Assets:Cash:Reserve07 USD, CAD, GBP
+2024-01-01 open Assets:Cash:Reserve08 USD, CAD, GBP
+2024-01-01 open Assets:Cash:Reserve09 USD, CAD, GBP
+2024-01-01 open Assets:Cash:Reserve10 USD, CAD, GBP
+2024-01-01 open Assets:Cash:Reserve11 USD, CAD, GBP
+2024-01-01 open Assets:Cash:Reserve12 USD, CAD, GBP
+2024-01-01 open Assets:Cash:Reserve13 USD, CAD, GBP
+2024-01-01 open Assets:Cash:Reserve14 USD, CAD, GBP
+2024-01-01 open Assets:Cash:Reserve15 USD, CAD, GBP
+2024-01-01 open Assets:Cash:Reserve16 USD, CAD, GBP
+2024-01-01 open Assets:Receivables:Client01 USD, EUR
+2024-01-01 open Assets:Receivables:Client02 USD, EUR
+2024-01-01 open Assets:Receivables:Client03 USD, EUR
+2024-01-01 open Assets:Receivables:Client04 USD, EUR
+2024-01-01 open Assets:Receivables:Client05 USD, EUR
+2024-01-01 open Assets:Receivables:Client06 USD, EUR
+2024-01-01 open Assets:Receivables:Client07 USD, EUR
+2024-01-01 open Assets:Receivables:Client08 USD, EUR
+2024-01-01 open Assets:Receivables:Client09 USD, EUR
+2024-01-01 open Assets:Receivables:Client10 USD, EUR
+2024-01-01 open Assets:Investments:Index01 SHARES, USD
+2024-01-01 open Assets:Investments:Index02 SHARES, USD
+2024-01-01 open Assets:Investments:Index03 SHARES, USD
+2024-01-01 open Assets:Investments:Index04 SHARES, USD
+2024-01-01 open Assets:Investments:Index05 SHARES, USD
+2024-01-01 open Liabilities:Credit:Card01 USD
+2024-01-01 open Liabilities:Credit:Card02 USD
+2024-01-01 open Liabilities:Credit:Card03 USD
+2024-01-01 open Liabilities:Credit:Card04 USD
+2024-01-01 open Liabilities:Credit:Card05 USD
+2024-01-01 open Liabilities:Credit:Card06 USD
+2024-01-01 open Liabilities:Credit:Card07 USD
+2024-01-01 open Liabilities:Credit:Card08 USD
+2024-01-01 open Liabilities:Credit:Card09 USD
+2024-01-01 open Liabilities:Credit:Card10 USD
+2024-01-01 open Liabilities:Loans:Term01 USD
+2024-01-01 open Liabilities:Loans:Term02 USD
+2024-01-01 open Liabilities:Loans:Term03 USD
+2024-01-01 open Liabilities:Loans:Term04 USD
+2024-01-01 open Liabilities:Loans:Term05 USD
+2024-01-01 open Income:Sales:Channel01 USD
+2024-01-01 open Income:Sales:Channel02 USD
+2024-01-01 open Income:Sales:Channel03 USD
+2024-01-01 open Income:Sales:Channel04 USD
+2024-01-01 open Income:Sales:Channel05 USD
+2024-01-01 open Income:Sales:Channel06 USD
+2024-01-01 open Income:Sales:Channel07 USD
+2024-01-01 open Income:Sales:Channel08 USD
+2024-01-01 open Expenses:Operations:Category01 USD
+2024-01-01 open Expenses:Operations:Category02 USD
+2024-01-01 open Expenses:Operations:Category03 USD
+2024-01-01 open Expenses:Operations:Category04 USD
+2024-01-01 open Expenses:Operations:Category05 USD
+2024-01-01 open Expenses:Operations:Category06 USD
+2024-01-01 open Expenses:Operations:Category07 USD
+2024-01-01 open Expenses:Operations:Category08 USD
+2024-01-01 open Expenses:Operations:Category09 USD
+2024-01-01 open Expenses:Operations:Category10 USD
+2024-01-01 open Expenses:Operations:Category11 USD
+2024-01-01 open Expenses:Operations:Category12 USD
+2024-01-01 open Expenses:Operations:Category13 USD
+2024-01-01 open Expenses:Operations:Category14 USD

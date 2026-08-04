@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "generator": "tools/fixturegen",
+  "generator_version": "1",
+  "deterministic": true,
+  "config": {
+    "wallets": 16,
+    "reserves": 16,
+    "receivables": 10,
+    "investments": 5,
+    "cards": 10,
+    "loans": 5,
+    "sales_channels": 8,
+    "expense_categories": 14,
+    "activity_entries": 120
+  }
+}

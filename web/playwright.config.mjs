@@ -11,14 +11,24 @@ if (nodeMajor === 24) {
 
 const repoRoot = path.resolve(import.meta.dirname, "..");
 const temporaryRun = `orangecount-fava-visual-${process.pid}`;
+const isReference = Boolean(process.env.FAVA_BASE_URL);
+const snapshotRoot = process.env.VISUAL_SNAPSHOT_DIR || path.join(repoRoot, "testdata", "visual-baselines");
+const viewports = [
+  ["desktop", { width: 1280, height: 800 }],
+  ["narrow", { width: 520, height: 800 }],
+];
+const projects = isReference
+  ? viewports.flatMap(([size, viewport]) => [
+      { name: `${size}-light`, use: { baseURL: process.env.FAVA_BASE_URL, viewport, deviceScaleFactor: 1, colorScheme: "light" } },
+      { name: `${size}-dark`, use: { baseURL: process.env.FAVA_BASE_URL, viewport, deviceScaleFactor: 1, colorScheme: "dark" } },
+    ])
+  : viewports.map(([name, viewport]) => ({ name, use: { baseURL: process.env.ORANGECOUNT_BASE_URL, viewport, deviceScaleFactor: 1 } }));
 
 export default defineConfig({
   testDir: path.join(repoRoot, "web", "tests"),
   outputDir: path.join(os.tmpdir(), temporaryRun, "test-results"),
   snapshotPathTemplate: path.join(
-    repoRoot,
-    "testdata",
-    "visual-baselines",
+    snapshotRoot,
     "{projectName}",
     "{testFilePath}",
     "{arg}{ext}",
@@ -36,35 +46,21 @@ export default defineConfig({
     },
   },
   reporter: [["list"]],
-  projects: [
-    {
-      name: "desktop",
-      use: {
-        baseURL: process.env.ORANGECOUNT_BASE_URL,
-        viewport: { width: 1280, height: 800 },
-        deviceScaleFactor: 1,
-      },
-    },
-    {
-      name: "narrow",
-      use: {
-        baseURL: process.env.ORANGECOUNT_BASE_URL,
-        viewport: { width: 520, height: 800 },
-        deviceScaleFactor: 1,
-      },
-    },
-  ],
+  projects,
   use: {
     locale: "en-US",
     timezoneId: "UTC",
-    colorScheme: "dark",
+    colorScheme: isReference ? undefined : "dark",
     reducedMotion: "reduce",
     serviceWorkers: "block",
     trace: "off",
     video: "off",
     screenshot: "off",
     launchOptions: {
-      args: ["--font-render-hinting=none"],
+      args: ["--font-render-hinting=none", "--no-sandbox"],
+      ...(process.env.CHROMIUM_EXECUTABLE_PATH
+        ? { executablePath: process.env.CHROMIUM_EXECUTABLE_PATH }
+        : {}),
     },
   },
 });

@@ -25,7 +25,7 @@ A behavior difference that alters a ledger's accounting result, including balanc
 _Avoid_: bug fix, formatting change
 
 **Built-in web interface**:
-The Go-served personal ledger interface that provides the essential exploration and reporting workflows associated with Fava.
+The Go-served personal ledger interface that provides the exploration, reporting, and reviewed authoring workflows associated with Fava.
 _Avoid_: external dashboard, Fava integration
 
 **Workflow compatibility**:
@@ -44,9 +44,17 @@ _Avoid_: unlicensed third-party reuse, backend port, theme-only parity
 The complete set of user-visible, built-in local-interface capabilities supplied by the pinned Fava 1.30.12 release, including its built-in pages, editor, importer, and options. Third-party plugin pages, user-defined extensions, and Fava's HTTP API are excluded.
 _Avoid_: plugin ecosystem parity, unbounded feature scope, API compatibility
 
+**Fava option compatibility**:
+Support for every user-visible Fava 1.30.12 built-in option that does not depend on an explicitly excluded capability, with the same interface effect and precedence. Excluded option behavior remains visible as an approved Fava deviation rather than being silently ignored.
+_Avoid_: supported subset, display-only option listing, silent fallback
+
 **UX parity gate**:
-The release criterion for an in-scope Fava capability: equivalent task outcomes, interaction and keyboard states, and responsive behavior; high-fidelity visual structure and hierarchy verified through redacted deterministic-fixture visual regression; no requirement for literal pixel identity where independent implementation or browser rendering differs.
-_Avoid_: manual-only visual review, arbitrary screenshot similarity, pixel-perfect mandate
+The release criterion for an in-scope Fava capability: equivalent task outcomes, interaction and keyboard states, responsive behavior, and Fava rendering fidelity verified against a redacted deterministic fixture.
+_Avoid_: workflow-only acceptance, manual-only visual review, approximate parity
+
+**Fava rendering fidelity**:
+The requirement that a fixed Fava version and OrangeCount produce the same observable visual composition under controlled browser, viewport, theme, locale, and fixture conditions, with every remaining difference explicitly documented and approved.
+_Avoid_: approximate theme match, undocumented visual deviation, arbitrary screenshot similarity score
 
 **Parity authority**:
 The source that decides whether a parity concern is correct: Fava decides user-observable UX; Beancount v3 decides ledger, valuation, and BeanQuery semantics. When the two differ, OrangeCount retains the v3 result and presents it through the Fava-aligned UX.
@@ -63,6 +71,14 @@ _Avoid_: untracked copy, Python runtime dependency, whole-application fork
 **Fava reference mirror**:
 A read-only, repository-external checkout pinned to the Fava 1.30.12 source commit. It is available for complete source study and provenance mapping but is neither shipped nor versioned as part of OrangeCount; the repository records its revision and each adopted source unit.
 _Avoid_: floating upstream checkout, vendored whole application, undocumented source reference
+
+**Fava visual baseline**:
+An approved rendering produced by the pinned Fava release under controlled conditions using only the deterministic synthetic ledger. It is the visual authority for regression comparison and never contains private-ledger material.
+_Avoid_: private screenshot, developer recollection, self-referential OrangeCount snapshot
+
+**Approved Fava deviation**:
+An explicit, reviewed departure from the Fava visual baseline or behavior required by OrangeCount's semantic authority, security, data integrity, privacy, or accessibility obligations.
+_Avoid_: opportunistic improvement, silent drift, unreviewed redesign
 
 **Fava frontend transplant**:
 The primary OrangeCount web-client migration that starts from Fava 1.30.12's frontend composition, components, styles, and interactions, then replaces Fava data access with Go-backed adapters. The legacy OrangeCount interface is a temporary per-page fallback and is deleted as each page family is accepted.
@@ -96,6 +112,10 @@ _Avoid_: hosted account, shared instance
 The user-maintained `.bean` file set, including its include graph, that remains OrangeCount's authoritative accounting record.
 _Avoid_: application database, managed ledger
 
+**Synthetic reference ledger**:
+A deterministic, non-private ledger designed to reproduce the scale, density, currencies, long labels, unavailable valuations, and interaction states needed for Fava parity evidence.
+_Avoid_: toy fixture, anonymized private ledger, random sample data
+
 **Private reference ledger**:
 A source ledger used only on its owner's machine to verify a release against real-world usage. A release must parse and evaluate it into a valid ledger snapshot without copying its content into the project.
 _Avoid_: committed fixture, sample ledger
@@ -104,13 +124,17 @@ _Avoid_: committed fixture, sample ledger
 An explicitly configured filesystem root from which OrangeCount may resolve attachments named by a `document` directive after path normalization and containment checks.
 _Avoid_: arbitrary local path, file browser
 
-**Read-only interface**:
-A web interface that explores, validates, and links to source-ledger locations but does not modify ledger files.
-_Avoid_: embedded editor, ledger authoring
+**Reviewed write workflow**:
+A local web operation that previews or validates an explicit source-ledger or document change and publishes it only through an atomic, recoverable, revalidated path. Uncommitted editing never changes the source ledger or active snapshot.
+_Avoid_: autosave, direct file mutation, partial snapshot publication
 
 **Core-derived report**:
 A report whose result can be obtained solely from the v3 source ledger and its explicitly supported options, without executing a plugin or reading an OrangeCount-specific extension.
 _Avoid_: plugin report, proprietary report
+
+**Fava budget projection**:
+A read-only interpretation of Fava's built-in `custom "budget"` directives for Journal and account-report presentation. It never changes balances, inventories, booking, or other ledger semantics.
+_Avoid_: budget plugin, accounting balance, proprietary budget model
 
 **Diagnostic**:
 An actionable explanation of a compatibility or accounting problem, anchored to its source span and any related ledger locations.
@@ -127,6 +151,14 @@ _Avoid_: best-effort report, incidental order
 **Query compatibility**:
 The current BeanQuery language semantics used by Fava for ledger queries. Legacy query constructs may receive migration diagnostics but do not establish a second result-semantic contract.
 _Avoid_: legacy query parity, dual query engine
+
+**Fava filter expression (FQL)**:
+The Fava 1.30.12 interface language for narrowing visible entries and report data through account, tag, link, payee, amount, and logical predicates. It is a UI filtering contract distinct from BeanQuery and does not define accounting semantics.
+_Avoid_: query, BeanQuery filter, plain text search
+
+**Fava time filter**:
+The Fava 1.30.12 interface language for selecting calendar, fiscal, relative, and explicit date intervals in reports and journals. It determines visible scope without changing ledger semantics.
+_Avoid_: date prefix, from/to fields, browser-local period
 
 **Display locale**:
 The explicitly selected language and regional formatting convention used to present OrangeCount's interface, diagnostics, dates, and numbers without changing ledger semantics.

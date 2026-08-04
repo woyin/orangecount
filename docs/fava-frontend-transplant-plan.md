@@ -1,364 +1,519 @@
-# Fava 1.30.12 frontend transplant plan
+# Fava 1.30.12 rendering-fidelity execution plan
 
-## Decision summary
+## Status and outcome
 
-OrangeCount will deliver the complete built-in local Fava 1.30.12 experience
-through a transplanted, selectively adapted Fava frontend and a private Go
-adapter. This is an implementation plan, not a requirement to run Fava or
-Python in the released product.
+This is the authoritative execution plan for replacing OrangeCount's hand-built
+Fava approximation with a selective transplant of the pinned Fava 1.30.12
+frontend. The current clean-room Svelte shell is an architectural prototype,
+not an accepted parity implementation, and must not receive further visual
+polish.
 
-- Fava is the UX authority; Beancount v3 remains the accounting and BeanQuery
-  semantic authority.
-- Fava's MIT license permits selected code, style, and asset reuse only when
-  copyright and license notices are retained and recorded.
-- The released binary remains Go-served, embedded, offline, and loopback-only.
-- The target excludes Fava's public HTTP API, Python/Beancount runtime,
-  third-party plugin pages, user extensions, and Python importers.
-- English is the visual reference. `zh-CN` keeps the same IA and interaction
-  model, with legitimate translated-copy and CJK-font layout differences.
-- Private-ledger observations are transient. All committed visual fixtures and
-  evidence use a deterministic, sanitized ledger.
+The migration is complete only when the entire Fava standard surface is served
+by the transplanted frontend, every route passes its four-layer route gate,
+there are no unapproved visual differences, the legacy UI and migration flag
+are deleted, and OrangeCount remains a Go-native, offline, loopback-only
+application.
 
-The authoritative decisions are ADR-0022 and ADR-0024 through ADR-0036.
-ADR-0023 is superseded by ADR-0030.
+## Non-negotiable decisions
 
-## Definition of complete
+1. Fava 1.30.12 is the visual and interaction authority. Beancount v3 and the
+   OrangeCount core remain the accounting, valuation, booking, and BeanQuery
+   authority.
+2. Visual work starts from selected Fava components, composition, CSS, fonts,
+   assets, routing, state, and interactions. A clean-room rewrite is an
+   exception, not the default.
+3. Under controlled English Chromium conditions, every visual difference must
+   either be removed or recorded as an Approved Fava deviation. An arbitrary
+   screenshot-similarity percentage is not an acceptance rule.
+4. English is the strict visual baseline. Simplified Chinese uses the same
+   components, information architecture, control order, focus order, and
+   responsive behavior, with language- and CJK-font-driven layout differences.
+5. Chromium is the pinned visual authority. WebKit and Firefox are supported
+   by behavior, accessibility, and serious-layout-regression checks rather than
+   cross-browser pixel comparison.
+6. The Fava standard navigation remains free of OrangeCount-exclusive pages.
+   Such pages are frozen during migration and isolated under a clearly labeled
+   OrangeCount extension area.
+7. The frontend changes as little as possible. The private Go Fava-shaped
+   adapter absorbs data-shape and transport differences without owning ledger
+   semantics.
+8. Every built-in user-visible Fava option that does not depend on an excluded
+   capability is implemented with Fava-compatible interface effects and
+   precedence. Unsupported excluded behavior is visible as an approved
+   deviation, never silently ignored.
+9. Python importers, plugin pages, user extensions, the Python/Beancount
+   runtime, and Fava's public HTTP API remain excluded.
+10. Editor, Import, Add Entry, source-slice, statement, and document operations
+    are in scope through the Reviewed write workflow. Fava behavior never
+    weakens OrangeCount's atomicity, backup, validation, snapshot, privacy, or
+    document-root controls.
+11. Fava's built-in budget behavior is implemented as a read-only presentation
+    projection over `custom "budget"` entries; it never changes accounting
+    semantics.
+12. Query CSV, XLSX, and ODS export, filtered Journal Beancount export, and
+    print behavior are in scope and implemented without Python.
+13. Fava FQL and Fava time-filter syntax are complete UI contracts, distinct
+    from BeanQuery and ledger semantics.
+14. Journal preserves Fava's private HTML presentation contract: the Go
+    adapter renders strictly escaped Fava-compatible Journal markup instead of
+    replacing the page with a clean-room JSON/Svelte implementation.
 
-The migration completes only when all the following are true.
+The governing ADRs are ADR-0022 and ADR-0024 through ADR-0038. ADR-0023 is
+superseded by ADR-0030; ADR-0004 and ADR-0007 describe earlier boundaries that
+ADR-0022 superseded.
 
-1. Every Fava 1.30.12 built-in route, menu, modal, keyboard path, loading,
-   empty, and error state is classified in the source inventory as adopted,
-   replaced, or explicitly excluded by the decisions above.
-2. Every adopted page is rendered by the transplanted frontend and receives
-   data only through the Go adapter and immutable OrangeCount snapshot.
-3. The English UI passes behavior, accessibility/responsiveness, and visual
-   regression gates at desktop and narrow widths. `zh-CN` passes the first two
-   gates and locale-aware visual review.
-4. Reports and queries retain OrangeCount/Beancount-v3 results even when that
-   differs from Fava's Python results.
-5. Editor and import writes remain explicit, atomic, backed up, validated,
-   and published through the existing Go snapshot mechanism.
-6. `make fmt vet test race license build` passes, no network is needed at
-   runtime, and `NOTICE` plus the provenance inventory pass review.
-7. The feature flag is removed, the Fava UI becomes default, and no legacy UI
-   code remains for an in-scope route.
+## Completion definition
 
-## Target architecture
+The project may claim completion only when all of the following are true:
+
+- A single route registry classifies every Fava 1.30.12 built-in route, modal,
+  menu, keyboard path, loaded state, empty state, loading state, unavailable
+  state, error state, and stale state as transplanted or explicitly excluded.
+- Every in-scope route uses selected Fava-derived frontend units and only the
+  private Go adapter plus the immutable OrangeCount snapshot.
+- Every route has adapter-contract, behavior, visual/structural, and release
+  evidence and has passed all four gates defined below.
+- English passes the pinned Chromium matrix for desktop/narrow and light/dark.
+  Simplified Chinese passes the structural, overflow, focus, keyboard, and
+  responsive invariants.
+- WebKit and Firefox complete the supported route flows without serious layout
+  failure.
+- The synthetic reference ledger demonstrates production-like density,
+  multi-currency rows, missing valuation paths, long text, paging, lots,
+  documents, events, diagnostics, editor failures, and import candidates.
+- Reports, filters, queries, exports, and writes retain exact OrangeCount/v3
+  results even where Fava's Python results differ.
+- All Approved Fava deviations are recorded and explicitly approved by the
+  user (the product owner). Implementing agents cannot approve their own baseline changes.
+- `make fmt vet test race license build`, frontend unit/build checks, browser
+  behavior tests, visual comparisons, accessibility checks, provenance checks,
+  and deterministic artifact checks pass.
+- No runtime network, Node, Python, container, or CDN dependency is introduced.
+- The migration flag, legacy routes, legacy DOM, obsolete assets, and current
+  prototype shell have been removed.
+
+## Authority and boundaries
 
 ```text
-Fava 1.30.12 reference mirror (external, read-only, pinned commit)
-  ├─ complete source inventory + MIT/dependency review
-  ├─ visual observer creates sanitized behavior/spec baselines
-  └─ selected frontend source → attributed OrangeCount frontend workspace
+Pinned Fava 1.30.12 reference mirror
+  ├─ selected attributed frontend source
+  ├─ controlled Fava visual baseline
+  └─ observable behavior and interaction authority
 
-OrangeCount binary
-  transplanted Fava frontend
-       │ private loopback requests only
-       ▼
-  internal/web Fava-shaped adapter
-       │ maps contracts; no public compatibility promise
-       ▼
-  report / query / source / snapshot / ledger (Go, v3 semantic authority)
-       │
-       └─ editor and import use the existing atomic write + revalidation path
+Transplanted Fava frontend
+  │ private loopback requests and HTML fragments
+  ▼
+Go Fava-shaped adapter
+  ├─ Fava-compatible DTOs, errors, status, URL state, and Journal markup
+  └─ no public API or accounting ownership
+  ▼
+report / query / source / snapshot / ledger
+  ├─ Beancount v3 semantics and exact values
+  └─ reviewed write workflow and active-snapshot publication
 ```
 
-### Frontend boundary
+### Frontend source boundary
 
-`web/` becomes the maintained source workspace for the transplanted frontend.
-Its build emits only static, local assets, which are copied into
-`internal/web/assets/` and embedded by Go exactly as today. Node/package
-manager tooling is development/build-only; it is neither needed nor shipped
-at runtime. The current dependency-free `app.js` is retained only behind the
-temporary UI flag until each route cutover is accepted.
+Selected upstream-derived units live under `web/src/fava/`, preserving useful
+upstream path relationships and required MIT/OFL/BSD notices. OrangeCount-only
+integration code lives under `web/src/orangecount/`. Every selected or adapted
+unit has a provenance row with upstream path, pinned revision, upstream hash,
+local path, modification summary, contract rows, license placement, and
+verification evidence.
 
-No page may combine legacy OrangeCount DOM/components with transplanted Fava
-components. A route is wholly legacy or wholly Fava-transplant while the flag
-exists; shared Go write, snapshot, locale, and security services remain common.
+A Fava-derived component may be modified only for an adapter boundary, an
+excluded capability, Simplified Chinese support, or an Approved Fava
+deviation. OrangeCount integration code must not be scattered through the
+upstream-derived tree merely for convenience. The full Fava checkout remains
+outside the repository.
+
+The current `web/src/fava/` clean-room shell files are prototype files despite
+their directory name. Wave 1 replaces or relocates them; they are not evidence
+that a Fava source unit has been transplanted.
 
 ### Go adapter boundary
 
-Create a narrowly owned adapter layer under `internal/web/` (the exact package
-layout is chosen after the inventory). It owns:
+The private adapter owns:
 
-- the boot/session payload expected by the frontend;
-- route-specific report, journal, account, commodity, document, event,
-  statistics, query, editor, import, options, and error contract adapters;
-- Fava-shaped status, validation, pagination, sort, and error payloads;
-- URL/query decoding and conversion to typed Go report/query inputs;
-- contract fixtures proving that a frontend request maps to the intended Go
-  domain result.
+- the bootstrap/ledger-data envelope, `mtime`, changed, errors, locale, theme,
+  options, route state, account details, commodity names, and precisions;
+- complete FQL and Fava time-filter parsing into typed UI filter values;
+- route-specific report, account, Journal, holdings, commodity, document,
+  event, statistics, query, editor, import, options, help, and error contracts;
+- Fava-compatible status, validation, pagination, sorting, cancellation,
+  source-anchor, empty, unavailable, stale, and error shapes;
+- strictly escaped Fava-compatible Journal and account-Journal markup;
+- exact CSV/XLSX/ODS and Beancount export presentation;
+- conversion from adapter requests to typed OrangeCount report/query/source
+  inputs and adaptation of exact results back to frontend-required shapes.
 
-It does **not** own accounting calculation, mutable ledger state, source-file
-authorization, import parsing, or snapshot publication. Those remain in their
-existing packages. The adapter is internal, loopback-only, versioned only for
-this embedded client, and never documented as a public Fava API.
+It does not own accounting calculation, booking, mutable snapshot state,
+source authorization, document-root policy, import parsing, file replacement,
+or snapshot publication.
 
-### Contract-map format
+### Reviewed write boundary
 
-For every frontend request, the inventory creates a row with these fields:
+All Editor, Source Slice, Add Entry, Import, Statement, and Document operations
+must be explicit. Ledger publication requires preview or validation, atomic
+replacement, a recoverable backup, re-evaluation, and successful publication
+of a complete snapshot. A failed write or re-evaluation retains the previous
+valid snapshot and a recoverable edit. Document operations additionally require
+normalization, containment re-checks, confirmation, and recoverable handling of
+cross-file partial failure.
 
-| Field | Required content |
-| --- | --- |
-| Fava source | tag, path, symbol, and frontend call site |
-| Route/state | URL, relevant query state, and UI state entered |
-| Request shape | method, parameters, body, and cancellation/loading behavior |
-| Go owner | snapshot/report/query/source/editor/import function used |
-| Semantic rule | v3 behavior, valuation and unavailable-data policy |
-| Response adaptation | exact frontend-required fields, types, ordering, errors |
-| Tests | contract fixture, browser flow, visual state, accessibility checks |
-| Provenance | copied/adapted/rewritten decision and license notice location |
+## Required model and Herdr orchestration
 
-## Reference, license, and privacy workflow
+Development uses the two user-selected models through Herdr and reports all
+results back to the current coordinating Agent.
 
-### Reference lock
-
-Work package P0 resolves `v1.30.12` to its immutable upstream commit and
-creates a committed lock record containing tag, commit, retrieval date,
-upstream URL, Fava license hash, and frontend dependency lock hashes. The full
-checkout lives outside this repository in an ignored read-only location.
-
-### Provenance
-
-Create a committed provenance inventory. For each Fava-derived file or asset,
-record upstream path and revision, OrangeCount path, whether it was copied or
-adapted, local modifications, copyright holder, MIT notice placement, and
-dependency-license result. Update `NOTICE` and the license check so a derived
-file cannot be added without inventory evidence.
-
-### Visual evidence
-
-Only a visual-capable operator may perform Fava observation and approve visual
-output. That operator uses the local Fava instance transiently, then writes a
-sanitized specification. Private screenshots, DOM dumps, API responses, paths,
-account names, values, and raw interaction recordings are never written to the
-repository or passed to implementation agents.
-
-The committed regression corpus contains a synthetic multi-currency ledger
-with: nested accounts, commodities, missing conversion paths, directives,
-documents under a sandbox root, editor errors, import candidates, saved query
-states, and enough transactions for pagination. It must contain no private
-ledger material.
-
-## Page-family migration order
-
-The ordering eliminates shared risks first and addresses the currently observed
-high-impact gaps before secondary surfaces.
-
-| Wave | Page family | Why this order | Principal acceptance |
+| Role | Herdr agent kind | Required model | Exclusive ownership |
 | --- | --- | --- | --- |
-| 0 | Reference, inventory, licenses, fixture, visual harness | Required inputs for all later work | P0 and P1 evidence accepted |
-| 1 | Build, shell, navigation, URL/state, locale, theme | Shared visual and routing foundation | Fava standard navigation/default page; desktop+narrow shell |
-| 2 | Journal and account detail | Highest-frequency workflow; transaction grouping | Transaction header/detail expansion, directive badges, running balance |
-| 3 | Balance sheet, income statement, trial balance, accounts | Solves multi-currency and hierarchy root cause | Account-by-row / currency-by-column, drill-down, non-disappearing charts |
-| 4 | Holdings, commodities/prices, documents, events, statistics | Reuses reports, filters, tables, chart controls | Empty/unavailable states and source/document safeguards |
-| 5 | Query and saved queries | Contract-heavy but isolated semantic owner | Run/save/export/error preservation and typed sort |
-| 6 | Editor, import, options, help, errors | Write safety and configuration boundaries | Atomic save/rollback, reviewed import, Fava-shaped options/help |
-| 7 | Cross-route hardening and cutover | Eliminates fallback and protects release | Full matrix, visual/a11y/perf/license release gate |
+| Code implementation | `pi` | DeepSeek V4 Flash supplied by WoYin; Pi selector `WoYin/clinepass/cline-pass/deepseek-v4-flash` | Go semantic projections, adapter contracts, FQL/time parsers, budgets, exporters, write pipeline, fixture semantics, unit/contract tests, build and license tooling |
+| Visual implementation | `codex` | OpenAI Codex `gpt-5.6-luna` | Fava source adaptation, CSS/fonts/assets, frontend composition and interaction, responsive behavior, Chromium baselines, visual diffs, Playwright visual flows, visual fixes, zh-CN structural review |
+| Coordinator/integrator | current Agent | current session model | task decomposition, ownership enforcement, handoffs, integration, full verification, documentation, evidence synthesis, and reporting to the user |
+| Final visual authority | user (product owner) | n/a | approval of baseline updates and Approved Fava deviations |
 
-## Work packages
+The code model must not certify visual parity. The visual model may implement
+visual frontend work and produce evidence but may not change ledger semantics,
+weaken write/security behavior, or grant final approval to its own baselines.
+The coordinator resolves conflicts using the parity-authority rule.
 
-Each package has one owner. Agents without visual capability must consume the
-published sanitized spec and must not self-certify visual acceptance.
+### Agent handoff protocol
 
-### P0 — Fava reference lock and full source inventory
+1. The coordinator creates named sibling Herdr agents and supplies a route/state
+   identifier, exact file ownership, upstream source paths, contract rows,
+   fixture hash, commands, and acceptance evidence.
+2. The code model completes adapter/semantic work and reports changed files,
+   tests, contract output, and residual risks to the coordinator.
+3. After the contract is stable, the visual model adapts the corresponding
+   Fava frontend units, runs browser/visual checks, and reports screenshots,
+   diffs, structural findings, and proposed deviations to the coordinator.
+4. The coordinator audits and integrates the result, runs the entire route
+   gate, and presents any baseline or deviation decision to the user for final approval.
+5. No two agents write the same files concurrently. In the shared working tree,
+   writer phases are serialized; read-only visual/reference inspection may run
+   in parallel. Separate worktrees require explicit user approval.
+6. Agents do not delegate further and do not merge or commit independently.
+   Their complete output returns to the current Agent.
 
-**Owner:** research/architecture agent. **Depends on:** none. **May not edit:**
-OrangeCount production UI or Go behavior.
+### Current orchestration prerequisite
 
-1. Obtain an external read-only checkout at the locked `v1.30.12` commit.
-2. Read all frontend, backend route, state, build, test, style, and dependency
-   areas; record the inventory rather than copying the checkout.
-3. Produce `docs/fava-source-inventory.md`, route and module tables, a list of
-   all Fava frontend requests, and an adoption/rewrite/exclusion decision for
-   every file.
-4. Produce the initial contract map and a dependency license inventory.
-5. Add the reference lock and provenance-template documents.
+Both required agent configurations have been verified through Herdr. OpenAI
+Codex `gpt-5.6-luna` reviewed this plan's visual concerns. A named Herdr `pi`
+agent was started with `WoYin/clinepass/cline-pass/deepseek-v4-flash`, and its
+Pi footer reported `(WoYin) clinepass/cline-pass/deepseek-v4-flash` with high
+thinking. Each production task still verifies its live agent/model identity
+before work. The separate `deepseek/deepseek-v4-flash` catalog entry is not an
+approved substitute, and no provider or model may be substituted without user
+approval.
 
-**Done when:** an independent reviewer can trace every in-scope page from a
-Fava source module through its data contract to a planned OrangeCount owner.
+## Reference and evidence system
 
-### P1 — Sanitized fixture and visual-spec baseline
+### Controlled reference environment
 
-**Owner:** visual-capable agent/operator only. **Depends on:** P0 route list.
-**May not do:** persist private ledger evidence.
+A development-only OCI environment pins:
 
-1. Build the sanitized multi-currency fixture and document roots.
-2. Exercise every Fava route/state in English at agreed desktop and narrow
-   viewports; record abstract control/state behavior and keyboard paths.
-3. Generate committed sanitized screenshots and visual-regression masks only
-   where browser rendering is intentionally variable.
-4. Write `docs/fava-ux-spec.md` as page/state tables, not prose impressions.
-5. Establish browser tests that can run against Fava and OrangeCount using the
-   same fixture without storing Fava private data.
+- Fava tag and commit;
+- Python, Beancount, Bison, and system-library versions;
+- Node 22 LTS, Playwright, Chromium, and browser revision;
+- Fira Sans, Fira Mono, Source Code Pro, and CJK fallback versions;
+- English locale, UTC, reduced motion, deterministic scale factor, and fixed
+  desktop/narrow viewports.
 
-**Done when:** a non-visual agent can implement a route from the spec and a
-visual operator can reproduce an objective pass/fail comparison.
+It mounts only the synthetic reference ledger and an explicit output directory.
+It never enters the release binary. Ordinary Go build/test commands require no
+container, Python, Node, or browser.
 
-### P2 — Build pipeline, attribution guard, and shell transplant
+### Synthetic fixtures
 
-**Owner:** frontend/platform agent. **Depends on:** P0, P1 shell spec.
-**Owns:** `web/`, generated-asset integration, `NOTICE`, license tooling, shell
-routes; coordinate with existing dirty changes rather than reverting them.
+Two non-private fixture tiers are required:
 
-1. Import only P0-approved Fava frontend build/config/source units with MIT
-   notices and provenance entries.
-2. Add reproducible build target that emits static assets into the existing Go
-   embed directory; update `Makefile` so normal Go release builds consume
-   checked-in assets and need no runtime Node/CDN.
-3. Implement the temporary UI flag and route isolation.
-4. Transplant app shell, sidebar, top controls, standard navigation, default
-   page, global URL state, locale/theme, responsive menu, focus handling, and
-   common loading/error components.
-5. Add artifact, source-header, dependency, and license checks.
+1. **Compact fixture** — precise contract, empty, error, unavailable, stale,
+   validation, rollback, and security states.
+2. **Synthetic reference ledger** — deterministic production-like density,
+   targeting 80–100 nested accounts, 6–10 currencies/commodities, multi-
+   currency accounts, missing and disconnected price paths, long Unicode
+   labels, enough transactions for paging, all directive/flag families, tags,
+   links, metadata, lots, documents, events, saved queries, editor errors, and
+   import candidates.
 
-**Done when:** Fava UI can boot behind the flag with no page-specific legacy
-DOM, and shell visual/a11y browser tests pass at both viewports.
+A fixed generator input and committed content hash make the dense ledger
+reproducible. It must not be derived by anonymizing a private ledger. A private
+reference ledger remains transient local smoke evidence only.
 
-### P3 — Adapter foundation and bootstrap contract
+### Baselines
 
-**Owner:** Go web agent. **Depends on:** P0, P2 request map. **Owns:**
-`internal/web/` adapter only; do not alter ledger semantics.
+Approved Fava screenshots generated solely from the synthetic reference ledger
+are committed under the designated baseline directory. Candidate updates never
+overwrite approved images automatically. Masks are permitted only for named,
+truly nondeterministic regions; global tolerance cannot hide layout, color,
+spacing, typography, density, or missing-state differences.
 
-1. Define typed adapter DTOs and request/response fixture helpers.
-2. Implement session/bootstrap, locale/options, route-state, diagnostics,
-   source-link, snapshot-status, and standardized error contracts.
-3. Map existing `/api/v1/*` data to private Fava-shaped routes without exposing
-   a public compatibility commitment.
-4. Preserve loopback-only routing, content security, attachment containment,
-   redaction, and stale-snapshot behavior.
+The strict English matrix is:
 
-**Done when:** shell and one read-only fixture page run entirely through
-contract-tested adapter endpoints.
+- desktop/light;
+- desktop/dark;
+- narrow/light;
+- narrow/dark.
 
-### P4 — Journal and account-detail vertical slice
+Simplified Chinese reuses the route/state manifest and verifies component
+identity, information hierarchy, table relationships, control and focus order,
+keyboard behavior, wrapping, overflow, and responsive transitions without
+cross-language pixel comparison.
 
-**Owner:** one frontend agent plus one Go report agent, with non-overlapping
-ownership. **Depends on:** P1–P3.
+### Approved deviations
 
-- **Go report owner:** expose transaction identity, directive kind, postings,
-  source anchors, filtering, and account running-balance data; add tests for
-  multi-posting grouping and deterministic ordering.
-- **Frontend owner:** transplant Journal, directive/flag badges, transaction
-  expansion, account page, account graph controls, pagination, and URL state.
-- **Visual operator:** accepts only against P1's journal/account states.
+`docs/fava-approved-deviations.md` is the sole registry. Each entry records an
+ID, route/state, Fava behavior, OrangeCount behavior, permitted reason,
+category, affected regions, tests, owner, approver, permanence/expiry, and
+baseline impact. Only semantic authority, security, data integrity, privacy,
+or accessibility can justify a deviation. Product preference, convenience,
+modernization, or subjective improvement cannot.
 
-**Done when:** transaction grouping replaces posting-row flattening; account
-links open a dedicated account page with graph and running balance; keyboard,
-source navigation, narrow layout, and CSV behavior pass.
+## Route scope summary
 
-### P5 — Core report and currency-presentation vertical slice
+`docs/fava-route-state-manifest.md` is the sole canonical coverage and status
+registry. Prerequisite Phase 0 makes it machine-checkable and complete. The
+following is only a page-family summary; nested modal, menu, download,
+keyboard, and state entries must be changed in the canonical manifest first:
 
-**Owner:** report-model agent and frontend report agent. **Depends on:** P3.
-
-1. Introduce a presentation projection that groups rows by account and pivots
-   natural holdings into dynamic currency columns. It must not alter evaluator
-   inventory or exact decimals.
-2. Redefine any global currency value as a default valuation/chart preference,
-   never as a filter that hides natural-currency table values.
-3. Transplant balance sheet, income statement, trial balance, account tree,
-   hierarchy charts, currency legends, drill-down, export/print and empty
-   states.
-4. Default a chart currency from operating currency; render a localized
-   unavailable-data card rather than silently dropping a chart.
-
-**Done when:** the synthetic multi-currency fixture demonstrates one account
-row with multiple natural currency columns, usable hierarchy charts, and
-stable v3 exact values.
-
-### P6 — Secondary read-only pages
-
-**Owner:** page-family agents, one family per agent. **Depends on:** P3 and
-shared table/chart primitives from P2/P5.
-
-| Agent ownership | Pages and required work |
+| Surface | Required scope |
 | --- | --- |
-| Holdings | lots, cost/market valuation, prices, unavailable pricing, sort/export |
-| Commodities | commodity overview and the Fava-equivalent prices view/tab, metadata and filters |
-| Documents/events | list/filter/source link, document-root enforcement, event navigation |
-| Statistics | deterministic metrics, chart controls, accessible table fallback |
-| Errors/help | Fava-shaped conditional errors surface, searchable help and shortcuts |
+| `/` | Fava-compatible default-page redirect/landing and ledger title |
+| `/income_statement` | tree report, intervals, conversion, charts, budgets where visible |
+| `/balance_sheet` | tree report, natural currencies, conversion, charts |
+| `/trial_balance` | tree report, currency legend, hierarchy modes, fallback |
+| `/journal` | FQL/time filtering, pagination, sorting, directive types, expansion, context, export |
+| `/account/<name>` | account details, up-to-date state, charts, budgets, running balance, account Journal |
+| `/holdings/by_<key>` | all built-in grouping variants, cost/value/units and unavailable valuation |
+| `/commodities` | metadata, names, precisions, prices, history and filters |
+| `/documents` | list, preview, upload, attach, move, delete, safe source/document links |
+| `/events` | filters, source navigation, empty/error states |
+| `/statistics` | deterministic metrics, charts and accessible tables |
+| `/query` | editor, run, saved state, errors, typed results, CSV/XLSX/ODS |
+| `/editor` | sources, CodeMirror, diagnostics, format, validate, save, revert, source slice |
+| `/import` | native adapters, upload/select, extract, edit, preview, diff, review, commit |
+| `/options` | all applicable built-in Fava options and explicit excluded-option deviations |
+| `/errors` | conditional navigation, diagnostics, source anchors and budget/FQL/import errors |
+| `/help/<slug>` | standard help and shortcuts, localized for OrangeCount boundaries |
+| Statements/documents | safe metadata statement links, downloads, uploads and containment errors |
+| Global/modals | navigation, filters, keyboard shortcuts, Add Entry, Context, Export, notifications |
 
-**Done when:** each family passes its P1 state table, contract fixtures, narrow
-layout, keyboard checks, and its existing Go security/semantic tests.
+Third-party extension routes, plugin pages, multi-ledger hosting, public Fava
+API compatibility, and Python importer execution remain excluded.
 
-### P7 — Query, editor, import, and options
+## Four-layer route gate
 
-**Owner:** separate agents by write boundary. **Depends on:** P2/P3 and the
-existing Go write services.
+A route cannot switch from legacy to transplant until all four layers pass.
 
-- **Query:** transplant query editor/results/saved-query UX; adapt to Go
-  BeanQuery; retain exact CSV values and preserve prior result on error.
-- **Editor:** transplant file tree, buffer, syntax/editor commands and
-  diagnostics UX; call existing Go validate/save/revert paths only; require
-  atomic replacement, backup, revalidation, and previous-snapshot retention.
-- **Import:** transplant Fava-shaped selection/preview/review/commit UX;
-  connect native CSV/Beancount adapters; never execute Python Fava importer
-  configuration; surface migration guidance when such config is encountered.
-- **Options:** transplant standard layout/theme/system controls and read-only
-  ledger option display; distinguish supported local options from excluded
-  plugin options.
+### Gate 1 — Contract and semantics
 
-**Done when:** browser tests prove failed editor/import writes do not publish a
-new snapshot and successful writes are explicit, recoverable, and localized.
+- Adapter requests, DTOs/HTML, status, errors, cancellation, ordering, URL
+  parameters, and Fava validators agree.
+- Exact OrangeCount/v3 values, natural-currency invariants, FQL/time parsing,
+  option precedence, budget projection, exports, and source anchors pass Go
+  tests.
+- Missing conversions remain localized to converted summaries/charts and never
+  erase natural holdings.
 
-### P8 — Final integration, removal, and release gate
+### Gate 2 — Behavior and safety
 
-**Owner:** integration/visual operator. **Depends on:** P0–P7.
+- Direct navigation, reload, history, filters, sorting, pagination, expansion,
+  keyboard shortcuts, focus return, empty/loading/error/stale recovery, and
+  responsive interactions pass browser flows.
+- Query errors retain the prior successful result.
+- Failed writes retain the previous snapshot and recoverable source state.
+- Document and statement operations enforce containment and do not reveal local
+  paths.
 
-1. Run every documented Fava standard route and state against the sanitized
-   fixture in English and `zh-CN`.
-2. Run visual diffs only for approved deterministic English states; triage
-   structural regressions, not font rasterization noise.
-3. Run private-ledger smoke validation locally without retaining evidence.
-4. Remove legacy route implementations and feature flag, update navigation and
-   help, and verify no dead legacy asset is embedded.
-5. Run release commands and provenance/license audits.
+### Gate 3 — Visual and structural fidelity
 
-## Required test layers
+- The route passes all four English Chromium baseline cells for required
+  states with no unapproved difference.
+- Simplified Chinese passes the structural/localization invariants.
+- The visual model supplies a diff report; the user (product owner) approves any
+  baseline or deviation change.
+- The implementing code model cannot self-certify this gate.
 
-| Layer | Owner | Gate |
-| --- | --- | --- |
-| Go unit/differential | ledger/report/query owners | v3 semantics, exact values, projection invariants |
-| Adapter contract | Go web owner | Fava frontend shape and error/status behavior |
-| Frontend unit | frontend owners | reducers/state, formatting, routes, keyboard semantics |
-| Browser flow | page owner | task completion, URL persistence, responsive layout, write safety |
-| Visual regression | visual-capable operator | English structural hierarchy and visual density |
-| Accessibility | page owner + visual operator | focus order, labels, keyboard, table/chart fallback |
-| License/provenance | platform owner | MIT notices, inventory completeness, dependency review |
+### Gate 4 — Release quality
 
-## Handoff rules for non-visual agents
+- Dense-fixture performance is no worse than the agreed Fava-relative budget;
+  the initial target is at most 1.2× the same-environment Fava measurement,
+  replaced by measured per-flow limits in Prerequisite Phase 0.
+- Offline/CSP, accessibility, deterministic build, dependency size,
+  license/provenance, Go race, and cross-browser checks pass.
+- The route contains no mixed legacy/transplant DOM and no undocumented source
+  derivative.
 
-Every task issued to a non-visual agent must include: the route/state identifier
-from the UX spec; requested source and target files; adapter contract rows;
-fixture/test command; acceptance selectors/assertions; and provenance rule. It
-must not include private screenshots, DOM dumps, ledger data, or a request to
-make an unverified “visual match.” The visual operator alone creates baselines,
-reviews diffs, and records the result.
+## Prerequisite Phase 0 and seven-wave implementation sequence
 
-## Risk controls
+Phase 0 is a readiness prerequisite, not one of the seven implementation waves.
+The seven waves are depth-first. Shared foundations may support later work, but
+no wave may create broad placeholder pages and call that route progress.
+
+### Prerequisite Phase 0 — Reference, fixture, decisions, and tooling
+
+**Code agent:** start Herdr `pi` with the exact WoYin DeepSeek V4 Flash selector
+and verify the reported provider/model; create deterministic dense
+fixture generator and hashes; build route/state manifest; close contract rows;
+prepare deterministic export/build/license checks; define measured performance
+flows.
+
+**Visual model:** build the OCI Fava/Playwright reference environment; adopt
+pinned fonts; capture and review the four English baseline cells; define
+Chinese structural invariants and permitted mask rules.
+
+**Coordinator:** reconcile source inventory, UX spec, provenance, reference
+lock, contract map, and deviation registry; verify privacy and model ownership.
+
+**Done when:** the requested two agents are verifiably configured; Fava and
+OrangeCount can load the same synthetic ledger; reference tests are not
+skipped; route/state manifest and baseline matrix are complete; all inventory
+open questions are resolved or registered as approved exclusions.
+
+### Wave 1 — Shell plus Income Statement golden vertical slice
+
+**Code model:** implement full bootstrap, changed/mtime, errors, account detail
+metadata, commodity names/precisions, applicable options, FQL/time foundations,
+and Income Statement/tree/chart contracts over OrangeCount semantics.
+
+**Visual model:** replace the prototype with selected Fava shell, router, stores,
+sidebar, header, filters, theme, fonts, CSS, common components, Income
+Statement, tree table, conversion/interval controls, and chart components.
+
+**Done when:** `/`, the entire shell, and `/income_statement` display real dense
+fixture data and pass all four route gates. No page-specific placeholder counts
+as completion.
+
+### Wave 2 — Core tree reports
+
+Implement and accept `/balance_sheet` and `/trial_balance`, natural-currency
+columns, account trees, conversion and interval behavior, fiscal periods,
+Treemap/Sunburst/Icicle, legends, drill-down, accessible table fallbacks,
+printing, and unavailable/error states.
+
+**Done when:** all three core tree reports share stable upstream-derived
+primitives and separately pass the four-layer gate with exact v3 values.
+
+### Wave 3 — Journal and Account Detail
+
+**Code model:** implement Fava-compatible Journal HTML templates with strict
+escaping, complete directive/flag models, FQL/time execution, deterministic
+pagination/sort, account running balances, account details/up-to-date status,
+budget projection, source/context contracts, filtered Beancount export, and
+safe statement resolution.
+
+**Visual model:** adapt Fava Journal, filters, headers, interaction handlers,
+account page, charts, context/export modals, badges, expansion, source links,
+and dense/narrow behavior with minimal frontend change.
+
+**Done when:** grouped transactions, postings, all directive kinds, budgets,
+paging, keyboard behavior, account drill-down, running balance, statements,
+exports, errors, and four English baseline cells pass.
+
+### Wave 4 — Secondary read-only and document surfaces
+
+Migrate Holdings variants, Commodities/Prices, Documents, Events, Statistics,
+Errors, and Help. Implement cost/value/units, lots, price/unavailable states,
+commodity metadata/precision, deterministic statistics, document preview and
+source navigation, conditional Errors navigation, and localized help.
+
+Document upload/attach/move/delete controls may be rendered here but cannot be
+accepted until their Reviewed write workflow passes Wave 6 safety gates.
+
+**Done when:** every read-only state, missing-price/conversion state, attachment
+denial, empty/error state, and route-specific keyboard path passes four gates.
+
+### Wave 5 — Query and exports
+
+Adapt Fava Query and CodeMirror/BQL components to OrangeCount BeanQuery.
+Implement saved state, typed sorting, table/string/error results, prior-result
+retention, CSV/XLSX/ODS, and deterministic exact-value export.
+
+**Done when:** query semantics remain OrangeCount/v3-authoritative while the
+entire Fava Query workflow and export surface pass all four route gates.
+
+### Wave 6 — Reviewed authoring
+
+Migrate Editor, Source Slice, Add Entry, Import, Options, and mutating Document
+operations. Adopt Fava CodeMirror and Tree-sitter assets. Implement all
+applicable Fava options, native CSV/Beancount import adapters, Python-importer
+migration diagnostics, preview/review/commit, concurrency hashes, atomic
+replacement, backup, revalidation, rollback, and snapshot publication.
+
+**Done when:** success, invalid input, concurrent change, write failure,
+revalidation failure, rollback, and stale-snapshot browser flows all pass; no
+implicit write exists; every visual state passes its matrix.
+
+### Wave 7 — Cross-route hardening and final cutover
+
+Run the complete English matrix, Chinese structural suite, WebKit/Firefox
+flows, keyboard/accessibility checks, dense-fixture performance, offline/CSP,
+private-ledger transient smoke, license/provenance audit, deterministic build,
+Go race, and dead-asset scan. Resolve or obtain product-owner approval for all
+remaining deviations.
+
+**Done when:** every route has four gate records; the transplanted UI is the
+only standard surface; legacy UI, prototype shell, feature flag, dead assets,
+and legacy navigation are deleted.
+
+## Per-route handoff packet
+
+Every implementation task must provide:
+
+- route/state manifest IDs and current wave;
+- exact upstream Fava paths and target local paths;
+- contract-map rows and semantic owner;
+- fixture input/hash and required state setup;
+- model role and exclusive file ownership;
+- test commands and selectors/assertions;
+- required English baseline cells and Chinese invariants;
+- provenance/license requirements;
+- Approved Fava deviations already applicable;
+- required report format back to the coordinator: changed files, commands,
+  screenshots/diffs, residual risks, and unapproved differences.
+
+A task lacking this packet is not ready for delegation.
+
+## Verification command families
+
+The final exact commands are established in Prerequisite Phase 0. At minimum the release
+gate includes:
+
+```sh
+make fmt
+make vet
+make test
+make race
+make license
+make build
+npm --prefix web ci
+npm --prefix web test
+npm --prefix web run build:check
+npm --prefix web run visual:test
+```
+
+Additional commands must cover route-manifest completeness, deterministic
+fixture/export/build hashes, provenance headers and manifests, accessibility,
+WebKit/Firefox flows, visual diffs, dead legacy assets, offline requests, and
+performance budgets.
+
+## Principal risks and controls
 
 | Risk | Control |
 | --- | --- |
-| Upstream drift | freeze Fava 1.30.12 and commit lock; upgrades are separate projects |
-| Accidental whole-app port | P0 adoption decisions, private adapter boundary, no Python runtime dependency |
-| MIT attribution loss | per-file provenance inventory, NOTICE update, CI license guard |
-| Private-ledger leakage | transient-only observation and sanitized committed fixture |
-| Semantic regression while matching UI | v3 authority, exact-value tests, adapter-only projection |
-| Visual work delegated to blind agents | P1/P8 visual-capable ownership and objective spec artifacts |
-| Broken writes during parallel UI migration | shared Go atomic write/snapshot path and browser rollback tests |
-| Existing dirty worktree conflicts | task owners inspect status first, never revert unrelated changes, and coordinate file ownership |
-
-## First delegation sequence
-
-Issue only these tasks initially, in order:
-
-1. **P0 source inventory** — no production edits.
-2. **P1 visual baseline** — sanitized artifacts only; run in parallel after P0
-   supplies the route list.
-3. **P2 frontend/platform** and **P3 Go adapter** — begin after P0/P1 approve
-   the shell and bootstrap contracts.
-4. **P4 Journal/account** and **P5 core reports** — parallel after P2/P3.
-
-Do not delegate secondary pages, editor/import, or legacy removal until P4/P5
-have established shared routing, table, chart, request, and provenance patterns.
+| Another clean-room approximation | Upstream-derived source boundary, provenance hashes, minimal patches, visual model ownership |
+| Baselines that compare OrangeCount to itself | OCI Fava reference generated from the same synthetic ledger |
+| Small-fixture false confidence | Dense deterministic synthetic reference ledger plus compact state fixtures |
+| Visual agent changes semantics | Contract-first handoff and OrangeCount/v3 authority |
+| Code agent self-certifies visuals | Separate visual model evidence and product-owner approval |
+| Baseline laundering | Candidate-only updates, deviation registry, no arbitrary global threshold |
+| Private data leakage | Synthetic committed evidence only; private smoke remains transient |
+| Python/plugin creep | Native adapters and explicit migration diagnostics |
+| Unsafe Fava write behavior | Reviewed write workflow and Approved Fava security deviations |
+| Journal drift from a rewrite | Go-rendered Fava-compatible private HTML contract |
+| Unsupported filter/time behavior | Complete Go-native FQL and time-filter contracts |
+| License loss | Per-file provenance, NOTICE, dependency and asset license gates |
+| Shared-worktree agent conflicts | Serialized writer ownership and coordinator-only integration |
+| Required Pi/WoYin/DeepSeek selection unavailable | Prerequisite Phase 0 hard gate; no unapproved provider or model substitute |
+| Performance regression | Same-environment Fava-relative dense-fixture budgets |

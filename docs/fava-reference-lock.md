@@ -67,6 +67,32 @@ frontend unit inherits its direct dependencies (Svelte, d3-*, @codemirror/*,
 MIT/ISC/Apache-2.0 with no copyleft field observed. The Python lock is
 reference-only (Fava backend is not transplanted).
 
+## Controlled visual-environment lock (Prerequisite Phase 0)
+
+The first complete candidate capture recorded the following immutable
+execution values in `testdata/visual-candidates/fava-reference/environment-lock.json`:
+
+| Field | Captured value |
+| --- | --- |
+| OCI image ID | `sha256:02c702c12363ce300e7f8ae2c2392edf9fd55bda3e908e07592f1229fb72e7eb` |
+| Python | `3.12.8` |
+| Beancount | `3.2.3` |
+| Bison | `3.8.2` |
+| Node / npm | `22.18.0` / `10.9.3` |
+| Playwright | `1.52.0` |
+| Chromium | `151.0.7922.71` (Debian bookworm package) |
+| Fonts | Fava-pinned Fira Sans/Fira Mono/Source Code Pro; Debian `fonts-noto-cjk` fallback |
+| Locale / timezone | `en-US` / `UTC` |
+| Browser settings | reduced motion; device scale factor `1`; desktop `1280x800`; narrow `520x800` |
+| Fixture content SHA-256 | `522ebabb292ce6dcebbe20a699c05248a4389f086307f602ea3a8a19b78cdea8` |
+
+The source lock above and the OCI image are development-only authority inputs.
+The runner records these values on every capture, and
+`check-reference-output.mjs` verifies the image/hash/matrix relationship. The
+candidate evidence does not approve or replace `testdata/visual-baselines/`.
+The image is defined by `tools/fava-reference/Dockerfile` and is rebuilt when
+that file or its copied harness inputs change.
+
 ## Reference integrity policy
 
 - Do not fetch, rebase, or modify the mirror; treat it as read-only.

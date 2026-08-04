@@ -31,3 +31,4 @@ web/node_modules/
 web/staging/
 web/test-results/
 web/playwright-report/
+testdata/visual-candidates/

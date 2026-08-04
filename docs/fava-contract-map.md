@@ -7,14 +7,16 @@ You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2
 
 # Fava 1.30.12 → OrangeCount contract map
 
-Initial contract map (P0). For every frontend request, a row records the Fava
+Planning contract map. For every frontend request, a row records the Fava
 source, the frontend call site, the request shape, the planned Go owner, the
 semantic rule, response adaptation, tests, and provenance. This is the
 self-check that "a reviewer can trace every in-scope page from a Fava source
 module through its data contract to a planned OrangeCount owner" (ADR-0034).
 
-References: `docs/fava-source-inventory.md` for decisions; `docs/fava-reference-lock.md`
-for pinning; `docs/fava-provenance-inventory.md` for attribution.
+References: `docs/fava-route-state-manifest.md` for canonical user-visible
+coverage; `docs/fava-source-inventory.md` for source decisions;
+`docs/fava-reference-lock.md` for pinning; and
+`docs/fava-provenance-inventory.md` for attribution.
 
 ## Conventions
 
@@ -27,7 +29,12 @@ for pinning; `docs/fava-provenance-inventory.md` for attribution.
   (matching the Fava validators in `frontend/src/api/validators.ts`).
 - `mtime` wrapper: every response is wrapped `{"data": ..., "mtime": "..."}`
   unless otherwise noted; the adapter owns mtime provenance.
-- Rows marked **[open]** are unresolved decisions (see source-inventory §8).
+- Former open questions were resolved by ADR-0037, ADR-0038, and the accepted
+  rendering-fidelity plan. Rows must name a concrete owner or explicitly
+  excluded capability.
+- `adopt` and `adapt` are target decisions, not proof that source is currently
+  present. Current adoption requires a matching provenance row, notice,
+  upstream hash, and route-gate evidence.
 
 ## Route table (page → Fava route → adapter endpoint → Go owner)
 
@@ -37,7 +44,7 @@ for pinning; `docs/fava-provenance-inventory.md` for attribution.
 | Income Statement | `json_api.get_income_statement` | `get_income_statement` (tree_reports/index.ts) | `income_statement` | `internal/report.IncomeStatement` + `internal/report/charts.go` | adopt |
 | Balance Sheet | `json_api.get_balance_sheet` | `get_balance_sheet` | `balance_sheet` | `internal/report.BalanceSheet` + charts | adopt |
 | Trial Balance | `json_api.get_trial_balance` | `get_trial_balance` | `trial_balance` | `internal/report.TrialBalanceTree` + charts | adopt |
-| Journal | `json_api.get_journal_page` + `_journal_table.html` | `get_journal_page` (journal/index.ts) | `journal_page` **[open Q1]** | `internal/report.JournalBetween` + `internal/report.FilterJournal`; Go serializer for rows | adapt (largest rewrite) |
+| Journal | `json_api.get_journal_page` + `_journal_table.html` | `get_journal_page` (journal/index.ts) | `journal_page` | `internal/report` transaction projection + complete FQL/time filtering + strictly escaped Go Fava-compatible HTML renderer (ADR-0037) | adapt |
 | Account report | `json_api.get_account_report` | `get_account_report` (accounts/index.ts) | `account_report` | `internal/report.JournalBetween` scoped to account + `internal/report/charts.go` accountChart | adapt |
 | Query | `json_api.get_query` + `core/query_shell.py` | `get_query` (query/index.ts, Query.svelte) | `query` | `internal/query.Evaluate` (BeanQuery semantics) | adopt |
 | Holdings | `json_api.get_query` with 4 predefined queries | `get_query` (holdings/index.ts) | `query` (holding query strings) | `internal/query` + `internal/report.Holdings*`; queries re-expressed | adopt |
@@ -48,32 +55,79 @@ for pinning; `docs/fava-provenance-inventory.md` for attribution.
 | Errors | `json_api.get_errors` | `get_errors` (app.ts, errors/index.ts) | `errors` | `internal/report.ErrorsWithGraph` + `internal/diagnostic` | adopt |
 | Editor | `json_api.get_source` / `put_source` | `get_source`, `put_source` (editor/index.ts, Editor.svelte) | `source` / `source` (PUT) | `internal/web` `handleEditor` + `handleEditorSave` (atomic write, snapshot reload) | adopt |
 | Import | `json_api.get_imports` / `get_extract` / `put_add_entries` | `get_imports`, `get_extract`, `save_entries` (import/index.ts, Import.svelte) | `imports` / `extract` / `add_entries` | `internal/web` `handleImport*` (native CSV/bean adapters; Python importers **excluded**) | adapt |
-| Options | `json_api.get_options` | `get_options` (options/index.ts) | `options` | `internal/web` `handleOptions` (supported subset) | adapt |
+| Options | `json_api.get_options` | `get_options` (options/index.ts) | `options` | `internal/web` `handleOptions` for every applicable built-in Fava option; excluded capabilities are explicit deviations | adapt |
 | Help | `application.help_page` | n/a (backend) | `help` | `internal/web` `handleHelp` + uploaded help content | adapt |
 | Document attachment | `application.document` | `DocumentPreview`/`Table` | `document` (GET `/documents/`) | `internal/web` `handleDocument` + `internal/source.DocumentRoots` | adapt |
-| Statement | `application.statement` **[open Q5]** | journal metadata links | `statement` | `internal/web` question: entry-hash→path resolution | open |
-| Journal export | `application.download_journal` **[open Q5]** | `Export` modal | `download-journal` | `internal/ledger` render of snapshot entries | open |
-| Query export | `application.download_query` | `QueryLinks` | `download-query.query_result.csv` (xlsx/ods open) | `internal/query.Result.WriteCSV` | open (CSV now) |
+| Statement | `application.statement` | journal metadata links | `statement` | `internal/web` entry-hash→metadata path resolution with Document Root containment | adapt with security deviation if Fava is broader |
+| Journal export | `application.download_journal` | `Export` modal | `download-journal` | deterministic Beancount rendering of filtered immutable-snapshot entries | rewrite |
+| Query export | `application.download_query` | `QueryLinks` | `download-query.query_result.csv/.xlsx/.ods` | exact Go-native CSV/XLSX/ODS exporters over `internal/query.Result` | rewrite |
 | `.jump` / sidebar links | `application.jump` | `SidebarLink` remote links | frontend URL handling | `internal/web` filter syncing | rewrite |
+
+## Complete frontend request registry
+
+Every request below requires a detailed fixture before its owning route can
+pass Gate 1. `planned` means the decision and owner are closed but the contract
+fixture has not yet been implemented.
+
+| Request | Fava source / frontend call site | Method and request shape | Frontend-required response | Go owner | Required tests | Provenance/status |
+| --- | --- | --- | --- | --- | --- | --- |
+| `changed` | `json_api.changed`; `app.ts` poll | GET, none | wrapped `bool` plus `mtime` | `internal/snapshot` via adapter | mtime/change contract + reload browser flow | rewrite/planned |
+| `errors` | `json_api.get_errors`; app/errors store | GET, none | `[{type,message,source|null}]` | `internal/diagnostic`, `internal/report` | diagnostic/source contract + conditional-nav flow | adapt/planned |
+| `ledger_data` | `internal_api.get_ledger_data`; bootstrap | GET, none | validator-complete `LedgerData` | adapter over snapshot/report/ledger | full fixture validator + bootstrap flow | rewrite/partial prototype |
+| `payee_accounts` | `json_api.get_payee_accounts`; transaction form | GET `payee` | `string[]` | report attribute ranking | exact ordering + autocomplete flow | adapt/planned |
+| `payee_transaction` | `json_api.get_payee_transaction`; transaction form | GET `payee` | serialized Transaction or `null` | report transaction projection | fixture match + form-fill flow | adapt/planned |
+| `narration_transaction` | `json_api.get_narration_transaction`; transaction form | GET `narration` | serialized Transaction or `null` | report transaction projection | fixture match + form-fill flow | adapt/planned |
+| `narrations` | `json_api.get_narrations`; transaction form | GET, none | ranked `string[]` | report attributes | ordering + autocomplete flow | adapt/planned |
+| `query` | `json_api.get_query`; Query/Holdings/Statistics | GET `query_string,account,filter,time` | table/string/error union plus `mtime` | `internal/query` + adapter | dtype/exact-value/error contract + prior-result flow | adopt frontend/rewrite backend |
+| `context` | `json_api.get_context`; Context modal | GET `entry_hash` | entry plus balances before/after | report/context projection | hash lookup + modal flow | adapt/planned |
+| `source_slice` read | `json_api.get_source_slice`; SliceEditor | GET `entry_hash` | `{slice,sha256sum}` | source service | hash/source contract + context flow | adapt/planned |
+| `source_slice` write/delete | `put/delete_source_slice`; SliceEditor | PUT/DELETE `entry_hash,source,sha256sum` | updated hash/status string | Reviewed write workflow | conflict/invalid/write/reload/rollback tests | adapt/planned |
+| `source` read | `json_api.get_source`; Editor | GET `filename` | `SourceFile{file_path,sha256sum,source}` | source/editor service | containment/hash contract + editor load | adopt frontend/rewrite backend |
+| `source` write | `json_api.put_source`; Editor | PUT `file_path,source,sha256sum` | updated hash | Reviewed write workflow | validation/conflict/atomicity/rollback/snapshot tests | adopt frontend/rewrite backend |
+| `format_source` | `json_api.put_format_source`; Editor | PUT `source` | formatted source string | Go formatter boundary | deterministic formatting + keyboard flow | adapt/planned |
+| `journal` | `json_api.get_journal`; legacy consumers | GET filters | serialized entries | report transaction projection | directive coverage + ordering | adapt/planned |
+| `journal_page` | `json_api.get_journal_page`; Journal | GET `page,order,account,filter,time,conversion,interval` | `{page,total_pages,journal:html}` | report + FQL/time + strict Go HTML template | escaping/grouping/paging contract + browser/visual flow | adapt/planned (ADR-0037) |
+| `income_statement` | tree report loader | GET filters/conversion/interval | tree-report DTO | `internal/report` + charts | exact projection + route flow | adopt frontend/rewrite backend |
+| `balance_sheet` | tree report loader | GET filters/conversion/interval | tree-report DTO | `internal/report` + charts | exact projection + route flow | adopt frontend/rewrite backend |
+| `trial_balance` | tree report loader | GET filters/conversion/interval | tree-report DTO | `internal/report` + charts | exact projection + route flow | adopt frontend/rewrite backend |
+| `account_report` | account loader | GET `a,r,filters,conversion,interval` | Journal HTML or tree/chart/budget DTO | report/account/budget + strict HTML template | running balance/details/budget contract + route flow | adapt/planned |
+| `events` | `json_api.get_events`; Events | GET filters | serialized Events | `internal/report` | ordering/filter/source contract + route flow | adopt/planned |
+| `statistics` | `json_api.get_statistics`; Statistics | GET filters | balances/directives/entry counts | report/query | deterministic metric contract + route flow | adopt/planned |
+| `commodities` | `json_api.get_commodities`; Commodities | GET filters | base/quote price series | report price projection | precision/history/unavailable contract + route flow | adopt/planned |
+| `options` | `json_api.get_options`; Options | GET, none | Fava and Beancount option maps | ledger options + adapter | every applicable option and precedence + route flow | adapt/planned |
+| `imports` | `json_api.get_imports`; Import | GET, none | native file/importer candidates | native import service | candidate/status contract + route flow | adapt/planned |
+| `extract` | `json_api.get_extract`; Import | GET `filename,importer` | serialized candidate entries | native import adapters | valid/invalid/unsupported-importer contract | adapt/planned |
+| `upload_import_file` | `json_api.put_upload_import_file`; Import | PUT multipart | local candidate identifier/status | native import service | containment/type/size/error + browser flow | adapt/planned |
+| `add_entries` | `json_api.put_add_entries`; AddEntry/Import | PUT serialized entries | status/new hash | Reviewed write workflow | validation/atomicity/rollback/snapshot + modal flow | adapt/planned |
+| `documents` | `json_api.get_documents`; Documents | GET filters | serialized Documents | report + Document Roots | grouping/filter/unsafe-state contract + route flow | adapt/planned |
+| `document` download | `application.document`; preview/table | GET normalized filename | contained file/download response | web/source roots | containment/missing/content headers + browser flow | rewrite/planned |
+| `document` delete | `json_api.delete_document`; Documents | DELETE `filename` | status | Reviewed document workflow | containment/confirm/partial failure + flow | adapt/planned |
+| `add_document` | `json_api.put_add_document`; DocumentUpload | PUT multipart | status/path identifier | Reviewed document workflow | containment/type/partial failure + flow | adapt/planned |
+| `attach_document` | `json_api.put_attach_document`; Context | PUT `filename,entry_hash` | status/new hash | document + Reviewed write workflow | cross-file rollback/snapshot + flow | adapt/planned |
+| `move` | `json_api.put_move`; Documents | PUT `account,new_name,filename` | status | document + Reviewed write workflow | containment/collision/rollback + flow | adapt/planned |
+| `statement` | `application.statement`; Journal metadata | GET `entry_hash,key` | contained file/download or safe error | context metadata + source roots | hash/key/containment/no-path-leak + flow | rewrite/planned |
+| `download-journal` | `application.download_journal`; Export modal | GET active filters | deterministic Beancount file | report filter + ledger renderer | exact order/content + download flow | rewrite/planned |
+| `download-query` | `application.download_query`; QueryLinks | GET query/format | CSV/XLSX/ODS file | query result exporters | exact values/deterministic artifact + downloads | rewrite/planned |
+| `help` | `application.help_page`; Help route | GET `slug` | localized help document | web help catalog | known/unknown/search + route flow | adapt/planned |
 
 ## Shared / cross-cutting contracts
 
-### `ledger_data` bootstrap (P3 first milestone)
+### `ledger_data` bootstrap (golden-slice prerequisite)
 
 | Field | Fava source | Go owner | Notes |
 | --- | --- | --- | --- |
 | `accounts` | `attributes.accounts` | `internal/report` account set | ranked string[] |
-| `account_details` | `core/accounts.py` | **[open Q4]** close date/last entry/uptodate | `AccountData` serialization |
+| `account_details` | `core/accounts.py` | `internal/report` close date, last entry and up-to-date projection | `AccountData` serialization |
 | `base_url` | `url_for("index")` | `internal/web` | route base for the embedded app |
-| `currencies` / `currency_names` / `precisions` | `attributes.currencies`, `core/commodities.py` | `internal/ledger` Commodity directives → **[open Q7]** | precisions from `precision` meta |
+| `currencies` / `currency_names` / `precisions` | `attributes.currencies`, `core/commodities.py` | v3-compatible Commodity directives and exact display rules | deterministic names and precisions |
 | `errors` | `get_errors()` | `internal/diagnostic` → `errors` | `[{type,message,source}]` |
-| `fava_options` | `fava_options` dataclass | `internal/web` supported subset | 27 fields; exclude plugin-only |
+| `fava_options` | `fava_options` dataclass | `internal/web` all applicable built-in options | excluded capability fields remain explicit approved deviations |
 | `options` | `_get_options()` | `internal/ledger` `Evaluation.Options` | title, filename, include, operating_currency, name_* |
 | `payees`/`tags`/`links`/`years`/`narrations` | `attributes.*` | `internal/report`/`internal/query` | string[] |
 | `user_queries` | `all_entries_by_type.Query` | `internal/ledger` Query directives | `[{name, query_string}]` |
 | `sidebar_links` | `core/misc.py` | `internal/web` | custom `fava-sidebar-link` subset |
 | `upcoming_events_count` | `core/misc.py` | `internal/report` Events | int |
-| `extensions` / `other_ledgers` / `incognito` / `have_excel` | extensions / multi-ledger / incognito / excel | `internal/web` — emit empty/empty/false/false | extensions excluded |
+| `extensions` / `other_ledgers` / `incognito` / `have_excel` | extensions / multi-ledger / incognito / excel | `internal/web` — emit empty/empty/false/true once XLSX/ODS are available | excluded surfaces remain empty; export capability is truthful |
 | envelope `mtime` | `json_success` | `internal/web` snapshot mtime | from `Store.Current()` |
 
 ### `query` response (`{t:"table",types:[{name,dtype}],rows}`)
@@ -92,7 +146,7 @@ for pinning; `docs/fava-provenance-inventory.md` for attribution.
 | --- | --- | --- |
 | `account`, `balance`, `balance_children`, `children`, `has_txns`, `cost`, `cost_children` | `core/tree.py` `serialise` | `internal/report` account tree projection (natural currency pivot) |
 
-## Per-request contract rows (P0 detail for the first slice)
+## Detailed high-impact contract rows
 
 ### `ledger_data` (GET)
 
@@ -120,20 +174,20 @@ for pinning; `docs/fava-provenance-inventory.md` for attribution.
 | Tests | `internal/report` exact-value tests; adapter contract fixture; browser `web/tests/fava-routes.spec.ts` |
 | Provenance | adopt (frontend components) + rewrite (Go tree/chart projection) |
 
-### `journal_page` (GET) — [open Q1]
+### `journal_page` (GET)
 
 | Field | Required content |
 | --- | --- |
 | Fava source | `json_api.get_journal_page`; `_journal_table.html` (server HTML) |
 | Route/state | journal; `page`, `order`, `account`, `filter`, `time`, `conversion`, `interval` |
 | Request shape | GET; Fava returns HTML string `journal` + `total_pages` |
-| Go owner | `internal/report.JournalBetween` + `internal/report.FilterJournal`; **Go must produce structured rows** (Q1) |
-| Semantic rule | transaction grouping, not posting flattening; deterministic order; v3 values |
-| Response adaptation | either `{page,total_pages,journal:html}` (port Jinja→Go template) or structured JSON rendered in Svelte (recommended) |
+| Go owner | typed `internal/report` transaction projection plus complete FQL/time execution and a strictly escaped presentation template |
+| Semantic rule | transaction grouping, not posting flattening; deterministic order; v3 exact values; HTML has no semantic ownership |
+| Response adaptation | `{page,total_pages,journal:html}` with Fava-compatible markup (ADR-0037) |
 | Tests | journal grouping test; browser flow; keyboard |
 | Provenance | adapt/rewrite — the HTML renderer is not adopted as-is |
 
-### `account_report` (GET) — [open Q1, Q4]
+### `account_report` (GET)
 
 | Field | Required content |
 | --- | --- |
@@ -188,7 +242,7 @@ for pinning; `docs/fava-provenance-inventory.md` for attribution.
 ## Provenance guard mapping
 
 Every row's provenance column links to the corresponding `docs/fava-provenance-inventory.md`
-row. The P2 build will add a CI check that fails if a `web/` or
+row. Prerequisite Phase 0 adds a check that fails if a selected or Fava-influenced `web/` or
 `internal/web/assets/` file lacks a provenance row; the contract-map rows
 document the data contract that each adopted frontend file depends on, so a
 new frontend file cannot be added without both a contract row and a

@@ -10,7 +10,12 @@
     "build:check": "node scripts/check-build.mjs",
     "test": "node --test tests/unit/*.test.mjs",
     "visual:test": "node scripts/run-visual.mjs",
-    "visual:update": "node scripts/run-visual.mjs --update-snapshots"
+    "visual:reference": "node scripts/run-reference.mjs",
+    "visual:update": "node scripts/run-visual.mjs --update-snapshots",
+    "check:route-manifest": "node scripts/check-route-manifest.mjs",
+    "check:provenance": "node scripts/check-provenance.mjs",
+    "check:reference-output": "node scripts/check-reference-output.mjs",
+    "check:phase0": "node scripts/check-route-manifest.mjs && node scripts/check-provenance.mjs"
   },
   "devDependencies": {
     "@playwright/test": "1.52.0",

@@ -1,0 +1,1525 @@
+; Dense, deterministic activity. No network prices or private data.
+2024-01-02 * "Opening Allocation" "Assets:Cash:Wallet01 opening" #opening ^open-000
+  category: "opening"
+  Assets:Cash:Wallet01 25 USD
+  Equity:Opening-Balances -25 USD
+
+2024-01-03 * "Opening Allocation" "Assets:Cash:Wallet01 opening" #opening ^open-000
+  category: "opening"
+  Assets:Cash:Wallet01 30 EUR
+  Equity:Opening-Balances -30 EUR
+
+2024-01-04 * "Opening Allocation" "Assets:Cash:Wallet01 opening" #opening ^open-000
+  category: "opening"
+  Assets:Cash:Wallet01 35 JPY
+  Equity:Opening-Balances -35 JPY
+
+2024-01-05 * "Opening Allocation" "Assets:Cash:Wallet01 opening" #opening ^open-000
+  category: "opening"
+  Assets:Cash:Wallet01 40 CHF
+  Equity:Opening-Balances -40 CHF
+
+2024-01-06 * "Opening Allocation" "Assets:Cash:Wallet02 opening" #opening ^open-001
+  category: "opening"
+  Assets:Cash:Wallet02 30 USD
+  Equity:Opening-Balances -30 USD
+
+2024-01-07 * "Opening Allocation" "Assets:Cash:Wallet02 opening" #opening ^open-001
+  category: "opening"
+  Assets:Cash:Wallet02 35 EUR
+  Equity:Opening-Balances -35 EUR
+
+2024-01-08 * "Opening Allocation" "Assets:Cash:Wallet02 opening" #opening ^open-001
+  category: "opening"
+  Assets:Cash:Wallet02 40 JPY
+  Equity:Opening-Balances -40 JPY
+
+2024-01-09 * "Opening Allocation" "Assets:Cash:Wallet02 opening" #opening ^open-001
+  category: "opening"
+  Assets:Cash:Wallet02 45 CHF
+  Equity:Opening-Balances -45 CHF
+
+2024-01-10 * "Opening Allocation" "Assets:Cash:Wallet03 opening" #opening ^open-002
+  category: "opening"
+  Assets:Cash:Wallet03 35 USD
+  Equity:Opening-Balances -35 USD
+
+2024-01-11 * "Opening Allocation" "Assets:Cash:Wallet03 opening" #opening ^open-002
+  category: "opening"
+  Assets:Cash:Wallet03 40 EUR
+  Equity:Opening-Balances -40 EUR
+
+2024-01-12 * "Opening Allocation" "Assets:Cash:Wallet03 opening" #opening ^open-002
+  category: "opening"
+  Assets:Cash:Wallet03 45 JPY
+  Equity:Opening-Balances -45 JPY
+
+2024-01-13 * "Opening Allocation" "Assets:Cash:Wallet03 opening" #opening ^open-002
+  category: "opening"
+  Assets:Cash:Wallet03 50 CHF
+  Equity:Opening-Balances -50 CHF
+
+2024-01-14 * "Opening Allocation" "Assets:Cash:Wallet04 opening" #opening ^open-003
+  category: "opening"
+  Assets:Cash:Wallet04 40 USD
+  Equity:Opening-Balances -40 USD
+
+2024-01-15 * "Opening Allocation" "Assets:Cash:Wallet04 opening" #opening ^open-003
+  category: "opening"
+  Assets:Cash:Wallet04 45 EUR
+  Equity:Opening-Balances -45 EUR
+
+2024-01-16 * "Opening Allocation" "Assets:Cash:Wallet04 opening" #opening ^open-003
+  category: "opening"
+  Assets:Cash:Wallet04 50 JPY
+  Equity:Opening-Balances -50 JPY
+
+2024-01-17 * "Opening Allocation" "Assets:Cash:Wallet04 opening" #opening ^open-003
+  category: "opening"
+  Assets:Cash:Wallet04 55 CHF
+  Equity:Opening-Balances -55 CHF
+
+2024-01-18 * "Opening Allocation" "Assets:Cash:Wallet05 opening" #opening ^open-004
+  category: "opening"
+  Assets:Cash:Wallet05 45 USD
+  Equity:Opening-Balances -45 USD
+
+2024-01-19 * "Opening Allocation" "Assets:Cash:Wallet05 opening" #opening ^open-004
+  category: "opening"
+  Assets:Cash:Wallet05 50 EUR
+  Equity:Opening-Balances -50 EUR
+
+2024-01-20 * "Opening Allocation" "Assets:Cash:Wallet05 opening" #opening ^open-004
+  category: "opening"
+  Assets:Cash:Wallet05 55 JPY
+  Equity:Opening-Balances -55 JPY
+
+2024-01-21 * "Opening Allocation" "Assets:Cash:Wallet05 opening" #opening ^open-004
+  category: "opening"
+  Assets:Cash:Wallet05 60 CHF
+  Equity:Opening-Balances -60 CHF
+
+2024-01-22 * "Opening Allocation" "Assets:Cash:Wallet06 opening" #opening ^open-005
+  category: "opening"
+  Assets:Cash:Wallet06 50 USD
+  Equity:Opening-Balances -50 USD
+
+2024-01-23 * "Opening Allocation" "Assets:Cash:Wallet06 opening" #opening ^open-005
+  category: "opening"
+  Assets:Cash:Wallet06 55 EUR
+  Equity:Opening-Balances -55 EUR
+
+2024-01-24 * "Opening Allocation" "Assets:Cash:Wallet06 opening" #opening ^open-005
+  category: "opening"
+  Assets:Cash:Wallet06 60 JPY
+  Equity:Opening-Balances -60 JPY
+
+2024-01-25 * "Opening Allocation" "Assets:Cash:Wallet06 opening" #opening ^open-005
+  category: "opening"
+  Assets:Cash:Wallet06 65 CHF
+  Equity:Opening-Balances -65 CHF
+
+2024-01-26 * "Opening Allocation" "Assets:Cash:Wallet07 opening" #opening ^open-006
+  category: "opening"
+  Assets:Cash:Wallet07 55 USD
+  Equity:Opening-Balances -55 USD
+
+2024-01-27 * "Opening Allocation" "Assets:Cash:Wallet07 opening" #opening ^open-006
+  category: "opening"
+  Assets:Cash:Wallet07 60 EUR
+  Equity:Opening-Balances -60 EUR
+
+2024-01-28 * "Opening Allocation" "Assets:Cash:Wallet07 opening" #opening ^open-006
+  category: "opening"
+  Assets:Cash:Wallet07 65 JPY
+  Equity:Opening-Balances -65 JPY
+
+2024-01-29 * "Opening Allocation" "Assets:Cash:Wallet07 opening" #opening ^open-006
+  category: "opening"
+  Assets:Cash:Wallet07 70 CHF
+  Equity:Opening-Balances -70 CHF
+
+2024-01-30 * "Opening Allocation" "Assets:Cash:Wallet08 opening" #opening ^open-007
+  category: "opening"
+  Assets:Cash:Wallet08 60 USD
+  Equity:Opening-Balances -60 USD
+
+2024-01-31 * "Opening Allocation" "Assets:Cash:Wallet08 opening" #opening ^open-007
+  category: "opening"
+  Assets:Cash:Wallet08 65 EUR
+  Equity:Opening-Balances -65 EUR
+
+2024-02-01 * "Opening Allocation" "Assets:Cash:Wallet08 opening" #opening ^open-007
+  category: "opening"
+  Assets:Cash:Wallet08 70 JPY
+  Equity:Opening-Balances -70 JPY
+
+2024-02-02 * "Opening Allocation" "Assets:Cash:Wallet08 opening" #opening ^open-007
+  category: "opening"
+  Assets:Cash:Wallet08 75 CHF
+  Equity:Opening-Balances -75 CHF
+
+2024-02-03 * "Opening Allocation" "Assets:Cash:Wallet09 opening" #opening ^open-008
+  category: "opening"
+  Assets:Cash:Wallet09 65 USD
+  Equity:Opening-Balances -65 USD
+
+2024-02-04 * "Opening Allocation" "Assets:Cash:Wallet09 opening" #opening ^open-008
+  category: "opening"
+  Assets:Cash:Wallet09 70 EUR
+  Equity:Opening-Balances -70 EUR
+
+2024-02-05 * "Opening Allocation" "Assets:Cash:Wallet09 opening" #opening ^open-008
+  category: "opening"
+  Assets:Cash:Wallet09 75 JPY
+  Equity:Opening-Balances -75 JPY
+
+2024-02-06 * "Opening Allocation" "Assets:Cash:Wallet09 opening" #opening ^open-008
+  category: "opening"
+  Assets:Cash:Wallet09 80 CHF
+  Equity:Opening-Balances -80 CHF
+
+2024-02-07 * "Opening Allocation" "Assets:Cash:Wallet10 opening" #opening ^open-009
+  category: "opening"
+  Assets:Cash:Wallet10 70 USD
+  Equity:Opening-Balances -70 USD
+
+2024-02-08 * "Opening Allocation" "Assets:Cash:Wallet10 opening" #opening ^open-009
+  category: "opening"
+  Assets:Cash:Wallet10 75 EUR
+  Equity:Opening-Balances -75 EUR
+
+2024-02-09 * "Opening Allocation" "Assets:Cash:Wallet10 opening" #opening ^open-009
+  category: "opening"
+  Assets:Cash:Wallet10 80 JPY
+  Equity:Opening-Balances -80 JPY
+
+2024-02-10 * "Opening Allocation" "Assets:Cash:Wallet10 opening" #opening ^open-009
+  category: "opening"
+  Assets:Cash:Wallet10 85 CHF
+  Equity:Opening-Balances -85 CHF
+
+2024-02-11 * "Opening Allocation" "Assets:Cash:Wallet11 opening" #opening ^open-010
+  category: "opening"
+  Assets:Cash:Wallet11 75 USD
+  Equity:Opening-Balances -75 USD
+
+2024-02-12 * "Opening Allocation" "Assets:Cash:Wallet11 opening" #opening ^open-010
+  category: "opening"
+  Assets:Cash:Wallet11 80 EUR
+  Equity:Opening-Balances -80 EUR
+
+2024-02-13 * "Opening Allocation" "Assets:Cash:Wallet11 opening" #opening ^open-010
+  category: "opening"
+  Assets:Cash:Wallet11 85 JPY
+  Equity:Opening-Balances -85 JPY
+
+2024-02-14 * "Opening Allocation" "Assets:Cash:Wallet11 opening" #opening ^open-010
+  category: "opening"
+  Assets:Cash:Wallet11 90 CHF
+  Equity:Opening-Balances -90 CHF
+
+2024-02-15 * "Opening Allocation" "Assets:Cash:Wallet12 opening" #opening ^open-011
+  category: "opening"
+  Assets:Cash:Wallet12 80 USD
+  Equity:Opening-Balances -80 USD
+
+2024-02-16 * "Opening Allocation" "Assets:Cash:Wallet12 opening" #opening ^open-011
+  category: "opening"
+  Assets:Cash:Wallet12 85 EUR
+  Equity:Opening-Balances -85 EUR
+
+2024-02-17 * "Opening Allocation" "Assets:Cash:Wallet12 opening" #opening ^open-011
+  category: "opening"
+  Assets:Cash:Wallet12 90 JPY
+  Equity:Opening-Balances -90 JPY
+
+2024-02-18 * "Opening Allocation" "Assets:Cash:Wallet12 opening" #opening ^open-011
+  category: "opening"
+  Assets:Cash:Wallet12 95 CHF
+  Equity:Opening-Balances -95 CHF
+
+2024-02-19 * "Opening Allocation" "Assets:Cash:Wallet13 opening" #opening ^open-012
+  category: "opening"
+  Assets:Cash:Wallet13 85 USD
+  Equity:Opening-Balances -85 USD
+
+2024-02-20 * "Opening Allocation" "Assets:Cash:Wallet13 opening" #opening ^open-012
+  category: "opening"
+  Assets:Cash:Wallet13 90 EUR
+  Equity:Opening-Balances -90 EUR
+
+2024-02-21 * "Opening Allocation" "Assets:Cash:Wallet13 opening" #opening ^open-012
+  category: "opening"
+  Assets:Cash:Wallet13 95 JPY
+  Equity:Opening-Balances -95 JPY
+
+2024-02-22 * "Opening Allocation" "Assets:Cash:Wallet13 opening" #opening ^open-012
+  category: "opening"
+  Assets:Cash:Wallet13 100 CHF
+  Equity:Opening-Balances -100 CHF
+
+2024-02-23 * "Opening Allocation" "Assets:Cash:Wallet14 opening" #opening ^open-013
+  category: "opening"
+  Assets:Cash:Wallet14 90 USD
+  Equity:Opening-Balances -90 USD
+
+2024-02-24 * "Opening Allocation" "Assets:Cash:Wallet14 opening" #opening ^open-013
+  category: "opening"
+  Assets:Cash:Wallet14 95 EUR
+  Equity:Opening-Balances -95 EUR
+
+2024-02-25 * "Opening Allocation" "Assets:Cash:Wallet14 opening" #opening ^open-013
+  category: "opening"
+  Assets:Cash:Wallet14 100 JPY
+  Equity:Opening-Balances -100 JPY
+
+2024-02-26 * "Opening Allocation" "Assets:Cash:Wallet14 opening" #opening ^open-013
+  category: "opening"
+  Assets:Cash:Wallet14 105 CHF
+  Equity:Opening-Balances -105 CHF
+
+2024-02-27 * "Opening Allocation" "Assets:Cash:Wallet15 opening" #opening ^open-014
+  category: "opening"
+  Assets:Cash:Wallet15 95 USD
+  Equity:Opening-Balances -95 USD
+
+2024-02-28 * "Opening Allocation" "Assets:Cash:Wallet15 opening" #opening ^open-014
+  category: "opening"
+  Assets:Cash:Wallet15 100 EUR
+  Equity:Opening-Balances -100 EUR
+
+2024-02-29 * "Opening Allocation" "Assets:Cash:Wallet15 opening" #opening ^open-014
+  category: "opening"
+  Assets:Cash:Wallet15 105 JPY
+  Equity:Opening-Balances -105 JPY
+
+2024-03-01 * "Opening Allocation" "Assets:Cash:Wallet15 opening" #opening ^open-014
+  category: "opening"
+  Assets:Cash:Wallet15 25 CHF
+  Equity:Opening-Balances -25 CHF
+
+2024-03-02 * "Opening Allocation" "Assets:Cash:Wallet16 opening" #opening ^open-015
+  category: "opening"
+  Assets:Cash:Wallet16 100 USD
+  Equity:Opening-Balances -100 USD
+
+2024-03-03 * "Opening Allocation" "Assets:Cash:Wallet16 opening" #opening ^open-015
+  category: "opening"
+  Assets:Cash:Wallet16 105 EUR
+  Equity:Opening-Balances -105 EUR
+
+2024-03-04 * "Opening Allocation" "Assets:Cash:Wallet16 opening" #opening ^open-015
+  category: "opening"
+  Assets:Cash:Wallet16 25 JPY
+  Equity:Opening-Balances -25 JPY
+
+2024-03-05 * "Opening Allocation" "Assets:Cash:Wallet16 opening" #opening ^open-015
+  category: "opening"
+  Assets:Cash:Wallet16 30 CHF
+  Equity:Opening-Balances -30 CHF
+
+2024-03-06 * "Opening Allocation" "Assets:Cash:Reserve01 opening" #opening ^open-016
+  category: "opening"
+  Assets:Cash:Reserve01 105 USD
+  Equity:Opening-Balances -105 USD
+
+2024-03-07 * "Opening Allocation" "Assets:Cash:Reserve01 opening" #opening ^open-016
+  category: "opening"
+  Assets:Cash:Reserve01 25 CAD
+  Equity:Opening-Balances -25 CAD
+
+2024-03-08 * "Opening Allocation" "Assets:Cash:Reserve01 opening" #opening ^open-016
+  category: "opening"
+  Assets:Cash:Reserve01 30 GBP
+  Equity:Opening-Balances -30 GBP
+
+2024-03-09 * "Opening Allocation" "Assets:Cash:Reserve02 opening" #opening ^open-017
+  category: "opening"
+  Assets:Cash:Reserve02 25 USD
+  Equity:Opening-Balances -25 USD
+
+2024-03-10 * "Opening Allocation" "Assets:Cash:Reserve02 opening" #opening ^open-017
+  category: "opening"
+  Assets:Cash:Reserve02 30 CAD
+  Equity:Opening-Balances -30 CAD
+
+2024-03-11 * "Opening Allocation" "Assets:Cash:Reserve02 opening" #opening ^open-017
+  category: "opening"
+  Assets:Cash:Reserve02 35 GBP
+  Equity:Opening-Balances -35 GBP
+
+2024-03-12 * "Opening Allocation" "Assets:Cash:Reserve03 opening" #opening ^open-018
+  category: "opening"
+  Assets:Cash:Reserve03 30 USD
+  Equity:Opening-Balances -30 USD
+
+2024-03-13 * "Opening Allocation" "Assets:Cash:Reserve03 opening" #opening ^open-018
+  category: "opening"
+  Assets:Cash:Reserve03 35 CAD
+  Equity:Opening-Balances -35 CAD
+
+2024-03-14 * "Opening Allocation" "Assets:Cash:Reserve03 opening" #opening ^open-018
+  category: "opening"
+  Assets:Cash:Reserve03 40 GBP
+  Equity:Opening-Balances -40 GBP
+
+2024-03-15 * "Opening Allocation" "Assets:Cash:Reserve04 opening" #opening ^open-019
+  category: "opening"
+  Assets:Cash:Reserve04 35 USD
+  Equity:Opening-Balances -35 USD
+
+2024-03-16 * "Opening Allocation" "Assets:Cash:Reserve04 opening" #opening ^open-019
+  category: "opening"
+  Assets:Cash:Reserve04 40 CAD
+  Equity:Opening-Balances -40 CAD
+
+2024-03-17 * "Opening Allocation" "Assets:Cash:Reserve04 opening" #opening ^open-019
+  category: "opening"
+  Assets:Cash:Reserve04 45 GBP
+  Equity:Opening-Balances -45 GBP
+
+2024-03-18 * "Opening Allocation" "Assets:Cash:Reserve05 opening" #opening ^open-020
+  category: "opening"
+  Assets:Cash:Reserve05 40 USD
+  Equity:Opening-Balances -40 USD
+
+2024-03-19 * "Opening Allocation" "Assets:Cash:Reserve05 opening" #opening ^open-020
+  category: "opening"
+  Assets:Cash:Reserve05 45 CAD
+  Equity:Opening-Balances -45 CAD
+
+2024-03-20 * "Opening Allocation" "Assets:Cash:Reserve05 opening" #opening ^open-020
+  category: "opening"
+  Assets:Cash:Reserve05 50 GBP
+  Equity:Opening-Balances -50 GBP
+
+2024-03-21 * "Opening Allocation" "Assets:Cash:Reserve06 opening" #opening ^open-021
+  category: "opening"
+  Assets:Cash:Reserve06 45 USD
+  Equity:Opening-Balances -45 USD
+
+2024-03-22 * "Opening Allocation" "Assets:Cash:Reserve06 opening" #opening ^open-021
+  category: "opening"
+  Assets:Cash:Reserve06 50 CAD
+  Equity:Opening-Balances -50 CAD
+
+2024-03-23 * "Opening Allocation" "Assets:Cash:Reserve06 opening" #opening ^open-021
+  category: "opening"
+  Assets:Cash:Reserve06 55 GBP
+  Equity:Opening-Balances -55 GBP
+
+2024-03-24 * "Opening Allocation" "Assets:Cash:Reserve07 opening" #opening ^open-022
+  category: "opening"
+  Assets:Cash:Reserve07 50 USD
+  Equity:Opening-Balances -50 USD
+
+2024-03-25 * "Opening Allocation" "Assets:Cash:Reserve07 opening" #opening ^open-022
+  category: "opening"
+  Assets:Cash:Reserve07 55 CAD
+  Equity:Opening-Balances -55 CAD
+
+2024-03-26 * "Opening Allocation" "Assets:Cash:Reserve07 opening" #opening ^open-022
+  category: "opening"
+  Assets:Cash:Reserve07 60 GBP
+  Equity:Opening-Balances -60 GBP
+
+2024-03-27 * "Opening Allocation" "Assets:Cash:Reserve08 opening" #opening ^open-023
+  category: "opening"
+  Assets:Cash:Reserve08 55 USD
+  Equity:Opening-Balances -55 USD
+
+2024-03-28 * "Opening Allocation" "Assets:Cash:Reserve08 opening" #opening ^open-023
+  category: "opening"
+  Assets:Cash:Reserve08 60 CAD
+  Equity:Opening-Balances -60 CAD
+
+2024-03-29 * "Opening Allocation" "Assets:Cash:Reserve08 opening" #opening ^open-023
+  category: "opening"
+  Assets:Cash:Reserve08 65 GBP
+  Equity:Opening-Balances -65 GBP
+
+2024-03-30 * "Opening Allocation" "Assets:Cash:Reserve09 opening" #opening ^open-024
+  category: "opening"
+  Assets:Cash:Reserve09 60 USD
+  Equity:Opening-Balances -60 USD
+
+2024-03-31 * "Opening Allocation" "Assets:Cash:Reserve09 opening" #opening ^open-024
+  category: "opening"
+  Assets:Cash:Reserve09 65 CAD
+  Equity:Opening-Balances -65 CAD
+
+2024-04-01 * "Opening Allocation" "Assets:Cash:Reserve09 opening" #opening ^open-024
+  category: "opening"
+  Assets:Cash:Reserve09 70 GBP
+  Equity:Opening-Balances -70 GBP
+
+2024-04-02 * "Opening Allocation" "Assets:Cash:Reserve10 opening" #opening ^open-025
+  category: "opening"
+  Assets:Cash:Reserve10 65 USD
+  Equity:Opening-Balances -65 USD
+
+2024-04-03 * "Opening Allocation" "Assets:Cash:Reserve10 opening" #opening ^open-025
+  category: "opening"
+  Assets:Cash:Reserve10 70 CAD
+  Equity:Opening-Balances -70 CAD
+
+2024-04-04 * "Opening Allocation" "Assets:Cash:Reserve10 opening" #opening ^open-025
+  category: "opening"
+  Assets:Cash:Reserve10 75 GBP
+  Equity:Opening-Balances -75 GBP
+
+2024-04-05 * "Opening Allocation" "Assets:Cash:Reserve11 opening" #opening ^open-026
+  category: "opening"
+  Assets:Cash:Reserve11 70 USD
+  Equity:Opening-Balances -70 USD
+
+2024-04-06 * "Opening Allocation" "Assets:Cash:Reserve11 opening" #opening ^open-026
+  category: "opening"
+  Assets:Cash:Reserve11 75 CAD
+  Equity:Opening-Balances -75 CAD
+
+2024-04-07 * "Opening Allocation" "Assets:Cash:Reserve11 opening" #opening ^open-026
+  category: "opening"
+  Assets:Cash:Reserve11 80 GBP
+  Equity:Opening-Balances -80 GBP
+
+2024-04-08 * "Opening Allocation" "Assets:Cash:Reserve12 opening" #opening ^open-027
+  category: "opening"
+  Assets:Cash:Reserve12 75 USD
+  Equity:Opening-Balances -75 USD
+
+2024-04-09 * "Opening Allocation" "Assets:Cash:Reserve12 opening" #opening ^open-027
+  category: "opening"
+  Assets:Cash:Reserve12 80 CAD
+  Equity:Opening-Balances -80 CAD
+
+2024-04-10 * "Opening Allocation" "Assets:Cash:Reserve12 opening" #opening ^open-027
+  category: "opening"
+  Assets:Cash:Reserve12 85 GBP
+  Equity:Opening-Balances -85 GBP
+
+2024-04-11 * "Opening Allocation" "Assets:Cash:Reserve13 opening" #opening ^open-028
+  category: "opening"
+  Assets:Cash:Reserve13 80 USD
+  Equity:Opening-Balances -80 USD
+
+2024-04-12 * "Opening Allocation" "Assets:Cash:Reserve13 opening" #opening ^open-028
+  category: "opening"
+  Assets:Cash:Reserve13 85 CAD
+  Equity:Opening-Balances -85 CAD
+
+2024-04-13 * "Opening Allocation" "Assets:Cash:Reserve13 opening" #opening ^open-028
+  category: "opening"
+  Assets:Cash:Reserve13 90 GBP
+  Equity:Opening-Balances -90 GBP
+
+2024-04-14 * "Opening Allocation" "Assets:Cash:Reserve14 opening" #opening ^open-029
+  category: "opening"
+  Assets:Cash:Reserve14 85 USD
+  Equity:Opening-Balances -85 USD
+
+2024-04-15 * "Opening Allocation" "Assets:Cash:Reserve14 opening" #opening ^open-029
+  category: "opening"
+  Assets:Cash:Reserve14 90 CAD
+  Equity:Opening-Balances -90 CAD
+
+2024-04-16 * "Opening Allocation" "Assets:Cash:Reserve14 opening" #opening ^open-029
+  category: "opening"
+  Assets:Cash:Reserve14 95 GBP
+  Equity:Opening-Balances -95 GBP
+
+2024-04-17 * "Opening Allocation" "Assets:Cash:Reserve15 opening" #opening ^open-030
+  category: "opening"
+  Assets:Cash:Reserve15 90 USD
+  Equity:Opening-Balances -90 USD
+
+2024-04-18 * "Opening Allocation" "Assets:Cash:Reserve15 opening" #opening ^open-030
+  category: "opening"
+  Assets:Cash:Reserve15 95 CAD
+  Equity:Opening-Balances -95 CAD
+
+2024-04-19 * "Opening Allocation" "Assets:Cash:Reserve15 opening" #opening ^open-030
+  category: "opening"
+  Assets:Cash:Reserve15 100 GBP
+  Equity:Opening-Balances -100 GBP
+
+2024-04-20 * "Opening Allocation" "Assets:Cash:Reserve16 opening" #opening ^open-031
+  category: "opening"
+  Assets:Cash:Reserve16 95 USD
+  Equity:Opening-Balances -95 USD
+
+2024-04-21 * "Opening Allocation" "Assets:Cash:Reserve16 opening" #opening ^open-031
+  category: "opening"
+  Assets:Cash:Reserve16 100 CAD
+  Equity:Opening-Balances -100 CAD
+
+2024-04-22 * "Opening Allocation" "Assets:Cash:Reserve16 opening" #opening ^open-031
+  category: "opening"
+  Assets:Cash:Reserve16 105 GBP
+  Equity:Opening-Balances -105 GBP
+
+2024-04-23 * "Opening Allocation" "Assets:Receivables:Client01 opening" #opening ^open-032
+  category: "opening"
+  Assets:Receivables:Client01 100 USD
+  Equity:Opening-Balances -100 USD
+
+2024-04-24 * "Opening Allocation" "Assets:Receivables:Client01 opening" #opening ^open-032
+  category: "opening"
+  Assets:Receivables:Client01 105 EUR
+  Equity:Opening-Balances -105 EUR
+
+2024-04-25 * "Opening Allocation" "Assets:Receivables:Client02 opening" #opening ^open-033
+  category: "opening"
+  Assets:Receivables:Client02 105 USD
+  Equity:Opening-Balances -105 USD
+
+2024-04-26 * "Opening Allocation" "Assets:Receivables:Client02 opening" #opening ^open-033
+  category: "opening"
+  Assets:Receivables:Client02 25 EUR
+  Equity:Opening-Balances -25 EUR
+
+2024-04-27 * "Opening Allocation" "Assets:Receivables:Client03 opening" #opening ^open-034
+  category: "opening"
+  Assets:Receivables:Client03 25 USD
+  Equity:Opening-Balances -25 USD
+
+2024-04-28 * "Opening Allocation" "Assets:Receivables:Client03 opening" #opening ^open-034
+  category: "opening"
+  Assets:Receivables:Client03 30 EUR
+  Equity:Opening-Balances -30 EUR
+
+2024-04-29 * "Opening Allocation" "Assets:Receivables:Client04 opening" #opening ^open-035
+  category: "opening"
+  Assets:Receivables:Client04 30 USD
+  Equity:Opening-Balances -30 USD
+
+2024-04-30 * "Opening Allocation" "Assets:Receivables:Client04 opening" #opening ^open-035
+  category: "opening"
+  Assets:Receivables:Client04 35 EUR
+  Equity:Opening-Balances -35 EUR
+
+2024-05-01 * "Opening Allocation" "Assets:Receivables:Client05 opening" #opening ^open-036
+  category: "opening"
+  Assets:Receivables:Client05 35 USD
+  Equity:Opening-Balances -35 USD
+
+2024-05-02 * "Opening Allocation" "Assets:Receivables:Client05 opening" #opening ^open-036
+  category: "opening"
+  Assets:Receivables:Client05 40 EUR
+  Equity:Opening-Balances -40 EUR
+
+2024-05-03 * "Opening Allocation" "Assets:Receivables:Client06 opening" #opening ^open-037
+  category: "opening"
+  Assets:Receivables:Client06 40 USD
+  Equity:Opening-Balances -40 USD
+
+2024-05-04 * "Opening Allocation" "Assets:Receivables:Client06 opening" #opening ^open-037
+  category: "opening"
+  Assets:Receivables:Client06 45 EUR
+  Equity:Opening-Balances -45 EUR
+
+2024-05-05 * "Opening Allocation" "Assets:Receivables:Client07 opening" #opening ^open-038
+  category: "opening"
+  Assets:Receivables:Client07 45 USD
+  Equity:Opening-Balances -45 USD
+
+2024-05-06 * "Opening Allocation" "Assets:Receivables:Client07 opening" #opening ^open-038
+  category: "opening"
+  Assets:Receivables:Client07 50 EUR
+  Equity:Opening-Balances -50 EUR
+
+2024-05-07 * "Opening Allocation" "Assets:Receivables:Client08 opening" #opening ^open-039
+  category: "opening"
+  Assets:Receivables:Client08 50 USD
+  Equity:Opening-Balances -50 USD
+
+2024-05-08 * "Opening Allocation" "Assets:Receivables:Client08 opening" #opening ^open-039
+  category: "opening"
+  Assets:Receivables:Client08 55 EUR
+  Equity:Opening-Balances -55 EUR
+
+2024-05-09 * "Opening Allocation" "Assets:Receivables:Client09 opening" #opening ^open-040
+  category: "opening"
+  Assets:Receivables:Client09 55 USD
+  Equity:Opening-Balances -55 USD
+
+2024-05-10 * "Opening Allocation" "Assets:Receivables:Client09 opening" #opening ^open-040
+  category: "opening"
+  Assets:Receivables:Client09 60 EUR
+  Equity:Opening-Balances -60 EUR
+
+2024-05-11 * "Opening Allocation" "Assets:Receivables:Client10 opening" #opening ^open-041
+  category: "opening"
+  Assets:Receivables:Client10 60 USD
+  Equity:Opening-Balances -60 USD
+
+2024-05-12 * "Opening Allocation" "Assets:Receivables:Client10 opening" #opening ^open-041
+  category: "opening"
+  Assets:Receivables:Client10 65 EUR
+  Equity:Opening-Balances -65 EUR
+
+2024-05-13 * "Opening Allocation" "Assets:Investments:Index01 opening" #opening ^open-042
+  category: "opening"
+  Assets:Investments:Index01 65 SHARES
+  Equity:Opening-Balances -65 SHARES
+
+2024-05-14 * "Opening Allocation" "Assets:Investments:Index01 opening" #opening ^open-042
+  category: "opening"
+  Assets:Investments:Index01 70 USD
+  Equity:Opening-Balances -70 USD
+
+2024-05-15 * "Opening Allocation" "Assets:Investments:Index02 opening" #opening ^open-043
+  category: "opening"
+  Assets:Investments:Index02 70 SHARES
+  Equity:Opening-Balances -70 SHARES
+
+2024-05-16 * "Opening Allocation" "Assets:Investments:Index02 opening" #opening ^open-043
+  category: "opening"
+  Assets:Investments:Index02 75 USD
+  Equity:Opening-Balances -75 USD
+
+2024-05-17 * "Opening Allocation" "Assets:Investments:Index03 opening" #opening ^open-044
+  category: "opening"
+  Assets:Investments:Index03 75 SHARES
+  Equity:Opening-Balances -75 SHARES
+
+2024-05-18 * "Opening Allocation" "Assets:Investments:Index03 opening" #opening ^open-044
+  category: "opening"
+  Assets:Investments:Index03 80 USD
+  Equity:Opening-Balances -80 USD
+
+2024-05-19 * "Opening Allocation" "Assets:Investments:Index04 opening" #opening ^open-045
+  category: "opening"
+  Assets:Investments:Index04 80 SHARES
+  Equity:Opening-Balances -80 SHARES
+
+2024-05-20 * "Opening Allocation" "Assets:Investments:Index04 opening" #opening ^open-045
+  category: "opening"
+  Assets:Investments:Index04 85 USD
+  Equity:Opening-Balances -85 USD
+
+2024-05-21 * "Opening Allocation" "Assets:Investments:Index05 opening" #opening ^open-046
+  category: "opening"
+  Assets:Investments:Index05 85 SHARES
+  Equity:Opening-Balances -85 SHARES
+
+2024-05-22 * "Opening Allocation" "Assets:Investments:Index05 opening" #opening ^open-046
+  category: "opening"
+  Assets:Investments:Index05 90 USD
+  Equity:Opening-Balances -90 USD
+
+2024-05-23 * "Opening Allocation" "Liabilities:Credit:Card01 opening" #opening ^open-047
+  category: "opening"
+  Liabilities:Credit:Card01 90 USD
+  Equity:Opening-Balances -90 USD
+
+2024-05-24 * "Opening Allocation" "Liabilities:Credit:Card02 opening" #opening ^open-048
+  category: "opening"
+  Liabilities:Credit:Card02 95 USD
+  Equity:Opening-Balances -95 USD
+
+2024-05-25 * "Opening Allocation" "Liabilities:Credit:Card03 opening" #opening ^open-049
+  category: "opening"
+  Liabilities:Credit:Card03 100 USD
+  Equity:Opening-Balances -100 USD
+
+2024-05-26 * "Opening Allocation" "Liabilities:Credit:Card04 opening" #opening ^open-050
+  category: "opening"
+  Liabilities:Credit:Card04 105 USD
+  Equity:Opening-Balances -105 USD
+
+2024-05-27 * "Opening Allocation" "Liabilities:Credit:Card05 opening" #opening ^open-051
+  category: "opening"
+  Liabilities:Credit:Card05 25 USD
+  Equity:Opening-Balances -25 USD
+
+2024-05-28 * "Opening Allocation" "Liabilities:Credit:Card06 opening" #opening ^open-052
+  category: "opening"
+  Liabilities:Credit:Card06 30 USD
+  Equity:Opening-Balances -30 USD
+
+2024-05-29 * "Opening Allocation" "Liabilities:Credit:Card07 opening" #opening ^open-053
+  category: "opening"
+  Liabilities:Credit:Card07 35 USD
+  Equity:Opening-Balances -35 USD
+
+2024-05-30 * "Opening Allocation" "Liabilities:Credit:Card08 opening" #opening ^open-054
+  category: "opening"
+  Liabilities:Credit:Card08 40 USD
+  Equity:Opening-Balances -40 USD
+
+2024-05-31 * "Opening Allocation" "Liabilities:Credit:Card09 opening" #opening ^open-055
+  category: "opening"
+  Liabilities:Credit:Card09 45 USD
+  Equity:Opening-Balances -45 USD
+
+2024-06-01 * "Opening Allocation" "Liabilities:Credit:Card10 opening" #opening ^open-056
+  category: "opening"
+  Liabilities:Credit:Card10 50 USD
+  Equity:Opening-Balances -50 USD
+
+2024-06-02 * "Opening Allocation" "Liabilities:Loans:Term01 opening" #opening ^open-057
+  category: "opening"
+  Liabilities:Loans:Term01 55 USD
+  Equity:Opening-Balances -55 USD
+
+2024-06-03 * "Opening Allocation" "Liabilities:Loans:Term02 opening" #opening ^open-058
+  category: "opening"
+  Liabilities:Loans:Term02 60 USD
+  Equity:Opening-Balances -60 USD
+
+2024-06-04 * "Opening Allocation" "Liabilities:Loans:Term03 opening" #opening ^open-059
+  category: "opening"
+  Liabilities:Loans:Term03 65 USD
+  Equity:Opening-Balances -65 USD
+
+2024-06-05 * "Opening Allocation" "Liabilities:Loans:Term04 opening" #opening ^open-060
+  category: "opening"
+  Liabilities:Loans:Term04 70 USD
+  Equity:Opening-Balances -70 USD
+
+2024-06-06 * "Opening Allocation" "Liabilities:Loans:Term05 opening" #opening ^open-061
+  category: "opening"
+  Liabilities:Loans:Term05 75 USD
+  Equity:Opening-Balances -75 USD
+
+2024-06-07 * "Opening Allocation" "Income:Sales:Channel01 opening" #opening ^open-062
+  category: "opening"
+  Income:Sales:Channel01 80 USD
+  Equity:Opening-Balances -80 USD
+
+2024-06-08 * "Opening Allocation" "Income:Sales:Channel02 opening" #opening ^open-063
+  category: "opening"
+  Income:Sales:Channel02 85 USD
+  Equity:Opening-Balances -85 USD
+
+2024-06-09 * "Opening Allocation" "Income:Sales:Channel03 opening" #opening ^open-064
+  category: "opening"
+  Income:Sales:Channel03 90 USD
+  Equity:Opening-Balances -90 USD
+
+2024-06-10 * "Opening Allocation" "Income:Sales:Channel04 opening" #opening ^open-065
+  category: "opening"
+  Income:Sales:Channel04 95 USD
+  Equity:Opening-Balances -95 USD
+
+2024-06-11 * "Opening Allocation" "Income:Sales:Channel05 opening" #opening ^open-066
+  category: "opening"
+  Income:Sales:Channel05 100 USD
+  Equity:Opening-Balances -100 USD
+
+2024-06-12 * "Opening Allocation" "Income:Sales:Channel06 opening" #opening ^open-067
+  category: "opening"
+  Income:Sales:Channel06 105 USD
+  Equity:Opening-Balances -105 USD
+
+2024-06-13 * "Opening Allocation" "Income:Sales:Channel07 opening" #opening ^open-068
+  category: "opening"
+  Income:Sales:Channel07 25 USD
+  Equity:Opening-Balances -25 USD
+
+2024-06-14 * "Opening Allocation" "Income:Sales:Channel08 opening" #opening ^open-069
+  category: "opening"
+  Income:Sales:Channel08 30 USD
+  Equity:Opening-Balances -30 USD
+
+2024-06-15 * "Opening Allocation" "Expenses:Operations:Category01 opening" #opening ^open-070
+  category: "opening"
+  Expenses:Operations:Category01 35 USD
+  Equity:Opening-Balances -35 USD
+
+2024-06-16 * "Opening Allocation" "Expenses:Operations:Category02 opening" #opening ^open-071
+  category: "opening"
+  Expenses:Operations:Category02 40 USD
+  Equity:Opening-Balances -40 USD
+
+2024-06-17 * "Opening Allocation" "Expenses:Operations:Category03 opening" #opening ^open-072
+  category: "opening"
+  Expenses:Operations:Category03 45 USD
+  Equity:Opening-Balances -45 USD
+
+2024-06-18 * "Opening Allocation" "Expenses:Operations:Category04 opening" #opening ^open-073
+  category: "opening"
+  Expenses:Operations:Category04 50 USD
+  Equity:Opening-Balances -50 USD
+
+2024-06-19 * "Opening Allocation" "Expenses:Operations:Category05 opening" #opening ^open-074
+  category: "opening"
+  Expenses:Operations:Category05 55 USD
+  Equity:Opening-Balances -55 USD
+
+2024-06-20 * "Opening Allocation" "Expenses:Operations:Category06 opening" #opening ^open-075
+  category: "opening"
+  Expenses:Operations:Category06 60 USD
+  Equity:Opening-Balances -60 USD
+
+2024-06-21 * "Opening Allocation" "Expenses:Operations:Category07 opening" #opening ^open-076
+  category: "opening"
+  Expenses:Operations:Category07 65 USD
+  Equity:Opening-Balances -65 USD
+
+2024-06-22 * "Opening Allocation" "Expenses:Operations:Category08 opening" #opening ^open-077
+  category: "opening"
+  Expenses:Operations:Category08 70 USD
+  Equity:Opening-Balances -70 USD
+
+2024-06-23 * "Opening Allocation" "Expenses:Operations:Category09 opening" #opening ^open-078
+  category: "opening"
+  Expenses:Operations:Category09 75 USD
+  Equity:Opening-Balances -75 USD
+
+2024-06-24 * "Opening Allocation" "Expenses:Operations:Category10 opening" #opening ^open-079
+  category: "opening"
+  Expenses:Operations:Category10 80 USD
+  Equity:Opening-Balances -80 USD
+
+2024-06-25 * "Opening Allocation" "Expenses:Operations:Category11 opening" #opening ^open-080
+  category: "opening"
+  Expenses:Operations:Category11 85 USD
+  Equity:Opening-Balances -85 USD
+
+2024-06-26 * "Opening Allocation" "Expenses:Operations:Category12 opening" #opening ^open-081
+  category: "opening"
+  Expenses:Operations:Category12 90 USD
+  Equity:Opening-Balances -90 USD
+
+2024-06-27 * "Opening Allocation" "Expenses:Operations:Category13 opening" #opening ^open-082
+  category: "opening"
+  Expenses:Operations:Category13 95 USD
+  Equity:Opening-Balances -95 USD
+
+2024-06-28 * "Opening Allocation" "Expenses:Operations:Category14 opening" #opening ^open-083
+  category: "opening"
+  Expenses:Operations:Category14 100 USD
+  Equity:Opening-Balances -100 USD
+
+2024-06-29 * "Synthetic Counterparty" "Dense activity 001" #activity-0 #dense ^batch-000
+  category: "activity"
+  Assets:Cash:Wallet01 3.00 USD
+  Expenses:Operations:Category01 1.00 USD
+  Equity:Adjustments -4 USD
+
+2024-06-30 ! "Synthetic Counterparty" "Dense activity 002 — café" #activity-1 ^batch-001
+  category: "activity"
+  Assets:Cash:Wallet02 4.07 EUR
+  Equity:Opening-Balances -4.07 EUR
+
+2024-07-01 A "Synthetic Counterparty" "Dense activity 003 — café" #activity-2 ^batch-002
+  category: "activity"
+  Assets:Cash:Wallet03 5.14 JPY
+  Equity:Opening-Balances -5.14 JPY
+
+2024-07-02 B "Synthetic Counterparty" "Dense activity 004 — café" #activity-3 ^batch-003
+  category: "activity"
+  Assets:Cash:Wallet04 6.21 CHF
+  Equity:Opening-Balances -6.21 CHF
+
+2024-07-03 C "Synthetic Counterparty" "Dense activity 005 — café" #activity-4 ^batch-004
+  category: "activity"
+  Assets:Cash:Wallet05 7.28 USD
+  Expenses:Operations:Category01 -7.28 USD
+
+2024-07-04 P "Synthetic Counterparty" "Dense activity 006 — café" #activity-5 ^batch-005
+  category: "activity"
+  Assets:Cash:Wallet06 8.35 EUR
+  Equity:Opening-Balances -8.35 EUR
+
+2024-07-05 S "Synthetic Counterparty" "Dense activity 007 — café" #activity-0 ^batch-006
+  category: "activity"
+  Assets:Cash:Wallet07 9.42 JPY
+  Equity:Opening-Balances -9.42 JPY
+
+2024-07-06 T "Synthetic Counterparty" "Dense activity 008 — café" #activity-1 ^batch-007
+  category: "activity"
+  Assets:Cash:Wallet08 10.49 CHF
+  Equity:Opening-Balances -10.49 CHF
+
+2024-07-07 U "Synthetic Counterparty" "Dense activity 009 — café" #activity-2 ^batch-008
+  category: "activity"
+  Assets:Cash:Wallet09 11.56 USD
+  Expenses:Operations:Category01 -11.56 USD
+
+2024-07-08 R "Synthetic Counterparty" "Dense activity 010 — café" #activity-3 ^batch-000
+  category: "activity"
+  Assets:Cash:Wallet10 12.63 EUR
+  Equity:Opening-Balances -12.63 EUR
+
+2024-07-09 * "Synthetic Counterparty" "Dense activity 011 — café" #activity-4 ^batch-001
+  category: "activity"
+  Assets:Cash:Wallet11 13.70 JPY
+  Equity:Opening-Balances -13.70 JPY
+
+2024-07-10 ! "Synthetic Counterparty" "Dense activity 012 — café" #activity-5 ^batch-002
+  category: "activity"
+  Assets:Cash:Wallet12 14.77 CHF
+  Equity:Opening-Balances -14.77 CHF
+
+2024-07-11 A "Synthetic Counterparty" "Dense activity 013 — café" #activity-0 ^batch-003
+  category: "activity"
+  Assets:Cash:Wallet13 15.84 USD
+  Expenses:Operations:Category01 -15.84 USD
+
+2024-07-12 B "Synthetic Counterparty" "Dense activity 014 — café" #activity-1 ^batch-004
+  category: "activity"
+  Assets:Cash:Wallet14 16.91 EUR
+  Equity:Opening-Balances -16.91 EUR
+
+2024-07-13 C "Synthetic Counterparty" "Dense activity 015 — café" #activity-2 ^batch-005
+  category: "activity"
+  Assets:Cash:Wallet15 17.98 JPY
+  Equity:Opening-Balances -17.98 JPY
+
+2024-07-14 P "Synthetic Counterparty" "Dense activity 016 — café" #activity-3 ^batch-006
+  category: "activity"
+  Assets:Cash:Wallet16 18.05 CHF
+  Equity:Opening-Balances -18.05 CHF
+
+2024-07-15 S "Synthetic Counterparty" "Dense activity 017 — café" #activity-4 ^batch-007
+  category: "activity"
+  Assets:Cash:Reserve01 19.12 CAD
+  Equity:Opening-Balances -19.12 CAD
+
+2024-07-16 T "Synthetic Counterparty" "Dense activity 018 — café" #activity-5 ^batch-008
+  category: "activity"
+  Assets:Cash:Reserve02 20.19 GBP
+  Equity:Opening-Balances -20.19 GBP
+
+2024-07-17 U "Synthetic Counterparty" "Dense activity 019 — café" #activity-0 ^batch-000
+  category: "activity"
+  Assets:Cash:Reserve03 21.26 USD
+  Expenses:Operations:Category01 -21.26 USD
+
+2024-07-18 R "Synthetic Counterparty" "Dense activity 020 — café" #activity-1 ^batch-001
+  category: "activity"
+  Assets:Cash:Reserve04 22.33 CAD
+  Equity:Opening-Balances -22.33 CAD
+
+2024-07-19 * "Synthetic Counterparty" "Dense activity 021 — café" #activity-2 ^batch-002
+  category: "activity"
+  Assets:Cash:Reserve05 23.40 GBP
+  Equity:Opening-Balances -23.40 GBP
+
+2024-07-20 ! "Synthetic Counterparty" "Dense activity 022 — café" #activity-3 ^batch-003
+  category: "activity"
+  Assets:Cash:Reserve06 24.47 USD
+  Expenses:Operations:Category01 -24.47 USD
+
+2024-07-21 A "Synthetic Counterparty" "Dense activity 023 — café" #activity-4 ^batch-004
+  category: "activity"
+  Assets:Cash:Reserve07 25.54 CAD
+  Equity:Opening-Balances -25.54 CAD
+
+2024-07-22 B "Synthetic Counterparty" "Dense activity 024 — café" #activity-5 ^batch-005
+  category: "activity"
+  Assets:Cash:Reserve08 3.61 GBP
+  Equity:Opening-Balances -3.61 GBP
+
+2024-07-23 C "Synthetic Counterparty" "Dense activity 025 — café" #activity-0 ^batch-006
+  category: "activity"
+  Assets:Cash:Reserve09 4.68 USD
+  Expenses:Operations:Category01 -4.68 USD
+
+2024-07-24 P "Synthetic Counterparty" "Dense activity 026 — café" #activity-1 ^batch-007
+  category: "activity"
+  Assets:Cash:Reserve10 5.75 CAD
+  Equity:Opening-Balances -5.75 CAD
+
+2024-07-25 S "Synthetic Counterparty" "Dense activity 027 — café" #activity-2 ^batch-008
+  category: "activity"
+  Assets:Cash:Reserve11 6.82 GBP
+  Equity:Opening-Balances -6.82 GBP
+
+2024-07-26 T "Synthetic Counterparty" "Dense activity 028 — café" #activity-3 ^batch-000
+  category: "activity"
+  Assets:Cash:Reserve12 7.89 USD
+  Expenses:Operations:Category01 -7.89 USD
+
+2024-07-27 U "Synthetic Counterparty" "Dense activity 029 — café" #activity-4 ^batch-001
+  category: "activity"
+  Assets:Cash:Reserve13 8.96 CAD
+  Equity:Opening-Balances -8.96 CAD
+
+2024-07-28 R "Synthetic Counterparty" "Dense activity 030 — café" #activity-5 ^batch-002
+  category: "activity"
+  Assets:Cash:Reserve14 9.03 GBP
+  Equity:Opening-Balances -9.03 GBP
+
+2024-07-29 * "Synthetic Counterparty" "Dense activity 031 — café" #activity-0 ^batch-003
+  category: "activity"
+  Assets:Cash:Reserve15 10.10 USD
+  Expenses:Operations:Category01 -10.10 USD
+
+2024-07-30 ! "Synthetic Counterparty" "Dense activity 032 — café" #activity-1 ^batch-004
+  category: "activity"
+  Assets:Cash:Reserve16 11.17 CAD
+  Equity:Opening-Balances -11.17 CAD
+
+2024-07-31 A "Synthetic Counterparty" "Dense activity 033 — café" #activity-2 ^batch-005
+  category: "activity"
+  Assets:Receivables:Client01 12.24 USD
+  Expenses:Operations:Category01 -12.24 USD
+
+2024-08-01 B "Synthetic Counterparty" "Dense activity 034 — café" #activity-3 ^batch-006
+  category: "activity"
+  Assets:Receivables:Client02 13.31 EUR
+  Equity:Opening-Balances -13.31 EUR
+
+2024-08-02 C "Synthetic Counterparty" "Dense activity 035 — café" #activity-4 ^batch-007
+  category: "activity"
+  Assets:Receivables:Client03 14.38 USD
+  Expenses:Operations:Category01 -14.38 USD
+
+2024-08-03 P "Synthetic Counterparty" "Dense activity 036 — café" #activity-5 ^batch-008
+  category: "activity"
+  Assets:Receivables:Client04 15.45 EUR
+  Equity:Opening-Balances -15.45 EUR
+
+2024-08-04 S "Synthetic Counterparty" "Dense activity 037 — café" #activity-0 ^batch-000
+  category: "activity"
+  Assets:Receivables:Client05 16.52 USD
+  Expenses:Operations:Category01 -16.52 USD
+
+2024-08-05 T "Synthetic Counterparty" "Dense activity 038 — café" #activity-1 ^batch-001
+  category: "activity"
+  Assets:Receivables:Client06 17.59 EUR
+  Equity:Opening-Balances -17.59 EUR
+
+2024-08-06 U "Synthetic Counterparty" "Dense activity 039 — café" #activity-2 ^batch-002
+  category: "activity"
+  Assets:Receivables:Client07 18.66 USD
+  Expenses:Operations:Category01 -18.66 USD
+
+2024-08-07 R "Synthetic Counterparty" "Dense activity 040 — café" #activity-3 ^batch-003
+  category: "activity"
+  Assets:Receivables:Client08 19.73 EUR
+  Equity:Opening-Balances -19.73 EUR
+
+2024-08-08 * "Synthetic Counterparty" "Dense activity 041 — café" #activity-4 ^batch-004
+  category: "activity"
+  Assets:Receivables:Client09 20.80 USD
+  Expenses:Operations:Category01 -20.80 USD
+
+2024-08-09 ! "Synthetic Counterparty" "Dense activity 042 — café" #activity-5 ^batch-005
+  category: "activity"
+  Assets:Receivables:Client10 21.87 EUR
+  Equity:Opening-Balances -21.87 EUR
+
+2024-08-10 A "Synthetic Counterparty" "Dense activity 043 — café" #activity-0 ^batch-006
+  category: "activity"
+  Assets:Investments:Index01 22.94 SHARES
+  Equity:Opening-Balances -22.94 SHARES
+
+2024-08-11 B "Synthetic Counterparty" "Dense activity 044 — café" #activity-1 ^batch-007
+  category: "activity"
+  Assets:Investments:Index02 23.01 USD
+  Expenses:Operations:Category01 -23.01 USD
+
+2024-08-12 C "Synthetic Counterparty" "Dense activity 045 — café" #activity-2 ^batch-008
+  category: "activity"
+  Assets:Investments:Index03 24.08 SHARES
+  Equity:Opening-Balances -24.08 SHARES
+
+2024-08-13 P "Synthetic Counterparty" "Dense activity 046 — café" #activity-3 ^batch-000
+  category: "activity"
+  Assets:Investments:Index04 25.15 USD
+  Expenses:Operations:Category01 -25.15 USD
+
+2024-08-14 S "Synthetic Counterparty" "Dense activity 047 — café" #activity-4 ^batch-001
+  category: "activity"
+  Assets:Investments:Index05 3.22 SHARES
+  Equity:Opening-Balances -3.22 SHARES
+
+2024-08-15 T "Synthetic Counterparty" "Dense activity 048 — café" #activity-5 ^batch-002
+  category: "activity"
+  Liabilities:Credit:Card01 4.29 USD
+  Equity:Opening-Balances -4.29 USD
+
+2024-08-16 U "Synthetic Counterparty" "Dense activity 049 — café" #activity-0 ^batch-003
+  category: "activity"
+  Liabilities:Credit:Card02 5.36 USD
+  Equity:Opening-Balances -5.36 USD
+
+2024-08-17 R "Synthetic Counterparty" "Dense activity 050 — café" #activity-1 ^batch-004
+  category: "activity"
+  Liabilities:Credit:Card03 6.43 USD
+  Equity:Opening-Balances -6.43 USD
+
+2024-08-18 * "Synthetic Counterparty" "Dense activity 051 — café" #activity-2 ^batch-005
+  category: "activity"
+  Liabilities:Credit:Card04 7.50 USD
+  Equity:Opening-Balances -7.50 USD
+
+2024-08-19 ! "Synthetic Counterparty" "Dense activity 052 — café" #activity-3 ^batch-006
+  category: "activity"
+  Liabilities:Credit:Card05 8.57 USD
+  Equity:Opening-Balances -8.57 USD
+
+2024-08-20 A "Synthetic Counterparty" "Dense activity 053 — café" #activity-4 ^batch-007
+  category: "activity"
+  Liabilities:Credit:Card06 9.64 USD
+  Equity:Opening-Balances -9.64 USD
+
+2024-08-21 B "Synthetic Counterparty" "Dense activity 054 — café" #activity-5 ^batch-008
+  category: "activity"
+  Liabilities:Credit:Card07 10.71 USD
+  Equity:Opening-Balances -10.71 USD
+
+2024-08-22 C "Synthetic Counterparty" "Dense activity 055 — café" #activity-0 ^batch-000
+  category: "activity"
+  Liabilities:Credit:Card08 11.78 USD
+  Equity:Opening-Balances -11.78 USD
+
+2024-08-23 P "Synthetic Counterparty" "Dense activity 056" #activity-1 #dense ^batch-001
+  category: "activity"
+  Liabilities:Credit:Card09 12.85 USD
+  Expenses:Operations:Category01 4.65 USD
+  Equity:Adjustments -17.5 USD
+
+2024-08-24 S "Synthetic Counterparty" "Dense activity 057 — café" #activity-2 ^batch-002
+  category: "activity"
+  Liabilities:Credit:Card10 13.92 USD
+  Equity:Opening-Balances -13.92 USD
+
+2024-08-25 T "Synthetic Counterparty" "Dense activity 058 — café" #activity-3 ^batch-003
+  category: "activity"
+  Liabilities:Loans:Term01 14.99 USD
+  Equity:Opening-Balances -14.99 USD
+
+2024-08-26 U "Synthetic Counterparty" "Dense activity 059 — café" #activity-4 ^batch-004
+  category: "activity"
+  Liabilities:Loans:Term02 15.06 USD
+  Equity:Opening-Balances -15.06 USD
+
+2024-08-27 R "Synthetic Counterparty" "Dense activity 060 — café" #activity-5 ^batch-005
+  category: "activity"
+  Liabilities:Loans:Term03 16.13 USD
+  Equity:Opening-Balances -16.13 USD
+
+2024-08-28 * "Synthetic Counterparty" "Dense activity 061 — café" #activity-0 ^batch-006
+  category: "activity"
+  Liabilities:Loans:Term04 17.20 USD
+  Equity:Opening-Balances -17.20 USD
+
+2024-08-29 ! "Synthetic Counterparty" "Dense activity 062 — café" #activity-1 ^batch-007
+  category: "activity"
+  Liabilities:Loans:Term05 18.27 USD
+  Equity:Opening-Balances -18.27 USD
+
+2024-08-30 A "Synthetic Counterparty" "Dense activity 063 — café" #activity-2 ^batch-008
+  category: "activity"
+  Income:Sales:Channel01 19.34 USD
+  Assets:Cash:Wallet01 -19.34 USD
+
+2024-08-31 B "Synthetic Counterparty" "Dense activity 064 — café" #activity-3 ^batch-000
+  category: "activity"
+  Income:Sales:Channel02 20.41 USD
+  Assets:Cash:Wallet01 -20.41 USD
+
+2024-09-01 C "Synthetic Counterparty" "Dense activity 065 — café" #activity-4 ^batch-001
+  category: "activity"
+  Income:Sales:Channel03 21.48 USD
+  Assets:Cash:Wallet01 -21.48 USD
+
+2024-09-02 P "Synthetic Counterparty" "Dense activity 066 — café" #activity-5 ^batch-002
+  category: "activity"
+  Income:Sales:Channel04 22.55 USD
+  Assets:Cash:Wallet01 -22.55 USD
+
+2024-09-03 S "Synthetic Counterparty" "Dense activity 067" #activity-0 #dense ^batch-003
+  category: "activity"
+  Income:Sales:Channel05 23.62 USD
+  Expenses:Operations:Category01 3.98 USD
+  Equity:Adjustments -27.6 USD
+
+2024-09-04 T "Synthetic Counterparty" "Dense activity 068 — café" #activity-1 ^batch-004
+  category: "activity"
+  Income:Sales:Channel06 24.69 USD
+  Assets:Cash:Wallet01 -24.69 USD
+
+2024-09-05 U "Synthetic Counterparty" "Dense activity 069 — café" #activity-2 ^batch-005
+  category: "activity"
+  Income:Sales:Channel07 25.76 USD
+  Assets:Cash:Wallet01 -25.76 USD
+
+2024-09-06 R "Synthetic Counterparty" "Dense activity 070 — café" #activity-3 ^batch-006
+  category: "activity"
+  Income:Sales:Channel08 3.83 USD
+  Assets:Cash:Wallet01 -3.83 USD
+
+2024-09-07 * "Synthetic Counterparty" "Dense activity 071 — café" #activity-4 ^batch-007
+  category: "activity"
+  Expenses:Operations:Category01 4.90 USD
+  Assets:Cash:Wallet01 -4.90 USD
+
+2024-09-08 ! "Synthetic Counterparty" "Dense activity 072 — café" #activity-5 ^batch-008
+  category: "activity"
+  Expenses:Operations:Category02 5.97 USD
+  Assets:Cash:Wallet01 -5.97 USD
+
+2024-09-09 A "Synthetic Counterparty" "Dense activity 073 — café" #activity-0 ^batch-000
+  category: "activity"
+  Expenses:Operations:Category03 6.04 USD
+  Assets:Cash:Wallet01 -6.04 USD
+
+2024-09-10 B "Synthetic Counterparty" "Dense activity 074 — café" #activity-1 ^batch-001
+  category: "activity"
+  Expenses:Operations:Category04 7.11 USD
+  Assets:Cash:Wallet01 -7.11 USD
+
+2024-09-11 C "Synthetic Counterparty" "Dense activity 075 — café" #activity-2 ^batch-002
+  category: "activity"
+  Expenses:Operations:Category05 8.18 USD
+  Assets:Cash:Wallet01 -8.18 USD
+
+2024-09-12 P "Synthetic Counterparty" "Dense activity 076 — café" #activity-3 ^batch-003
+  category: "activity"
+  Expenses:Operations:Category06 9.25 USD
+  Assets:Cash:Wallet01 -9.25 USD
+
+2024-09-13 S "Synthetic Counterparty" "Dense activity 077 — café" #activity-4 ^batch-004
+  category: "activity"
+  Expenses:Operations:Category07 10.32 USD
+  Assets:Cash:Wallet01 -10.32 USD
+
+2024-09-14 T "Synthetic Counterparty" "Dense activity 078 — café" #activity-5 ^batch-005
+  category: "activity"
+  Expenses:Operations:Category08 11.39 USD
+  Assets:Cash:Wallet01 -11.39 USD
+
+2024-09-15 U "Synthetic Counterparty" "Dense activity 079 — café" #activity-0 ^batch-006
+  category: "activity"
+  Expenses:Operations:Category09 12.46 USD
+  Assets:Cash:Wallet01 -12.46 USD
+
+2024-09-16 R "Synthetic Counterparty" "Dense activity 080 — café" #activity-1 ^batch-007
+  category: "activity"
+  Expenses:Operations:Category10 13.53 USD
+  Assets:Cash:Wallet01 -13.53 USD
+
+2024-09-17 * "Synthetic Counterparty" "Dense activity 081 — café" #activity-2 ^batch-008
+  category: "activity"
+  Expenses:Operations:Category11 14.60 USD
+  Assets:Cash:Wallet01 -14.60 USD
+
+2024-09-18 ! "Synthetic Counterparty" "Dense activity 082 — café" #activity-3 ^batch-000
+  category: "activity"
+  Expenses:Operations:Category12 15.67 USD
+  Assets:Cash:Wallet01 -15.67 USD
+
+2024-09-19 A "Synthetic Counterparty" "Dense activity 083 — café" #activity-4 ^batch-001
+  category: "activity"
+  Expenses:Operations:Category13 16.74 USD
+  Assets:Cash:Wallet01 -16.74 USD
+
+2024-09-20 B "Synthetic Counterparty" "Dense activity 084 — café" #activity-5 ^batch-002
+  category: "activity"
+  Expenses:Operations:Category14 17.81 USD
+  Assets:Cash:Wallet01 -17.81 USD
+
+2024-09-21 C "Synthetic Counterparty" "Dense activity 085 — café" #activity-0 ^batch-003
+  category: "activity"
+  Assets:Cash:Wallet01 18.88 USD
+  Expenses:Operations:Category01 -18.88 USD
+
+2024-09-22 P "Synthetic Counterparty" "Dense activity 086 — café" #activity-1 ^batch-004
+  category: "activity"
+  Assets:Cash:Wallet02 19.95 EUR
+  Equity:Opening-Balances -19.95 EUR
+
+2024-09-23 S "Synthetic Counterparty" "Dense activity 087 — café" #activity-2 ^batch-005
+  category: "activity"
+  Assets:Cash:Wallet03 20.02 JPY
+  Equity:Opening-Balances -20.02 JPY
+
+2024-09-24 T "Synthetic Counterparty" "Dense activity 088 — café" #activity-3 ^batch-006
+  category: "activity"
+  Assets:Cash:Wallet04 21.09 CHF
+  Equity:Opening-Balances -21.09 CHF
+
+2024-09-25 U "Synthetic Counterparty" "Dense activity 089" #activity-4 #dense ^batch-007
+  category: "activity"
+  Assets:Cash:Wallet05 22.16 USD
+  Expenses:Operations:Category01 1.64 USD
+  Equity:Adjustments -23.8 USD
+
+2024-09-26 R "Synthetic Counterparty" "Dense activity 090 — café" #activity-5 ^batch-008
+  category: "activity"
+  Assets:Cash:Wallet06 23.23 EUR
+  Equity:Opening-Balances -23.23 EUR
+
+2024-09-27 * "Synthetic Counterparty" "Dense activity 091 — café" #activity-0 ^batch-000
+  category: "activity"
+  Assets:Cash:Wallet07 24.30 JPY
+  Equity:Opening-Balances -24.30 JPY
+
+2024-09-28 ! "Synthetic Counterparty" "Dense activity 092 — café" #activity-1 ^batch-001
+  category: "activity"
+  Assets:Cash:Wallet08 25.37 CHF
+  Equity:Opening-Balances -25.37 CHF
+
+2024-09-29 A "Synthetic Counterparty" "Dense activity 093 — café" #activity-2 ^batch-002
+  category: "activity"
+  Assets:Cash:Wallet09 3.44 USD
+  Expenses:Operations:Category01 -3.44 USD
+
+2024-09-30 B "Synthetic Counterparty" "Dense activity 094 — café" #activity-3 ^batch-003
+  category: "activity"
+  Assets:Cash:Wallet10 4.51 EUR
+  Equity:Opening-Balances -4.51 EUR
+
+2024-10-01 C "Synthetic Counterparty" "Dense activity 095 — café" #activity-4 ^batch-004
+  category: "activity"
+  Assets:Cash:Wallet11 5.58 JPY
+  Equity:Opening-Balances -5.58 JPY
+
+2024-10-02 P "Synthetic Counterparty" "Dense activity 096 — café" #activity-5 ^batch-005
+  category: "activity"
+  Assets:Cash:Wallet12 6.65 CHF
+  Equity:Opening-Balances -6.65 CHF
+
+2024-10-03 S "Synthetic Counterparty" "Dense activity 097 — café" #activity-0 ^batch-006
+  category: "activity"
+  Assets:Cash:Wallet13 7.72 USD
+  Expenses:Operations:Category01 -7.72 USD
+
+2024-10-04 T "Synthetic Counterparty" "Dense activity 098 — café" #activity-1 ^batch-007
+  category: "activity"
+  Assets:Cash:Wallet14 8.79 EUR
+  Equity:Opening-Balances -8.79 EUR
+
+2024-10-05 U "Synthetic Counterparty" "Dense activity 099 — café" #activity-2 ^batch-008
+  category: "activity"
+  Assets:Cash:Wallet15 9.86 JPY
+  Equity:Opening-Balances -9.86 JPY
+
+2024-10-06 R "Synthetic Counterparty" "Dense activity 100 — café" #activity-3 ^batch-000
+  category: "activity"
+  Assets:Cash:Wallet16 10.93 CHF
+  Equity:Opening-Balances -10.93 CHF
+
+2024-10-07 * "Synthetic Counterparty" "Dense activity 101 — café" #activity-4 ^batch-001
+  category: "activity"
+  Assets:Cash:Reserve01 11.00 CAD
+  Equity:Opening-Balances -11.00 CAD
+
+2024-10-08 ! "Synthetic Counterparty" "Dense activity 102 — café" #activity-5 ^batch-002
+  category: "activity"
+  Assets:Cash:Reserve02 12.07 GBP
+  Equity:Opening-Balances -12.07 GBP
+
+2024-10-09 A "Synthetic Counterparty" "Dense activity 103 — café" #activity-0 ^batch-003
+  category: "activity"
+  Assets:Cash:Reserve03 13.14 USD
+  Expenses:Operations:Category01 -13.14 USD
+
+2024-10-10 B "Synthetic Counterparty" "Dense activity 104 — café" #activity-1 ^batch-004
+  category: "activity"
+  Assets:Cash:Reserve04 14.21 CAD
+  Equity:Opening-Balances -14.21 CAD
+
+2024-10-11 C "Synthetic Counterparty" "Dense activity 105 — café" #activity-2 ^batch-005
+  category: "activity"
+  Assets:Cash:Reserve05 15.28 GBP
+  Equity:Opening-Balances -15.28 GBP
+
+2024-10-12 P "Synthetic Counterparty" "Dense activity 106 — café" #activity-3 ^batch-006
+  category: "activity"
+  Assets:Cash:Reserve06 16.35 USD
+  Expenses:Operations:Category01 -16.35 USD
+
+2024-10-13 S "Synthetic Counterparty" "Dense activity 107 — café" #activity-4 ^batch-007
+  category: "activity"
+  Assets:Cash:Reserve07 17.42 CAD
+  Equity:Opening-Balances -17.42 CAD
+
+2024-10-14 T "Synthetic Counterparty" "Dense activity 108 — café" #activity-5 ^batch-008
+  category: "activity"
+  Assets:Cash:Reserve08 18.49 GBP
+  Equity:Opening-Balances -18.49 GBP
+
+2024-10-15 U "Synthetic Counterparty" "Dense activity 109 — café" #activity-0 ^batch-000
+  category: "activity"
+  Assets:Cash:Reserve09 19.56 USD
+  Expenses:Operations:Category01 -19.56 USD
+
+2024-10-16 R "Synthetic Counterparty" "Dense activity 110 — café" #activity-1 ^batch-001
+  category: "activity"
+  Assets:Cash:Reserve10 20.63 CAD
+  Equity:Opening-Balances -20.63 CAD
+
+2024-10-17 * "Synthetic Counterparty" "Dense activity 111 — café" #activity-2 ^batch-002
+  category: "activity"
+  Assets:Cash:Reserve11 21.70 GBP
+  Equity:Opening-Balances -21.70 GBP
+
+2024-10-18 ! "Synthetic Counterparty" "Dense activity 112 — café" #activity-3 ^batch-003
+  category: "activity"
+  Assets:Cash:Reserve12 22.77 USD
+  Expenses:Operations:Category01 -22.77 USD
+
+2024-10-19 A "Synthetic Counterparty" "Dense activity 113 — café" #activity-4 ^batch-004
+  category: "activity"
+  Assets:Cash:Reserve13 23.84 CAD
+  Equity:Opening-Balances -23.84 CAD
+
+2024-10-20 B "Synthetic Counterparty" "Dense activity 114 — café" #activity-5 ^batch-005
+  category: "activity"
+  Assets:Cash:Reserve14 24.91 GBP
+  Equity:Opening-Balances -24.91 GBP
+
+2024-10-21 C "Synthetic Counterparty" "Dense activity 115 — café" #activity-0 ^batch-006
+  category: "activity"
+  Assets:Cash:Reserve15 25.98 USD
+  Expenses:Operations:Category01 -25.98 USD
+
+2024-10-22 P "Synthetic Counterparty" "Dense activity 116 — café" #activity-1 ^batch-007
+  category: "activity"
+  Assets:Cash:Reserve16 3.05 CAD
+  Equity:Opening-Balances -3.05 CAD
+
+2024-10-23 S "Synthetic Counterparty" "Dense activity 117 — café" #activity-2 ^batch-008
+  category: "activity"
+  Assets:Receivables:Client01 4.12 USD
+  Expenses:Operations:Category01 -4.12 USD
+
+2024-10-24 T "Synthetic Counterparty" "Dense activity 118 — café" #activity-3 ^batch-000
+  category: "activity"
+  Assets:Receivables:Client02 5.19 EUR
+  Equity:Opening-Balances -5.19 EUR
+
+2024-10-25 U "Synthetic Counterparty" "Dense activity 119 — café" #activity-4 ^batch-001
+  category: "activity"
+  Assets:Receivables:Client03 6.26 USD
+  Expenses:Operations:Category01 -6.26 USD
+
+2024-10-26 R "Synthetic Counterparty" "Dense activity 120 — café" #activity-5 ^batch-002
+  category: "activity"
+  Assets:Receivables:Client04 7.33 EUR
+  Equity:Opening-Balances -7.33 EUR
+
+2024-10-27 * "Synthetic Broker" "Lot purchase 01" #lot ^lot-01
+  lot_type: "reference"
+  Assets:Investments:Index01 5 SHARES {23 USD}
+  Equity:Opening-Balances -115 USD
+
+2024-10-28 * "Synthetic Broker" "Lot purchase 02" #lot ^lot-02
+  lot_type: "reference"
+  Assets:Investments:Index02 6 SHARES {26 USD}
+  Equity:Opening-Balances -156 USD
+
+2024-10-29 * "Synthetic Broker" "Lot purchase 03" #lot ^lot-03
+  lot_type: "reference"
+  Assets:Investments:Index03 7 SHARES {29 USD}
+  Equity:Opening-Balances -203 USD
+
+2024-10-30 * "Synthetic Broker" "Lot purchase 04" #lot ^lot-04
+  lot_type: "reference"
+  Assets:Investments:Index04 8 SHARES {32 USD}
+  Equity:Opening-Balances -256 USD
+
+2024-10-31 * "Synthetic Broker" "Lot purchase 05" #lot ^lot-05
+  lot_type: "reference"
+  Assets:Investments:Index05 9 SHARES {35 USD}
+  Equity:Opening-Balances -315 USD
+

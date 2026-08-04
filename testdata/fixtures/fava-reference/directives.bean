@@ -1,0 +1,20 @@
+; Source-preserving directives for events, documents, queries, and options.
+2025-06-20 event "milestone" "dense-fixture-304"
+2025-06-21 query "saved-overview" "SELECT account, balance FROM accounts ORDER BY account"
+2025-06-22 custom "review-state" "pending" "synthetic"
+2025-06-23 custom "risk-score" 3.5 USD true
+2025-06-24 note Assets:Cash:Wallet01 "Synthetic note for source navigation and context."
+2025-06-25 document Assets:Cash:Wallet01 "documents/doc-001.txt" #evidence ^doc-001
+2025-06-26 document Assets:Cash:Reserve01 "documents/doc-002.txt" #evidence ^doc-002
+2025-06-27 document Assets:Receivables:Client01 "documents/nested/doc-003.txt" #nested ^doc-003
+2025-06-28 price EUR 1.10 USD
+2025-06-28 price JPY 0.0075 USD
+2025-06-28 price GBP 1.27 USD
+2025-06-28 price CAD 0.74 USD
+2025-06-28 price CHF 1.11 USD
+2025-06-28 price AUD 0.66 USD
+2025-06-28 price SHARES 28.50 USD
+2025-06-28 price BTC 62000 USD
+2025-06-28 price GOLD 2300 USD
+2025-06-29 balance Assets:Cash:Wallet01 -245.15 USD
+2025-06-30 close Liabilities:Credit:Card01

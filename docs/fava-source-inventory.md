@@ -5,8 +5,11 @@ any migration work. Every file below was read at the pinned commit; decisions
 are `adopt` (copy/adapt the frontend unit), `adapt` (frontend unit adapted for
 the Go adapter), `rewrite` (independent OrangeCount implementation with
 equivalent observable behavior), or `exclude` (not adopted: Python runtime,
-plugins, extensions, HTTP API, template backend pieces). No production
-OrangeCount UI or Go semantic files were changed by this inventory.
+plugins, extensions, HTTP API, template backend pieces). These decisions are
+the accepted target treatment, not proof that an upstream unit is currently
+present. Actual adoption requires a matching current row, notice, and upstream
+hash in `docs/fava-provenance-inventory.md`. No production OrangeCount UI or Go
+semantic files were changed by the inventory itself.
 
 Reference facts (see `docs/fava-reference-lock.md`):
 
@@ -27,8 +30,11 @@ Jinja templates (`src/fava/templates/_layout.html`) containing:
   (`help`, `jump` redirect, document/statement downloads, extension pages).
 
 The Svelte frontend (`frontend/src/app.ts`) mounts into the `article` element,
-initializes the router (`frontend/src/router.ts`) over the 15 client-side
-routes (`frontend/src/reports/routes.ts`) and calls the JSON API
+initializes the router (`frontend/src/router.ts`) over 15 client-side report
+routes (`frontend/src/reports/routes.ts`) and calls the JSON API. Server routes,
+downloads, conditional navigation, global modals, and keyboard surfaces are
+additional user-visible surfaces tracked in
+`docs/fava-route-state-manifest.md`. The frontend calls the JSON API
 (`src/fava/json_api.py`) mounted at `/&lt;bfile&gt;/api/...`. All JSON API
 responses are wrapped as `{"data": ..., "mtime": "..."}`
 (`json_success`); errors are `{"error": "..."}` with HTTP status. The
@@ -48,14 +54,14 @@ authority in Fava. OrangeCount replaces it with `internal/ledger`,
 | `/` and `/<bfile>/` | `index` — redirect to default page | URL bootstrap | rewrite | `internal/web` server index + redirect; default page from fava-option equivalent |
 | `/<bfile>/account/<name>/` | shell for client-side account page | account report | rewrite (route exists) | `internal/web/assets/app.js` account path `/account/<name>` + `internal/web/server.go` |
 | `/<bfile>/document/` | `document` — download attachment (query `filename`) | document preview/links | rewrite (attachment containment) | `internal/web` `handleDocument` (`/documents/`) + `internal/source` `DocumentRoots` |
-| `/<bfile>/statement/` | `statement` — download via `entry_hash`+`key` metadata | statement links in journal | excluded (editor/statement metadata flow not in scope v0; revisit) | `internal/web` question: needs entry-hash → path resolution from the Go snapshot |
+| `/<bfile>/statement/` | `statement` — download via `entry_hash`+`key` metadata | statement links in journal | rewrite with approved security deviation where required | `internal/web` entry-hash→metadata resolution with normalized Document Root containment |
 | `/<bfile>/holdings/by_<key>/` | shell for client-side holdings variants | holdings | rewrite | `internal/web/assets/app.js` holdings variants over `/api/v1/reports/holdings` |
 | `/<bfile>/<report_name>/` | shell for the 15 client-side reports | all report pages | rewrite | `internal/web` report handlers + uploaded frontend components |
 | `/<bfile>/extension/<name>/<endpoint>` | extension endpoint | extension pages | **excluded** (ADR-0024, no plugin/extension ecosystem) | n/a |
 | `/<bfile>/extension_js_module/<name>.js` | extension JS module | extensions | **excluded** | n/a |
 | `/<bfile>/extension/<name>/` | extension report | extension pages | **excluded** | n/a |
-| `/<bfile>/download-query/query_result.<fmt>` | query→CSV/XLSX/ODS | QueryLinks | rewrite | `internal/query` `Result.WriteCSV`; XLSX/ODS excluded unless later approved |
-| `/<bfile>/download-journal/` | render filtered entries as Beancount | Export modal | rewrite | question: OrangeCount source export from snapshot (`internal/ledger` render) |
+| `/<bfile>/download-query/query_result.<fmt>` | query→CSV/XLSX/ODS | QueryLinks | rewrite | `internal/query` exact CSV plus Go-native XLSX/ODS exporters |
+| `/<bfile>/download-journal/` | render filtered entries as Beancount | Export modal | rewrite | deterministic Beancount rendering from the filtered immutable snapshot |
 | `/<bfile>/help/<slug>` | markdown help pages | Help | adapt (rewrite translations; keep page set) | `internal/web` help endpoints + uploaded help component; zh-CN/en |
 | `/jump` | redirect rewriting current filters | sidebar links | rewrite | not needed as a server route; frontend URL handling |
 | `/<bfile>/api/*` | `src/fava/json_api.py` blueprint | all frontend data | **excluded as public API**; the shapes are re-expressed loopback-only (ADR-0033) | `internal/web` private Fava-shaped endpoints |
@@ -113,7 +119,7 @@ uploaded frontend feeds into `fetch_and_handle_api_call`.
 | `tsconfig.json`, `eslint.config.js`, `prettier.config.cjs`, `stylelint.config.js`, `deno.json` (deno build task), `biome.json` (repo root used by pre-commit) | lint/format | adopt selectively for `web/` toolchain; not shipped |
 | `sync-pre-commit.ts` | syncs eslint/prettier config | exclude (repo tooling detail) |
 | `css/*.css` (13 files) | global styles: `base, charts, components, editor, fonts, grid, help, journal-table, layout, notifications, style, tree-table` | **adopt** (MIT licenses on fonts imported via @fontsource), with zh-CN font/layout adjustments allowed |
-| `src/fava/static/favicon.ico` | only committed static asset | exclude from adoption; question: use own favicon or adopt under MIT |
+| `src/fava/static/favicon.ico` | only committed static asset | adopt where required for standard-surface fidelity under MIT provenance; product metadata may differ only through an approved deviation |
 
 ### 3.2 App shell, router, state (`frontend/src` root + `sidebar` + `stores`)
 
@@ -131,7 +137,7 @@ uploaded frontend feeds into `fetch_and_handle_api_call`.
 | `sidebar/` (13 files incl. `Header`, `AsideWithButton`, `AsideContents`, `FilterForm`, `SidebarLink`, `AccountSelector`, `AccountIndicator`, `AccountPageTitle`, `PageTitle`, `page-title.ts`, `index.ts`, `HeaderIcon`, `HeaderAndAside`) | shell header/sidebar/nav/filters/badges | **adapt** (no multi-ledger dropdown, no extensions list, no external `beancount://` by default) |
 | `stores/index.ts` | `ledgerData` store + derived accounts/currencies/… | **adapt** (reticulate to adapter `ledger_data` payload) |
 | `stores/url.ts` | URL-derived stores: conversion, interval, charts, synced params | **adapt** (own route base) |
-| `stores/options.ts`, `stores/fava_options.ts` | ledger options + fava options stores | **adapt** (supported subset; plugin options excluded) |
+| `stores/options.ts`, `stores/fava_options.ts` | ledger options + fava options stores | **adapt** (all applicable built-in options; excluded-capability options remain explicit deviations) |
 | `stores/filters.ts` | time/account/fql filter stores | **adapt** |
 | `stores/journal.ts`, `stores/query.ts`, `stores/editor.ts`, `stores/chart.ts`, `stores/color_scheme.ts`, `stores/mtime.ts`, `stores/format.ts`, `stores/accounts.ts` | localStorage-synced prefs + derived formatting/toggling | **adapt** (localStorage keys are Fava-derived; keep semantics, not the `fava-` prefix) |
 
@@ -152,11 +158,11 @@ Route registry: `routes.ts` (15 routes) — all are frontend-rendered.
 | `income_statement` | `tree_reports/IncomeStatement.svelte`, `index.ts` | `income_statement` | adopt |
 | `balance_sheet` | `tree_reports/BalanceSheet.svelte`, `index.ts` | `balance_sheet` | adopt |
 | `trial_balance` | `tree_reports/TrialBalance.svelte`, `index.ts` | `trial_balance` | adopt |
-| `journal` | `journal/Journal.svelte`, `JournalTable.svelte`, `JournalFilters.svelte`, `JournalHeaders.svelte`, `click_handler.ts`, `sort.ts`, `index.ts` | `journal_page` (HTML!) | **adapt with the largest rewrite**: Fava renders journal rows server-side via `_journal_table.html` into HTML; OrangeCount must instead render rows client-side from a JSON contract (Go adapter `journal_page` equivalent returning structured rows), or re-implement the template renderer in Go. This is the single biggest adapter decision in the project. |
+| `journal` | `journal/Journal.svelte`, `JournalTable.svelte`, `JournalFilters.svelte`, `JournalHeaders.svelte`, `click_handler.ts`, `sort.ts`, `index.ts` | `journal_page` (HTML) | **adapt with minimal frontend change**: preserve Fava's private Journal HTML presentation contract and render strictly escaped Fava-compatible markup in the Go adapter (ADR-0037) |
 | `query` | `query/Query.svelte`, `QueryEditor.svelte`, `QueryBox.svelte`, `QueryTable.svelte`, `QueryLinks.svelte`, `ReadonlyQueryEditor.svelte`, `query_table.ts`, `index.ts` | `query` | adopt (Go BeanQuery backend, exact values; `query_table.ts` validators stay) |
 | `editor` | `editor/Editor.svelte`, `EditorMenu.svelte`, `Sources.svelte`, `AppMenu*.svelte`, `Key.svelte`, `index.ts`, `stores.ts` | `source`, `errors`, `format_source`, `source_slice` | adopt (Go save/validate path: `internal/web` editor handlers already exist) |
 | `import` | `import/Import.svelte`, `Extract.svelte`, `FileList.svelte`, `ImportFileUpload.svelte`, `index.ts` | `imports`, `extract`, `add_entries`, `move`, `document`, `upload_import_file` | adopt-shaped; **rewrite semantics**: OrangeCount uses native CSV/generic adapters, never Python importers (`internal/web` import handlers exist; `imports` payload must be re-expressed as file candidates) |
-| `options` | `options/Options.svelte`, `OptionsTable.svelte`, `index.ts` | `options`, color scheme store | adopt (supported options; plugin-option rows excluded) |
+| `options` | `options/Options.svelte`, `OptionsTable.svelte`, `index.ts` | `options`, color scheme store | adopt (all applicable built-in options; plugin/extension dependencies are explicit approved deviations) |
 | `holdings` | `holdings/Holdings.svelte`, `index.ts` (4 aggregation queries) | `query` | adopt (queries run against Go BeanQuery; `units/value` semantics per v3) |
 | `commodities` | `commodities/Commodities.svelte`, `CommodityTable.svelte`, `index.ts` | `commodities` | adopt |
 | `documents` | `documents/Documents.svelte`, `Table.svelte`, `Accounts.svelte` (move/drag), `DocumentPreview.svelte`, `stores.ts`, `index.ts` | `documents`, `move`, `add_document`, `document` | adapt (attachment root containment enforced in Go; preview editor kept) |
@@ -206,25 +212,25 @@ Route registry: `routes.ts` (15 routes) — all are frontend-rendered.
 | `core/tree.py` | account tree, cap/transfer for balance sheet, net profit | `internal/report` (TrialBalanceTree/BalanceSheet project hierarchy) |
 | `core/charts.py`, `internal_api.py` ChartApi | balances/bar line-chart data, net worth | `internal/report/charts.go` |
 | `core/conversion.py` | at_cost/at_value/units/currency conversions | `internal/report` valuation (v3 price map) |
-| `core/filters.py` | FQL syntax lexer/parser (`#tag`, `^link`, `payee:`, `any()`, `all()`, amounts, ranges) | question: OrangeCount `internal/report` `Filter`/`FilterJournal` implements subset; full FQL parity needs a Go parser (open) |
-| `core/fava_options.py` | 27 fava-options parsed from `custom "fava-option"` | `internal/web` `handleOptions` (supported subset, ADR decision in plan) |
-| `core/accounts.py` | account details: close date, uptodate status, balance string | question: `account_details`/uptodate indicator data not yet produced by Go — adapter additions needed |
+| `core/filters.py` | FQL syntax lexer/parser (`#tag`, `^link`, `payee:`, `any()`, `all()`, amounts, ranges) | Go-native complete Fava 1.30.12 FQL parser/evaluator as a UI filtering contract (ADR-0038) |
+| `core/fava_options.py` | 27 fava-options parsed from `custom "fava-option"` | all built-in user-visible options not dependent on excluded capabilities, with Fava-compatible effect and precedence |
+| `core/accounts.py` | account details: close date, uptodate status, balance string | Go report/adapter additions for account details and up-to-date indicators |
 | `core/attributes.py` | ranked accounts/currencies/payees/tags/links/years/narrations | `internal/report` + `internal/web` (partial; ranking util is small) |
-| `core/ingest.py`, `beangulp` | import extraction (Python importers) | **excluded**; OrangeCount native CSV/bean adapters (ADR plan P7) |
+| `core/ingest.py`, `beangulp` | import extraction (Python importers) | **excluded**; OrangeCount native CSV/bean adapters in implementation Wave 6 |
 | `core/query_shell.py`, `core/query.py`, `beanquery` | BQL shell + serialised table columns (`COLUMNS` dtype map) | `internal/query` |
-| `core/budgets.py` | budget custom entries | question: OrangeCount has no budget model; tree-table/account budget overlays excluded until a model exists |
+| `core/budgets.py` | budget custom entries | Go read-only Fava budget projection over `custom "budget"`; no accounting-semantic ownership |
 | `core/documents.py` | document path containment | `internal/source/roots.go` |
 | `core/file.py` | source read/write, sha256 concurrency guards, entry slice editing | `internal/web` editor + `internal/source` |
-| `core/commodities.py` | commodity names/precisions | question: `precisions`/`currency_names` in `ledger_data` — Go must compute from Commodity directives |
-| `core/misc.py` | sidebar links, upcoming events, align | `internal/web` options subset |
+| `core/commodities.py` | commodity names/precisions | Go computes `precisions` and `currency_names` from v3 Commodity directives and exact display rules |
+| `core/misc.py` | sidebar links, upcoming events, align | `internal/web` standard-surface options and attributes; extension links remain excluded |
 | `core/group_entries.py`, `core/inventory.py`, `core/number.py`, `core/watcher.py`, `core/module_base.py`, `core/extensions.py` | grouping, inventories, decimal formatting, file watcher, extensions | `internal/ledger`, `internal/report`, `internal/snapshot` watcher; extensions excluded |
-| `util/date.py` (576 lines) | time-filter parsing: `2015`, `2016-Q1`, `fy2018`, relative `year-1`, dateranges, fiscal year end | question: OrangeCount implements `time` filter as year/month prefix + from/to; full Fava time syntax incl. ranges/fiscal-year needs Go port decisions |
-| `util/excel.py`, `util/ranking.py`, `util/sets.py`, `util/__init__.py` | xlsx/ods export, decay ranking, sets, misc | excel export excluded unless approved; ranking adapt |
+| `util/date.py` (576 lines) | time-filter parsing: `2015`, `2016-Q1`, `fy2018`, relative `year-1`, dateranges, fiscal year end | Go-native complete Fava 1.30.12 time-filter parser with fixed-clock tests and fiscal-year option support |
+| `util/excel.py`, `util/ranking.py`, `util/sets.py`, `util/__init__.py` | xlsx/ods export, decay ranking, sets, misc | Go-native exact XLSX/ODS export; ranking behavior adapted for interface attributes |
 | `serialisation.py`, `beans/*` (abc, account, create, flags, funcs, helpers, ingest, load, prices, protocols, str, types, `__init__`) | Beancount data model wrappers, hash_entry, price map, position strings | `internal/ledger` (v3 semantics) |
 | `plugins/*` | `link_documents`, `tag_discovered_documents` | **excluded** (plugins never executed; OrangeCount diagnoses) |
 | `ext/*` (auto_commit, portfolio_list, fava_ext_test) | example extensions | **excluded** |
 | `help/*.md` (9 pages) | user docs | adapt as localized help content (rewrite to OrangeCount behavior; budgets/extensions/import pages re-scoped) |
-| `templates/*` (`_layout.html`, `_journal_table.html`, `_query_table.html`, `beancount_file`, `help.html`, macros) | server templates | **excluded as runtime**; `_journal_table.html` and `_query_table.html` inform the Go serializer/CSV contracts |
+| `templates/*` (`_layout.html`, `_journal_table.html`, `_query_table.html`, `beancount_file`, `help.html`, macros) | server templates | Python/Jinja runtime excluded; `_journal_table.html` is the structural authority for strictly escaped Go-rendered Fava-compatible Journal markup (ADR-0037), while query/export templates inform Go output contracts |
 | `translations/*.po` | 17 locales | exclude (en + zh-CN catalogs re-expressed in Go/TS; note `zh` exists upstream) |
 | `cli.py`, `application.py`, `context.py`, `_ctx_globals_class.py`, `helpers.py`, `template_filters.py`, `json_api.py` (889 lines), `internal_api.py` (221) | WSGI server + API | exclude application code; contracts per §2 |
 
@@ -253,89 +259,53 @@ deps (`uv.lock`, incl. Flask, beancount, beanquery, beangulp, Babel,
 simplejson, cheroot, markdown2, ply, watchfiles) are reference-only, not
 adopted.
 
-## 6. Tests and build inventory (all `exclude` from product; repurpose? )
+## 6. Tests and build inventory
 
 | Area | Files | Notes |
 | --- | --- | --- |
-| Python tests | `tests/*.py` (31 test modules) + `tests/__snapshots__/` and `tests/data/*.beancount` | snapshot JSON files are **contract gold**: `test_json_api-*.json`, `test_internal_api-test_get_ledger_data.json` define every API shape. Decide (open): commit sanitized re-expressions of these shapes as adapter contract fixtures; never copy the private/demo ledgers wholesale without review (they are Fava's own demo fixtures, MIT-licensed — acceptable as *reference*, must be re-expressed, not vendored). |
+| Python tests | `tests/*.py` (31 test modules) + `tests/__snapshots__/` and `tests/data/*.beancount` | snapshot JSON files are contract references. OrangeCount commits independently generated contract shapes and deterministic synthetic fixtures, not upstream demo ledgers wholesale; any copied assertion/helper still requires MIT provenance. |
 | Frontend tests | `frontend/test/*.test.ts` (21 files) + `helpers.ts`/`dom.ts` | adopt as the test corpus for `web/` (they load Python snapshot JSON — adjust the fixture loader to the Go adapter fixtures) |
 | Build | `Makefile` (uv + npm orchestration), `_build_backend.py` | reference only |
 
-## 7. Risks and strict first implementation slice
+## 7. Resolved risks and first implementation slice
 
-Risks (see also plan's risk table):
+The grilling session resolved the former open questions as follows:
 
-1. **Journal is server-rendered HTML in Fava** (`journal_page` returns HTML;
-   `account_report` journal is HTML; `_journal_table.html` does the render).
-   A naive "copy the HTML" keeps Python/Jinja semantics inside Go. Mitigation:
-   define a structured journal contract in Go (rows with directive kind, flag,
-   date, payee/narration, tags/links, metadata, postings, change/balance,
-   source anchor) and port the visible structure to a Svelte template. This is
-   a rewrite of presentation, not semantics.
-2. **FQL filter syntax is a Python PLY grammar** (tags, links, payee/narration
-   keys, `any(...)`, `all(...)`, amount comparisons). Go has a subset today
-   (`internal/report.Filter` text match + `FilterJournal`). Full parity needs a
-   Go FQL parser. First slice: text/search subset; document the gap.
-3. **Time filter syntax** (`fy2018`, `2016-Q1`, relative `year-1`, ranges) is
-   Python (`util/date.py`, 576 lines). Go parses year/month prefix + from/to.
-   First slice: keep current Go time model; mark range/fiscal-year parity open.
-4. **Charts require a weight/price map at as-of dates** — `linechart`,
-   `interval_totals`, net worth, hierarchy trees use `FavaPriceMap` up to a
-   date. Go `charts.go` already computes chart series with price-map lookups;
-   parity concerns are the multi-currency "unavailable" behavior already
-   documented in `fava-visual-gap-analysis.md` (pivot currencies per column).
-5. **`ledger_data` bootstrap payload** is the frontend's source of truth
-   (accounts, account_details, currencies, currency_names, precisions, fava
-   options, options, years, payees, tags, links, user_queries, sidebar_links,
-   upcoming_events_count, extension list, other_ledgers, incognito,
-   have_excel). The Go adapter must produce this field-for-field or the
-   frontend validators (`ledgerDataValidator`) fail. This is the P3 bootstrap
-   contract and the first milestone.
-6. **Dependency surface**: adopting charts/editor pulls in d3, @codemirror,
-   web-tree-sitter WASM, @fontsource fonts. Bundle sizes and CSP must be
-   re-audited; offline/no-CDN is already satisfied by esbuild bundling.
-7. **Statement/download exports** (`statement/`, `download-journal`,
-   `download-query.query_result.xlsx/ods`) depend on entry-hash→file render
-   and Excel libs; first slice: CSV only, mark xlsx/ods/statement excluded
-   pending decisions.
-8. **Account `uptodate-indicator`** (green/yellow/red circles) requires
-   close-date + last-entry + balance-check logic not yet present in Go —
-   open question for account/statistics parity.
+1. Journal and account-Journal retain Fava's private HTML presentation shape,
+   rendered with strict escaping by the Go adapter (ADR-0037).
+2. OrangeCount implements complete Fava 1.30.12 FQL in Go as a UI filtering
+   language distinct from BeanQuery (ADR-0038).
+3. OrangeCount implements complete Fava time-filter and fiscal-year behavior in
+   Go with a fixed test clock.
+4. Account details and up-to-date indicators are added to the report/adapter
+   projection.
+5. Statement/document operations, filtered Journal export, CSV/XLSX/ODS, and
+   printing are in scope under the security and semantic boundaries in the
+   authoritative plan.
+6. Fava budgets are a read-only projection over `custom "budget"` directives.
+7. Commodity names and precisions come from OrangeCount's v3-compatible
+   Commodity data and exact display rules.
+8. Contract fixtures are independently generated from the synthetic fixtures;
+   upstream assertions/helpers are adapted only with provenance.
+9. English is the strict visual authority. Simplified Chinese adapts the
+   upstream terminology where applicable and adds OrangeCount-specific
+   diagnostics while preserving the same structural surface.
+10. Required Fava fonts, icons, CodeMirror, Tree-sitter WASM, and chart assets
+    are adopted locally with provenance and license review. Product-only
+    branding cannot alter the standard navigation surface.
 
-Strict first slice (P3+P4, after P0/P1/P2 foundation):
+Remaining risks are implementation risks, not scope questions: exact Journal
+markup safety, FQL/time parser correctness, price-map projections, full
+`ledger_data` validation, dependency/CSP/size control, reviewed writes,
+provenance completeness, and deterministic browser evidence. Their controls
+are specified in `docs/fava-frontend-transplant-plan.md`.
 
-- (a) Go adapter bootstrap contract: `ledger_data` (full validator-compatible
-  payload), `changed`, `errors`, `source`, `options`, static assets; all
-  loopback-only.
-- (b) Shell transplant: `_layout.html`-equivalent shell in `internal/web`
-  serving `index.html` with `#ledger-data`/`#ledger-mtime`/`#translations`
-  script tags; router + sidebar + header + filters + theme + keyboard.
-- (c) One read-only vertical slice: Income Statement / Balance Sheet tree
-  tables + hierarchy charts over `account_report`/tree endpoints, using the
-  existing `internal/report` + `internal/report/charts.go`, wired through
-  adapter endpoints that return `{data, mtime}` envelope with validated
-  `SerialisedTreeNode` shapes.
-- (d) Journal as a structured (not HTML) contract behind the `journal_page`
-  shape, rendered client-side; accept only the subset of flags/directives that
-  Go produces today.
-- Defer: editor save, import, query, documents move/upload, options writes,
-  help content, xlsx/ods exports, full FQL/time parser, uptodate indicators,
-  budgets.
-
-## 8. Open questions (blocking later packages, not P0)
-
-| # | Question | Where it blocks |
-| --- | --- | --- |
-| Q1 | Should `journal_page`/`account_report.journal` remain server-rendered HTML (Fava behavior) or become a structured JSON contract rendered in Svelte? Recommended: structured JSON (keeps Go the only serializer). | P4 journal/account slice |
-| Q2 | Does OrangeCount port the FQL filter grammar (tags/links/payee/amount/`any`/`all`/ranges) to Go, or keep the current text-filter subset? | P4 journal; global filter parity |
-| Q3 | Full Fava time-filter syntax (quarters, fiscal year end, relative `year-1`, ranges) in Go? | all period-dependent reports |
-| Q4 | `account_details` + uptodate indicators (close date, last entry, balance check status): add to Go report layer? | account page, statistics, tree tables |
-| Q5 | `statement/` and `download-journal/` exports and xlsx/ods query exports: in scope? (CSV now, others later?) | P4/P6/P7 exports |
-| Q6 | Budget module (custom budget entries): exclude entirely, or implement a v3-compatible subset? | tree-table budget overlays, account balances |
-| Q7 | `precisions`/`currency_names` from Commodity directives in Go `ledger_data` — confirm source of truth and format (already needed for Q1's bootstrap). | P3 bootstrap |
-| Q8 | Fava demo fixtures in `tests/data/` and `tests/__snapshots__/`: reuse as sanitized contract fixtures (MIT) or re-express only shapes? | P3 contract fixtures |
-| Q9 | zh-CN: Fava ships upstream `zh` and `zh_Hant_TW` catalogs (PO). OrangeCount's existing catalog is in `web/src/translations.ts`. Adopt Fava's zh strings (MIT, re-expressed) or keep OrangeCount's? | P2 shell locale |
-| Q10 | `favicon.ico` and `HeaderIcon` logo: adopt under MIT or replace? | P2 shell |
+The strict first slice is the Fava-derived shell plus Income Statement. It
+includes the complete bootstrap contract needed by the shell, real dense-
+fixture data, tree tables, interval/conversion controls, charts, fonts, themes,
+responsive behavior, and the four-layer route gate. It excludes placeholders
+and does not begin Journal or secondary-page frontend work until the golden
+slice establishes stable source, adapter, provenance, and visual patterns.
 
 ## 9. Verification performed
 

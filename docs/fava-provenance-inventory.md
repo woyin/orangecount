@@ -10,8 +10,8 @@ You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2
 Every Fava-derived file or asset inside this repository must be recorded in
 this inventory **before** it is added, per ADR-0030 and the Fava frontend
 transplant plan ("a derived file cannot be added without inventory evidence").
-Original OrangeCount files never appear here. This is a template; entries are
-filled in by the P2/P4+ agents that actually import or adapt Fava units.
+Original OrangeCount files never appear here. This is a template; entries are filled in by the owning implementation-wave
+agents when they actually import or adapt Fava units.
 Until a row exists for a file, the file must not be imported.
 
 ## Attribution baseline
@@ -31,7 +31,7 @@ Until a row exists for a file, the file must not be imported.
 | --- | --- |
 | `copied` | File imported unchanged from the pinned Fava commit (still needs a row). |
 | `adapted` | File imported and modified for the Go adapter / OrangeCount boundary. |
-| `rewritten` | File replaced by an independent OrangeCount implementation with equivalent behavior (no upstream code reused; no provenance row needed, but record it here for traceability). |
+| `rewritten` | File replaced by an independent OrangeCount implementation with equivalent behavior. It needs no derivative-license notice when no upstream code is reused, but still requires a traceability row and justification. |
 | `excluded` | File intentionally not adopted; record the reason. |
 
 ## Row template (one row per derived file)
@@ -42,7 +42,7 @@ Until a row exists for a file, the file must not be imported.
 | Upstream path | `frontend/src/...` (at the pinned commit) |
 | Upstream revision | `aa7538e8971252c9efc52c8a516a3a77d604553f` |
 | OrangeCount path | `web/...` or `internal/web/assets/...` |
-| Decision | `copied` / `adapted` |
+| Decision | `copied` / `adapted` / `rewritten` / `excluded` |
 | Local modifications | exact list of behavioral changes vs upstream |
 | Copyright holder | Dominik Aumayr (Fava) + OrangeCount contributors |
 | MIT notice placement | header of the file and `NOTICE` section |
@@ -53,12 +53,17 @@ Until a row exists for a file, the file must not be imported.
 
 ## Current inventory
 
-P2 phase 1 uses the pinned Fava source inventory as a behavior and dependency
-reference, but does not copy Fava implementation code, CSS, fonts, icons, or
-runtime assets. The shell units below are clean-room rewrites of the approved
-Fava shell boundaries; they are recorded for traceability and do not require a
-Fava MIT header. The only adopted Fava dependency families are the approved
-Svelte/esbuild/TypeScript build dependencies, all development-only.
+The completed P2 phase-1 attempt used the pinned Fava source only as a behavior
+and dependency reference. It copied no Fava implementation code, CSS, fonts,
+icons, or runtime assets. The shell units below are therefore clean-room
+prototype rewrites, not accepted implementation of the Fava frontend
+transplant or rendering-fidelity goal. Wave 1 replaces or relocates them and
+adds selected upstream-derived units with full provenance before a route may
+cut over.
+
+The rows remain as an honest inventory of the current tree. A `rewritten` row
+never grants visual acceptance and may not be used to avoid an `adapted`
+source unit selected by the authoritative transplant plan.
 
 | Upstream path | OrangeCount path | Decision | Local modifications | MIT notice location | Dependency license result |
 | --- | --- | --- | --- | --- | --- |
@@ -76,5 +81,8 @@ Svelte/esbuild/TypeScript build dependencies, all development-only.
    entry in the same change.
 2. `rewritten` files do not reuse upstream code; they still require a row so
    the exclusion/adoption matrix stays complete.
-3. The license check (`make license`) and CI provenance guard fail when a
-   file under `web/` or `internal/web/assets/` has no inventory row.
+3. Prerequisite Phase 0 must extend `make license` and add a provenance guard that fails when
+   a selected, adapted, or Fava-influenced unit under `web/` or
+   `internal/web/assets/` has no traceability row, required notice, upstream
+   hash, or contract mapping. The current `make license` does not yet enforce
+   this rule.

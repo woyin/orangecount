@@ -1,10 +1,14 @@
 # Fava-aligned English UX baseline
 
-This is the implementation baseline for the OrangeCount Fava frontend
-transplant. It describes observable structure and interaction, not Fava
-implementation code, assets, DOM, HTTP responses, or literal pixel identity.
-The baseline is exercised only with the deterministic synthetic fixture under
-`testdata/fixtures/fava-visual/`.
+This is the observable UX specification for the OrangeCount Fava frontend
+transplant. The pinned Fava 1.30.12 source and approved synthetic-ledger
+screenshots are the visual authority; OrangeCount must have no unapproved
+visual difference under controlled conditions. This document describes the
+route/state outcomes and structural anchors without storing private Fava data,
+DOM, HTTP responses, or private-ledger evidence. Canonical route/state
+coverage and acceptance status live in
+`docs/fava-route-state-manifest.md`; this document supplies the shared
+observable requirements for those entries.
 
 ## Baseline frame
 
@@ -15,11 +19,28 @@ The baseline is exercised only with the deterministic synthetic fixture under
 | English | English labels, dates, numbers, diagnostics, and keyboard help | Copy is stable enough for visual comparison; labels do not depend on browser locale |
 | Offline | Local styles, charts, fixture documents, and data requests only | No remote asset, font, market-data, or telemetry request is required |
 
+## Strict visual matrix
+
+Every in-scope route must obtain approved English Chromium baselines for
+desktop/light, desktop/dark, narrow/light, and narrow/dark during Prerequisite
+Phase 0 and its route wave. No approved baseline exists yet. Layout,
+typography, color, spacing,
+density, control position, table/chart composition, and state structure must
+match the Fava visual baseline unless an entry in
+`docs/fava-approved-deviations.md` explicitly permits the bounded difference.
+Rasterization noise may be handled by a narrowly documented comparison rule;
+it is not permission for a global similarity threshold or broad mask.
+
+Simplified Chinese uses the same route/state manifest and components. It must
+preserve information hierarchy, table relationships, control and focus order,
+keyboard behavior, wrapping, overflow safety, and responsive transitions, but
+translated text is not compared pixel-for-pixel with the English baseline.
+
 ## Route and state table
 
 | Route | Loaded state | Empty or unavailable state | Error or stale state |
 | --- | --- | --- | --- |
-| `/` | Summary content, current period, and global filters are visible | Explain that the selected scope has no entries | Preserve the last valid summary and identify that refresh failed |
+| `/` | Resolve the applicable Fava default-page option and enter that standard route with ledger title and global state intact | Use the documented Fava fallback when the configured page is unavailable | Preserve the prior valid route and surface bootstrap/default-option failure |
 | `/journal` | Transactions are grouped by date/source identity; postings are collapsed below each header | Explain that no transaction matches the filters | Keep filters and show an actionable load error |
 | `/balance_sheet` | Account tree, natural-currency columns, totals, and hierarchy chart are visible | Explain that the selected period has no balances | Keep the last valid report and identify unavailable valuation data |
 | `/income_statement` | Income and expense trees, period controls, totals, and chart are visible | Explain that the selected period has no activity | Preserve the prior report when a refresh fails |
@@ -33,8 +54,10 @@ The baseline is exercised only with the deterministic synthetic fixture under
 | `/query` | Editor, run/save/export controls, and typed result table are visible | Explain that the query returned no rows | A parse/evaluation error must not erase the last successful result |
 | `/editor` | File tree, buffer, diagnostics, validate, save, and revert controls are visible | Explain that the selected source has no diagnostics | Failed validation leaves the previous snapshot and editable content recoverable |
 | `/import` | Local source selection, adapter/mapping controls, preview rows, diff, review, and commit are visible | Explain that the source contains no candidates | Invalid candidates remain in preview with diagnostics; no implicit commit occurs |
-| `/options` | Supported display and runtime options are grouped and clearly labeled | Explain when an optional value is unset | Reject invalid changes without changing the saved option |
-| `/help` | Searchable help and keyboard-shortcut sections are visible | Explain that no help topic matches | Preserve the prior route and search text if loading fails |
+| `/options` | Every applicable built-in Fava option is grouped and has its real interface effect; excluded capabilities are explicit approved deviations | Explain when an optional value is unset | Reject invalid changes without changing the saved option |
+| `/errors` | Conditional navigation, diagnostics, source anchors, and Fava budget/FQL/import errors are visible | Remove the conditional navigation entry when there are no diagnostics | Preserve the last valid diagnostic set and identify refresh failure |
+| `/help/<slug>` | Searchable help and keyboard-shortcut sections are visible | Explain that no help topic matches | Preserve the prior route and search text if loading fails |
+| Global modals | Add Entry, Context, Export, notification, document, and confirmation surfaces preserve Fava composition and focus behavior | Explain unavailable actions without rendering a broken modal | Close safely, restore focus, and retain uncommitted user input where recovery is possible |
 
 ## Shared controls
 
@@ -76,6 +99,8 @@ The baseline is exercised only with the deterministic synthetic fixture under
 4. **Hierarchy charts:** the account tree and chart share the same selected
    currency and deterministic ordering. Treemap, sunburst, and icicle states
    remain structurally present when data is unavailable.
-5. **Privacy:** baseline review records route/state/control outcomes only.
-   Never commit screenshots, raw browser output, source text, attachment
-   content, private-ledger material, or local-session URLs.
+5. **Privacy:** approved screenshots may be committed only when generated from
+   the deterministic synthetic reference ledger in the controlled reference
+   environment. Never commit private-ledger screenshots, raw private browser
+   output, private source text, private attachment content, or private local-
+   session URLs.
