@@ -36,6 +36,7 @@ export interface ReportChart {
   measure: string;
   availability?: string;
   series: ChartSeries[];
+  nodes?: { name: string; value: DecimalWire; depth: number }[];
 }
 
 export interface TreeReport {

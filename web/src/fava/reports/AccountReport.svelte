@@ -32,5 +32,5 @@
 {:else}
   <div class="headerline"><h2>{account}</h2><span class="muted">Account detail</span></div>
   {#if balance}<GenericReport report={balance} title="Balance" />{/if}
-  {#if journal}<JournalReport report={journal} />{/if}
+  {#if journal}<JournalReport report={journal} {account} />{/if}
 {/if}

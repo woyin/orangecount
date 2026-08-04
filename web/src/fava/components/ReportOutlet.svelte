@@ -72,7 +72,7 @@
 {:else if table && route === "journal"}
   <JournalReport report={table} />
 {:else if table}
-  <GenericReport report={table} title={pageLabel(route)} />
+  <GenericReport report={table} title={pageLabel(route)} {route} />
 {:else}
   <section class="route-placeholder">
     <p class="headerline"><strong>Fava-aligned shell</strong></p>

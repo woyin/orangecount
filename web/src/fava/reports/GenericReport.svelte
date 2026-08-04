@@ -4,6 +4,7 @@
 
   export let report: TableReport;
   export let title: string;
+  export let route = "";
 
   function display(value: unknown): string {
     if (value && typeof value === "object" && "display" in value && typeof value.display === "string") {
@@ -22,6 +23,7 @@
 <div class="headerline">
   <h2>{title}</h2>
   <span class="muted">{report.rows.length} rows</span>
+  {#if route}<a class="button" href={`/api/v1/reports/${route}?format=csv`}>Export CSV</a>{/if}
 </div>
 {#if report.chart}
   <ReportChart chart={report.chart} />
@@ -39,7 +41,15 @@
       {#each report.rows as row, index (index)}
         <tr>
           {#each report.columns as column (column)}
-            <td class:num={isNumberLike(row[column])}>{display(row[column])}</td>
+            <td class:num={isNumberLike(row[column])}>
+              {#if route === "documents" && column === "filename" && typeof row[column] === "string"}
+                <a href={`/documents/${encodeURIComponent(row[column] as string)}`}>{display(row[column])}</a>
+              {:else if ["file", "path"].includes(column) && typeof row[column] === "string"}
+                <a href={`/source?path=${encodeURIComponent(row[column] as string)}`}>{display(row[column])}</a>
+              {:else}
+                {display(row[column])}
+              {/if}
+            </td>
           {/each}
         </tr>
       {:else}

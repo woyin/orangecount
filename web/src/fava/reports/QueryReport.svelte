@@ -37,6 +37,7 @@
 {#if error}
   <p class="error-panel" role="alert">{error}</p>
 {:else if result}
+  <p><a class="button" href={`/api/v1/query?q=${encodeURIComponent(queryText)}&format=csv`}>Export CSV</a></p>
   <GenericReport report={result} title="Query result" />
 {/if}
 
