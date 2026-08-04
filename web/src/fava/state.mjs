@@ -3,11 +3,20 @@ import { writable } from "svelte/store";
 export const DEFAULT_LOCALE = "en";
 export const DEFAULT_THEME = "system";
 
+function stored(key, fallback, values) {
+  try {
+    const value = localStorage.getItem(key);
+    return values.includes(value) ? value : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export function initialShellState(route) {
   return {
     route,
-    locale: DEFAULT_LOCALE,
-    theme: DEFAULT_THEME,
+    locale: stored("orangecount-locale", DEFAULT_LOCALE, ["en", "zh-CN"]),
+    theme: stored("orangecount-theme", DEFAULT_THEME, ["system", "dark", "light"]),
     loading: false,
     error: null,
     sidebarOpen: false,

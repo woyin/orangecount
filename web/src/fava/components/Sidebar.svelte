@@ -1,9 +1,11 @@
 <script lang="ts">
+  import { translations, type Locale } from "../../translations";
   import { ROUTES, pageLabel, routeHref } from "../router.mjs";
 
   export let route: string;
   export let open = false;
   export let errors: unknown[] = [];
+  export let locale = "en";
   export let onMenu: () => void;
   export let onNavigate: (href: string) => void;
 
@@ -13,6 +15,8 @@
     ["", ["editor", "import", "options", "help"]],
   ];
   const known = new Set([...ROUTES, "account"]);
+  const keys: Record<string, string> = { income_statement: "incomeStatement", balance_sheet: "balanceSheet", trial_balance: "trialBalance", journal: "journal", query: "query", holdings: "holdings", commodities: "commodities", documents: "documents", events: "events", statistics: "statistics", editor: "editor", import: "import", options: "options", help: "help", account: "accounts" };
+  function label(routeName: string): string { const catalog = translations[(locale === "zh-CN" ? "zh-CN" : "en") as Locale]; return catalog[keys[routeName] || ""] || pageLabel(routeName); }
 </script>
 
 {#if open}
@@ -34,7 +38,7 @@
               aria-current={route === item ? "page" : undefined}
               data-route={item}
               onclick={(event) => { event.preventDefault(); onNavigate(routeHref(item)); }}
-            >{pageLabel(item)}</a>
+            >{label(item)}</a>
           </li>
         {/if}
       {/each}

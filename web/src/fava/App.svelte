@@ -20,6 +20,7 @@
   $: current = $shell;
   $: document.documentElement.lang = current.locale;
   $: document.documentElement.dataset.theme = current.theme === "system" ? "" : current.theme;
+  $: document.documentElement.style.colorScheme = current.theme === "system" ? "light dark" : current.theme;
 
   function navigate(href: string) {
     const target = new URL(href, window.location.href);
@@ -65,10 +66,12 @@
   }
 
   function setLocale(locale: string) {
+    try { localStorage.setItem("orangecount-locale", locale); } catch { /* storage is optional */ }
     shell.dispatch({ type: "locale", locale });
   }
 
   function setTheme(theme: string) {
+    try { localStorage.setItem("orangecount-theme", theme); } catch { /* storage is optional */ }
     shell.dispatch({ type: "theme", theme });
   }
 
@@ -133,7 +136,7 @@
   onInterval={setInterval}
   onQuery={setQuery}
 />
-<Sidebar route={current.route} open={current.sidebarOpen} errors={current.errors} onMenu={() => shell.dispatch({ type: "menu" })} onNavigate={navigate} />
+<Sidebar route={current.route} open={current.sidebarOpen} errors={current.errors} locale={current.locale} onMenu={() => shell.dispatch({ type: "menu" })} onNavigate={navigate} />
 <article id="main-content" tabindex="-1">
   <LoadingBoundary active={current.loading}>
     <ErrorBoundary message={current.error} onRetry={retry}>

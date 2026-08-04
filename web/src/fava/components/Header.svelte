@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { translations, type Locale } from "../../translations";
   import PageTitle from "./PageTitle.svelte";
 
   export let ledgerTitle: string;
@@ -19,12 +20,16 @@
   export let onQuery: (value: string) => void;
   export let onConversion: (value: string) => void;
   export let onInterval: (value: string) => void;
+
+  function t(key: string): string {
+    return translations[(locale === "zh-CN" ? "zh-CN" : "en") as Locale][key] || translations.en[key] || key;
+  }
 </script>
 
 <header>
   <h1>
     <a class="ledger-title" href="/" on:click|preventDefault={() => onNavigate("/")}>{ledgerTitle}</a>
-    <PageTitle {route} {account} />
+    <PageTitle {route} {account} {locale} />
   </h1>
   <span class="spacer"></span>
   <form class="flex-row" aria-label="Global filters" on:submit|preventDefault>
@@ -54,31 +59,31 @@
     />
   </form>
   <label class="header-select">
-    <span>Conversion</span>
+    <span>{t("conversion")}</span>
     <select id="conversion" value={conversion} on:change={(event) => onConversion((event.currentTarget as HTMLSelectElement).value)}>
-      <option value="at_cost">At cost</option>
-      <option value="market_value">Market value</option>
+      <option value="at_cost">{t("atCost")}</option>
+      <option value="market_value">{t("marketValue")}</option>
       <option value="units">Units</option>
-      <option value="currency">Currency</option>
+      <option value="currency">{t("currency")}</option>
     </select>
   </label>
   <label class="header-select">
-    <span>Interval</span>
+    <span>{t("interval")}</span>
     <select id="interval" value={interval} on:change={(event) => onInterval((event.currentTarget as HTMLSelectElement).value)}>
-      <option value="month">Monthly</option>
-      <option value="quarter">Quarterly</option>
-      <option value="year">Yearly</option>
+      <option value="month">{t("monthly")}</option>
+      <option value="quarter">{t("quarterly")}</option>
+      <option value="year">{t("yearly")}</option>
     </select>
   </label>
   <label class="header-select">
-    <span>Language</span>
+    <span>{t("language")}</span>
     <select id="locale" value={locale} on:change={(event) => onLocale((event.currentTarget as HTMLSelectElement).value)}>
       <option value="en">English</option>
       <option value="zh-CN">简体中文</option>
     </select>
   </label>
   <label class="header-select">
-    <span>Theme</span>
+    <span>{t("theme")}</span>
     <select id="theme" value={theme} on:change={(event) => onTheme((event.currentTarget as HTMLSelectElement).value)}>
       <option value="system">System</option>
       <option value="dark">Dark</option>

@@ -8,7 +8,7 @@ export type Locale = "en" | "zh-CN";
 /** Labels used by the read-only workbench. Keep both catalogs complete. */
 export const translations: Record<Locale, Record<string, string>> = {
   en: {
-    subtitle: "Read-only local ledger view.", language: "Language", overview: "Overview", accounts: "Accounts",
+    subtitle: "Read-only local ledger view.", language: "Language", theme: "Theme", conversion: "Conversion", interval: "Interval", overview: "Overview", accounts: "Accounts",
     journal: "Journal", trialBalance: "Trial balance", balanceSheet: "Balance sheet",
     incomeStatement: "Income statement", holdings: "Holdings", prices: "Prices", commodities: "Commodities", events: "Events",
     documents: "Documents", statistics: "Statistics", diagnostics: "Diagnostics", query: "Query", status: "Status", snapshot: "Snapshot",
@@ -29,7 +29,7 @@ export const translations: Record<Locale, Record<string, string>> = {
   },
   "zh-CN": {
     subtitle: "只读本地账本视图。", language: "语言", overview: "概览", accounts: "账户", journal: "日记账",
-    trialBalance: "试算平衡", balanceSheet: "资产负债表", incomeStatement: "损益表", holdings: "持仓",
+    trialBalance: "试算平衡", balanceSheet: "资产负债表", incomeStatement: "损益表", holdings: "持仓", theme: "主题", conversion: "换算", interval: "区间",
     prices: "价格", commodities: "商品", events: "事件", documents: "文档", statistics: "统计", diagnostics: "诊断", query: "查询", status: "状态",
     snapshot: "快照", valid: "有效", accountsCount: "账户数", diagnosticsCount: "诊断数", publishedAt: "发布时间",
     yes: "是", no: "否", loading: "加载中…", unavailable: "没有有效快照。", rows: "行", columns: "列",

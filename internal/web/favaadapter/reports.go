@@ -248,6 +248,13 @@ func evaluationDateRange(e ledger.Evaluation) *DateRange {
 }
 
 func firstCurrency(e ledger.Evaluation) string {
+	if configured := strings.TrimSpace(e.Options["operating_currency"]); configured != "" {
+		for _, value := range strings.FieldsFunc(configured, func(r rune) bool { return r == ',' || r == ' ' || r == '\t' }) {
+			if value != "" {
+				return value
+			}
+		}
+	}
 	currencies := map[string]bool{}
 	for _, state := range e.Accounts {
 		for currency := range state.Balances {
