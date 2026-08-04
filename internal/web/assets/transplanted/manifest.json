@@ -1,0 +1,6 @@
+{
+  "name": "orangecount-fava-shell",
+  "artifact": "development-only",
+  "adapter": "private-orange-count-fava-shaped",
+  "entry": "index.html"
+}

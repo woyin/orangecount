@@ -4,7 +4,7 @@ NODE ?= node
 NPM ?= npm
 
 .PHONY: all build test race fmt vet license licenses clean \
-	web-test web-check web-build-check check fixturegen visual-reference \
+	web-test web-check web-build-check web-build-embedded check fixturegen visual-reference \
 	check-route-manifest check-provenance check-reference-output
 
 all: build
@@ -66,6 +66,12 @@ web-check: web-test check
 # Deterministic frontend build check (Node + esbuild).
 web-build-check:
 	$(NPM) --prefix web run build:check
+
+# Copy the deterministic staged transplant into a separate embedded asset
+# namespace. The Go server selects it only with ORANGECOUNT_TRANSPLANTED_UI=1
+# until route gates and visual approval authorize the final cutover.
+web-build-embedded:
+	$(NPM) --prefix web run build:embedded
 
 # Regenerate the committed dense synthetic reference fixture. This target never
 # reads a private ledger and accepts no source-ledger input.

@@ -365,6 +365,32 @@
       "upstream_hash": "40fbf531a43c65bf7ee3a42b364b09edb9b1478171b45a47d1dfaa2ab87aca7c",
       "notice": "NOTICE",
       "notes": "Adapted Fava account report with OrangeCount account-scoped balance and Journal projections."
+    },
+    "internal/web/assets/transplanted/app.css": {
+      "current_kind": "derived",
+      "upstream": "frontend/css/style.css + frontend/css/base.css + frontend/css/layout.css + frontend/css/components.css + frontend/css/fonts.css + frontend/css/grid.css + frontend/css/charts.css + frontend/css/tree-table.css",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "78b8ddc7150cf285a3318aa13ba6ef5fa4a04e7c9c875b4d637f2a47576c7c4b",
+      "notice": "NOTICE",
+      "notes": "Deterministic bundled CSS generated from the pinned Fava-derived stylesheet set; app.css is served only by the explicit transplanted-ui flag."
+    },
+    "internal/web/assets/transplanted/app.js": {
+      "current_kind": "derived",
+      "upstream": "frontend/src/app.ts + selected frontend/src/sidebar and report units",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "19e4d5f514496e8bdb45478179580696044d06076e7512810824907ebbca1614",
+      "notice": "NOTICE",
+      "notes": "Deterministic OrangeCount adapter bundle; not served unless ORANGECOUNT_TRANSPLANTED_UI=1."
+    },
+    "internal/web/assets/transplanted/index.html": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Generated OrangeCount mount document for the staged transplant; no runtime CDN or network dependency."
+    },
+    "internal/web/assets/transplanted/manifest.json": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Generated development artifact metadata for the transplanted bundle."
     }
   }
 }

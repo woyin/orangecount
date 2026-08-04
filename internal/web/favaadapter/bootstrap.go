@@ -6,6 +6,7 @@
 package favaadapter
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
@@ -34,10 +35,14 @@ import (
 //     scope (ADR-0024, ADR-0033). The frontend validator accepts these as
 //     empty/false.
 type Bootstrap struct {
+	// AccountDetails contains display-only account lifecycle and balance data.
+	AccountDetails map[string]AccountDetail `json:"account_details"`
 	// Accounts is the sorted, deduplicated account list.
 	Accounts []string `json:"accounts"`
 	// Currencies is the sorted, deduplicated currency list.
-	Currencies []string `json:"currencies"`
+	Currencies    []string          `json:"currencies"`
+	CurrencyNames map[string]string `json:"currency_names"`
+	Precisions    map[string]int    `json:"precisions"`
 	// Payees is the sorted, deduplicated payee list.
 	Payees []string `json:"payees"`
 	// Tags is the sorted, deduplicated tag list.
@@ -55,9 +60,12 @@ type Bootstrap struct {
 	// BaseURL is the loopback base the embedded shell is served at.
 	BaseURL string `json:"base_url"`
 	// Extensions is always empty (excluded per ADR-0024).
-	Extensions []string `json:"extensions"`
+	Extensions []Extension `json:"extensions"`
 	// OtherLedgers is always empty (single-ledger product).
-	OtherLedgers []string `json:"other_ledgers"`
+	OtherLedgers        [][2]string `json:"other_ledgers"`
+	SidebarLinks        [][2]string `json:"sidebar_links"`
+	UserQueries         []UserQuery `json:"user_queries"`
+	UpcomingEventsCount int         `json:"upcoming_events_count"`
 	// Incognito is always false (no incognito mode projection).
 	Incognito bool `json:"incognito"`
 	// HaveExcel is always false (Excel export out of scope).
@@ -72,6 +80,23 @@ type Bootstrap struct {
 // AdapterDiagnostic is a redacted, display-safe diagnostic. The frontend
 // errors validator expects {type, message, source{filename,lineno}|null};
 // this is the independent Go mapping (contract row: errors).
+type AccountDetail struct {
+	BalanceString  string `json:"balance_string,omitempty"`
+	CloseDate      string `json:"close_date,omitempty"`
+	UptodateStatus string `json:"uptodate_status,omitempty"`
+}
+
+type Extension struct {
+	Name        string `json:"name"`
+	ReportTitle string `json:"report_title,omitempty"`
+	HasJSModule bool   `json:"has_js_module"`
+}
+
+type UserQuery struct {
+	Name        string `json:"name"`
+	QueryString string `json:"query_string"`
+}
+
 type AdapterDiagnostic struct {
 	// Type echoes the diagnostic code (e.g. "E-CUSTOM").
 	Type string `json:"type"`
@@ -102,11 +127,16 @@ type BootstrapOptions struct {
 // state.
 func BootstrapProjection(opts BootstrapOptions) Bootstrap {
 	proj := Bootstrap{
-		BaseURL:      opts.BaseURL,
-		Extensions:   []string{},
-		OtherLedgers: []string{},
-		FavaOptions:  map[string]string{},
-		Options:      map[string]string{},
+		AccountDetails: map[string]AccountDetail{},
+		BaseURL:        opts.BaseURL,
+		CurrencyNames:  map[string]string{},
+		Precisions:     map[string]int{},
+		Extensions:     []Extension{},
+		OtherLedgers:   [][2]string{},
+		SidebarLinks:   [][2]string{},
+		UserQueries:    []UserQuery{},
+		FavaOptions:    map[string]string{},
+		Options:        map[string]string{},
 	}
 	if opts.Snapshot == nil {
 		return proj
@@ -126,6 +156,13 @@ func BootstrapProjection(opts BootstrapOptions) Bootstrap {
 
 	currencies := collectCurrencies(evaluation)
 	proj.Currencies = currencies
+	for _, currency := range currencies {
+		proj.CurrencyNames[currency] = currency
+		proj.Precisions[currency] = 2
+	}
+	proj.AccountDetails = projectAccountDetails(evaluation)
+	proj.UserQueries = projectUserQueries(evaluation)
+	proj.UpcomingEventsCount = countEvents(evaluation)
 
 	payees, tags, links, years := collectDimensions(evaluation)
 	proj.Payees = payees
@@ -151,6 +188,54 @@ func BootstrapProjection(opts BootstrapOptions) Bootstrap {
 // optionsDefault returns the subset of evaluated options that the frontend
 // reads for shell display (title, operating_currency, name_*). Unknown keys
 // are ignored. This is a presentation projection, not a semantic one.
+func projectAccountDetails(evaluation ledger.Evaluation) map[string]AccountDetail {
+	result := make(map[string]AccountDetail, len(evaluation.Accounts))
+	for account, state := range evaluation.Accounts {
+		currencies := make([]string, 0, len(state.Balances))
+		for currency := range state.Balances {
+			currencies = append(currencies, currency)
+		}
+		sort.Strings(currencies)
+		parts := make([]string, 0, len(currencies))
+		for _, currency := range currencies {
+			parts = append(parts, fmt.Sprintf("%s %s", state.Balances[currency].String(), currency))
+		}
+		detail := AccountDetail{BalanceString: strings.Join(parts, ", "), UptodateStatus: "green"}
+		if state.Closed != nil {
+			detail.CloseDate = state.Closed.Raw
+		}
+		result[account] = detail
+	}
+	return result
+}
+
+func projectUserQueries(evaluation ledger.Evaluation) []UserQuery {
+	result := []UserQuery{}
+	for _, entry := range evaluation.Entries {
+		switch value := entry.Directive.(type) {
+		case ledger.Query:
+			result = append(result, UserQuery{Name: value.Name, QueryString: value.Query})
+		case *ledger.Query:
+			if value != nil {
+				result = append(result, UserQuery{Name: value.Name, QueryString: value.Query})
+			}
+		}
+	}
+	sort.SliceStable(result, func(i, j int) bool { return result[i].Name < result[j].Name })
+	return result
+}
+
+func countEvents(evaluation ledger.Evaluation) int {
+	count := 0
+	for _, entry := range evaluation.Entries {
+		switch entry.Directive.(type) {
+		case ledger.Event, *ledger.Event:
+			count++
+		}
+	}
+	return count
+}
+
 func optionsDefault(options map[string]string) map[string]string {
 	subset := map[string]string{}
 	for _, key := range []string{"title", "operating_currency", "name_assets", "name_liabilities", "name_equity", "name_income", "name_expenses"} {

@@ -158,6 +158,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/documents", s.handleIndex)
 	mux.HandleFunc("/documents/", s.handleDocument)
 	mux.HandleFunc("/app.js", s.handleApp)
+	mux.HandleFunc("/app.css", s.handleStyle)
 	return mux
 }
 
@@ -235,7 +236,7 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	data, err := assets.ReadFile("assets/index.html")
+	data, err := assets.ReadFile(s.uiAsset("index.html"))
 	if err != nil {
 		http.Error(w, "embedded UI unavailable", http.StatusInternalServerError)
 		return
@@ -1453,18 +1454,41 @@ func displayDiagnosticPath(value diagnostic.Diagnostic, graph *source.Graph) str
 	return source.SafeDisplayPath(value.Path)
 }
 
+func (s *Server) uiAsset(name string) string {
+	if os.Getenv("ORANGECOUNT_TRANSPLANTED_UI") == "1" {
+		return "assets/transplanted/" + name
+	}
+	return "assets/" + name
+}
+
 func (s *Server) handleApp(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		w.Header().Set("Allow", "GET, HEAD")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	data, err := assets.ReadFile("assets/app.js")
+	data, err := assets.ReadFile(s.uiAsset("app.js"))
 	if err != nil {
 		http.Error(w, "embedded UI unavailable", http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
+	w.Header().Set("Cache-Control", "no-cache")
+	_, _ = w.Write(data)
+}
+
+func (s *Server) handleStyle(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet && r.Method != http.MethodHead {
+		w.Header().Set("Allow", "GET, HEAD")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	data, err := assets.ReadFile(s.uiAsset("app.css"))
+	if err != nil {
+		http.Error(w, "embedded UI unavailable", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "text/css; charset=utf-8")
 	w.Header().Set("Cache-Control", "no-cache")
 	_, _ = w.Write(data)
 }

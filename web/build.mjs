@@ -1,6 +1,6 @@
 import { build } from "esbuild";
 import svelte from "esbuild-svelte";
-import { mkdir, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const webRoot = import.meta.dirname;
@@ -44,4 +44,14 @@ await writeFile(path.join(staging, "manifest.json"), `${JSON.stringify({
   adapter: "private-orange-count-fava-shaped",
   entry: "index.html",
 }, null, 2)}\n`);
-console.log(`built sanitized Fava shell into web/staging/fava-shell`);
+if (process.env.ORANGECOUNT_SYNC_EMBEDDED === "1") {
+  const embedded = path.join(webRoot, "..", "internal", "web", "assets", "transplanted");
+  await rm(embedded, { recursive: true, force: true });
+  await mkdir(embedded, { recursive: true });
+  for (const name of ["app.css", "app.js", "index.html", "manifest.json"]) {
+    await copyFile(path.join(staging, name), path.join(embedded, name));
+  }
+  console.log(`synced transplanted shell into internal/web/assets/transplanted`);
+} else {
+  console.log(`built sanitized Fava shell into web/staging/fava-shell`);
+}

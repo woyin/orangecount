@@ -419,6 +419,29 @@ func TestEmbeddedUIProvidesSortableTablesAndJournalDateControls(t *testing.T) {
 	}
 }
 
+func TestTransplantedUIAssetSelection(t *testing.T) {
+	t.Setenv("ORANGECOUNT_TRANSPLANTED_UI", "1")
+	server, err := NewServer(Config{Store: snapshot.NewStore(nil), Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
+	if recorder.Code != http.StatusOK || !strings.Contains(recorder.Body.String(), "app.css") || !strings.Contains(recorder.Body.String(), "display: contents") {
+		t.Fatalf("transplanted index status=%d body=%q", recorder.Code, recorder.Body.String())
+	}
+	recorder = httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/app.css", nil))
+	if recorder.Code != http.StatusOK || !strings.Contains(recorder.Header().Get("Content-Type"), "text/css") || !strings.Contains(recorder.Body.String(), "--font-family") {
+		t.Fatalf("transplanted css status=%d content-type=%q", recorder.Code, recorder.Header().Get("Content-Type"))
+	}
+	recorder = httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/app.js", nil))
+	if recorder.Code != http.StatusOK || !strings.Contains(recorder.Body.String(), "Fava-aligned shell") {
+		t.Fatalf("transplanted app status=%d", recorder.Code)
+	}
+}
+
 func TestEditorWriteWorkflowIsAtomicAndRevalidated(t *testing.T) {
 	dir := t.TempDir()
 	entry := filepath.Join(dir, "main.bean")
