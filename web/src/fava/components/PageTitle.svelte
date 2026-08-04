@@ -7,4 +7,13 @@
   $: title = route === "account" && account ? account : pageLabel(route);
 </script>
 
-<h1 id="page-title">{title}</h1>
+<strong id="page-title">{title}</strong>
+
+<style>
+  strong::before {
+    margin: 0 10px;
+    font-weight: normal;
+    content: "›";
+    opacity: 0.5;
+  }
+</style>

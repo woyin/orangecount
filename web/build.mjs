@@ -32,6 +32,7 @@ await build({
   sourcemap: false,
   minify: false,
   legalComments: "eof",
+  loader: { ".woff": "dataurl", ".woff2": "dataurl" },
   plugins: [svelte({ compilerOptions: { dev: false } })],
 });
 await writeFile(path.join(staging, "index.html"), indexHTML);

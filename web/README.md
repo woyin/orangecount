@@ -2,7 +2,7 @@
 
 ## Current state
 
-`internal/web/assets/` contains the legacy checked-in frontend consumed by the Go binary. `web/src/fava/` currently contains a clean-room Svelte shell prototype; despite its name, it is not an accepted Fava frontend transplant and implements no complete report route. Do not continue visually polishing that prototype.
+`internal/web/assets/` still contains the legacy checked-in frontend consumed by the Go binary. `web/src/fava/` now contains the first Fava-derived shell transplant: pinned global CSS, fonts, header, mobile aside, page-title structure, and an OrangeCount adapter seam. Report routes remain staged-only until their adapter contracts and acceptance gates pass; do not mix the legacy and transplanted component trees.
 
 The authoritative migration plan is [`../docs/fava-frontend-transplant-plan.md`](../docs/fava-frontend-transplant-plan.md).
 

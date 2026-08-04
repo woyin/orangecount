@@ -5,3 +5,32 @@ OrangeCount is an independent clean-room implementation of the public
 Beancount v3 language and accounting behavior. It does not include or link
 to Beancount source code. Beancount is a separate project with its own
 license and is used only as an optional development-time compatibility oracle.
+
+Fava-derived frontend units
+---------------------------
+The files under web/src/fava that are classified as derived in
+web/provenance-manifest.json are adapted from Fava 1.30.12 at commit
+#aa7538e8971252c9efc52c8a516a3a77d604553f. Fava is Copyright (c) 2015-2016
+Dominik Aumayr and is distributed under the MIT License:
+
+The MIT License (MIT)
+
+Copyright (c) 2015-2016 Dominik Aumayr <dominik@aumayr.name>
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

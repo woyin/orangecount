@@ -1,46 +1,63 @@
 <script lang="ts">
-  import { pageLabel } from "../router.mjs";
+  import PageTitle from "./PageTitle.svelte";
 
   export let ledgerTitle: string;
   export let route: string;
   export let account = "";
   export let locale: string;
   export let theme: string;
-  export let menuOpen = false;
-  export let time = "all";
+  export let time = "";
+  export let accountFilter = "";
   export let filter = "";
-  export let onMenu: () => void;
   export let onNavigate: (href: string) => void;
   export let onLocale: (value: string) => void;
   export let onTheme: (value: string) => void;
   export let onTime: (value: string) => void;
+  export let onAccount: (value: string) => void;
   export let onQuery: (value: string) => void;
 </script>
 
-<header class="topbar">
-  <button id="menu-toggle" class="menu-toggle" type="button" aria-controls="sidebar" aria-expanded={menuOpen} aria-label="Menu" on:click={onMenu}>
-    <span aria-hidden="true">☰</span>
-  </button>
-  <a class="brand" href="/" on:click|preventDefault={() => onNavigate("/")}>{ledgerTitle}</a>
-  <span class="brand-separator" aria-hidden="true">›</span>
-  <span class="brand-page">{account || pageLabel(route)}</span>
-  <div class="global-filters" role="search" aria-label="Global filters">
-    <label>Time
-      <select id="global-time" value={time} on:change={(event) => onTime((event.currentTarget as HTMLSelectElement).value)}>
-        <option value="all">All time</option>
-        <option value="year">This year</option>
-        <option value="month">This month</option>
-      </select>
-    </label>
-    <input id="global-filter" type="search" value={filter} aria-label="Filter by tag, payee, or narration" placeholder="Filter by tag, payee, or narration" on:input={(event) => onQuery((event.currentTarget as HTMLInputElement).value)} />
-  </div>
-  <label class="select-control">Language
+<header>
+  <h1>
+    <a class="ledger-title" href="/" on:click|preventDefault={() => onNavigate("/")}>{ledgerTitle}</a>
+    <PageTitle {route} {account} />
+  </h1>
+  <span class="spacer"></span>
+  <form class="flex-row" aria-label="Global filters" on:submit|preventDefault>
+    <input
+      id="global-time"
+      type="text"
+      value={time}
+      placeholder="Time"
+      aria-label="Time"
+      on:change={(event) => onTime((event.currentTarget as HTMLInputElement).value)}
+    />
+    <input
+      id="global-account"
+      type="text"
+      value={accountFilter}
+      placeholder="Account"
+      aria-label="Account"
+      on:change={(event) => onAccount((event.currentTarget as HTMLInputElement).value)}
+    />
+    <input
+      id="global-filter"
+      type="text"
+      value={filter}
+      placeholder="Filter by tag, payee, ..."
+      aria-label="Filter by tag, payee, or narration"
+      on:change={(event) => onQuery((event.currentTarget as HTMLInputElement).value)}
+    />
+  </form>
+  <label class="header-select">
+    <span>Language</span>
     <select id="locale" value={locale} on:change={(event) => onLocale((event.currentTarget as HTMLSelectElement).value)}>
       <option value="en">English</option>
       <option value="zh-CN">简体中文</option>
     </select>
   </label>
-  <label class="select-control">Theme
+  <label class="header-select">
+    <span>Theme</span>
     <select id="theme" value={theme} on:change={(event) => onTheme((event.currentTarget as HTMLSelectElement).value)}>
       <option value="system">System</option>
       <option value="dark">Dark</option>
@@ -48,3 +65,57 @@
     </select>
   </label>
 </header>
+
+<style>
+  h1 {
+    display: inline-block;
+    padding: 0.5rem;
+    margin: 0;
+    overflow: hidden;
+    font-size: 16px;
+    font-weight: normal;
+  }
+
+  .ledger-title {
+    color: inherit;
+  }
+
+  .spacer {
+    flex: 1;
+  }
+
+  .header-select {
+    display: flex;
+    gap: 0.25rem;
+    align-items: center;
+    white-space: nowrap;
+  }
+
+  .header-select select {
+    color: var(--header-color);
+    background-color: var(--header-background);
+    border: 1px solid var(--header-placeholder-background);
+  }
+
+  @media (width <= 767px) {
+    .header-select span {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    form {
+      width: 100%;
+    }
+
+    form :global(input) {
+      min-width: 0;
+      flex: 1;
+    }
+  }
+</style>

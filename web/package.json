@@ -18,6 +18,9 @@
     "check:phase0": "node scripts/check-route-manifest.mjs && node scripts/check-provenance.mjs"
   },
   "devDependencies": {
+    "@fontsource/fira-mono": "5.2.7",
+    "@fontsource/fira-sans": "5.2.7",
+    "@fontsource/source-code-pro": "5.2.7",
     "@playwright/test": "1.52.0",
     "esbuild": "0.27.0",
     "esbuild-svelte": "0.9.0",

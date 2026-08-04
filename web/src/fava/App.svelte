@@ -4,9 +4,8 @@
   import ErrorBoundary from "./components/ErrorBoundary.svelte";
   import Header from "./components/Header.svelte";
   import LoadingBoundary from "./components/LoadingBoundary.svelte";
-  import PageTitle from "./components/PageTitle.svelte";
   import Sidebar from "./components/Sidebar.svelte";
-  import { parseRoute, routeHref, updateQuery } from "./router.mjs";
+  import { parseRoute, updateQuery } from "./router.mjs";
   import { createShellStore, initialShellState } from "./state.mjs";
 
   const initialRoute = parseRoute(window.location.href);
@@ -18,8 +17,8 @@
   const adapter = createAdapterClient();
 
   $: current = $shell;
-  $: document.documentElement.dataset.theme = current.theme === "system" ? "" : current.theme;
   $: document.documentElement.lang = current.locale;
+  $: document.documentElement.dataset.theme = current.theme === "system" ? "" : current.theme;
 
   function navigate(href: string) {
     const target = new URL(href, window.location.href);
@@ -36,11 +35,18 @@
     shell.dispatch({ type: "query", query: { filter: value } });
   }
 
-  function setTime(value: string) {
-    const href = updateQuery(window.location.href, { time: value === "all" ? "" : value });
+  function setAccount(value: string) {
+    const href = updateQuery(window.location.href, { account: value });
     const target = new URL(href, window.location.href);
     window.history.replaceState({}, "", target.href);
-    shell.dispatch({ type: "query", query: { time: value === "all" ? "" : value } });
+    shell.dispatch({ type: "query", query: { account: value } });
+  }
+
+  function setTime(value: string) {
+    const href = updateQuery(window.location.href, { time: value });
+    const target = new URL(href, window.location.href);
+    window.history.replaceState({}, "", target.href);
+    shell.dispatch({ type: "query", query: { time: value } });
   }
 
   function setLocale(locale: string) {
@@ -79,45 +85,75 @@
 
 <svelte:head>
   <title>{current.ledgerTitle} › {current.account || current.route}</title>
-  <meta name="description" content="OrangeCount local ledger interface shell" />
+  <meta name="description" content="OrangeCount local ledger interface" />
 </svelte:head>
 
-<div class="application-shell">
-  <Header
-    ledgerTitle={current.ledgerTitle}
-    route={current.route}
-    account={current.account}
-    locale={current.locale}
-    theme={current.theme}
-    menuOpen={current.sidebarOpen}
-    time={current.query.time || "all"}
-    filter={current.query.filter || ""}
-    onMenu={() => shell.dispatch({ type: "menu" })}
-    onNavigate={navigate}
-    onLocale={setLocale}
-    onTheme={setTheme}
-    onTime={setTime}
-    onQuery={setQuery}
-  />
-  <div class="shell-body">
-    <Sidebar route={current.route} open={current.sidebarOpen} onNavigate={navigate} />
-    <main id="main-content" tabindex="-1">
-      <div class="page-heading">
-        <PageTitle route={current.route} account={current.account} />
-        <p class="subtitle">Read-only local ledger view</p>
-      </div>
-      <div id="app-content">
-        <LoadingBoundary active={current.loading}>
-          <ErrorBoundary message={current.error} onRetry={retry}>
-            <section class="route-placeholder" aria-labelledby="route-heading">
-              <p class="eyebrow">Fava-aligned shell</p>
-              <h2 id="route-heading">{current.account || current.route}</h2>
-              <p>This route is ready for its private OrangeCount adapter contract.</p>
-              <p class="adapter-note">Data access is intentionally deferred until the P3 adapter is available.</p>
-            </section>
-          </ErrorBoundary>
-        </LoadingBoundary>
-      </div>
-    </main>
-  </div>
-</div>
+<Header
+  ledgerTitle={current.ledgerTitle}
+  route={current.route}
+  account={current.account}
+  locale={current.locale}
+  theme={current.theme}
+  time={current.query.time || ""}
+  accountFilter={current.query.account || ""}
+  filter={current.query.filter || ""}
+  onNavigate={navigate}
+  onLocale={setLocale}
+  onTheme={setTheme}
+  onTime={setTime}
+  onAccount={setAccount}
+  onQuery={setQuery}
+/>
+<Sidebar route={current.route} open={current.sidebarOpen} onMenu={() => shell.dispatch({ type: "menu" })} onNavigate={navigate} />
+<article id="main-content" tabindex="-1">
+  <LoadingBoundary active={current.loading}>
+    <ErrorBoundary message={current.error} onRetry={retry}>
+      <section class="route-placeholder" aria-labelledby="route-heading">
+        <p class="headerline"><strong>Fava-aligned shell</strong></p>
+        <h2 id="route-heading">{current.account || current.route}</h2>
+        <p>This route is ready for its private OrangeCount adapter contract.</p>
+      </section>
+    </ErrorBoundary>
+  </LoadingBoundary>
+</article>
+
+<style>
+  .route-placeholder {
+    max-width: 70rem;
+  }
+
+  .route-placeholder p {
+    color: var(--text-color-lighter);
+  }
+
+  :global(.state-panel) {
+    max-width: 70rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border);
+  }
+
+  :global(.error-panel) {
+    color: var(--error);
+    border-color: var(--error);
+  }
+
+  :global(.loading-panel) {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  :global(.spinner) {
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid var(--border);
+    border-top-color: var(--link-color);
+    border-radius: 50%;
+    animation: spinner 1s linear infinite;
+  }
+
+  @keyframes spinner {
+    to { transform: rotate(360deg); }
+  }
+</style>

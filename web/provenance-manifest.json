@@ -91,9 +91,12 @@
       "notes": "Legacy en/zh-CN label catalogs."
     },
     "web/src/fava/App.svelte": {
-      "current_kind": "prototype",
-      "upstream": null,
-      "notes": "Clean-room Svelte shell prototype; not accepted Fava transplant evidence (per fava-provenance-inventory.md rows)."
+      "current_kind": "derived",
+      "upstream": "frontend/src/app.ts",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "19e4d5f514496e8bdb45478179580696044d06076e7512810824907ebbca1614",
+      "notice": "NOTICE",
+      "notes": "Adapted Fava application shell; route state and data transport remain OrangeCount-owned."
     },
     "web/src/fava/adapter-client.ts": {
       "current_kind": "prototype",
@@ -101,9 +104,12 @@
       "notes": "Clean-room adapter client boundary."
     },
     "web/src/fava/main.ts": {
-      "current_kind": "prototype",
-      "upstream": null,
-      "notes": "Clean-room mount point."
+      "current_kind": "derived",
+      "upstream": "frontend/src/app.ts",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "19e4d5f514496e8bdb45478179580696044d06076e7512810824907ebbca1614",
+      "notice": "NOTICE",
+      "notes": "Adapted Fava application entry; OrangeCount owns the adapter bootstrap and excludes extensions/plugin custom elements."
     },
     "web/src/fava/router.mjs": {
       "current_kind": "prototype",
@@ -121,9 +127,12 @@
       "notes": "Clean-room shell error state."
     },
     "web/src/fava/components/Header.svelte": {
-      "current_kind": "prototype",
-      "upstream": null,
-      "notes": "Clean-room shell header."
+      "current_kind": "derived",
+      "upstream": "frontend/src/sidebar/Header.svelte",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "cb69455dda770bef24809a5bae6501e669c44e73e0258cfddf850ae0cd649517",
+      "notice": "NOTICE",
+      "notes": "Adapted Fava sidebar header and filter placement for the private OrangeCount adapter."
     },
     "web/src/fava/components/LoadingBoundary.svelte": {
       "current_kind": "prototype",
@@ -131,19 +140,20 @@
       "notes": "Clean-room shell loading state."
     },
     "web/src/fava/components/PageTitle.svelte": {
-      "current_kind": "prototype",
-      "upstream": null,
-      "notes": "Clean-room shell page title."
+      "current_kind": "derived",
+      "upstream": "frontend/src/sidebar/PageTitle.svelte",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "74f3724712365ae2f63a1f3787b68e4f56557d11a93c3379d04adbe660a05037",
+      "notice": "NOTICE",
+      "notes": "Fava page-title structure adapted to the OrangeCount route state."
     },
     "web/src/fava/components/Sidebar.svelte": {
-      "current_kind": "prototype",
-      "upstream": null,
-      "notes": "Clean-room shell navigation."
-    },
-    "web/src/fava/styles/shell.css": {
-      "current_kind": "prototype",
-      "upstream": null,
-      "notes": "Clean-room shell stylesheet; no Fava CSS or font assets copied."
+      "current_kind": "derived",
+      "upstream": "frontend/src/sidebar/AsideWithButton.svelte",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "256a87a6c7e185f44531d464d221a009e2fe31d65d1b794744e925ca4804e607",
+      "notice": "NOTICE",
+      "notes": "Adapted Fava mobile aside/button shell and AsideContents navigation; extensions and multi-ledger links are excluded."
     },
     "web/tests/unit/router.test.mjs": {
       "current_kind": "original",
@@ -199,6 +209,46 @@
       "current_kind": "legacy",
       "upstream": null,
       "notes": "Legacy regression harness for embedded journal sorting."
+    },
+    "web/src/fava/styles/fava/base.css": {
+      "current_kind": "derived",
+      "upstream": "frontend/css/base.css",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "ad444f27a9d928462aa1ef4e1166352b88107049fe28217bc0532630aec9d8af",
+      "notice": "NOTICE",
+      "notes": "Fava global stylesheet transplanted at the pinned reference revision."
+    },
+    "web/src/fava/styles/fava/components.css": {
+      "current_kind": "derived",
+      "upstream": "frontend/css/components.css",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "7520e519d3805d4c350edf32a3e117b03aec9b0d7489c30a1b7eff0b9863d280",
+      "notice": "NOTICE",
+      "notes": "Fava global stylesheet transplanted at the pinned reference revision."
+    },
+    "web/src/fava/styles/fava/fonts.css": {
+      "current_kind": "derived",
+      "upstream": "frontend/css/fonts.css",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "266193daab232dd1c4badd2123269f32ce7512aa8f348d99a0b591f9baf962ee",
+      "notice": "NOTICE",
+      "notes": "Fava global stylesheet transplanted at the pinned reference revision."
+    },
+    "web/src/fava/styles/fava/layout.css": {
+      "current_kind": "derived",
+      "upstream": "frontend/css/layout.css",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "41de9d2e9060626a7d0a4de93d68695cfed85598a564543f165ab1e60896182a",
+      "notice": "NOTICE",
+      "notes": "Fava global stylesheet transplanted at the pinned reference revision."
+    },
+    "web/src/fava/styles/fava/style.css": {
+      "current_kind": "derived",
+      "upstream": "frontend/css/style.css",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "78b8ddc7150cf285a3318aa13ba6ef5fa4a04e7c9c875b4d637f2a47576c7c4b",
+      "notice": "NOTICE",
+      "notes": "Fava global stylesheet transplanted at the pinned reference revision."
     }
   }
 }
