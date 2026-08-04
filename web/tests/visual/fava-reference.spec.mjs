@@ -8,15 +8,25 @@ test.describe("optional isolated Fava 1.30.12 reference", () => {
   test.use({ baseURL: referenceURL });
 
   for (const [name, route] of [
-    ["shell-journal", "/journal/"],
-    ["income-statement", "/income_statement/"],
-    ["balance-sheet", "/balance_sheet/"],
-    ["trial-balance", "/trial_balance/"],
-    ["account-detail", "/account/Assets%3AWallet%3APrimary/"],
+    ["shell-journal", "journal"],
+    ["income-statement", "income_statement"],
+    ["balance-sheet", "balance_sheet"],
+    ["trial-balance", "trial_balance"],
+    ["account-detail", "account/Assets:Cash:Wallet01"],
   ]) {
     test(`captures sanitized ${name} reference`, async ({ page }) => {
-      await page.goto(route, { waitUntil: "networkidle" });
+      // Fava serves the SPA below a ledger-specific slug. Start at `/` so
+      // the server supplies that slug, then navigate to the client route.
+      await page.goto("/", { waitUntil: "networkidle" });
+      const redirectedPath = new URL(page.url()).pathname;
+      const marker = "/income_statement/";
+      const markerIndex = redirectedPath.indexOf(marker);
+      if (markerIndex < 1) throw new Error(`Fava did not provide a ledger route prefix: ${redirectedPath}`);
+      const ledgerPrefix = redirectedPath.slice(0, markerIndex + 1);
+      const response = await page.goto(`${ledgerPrefix}${route}/`, { waitUntil: "networkidle" });
+      expect(response?.status()).toBe(200);
       await expect(page.locator("body")).toBeVisible();
+      await expect(page.locator("body")).not.toContainText("Not Found");
       await expect(page).toHaveScreenshot(`${name}.png`, { fullPage: true });
     });
   }

@@ -74,7 +74,7 @@ execution values in `testdata/visual-candidates/fava-reference/environment-lock.
 
 | Field | Captured value |
 | --- | --- |
-| OCI image ID | `sha256:02c702c12363ce300e7f8ae2c2392edf9fd55bda3e908e07592f1229fb72e7eb` |
+| OCI image ID | `sha256:64152901c794d93da74b199b321740cc875962539872edf24d9a7c0760db85f2` |
 | Python | `3.12.8` |
 | Beancount | `3.2.3` |
 | Bison | `3.8.2` |

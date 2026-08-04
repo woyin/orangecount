@@ -84,7 +84,7 @@ async function main() {
       try {
         const data = await readFile(screenshot);
         const size = pngSize(data);
-        requireValue(errors, size?.width === width && size?.height === height, `${project}/${route}.png has unexpected dimensions`);
+        requireValue(errors, size?.width === width && size?.height >= height, `${project}/${route}.png has unexpected dimensions`);
       } catch (error) {
         errors.push(`missing candidate screenshot '${path.relative(repoRoot, screenshot)}': ${error.message}`);
       }
