@@ -249,6 +249,72 @@
       "upstream_hash": "78b8ddc7150cf285a3318aa13ba6ef5fa4a04e7c9c875b4d637f2a47576c7c4b",
       "notice": "NOTICE",
       "notes": "Fava global stylesheet transplanted at the pinned reference revision."
+    },
+    "web/src/fava/components/ReportOutlet.svelte": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "OrangeCount route loader and adapter validation boundary."
+    },
+    "web/src/fava/reports/types.ts": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "OrangeCount exact-decimal runtime validation and report wire types."
+    },
+    "web/src/fava/reports/TreeReport.svelte": {
+      "current_kind": "derived",
+      "upstream": "frontend/src/reports/tree_reports/IncomeStatement.svelte",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "f87ef8bf159ecffa33b1372bc75297d8af8672952006eb2f8d1d54dbe65228c4",
+      "notice": "NOTICE",
+      "notes": "Adapted Fava tree-report composition; OrangeCount owns the report wire types and chart/table primitives."
+    },
+    "web/src/fava/tree-table/TreeTable.svelte": {
+      "current_kind": "derived",
+      "upstream": "frontend/src/tree-table/TreeTable.svelte",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "423682d444b4380525618f3ddf2a5e988d34638828bbe1627fb4096ee74f46df",
+      "notice": "NOTICE",
+      "notes": "Adapted Fava tree table with OrangeCount exact-decimal rendering and local collapse state."
+    },
+    "web/src/fava/tree-table/TreeTableNode.svelte": {
+      "current_kind": "derived",
+      "upstream": "frontend/src/tree-table/TreeTableNode.svelte",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "4d0a25ca8e179a5e6be42e841bbc9d0dbb7f9bc9b3b6ce9802e6d3dc431dee9c",
+      "notice": "NOTICE",
+      "notes": "Adapted Fava tree-table node/account cell with OrangeCount route links and exact values."
+    },
+    "web/src/fava/charts/ReportChart.svelte": {
+      "current_kind": "derived",
+      "upstream": "frontend/src/charts/Chart.svelte",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "41d1cf63f5f938289f34615e294563127fa2b5151afee08f569b37f82ccb3274",
+      "notice": "NOTICE",
+      "notes": "Temporary Wave 1 chart presentation preserving the Fava chart contract; full chart transplant remains a later wave."
+    },
+    "web/src/fava/styles/fava/charts.css": {
+      "current_kind": "derived",
+      "upstream": "frontend/css/charts.css",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "234593eb6ec4f8ec24f1bbffac61e7169969172324e01923d3102eb31066954a",
+      "notice": "NOTICE",
+      "notes": "Fava global stylesheet transplanted at the pinned reference revision."
+    },
+    "web/src/fava/styles/fava/grid.css": {
+      "current_kind": "derived",
+      "upstream": "frontend/css/grid.css",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "6ec894fb7347e125bea39bee4e321e68d2c86f852460931b33cb2b664e67a151",
+      "notice": "NOTICE",
+      "notes": "Fava global stylesheet transplanted at the pinned reference revision."
+    },
+    "web/src/fava/styles/fava/tree-table.css": {
+      "current_kind": "derived",
+      "upstream": "frontend/css/tree-table.css",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "f6c497fbc9128eba1aa3c312993e56417cf48e72c1debec2011b2fb0e5f5b6be",
+      "notice": "NOTICE",
+      "notes": "Fava global stylesheet transplanted at the pinned reference revision."
     }
   }
 }

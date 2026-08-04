@@ -2,8 +2,8 @@
  * Narrow client boundary for the private OrangeCount Fava-shaped adapter.
  *
  * The endpoint names are internal client contracts, not Fava's public API.
- * P3 supplies the loopback handlers and may change transport details without
- * making this client a public compatibility promise.
+ * The loopback handlers may change transport details without making this
+ * client a public compatibility promise.
  */
 
 export interface BootstrapPayload {
@@ -45,7 +45,7 @@ function bootstrapPayload(wire: BootstrapWire): BootstrapPayload {
     locale,
     locales: ["en", "zh-CN"],
     theme: "system",
-    routes: ["journal", "income_statement", "balance_sheet", "trial_balance", "account"],
+    routes: ["income_statement", "balance_sheet", "trial_balance", "journal", "query", "holdings", "commodities", "documents", "events", "statistics", "editor", "import", "options", "help", "account"],
     accounts: wire.accounts || [],
     currencies: wire.currencies || [],
     errors: wire.errors || [],

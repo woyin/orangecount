@@ -1,0 +1,38 @@
+:root {
+  --flex-gap: 0.5rem;
+}
+
+.flex-column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--flex-gap);
+
+  > h3 {
+    margin: 0;
+  }
+}
+
+.flex-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--flex-gap);
+  align-items: center;
+
+  > h3 {
+    margin: 0;
+  }
+
+  > label {
+    display: contents;
+  }
+
+  @media (hover: hover) and (width > 767px) {
+    .remove-row {
+      opacity: 0;
+    }
+  }
+
+  &:hover .remove-row {
+    opacity: 1;
+  }
+}

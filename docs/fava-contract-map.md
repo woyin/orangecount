@@ -36,6 +36,12 @@ coverage; `docs/fava-source-inventory.md` for source decisions;
   present. Current adoption requires a matching provenance row, notice,
   upstream hash, and route-gate evidence.
 
+Wave 1 implementation note: the private `ledger_data`, `metadata`, and
+`income_statement`/`balance_sheet`/`trial_balance` adapter paths now emit
+snapshot envelopes. The staged frontend consumes the tree-report projection;
+embedded cutover remains gated on the four-layer route evidence and approved
+visual baselines.
+
 ## Route table (page → Fava route → adapter endpoint → Go owner)
 
 | Page (frontend route) | Fava source module | Frontend call site | Adapter endpoint (Go) | Go owner | Provenance |
@@ -73,7 +79,7 @@ fixture has not yet been implemented.
 | --- | --- | --- | --- | --- | --- | --- |
 | `changed` | `json_api.changed`; `app.ts` poll | GET, none | wrapped `bool` plus `mtime` | `internal/snapshot` via adapter | mtime/change contract + reload browser flow | rewrite/planned |
 | `errors` | `json_api.get_errors`; app/errors store | GET, none | `[{type,message,source|null}]` | `internal/diagnostic`, `internal/report` | diagnostic/source contract + conditional-nav flow | adapt/planned |
-| `ledger_data` | `internal_api.get_ledger_data`; bootstrap | GET, none | validator-complete `LedgerData` | adapter over snapshot/report/ledger | full fixture validator + bootstrap flow | rewrite/partial prototype |
+| `ledger_data` | `internal_api.get_ledger_data`; bootstrap | GET, none | validator-complete `LedgerData` | adapter over snapshot/report/ledger | full fixture validator + bootstrap flow | rewrite/partial shell slice |
 | `payee_accounts` | `json_api.get_payee_accounts`; transaction form | GET `payee` | `string[]` | report attribute ranking | exact ordering + autocomplete flow | adapt/planned |
 | `payee_transaction` | `json_api.get_payee_transaction`; transaction form | GET `payee` | serialized Transaction or `null` | report transaction projection | fixture match + form-fill flow | adapt/planned |
 | `narration_transaction` | `json_api.get_narration_transaction`; transaction form | GET `narration` | serialized Transaction or `null` | report transaction projection | fixture match + form-fill flow | adapt/planned |
@@ -172,7 +178,7 @@ fixture has not yet been implemented.
 | Semantic rule | v3 exact balances; natural-currency columns; unavailable conversion is a labelled card, never a dropped chart |
 | Response adaptation | `{date_range, charts, trees: SerialisedTreeNode[]}`; charts validated by `chart_validator` |
 | Tests | `internal/report` exact-value tests; adapter contract fixture; browser `web/tests/fava-routes.spec.ts` |
-| Provenance | adopt (frontend components) + rewrite (Go tree/chart projection) |
+| Provenance | adopt (frontend components) + rewrite (Go tree/chart projection); Wave 1 staged slice implemented |
 
 ### `journal_page` (GET)
 

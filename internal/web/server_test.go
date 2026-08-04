@@ -223,6 +223,10 @@ func TestPrivateFavaAdapterBootstrapAndMetadata(t *testing.T) {
 	if metadataResponse.Code != http.StatusOK || !strings.Contains(metadataResponse.Body.String(), "Assets:Cash") {
 		t.Fatalf("metadata status=%d body=%q", metadataResponse.Code, metadataResponse.Body.String())
 	}
+	incomeResponse := request("/__orangecount/fava/income_statement?period=month")
+	if incomeResponse.Code != http.StatusOK || !strings.Contains(incomeResponse.Body.String(), `"trees"`) || !strings.Contains(incomeResponse.Body.String(), "Net Profit") {
+		t.Fatalf("income statement status=%d body=%q", incomeResponse.Code, incomeResponse.Body.String())
+	}
 	unknown := request("/__orangecount/fava/not-a-route")
 	if unknown.Code != http.StatusNotFound {
 		t.Fatalf("unknown private adapter route status=%d", unknown.Code)

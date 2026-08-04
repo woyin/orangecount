@@ -37,7 +37,14 @@ export function reduceShellState(state, action) {
     case "clear-error":
       return { ...state, error: null };
     case "bootstrap":
-      return { ...state, ledgerTitle: action.ledgerTitle || state.ledgerTitle, error: null, loading: false };
+      return {
+        ...state,
+        ledgerTitle: action.ledgerTitle || state.ledgerTitle,
+        locale: action.locale === "zh-CN" ? "zh-CN" : state.locale,
+        theme: ["system", "dark", "light"].includes(action.theme) ? action.theme : state.theme,
+        error: null,
+        loading: false,
+      };
     default:
       return state;
   }

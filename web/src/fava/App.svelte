@@ -4,6 +4,7 @@
   import ErrorBoundary from "./components/ErrorBoundary.svelte";
   import Header from "./components/Header.svelte";
   import LoadingBoundary from "./components/LoadingBoundary.svelte";
+  import ReportOutlet from "./components/ReportOutlet.svelte";
   import Sidebar from "./components/Sidebar.svelte";
   import { parseRoute, updateQuery } from "./router.mjs";
   import { createShellStore, initialShellState } from "./state.mjs";
@@ -61,7 +62,7 @@
     shell.dispatch({ type: "loading", value: true });
     try {
       const payload = await adapter.bootstrap();
-      shell.dispatch({ type: "bootstrap", ledgerTitle: payload.ledger_title });
+      shell.dispatch({ type: "bootstrap", ledgerTitle: payload.ledger_title, locale: payload.locale, theme: payload.theme });
     } catch (error) {
       shell.dispatch({ type: "error", message: error instanceof Error ? error.message : "The local adapter could not load this view." });
     }
@@ -108,21 +109,17 @@
 <article id="main-content" tabindex="-1">
   <LoadingBoundary active={current.loading}>
     <ErrorBoundary message={current.error} onRetry={retry}>
-      <section class="route-placeholder" aria-labelledby="route-heading">
-        <p class="headerline"><strong>Fava-aligned shell</strong></p>
-        <h2 id="route-heading">{current.account || current.route}</h2>
-        <p>This route is ready for its private OrangeCount adapter contract.</p>
-      </section>
+      <ReportOutlet adapter={adapter} route={current.route} query={current.query} />
     </ErrorBoundary>
   </LoadingBoundary>
 </article>
 
 <style>
-  .route-placeholder {
+  :global(.route-placeholder) {
     max-width: 70rem;
   }
 
-  .route-placeholder p {
+  :global(.route-placeholder p) {
     color: var(--text-color-lighter);
   }
 

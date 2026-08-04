@@ -265,6 +265,25 @@ func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 		root := strings.TrimSpace(r.URL.Query().Get("root"))
 		projection := favaadapter.MetadataProjectionOptions(favaadapter.MetadataOptions{Evaluation: current.Evaluation(), Root: root})
 		writeJSON(w, favaadapter.NewEnvelope(projection, current.BuiltAt))
+	case "income_statement", "balance_sheet", "trial_balance":
+		filters, err := globalReportFilters(r)
+		if err != nil {
+			writeAPIError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		valuation := strings.TrimSpace(r.URL.Query().Get("valuation"))
+		if valuation == "" {
+			valuation = "at-cost"
+		}
+		projection := favaadapter.ProjectTreeReport(
+			current.Evaluation(),
+			resource,
+			filters,
+			strings.TrimSpace(r.URL.Query().Get("period")),
+			strings.TrimSpace(r.URL.Query().Get("currency")),
+			valuation,
+		)
+		writeJSON(w, favaadapter.NewEnvelope(projection, current.BuiltAt))
 	default:
 		http.NotFound(w, r)
 	}
