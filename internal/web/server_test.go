@@ -20,6 +20,7 @@ import (
 
 	"orangecount/internal/snapshot"
 	"orangecount/internal/source"
+	"orangecount/internal/web/favaadapter"
 )
 
 func TestServerStatusAndDocumentContainment(t *testing.T) {
@@ -174,6 +175,57 @@ func TestServerSourceAndErrorPathsUseDisplayIdentifiers(t *testing.T) {
 	entries := request("/api/v1/query?q=SELECT%20file%20FROM%20entries")
 	if entries.Code != http.StatusOK || strings.Contains(entries.Body.String(), dir) || !strings.Contains(entries.Body.String(), `"file":"main.bean"`) {
 		t.Fatalf("entry query status=%d body=%q", entries.Code, entries.Body.String())
+	}
+}
+
+func TestPrivateFavaAdapterBootstrapAndMetadata(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	text := "option \"title\" \"Adapter Fixture\"\n" +
+		"2000-01-01 open Assets:Cash USD\n" +
+		"2000-01-01 open Equity:Opening USD\n" +
+		"2000-01-02 * \"Seed\"\n" +
+		"  Assets:Cash 2.50 USD\n" +
+		"  Equity:Opening -2.50 USD\n"
+	if err := os.WriteFile(entry, []byte(text), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	built := snapshot.Build(entry)
+	if built.Snapshot == nil || built.Err != nil {
+		t.Fatalf("build diagnostics=%+v err=%v", built.Diagnostics, built.Err)
+	}
+	server, err := NewServer(Config{Store: snapshot.NewStore(built.Snapshot), Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := func(path string) *httptest.ResponseRecorder {
+		recorder := httptest.NewRecorder()
+		server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
+		return recorder
+	}
+	bootstrapResponse := request("/__orangecount/fava/ledger_data")
+	if bootstrapResponse.Code != http.StatusOK {
+		t.Fatalf("bootstrap status=%d body=%q", bootstrapResponse.Code, bootstrapResponse.Body.String())
+	}
+	var bootstrap favaadapter.Envelope
+	if err := json.Unmarshal(bootstrapResponse.Body.Bytes(), &bootstrap); err != nil {
+		t.Fatal(err)
+	}
+	data, ok := bootstrap.Data.(map[string]any)
+	options, optionsOK := data["options"].(map[string]any)
+	if !ok || !optionsOK || options["title"] != "Adapter Fixture" {
+		t.Fatalf("bootstrap data=%v", bootstrap.Data)
+	}
+	if bootstrap.Mtime == "" {
+		t.Fatal("bootstrap omitted snapshot mtime")
+	}
+	metadataResponse := request("/__orangecount/fava/metadata?root=Assets")
+	if metadataResponse.Code != http.StatusOK || !strings.Contains(metadataResponse.Body.String(), "Assets:Cash") {
+		t.Fatalf("metadata status=%d body=%q", metadataResponse.Code, metadataResponse.Body.String())
+	}
+	unknown := request("/__orangecount/fava/not-a-route")
+	if unknown.Code != http.StatusNotFound {
+		t.Fatalf("unknown private adapter route status=%d", unknown.Code)
 	}
 }
 

@@ -29,6 +29,29 @@ interface AdapterEnvelope<T> {
   mtime?: string;
 }
 
+interface BootstrapWire {
+  accounts: string[];
+  currencies: string[];
+  errors: unknown[];
+  options?: Record<string, string>;
+  fava_options?: Record<string, string>;
+}
+
+function bootstrapPayload(wire: BootstrapWire): BootstrapPayload {
+  const title = wire.options?.title?.trim() || "OrangeCount";
+  const locale = wire.fava_options?.locale === "zh-CN" ? "zh-CN" : "en";
+  return {
+    ledger_title: title,
+    locale,
+    locales: ["en", "zh-CN"],
+    theme: "system",
+    routes: ["journal", "income_statement", "balance_sheet", "trial_balance", "account"],
+    accounts: wire.accounts || [],
+    currencies: wire.currencies || [],
+    errors: wire.errors || [],
+  };
+}
+
 export function createAdapterClient(
   fetcher: typeof fetch = fetch,
   base = PRIVATE_ADAPTER_BASE,
@@ -44,12 +67,12 @@ export function createAdapterClient(
   }
 
   return {
-    bootstrap: () => get<BootstrapPayload>("ledger_data"),
+    bootstrap: async () => bootstrapPayload(await get<BootstrapWire>("ledger_data")),
     load: (route, query = {}) => get(route, query),
   };
 }
 
-/** A deterministic shell-only adapter used until P3 publishes bootstrap data. */
+/** A deterministic shell-only adapter for isolated frontend unit/prototype work. */
 export function createSyntheticAdapter(): AdapterClient {
   const bootstrap: BootstrapPayload = {
     ledger_title: "OrangeCount",

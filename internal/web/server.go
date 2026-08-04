@@ -30,6 +30,7 @@ import (
 	"orangecount/internal/report"
 	"orangecount/internal/snapshot"
 	"orangecount/internal/source"
+	"orangecount/internal/web/favaadapter"
 )
 
 // assets contains the compiled, dependency-free browser bundle. Keeping the
@@ -148,6 +149,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/api/v1/options", s.handleOptions)
 	mux.HandleFunc("/api/v1/help", s.handleHelp)
 	mux.HandleFunc("/api/v1/reports/", s.handleReport)
+	// Private frontend-transplant adapter. This path is loopback-only by the
+	// server's construction and is intentionally not a public Fava API.
+	mux.HandleFunc("/__orangecount/fava/", s.handleFavaAdapter)
 	// Reserve the Fava-style Documents UI route separately from attachment
 	// paths (`/documents/<name>`), otherwise ServeMux canonicalizes `/documents`
 	// to the attachment handler before the embedded shell can load.
@@ -239,6 +243,31 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Content-Security-Policy", "default-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'")
 	_, _ = w.Write(data)
+}
+
+func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.Header().Set("Allow", "GET")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	resource := strings.Trim(strings.TrimPrefix(r.URL.Path, "/__orangecount/fava/"), "/")
+	current := s.store.Current()
+	if current == nil {
+		writeAPIError(w, http.StatusServiceUnavailable, "no valid snapshot")
+		return
+	}
+	switch resource {
+	case "ledger_data":
+		projection := favaadapter.BootstrapProjection(favaadapter.BootstrapOptions{Snapshot: current, BaseURL: "/"})
+		writeJSON(w, favaadapter.NewEnvelope(projection, current.BuiltAt))
+	case "metadata":
+		root := strings.TrimSpace(r.URL.Query().Get("root"))
+		projection := favaadapter.MetadataProjectionOptions(favaadapter.MetadataOptions{Evaluation: current.Evaluation(), Root: root})
+		writeJSON(w, favaadapter.NewEnvelope(projection, current.BuiltAt))
+	default:
+		http.NotFound(w, r)
+	}
 }
 
 func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {

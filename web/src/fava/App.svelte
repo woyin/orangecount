@@ -1,6 +1,6 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { createSyntheticAdapter } from "./adapter-client";
+  import { createAdapterClient } from "./adapter-client";
   import ErrorBoundary from "./components/ErrorBoundary.svelte";
   import Header from "./components/Header.svelte";
   import LoadingBoundary from "./components/LoadingBoundary.svelte";
@@ -15,7 +15,7 @@
     account: initialRoute.account,
     query: initialRoute.query,
   });
-  const adapter = createSyntheticAdapter();
+  const adapter = createAdapterClient();
 
   $: current = $shell;
   $: document.documentElement.dataset.theme = current.theme === "system" ? "" : current.theme;
