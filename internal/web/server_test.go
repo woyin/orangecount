@@ -233,6 +233,20 @@ func TestPrivateFavaAdapterBootstrapAndMetadata(t *testing.T) {
 			t.Fatalf("%s status=%d body=%q", route, response.Code, response.Body.String())
 		}
 	}
+	generic := request("/__orangecount/fava/reports/events")
+	if generic.Code != http.StatusOK || !strings.Contains(generic.Body.String(), `"columns"`) || !strings.Contains(generic.Body.String(), `"rows"`) {
+		t.Fatalf("generic report status=%d body=%q", generic.Code, generic.Body.String())
+	}
+	queryResponse := request("/__orangecount/fava/reports/query?query_string=SELECT%20account%20FROM%20accounts")
+	if queryResponse.Code != http.StatusOK || !strings.Contains(queryResponse.Body.String(), `"columns"`) {
+		t.Fatalf("private query status=%d body=%q", queryResponse.Code, queryResponse.Body.String())
+	}
+	for _, route := range []string{"options", "help", "editor", "import", "source"} {
+		response := request("/__orangecount/fava/" + route)
+		if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), `"data"`) {
+			t.Fatalf("private %s status=%d body=%q", route, response.Code, response.Body.String())
+		}
+	}
 	unknown := request("/__orangecount/fava/not-a-route")
 	if unknown.Code != http.StatusNotFound {
 		t.Fatalf("unknown private adapter route status=%d", unknown.Code)

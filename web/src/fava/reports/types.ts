@@ -44,6 +44,12 @@ export interface TreeReport {
   trees: TreeNode[];
 }
 
+export interface TableReport {
+  columns: string[];
+  rows: Record<string, unknown>[];
+  chart?: ReportChart;
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
@@ -73,6 +79,20 @@ function chart(value: unknown): value is ReportChart {
     if (!isRecord(series) || typeof series.label !== "string" || !Array.isArray(series.points)) return false;
     return series.points.every((point) => isRecord(point) && typeof point.date === "string" && decimal(point.value));
   });
+}
+
+export function parseTableReport(value: unknown): TableReport {
+  if (!isRecord(value) || !Array.isArray(value.columns) || !value.columns.every((column) => typeof column === "string") || !Array.isArray(value.rows) || !value.rows.every(isRecord)) {
+    throw new Error("Adapter returned an invalid table-report payload");
+  }
+  if (value.chart !== undefined && value.chart !== null && !chart(value.chart)) {
+    throw new Error("Adapter returned an invalid table-report chart");
+  }
+  return {
+    columns: value.columns as string[],
+    rows: value.rows as Record<string, unknown>[],
+    chart: value.chart as ReportChart | undefined,
+  };
 }
 
 export function parseTreeReport(value: unknown): TreeReport {

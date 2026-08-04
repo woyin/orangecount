@@ -265,6 +265,105 @@ func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 		root := strings.TrimSpace(r.URL.Query().Get("root"))
 		projection := favaadapter.MetadataProjectionOptions(favaadapter.MetadataOptions{Evaluation: current.Evaluation(), Root: root})
 		writeJSON(w, favaadapter.NewEnvelope(projection, current.BuiltAt))
+	case "options":
+		options := map[string]string{}
+		for key, value := range current.Evaluation().Options {
+			options[key] = value
+		}
+		s.optionsMu.RLock()
+		for key, value := range s.options {
+			options[key] = value
+		}
+		s.optionsMu.RUnlock()
+		writeJSON(w, favaadapter.NewEnvelope(struct {
+			Options     map[string]string `json:"options"`
+			FavaOptions map[string]string `json:"fava_options"`
+		}{Options: options, FavaOptions: map[string]string{"locale": "en", "theme": "system"}}, current.BuiltAt))
+	case "help":
+		writeJSON(w, favaadapter.NewEnvelope(struct {
+			Sections []map[string]string `json:"sections"`
+		}{Sections: helpSections()}, current.BuiltAt))
+	case "diagnostics":
+		locale := requestedLocale(r)
+		graph := current.Graph()
+		values := s.store.Diagnostics()
+		localized := make([]diagnostic.Diagnostic, len(values))
+		for i, value := range values {
+			localized[i] = diagnostic.Localize(value, locale)
+			localized[i].Path = displayDiagnosticPath(localized[i], graph)
+		}
+		writeJSON(w, favaadapter.NewEnvelope(localized, current.BuiltAt))
+	case "editor":
+		graph := current.Graph()
+		if graph == nil {
+			writeAPIError(w, http.StatusServiceUnavailable, "no source graph")
+			return
+		}
+		requested := strings.TrimSpace(r.URL.Query().Get("path"))
+		if requested == "" {
+			writeJSON(w, favaadapter.NewEnvelope(struct {
+				Paths      []string `json:"paths"`
+				Entry      string   `json:"entry"`
+				SnapshotID string   `json:"snapshot_id"`
+			}{Paths: graph.DisplayPaths(), Entry: graph.DisplayPath(graph.Entry), SnapshotID: current.ID}, current.BuiltAt))
+			return
+		}
+		file, display, ok := graphFile(graph, requested)
+		if !ok {
+			http.NotFound(w, r)
+			return
+		}
+		writeJSON(w, favaadapter.NewEnvelope(struct {
+			Path       string `json:"path"`
+			Content    string `json:"content"`
+			SnapshotID string `json:"snapshot_id"`
+		}{Path: display, Content: string(file.Data), SnapshotID: current.ID}, current.BuiltAt))
+	case "import":
+		graph := current.Graph()
+		if graph == nil {
+			writeAPIError(w, http.StatusServiceUnavailable, "no source graph")
+			return
+		}
+		if r.URL.Query().Get("kind") == "adapters" {
+			writeJSON(w, favaadapter.NewEnvelope(struct {
+				Adapters []map[string]any `json:"adapters"`
+			}{Adapters: []map[string]any{
+				{"id": "beancount", "label": "Beancount source", "extensions": []string{".bean", ".beancount"}},
+				{"id": "csv", "label": "Generic CSV", "extensions": []string{".csv"}},
+			}}, current.BuiltAt))
+			return
+		}
+		writeJSON(w, favaadapter.NewEnvelope(struct {
+			Paths      []string `json:"paths"`
+			Entry      string   `json:"entry"`
+			SnapshotID string   `json:"snapshot_id"`
+		}{Paths: graph.DisplayPaths(), Entry: graph.DisplayPath(graph.Entry), SnapshotID: current.ID}, current.BuiltAt))
+	case "source":
+		graph := current.Graph()
+		if graph == nil {
+			writeAPIError(w, http.StatusServiceUnavailable, "no source graph")
+			return
+		}
+		requested := strings.TrimSpace(r.URL.Query().Get("path"))
+		if requested == "" {
+			writeJSON(w, favaadapter.NewEnvelope(struct {
+				Paths []string `json:"paths"`
+			}{Paths: graph.DisplayPaths()}, current.BuiltAt))
+			return
+		}
+		id, ok := graph.FileIDForDisplayPath(requested)
+		if !ok {
+			id, ok = graph.ByPath[requested]
+		}
+		if !ok || graph.File(id) == nil {
+			http.NotFound(w, r)
+			return
+		}
+		file := graph.File(id)
+		writeJSON(w, favaadapter.NewEnvelope(struct {
+			Path    string `json:"path"`
+			Content string `json:"content"`
+		}{Path: graph.DisplayPath(id), Content: string(file.Data)}, current.BuiltAt))
 	case "income_statement", "balance_sheet", "trial_balance":
 		filters, err := globalReportFilters(r)
 		if err != nil {
@@ -285,6 +384,51 @@ func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 		)
 		writeJSON(w, favaadapter.NewEnvelope(projection, current.BuiltAt))
 	default:
+		if strings.HasPrefix(resource, "reports/") {
+			name := strings.Trim(strings.TrimPrefix(resource, "reports/"), "/")
+			if name == "query" {
+				text := strings.TrimSpace(r.URL.Query().Get("query_string"))
+				if text == "" {
+					text = strings.TrimSpace(r.URL.Query().Get("q"))
+				}
+				if text == "" {
+					writeAPIError(w, http.StatusBadRequest, "query_string is required")
+					return
+				}
+				result, err := query.Evaluate(text, current.Evaluation())
+				if err != nil {
+					writeAPIError(w, http.StatusBadRequest, err.Error())
+					return
+				}
+				result = redactQueryPaths(result, current.Graph())
+				writeJSON(w, favaadapter.NewEnvelope(report.Present(result), current.BuiltAt))
+				return
+			}
+			result, chartRoute, known, err := s.buildReport(r, current, name)
+			if err != nil {
+				writeAPIError(w, http.StatusBadRequest, err.Error())
+				return
+			}
+			if !known {
+				http.NotFound(w, r)
+				return
+			}
+			presented := report.Present(result)
+			payload := struct {
+				query.Result
+				Chart *report.PresentedChartSpec `json:"chart,omitempty"`
+			}{Result: presented}
+			if chartRoute != "" {
+				valuation := strings.TrimSpace(r.URL.Query().Get("valuation"))
+				if valuation == "" {
+					valuation = "at-cost"
+				}
+				chart := report.PresentChart(report.ReportChart(current.Evaluation(), chartRoute, r.URL.Query().Get("period"), r.URL.Query().Get("currency"), valuation, r.URL.Query().Get("account")))
+				payload.Chart = &chart
+			}
+			writeJSON(w, favaadapter.NewEnvelope(payload, current.BuiltAt))
+			return
+		}
 		http.NotFound(w, r)
 	}
 }
@@ -345,9 +489,50 @@ func (s *Server) handleReport(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, http.StatusServiceUnavailable, "no valid snapshot")
 		return
 	}
+	name := strings.TrimSuffix(strings.TrimPrefix(r.URL.Path, "/api/v1/reports/"), "/")
+	result, chartRoute, known, err := s.buildReport(r, current, name)
+	if err != nil {
+		writeAPIError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if !known {
+		http.NotFound(w, r)
+		return
+	}
+	if format := strings.TrimSpace(r.URL.Query().Get("format")); strings.EqualFold(format, "csv") {
+		w.Header().Set("Content-Type", "text/csv; charset=utf-8")
+		if err := result.WriteCSV(w); err != nil {
+			return
+		}
+		return
+	} else if format != "" && !strings.EqualFold(format, "json") {
+		writeAPIError(w, http.StatusBadRequest, "format must be json or csv")
+		return
+	}
+	presented := report.Present(result)
+	if chartRoute == "" {
+		writeJSON(w, presented)
+		return
+	}
 	evaluation := current.Evaluation()
-	name := strings.TrimPrefix(r.URL.Path, "/api/v1/reports/")
-	name = strings.TrimSuffix(name, "/")
+	period := strings.TrimSpace(r.URL.Query().Get("period"))
+	valuation := strings.TrimSpace(r.URL.Query().Get("valuation"))
+	if valuation == "" {
+		valuation = "at-cost"
+	}
+	chart := report.ReportChart(evaluation, chartRoute, period, strings.TrimSpace(r.URL.Query().Get("currency")), valuation, strings.TrimSpace(r.URL.Query().Get("account")))
+	writeJSON(w, struct {
+		query.Result
+		Chart report.PresentedChartSpec `json:"chart"`
+	}{Result: presented, Chart: report.PresentChart(chart)})
+}
+
+// buildReport is the shared semantic/report projection used by both the
+// existing OrangeCount report endpoint and the private Fava-shaped adapter.
+// Keeping one builder prevents the two surfaces from drifting in filtering,
+// redaction, or report ownership.
+func (s *Server) buildReport(r *http.Request, current *snapshot.Snapshot, name string) (query.Result, string, bool, error) {
+	evaluation := current.Evaluation()
 	chartRoute := ""
 	var result query.Result
 	switch strings.ToLower(name) {
@@ -357,8 +542,7 @@ func (s *Server) handleReport(w http.ResponseWriter, r *http.Request) {
 	case "journal":
 		from, to, err := journalDateRange(r)
 		if err != nil {
-			writeAPIError(w, http.StatusBadRequest, err.Error())
-			return
+			return query.Result{}, "", true, err
 		}
 		result = report.JournalBetween(evaluation, from, to)
 	case "trial-balance", "trial_balance", "trialbalance":
@@ -376,8 +560,7 @@ func (s *Server) handleReport(w http.ResponseWriter, r *http.Request) {
 	case "holdings":
 		asOf, err := reportAsOfDate(r)
 		if err != nil {
-			writeAPIError(w, http.StatusBadRequest, err.Error())
-			return
+			return query.Result{}, "", true, err
 		}
 		valuation := strings.TrimSpace(r.URL.Query().Get("valuation"))
 		if valuation == "" {
@@ -395,14 +578,12 @@ func (s *Server) handleReport(w http.ResponseWriter, r *http.Request) {
 	case "errors", "error":
 		result = report.ErrorsWithGraph(evaluation, current.Graph())
 	default:
-		http.NotFound(w, r)
-		return
+		return query.Result{}, "", false, nil
 	}
 	result = redactQueryPaths(result, current.Graph())
 	filters, err := globalReportFilters(r)
 	if err != nil {
-		writeAPIError(w, http.StatusBadRequest, err.Error())
-		return
+		return query.Result{}, "", true, err
 	}
 	result = report.Filter(result, filters)
 	if strings.EqualFold(name, "journal") {
@@ -415,31 +596,7 @@ func (s *Server) handleReport(w http.ResponseWriter, r *http.Request) {
 			Kind:      r.URL.Query().Get("kind"),
 		})
 	}
-	if format := strings.TrimSpace(r.URL.Query().Get("format")); strings.EqualFold(format, "csv") {
-		w.Header().Set("Content-Type", "text/csv; charset=utf-8")
-		if err := result.WriteCSV(w); err != nil {
-			return
-		}
-		return
-	} else if format != "" && !strings.EqualFold(format, "json") {
-		writeAPIError(w, http.StatusBadRequest, "format must be json or csv")
-		return
-	}
-	presented := report.Present(result)
-	if chartRoute == "" {
-		writeJSON(w, presented)
-		return
-	}
-	period := strings.TrimSpace(r.URL.Query().Get("period"))
-	valuation := strings.TrimSpace(r.URL.Query().Get("valuation"))
-	if valuation == "" {
-		valuation = "at-cost"
-	}
-	chart := report.ReportChart(evaluation, chartRoute, period, strings.TrimSpace(r.URL.Query().Get("currency")), valuation, strings.TrimSpace(r.URL.Query().Get("account")))
-	writeJSON(w, struct {
-		query.Result
-		Chart report.PresentedChartSpec `json:"chart"`
-	}{Result: presented, Chart: report.PresentChart(chart)})
+	return result, chartRoute, true, nil
 }
 
 func globalReportFilters(r *http.Request) (report.Filters, error) {
@@ -1254,6 +1411,18 @@ func validateLocalOption(key, value string) error {
 	return nil
 }
 
+func helpSections() []map[string]string {
+	return []map[string]string{
+		{"id": "navigation", "title": "Navigation", "body": "Use the sidebar or the menu button to move between reports."},
+		{"id": "filters", "title": "Filters", "body": "Global time, account, and text filters are bookmarkable URL state."},
+		{"id": "editor", "title": "Editor safety", "body": "Validate before saving. Saves are atomic, backed up, and revalidated before publication."},
+		{"id": "import", "title": "Import review", "body": "Preview imported postings and explicitly commit them to a selected ledger file."},
+		{"id": "prices", "title": "Local prices", "body": "Market valuation uses only price directives in the local ledger. Missing quotes are shown as unavailable; no external provider is contacted."},
+		{"id": "plugins", "title": "Plugin migration", "body": "Python plugins are never executed. Plugin directives remain visible as diagnostics so they can be migrated explicitly."},
+		{"id": "shortcuts", "title": "Keyboard", "body": "Tab reaches controls; Enter applies filters and runs queries."},
+	}
+}
+
 func (s *Server) handleHelp(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.Header().Set("Allow", "GET")
@@ -1262,15 +1431,7 @@ func (s *Server) handleHelp(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, struct {
 		Sections []map[string]string `json:"sections"`
-	}{Sections: []map[string]string{
-		{"id": "navigation", "title": "Navigation", "body": "Use the sidebar or the menu button to move between reports."},
-		{"id": "filters", "title": "Filters", "body": "Global time, account, and text filters are bookmarkable URL state."},
-		{"id": "editor", "title": "Editor safety", "body": "Validate before saving. Saves are atomic, backed up, and revalidated before publication."},
-		{"id": "import", "title": "Import review", "body": "Preview imported postings and explicitly commit them to a selected ledger file."},
-		{"id": "prices", "title": "Local prices", "body": "Market valuation uses only price directives in the local ledger. Missing quotes are shown as unavailable; no external provider is contacted."},
-		{"id": "plugins", "title": "Plugin migration", "body": "Python plugins are never executed. Plugin directives remain visible as diagnostics so they can be migrated explicitly."},
-		{"id": "shortcuts", "title": "Keyboard", "body": "Tab reaches controls; Enter applies filters and runs queries."},
-	}})
+	}{Sections: helpSections()})
 }
 
 func displayDiagnosticPath(value diagnostic.Diagnostic, graph *source.Graph) string {

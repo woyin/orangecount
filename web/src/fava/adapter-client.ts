@@ -68,7 +68,12 @@ export function createAdapterClient(
 
   return {
     bootstrap: async () => bootstrapPayload(await get<BootstrapWire>("ledger_data")),
-    load: (route, query = {}) => get(route, query),
+    load: (route, query = {}) => {
+      const treeRoutes = new Set(["income_statement", "balance_sheet", "trial_balance"]);
+      const directRoutes = new Set(["options", "help", "diagnostics", "source", "editor", "import"]);
+      const resource = treeRoutes.has(route) || directRoutes.has(route) ? route : `reports/${route}`;
+      return get(resource, query);
+    },
   };
 }
 

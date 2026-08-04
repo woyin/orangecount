@@ -315,6 +315,48 @@
       "upstream_hash": "f6c497fbc9128eba1aa3c312993e56417cf48e72c1debec2011b2fb0e5f5b6be",
       "notice": "NOTICE",
       "notes": "Fava global stylesheet transplanted at the pinned reference revision."
+    },
+    "web/src/fava/reports/GenericReport.svelte": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "OrangeCount exact-value table fallback shared by staged read-only routes."
+    },
+    "web/src/fava/reports/JournalReport.svelte": {
+      "current_kind": "derived",
+      "upstream": "frontend/src/reports/journal/Journal.svelte",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "6e18c44cd93456fef7bce08c635e64e7a89975f61218ca42c0dadd12551e2689",
+      "notice": "NOTICE",
+      "notes": "Adapted Fava Journal report with OrangeCount grouping and exact-value posting rendering."
+    },
+    "web/src/fava/reports/QueryReport.svelte": {
+      "current_kind": "derived",
+      "upstream": "frontend/src/reports/query/Query.svelte",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "1841fc08308abb55f76463ce9085dc5848166dbf5bcf66efcac734ff3892737d",
+      "notice": "NOTICE",
+      "notes": "Adapted Fava Query report using the OrangeCount BeanQuery adapter and exact result presentation."
+    },
+    "web/src/fava/reports/UtilityReport.svelte": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "OrangeCount utility-route presentation for local options, help, diagnostics, and source metadata."
+    },
+    "web/src/fava/reports/EditorReport.svelte": {
+      "current_kind": "derived",
+      "upstream": "frontend/src/reports/editor/Editor.svelte",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "579223691dceb05cf50c3774c2382d415e2d2a5a2d15acbbe3157a502673bf39",
+      "notice": "NOTICE",
+      "notes": "Adapted Fava Editor route with OrangeCount reviewed save/validate endpoints."
+    },
+    "web/src/fava/reports/ImportReport.svelte": {
+      "current_kind": "derived",
+      "upstream": "frontend/src/reports/import/Import.svelte",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "817452864e968f3edac395d75c4fbe9d6d2debea9494f6a4a0e7deea945e5b18",
+      "notice": "NOTICE",
+      "notes": "Adapted Fava Import route with native OrangeCount preview/commit workflows; Python importers excluded."
     }
   }
 }

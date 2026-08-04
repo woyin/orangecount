@@ -109,7 +109,11 @@
 <article id="main-content" tabindex="-1">
   <LoadingBoundary active={current.loading}>
     <ErrorBoundary message={current.error} onRetry={retry}>
-      <ReportOutlet adapter={adapter} route={current.route} query={current.query} />
+      <ReportOutlet
+        adapter={adapter}
+        route={current.route}
+        query={{ ...current.query, ...(current.account ? { account: current.account } : {}) }}
+      />
     </ErrorBoundary>
   </LoadingBoundary>
 </article>
