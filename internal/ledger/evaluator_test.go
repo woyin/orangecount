@@ -67,6 +67,32 @@ func TestEvaluateExcludesOptionsFromEntries(t *testing.T) {
 	}
 }
 
+func TestEvaluateAccumulatesRepeatedOperatingCurrency(t *testing.T) {
+	text := `option "operating_currency" "CNY"
+option "operating_currency" "USD"
+option "operating_currency" "CNY"
+2000-01-01 open Assets:Cash CNY
+2000-01-01 open Equity:Opening CNY
+2000-01-02 * "opening"
+  Assets:Cash 1 CNY
+  Equity:Opening -1 CNY
+`
+	file, parseDiagnostics := ParseText("operating-currency.bean", []byte(text))
+	if parseDiagnostics.HasErrors() {
+		t.Fatalf("parse diagnostics=%+v", parseDiagnostics.All())
+	}
+	evaluation := EvaluateFiles(map[source.FileID]*File{1: file}, []source.FileID{1}, EvalOptions{})
+	if !evaluation.Valid {
+		t.Fatalf("evaluation=%s diagnostics=%+v", evaluation, evaluation.Diagnostics)
+	}
+	// Beancount accumulates repeated operating_currency declarations rather
+	// than letting the last one win; the first declared currency is the
+	// ledger's primary one and must stay first, with duplicates collapsed.
+	if got := evaluation.Options["operating_currency"]; got != "CNY USD" {
+		t.Fatalf("operating_currency=%q want %q", got, "CNY USD")
+	}
+}
+
 func TestEvaluateBalanceAssertionSortsBeforeSameDayTransactions(t *testing.T) {
 	before := `2000-01-01 open Assets:Cash USD
 2000-01-01 open Equity:Opening USD

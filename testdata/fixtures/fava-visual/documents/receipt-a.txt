@@ -1,0 +1,2 @@
+Synthetic document fixture A.
+This attachment contains no ledger data and exists only to exercise safe document-root resolution.

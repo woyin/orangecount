@@ -1,0 +1,8 @@
+; Deterministic synthetic fixture for Fava-shaped visual and browser checks.
+; It is intentionally independent of any private ledger.
+option "title" "Visual Baseline Ledger"
+option "operating_currency" "USD"
+option "name_assets" "Assets"
+option "name_liabilities" "Liabilities"
+include "accounts.bean"
+include "activity.bean"

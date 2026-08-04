@@ -49,6 +49,7 @@ type JournalFilters struct {
 	Link      string
 	Payee     string
 	Narration string
+	Kind      string
 }
 
 // Filter applies global account, free-text, and ISO time-prefix filters while
@@ -125,7 +126,8 @@ func FilterJournal(result query.Result, filters JournalFilters) query.Result {
 	link := strings.ToLower(strings.TrimSpace(filters.Link))
 	payee := strings.ToLower(strings.TrimSpace(filters.Payee))
 	narration := strings.ToLower(strings.TrimSpace(filters.Narration))
-	if flag == "" && tag == "" && link == "" && payee == "" && narration == "" {
+	kind := strings.TrimSpace(filters.Kind)
+	if flag == "" && tag == "" && link == "" && payee == "" && narration == "" && kind == "" {
 		return result
 	}
 	filtered := query.Result{Columns: append([]string(nil), result.Columns...), Rows: make([]query.Row, 0, len(result.Rows))}
@@ -133,6 +135,12 @@ func FilterJournal(result query.Result, filters JournalFilters) query.Result {
 		if flag != "" {
 			value, _ := row["flag"].(string)
 			if value != flag {
+				continue
+			}
+		}
+		if kind != "" {
+			value := fmt.Sprint(row["kind"])
+			if !strings.EqualFold(value, kind) {
 				continue
 			}
 		}
@@ -202,7 +210,7 @@ func JournalBetween(e ledger.Evaluation, from, to *ledger.Date) query.Result {
 	// Keep posting metadata in the journal result so the browser can implement
 	// Fava-style flag/tag/link filters and expandable transaction details
 	// without reading source files or duplicating evaluator state.
-	result := evaluate("SELECT date, account, units, currency, flag, payee, narration, tags, links, file, span FROM postings ORDER BY date, account", e)
+	result := evaluate("SELECT date, account, units, currency, flag, payee, narration, tags, links, file, span, kind FROM postings ORDER BY date, account", e)
 	if from == nil && to == nil {
 		return result
 	}

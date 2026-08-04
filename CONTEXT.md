@@ -36,6 +36,58 @@ _Avoid_: API compatibility, pixel parity
 The ability to complete Fava's local personal-ledger interface workflows with materially equivalent page structure, controls, interaction states, and outcomes. OrangeCount may use an independent implementation while preserving the user-visible workflow.
 _Avoid_: superficial theme match, API compatibility
 
+**Observed UX parity**:
+High-fidelity reproduction of Fava's user-observable information architecture, visual hierarchy, interaction behavior, responsive states, keyboard behavior, and task outcomes, verified from black-box use of a running Fava instance and, where useful, selective adaptation of Fava's MIT-licensed frontend. It excludes Fava's Python/Beancount runtime and public HTTP API.
+_Avoid_: unlicensed third-party reuse, backend port, theme-only parity
+
+**Fava standard surface**:
+The complete set of user-visible, built-in local-interface capabilities supplied by the pinned Fava 1.30.12 release, including its built-in pages, editor, importer, and options. Third-party plugin pages, user-defined extensions, and Fava's HTTP API are excluded.
+_Avoid_: plugin ecosystem parity, unbounded feature scope, API compatibility
+
+**UX parity gate**:
+The release criterion for an in-scope Fava capability: equivalent task outcomes, interaction and keyboard states, and responsive behavior; high-fidelity visual structure and hierarchy verified through redacted deterministic-fixture visual regression; no requirement for literal pixel identity where independent implementation or browser rendering differs.
+_Avoid_: manual-only visual review, arbitrary screenshot similarity, pixel-perfect mandate
+
+**Parity authority**:
+The source that decides whether a parity concern is correct: Fava decides user-observable UX; Beancount v3 decides ledger, valuation, and BeanQuery semantics. When the two differ, OrangeCount retains the v3 result and presents it through the Fava-aligned UX.
+_Avoid_: Fava-defined accounting semantics, UI-driven semantic drift
+
+**Parity evidence discipline**:
+The rule that permits private-ledger Fava observation only in transient local browser sessions. Repository evidence contains only abstracted behavior records and redacted deterministic-fixture artifacts; it never contains private screenshots, DOM, responses, source locations, account names, amounts, or task payloads derived from them.
+_Avoid_: redacted-after-commit evidence, private golden image, raw browser dump
+
+**Fava-derived frontend**:
+A deliberately selected and adapted portion of Fava 1.30.12's MIT-licensed frontend code, styles, or assets, used to preserve UX fidelity while replacing its Python API and runtime assumptions with OrangeCount adapters. Every derived file retains required copyright and MIT-license attribution and is recorded in the third-party notice inventory.
+_Avoid_: untracked copy, Python runtime dependency, whole-application fork
+
+**Fava reference mirror**:
+A read-only, repository-external checkout pinned to the Fava 1.30.12 source commit. It is available for complete source study and provenance mapping but is neither shipped nor versioned as part of OrangeCount; the repository records its revision and each adopted source unit.
+_Avoid_: floating upstream checkout, vendored whole application, undocumented source reference
+
+**Fava frontend transplant**:
+The primary OrangeCount web-client migration that starts from Fava 1.30.12's frontend composition, components, styles, and interactions, then replaces Fava data access with Go-backed adapters. The legacy OrangeCount interface is a temporary per-page fallback and is deleted as each page family is accepted.
+_Avoid_: incremental restyling of the legacy shell, Python backend migration, permanent dual UI
+
+**Fava-shaped adapter**:
+A loopback-only, internal Go HTTP contract that supplies exactly the request, response, and error shapes required by the transplanted Fava frontend. It is derived per implemented page, backed by OrangeCount's v3 semantic core, and has no public API compatibility or third-party-client support commitment.
+_Avoid_: public Fava API, Python endpoint emulation, domain model leakage
+
+**Fava source inventory**:
+The mandatory, complete Fava 1.30.12 study performed before any migration: frontend files, routes, state, styles, server endpoints, tests, build tooling, and license dependencies are mapped to OrangeCount adoption, adaptation, exclusion, or replacement decisions.
+_Avoid_: page-only reconnaissance, undocumented selective reading, implementation before mapping
+
+**UI migration flag**:
+A temporary, explicit local selection of the transplanted Fava frontend during migration. It permits complete per-route cutovers and fallback to the legacy UI while preserving one Go write and snapshot path; it is removed with the legacy UI only after every standard route passes the UX parity gate.
+_Avoid_: mixed components on one route, parallel write paths, permanent compatibility switch
+
+**English visual baseline**:
+The English Fava standard surface used to define visual-regression expectations. OrangeCount's English interface must meet the full UX parity gate; its Simplified Chinese interface keeps the same information architecture, controls, and behavior while allowing language- and font-driven layout differences.
+_Avoid_: English-only product, translated screenshot pixel match, locale-specific workflow
+
+**Standard navigation surface**:
+The Fava 1.30.12 main navigation, default landing behavior, URL routes, and page hierarchy. OrangeCount-exclusive tools may exist only as clearly labeled extensions that do not alter or compete with this standard surface.
+_Avoid_: mixed primary navigation, OrangeCount default route, hidden route incompatibility
+
 **Local web session**:
 A built-in web-interface session initiated by the OrangeCount CLI and bound only to the loopback network interface for its owner.
 _Avoid_: hosted account, shared instance

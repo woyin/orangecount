@@ -385,7 +385,10 @@ func accountChart(e ledger.Evaluation, keys []string, ends map[string]string, in
 			}
 			amount, status := chartAmount(e, posting, posting.date, currency, valuation)
 			availability.observe(status, posting.currency)
-			if status != amountOK {
+			// In native mode (no display currency) every posting contributes its
+			// own exact amount as its currency's series; the nativeMulti status is
+			// a valid contribution, not a drop. Only unavailable conversions are skipped.
+			if status != amountOK && status != amountNativeMulti {
 				continue
 			}
 			keyCurrency := posting.currency

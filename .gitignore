@@ -25,3 +25,9 @@ testdata/private/
 
 # Generated frontend assets
 web/dist/
+
+# Development-only browser tooling output
+web/node_modules/
+web/staging/
+web/test-results/
+web/playwright-report/

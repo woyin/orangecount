@@ -202,7 +202,17 @@ func (e *evaluator) evaluateDirective(file *File, directive Directive) {
 	}
 	switch d := directive.(type) {
 	case Option:
-		e.result.Options[d.Key] = d.Value
+		// Beancount accumulates repeated operating_currency declarations
+		// instead of letting the last one win (every other option key is
+		// single-valued and overwrites). Losing all but the last declared
+		// operating currency previously made downstream consumers - the web
+		// UI's default report/chart currency in particular - pick a currency
+		// that was never the ledger's primary one.
+		if strings.EqualFold(d.Key, "operating_currency") {
+			e.result.Options[d.Key] = appendOperatingCurrency(e.result.Options[d.Key], d.Value)
+		} else {
+			e.result.Options[d.Key] = d.Value
+		}
 		if strings.EqualFold(d.Key, "tolerance") {
 			tolerance, err := ParseDecimal(d.Value)
 			if err != nil {
@@ -241,6 +251,22 @@ func (e *evaluator) evaluateDirective(file *File, directive Directive) {
 	default:
 		e.add("W-EVAL-UNSUPPORTED", diagnostic.Warning, span, path)
 	}
+}
+
+// appendOperatingCurrency joins repeated operating_currency declarations into
+// a space-separated list in declaration order, keeping the first-declared
+// currency (the ledger's primary operating currency) first and skipping
+// duplicates.
+func appendOperatingCurrency(existing, value string) string {
+	if existing == "" {
+		return value
+	}
+	for _, part := range strings.Fields(existing) {
+		if part == value {
+			return existing
+		}
+	}
+	return existing + " " + value
 }
 
 func isEntryDirective(d Directive) bool {

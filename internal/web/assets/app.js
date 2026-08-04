@@ -28,6 +28,12 @@ const translations = {
     discard: "Discard", syntax: "Syntax preview", noFile: "Select a file", searchHelp: "Search help", back: "Back",
     summary: "Summary", leavesOnly: "Leaves only", hierarchy: "Hierarchy", treemap: "Treemap", sunburst: "Sunburst", icicle: "Icicle",
     accountBalance: "Account balance", subtreeTotal: "Subtree total", notValued: "Not valued",
+    transaction: "Transaction", note: "Note", document: "Document", open: "Open", close: "Close",
+    pad: "Pad", price: "Price", queryKind: "Query", custom: "Custom", commodity: "Commodity",
+    event: "Event", metadata: "Metadata", postings: "Postings", details: "Details",
+    runningBalance: "Running balance", theme: "Theme", system: "System", dark: "Dark", light: "Light",
+    optionsFromLedger: "Ledger options", extended: "Extended", accountDetail: "Account detail",
+    noConversionData: "No data for this currency", operating: "Operating",
   },
   "zh-CN": {
     subtitle: "只读本地账本视图。", language: "语言", overview: "概览", accounts: "账户", journal: "日记账",
@@ -48,6 +54,12 @@ const translations = {
     discard: "丢弃", syntax: "语法预览", noFile: "选择文件", searchHelp: "搜索帮助", back: "返回",
     summary: "汇总", leavesOnly: "仅叶子账户", hierarchy: "层级", treemap: "矩形树图", sunburst: "旭日图", icicle: "冰柱图",
     accountBalance: "账户余额", subtreeTotal: "含子账户汇总", notValued: "未估值",
+    transaction: "交易", note: "备注", document: "文档", open: "开户", close: "销户",
+    pad: "补差", price: "价格", queryKind: "查询", custom: "自定义", commodity: "商品",
+    event: "事件", metadata: "元数据", postings: "过账", details: "详情",
+    runningBalance: "运行结存", theme: "主题", system: "跟随系统", dark: "深色", light: "浅色",
+    optionsFromLedger: "账本选项", extended: "扩展", accountDetail: "账户详情",
+    noConversionData: "该货币暂无数据", operating: "记账本位币",
   },
 };
 
@@ -97,7 +109,7 @@ let globalState = {
   time: params.get("time") || "all",
   account: params.get("account") || accountFromPath,
   filter: params.get("filter") || "",
-  currency: params.get("currency") || "USD",
+  currency: params.get("currency") || "",
 };
 let reportState = {
   period: params.get("period") || "all",
@@ -113,6 +125,7 @@ let journalFilters = {
   link: params.get("link") || "",
   payee: params.get("payee") || "",
   narration: params.get("narration") || "",
+  kind: params.get("kind") || "",
 };
 const journalPageParam = Number.parseInt(params.get("page") || "1", 10);
 let journalTableState = {
@@ -126,6 +139,12 @@ const navigation = document.getElementById("navigation");
 const localePicker = document.getElementById("locale");
 const subtitle = document.getElementById("subtitle");
 const pageTitle = document.getElementById("page-title");
+const brand = document.getElementById("brand");
+let ledgerTitle = "";
+let ledgerOptions = {};
+let operatingCurrency = "";
+let diagnosticCount = 0;
+let theme = localStorage.getItem("orangecount-theme") || "dark";
 const sidebar = document.getElementById("sidebar");
 const menuToggle = document.getElementById("menu-toggle");
 const timePicker = document.getElementById("global-time");
@@ -244,20 +263,85 @@ function treeMetadata(rows) {
     return [row, { account, parent: parentByAccount.get(account) || "", depth: account ? depthFor(account) : 0, hasChild: children.has(account) }];
   }));
 }
+// pivotCurrency groups a per-(account, currency) report into one row per
+// account with a dynamic per-currency column, matching Fava's per-column
+// currency presentation. The operating currency is listed first when present,
+// then currencies in ledger appearance order. Accounts not holding a currency
+// get an empty cell instead of removing the row. Aggregate rows expose their
+// subtree total; leaf rows expose their own balance.
+function pivotCurrency(rows, columns, preferredCurrency) {
+  const currencyOrder = [];
+  const seen = new Set();
+  if (preferredCurrency && !seen.has(preferredCurrency)) {
+    seen.add(preferredCurrency);
+    currencyOrder.push(preferredCurrency);
+  }
+  rows.forEach((row) => {
+    const currency = row.currency;
+    if (currency && !seen.has(currency)) {
+      seen.add(currency);
+      currencyOrder.push(currency);
+    }
+  });
+  const accountOrder = [];
+  const byAccount = new Map();
+  rows.forEach((row) => {
+    const account = row.account;
+    if (!byAccount.has(account)) {
+      byAccount.set(account, []);
+      accountOrder.push(account);
+    }
+    byAccount.get(account).push(row);
+  });
+  const baseColumns = columns.filter((column) => column !== "currency" && column !== "balance" && column !== "own_balance" && column !== "total_balance");
+  const newColumns = [...baseColumns, ...currencyOrder];
+  const outRows = accountOrder.map((account) => {
+    const group = byAccount.get(account);
+    const first = group[0];
+    const row = {};
+    baseColumns.forEach((column) => { row[column] = first[column]; });
+    Object.keys(first).forEach((key) => {
+      if (key.startsWith("_tree_")) row[key] = first[key];
+    });
+    row.account = account;
+    const role = first._tree_role;
+    currencyOrder.forEach((currency) => {
+      const found = group.find((item) => item.currency === currency);
+      if (!found) {
+        row[currency] = null;
+        return;
+      }
+      let value = found.balance;
+      if (role === "aggregate") {
+        if (found.total_balance != null) value = found.total_balance;
+      } else if (found.own_balance != null) {
+        value = found.own_balance;
+      }
+      row[currency] = value;
+    });
+    return row;
+  });
+  return { rows: outRows, columns: newColumns };
+}
 function renderTable(result, options = {}) {
   if (!result || !Array.isArray(result.columns)) return `<p class="muted">${escapeHTML(t("empty"))}</p>`;
   // Tree metadata is intentionally part of the API payload but not of the
-  // visible accounting table. It carries actual relationships generated by
-  // the report layer; deriving a depth from punctuation in a name caused
-  // unrelated rows to look like parent/child accounts.
+  // visible accounting table.
   let columns = result.columns.filter((column) => !column.startsWith("_tree_"));
-  const rows = Array.isArray(result.rows) ? result.rows : [];
+  let rows = Array.isArray(result.rows) ? result.rows : [];
   if (!rows.length) return `<p class="muted">${escapeHTML(t("empty"))}</p>`;
   const tree = options.tree === true;
+  // Currency pivot: for account tree reports, group rows by account and expand
+  // the currency column into dynamic per-currency columns (Fava-style). The
+  // global currency switch is a display preference and must not gate which
+  // currency columns are visible.
+  if (options.pivotCurrency === true && columns.includes("account") && columns.includes("currency")) {
+    const pivoted = pivotCurrency(rows, columns, operatingCurrency);
+    rows = pivoted.rows;
+    columns = pivoted.columns;
+  }
   const hasSplit = tree && columns.includes("own_balance") && columns.includes("total_balance");
   if (hasSplit) {
-    // The aggregate balance was already exposed as own_balance/total_balance.
-    // Drop the legacy total alias so the same balance is not shown twice.
     columns = columns.filter((column) => column !== "balance");
   }
   const metadata = tree ? treeMetadata(rows) : new Map();
@@ -683,7 +767,10 @@ function flattenHierarchy(chart) {
   const flat = [];
   const walk = (nodes) => {
     (nodes || []).forEach((node) => {
-      flat.push(node);
+      // node.value is a serialized PresentedDecimal ({display, exact}) or a
+      // plain number/string; normalize it so layout math sees a number.
+      const value = chartValue(node != null ? node.value : null);
+      flat.push({ ...node, value });
       walk(node.children);
     });
   };
@@ -692,32 +779,60 @@ function flattenHierarchy(chart) {
   if (!computed.length && chart && Array.isArray(chart.series)) {
     // Fallback for a hierarchy chart with a flat series payload: represent
     // each series as a node so the layout still renders.
-    computed = chart.series.map((series) => ({ name: series.label || "", currency: chart.currency || "", value: series.points && series.points.length ? series.points[series.points.length - 1].value : 0, depth: 0, children: [] }));
+    computed = chart.series.map((series) => ({ name: series.label || "", currency: chart.currency || "", value: chartValue(series.points && series.points.length ? series.points[series.points.length - 1].value : 0), depth: 0, children: [] }));
   }
   return computed;
 }
 function hierarchyTotal(nodes) {
   return (nodes || []).reduce((sum, node) => sum + Math.abs(Number(node.value || 0)), 0);
 }
+// layoutTreemapRects recursively bisects a rectangle: items are split into two
+// value-balanced groups, the group boundary cuts along the rectangle's longer
+// side, and each group recurses into its share of the area. This keeps every
+// leaf's rectangle proportional to its value while staying reliably
+// two-dimensional (the previous single-row sqrt-width layout degenerated into
+// a thin sliver of near-zero-width rectangles once leaf values had a wide
+// spread, which is the common case for a real multi-account ledger).
+function layoutTreemapRects(items, x, y, w, h) {
+  if (!items.length || w <= 0 || h <= 0) return [];
+  if (items.length === 1) return [{ node: items[0].node, x, y, w, h }];
+  const total = items.reduce((sum, item) => sum + item.value, 0);
+  if (!total) return [];
+  let running = 0;
+  let splitIndex = 1;
+  for (let index = 0; index < items.length; index++) {
+    running += items[index].value;
+    if (running >= total / 2) { splitIndex = index + 1; break; }
+  }
+  splitIndex = Math.min(Math.max(splitIndex, 1), items.length - 1);
+  const groupA = items.slice(0, splitIndex);
+  const groupB = items.slice(splitIndex);
+  const fractionA = groupA.reduce((sum, item) => sum + item.value, 0) / total;
+  if (w >= h) {
+    const widthA = w * fractionA;
+    return [...layoutTreemapRects(groupA, x, y, widthA, h), ...layoutTreemapRects(groupB, x + widthA, y, w - widthA, h)];
+  }
+  const heightA = h * fractionA;
+  return [...layoutTreemapRects(groupA, x, y, w, heightA), ...layoutTreemapRects(groupB, x, y + heightA, w, h - heightA)];
+}
 function renderHierarchyTreemap(chart) {
   const nodes = flattenHierarchy(chart);
-  const total = hierarchyTotal(nodes);
-  if (!total) return "";
-  // Treemap: squarify each node as a fraction of the full 100x52 canvas by
-  // adding leaf areas first and letting aggregate nodes only lay out children.
   const leaves = [];
   const addLeaves = (n) => {
     if (n.children && n.children.length) n.children.forEach(addLeaves);
     else leaves.push(n);
   };
   nodes.forEach(addLeaves);
-  let x = 0;
-  const areaUnit = 100 * 52 / total;
-  return leaves.map((node) => {
-    const width = Math.sqrt(Math.abs(Number(node.value || 0)) * areaUnit) || 1;
-    const height = width;
-    x += width;
-    return `<rect class="hierarchy-node series-${node.depth % 4}" data-account="${escapeHTML(node.name || "")}" x="${x.toFixed(2)}" y="4" width="${Math.max(1, Math.min(width, 100 - x)).toFixed(2)}" height="${Math.min(height, 44).toFixed(2)}" rx="1" tabindex="0" aria-label="${escapeHTML(`${node.name || ""}: ${node.value || 0} ${chart.currency || ""}`)}"><title>${escapeHTML(`${node.name || ""}: ${node.value || 0} ${chart.currency || ""}`)}</title></rect>`;
+  const items = leaves
+    .map((node) => ({ node, value: Math.abs(Number(node.value || 0)) }))
+    .filter((item) => item.value > 0)
+    .sort((a, b) => b.value - a.value);
+  if (!items.length) return "";
+  const gap = 0.3;
+  return layoutTreemapRects(items, 0, 4, 100, 44).map(({ node, x, y, w, h }) => {
+    const rx = x + gap / 2, ry = y + gap / 2;
+    const rw = Math.max(0.4, w - gap), rh = Math.max(0.4, h - gap);
+    return `<rect class="hierarchy-node series-${(node.depth || 0) % 4}" data-account="${escapeHTML(node.name || "")}" x="${rx.toFixed(2)}" y="${ry.toFixed(2)}" width="${rw.toFixed(2)}" height="${rh.toFixed(2)}" rx=".5" tabindex="0" aria-label="${escapeHTML(`${node.name || ""}: ${node.value || 0} ${chart.currency || ""}`)}"><title>${escapeHTML(`${node.name || ""}: ${node.value || 0} ${chart.currency || ""}`)}</title></rect>`;
   }).join("");
 }
 function renderHierarchySunburst(chart) {
@@ -765,7 +880,7 @@ function renderHierarchyChart(chart, fallbackLabel) {
   const unit = chart.currency || chart.unit || t("unavailable");
   const words = chartHeader(chart, fallbackLabel, unit);
   const layout = reportState.hierarchyLayout === "sunburst" ? renderHierarchySunburst(chart) : reportState.hierarchyLayout === "icicle" ? renderHierarchyIcicle(chart) : renderHierarchyTreemap(chart);
-  if (!layout) return "";
+  if (!layout) return `<section class="chart-card" aria-label="${escapeHTML(`${t("chart")}: ${words.description}`)}"><h3>${escapeHTML(words.title)}</h3>${chartAvailabilityNote(chart)}<p class="warning">${escapeHTML(t("noConversionData"))}</p></section>`;
   return `<section class="chart-card" aria-label="${escapeHTML(`${t("chart")}: ${words.description}`)}"><h3>${escapeHTML(words.title)}</h3>${chartAvailabilityNote(chart)}<svg class="report-chart report-hierarchy-chart" viewBox="0 0 100 52" role="img" aria-label="${escapeHTML(words.description)}" data-chart-unit="${escapeHTML(unit)}" data-chart-period="${escapeHTML(words.period)}">${layout}</svg><p class="muted">${escapeHTML(words.description)}</p></section>`;
 }
 function renderChart(result, label, route, chart) {
@@ -851,7 +966,7 @@ function updateURL() {
   if (view === "journal") {
     if (journalRange.from) next.searchParams.set("from", journalRange.from); else next.searchParams.delete("from");
     if (journalRange.to) next.searchParams.set("to", journalRange.to); else next.searchParams.delete("to");
-    ["flag", "tag", "link", "payee", "narration"].forEach((key) => {
+    ["flag", "tag", "link", "payee", "narration", "kind"].forEach((key) => {
       if (journalFilters[key]) next.searchParams.set(key, journalFilters[key]); else next.searchParams.delete(key);
     });
     if (journalTableState.sort) {
@@ -863,7 +978,7 @@ function updateURL() {
     }
     if (journalTableState.page > 0) next.searchParams.set("page", String(journalTableState.page + 1)); else next.searchParams.delete("page");
   } else {
-    ["from", "to", "flag", "tag", "link", "payee", "narration", "sort", "direction", "page"].forEach((key) => next.searchParams.delete(key));
+    ["from", "to", "flag", "tag", "link", "payee", "narration", "kind", "sort", "direction", "page"].forEach((key) => next.searchParams.delete(key));
   }
   window.history.replaceState({}, "", next);
 }
@@ -881,8 +996,14 @@ function reportURL(route) {
   if (reportState.period && reportState.period !== "all") search.set("period", reportState.period);
   if (reportState.valuation && reportState.valuation !== "at-cost") search.set("valuation", reportState.valuation);
   if (reportState.asOf && route === "holdings") search.set("as_of", reportState.asOf);
+  if (!search.has("currency") && (route === "trial-balance" || route === "balance-sheet" || route === "income-statement" || route === "accounts")) search.set("currency", effectiveCurrency());
   const suffix = search.toString();
   return `/api/v1/reports/${encodeURIComponent(apiRoute)}${suffix ? `?${suffix}` : ""}`;
+}
+// effectiveCurrency is the active chart display currency: the explicit global
+// preference when set, otherwise the ledger operating currency, otherwise USD.
+function effectiveCurrency() {
+  return globalState.currency || operatingCurrency || "USD";
 }
 function applyGlobalState() {
   globalState.time = timePicker.value || "all";
@@ -892,7 +1013,13 @@ function applyGlobalState() {
   render();
 }
 function renderNavigation() {
-  navigation.innerHTML = navRoutes.map(([route, key]) => `<button type="button" data-view="${route}" aria-current="${view === route ? "page" : "false"}">${escapeHTML(t(key))}</button>`).join("");
+  const coreRoutes = navRoutes.filter(([route]) => route !== "diagnostics" && route !== "source" && route !== "accounts" && route !== "overview");
+  const extendedRoutes = navRoutes.filter(([route]) => route === "overview" || route === "accounts" || route === "source");
+  const diagnosticsVisible = diagnosticCount > 0 || view === "diagnostics";
+  const core = coreRoutes.map(([route, key]) => `<button type="button" data-view="${route}" aria-current="${view === route ? "page" : "false"}">${escapeHTML(t(key))}</button>`).join("");
+  const extended = extendedRoutes.map(([route, key]) => `<button type="button" data-view="${route}" aria-current="${view === route ? "page" : "false"}">${escapeHTML(t(key))}</button>`).join("");
+  const errors = diagnosticsVisible ? `<button type="button" data-view="diagnostics" aria-current="${view === "diagnostics" ? "page" : "false"}">${escapeHTML(t("diagnostics"))}${diagnosticCount ? ` (${diagnosticCount})` : ""}</button>` : "";
+  navigation.innerHTML = `${core}${errors}${extended ? `<div class="sidebar-heading">${escapeHTML(t("extended"))}</div>${extended}` : ""}`;
   navigation.querySelectorAll("button[data-view]").forEach((button) => button.addEventListener("click", () => {
     view = button.dataset.view;
     updateURL();
@@ -908,8 +1035,28 @@ async function renderOverview() {
     app.innerHTML = `<div class="cards"><section class="card">${escapeHTML(t("snapshot"))}<strong><code>${escapeHTML(status.snapshot_id || "—")}</code></strong></section><section class="card">${escapeHTML(t("valid"))}<strong>${status.valid ? escapeHTML(t("yes")) : escapeHTML(t("no"))}</strong></section><section class="card">${escapeHTML(t("accountsCount"))}<strong>${status.account_count || 0}</strong></section><section class="card">${escapeHTML(t("diagnosticsCount"))}<strong>${status.diagnostic_count || 0}</strong></section><section class="card">${escapeHTML(t("publishedAt"))}<strong>${escapeHTML(status.published_at || "—")}</strong></section></div>`;
   } catch (error) { app.innerHTML = renderError(error); }
 }
+const journalEntryBadges = [
+  ["kind", "transaction", "Transaction"], ["flag", "*", "*"], ["flag", "!", "!"],
+];
 function journalToolbar() {
-  return `<div class="toolbar journal-toolbar" role="group" aria-label="${escapeHTML(t("journal"))}"><label>${escapeHTML(t("from"))} <input id="journal-from" type="date" value="${escapeHTML(journalRange.from)}"></label><label>${escapeHTML(t("to"))} <input id="journal-to" type="date" value="${escapeHTML(journalRange.to)}"></label><label>${escapeHTML(t("flag"))} <input id="journal-flag" type="text" inputmode="text" value="${escapeHTML(journalFilters.flag)}" placeholder="* or !"></label><label>${escapeHTML(t("tag"))} <input id="journal-tag" type="search" value="${escapeHTML(journalFilters.tag)}"></label><label>${escapeHTML(t("link"))} <input id="journal-link" type="search" value="${escapeHTML(journalFilters.link)}"></label><label>${escapeHTML(t("payee"))} <input id="journal-payee" type="search" value="${escapeHTML(journalFilters.payee)}"></label><label>${escapeHTML(t("narration"))} <input id="journal-narration" type="search" value="${escapeHTML(journalFilters.narration)}"></label><button id="journal-apply" type="button">${escapeHTML(t("apply"))}</button><button id="journal-reset" type="button">${escapeHTML(t("reset"))}</button><a class="button" href="${escapeHTML(`${journalURL()}${journalURL().includes("?") ? "&" : "?"}format=csv`)}" download>${escapeHTML(t("exportCSV"))}</a></div>`;
+  const badges = journalEntryBadges.map(([type, value, label]) => {
+    const active = type === "kind" ? journalFilters.kind === value : journalFilters.flag === value;
+    return `<button type="button" class="journal-entry-badge${active ? " badge-on" : ""}" data-journal-type="${escapeHTML(type)}" data-journal-value="${escapeHTML(value)}" aria-pressed="${active ? "true" : "false"}">${escapeHTML(t(label))}</button>`;
+  }).join("");
+  return `<div class="toolbar journal-toolbar" role="group" aria-label="${escapeHTML(t("journal"))}"><div class="journal-entry-badges" role="group" aria-label="${escapeHTML(t("postings"))}">${badges}</div><label>${escapeHTML(t("from"))} <input id="journal-from" type="date" value="${escapeHTML(journalRange.from)}"></label><label>${escapeHTML(t("to"))} <input id="journal-to" type="date" value="${escapeHTML(journalRange.to)}"></label><label>${escapeHTML(t("flag"))} <input id="journal-flag" type="text" inputmode="text" value="${escapeHTML(journalFilters.flag)}" placeholder="* or !"></label><label>${escapeHTML(t("tag"))} <input id="journal-tag" type="search" value="${escapeHTML(journalFilters.tag)}"></label><label>${escapeHTML(t("link"))} <input id="journal-link" type="search" value="${escapeHTML(journalFilters.link)}"></label><label>${escapeHTML(t("payee"))} <input id="journal-payee" type="search" value="${escapeHTML(journalFilters.payee)}"></label><label>${escapeHTML(t("narration"))} <input id="journal-narration" type="search" value="${escapeHTML(journalFilters.narration)}"></label><button id="journal-apply" type="button">${escapeHTML(t("apply"))}</button><button id="journal-reset" type="button">${escapeHTML(t("reset"))}</button><a class="button" href="${escapeHTML(`${journalURL()}${journalURL().includes("?") ? "&" : "?"}format=csv`)}" download>${escapeHTML(t("exportCSV"))}</a></div>`;
+}
+function wireJournalEntryBadges() {
+  document.querySelectorAll(".journal-entry-badge").forEach((button) => button.addEventListener("click", () => {
+    const type = button.dataset.journalType;
+    const value = button.dataset.journalValue;
+    if (type === "kind") {
+      journalFilters.kind = journalFilters.kind === value ? "" : value;
+    } else {
+      journalFilters.flag = journalFilters.flag === value ? "" : value;
+    }
+    updateURL();
+    renderReport("journal");
+  }));
 }
 function journalURL() {
   const search = globalQuery();
@@ -919,47 +1066,177 @@ function journalURL() {
   const suffix = search.toString();
   return `/api/v1/reports/journal${suffix ? `?${suffix}` : ""}`;
 }
-function journalTableOptions() {
-  return {
-    paginate: true,
-    sortColumn: journalTableState.sort,
-    sortDirection: journalTableState.direction,
-    page: journalTableState.page,
-    onSort: ({ column, direction }) => {
-      journalTableState.sort = column;
-      journalTableState.direction = direction;
-      updateURL();
-    },
-    onPageChange: (page) => {
-      journalTableState.page = page;
-      updateURL();
-    },
-  };
+// renderJournal groups flat posting rows into transaction header + expandable
+// posting detail rows. Postings of the same transaction share (file, span);
+// header rows carry the date, payee/narration, and a toggle that reveals the
+// indented posting rows beneath.
+function renderJournal(result) {
+  const container = document.getElementById("journal-result");
+  const rows = Array.isArray(result.rows) ? result.rows : [];
+  if (!rows.length) {
+    container.innerHTML = `<p class="muted">${escapeHTML(t("empty"))}</p>`;
+    return;
+  }
+  const groups = [];
+  const byKey = new Map();
+  rows.forEach((row) => {
+    const key = `${row.file || ""}::${row.span || ""}::${row.date || ""}`;
+    if (!byKey.has(key)) {
+      byKey.set(key, []);
+      groups.push({ key, rows: byKey.get(key) });
+    }
+    byKey.get(key).push(row);
+  });
+  const html = groups.map((group) => {
+    const first = group.rows[0];
+    const header = `<tr class="journal-transaction-row" data-journal-group="${escapeHTML(group.key)}"><td colspan="4"><button type="button" class="journal-transaction-toggle" aria-expanded="true" aria-label="${escapeHTML(`${t("details")}: ${first.date || ""}`)}">▾</button><span class="muted">${escapeHTML(first.date || "")}</span>${first.payee ? ` <strong>${escapeHTML(first.payee)}</strong>` : ""}${first.narration ? ` · ${escapeHTML(first.narration)}` : ""}<span class="muted"> · ${group.rows.length} ${escapeHTML(t("postings"))}</span></td></tr>`;
+    const detail = group.rows.map((posting) => `<tr class="journal-posting-row" data-journal-group="${escapeHTML(group.key)}"><td></td><td>${escapeHTML(posting.account || "")}</td><td>${escapeHTML(postedUnits(posting))}</td><td>${escapeHTML(postedCost(posting))}</td></tr>`).join("");
+    return header + detail;
+  }).join("");
+  container.innerHTML = `<div class="table-wrap"><table><thead><tr><th class="sr-only">${escapeHTML(t("details"))}</th><th>${escapeHTML(t("account"))}</th><th>${escapeHTML(t("units"))}</th><th>${escapeHTML(t("cost"))}</th></tr></thead><tbody>${html}</tbody></table></div>`;
+  container.querySelectorAll(".journal-transaction-toggle").forEach((button) => button.addEventListener("click", () => {
+    const key = button.dataset.journalGroup;
+    const expanded = button.getAttribute("aria-expanded") === "true";
+    button.setAttribute("aria-expanded", String(!expanded));
+    button.textContent = expanded ? "▸" : "▾";
+    container.querySelectorAll(`.journal-posting-row[data-journal-group="${CSS.escape(key)}"]`).forEach((row) => { row.hidden = expanded; });
+  }));
+}
+function postedUnits(posting) {
+  const units = posting.units;
+  if (units && typeof units === "object") {
+    const amount = units.display != null ? units.display : units;
+    const currency = posting.currency || "";
+    return `${amount}${currency ? ` ${currency}` : ""}`;
+  }
+  return posting.units != null ? String(posting.units) : "";
+}
+function postedCost(posting) {
+  const cost = posting.cost;
+  if (cost && typeof cost === "object") {
+    const amount = cost.display != null ? cost.display : cost;
+    return `${amount}${posting.cost_currency ? ` ${posting.cost_currency}` : ""}`;
+  }
+  return "";
 }
 async function renderReport(route) {
   app.innerHTML = `<p class="muted">${escapeHTML(t("loading"))}</p>`;
   try {
     const result = await api(route === "journal" ? journalURL() : reportURL(route));
     if (route === "journal") {
-      app.innerHTML = `<h2>${escapeHTML(t("journal"))}</h2>${journalToolbar()}<div id="journal-result"></div>`;
+      app.innerHTML = `${journalToolbar()}<div id="journal-result"></div>`;
       document.getElementById("journal-apply").addEventListener("click", () => {
         journalRange = { from: document.getElementById("journal-from").value, to: document.getElementById("journal-to").value };
-        ["flag", "tag", "link", "payee", "narration"].forEach((key) => { journalFilters[key] = document.getElementById(`journal-${key}`).value.trim(); });
+        ["flag", "tag", "link", "payee", "narration", "kind"].forEach((key) => { journalFilters[key] = document.getElementById(`journal-${key}`).value.trim(); });
         updateURL();
         renderReport("journal");
       });
-      document.getElementById("journal-reset").addEventListener("click", () => { journalRange = { from: "", to: "" }; journalFilters = { flag: "", tag: "", link: "", payee: "", narration: "" }; updateURL(); renderReport("journal"); });
-      mountTable(document.getElementById("journal-result"), result, journalTableOptions());
+      document.getElementById("journal-reset").addEventListener("click", () => { journalRange = { from: "", to: "" }; journalFilters = { flag: "", tag: "", link: "", payee: "", narration: "", kind: "" }; updateURL(); renderReport("journal"); });
+      wireJournalEntryBadges();
+      renderJournal(result);
       return;
     }
     const tree = route === "accounts" || route === "trial-balance" || route === "balance-sheet" || route === "income-statement";
+    // Account detail view: when a single exact account is selected, render a
+    // dedicated balance chart + posting detail (with running balance) instead
+    // of the generic filtered accounts list.
+    if (route === "accounts" && globalState.account) {
+      await renderAccountDetail(globalState.account);
+      return;
+    }
     const asOfNote = route === "holdings" && reportState.asOf ? `<p class="muted">${escapeHTML(t("survivingLots"))}</p>` : "";
     app.innerHTML = `${reportToolbar(route)}${asOfNote}${renderChart(result, t(navRoutes.find(([name]) => name === route)?.[1] || route), route, result.chart)}<div id="report-result"></div>`;
     wireReportToolbar(route);
     mountChartData(app.querySelector(".report-chart"), result.chart);
     wireCharts(app);
-    mountTable(document.getElementById("report-result"), result, { tree, leavesOnly: tree && reportState.treeMode === "leaves" });
+    mountTable(document.getElementById("report-result"), result, { tree, leavesOnly: tree && reportState.treeMode === "leaves", pivotCurrency: tree });
   } catch (error) { app.innerHTML = renderError(error); }
+}
+// renderAccountDetail renders a dedicated account page: a balance time-series
+// chart for the account plus its posting detail table with a running balance
+// column (Fava's account journal).
+async function renderAccountDetail(account) {
+  app.innerHTML = `<p class="muted">${escapeHTML(t("loading"))}</p>`;
+  try {
+    const displayCurrency = globalState.currency || operatingCurrency || "";
+    const [chartResult, journalResult] = await Promise.all([
+      api(`/api/v1/reports/accounts?currency=${encodeURIComponent(displayCurrency)}&account=${encodeURIComponent(account)}&period=${encodeURIComponent(reportState.period || "all")}`),
+      api(`/api/v1/reports/journal?account=${encodeURIComponent(account)}`),
+    ]);
+    const chart = chartResult.chart;
+    const head = `<div class="account-detail-head"><a href="?view=accounts">&larr; ${escapeHTML(t("back"))}</a><h3>${escapeHTML(account)}</h3></div>`;
+    const chartHtml = chart && Array.isArray(chart.series) && chart.series.some((series) => Array.isArray(series.points) && series.points.length) ? renderChart(chartResult, t("accountBalance"), "accounts", chart) : `<p class="muted">${escapeHTML(t("empty"))}</p>`;
+    const rows = Array.isArray(journalResult.rows) ? journalResult.rows : [];
+    // Running balance is tracked per currency; summing across currencies would
+    // produce a meaningless number for a multi-currency account.
+    const runningByCurrency = new Map();
+    const detailRows = rows.map((row) => {
+      const amount = postedAmountValue(row);
+      const currency = row.currency || "";
+      let running = "";
+      if (amount != null && currency) {
+        const current = runningByCurrency.get(currency) || { exact: "0", display: "0" };
+        const next = addExact(current.exact, amount.exact);
+        runningByCurrency.set(currency, { exact: String(next.exact), display: String(next.display) });
+        running = String(next.display);
+      }
+      return { date: row.date || "", account: row.account || "", units: postedUnits(row), flag: row.flag || "", running };
+    });
+    app.innerHTML = `${head}${chartHtml}<div id="account-journal"></div>`;
+    mountChartData(app.querySelector(".report-chart"), chart);
+    wireCharts(app);
+    mountRawTable(document.getElementById("account-journal"), { columns: ["date", "account", "flag", "units", "running"], rows: detailRows }, { runningLabel: t("runningBalance") });
+  } catch (error) { app.innerHTML = renderError(error); }
+}
+function postedAmountValue(row) {
+  const units = row.units;
+  if (units && typeof units === "object" && units.exact != null) return { exact: units.exact, display: units.display != null ? units.display : units.exact };
+  if (units != null) return { exact: String(units), display: String(units) };
+  return null;
+}
+function addExact(left, right) {
+  const a = decimalParts(left);
+  const b = decimalParts(right);
+  if (!a || !b) return { exact: String(left), display: String(left) };
+  const numerator = a.numerator * b.denominator + b.numerator * a.denominator;
+  const denominator = a.denominator * b.denominator;
+  if (numerator === 0n) return { exact: "0", display: "0" };
+  // Reduce by the GCD so the result is exact and minimal.
+  let n = numerator < 0n ? -numerator : numerator;
+  let d = denominator;
+  while (d !== 0n) { const r = n % d; n = d; d = r; }
+  const gcd = n;
+  const reducedNum = numerator / gcd;
+  const reducedDen = denominator / gcd;
+  if (reducedDen === 1n) return { exact: String(reducedNum), display: String(reducedNum) };
+  // A denominator with only 2 and 5 prime factors terminates as a decimal;
+  // anything else stays a reduced fraction.
+  let remaining = reducedDen;
+  while (remaining % 2n === 0n) remaining /= 2n;
+  while (remaining % 5n === 0n) remaining /= 5n;
+  if (remaining === 1n) {
+    const sign = reducedNum < 0n ? "-" : "";
+    const absNum = reducedNum < 0n ? -reducedNum : reducedNum;
+    const integer = absNum / reducedDen;
+    const remainder = absNum % reducedDen;
+    if (remainder === 0n) return { exact: `${reducedNum}/${reducedDen}`, display: `${sign}${integer}` };
+    // Scale the remainder to the full decimal expansion of the denominator.
+    let scale = 1n;
+    let digits = "";
+    let r = remainder;
+    while (r !== 0n) {
+      r *= 10n;
+      digits += String(r / reducedDen);
+      r %= reducedDen;
+      scale *= 10n;
+    }
+    return { exact: `${reducedNum}/${reducedDen}`, display: `${sign}${integer}.${digits}` };
+  }
+  return { exact: `${reducedNum}/${reducedDen}`, display: `${reducedNum}/${reducedDen}` };
+}
+function mountRawTable(container, result, options = {}) {
+  const columns = result.columns.map((column) => column === "running" && options.runningLabel ? options.runningLabel : column);
+  container.innerHTML = `<div class="table-wrap"><table><thead><tr>${columns.map((column) => `<th>${escapeHTML(column)}</th>`).join("")}</tr></thead><tbody>${result.rows.map((row) => `<tr>${result.columns.map((column) => `<td>${escapeHTML(row[column] == null ? "" : String(row[column]))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 }
 async function renderDiagnostics() {
   app.innerHTML = `<p class="muted">${escapeHTML(t("loading"))}</p>`;
@@ -973,8 +1250,8 @@ async function renderSource() {
   try {
     const listing = await api("/api/v1/source");
     const paths = Array.isArray(listing.paths) ? listing.paths : [];
-    if (!paths.length) { app.innerHTML = `<h2>${escapeHTML(t("source"))}</h2><p class="muted">${escapeHTML(t("empty"))}</p>`; return; }
-    app.innerHTML = `<h2>${escapeHTML(t("source"))}</h2><p class="muted">${escapeHTML(t("sourceHint"))}</p><div class="toolbar">${paths.map((path) => `<button type="button" data-source-path="${escapeHTML(path)}">${escapeHTML(path)}</button>`).join("")}</div><h3 id="source-file">${escapeHTML(t("file"))}</h3><pre id="source-content" class="source-content">${escapeHTML(t("empty"))}</pre>`;
+    if (!paths.length) { app.innerHTML = `<p class="muted">${escapeHTML(t("empty"))}</p>`; return; }
+    app.innerHTML = `<p class="muted">${escapeHTML(t("sourceHint"))}</p><div class="toolbar">${paths.map((path) => `<button type="button" data-source-path="${escapeHTML(path)}">${escapeHTML(path)}</button>`).join("")}</div><h3 id="source-file">${escapeHTML(t("file"))}</h3><pre id="source-content" class="source-content">${escapeHTML(t("empty"))}</pre>`;
     const loadSource = async (path) => {
       const fileHeading = document.getElementById("source-file");
       const content = document.getElementById("source-content");
@@ -1007,7 +1284,7 @@ async function renderEditor() {
     const listing = await api("/api/v1/editor");
     const paths = Array.isArray(listing.paths) ? listing.paths : [];
     if (!paths.length) { app.innerHTML = `<p class="muted">${escapeHTML(t("noFile"))}</p>`; return; }
-    app.innerHTML = `<h2>${escapeHTML(t("editor"))}</h2><div class="editor-layout"><aside class="editor-files"><h3>${escapeHTML(t("files"))}</h3><select id="editor-file" size="${Math.min(Math.max(paths.length, 2), 12)}">${paths.map((path) => `<option value="${escapeHTML(path)}">${escapeHTML(path)}</option>`).join("")}</select></aside><section class="editor-pane"><div class="toolbar"><button id="editor-validate" type="button">${escapeHTML(t("validate"))}</button><button id="editor-save" type="button">${escapeHTML(t("save"))}</button><span id="editor-status" class="muted"></span></div><label class="sr-only" for="editor-buffer">${escapeHTML(t("editor"))}</label><div class="editor-code"><pre id="editor-lines" class="line-numbers" aria-hidden="true">1</pre><textarea id="editor-buffer" spellcheck="false"></textarea></div><h3>${escapeHTML(t("syntax"))}</h3><pre id="editor-highlight" class="source-content syntax-preview"></pre><div id="editor-diagnostics"></div></section></div>`;
+    app.innerHTML = `<div class="editor-layout"><aside class="editor-files"><h3>${escapeHTML(t("files"))}</h3><select id="editor-file" size="${Math.min(Math.max(paths.length, 2), 12)}">${paths.map((path) => `<option value="${escapeHTML(path)}">${escapeHTML(path)}</option>`).join("")}</select></aside><section class="editor-pane"><div class="toolbar"><button id="editor-validate" type="button">${escapeHTML(t("validate"))}</button><button id="editor-save" type="button">${escapeHTML(t("save"))}</button><span id="editor-status" class="muted"></span></div><label class="sr-only" for="editor-buffer">${escapeHTML(t("editor"))}</label><div class="editor-code"><pre id="editor-lines" class="line-numbers" aria-hidden="true">1</pre><textarea id="editor-buffer" spellcheck="false"></textarea></div><h3>${escapeHTML(t("syntax"))}</h3><pre id="editor-highlight" class="source-content syntax-preview"></pre><div id="editor-diagnostics"></div></section></div>`;
     const picker = document.getElementById("editor-file");
     const buffer = document.getElementById("editor-buffer");
     const lines = document.getElementById("editor-lines");
@@ -1020,7 +1297,13 @@ async function renderEditor() {
       highlight.innerHTML = highlightSource(buffer.value);
       lines.textContent = Array.from({ length: Math.max(1, buffer.value.split("\n").length) }, (_, index) => index + 1).join("\n");
     };
-    buffer.addEventListener("input", updateHighlight);
+    // Debounce re-highlighting so typing stays fluid; the preview updates a
+    // few hundred milliseconds after the user stops typing.
+    let highlightTimer = null;
+    buffer.addEventListener("input", () => {
+      clearTimeout(highlightTimer);
+      highlightTimer = setTimeout(updateHighlight, 200);
+    });
     buffer.addEventListener("scroll", () => { lines.scrollTop = buffer.scrollTop; highlight.scrollTop = buffer.scrollTop; });
     const load = async (path) => {
       status.textContent = t("loading");
@@ -1062,7 +1345,7 @@ async function renderImport() {
   try {
     const [targets, adaptersResponse] = await Promise.all([api("/api/v1/import/targets"), api("/api/v1/import/adapters")]);
     const paths = Array.isArray(targets.paths) ? targets.paths : [];
-    app.innerHTML = `<h2>${escapeHTML(t("import"))}</h2><p class="muted">${escapeHTML(t("documentsHint"))}</p><div class="toolbar"><label>${escapeHTML(t("chooseFile"))} <input id="import-file" type="file" accept=".bean,.beancount,text/plain"></label><label>${escapeHTML(t("files"))} <input id="import-path" type="text" value="import.bean" pattern="[^/\\\\]+\\.(bean|beancount)"></label><label>${escapeHTML(t("target"))} <select id="import-target">${paths.map((path) => `<option value="${escapeHTML(path)}">${escapeHTML(path)}</option>`).join("")}</select></label></div><textarea id="import-buffer" spellcheck="false" placeholder="${escapeHTML(t("chooseFile"))}"></textarea><div class="toolbar"><button id="import-preview" type="button">${escapeHTML(t("preview"))}</button><button id="import-commit" type="button" disabled>${escapeHTML(t("commit"))}</button><span id="import-status" class="muted"></span></div><p id="import-diff" class="muted"></p><div id="import-result"></div>`;
+    app.innerHTML = `<p class="muted">${escapeHTML(t("documentsHint"))}</p><div class="toolbar"><label>${escapeHTML(t("chooseFile"))} <input id="import-file" type="file" accept=".bean,.beancount,text/plain"></label><label>${escapeHTML(t("files"))} <input id="import-path" type="text" value="import.bean" pattern="[^/\\\\]+\\.(bean|beancount)"></label><label>${escapeHTML(t("target"))} <select id="import-target">${paths.map((path) => `<option value="${escapeHTML(path)}">${escapeHTML(path)}</option>`).join("")}</select></label></div><textarea id="import-buffer" spellcheck="false" placeholder="${escapeHTML(t("chooseFile"))}"></textarea><div class="toolbar"><button id="import-preview" type="button">${escapeHTML(t("preview"))}</button><button id="import-commit" type="button" disabled>${escapeHTML(t("commit"))}</button><span id="import-status" class="muted"></span></div><p id="import-diff" class="muted"></p><div id="import-result"></div>`;
     const adapters = Array.isArray(adaptersResponse.adapters) ? adaptersResponse.adapters : [];
     const importToolbar = document.querySelector(".toolbar");
     if (importToolbar) importToolbar.insertAdjacentHTML("afterbegin", `<label>${escapeHTML(t("adapter"))} <select id="import-adapter">${adapters.map((adapter) => `<option value="${escapeHTML(adapter.id)}">${escapeHTML(adapter.label)}</option>`).join("")}</select></label><label>${escapeHTML(t("offset"))} <input id="import-offset" type="text" value="Equity:Opening"></label><label>${escapeHTML(t("currency"))} <input id="import-currency" type="text" value="USD" maxlength="12"></label>`);
@@ -1116,19 +1399,25 @@ async function renderOptions() {
   try {
     const response = await api("/api/v1/options");
     const values = response.options || {};
-    app.innerHTML = `<h2>${escapeHTML(t("options"))}</h2><div class="toolbar options-form"><label>${escapeHTML(t("language"))} <select id="options-locale"><option value="en">English</option><option value="zh-CN">简体中文</option></select></label><label>${escapeHTML(t("currency"))} <input id="options-currency" value="${escapeHTML(values.currency || globalState.currency)}" maxlength="12"></label><label>${escapeHTML(t("time"))} <select id="options-time"><option value="all">${escapeHTML(t("allPeriods"))}</option><option value="year">${escapeHTML(t("yearly"))}</option><option value="month">${escapeHTML(t("monthly"))}</option></select></label><button id="options-save" type="button">${escapeHTML(t("save"))}</button><span id="options-status" class="muted"></span></div><p class="muted">${escapeHTML(t("subtitle"))}</p>`;
+    const ledgerEntries = Object.entries(values).filter(([key]) => !["locale", "currency", "time"].includes(key));
+    const readonlyTable = ledgerEntries.length ? `<div class="options-readonly"><h3>${escapeHTML(t("optionsFromLedger"))}</h3><div class="table-wrap"><table><thead><tr><th>option</th><th>value</th></tr></thead><tbody>${ledgerEntries.map(([key, value]) => `<tr><td>${escapeHTML(key)}</td><td>${escapeHTML(String(value))}</td></tr>`).join("")}</tbody></table></div></div>` : "";
+    const themeSelect = `<div class="toolbar options-form"><label>${escapeHTML(t("theme"))} <select id="options-theme"><option value="dark">${escapeHTML(t("dark"))}</option><option value="light">${escapeHTML(t("light"))}</option><option value="system">${escapeHTML(t("system"))}</option></select></label></div>`;
+    app.innerHTML = `<div class="toolbar options-form"><label>${escapeHTML(t("language"))} <select id="options-locale"><option value="en">English</option><option value="zh-CN">简体中文</option></select></label><label>${escapeHTML(t("currency"))} <input id="options-currency" value="${escapeHTML(values.currency || globalState.currency)}" maxlength="12"></label><label>${escapeHTML(t("time"))} <select id="options-time"><option value="all">${escapeHTML(t("allPeriods"))}</option><option value="year">${escapeHTML(t("yearly"))}</option><option value="month">${escapeHTML(t("monthly"))}</option></select></label><button id="options-save" type="button">${escapeHTML(t("save"))}</button><span id="options-status" class="muted"></span></div>${themeSelect}${readonlyTable}<p class="muted">${escapeHTML(t("subtitle"))}</p>`;
     const localeInput = document.getElementById("options-locale");
     const currencyInput = document.getElementById("options-currency");
     const timeInput = document.getElementById("options-time");
+    const themeInput = document.getElementById("options-theme");
     localeInput.value = values.locale || locale;
     timeInput.value = values.time || globalState.time;
+    themeInput.value = theme === "system" ? "system" : theme;
+    themeInput.addEventListener("change", () => { applyTheme(themeInput.value); render(); });
     document.getElementById("options-save").addEventListener("click", async () => {
       const next = { locale: localeInput.value, currency: currencyInput.value.trim().toUpperCase(), time: timeInput.value };
       try {
         await apiJSON("/api/v1/options", "POST", next);
         locale = next.locale === "zh-CN" ? "zh-CN" : "en";
         localStorage.setItem("orangecount-locale", locale);
-        globalState.currency = next.currency || "USD";
+        globalState.currency = next.currency || "";
         globalState.time = next.time || "all";
         updateURL();
         document.getElementById("options-status").textContent = t("saved");
@@ -1142,7 +1431,7 @@ async function renderHelp() {
   try {
     const response = await api("/api/v1/help");
     const sections = Array.isArray(response.sections) ? response.sections : [];
-    app.innerHTML = `<h2>${escapeHTML(t("help"))}</h2><input id="help-search" type="search" placeholder="${escapeHTML(t("searchHelp"))}" aria-label="${escapeHTML(t("searchHelp"))}"><div id="help-sections" class="help-sections"></div>`;
+    app.innerHTML = `<input id="help-search" type="search" placeholder="${escapeHTML(t("searchHelp"))}" aria-label="${escapeHTML(t("searchHelp"))}"><div id="help-sections" class="help-sections"></div>`;
     const search = document.getElementById("help-search");
     const render = () => {
       const needle = search.value.trim().toLowerCase();
@@ -1154,7 +1443,7 @@ async function renderHelp() {
 }
 function renderQuery() {
   const saved = JSON.parse(localStorage.getItem("orangecount-saved-queries") || "[]");
-  app.innerHTML = `<h2>${escapeHTML(t("query"))}</h2><textarea id="query-text" aria-label="${escapeHTML(t("query"))}">${escapeHTML(params.get("q") || t("queryHint"))}</textarea><div class="toolbar"><button id="run-query" type="button">${escapeHTML(t("run"))}</button><input id="query-name" type="text" placeholder="${escapeHTML(t("queryName"))}"><button id="save-query" type="button">${escapeHTML(t("save"))}</button><label>${escapeHTML(t("saved"))} <select id="saved-queries"><option value="">—</option>${saved.map((entry) => `<option value="${escapeHTML(entry.name)}">${escapeHTML(entry.name)}</option>`).join("")}</select></label><a class="button" id="query-csv" href="#" download>${escapeHTML(t("exportCSV"))}</a></div><div id="query-result"></div>`;
+  app.innerHTML = `<textarea id="query-text" aria-label="${escapeHTML(t("query"))}">${escapeHTML(params.get("q") || t("queryHint"))}</textarea><div class="toolbar"><button id="run-query" type="button">${escapeHTML(t("run"))}</button><input id="query-name" type="text" placeholder="${escapeHTML(t("queryName"))}"><button id="save-query" type="button">${escapeHTML(t("save"))}</button><label>${escapeHTML(t("saved"))} <select id="saved-queries"><option value="">—</option>${saved.map((entry) => `<option value="${escapeHTML(entry.name)}">${escapeHTML(entry.name)}</option>`).join("")}</select></label><a class="button" id="query-csv" href="#" download>${escapeHTML(t("exportCSV"))}</a></div><div id="query-result"></div>`;
   const queryText = document.getElementById("query-text");
   const csvLink = document.getElementById("query-csv");
   const updateCSV = () => { csvLink.href = `/api/v1/query?format=csv&q=${encodeURIComponent(queryText.value)}`; };
@@ -1192,6 +1481,7 @@ function render() {
   accountPicker.value = globalState.account;
   globalFilter.value = globalState.filter;
   currencySwitch.querySelectorAll("button[data-currency]").forEach((button) => button.setAttribute("aria-pressed", button.dataset.currency === globalState.currency ? "true" : "false"));
+  renderBrand();
   renderNavigation();
   if (view === "overview") return renderOverview();
   if (view === "source") return renderSource();
@@ -1202,6 +1492,26 @@ function render() {
   if (view === "options") return renderOptions();
   if (view === "help") return renderHelp();
   return renderReport(view);
+}
+// renderBrand builds the topbar breadcrumb "‹ledger title› › current page" from
+// the ledger option title, falling back to the product name when no title is
+// set. Keeps the brand link pointing at the home page.
+function renderBrand() {
+  const pageLabel = t(navRoutes.find(([route]) => route === view)?.[1] || "overview");
+  const title = ledgerTitle || "OrangeCount";
+  brand.innerHTML = `${escapeHTML(title)}${view && view !== "overview" ? `<span class="brand-sep">›</span><span class="brand-page">${escapeHTML(pageLabel)}</span>` : ""}`;
+  brand.setAttribute("aria-label", title);
+}
+// applyTheme applies the System/Dark/Light theme to the document root and
+// persists the choice. System resolves to the OS color-scheme preference.
+function applyTheme(value) {
+  theme = value === "system" ? "system" : (value === "light" ? "light" : "dark");
+  localStorage.setItem("orangecount-theme", theme);
+  if (theme === "system") {
+    document.documentElement.removeAttribute("data-theme");
+  } else {
+    document.documentElement.setAttribute("data-theme", theme);
+  }
 }
 async function loadAccountOptions() {
   try {
@@ -1223,7 +1533,7 @@ globalFilter.addEventListener("keydown", (event) => { if (event.key === "Enter")
 currencySwitch.addEventListener("click", (event) => {
   const button = event.target.closest("button[data-currency]");
   if (!button) return;
-  globalState.currency = button.dataset.currency || "USD";
+  globalState.currency = button.dataset.currency || "";
   updateURL();
   render();
 });
@@ -1235,5 +1545,29 @@ localePicker.addEventListener("change", () => {
   window.history.replaceState({}, "", next);
   render();
 });
-render();
-loadAccountOptions();
+async function bootstrap() {
+  applyTheme(theme);
+  try {
+    const [status, options] = await Promise.all([api("/api/v1/status"), api("/api/v1/options")]);
+    diagnosticCount = status.diagnostic_count || 0;
+    const values = options.options || {};
+    ledgerTitle = values.title || "";
+    // operating_currency accumulates repeated declarations as a
+    // space-separated list (see appendOperatingCurrency in the evaluator);
+    // the first entry is the ledger's primary operating currency.
+    const operatingCurrencies = (values.operating_currency || "").split(/\s+/).filter(Boolean);
+    operatingCurrency = operatingCurrencies[0] || "";
+    ledgerOptions = values;
+    operatingCurrencies.forEach((currency) => {
+      if (currencySwitch.querySelector(`button[data-currency="${CSS.escape(currency)}"]`)) return;
+      const button = document.createElement("button");
+      button.type = "button";
+      button.dataset.currency = currency;
+      button.textContent = currency;
+      currencySwitch.appendChild(button);
+    });
+  } catch (_) { /* shell works without ledger metadata */ }
+  render();
+  loadAccountOptions();
+}
+bootstrap();

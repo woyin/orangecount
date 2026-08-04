@@ -17,7 +17,7 @@ For each Fava route, record a redacted structural baseline: page shell, navigati
 
 ## Constraints
 
-- Never copy Fava GPL/third-party implementation code; if using its MIT-licensed assets or code, preserve attribution and perform a license review.
+- Fava 1.30.12 frontend code, styles, and assets may be selectively adapted under its MIT license; retain copyright and license text per derived file and record each imported unit in the third-party notice inventory. Do not copy non-Fava third-party code or assets without a separate license review.
 - Never execute Python plugins as part of OrangeCount's accounting engine.
 - Editor writes must use explicit user action, atomic replacement, a recoverable backup, and revalidation before publishing the new snapshot.
 - Importers operate locally and must present changes for review before committing them to a ledger file.

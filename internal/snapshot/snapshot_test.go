@@ -76,3 +76,29 @@ func TestWatchDebouncesIncludeGraphChanges(t *testing.T) {
 		t.Fatalf("reload count=%d", got)
 	}
 }
+
+func TestSnapshotPreservesEvaluationOptions(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	if err := os.WriteFile(entry, []byte(`option "title" "Probe Ledger"
+option "operating_currency" "CNY"
+2020-01-01 open Assets:Cash CNY
+2020-01-01 open Equity:Opening CNY
+2020-01-01 * "opening"
+  Assets:Cash 1 CNY
+  Equity:Opening
+`), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	res := Build(entry)
+	if res.Snapshot == nil {
+		t.Fatalf("snapshot nil: %v", res.Err)
+	}
+	opts := res.Snapshot.Evaluation().Options
+	if opts["title"] != "Probe Ledger" {
+		t.Fatalf("title option lost: %v", opts)
+	}
+	if opts["operating_currency"] != "CNY" {
+		t.Fatalf("operating_currency option lost: %v", opts)
+	}
+}

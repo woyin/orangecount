@@ -1,0 +1,14 @@
+; Synthetic account tree and commodities. No external price service is needed.
+2024-01-01 commodity USD
+2024-01-01 commodity EUR
+2024-01-01 commodity JPY
+2024-01-01 commodity CAD
+2024-01-01 commodity SH
+
+2024-01-01 open Assets:Wallet:Primary USD, EUR, JPY
+2024-01-01 open Assets:Wallet:Reserve USD, CAD
+2024-01-01 open Assets:Investments:Fund SH
+2024-01-01 open Liabilities:Card USD
+2024-01-01 open Income:Sales USD
+2024-01-01 open Expenses:Meals USD
+2024-01-01 open Equity:Opening-Balances USD, EUR, JPY, CAD, SH

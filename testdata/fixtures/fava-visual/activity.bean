@@ -1,0 +1,55 @@
+; Synthetic activity deliberately includes several currencies and a commodity.
+2024-01-02 * "Opening allocation" #seed ^batch-a
+  Assets:Wallet:Primary 100 USD
+  Assets:Wallet:Primary 50 EUR
+  Assets:Wallet:Primary 10000 JPY
+  Assets:Wallet:Reserve 20 CAD
+  Equity:Opening-Balances -100 USD
+  Equity:Opening-Balances -50 EUR
+  Equity:Opening-Balances -10000 JPY
+  Equity:Opening-Balances -20 CAD
+
+2024-01-03 * "Fund purchase" #investing ^batch-b
+  Assets:Investments:Fund 10 SH {25 USD}
+  Equity:Opening-Balances -250 USD
+
+2024-01-04 price SH 25 USD
+2024-01-05 price EUR 1.10 USD
+2024-01-06 price JPY 0.007 USD
+
+2024-01-07 * "Sale receipt" #income ^batch-c
+  Assets:Wallet:Primary 80 USD
+  Income:Sales -80 USD
+
+2024-01-08 * "Meal payment" #expense ^batch-d
+  Expenses:Meals 15 USD
+  Assets:Wallet:Primary -15 USD
+
+2024-01-09 * "Card charge" #liability ^batch-e
+  Expenses:Meals 12 USD
+  Liabilities:Card -12 USD
+
+2024-01-10 * "Card payment" #liability ^batch-f
+  Liabilities:Card 12 USD
+  Assets:Wallet:Primary -12 USD
+
+2024-01-11 * "Reserve transfer" #transfer ^batch-g
+  Assets:Wallet:Reserve 75 USD
+  Assets:Wallet:Primary -75 USD
+
+2024-01-12 * "Second sale" #income ^batch-h
+  Assets:Wallet:Primary 35 USD
+  Income:Sales -35 USD
+
+2024-01-13 * "Second meal" #expense ^batch-i
+  Expenses:Meals 9 USD
+  Assets:Wallet:Primary -9 USD
+
+2024-01-14 balance Assets:Wallet:Reserve 75 USD
+2024-01-15 event "milestone" "synthetic-event"
+2024-01-16 query "saved-overview" "SELECT account, balance FROM accounts ORDER BY account"
+2024-01-17 document Assets:Wallet:Primary "receipt-a.txt" #evidence ^batch-c
+2024-01-18 note Assets:Wallet:Primary "Synthetic note for source-link checks"
+2024-01-18 document Assets:Wallet:Primary "nested/receipt-b.txt" #evidence ^batch-c
+2024-01-19 custom "review-state" "pending" "synthetic"
+2024-01-20 close Liabilities:Card

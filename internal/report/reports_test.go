@@ -387,6 +387,44 @@ func TestChartPeriodIntervalQuarterYear(t *testing.T) {
 	}
 }
 
+func TestAccountChartNativeModeEmitsPerCurrencySeries(t *testing.T) {
+	// A multi-currency account with no display currency requested must emit one
+	// running series per native currency instead of silently dropping all data.
+	text := `2000-01-01 open Assets:Bank:Main USD
+2000-01-01 open Assets:Bank:Main CNY
+2000-01-01 open Equity:Opening USD
+2000-01-01 open Equity:Opening CNY
+2000-01-02 * "usd"
+  Assets:Bank:Main 10 USD
+  Equity:Opening -10 USD
+2000-03-02 * "cny"
+  Assets:Bank:Main 100 CNY
+  Equity:Opening -100 CNY
+`
+	file, diagnostics := ledger.ParseText("native-account.bean", []byte(text))
+	if diagnostics.HasErrors() {
+		t.Fatalf("parse=%+v", diagnostics.All())
+	}
+	evaluation := ledger.EvaluateFiles(map[source.FileID]*ledger.File{1: file}, []source.FileID{1}, ledger.EvalOptions{})
+	chart := ReportChart(*evaluation, "accounts", "month", "", "at-cost", "Assets:Bank:Main")
+	if chart.Availability != "native-multi" {
+		t.Fatalf("native availability=%q want=native-multi", chart.Availability)
+	}
+	if len(chart.Series) != 2 {
+		t.Fatalf("native series len=%d want=2 (USD, CNY), chart=%+v", len(chart.Series), chart)
+	}
+	labels := map[string]bool{}
+	for _, series := range chart.Series {
+		labels[series.Label] = true
+		if len(series.Points) == 0 {
+			t.Fatalf("native series %q has no points", series.Label)
+		}
+	}
+	if !labels["USD"] || !labels["CNY"] {
+		t.Fatalf("native series labels=%v want USD and CNY", labels)
+	}
+}
+
 func TestGlobalReportFiltersKeepStableRows(t *testing.T) {
 	result := query.Result{Columns: []string{"date", "account", "narration"}, Rows: []query.Row{
 		{"date": "2024-01-02", "account": "Assets:Cash", "narration": "Coffee"},
@@ -419,6 +457,26 @@ func TestJournalFiltersMatchDirectiveMetadata(t *testing.T) {
 	filtered := FilterJournal(result, JournalFilters{Flag: "*", Tag: "FOOD", Link: "receipt", Payee: "caf", Narration: "lunch"})
 	if len(filtered.Rows) != 1 || filtered.Rows[0]["payee"] != "Cafe" {
 		t.Fatalf("filtered=%+v", filtered.Rows)
+	}
+}
+
+func TestJournalKindFilterMatchesDirectiveKind(t *testing.T) {
+	result := query.Result{Columns: []string{"kind", "account"}, Rows: []query.Row{
+		{"kind": "transaction", "account": "Assets:Cash"},
+		{"kind": "transaction", "account": "Expenses:Food"},
+	}}
+	filtered := FilterJournal(result, JournalFilters{Kind: "transaction"})
+	if len(filtered.Rows) != 2 {
+		t.Fatalf("kind=transaction filtered=%+v", filtered.Rows)
+	}
+	nonMatching := FilterJournal(result, JournalFilters{Kind: "document"})
+	if len(nonMatching.Rows) != 0 {
+		t.Fatalf("kind=document filtered=%+v", nonMatching.Rows)
+	}
+	// The kind value must compare even when the filter target does not match.
+	flagged := FilterJournal(result, JournalFilters{Kind: "note"})
+	if len(flagged.Rows) != 0 {
+		t.Fatalf("kind=note filtered=%+v", flagged.Rows)
 	}
 }
 

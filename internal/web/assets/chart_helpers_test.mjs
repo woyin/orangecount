@@ -67,6 +67,13 @@ vm.runInNewContext([
   extractFunction("samplePoints"),
   extractFunction("buildTooltipHtml"),
   extractFunction("legendToggleStates"),
+  extractFunction("presented"),
+  extractFunction("display"),
+  extractFunction("exactValue"),
+  extractFunction("chartValue"),
+  extractFunction("flattenHierarchy"),
+  extractFunction("hierarchyTotal"),
+  extractFunction("layoutTreemapRects"),
 ].join("\n"), context);
 
 // Ticks span the data range and are monotonic.
@@ -104,5 +111,64 @@ assert.ok(tooltip.includes("Assets") && tooltip.includes("2000-01"), "tooltip sh
 // Legend toggle state reflects the hidden set.
 const states = context.legendToggleStates([{ label: "A" }, { label: "B" }, { label: "C" }], new Set([1]));
 assert.deepEqual(states.map((s) => s.hidden), [false, true, false], "legend toggle should hide only the selected series");
+
+// chartValue normalizes a serialized PresentedDecimal ({display, exact}) into
+// a number, and falls back to a plain number/string.
+assert.equal(context.chartValue({ display: "15", exact: "15", approximate: false }), 15, "chartValue should read a PresentedDecimal display");
+assert.equal(context.chartValue(7), 7, "chartValue passes through plain numbers");
+assert.equal(context.chartValue("2.5"), 2.5, "chartValue parses numeric strings");
+assert.ok(Number.isNaN(context.chartValue(null)), "chartValue of null is NaN");
+
+// flattenHierarchy must normalize PresentedDecimal node values so the layout
+// math never sees a NaN (which previously made the whole hierarchy card vanish).
+const hierarchy = {
+  nodes: [
+    { name: "Assets", value: { display: "1114.59", exact: "1114.59", approximate: false }, depth: 0, children: [
+      { name: "Assets:Bank", value: { display: "1114.59", exact: "1114.59", approximate: false }, depth: 1, children: [
+        { name: "Assets:Bank:ZA", value: { display: "15", exact: "15", approximate: false }, depth: 2 },
+      ] },
+    ] },
+  ],
+};
+const flat = context.flattenHierarchy(hierarchy);
+assert.equal(flat.length, 3, "flattenHierarchy should flatten all nodes");
+assert.ok(flat.every((node) => typeof node.value === "number"), "flattenHierarchy should normalize values to numbers");
+assert.equal(flat[0].value, 1114.59, "normalized aggregate value");
+assert.equal(flat[2].value, 15, "normalized leaf value");
+
+// hierarchyTotal is the sum of absolute node values and must be finite/positive.
+const total = context.hierarchyTotal(flat);
+assert.ok(Number.isFinite(total) && total > 0, `hierarchyTotal should be a positive finite number, got ${total}`);
+assert.ok(context.hierarchyTotal([]) === 0, "empty hierarchy totals zero");
+
+// layoutTreemapRects must place every item exactly once, keep every rectangle
+// two-dimensional (non-zero width and height), and exactly tile the given box
+// even when values are wildly skewed (one dominant leaf plus many tiny ones,
+// the real-world shape that made the previous single-row layout degenerate
+// into a sliver of near-invisible rectangles).
+const skewedItems = [
+  { node: { name: "dominant" }, value: 1000000 },
+  { node: { name: "tiny-1" }, value: 1 },
+  { node: { name: "tiny-2" }, value: 1 },
+  { node: { name: "tiny-3" }, value: 1 },
+  { node: { name: "tiny-4" }, value: 1 },
+  { node: { name: "mid" }, value: 500 },
+];
+const rects = context.layoutTreemapRects(skewedItems, 0, 4, 100, 44);
+assert.equal(rects.length, skewedItems.length, "every item should produce exactly one rectangle");
+// rects was built inside the vm context, so it (and Array.prototype.map's
+// result) carries that context's Array constructor; compare the names as a
+// joined string rather than via assert.deepEqual, which also checks
+// prototype identity and would spuriously fail on a cross-realm array even
+// when the contents match.
+const names = rects.map((r) => r.node.name).sort().join(",");
+const expectedNames = skewedItems.map((i) => i.node.name).sort().join(",");
+assert.equal(names, expectedNames, "every leaf must appear exactly once");
+rects.forEach((rect) => {
+  assert.ok(rect.w > 0.001, `rectangle for ${rect.node.name} has non-positive width ${rect.w}`);
+  assert.ok(rect.h > 0.001, `rectangle for ${rect.node.name} has non-positive height ${rect.h}`);
+});
+const totalArea = rects.reduce((sum, rect) => sum + rect.w * rect.h, 0);
+assert.ok(Math.abs(totalArea - 100 * 44) < 0.01, `rectangles should exactly tile the box, got area ${totalArea}`);
 
 console.log("chart helpers regression: ok");

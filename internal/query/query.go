@@ -252,7 +252,7 @@ func postingRows(evaluation ledger.Evaluation) []Row {
 			// Journal directive filters use the transaction flag (the same flag
 			// shown in Fava's journal). Preserve a separate posting_flag for
 			// callers that need the lower-level posting marker.
-			row := Row{"date": transaction.Date.Raw, "account": posting.Account, "flag": transaction.Flag, "posting_flag": posting.Flag, "narration": transaction.Narration, "payee": transaction.Payee, "tags": append([]string(nil), transaction.Tags...), "links": append([]string(nil), transaction.Links...), "file": entry.File, "span": entry.Span.String()}
+			row := Row{"date": transaction.Date.Raw, "account": posting.Account, "flag": transaction.Flag, "posting_flag": posting.Flag, "narration": transaction.Narration, "payee": transaction.Payee, "tags": append([]string(nil), transaction.Tags...), "links": append([]string(nil), transaction.Links...), "file": entry.File, "span": entry.Span.String(), "kind": string(transaction.Kind())}
 			if posting.Units != nil {
 				row["currency"] = posting.Units.Currency
 				row["units"] = ledger.DecimalFromNumber(posting.Units.Number)

@@ -364,6 +364,7 @@ func (s *Server) handleReport(w http.ResponseWriter, r *http.Request) {
 			Link:      r.URL.Query().Get("link"),
 			Payee:     r.URL.Query().Get("payee"),
 			Narration: r.URL.Query().Get("narration"),
+			Kind:      r.URL.Query().Get("kind"),
 		})
 	}
 	if format := strings.TrimSpace(r.URL.Query().Get("format")); strings.EqualFold(format, "csv") {

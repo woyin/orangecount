@@ -143,8 +143,9 @@ func cloneEvaluation(value ledger.Evaluation) ledger.Evaluation {
 		value.Prices[base] = append([]ledger.PriceQuote(nil), quotes...)
 	}
 	value.Entries = append([]ledger.EntryRecord(nil), value.Entries...)
-	value.Options = make(map[string]string, len(value.Options))
-	for key, option := range value.Options {
+	options := value.Options
+	value.Options = make(map[string]string, len(options))
+	for key, option := range options {
 		value.Options[key] = option
 	}
 	value.Diagnostics = append([]diagnostic.Diagnostic(nil), value.Diagnostics...)

@@ -1,0 +1,22 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+
+import { parseRoute, routeHref, updateQuery } from "../../src/fava/router.mjs";
+
+test("parses standard report routes and supported query state", () => {
+  const parsed = parseRoute("https://orange-count.invalid/balance_sheet?time=year&filter=%23seed");
+  assert.equal(parsed.route, "balance_sheet");
+  assert.deepEqual(parsed.query, { time: "year", filter: "#seed" });
+});
+
+test("parses and serializes account detail without losing the account", () => {
+  const parsed = parseRoute("https://orange-count.invalid/account/Assets%3AWallet%3APrimary?conversion=at_cost");
+  assert.equal(parsed.route, "account");
+  assert.equal(parsed.account, "Assets:Wallet:Primary");
+  assert.equal(routeHref(parsed.route, parsed), "/account/Assets%3AWallet%3APrimary?conversion=at_cost");
+});
+
+test("updates one query parameter while retaining route state", () => {
+  const next = updateQuery("https://orange-count.invalid/journal?time=year&account=Assets%3AWallet", { filter: "payee:sample", time: "" });
+  assert.equal(next, "/journal?account=Assets%3AWallet&filter=payee%3Asample");
+});
