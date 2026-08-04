@@ -3,6 +3,7 @@
 
   export let adapter: AdapterClient;
   export let route: string;
+  export let query: Record<string, string> = {};
 
   let loading = true;
   let error = "";
@@ -12,7 +13,7 @@
     loading = true;
     error = "";
     try {
-      data = await adapter.load(route);
+      data = await adapter.load(route, query);
     } catch (value) {
       error = value instanceof Error ? value.message : "The page could not be loaded.";
     } finally {
@@ -39,6 +40,9 @@
       <div>{section.body}</div>
     </details>
   {/each}
+{:else if route === "source" && data?.content !== undefined}
+  <div class="headerline"><h2>{data.path}</h2></div>
+  <pre class="source-content">{data.content}</pre>
 {:else if route === "source" && data?.paths}
   <div class="headerline"><h2>Source files</h2></div>
   <ul class="source-list">

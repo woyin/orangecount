@@ -17,6 +17,7 @@ test("keeps Fava holdings variants and help slugs on their route families", () =
   assert.equal(parseRoute("https://orange-count.invalid/holdings/by_currency").route, "holdings_by_currency");
   assert.equal(parseRoute("https://orange-count.invalid/help/features").route, "help");
   assert.equal(routeHref("holdings_by_currency"), "/holdings/by_currency");
+  assert.deepEqual(parseRoute("https://orange-count.invalid/source?path=activity.bean").query, { path: "activity.bean" });
 });
 
 test("parses and serializes account detail without losing the account", () => {

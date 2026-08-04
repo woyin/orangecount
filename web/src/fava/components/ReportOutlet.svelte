@@ -66,7 +66,7 @@
 {:else if route === "import"}
   <ImportReport {adapter} />
 {:else if ["options", "help", "diagnostics", "source"].includes(route)}
-  <UtilityReport {adapter} {route} />
+  <UtilityReport {adapter} {route} query={query} />
 {:else if report}
   <TreeReport {report} />
 {:else if table && route === "journal"}
