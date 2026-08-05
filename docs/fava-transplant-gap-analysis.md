@@ -124,7 +124,13 @@
 > T3 第一步（侧栏移植 Go to account 模糊组合框，`g a` 快捷键聚焦、
 > 选中即跳转并清空，冒烟验证，`6dc8d38`）、H6（Options 页对齐上游：
 > ModeSwitch 式配色方案按钮、Fava options 表带 help 链接、两表按键
-> 排序、zh-CN 词条补齐，冒烟验证主题/语言切换，`4249322`）。
+> 排序、zh-CN 词条补齐，冒烟验证主题/语言切换，`4249322`）、
+> H4 第一步（Holdings 四聚合页签落地：后端新增 HoldingsAggregate
+> 按 account/currency/root/commodity 分组求和 units 与 book value，
+> 不跨成本货币合并；前端 HoldingsReport 提供上游 headerline 式页签与
+> 可读列名、CSV 导出带 aggregation 参数，含单测与四页签冒烟，
+> `3c9fef1`。页签集合保留 OC 扩展的 by_root_account/by_commodity、
+> 缺上游 by_cost_currency，待 L2 偏差登记）。
 > T1/H5 的 WIP 覆盖部分仍待稠密夹具复比勾销。
 
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
