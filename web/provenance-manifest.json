@@ -349,6 +349,11 @@
       "upstream": null,
       "notes": "Holdings aggregation tabs and readable headers; layout modeled on Fava holdings headerline, written for the OrangeCount adapter."
     },
+    "web/src/fava/reports/EventsReport.svelte": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Per-type event grouping over the flat adapter table; layout modeled on Fava events page, written for the OrangeCount adapter."
+    },
     "web/src/fava/reports/JournalReport.svelte": {
       "current_kind": "derived",
       "upstream": "frontend/src/reports/journal/Journal.svelte",

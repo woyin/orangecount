@@ -7,6 +7,7 @@
   import JournalReport from "../reports/JournalReport.svelte";
   import QueryReport from "../reports/QueryReport.svelte";
   import EditorReport from "../reports/EditorReport.svelte";
+  import EventsReport from "../reports/EventsReport.svelte";
   import TreeReport from "../reports/TreeReport.svelte";
   import UtilityReport from "../reports/UtilityReport.svelte";
   import { notify_err } from "../notifications";
@@ -86,6 +87,8 @@
   <JournalReport report={journal} {renderCommas} />
 {:else if table && (route === "holdings" || route.startsWith("holdings_by_"))}
   <HoldingsReport report={table} {route} {locale} {renderCommas} />
+{:else if table && route === "events"}
+  <EventsReport report={table} {locale} />
 {:else if table}
   <GenericReport report={table} title={pageLabel(route)} {route} {locale} {renderCommas} />
 {:else}
