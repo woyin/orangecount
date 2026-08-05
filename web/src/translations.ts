@@ -27,7 +27,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     commit: "Commit", preview: "Preview", target: "Target ledger", chooseFile: "Choose a local file", backup: "Backup",
     discard: "Discard", syntax: "Syntax preview", noFile: "Select a file", searchHelp: "Search help", back: "Back",
     chartData: "Chart data", unavailablePrice: "Unavailable: no local price",
-    unavailableCurrency: "Unavailable: no conversion quote", notValued: "Not valued",
+    unavailableCurrency: "Unavailable: no conversion quote", notValued: "Not valued", goToAccount: "Go to account",
   },
   "zh-CN": {
     subtitle: "只读本地账本视图。", language: "语言", overview: "概览", accounts: "账户", journal: "日记账",
@@ -48,6 +48,6 @@ export const translations: Record<Locale, Record<string, string>> = {
     commit: "提交", preview: "预览", target: "目标账本", chooseFile: "选择本地文件", backup: "备份",
     discard: "丢弃", syntax: "语法预览", noFile: "选择文件", searchHelp: "搜索帮助", back: "返回",
     chartData: "图表数据", unavailablePrice: "不可用：没有本地价格",
-    unavailableCurrency: "不可用：没有换算报价", notValued: "未估值",
+    unavailableCurrency: "不可用：没有换算报价", notValued: "未估值", goToAccount: "跳转到账户",
   },
 };

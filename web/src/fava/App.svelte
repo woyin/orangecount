@@ -142,7 +142,7 @@
   onInterval={setInterval}
   onQuery={setQuery}
 />
-<Sidebar route={current.route} open={current.sidebarOpen} errors={current.errors} locale={current.locale} onMenu={() => shell.dispatch({ type: "menu" })} onNavigate={navigate} />
+<Sidebar route={current.route} open={current.sidebarOpen} errors={current.errors} locale={current.locale} accounts={current.accounts} onMenu={() => shell.dispatch({ type: "menu" })} onNavigate={navigate} />
 <article id="main-content" tabindex="-1">
   <LoadingBoundary active={current.loading}>
     <ErrorBoundary message={current.error} onRetry={retry}>

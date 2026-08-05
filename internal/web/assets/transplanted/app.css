@@ -362,7 +362,7 @@ pre.svelte-16ywk3n {
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/components/Sidebar.esbuild-svelte-fake-css */
-aside.svelte-16iwe3x {
+aside.svelte-611do5 {
   grid-area: aside;
   padding-top: 0.5rem;
   margin: 0;
@@ -371,14 +371,14 @@ aside.svelte-16iwe3x {
   background-color: var(--sidebar-background);
   border-right: 1px solid var(--sidebar-border);
 }
-.aside-buttons.svelte-16iwe3x {
+.aside-buttons.svelte-611do5 {
   display: none;
 }
 @media (width <= 767px) {
   :root {
     --aside-width: 200px;
   }
-  aside.svelte-16iwe3x {
+  aside.svelte-611do5 {
     position: fixed;
     top: 0;
     bottom: 0;
@@ -388,7 +388,7 @@ aside.svelte-16iwe3x {
     margin-left: -200px;
     transition: var(--transitions);
   }
-  .overlay.svelte-16iwe3x {
+  .overlay.svelte-611do5 {
     position: fixed;
     inset: 0;
     z-index: var(--z-index-floating-ui);
@@ -396,11 +396,11 @@ aside.svelte-16iwe3x {
     background: var(--overlay-wrapper-background);
     transition: var(--transitions);
   }
-  aside.active.svelte-16iwe3x {
+  aside.active.svelte-611do5 {
     margin-left: 0;
     visibility: visible;
   }
-  .aside-buttons.svelte-16iwe3x {
+  .aside-buttons.svelte-611do5 {
     position: fixed;
     top: 0;
     left: 0;
@@ -409,10 +409,10 @@ aside.svelte-16iwe3x {
     flex-direction: column;
     transition: var(--transitions);
   }
-  .active.aside-buttons.svelte-16iwe3x {
+  .active.aside-buttons.svelte-611do5 {
     left: 200px;
   }
-  .aside-buttons.svelte-16iwe3x > :where(.svelte-16iwe3x) {
+  .aside-buttons.svelte-611do5 > :where(.svelte-611do5) {
     width: 42px;
     height: 42px;
     color: var(--mobile-button-text);
@@ -420,47 +420,55 @@ aside.svelte-16iwe3x {
     background-color: var(--sidebar-background);
     border: 1px solid var(--sidebar-border);
   }
-  .aside-buttons.svelte-16iwe3x a:where(.svelte-16iwe3x) {
+  .aside-buttons.svelte-611do5 a:where(.svelte-611do5) {
     font-size: 28px;
   }
 }
 @media print {
-  aside.svelte-16iwe3x,
-  .aside-buttons.svelte-16iwe3x {
+  aside.svelte-611do5,
+  .aside-buttons.svelte-611do5 {
     display: none;
   }
 }
-.navigation.svelte-16iwe3x {
+.navigation.svelte-611do5 {
   padding-bottom: 0.5rem;
   margin: 0;
 }
-.navigation.svelte-16iwe3x + .navigation:where(.svelte-16iwe3x) {
+.navigation.svelte-611do5 + .navigation:where(.svelte-611do5) {
   padding-top: 0.5rem;
   border-top: 1px solid var(--sidebar-border);
 }
-.navigation.svelte-16iwe3x a.selected:where(.svelte-16iwe3x),
-.navigation.svelte-16iwe3x a:where(.svelte-16iwe3x):hover {
+.navigation.svelte-611do5 a.selected:where(.svelte-611do5),
+.navigation.svelte-611do5 a:where(.svelte-611do5):hover {
   color: var(--sidebar-hover-color);
   background-color: var(--sidebar-border);
 }
-.navigation.svelte-16iwe3x li:where(.svelte-16iwe3x) {
+.navigation.svelte-611do5 li:where(.svelte-611do5) {
   display: flex;
   flex-wrap: wrap;
 }
-.navigation-heading.svelte-16iwe3x {
+.navigation-heading.svelte-611do5 {
   padding: 0.25em 0.5em 0 1em;
   font-size: 0.75em;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   opacity: 0.7;
 }
-.navigation.svelte-16iwe3x a:where(.svelte-16iwe3x) {
+.navigation.svelte-611do5 a:where(.svelte-611do5) {
   display: block;
   flex: 1;
   padding: 0.25em 0.5em 0.25em 1em;
   color: inherit;
 }
-.aside-buttons.svelte-16iwe3x button:where(.svelte-16iwe3x) {
+.account-selector.svelte-611do5 {
+  --input-border: none;
+  --input-padding: 0.25em 0.5em 0.25em 1em;
+  --autocomplete-list-position: fixed;
+}
+.account-selector.svelte-611do5 span {
+  flex: 1;
+}
+.aside-buttons.svelte-611do5 button:where(.svelte-611do5) {
   font-size: 1.2rem;
 }
 

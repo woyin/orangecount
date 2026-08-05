@@ -4413,7 +4413,8 @@ var translations = {
     chartData: "Chart data",
     unavailablePrice: "Unavailable: no local price",
     unavailableCurrency: "Unavailable: no conversion quote",
-    notValued: "Not valued"
+    notValued: "Not valued",
+    goToAccount: "Go to account"
   },
   "zh-CN": {
     subtitle: "\u53EA\u8BFB\u672C\u5730\u8D26\u672C\u89C6\u56FE\u3002",
@@ -4510,7 +4511,8 @@ var translations = {
     chartData: "\u56FE\u8868\u6570\u636E",
     unavailablePrice: "\u4E0D\u53EF\u7528\uFF1A\u6CA1\u6709\u672C\u5730\u4EF7\u683C",
     unavailableCurrency: "\u4E0D\u53EF\u7528\uFF1A\u6CA1\u6709\u6362\u7B97\u62A5\u4EF7",
-    notValued: "\u672A\u4F30\u503C"
+    notValued: "\u672A\u4F30\u503C",
+    goToAccount: "\u8DF3\u8F6C\u5230\u8D26\u6237"
   }
 };
 
@@ -8122,28 +8124,38 @@ function ReportOutlet($$anchor, $$props) {
 }
 
 // src/fava/components/Sidebar.svelte
-var root_121 = template(`<div class="overlay svelte-16iwe3x" aria-hidden="true"></div>`);
-var root_313 = template(`<li class="navigation-heading svelte-16iwe3x" aria-hidden="true"> </li>`);
+var root_121 = template(`<div class="overlay svelte-611do5" aria-hidden="true"></div>`);
+var root_313 = template(`<li class="navigation-heading svelte-611do5" aria-hidden="true"> </li>`);
 var on_click4 = (event2, onNavigate, item) => {
   event2.preventDefault();
   onNavigate()(routeHref(get(item)));
 };
-var root_57 = template(`<li class="svelte-16iwe3x"><a class="svelte-16iwe3x"> </a></li>`);
+var root_57 = template(`<li class="svelte-611do5"><a class="svelte-611do5"> </a></li>`);
+var root_65 = template(`<li class="account-selector svelte-611do5"><!></li>`);
 var on_click_12 = (event2, onNavigate) => {
   event2.preventDefault();
   onNavigate()(routeHref("errors"));
 };
-var root_65 = template(`<ul class="navigation svelte-16iwe3x"><li class="svelte-16iwe3x"><a class="svelte-16iwe3x"> </a></li></ul>`);
-var root_210 = template(`<ul class="navigation svelte-16iwe3x"><!> <!></ul> <!>`, 1);
-var root12 = template(`<!> <div class="aside-buttons svelte-16iwe3x"><button id="menu-toggle" type="button" aria-controls="sidebar" aria-label="Menu" class="svelte-16iwe3x">\u2630</button> <a class="button svelte-16iwe3x" href="#add-transaction" aria-label="Add transaction">+</a></div> <aside id="sidebar" aria-label="Primary navigation" class="svelte-16iwe3x"></aside>`, 1);
+var root_74 = template(`<ul class="navigation svelte-611do5"><li class="svelte-611do5"><a class="svelte-611do5"> </a></li></ul>`);
+var root_210 = template(`<ul class="navigation svelte-611do5"><!> <!> <!></ul> <!>`, 1);
+var root12 = template(`<!> <div class="aside-buttons svelte-611do5"><button id="menu-toggle" type="button" aria-controls="sidebar" aria-label="Menu" class="svelte-611do5">\u2630</button> <a class="button svelte-611do5" href="#add-transaction" aria-label="Add transaction">+</a></div> <aside id="sidebar" aria-label="Primary navigation" class="svelte-611do5"></aside>`, 1);
 function Sidebar($$anchor, $$props) {
   push($$props, false);
   let route = prop($$props, "route", 8);
   let open = prop($$props, "open", 8, false);
   let errors = prop($$props, "errors", 24, () => []);
   let locale = prop($$props, "locale", 8, "en");
+  let accounts = prop($$props, "accounts", 24, () => []);
   let onMenu = prop($$props, "onMenu", 8);
   let onNavigate = prop($$props, "onNavigate", 8);
+  let gotoAccount = mutable_state("");
+  function selectAccount(el) {
+    if (get(gotoAccount)) {
+      onNavigate()(`/account/${encodeURIComponent(get(gotoAccount))}`);
+      el.blur();
+      set(gotoAccount, "");
+    }
+  }
   const sections = [
     [
       "",
@@ -8208,6 +8220,10 @@ function Sidebar($$anchor, $$props) {
   function label(routeName) {
     const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
     return catalog[keys[routeName] || ""] || pageLabel(routeName);
+  }
+  function t(key) {
+    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+    return catalog[key] || key;
   }
   init();
   var fragment = root12();
@@ -8278,18 +8294,49 @@ function Sidebar($$anchor, $$props) {
       }
       append($$anchor3, fragment_2);
     });
-    reset(ul);
-    var node_4 = sibling(ul, 2);
+    var node_4 = sibling(node_2, 2);
     {
       var consequent_3 = ($$anchor3) => {
-        var ul_1 = root_65();
-        var li_2 = child(ul_1);
-        var a_1 = child(li_2);
+        var li_2 = root_65();
+        var node_5 = child(li_2);
+        var placeholder = derived_safe_equal(() => t("goToAccount"));
+        AutocompleteInput(node_5, {
+          get placeholder() {
+            return get(placeholder);
+          },
+          get suggestions() {
+            return accounts();
+          },
+          key: "g a",
+          onSelect: selectAccount,
+          onEnter: selectAccount,
+          get value() {
+            return get(gotoAccount);
+          },
+          set value($$value) {
+            set(gotoAccount, $$value);
+          },
+          $$legacy: true
+        });
+        reset(li_2);
+        append($$anchor3, li_2);
+      };
+      if_block(node_4, ($$render) => {
+        if (sectionIndex === 0) $$render(consequent_3);
+      });
+    }
+    reset(ul);
+    var node_6 = sibling(ul, 2);
+    {
+      var consequent_4 = ($$anchor3) => {
+        var ul_1 = root_74();
+        var li_3 = child(ul_1);
+        var a_1 = child(li_3);
         template_effect(() => set_attribute(a_1, "href", routeHref("errors")));
         a_1.__click = [on_click_12, onNavigate];
         var text_2 = child(a_1);
         reset(a_1);
-        reset(li_2);
+        reset(li_3);
         reset(ul_1);
         template_effect(() => {
           set_attribute(a_1, "aria-current", route() === "errors" ? "page" : void 0);
@@ -8298,8 +8345,8 @@ function Sidebar($$anchor, $$props) {
         });
         append($$anchor3, ul_1);
       };
-      if_block(node_4, ($$render) => {
-        if (sectionIndex === sections.length - 1 && errors().length) $$render(consequent_3);
+      if_block(node_6, ($$render) => {
+        if (sectionIndex === sections.length - 1 && errors().length) $$render(consequent_4);
       });
     }
     template_effect(() => set_attribute(ul, "aria-label", heading() || "Reports"));
@@ -8665,6 +8712,9 @@ function App($$anchor, $$props) {
     },
     get locale() {
       return get(current).locale;
+    },
+    get accounts() {
+      return get(current).accounts;
     },
     onMenu: () => shell.dispatch({ type: "menu" }),
     onNavigate: navigate

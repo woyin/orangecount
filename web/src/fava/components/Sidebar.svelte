@@ -1,5 +1,6 @@
 <script lang="ts">
   import { translations, type Locale } from "../../translations";
+  import AutocompleteInput from "./AutocompleteInput.svelte";
   import { keyboardShortcut, type KeySpec } from "../keyboard-shortcuts";
   import { ROUTES, pageLabel, routeHref } from "../router.mjs";
 
@@ -7,8 +8,18 @@
   export let open = false;
   export let errors: unknown[] = [];
   export let locale = "en";
+  export let accounts: string[] = [];
   export let onMenu: () => void;
   export let onNavigate: (href: string) => void;
+
+  let gotoAccount = "";
+  function selectAccount(el: HTMLInputElement) {
+    if (gotoAccount) {
+      onNavigate(`/account/${encodeURIComponent(gotoAccount)}`);
+      el.blur();
+      gotoAccount = "";
+    }
+  }
 
   const sections = [
     ["", ["income_statement", "balance_sheet", "trial_balance", "journal", "query"]],
@@ -35,6 +46,7 @@
   };
   const keys: Record<string, string> = { income_statement: "incomeStatement", balance_sheet: "balanceSheet", trial_balance: "trialBalance", journal: "journal", query: "query", holdings: "holdings", commodities: "commodities", documents: "documents", events: "events", statistics: "statistics", editor: "editor", import: "import", options: "options", help: "help", account: "accounts" };
   function label(routeName: string): string { const catalog = translations[(locale === "zh-CN" ? "zh-CN" : "en") as Locale]; return catalog[keys[routeName] || ""] || pageLabel(routeName); }
+  function t(key: string): string { const catalog = translations[(locale === "zh-CN" ? "zh-CN" : "en") as Locale]; return catalog[key] || key; }
 </script>
 
 {#if open}
@@ -64,6 +76,18 @@
           </li>
         {/if}
       {/each}
+      {#if sectionIndex === 0}
+        <li class="account-selector">
+          <AutocompleteInput
+            bind:value={gotoAccount}
+            placeholder={t("goToAccount")}
+            suggestions={accounts}
+            key="g a"
+            onSelect={selectAccount}
+            onEnter={selectAccount}
+          />
+        </li>
+      {/if}
     </ul>
     {#if sectionIndex === sections.length - 1 && errors.length}
       <ul class="navigation">
@@ -187,6 +211,16 @@
     flex: 1;
     padding: 0.25em 0.5em 0.25em 1em;
     color: inherit;
+  }
+
+  .account-selector {
+    --input-border: none;
+    --input-padding: 0.25em 0.5em 0.25em 1em;
+    --autocomplete-list-position: fixed;
+  }
+
+  .account-selector :global(span) {
+    flex: 1;
   }
 
   .aside-buttons button {
