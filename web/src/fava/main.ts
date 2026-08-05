@@ -11,6 +11,9 @@ import "./styles/fava/grid.css";
 import "./styles/fava/journal-table.css";
 import "./styles/fava/tree-table.css";
 import "./styles/fava/charts.css";
+import "./styles/fava/editor.css";
+import "./styles/fava/help.css";
+import "./styles/fava/notifications.css";
 // Loaded last so OrangeCount-owned overrides win over the derived stylesheets.
 import "./styles/orangecount.css";
 

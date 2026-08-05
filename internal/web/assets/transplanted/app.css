@@ -2256,6 +2256,102 @@ svg text {
   color: var(--text-color-lightest);
 }
 
+/* src/fava/styles/fava/editor.css */
+.cm-editor .cm-gutters {
+  background: var(--sidebar-background);
+  border-right: 1px solid var(--sidebar-border);
+}
+.cm-editor .cm-scroller {
+  font-family: var(--font-family-editor);
+}
+.cm-editor .cm-placeholder {
+  color: var(--placeholder-color);
+}
+.cm-editor .cm-tooltip {
+  background-color: var(--sidebar-border);
+}
+.cm-editor .cm-activeLine {
+  background-color: var(--editor-activeline);
+}
+.cm-editor .cm-selectionBackground {
+  background-color: var(--editor-activeline);
+}
+.cm-editor.cm-focused > .cm-scroller > .cm-selectionLayer .cm-selectionBackground {
+  background-color: var(--editor-activeline);
+}
+.cm-editor .cm-selectionMatch {
+  background-color: var(--editor-selectionmatch);
+}
+.cm-editor .cm-cursor {
+  border-left-color: var(--text-color-lighter);
+}
+
+/* src/fava/styles/fava/help.css */
+.help {
+  --help-max-width: 600px;
+  max-width: calc(var(--help-max-width) + 160px);
+}
+.help-text {
+  max-width: var(--help-max-width);
+  font-size: 16px;
+}
+.help-text .cm-editor {
+  font-size: 14px;
+}
+.help-text h1 {
+  margin: 0 0 1rem;
+  font-weight: 500;
+}
+.help-text > div {
+  margin-bottom: 1em;
+}
+.help-text code {
+  font-size: 0.9em;
+}
+.help-text ul {
+  padding-left: 2em;
+}
+.help-text li {
+  list-style-type: disc;
+}
+.help-sidebar {
+  float: right;
+  padding: 10px 10px 0;
+  margin: 0 0 10px 10px;
+  font-size: 1.1em;
+  background-color: var(--help-sidebar-background);
+  border: 1px solid var(--help-sidebar-border);
+}
+.help-sidebar a:hover,
+.help-sidebar a.selected {
+  font-weight: 500;
+}
+
+/* src/fava/styles/fava/notifications.css */
+.notifications {
+  position: fixed;
+  top: 60px;
+  right: 10px;
+  width: 400px;
+}
+.notifications li {
+  display: block;
+  width: 100%;
+  padding: 5px 10px;
+  margin-bottom: 0.5em;
+  color: var(--notification-color);
+  white-space: pre-wrap;
+  cursor: pointer;
+  background-color: var(--green);
+}
+.notifications .error {
+  background-color: var(--error);
+}
+.notifications .warning {
+  color: var(--dark-gray);
+  background-color: var(--yellow);
+}
+
 /* src/fava/styles/orangecount.css */
 #main-content a.button:link,
 #main-content a.button:visited {

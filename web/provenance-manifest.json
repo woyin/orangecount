@@ -419,6 +419,30 @@
       "current_kind": "original",
       "upstream": null,
       "notes": "Development-only browser smoke gate for the explicit transplanted UI asset flag."
+    },
+    "web/src/fava/styles/fava/editor.css": {
+      "current_kind": "derived",
+      "upstream": "frontend/css/editor.css",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "8cbde10a1fc76e636840085804af5a38f8936faf245989301c6e40293117a77f",
+      "notice": "NOTICE",
+      "notes": "Fava page stylesheet transplanted at the pinned reference revision."
+    },
+    "web/src/fava/styles/fava/help.css": {
+      "current_kind": "derived",
+      "upstream": "frontend/css/help.css",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "59253ee31b49403530111cd54a95ae1ddb6d0ad8667803a2d7e4f65d89dc2f39",
+      "notice": "NOTICE",
+      "notes": "Fava page stylesheet transplanted at the pinned reference revision."
+    },
+    "web/src/fava/styles/fava/notifications.css": {
+      "current_kind": "derived",
+      "upstream": "frontend/css/notifications.css",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "53d970a1427a7ccfe1201ddf9bf9b357cda2f662c0252454bb1e45f3c03311a6",
+      "notice": "NOTICE",
+      "notes": "Fava page stylesheet transplanted at the pinned reference revision."
     }
   }
 }
