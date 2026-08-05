@@ -1,5 +1,11 @@
 # Fava 视觉与交互差距分析（2026-08-03）
 
+> **范围声明（2026-08-05 补记）**：本文档仅针对**旧版手写 UI**
+> （`internal/web/assets/app.js` / `index.html`）。按 ADR-0032，旧版 UI 是
+> 移植期间的临时回退并将被删除，本文档不再作为修复工作输入。**移植版
+> （Fava 前端移植 + Go 适配器）的差距清单见
+> [docs/fava-transplant-gap-analysis.md](fava-transplant-gap-analysis.md)。**
+
 ## 背景与方法
 
 本文档记录了一次对 OrangeCount 内置 Web 界面（`http://127.0.0.1:54870`）与本地

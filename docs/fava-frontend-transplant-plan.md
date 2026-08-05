@@ -58,7 +58,7 @@ application.
     adapter renders strictly escaped Fava-compatible Journal markup instead of
     replacing the page with a clean-room JSON/Svelte implementation.
 
-The governing ADRs are ADR-0022 and ADR-0024 through ADR-0038. ADR-0023 is
+The governing ADRs are ADR-0022 and ADR-0024 through ADR-0039. ADR-0023 is
 superseded by ADR-0030; ADR-0004 and ADR-0007 describe earlier boundaries that
 ADR-0022 superseded.
 
@@ -161,51 +161,24 @@ valid snapshot and a recoverable edit. Document operations additionally require
 normalization, containment re-checks, confirmation, and recoverable handling of
 cross-file partial failure.
 
-## Required model and Herdr orchestration
+## Execution model and role separation
 
-Development uses the two user-selected models through Herdr and reports all
-results back to the current coordinating Agent.
+Per ADR-0039, transplant work is executed by a single session model; the
+earlier requirement for two distinct externally supplied models is retired.
+Role separation survives as process discipline rather than model identity:
 
-| Role | Herdr agent kind | Required model | Exclusive ownership |
-| --- | --- | --- | --- |
-| Code implementation | `pi` | DeepSeek V4 Flash supplied by WoYin; Pi selector `WoYin/clinepass/cline-pass/deepseek-v4-flash` | Go semantic projections, adapter contracts, FQL/time parsers, budgets, exporters, write pipeline, fixture semantics, unit/contract tests, build and license tooling |
-| Visual implementation | `codex` | OpenAI Codex `gpt-5.6-luna` | Fava source adaptation, CSS/fonts/assets, frontend composition and interaction, responsive behavior, Chromium baselines, visual diffs, Playwright visual flows, visual fixes, zh-CN structural review |
-| Coordinator/integrator | current Agent | current session model | task decomposition, ownership enforcement, handoffs, integration, full verification, documentation, evidence synthesis, and reporting to the user |
-| Final visual authority | user (product owner) | n/a | approval of baseline updates and Approved Fava deviations |
+| Role | Ownership |
+| --- | --- |
+| Implementation | Go semantic projections, adapter contracts, FQL/time parsers, budgets, exporters, write pipeline, fixture semantics, unit/contract tests, build and license tooling; Fava source adaptation, CSS/fonts/assets, frontend composition and interaction, responsive behavior, baselines, visual diffs, visual fixes, zh-CN structural review |
+| Coordinator | task decomposition, handoffs, integration, full verification, documentation, evidence synthesis, and reporting to the user |
+| Final visual authority | user (product owner): approval of baseline updates and Approved Fava deviations |
 
-The code model must not certify visual parity. The visual model may implement
-visual frontend work and produce evidence but may not change ledger semantics,
-weaken write/security behavior, or grant final approval to its own baselines.
-The coordinator resolves conflicts using the parity-authority rule.
-
-### Agent handoff protocol
-
-1. The coordinator creates named sibling Herdr agents and supplies a route/state
-   identifier, exact file ownership, upstream source paths, contract rows,
-   fixture hash, commands, and acceptance evidence.
-2. The code model completes adapter/semantic work and reports changed files,
-   tests, contract output, and residual risks to the coordinator.
-3. After the contract is stable, the visual model adapts the corresponding
-   Fava frontend units, runs browser/visual checks, and reports screenshots,
-   diffs, structural findings, and proposed deviations to the coordinator.
-4. The coordinator audits and integrates the result, runs the entire route
-   gate, and presents any baseline or deviation decision to the user for final approval.
-5. No two agents write the same files concurrently. In the shared working tree,
-   writer phases are serialized; read-only visual/reference inspection may run
-   in parallel. Separate worktrees require explicit user approval.
-6. Agents do not delegate further and do not merge or commit independently.
-   Their complete output returns to the current Agent.
-
-### Current orchestration prerequisite
-
-Both required agent configurations have been verified through Herdr. OpenAI
-Codex `gpt-5.6-luna` reviewed this plan's visual concerns. A named Herdr `pi`
-agent was started with `WoYin/clinepass/cline-pass/deepseek-v4-flash`, and its
-Pi footer reported `(WoYin) clinepass/cline-pass/deepseek-v4-flash` with high
-thinking. Each production task still verifies its live agent/model identity
-before work. The separate `deepseek/deepseek-v4-flash` catalog entry is not an
-approved substitute, and no provider or model may be substituted without user
-approval.
+The implementer must not certify Gate 3 visual parity for its own changes,
+may not change ledger semantics while doing visual work, may not weaken
+write/security behavior, and cannot approve its own baselines. The
+coordinator resolves conflicts using the parity-authority rule. Concurrent
+writer phases on the same files remain serialized; agents do not delegate
+further and do not merge or commit independently.
 
 ## Reference and evidence system
 
@@ -331,9 +304,9 @@ A route cannot switch from legacy to transplant until all four layers pass.
 - The route passes all four English Chromium baseline cells for required
   states with no unapproved difference.
 - Simplified Chinese passes the structural/localization invariants.
-- The visual model supplies a diff report; the user (product owner) approves any
+- Visual work supplies a diff report; the user (product owner) approves any
   baseline or deviation change.
-- The implementing code model cannot self-certify this gate.
+- The implementer cannot self-certify this gate.
 
 ### Gate 4 — Release quality
 
@@ -353,31 +326,30 @@ no wave may create broad placeholder pages and call that route progress.
 
 ### Prerequisite Phase 0 — Reference, fixture, decisions, and tooling
 
-**Code agent:** start Herdr `pi` with the exact WoYin DeepSeek V4 Flash selector
-and verify the reported provider/model; create deterministic dense
+**Implementation:** create deterministic dense
 fixture generator and hashes; build route/state manifest; close contract rows;
 prepare deterministic export/build/license checks; define measured performance
 flows.
 
-**Visual model:** build the OCI Fava/Playwright reference environment; adopt
+**Visual work:** build the OCI Fava/Playwright reference environment; adopt
 pinned fonts; capture and review the four English baseline cells; define
 Chinese structural invariants and permitted mask rules.
 
 **Coordinator:** reconcile source inventory, UX spec, provenance, reference
 lock, contract map, and deviation registry; verify privacy and model ownership.
 
-**Done when:** the requested two agents are verifiably configured; Fava and
+**Done when:** Fava and
 OrangeCount can load the same synthetic ledger; reference tests are not
 skipped; route/state manifest and baseline matrix are complete; all inventory
 open questions are resolved or registered as approved exclusions.
 
 ### Wave 1 — Shell plus Income Statement golden vertical slice
 
-**Code model:** implement full bootstrap, changed/mtime, errors, account detail
+**Code work:** implement full bootstrap, changed/mtime, errors, account detail
 metadata, commodity names/precisions, applicable options, FQL/time foundations,
 and Income Statement/tree/chart contracts over OrangeCount semantics.
 
-**Visual model:** replace the prototype with selected Fava shell, router, stores,
+**Visual work:** replace the prototype with selected Fava shell, router, stores,
 sidebar, header, filters, theme, fonts, CSS, common components, Income
 Statement, tree table, conversion/interval controls, and chart components.
 
@@ -397,13 +369,13 @@ primitives and separately pass the four-layer gate with exact v3 values.
 
 ### Wave 3 — Journal and Account Detail
 
-**Code model:** implement Fava-compatible Journal HTML templates with strict
+**Code work:** implement Fava-compatible Journal HTML templates with strict
 escaping, complete directive/flag models, FQL/time execution, deterministic
 pagination/sort, account running balances, account details/up-to-date status,
 budget projection, source/context contracts, filtered Beancount export, and
 safe statement resolution.
 
-**Visual model:** adapt Fava Journal, filters, headers, interaction handlers,
+**Visual work:** adapt Fava Journal, filters, headers, interaction handlers,
 account page, charts, context/export modals, badges, expansion, source links,
 and dense/narrow behavior with minimal frontend change.
 
@@ -502,11 +474,11 @@ performance budgets.
 
 | Risk | Control |
 | --- | --- |
-| Another clean-room approximation | Upstream-derived source boundary, provenance hashes, minimal patches, visual model ownership |
+| Another clean-room approximation | Upstream-derived source boundary, provenance hashes, minimal patches, visual-work ownership |
 | Baselines that compare OrangeCount to itself | OCI Fava reference generated from the same synthetic ledger |
 | Small-fixture false confidence | Dense deterministic synthetic reference ledger plus compact state fixtures |
 | Visual agent changes semantics | Contract-first handoff and OrangeCount/v3 authority |
-| Code agent self-certifies visuals | Separate visual model evidence and product-owner approval |
+| Implementer self-certifies visuals | Independent visual evidence and product-owner approval |
 | Baseline laundering | Candidate-only updates, deviation registry, no arbitrary global threshold |
 | Private data leakage | Synthetic committed evidence only; private smoke remains transient |
 | Python/plugin creep | Native adapters and explicit migration diagnostics |
@@ -515,5 +487,4 @@ performance budgets.
 | Unsupported filter/time behavior | Complete Go-native FQL and time-filter contracts |
 | License loss | Per-file provenance, NOTICE, dependency and asset license gates |
 | Shared-worktree agent conflicts | Serialized writer ownership and coordinator-only integration |
-| Required Pi/WoYin/DeepSeek selection unavailable | Prerequisite Phase 0 hard gate; no unapproved provider or model substitute |
 | Performance regression | Same-environment Fava-relative dense-fixture budgets |
