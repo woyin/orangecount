@@ -21,6 +21,7 @@ export function initialShellState(route) {
     error: null,
     sidebarOpen: false,
     ledgerTitle: "OrangeCount",
+    accounts: [],
     operatingCurrencies: [],
     renderCommas: false,
     query: {},
@@ -53,6 +54,7 @@ export function reduceShellState(state, action) {
       return {
         ...state,
         ledgerTitle: action.ledgerTitle || state.ledgerTitle,
+        accounts: Array.isArray(action.accounts) ? action.accounts : state.accounts,
         operatingCurrencies: Array.isArray(action.operatingCurrencies) ? action.operatingCurrencies : state.operatingCurrencies,
         renderCommas: typeof action.renderCommas === "boolean" ? action.renderCommas : state.renderCommas,
         locale: action.locale === "zh-CN" ? "zh-CN" : state.locale,

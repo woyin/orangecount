@@ -1,3 +1,50 @@
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/components/AutocompleteInput.esbuild-svelte-fake-css */
+span.svelte-qkidfo {
+  position: relative;
+  display: inline-block;
+  flex: var(--autocomplete-wrapper-flex, initial);
+}
+input.svelte-qkidfo {
+  width: 100%;
+}
+ul.svelte-qkidfo {
+  position: var(--autocomplete-list-position, absolute);
+  z-index: var(--z-index-autocomplete);
+  overflow: hidden auto;
+  background-color: var(--background);
+  border: 1px solid var(--border-darker);
+  box-shadow: var(--box-shadow-dropdown);
+}
+li.svelte-qkidfo {
+  min-width: 8rem;
+  padding: 0 0.5em;
+  white-space: nowrap;
+  cursor: pointer;
+}
+li.selected.svelte-qkidfo,
+li.svelte-qkidfo:hover {
+  color: var(--background);
+  background-color: var(--link-color);
+}
+button.svelte-qkidfo {
+  position: absolute;
+  top: 8px;
+  right: 4px;
+  background: transparent;
+}
+li.svelte-qkidfo span:where(.svelte-qkidfo) {
+  height: 1.2em;
+  padding: 0 0.05em;
+  margin: 0 -0.05em;
+  background-color: var(--autocomplete-match);
+  border-radius: 2px;
+}
+@media print {
+  button.svelte-qkidfo {
+    display: none;
+  }
+}
+
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/components/PageTitle.esbuild-svelte-fake-css */
 strong.svelte-95cklu::before {
   margin: 0 10px;

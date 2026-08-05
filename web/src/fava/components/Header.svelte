@@ -1,10 +1,12 @@
 <script lang="ts">
   import { translations, type Locale } from "../../translations";
+  import AutocompleteInput from "./AutocompleteInput.svelte";
   import PageTitle from "./PageTitle.svelte";
 
   export let ledgerTitle: string;
   export let route: string;
   export let account = "";
+  export let accounts: string[] = [];
   export let locale: string;
   export let time = "";
   export let accountFilter = "";
@@ -21,6 +23,9 @@
   function t(key: string): string {
     return translations[(locale === "zh-CN" ? "zh-CN" : "en") as Locale][key] || translations.en[key] || key;
   }
+
+  let accountDraft = accountFilter;
+  $: accountDraft = accountFilter;
 </script>
 
 <header>
@@ -38,13 +43,17 @@
       aria-label="Time"
       on:change={(event) => onTime((event.currentTarget as HTMLInputElement).value)}
     />
-    <input
-      id="global-account"
-      type="text"
-      value={accountFilter}
+    <AutocompleteInput
+      value={accountDraft}
+      on:change={(event) => { accountDraft = event.detail; }}
       placeholder="Account"
-      aria-label="Account"
-      on:change={(event) => onAccount((event.currentTarget as HTMLInputElement).value)}
+      suggestions={accounts}
+      key="f a"
+      clearButton={true}
+      setSize={true}
+      onBlur={() => onAccount(accountDraft)}
+      onSelect={() => onAccount(accountDraft)}
+      onEnter={() => onAccount(accountDraft)}
     />
     <input
       id="global-filter"

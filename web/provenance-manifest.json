@@ -467,6 +467,27 @@
       "upstream_hash": "3f83a2f2ce313f5fa588bfa204293346e3c5532f0298379af98c2267e3fc708e",
       "notice": "NOTICE",
       "notes": "Toast notification helpers transplanted at the pinned reference revision; console logging replaces Fava's log store."
+    },
+    "web/src/fava/lib/fuzzy.ts": {
+      "current_kind": "derived",
+      "upstream": "frontend/src/lib/fuzzy.ts",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "dbb6c96e94edbe48b9a695978a58f2ea3f5de4bced39647eedeece5ec801ca1a",
+      "notice": "NOTICE",
+      "notes": "Fuzzy matching helpers transplanted verbatim at the pinned reference revision."
+    },
+    "web/src/fava/components/AutocompleteInput.svelte": {
+      "current_kind": "derived",
+      "upstream": "frontend/src/AutocompleteInput.svelte",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "86921e2c1a18d91b5dc4b81f38d73364d1c50a7efa8e0aa1087a6e212a7cf7cc",
+      "notice": "NOTICE",
+      "notes": "Combobox autocomplete input transplanted at the pinned reference revision; expressed with the classic Svelte component API because the pinned Svelte version lacks the upstream rune APIs. Behavior, markup, and styling match upstream."
+    },
+    "web/tests/unit/fuzzy.test.mjs": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Unit tests for the transplanted fuzzy matching helpers used by the account autocomplete."
     }
   }
 }
