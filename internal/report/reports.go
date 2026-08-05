@@ -285,6 +285,51 @@ func HoldingsAt(e ledger.Evaluation, asOf, valuation string) query.Result {
 	return HoldingsAtCurrency(e, asOf, valuation, "")
 }
 
+// ValuedBalances returns one account's own balances converted according to
+// valuation, the way Fava's account-tree reports present a commodity holding.
+//
+// "units" keeps every balance in its own commodity. "at-cost" replaces each lot
+// with units*cost in the lot's cost currency. "market-value" uses the latest
+// price-map quote instead, and leaves a lot in its own commodity when no quote
+// exists rather than inventing one. Amounts that are not held at cost (plain
+// currency balances) are never touched.
+//
+// Zero results are dropped so a fully converted commodity does not linger as a
+// "0 FUND" column, matching Beancount inventory behavior.
+func ValuedBalances(e ledger.Evaluation, account, valuation string) map[string]ledger.Decimal {
+	values := make(map[string]ledger.Decimal)
+	state, ok := e.Accounts[account]
+	if !ok {
+		return values
+	}
+	for currency, amount := range state.Balances {
+		values[currency] = amount
+	}
+	if !strings.EqualFold(valuation, "units") {
+		for _, position := range state.Positions {
+			if position.Cost == nil || position.Cost.Currency == "" {
+				continue
+			}
+			value, currency := position.Units.Mul(position.Cost.Number), position.Cost.Currency
+			if strings.EqualFold(valuation, "market-value") {
+				quote, found := latestQuote(e, position.Currency, "")
+				if !found {
+					continue
+				}
+				value, currency = position.Units.Mul(quote.Amount), quote.Currency
+			}
+			values[position.Currency] = values[position.Currency].Sub(position.Units)
+			values[currency] = values[currency].Add(value)
+		}
+	}
+	for currency, amount := range values {
+		if amount.IsZero() {
+			delete(values, currency)
+		}
+	}
+	return values
+}
+
 // HoldingsAtCurrency is HoldingsAt with an optional presentation currency.
 // Conversion uses only exact price-map quotes already present in the
 // evaluation; a missing quote leaves the value in its native currency.

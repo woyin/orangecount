@@ -8,8 +8,11 @@ import "./styles/fava/layout.css";
 import "./styles/fava/components.css";
 import "./styles/fava/fonts.css";
 import "./styles/fava/grid.css";
+import "./styles/fava/journal-table.css";
 import "./styles/fava/tree-table.css";
 import "./styles/fava/charts.css";
+// Loaded last so OrangeCount-owned overrides win over the derived stylesheets.
+import "./styles/orangecount.css";
 
 const target = document.getElementById("app");
 if (!target) throw new Error("Fava shell mount target is missing");

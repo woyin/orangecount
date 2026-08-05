@@ -566,7 +566,12 @@ func trialBalanceChart(e ledger.Evaluation, keys []string, ends map[string]strin
 			currencies[rowCurrency] = true
 		}
 		parent, _ := row["_tree_parent"].(string)
-		if parent != "" {
+		if parent != "" && parentByAccount[name] == "" {
+			// One row arrives per (account, currency). Appending a child once
+			// per row registered an account under its parent as many times as
+			// it holds currencies, and because that repetition compounds at
+			// every level the emitted tree grew multiplicatively: a 122-account
+			// ledger produced 7528 nodes, one leaf appearing 4368 times.
 			parentByAccount[name] = parent
 			childrenByParent[parent] = append(childrenByParent[parent], name)
 		}
@@ -613,4 +618,171 @@ func buildChartNode(name string, values map[string]ledger.Decimal, children map[
 
 func accountWithin(parent, account string) bool {
 	return account == parent || strings.HasPrefix(account, parent+":")
+}
+
+// nativeChartAmount converts a posting to the amount and currency a
+// native-currency chart should accumulate. A lot held at cost contributes its
+// cost value in the cost currency, matching the at-cost tree valuation; every
+// other posting contributes its own units in its own currency. Nothing is ever
+// dropped for lack of a price quote, because nothing is converted across
+// currencies.
+func nativeChartAmount(posting chartPosting, valuation string) (ledger.Decimal, string) {
+	if !strings.EqualFold(valuation, "units") {
+		if costNumber, costCurrency, total, ok := chartCost(posting.cost); ok && costCurrency != "" {
+			if total {
+				if posting.amount.Sign() < 0 {
+					return costNumber.Neg(), costCurrency
+				}
+				return costNumber, costCurrency
+			}
+			return posting.amount.Mul(costNumber), costCurrency
+		}
+	}
+	return posting.amount, posting.currency
+}
+
+// ReportCharts builds the per-measure chart set the transplanted Fava shell
+// renders for a tree report: one chart per measure, each carrying one series
+// per currency.
+//
+// This is deliberately separate from ReportChart. ReportChart converts every
+// posting into a single requested display currency and skips whatever it
+// cannot convert, which understates a multi-currency ledger and leaves a
+// permanent "no conversion quote" notice. Fava instead plots each currency as
+// its own toggleable line, so no quote is needed and nothing is discarded.
+func ReportCharts(e ledger.Evaluation, route, period, valuation string) []ChartSpec {
+	interval := normalizeChartPeriod(period)
+	keys, ends := chartPeriods(e, interval)
+	if len(keys) == 0 {
+		return nil
+	}
+	switch route {
+	case "balance-sheet":
+		return nativeBalanceCharts(e, keys, ends, interval, valuation)
+	case "income-statement":
+		return nativeFlowCharts(e, keys, ends, interval, valuation)
+	default:
+		return nil
+	}
+}
+
+// nativeBalanceCharts reports cumulative balances per measure, one series per
+// currency, in the shape Fava's balance-sheet "Net Worth" chart uses.
+func nativeBalanceCharts(e ledger.Evaluation, keys []string, ends map[string]string, interval, valuation string) []ChartSpec {
+	measures := []string{"Net worth", "Assets", "Liabilities", "Equity"}
+	running := map[string]map[string]ledger.Decimal{}
+	byPeriod := map[string]map[string]map[string]ledger.Decimal{}
+	for _, measure := range measures {
+		running[measure] = map[string]ledger.Decimal{}
+		byPeriod[measure] = map[string]map[string]ledger.Decimal{}
+	}
+	postings := transactionPostings(e)
+	index := 0
+	for _, key := range keys {
+		end := ends[key]
+		for index < len(postings) && postings[index].date <= end {
+			posting := postings[index]
+			index++
+			root := accountRoot(posting.account)
+			if root != "Assets" && root != "Liabilities" && root != "Equity" {
+				continue
+			}
+			amount, currency := nativeChartAmount(posting, valuation)
+			if currency == "" {
+				continue
+			}
+			running[root][currency] = running[root][currency].Add(amount)
+			// Net worth is assets plus liabilities, the same combination the
+			// balance-sheet table reports.
+			if root == "Assets" || root == "Liabilities" {
+				running["Net worth"][currency] = running["Net worth"][currency].Add(amount)
+			}
+		}
+		for _, measure := range measures {
+			snapshot := make(map[string]ledger.Decimal, len(running[measure]))
+			for currency, value := range running[measure] {
+				snapshot[currency] = value
+			}
+			byPeriod[measure][key] = snapshot
+		}
+	}
+	return nativeChartSet(ChartLine, "balance", measures, keys, byPeriod, interval, valuation, false)
+}
+
+// nativeFlowCharts reports per-period flows for the income statement, matching
+// Fava's Net Profit / Income / Expenses monthly bar charts.
+func nativeFlowCharts(e ledger.Evaluation, keys []string, ends map[string]string, interval, valuation string) []ChartSpec {
+	measures := []string{"Net profit", "Income", "Expenses"}
+	byPeriod := map[string]map[string]map[string]ledger.Decimal{}
+	for _, measure := range measures {
+		byPeriod[measure] = map[string]map[string]ledger.Decimal{}
+	}
+	postings := transactionPostings(e)
+	for _, key := range keys {
+		period := map[string]map[string]ledger.Decimal{}
+		for _, measure := range measures {
+			period[measure] = map[string]ledger.Decimal{}
+		}
+		for _, posting := range postings {
+			if chartPeriodKey(posting.date, interval) != key {
+				continue
+			}
+			root := accountRoot(posting.account)
+			if root != "Income" && root != "Expenses" {
+				continue
+			}
+			amount, currency := nativeChartAmount(posting, valuation)
+			if currency == "" {
+				continue
+			}
+			period[root][currency] = period[root][currency].Add(amount)
+			period["Net profit"][currency] = period["Net profit"][currency].Add(amount)
+		}
+		for _, measure := range measures {
+			byPeriod[measure][key] = period[measure]
+		}
+	}
+	return nativeChartSet(ChartBar, "flow", measures, keys, byPeriod, interval, valuation, false)
+}
+
+// nativeChartSet turns per-period, per-currency totals into one chart per
+// measure. Every series is emitted densely over the full period list: the
+// renderer positions points by array index, so a currency that only appears
+// part-way through the ledger must still carry a point (zero) for the earlier
+// periods or its line would be drawn against the wrong dates.
+func nativeChartSet(kind, measure string, measures, keys []string, byPeriod map[string]map[string]map[string]ledger.Decimal, interval, valuation string, stacked bool) []ChartSpec {
+	charts := make([]ChartSpec, 0, len(measures))
+	for _, name := range measures {
+		periods := byPeriod[name]
+		currencies := map[string]bool{}
+		for _, values := range periods {
+			for currency, value := range values {
+				if !value.IsZero() {
+					currencies[currency] = true
+				}
+			}
+		}
+		if len(currencies) == 0 {
+			continue
+		}
+		ordered := make([]string, 0, len(currencies))
+		for currency := range currencies {
+			ordered = append(ordered, currency)
+		}
+		sort.Strings(ordered)
+		series := make([]ChartSeries, 0, len(ordered))
+		for _, currency := range ordered {
+			points := make([]ChartPoint, 0, len(keys))
+			for _, key := range keys {
+				points = append(points, ChartPoint{Date: key, Value: periods[key][currency]})
+			}
+			series = append(series, ChartSeries{Label: currency, Points: points, Stacked: stacked})
+		}
+		charts = append(charts, ChartSpec{
+			Kind: kind, Title: name, Unit: "", Currency: "",
+			Valuation: chartValuation(valuation), Period: interval, Interval: interval,
+			Measure: measure, Series: series,
+		})
+	}
+	return charts
 }

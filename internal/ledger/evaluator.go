@@ -368,11 +368,11 @@ func (e *evaluator) transaction(tx *Transaction) {
 		currency string
 	}
 	known := make([]knownPosting, 0, len(tx.Postings))
-	missing := make([]Posting, 0, len(tx.Postings))
+	missing := make([]int, 0, len(tx.Postings))
 	totals := make(map[string]Decimal)
-	for _, posting := range tx.Postings {
+	for index, posting := range tx.Postings {
 		if posting.Units == nil || posting.Units.Currency == "" || posting.Units.Number.Raw == "" {
-			missing = append(missing, posting)
+			missing = append(missing, index)
 			continue
 		}
 		amount := DecimalFromNumber(posting.Units.Number)
@@ -380,11 +380,13 @@ func (e *evaluator) transaction(tx *Transaction) {
 		e.addContribution(totals, posting, amount, posting.Units.Currency)
 	}
 	if len(missing) > 1 {
-		for _, posting := range missing {
+		for _, index := range missing {
+			posting := tx.Postings[index]
 			e.add("E-EVAL-INFER", diagnostic.Error, posting.Span(), e.pathFor(posting.Span()))
 		}
 	} else if len(missing) == 1 {
-		posting := missing[0]
+		index := missing[0]
+		posting := tx.Postings[index]
 		currency := e.inferPostingCurrency(posting, totals)
 		balanceCurrency, factor, ok := e.inferenceTarget(posting, currency, totals)
 		if !ok || factor.IsZero() {
@@ -392,6 +394,15 @@ func (e *evaluator) transaction(tx *Transaction) {
 		} else {
 			inferred := totals[balanceCurrency].Neg()
 			inferred = divideDecimal(inferred, factor)
+			// Complete the posting in the entry stream, the way Beancount's
+			// loader hands back a fully interpolated transaction. Leaving the
+			// amount only in local evaluator state made every consumer that
+			// reads Entries - journal rows, query results, and the report
+			// charts - silently skip the interpolated posting, so a purchase
+			// counted its shares but never the cash that paid for them.
+			units := Amount{Number: numberFromDecimal(inferred), Currency: currency}
+			tx.Postings[index].Units = &units
+			posting = tx.Postings[index]
 			known = append(known, knownPosting{posting: posting, amount: inferred, currency: currency})
 			e.addContribution(totals, posting, inferred, currency)
 		}
@@ -657,14 +668,13 @@ func (e *evaluator) addContribution(totals map[string]Decimal, posting Posting, 
 	totals[currency] = decimalAdd(totals[currency], value)
 }
 
+// balancingContribution returns the posting's balancing weight. Cost takes
+// precedence over price: when a posting carries both — the shape every lot
+// reduction like `-2200 SHARES {} @ 21.46 CNY` takes — Beancount balances it at
+// the cost of the lots removed and treats the price as reporting information
+// only. Weighting such a posting at its price instead silently moved the whole
+// realized gain out of the inferred residual posting.
 func balancingContribution(posting Posting, amount Decimal, unitsCurrency string) (string, Decimal, bool) {
-	if posting.Price != nil && posting.Price.Amount.Currency != "" && posting.Price.Amount.Number.Raw != "" {
-		price := DecimalFromNumber(posting.Price.Amount.Number)
-		if posting.Price.Total {
-			return posting.Price.Amount.Currency, signedTotal(amount, price), true
-		}
-		return posting.Price.Amount.Currency, amount.Mul(price), true
-	}
 	if posting.Cost != nil {
 		if cost, ok := normalizeCost(*posting.Cost); ok && cost.Currency != "" && !cost.Number.IsZero() {
 			if posting.Cost.Total {
@@ -672,6 +682,13 @@ func balancingContribution(posting Posting, amount Decimal, unitsCurrency string
 			}
 			return cost.Currency, amount.Mul(cost.Number), true
 		}
+	}
+	if posting.Price != nil && posting.Price.Amount.Currency != "" && posting.Price.Amount.Number.Raw != "" {
+		price := DecimalFromNumber(posting.Price.Amount.Number)
+		if posting.Price.Total {
+			return posting.Price.Amount.Currency, signedTotal(amount, price), true
+		}
+		return posting.Price.Amount.Currency, amount.Mul(price), true
 	}
 	return unitsCurrency, amount, unitsCurrency != ""
 }

@@ -9,17 +9,21 @@
   import TreeReport from "../reports/TreeReport.svelte";
   import UtilityReport from "../reports/UtilityReport.svelte";
   import { pageLabel } from "../router.mjs";
-  import { parseTableReport, parseTreeReport, type TableReport, type TreeReport as TreeReportData } from "../reports/types";
+  import { parseJournalReport, parseTableReport, parseTreeReport, type JournalReport as JournalReportData, type TableReport, type TreeReport as TreeReportData } from "../reports/types";
 
   export let adapter: AdapterClient;
   export let route: string;
   export let query: Record<string, string> = {};
+  export let locale = "en";
+  export let operatingCurrencies: string[] = [];
+  export let renderCommas = false;
 
   let loadedKey = "";
   let loading = false;
   let error: string | null = null;
   let report: TreeReportData | null = null;
   let table: TableReport | null = null;
+  let journal: JournalReportData | null = null;
 
   $: requestKey = `${route}?${new URLSearchParams(query).toString()}`;
   $: if (requestKey !== loadedKey) {
@@ -32,6 +36,7 @@
     error = null;
     report = null;
     table = null;
+    journal = null;
     if (["query", "options", "help", "diagnostics", "source", "editor", "import"].includes(route) || !["income_statement", "balance_sheet", "trial_balance", "accounts", "account", "journal", "holdings", "holdings_by_account", "holdings_by_currency", "holdings_by_root_account", "holdings_by_commodity", "commodities", "events", "documents", "statistics", "errors"].includes(route)) {
       loading = false;
       return;
@@ -41,6 +46,8 @@
       if (key !== requestKey) return;
       if (["income_statement", "balance_sheet", "trial_balance"].includes(route)) {
         report = parseTreeReport(payload);
+      } else if (route === "journal") {
+        journal = parseJournalReport(payload);
       } else {
         table = parseTableReport(payload);
       }
@@ -68,11 +75,11 @@
 {:else if ["options", "help", "diagnostics", "source"].includes(route)}
   <UtilityReport {adapter} {route} query={query} />
 {:else if report}
-  <TreeReport {report} />
-{:else if table && route === "journal"}
-  <JournalReport report={table} />
+  <TreeReport {report} {locale} {operatingCurrencies} {renderCommas} />
+{:else if journal}
+  <JournalReport report={journal} {renderCommas} />
 {:else if table}
-  <GenericReport report={table} title={pageLabel(route)} {route} />
+  <GenericReport report={table} title={pageLabel(route)} {route} {locale} {renderCommas} />
 {:else}
   <section class="route-placeholder">
     <p class="headerline"><strong>Fava-aligned shell</strong></p>

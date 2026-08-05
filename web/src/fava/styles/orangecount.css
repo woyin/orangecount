@@ -1,0 +1,20 @@
+/* OrangeCount-owned overrides.
+ *
+ * Kept separate from the Fava-derived stylesheets so those stay verbatim
+ * copies of their pinned upstream revision. Only rules that exist because of
+ * an OrangeCount markup or adapter decision belong here.
+ */
+
+/* Fava never renders an anchor styled as a button, so its `a:link, a:visited`
+ * rule (specificity 0,2,1) outranks `button, .button` (0,1,0) and paints our
+ * export links in --link-color. In the light theme that resolves to the very
+ * same hue as --button-background, leaving the label invisible on its own
+ * background. Restate the button colour at matching specificity.
+ *
+ * Scoped to the report area on purpose: the sidebar's menu toggle also carries
+ * .button but is restyled for narrow screens with its own colour on a light
+ * background, and an unscoped rule here would outrank that and blank it out. */
+#main-content a.button:link,
+#main-content a.button:visited {
+  color: var(--button-color);
+}

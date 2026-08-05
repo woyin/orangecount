@@ -155,6 +155,16 @@
       "notice": "NOTICE",
       "notes": "Adapted Fava mobile aside/button shell and AsideContents navigation; extensions and multi-ledger links are excluded."
     },
+    "web/tests/unit/format-amount.test.mjs": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Unit test for display-only thousands grouping driven by the ledger render_commas option."
+    },
+    "web/tests/unit/shell-html.test.mjs": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Unit test asserting the served shell keeps root-absolute asset URLs so nested routes load."
+    },
     "web/tests/unit/router.test.mjs": {
       "current_kind": "original",
       "upstream": null,
@@ -308,6 +318,19 @@
       "notice": "NOTICE",
       "notes": "Fava global stylesheet transplanted at the pinned reference revision."
     },
+    "web/src/fava/styles/orangecount.css": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "OrangeCount-owned CSS overrides, kept out of the Fava-derived stylesheets so those stay verbatim."
+    },
+    "web/src/fava/styles/fava/journal-table.css": {
+      "current_kind": "derived",
+      "upstream": "frontend/css/journal-table.css",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "cf80c0686a1f083b62c1badae7477174621995466d149601f2bfa3cb9c99a44b",
+      "notice": "NOTICE",
+      "notes": "Fava global stylesheet transplanted at the pinned reference revision. Supplies the shared .flex-table primitives that tree-table.css depends on."
+    },
     "web/src/fava/styles/fava/tree-table.css": {
       "current_kind": "derived",
       "upstream": "frontend/css/tree-table.css",
@@ -368,7 +391,7 @@
     },
     "internal/web/assets/transplanted/app.css": {
       "current_kind": "derived",
-      "upstream": "frontend/css/style.css + frontend/css/base.css + frontend/css/layout.css + frontend/css/components.css + frontend/css/fonts.css + frontend/css/grid.css + frontend/css/charts.css + frontend/css/tree-table.css",
+      "upstream": "frontend/css/style.css + frontend/css/base.css + frontend/css/layout.css + frontend/css/components.css + frontend/css/fonts.css + frontend/css/grid.css + frontend/css/charts.css + frontend/css/journal-table.css + frontend/css/tree-table.css",
       "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
       "upstream_hash": "78b8ddc7150cf285a3318aa13ba6ef5fa4a04e7c9c875b4d637f2a47576c7c4b",
       "notice": "NOTICE",

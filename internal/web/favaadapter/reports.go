@@ -58,9 +58,17 @@ func ProjectTreeReport(e ledger.Evaluation, name string, filters report.Filters,
 	result, roots := treeResult(e, name)
 	result = report.Filter(result, filters)
 	root := buildTree(result)
+	revalueTree(root, e, valuation)
 	trees := make([]TreeNode, 0, len(roots))
 	for _, name := range roots {
-		node := root.children[name]
+		// The trial balance is rooted at the synthetic "" account, which is the
+		// tree root itself rather than one of its children. Looking it up as a
+		// child found nothing and substituted an empty placeholder, leaving the
+		// whole trial-balance table blank.
+		node := root
+		if name != "" {
+			node = root.children[name]
+		}
 		if node == nil {
 			node = &treeNode{account: name, balance: map[string]ledger.Decimal{}, balanceChildren: map[string]ledger.Decimal{}, children: map[string]*treeNode{}}
 		}
@@ -70,13 +78,21 @@ func ProjectTreeReport(e ledger.Evaluation, name string, filters report.Filters,
 		trees = insertNetProfit(trees)
 	}
 	charts := []report.PresentedChartSpec{}
-	chartCurrency := strings.TrimSpace(currency)
-	if chartCurrency == "" {
-		chartCurrency = firstCurrency(e)
-	}
-	chart := report.ReportChart(e, chartRoute(name), period, chartCurrency, valuation, filters.Account)
-	if chart.Kind != "" {
+	// Prefer the per-measure, per-currency chart set: it plots every currency
+	// the ledger actually holds instead of discarding whatever cannot be
+	// converted into one display currency.
+	for _, chart := range report.ReportCharts(e, chartRoute(name), period, valuation) {
 		charts = append(charts, report.PresentChart(chart))
+	}
+	if len(charts) == 0 {
+		chartCurrency := strings.TrimSpace(currency)
+		if chartCurrency == "" {
+			chartCurrency = firstCurrency(e)
+		}
+		chart := report.ReportChart(e, chartRoute(name), period, chartCurrency, valuation, filters.Account)
+		if chart.Kind != "" {
+			charts = append(charts, report.PresentChart(chart))
+		}
 	}
 	return TreeReport{DateRange: evaluationDateRange(e), Charts: charts, Trees: trees}
 }
@@ -105,6 +121,44 @@ func chartRoute(name string) string {
 	default:
 		return ""
 	}
+}
+
+// revalueTree restates every node's own balance under the requested valuation
+// and then rebuilds the subtree totals from those restated amounts.
+//
+// The semantic report layer reports each account in the commodity it holds, so
+// without this pass a ledger holding funds or shares shows raw lot units
+// ("6433.906476 FUND_017436") where Fava shows their cost in the operating
+// currency. Subtree totals must be recomputed rather than converted, because a
+// parent's total is the sum of its descendants' own balances and conversion
+// changes which currency each of those lands in.
+func revalueTree(node *treeNode, e ledger.Evaluation, valuation string) map[string]ledger.Decimal {
+	if node == nil {
+		return map[string]ledger.Decimal{}
+	}
+	if node.account != "" {
+		node.balance = report.ValuedBalances(e, node.account, valuation)
+	}
+	totals := make(map[string]ledger.Decimal, len(node.balance))
+	for currency, amount := range node.balance {
+		totals[currency] = amount
+	}
+	for _, child := range node.children {
+		for currency, amount := range revalueTree(child, e, valuation) {
+			totals[currency] = totals[currency].Add(amount)
+		}
+	}
+	for currency, amount := range totals {
+		if amount.IsZero() {
+			delete(totals, currency)
+		}
+	}
+	node.balanceChildren = totals
+	result := make(map[string]ledger.Decimal, len(totals))
+	for currency, amount := range totals {
+		result[currency] = amount
+	}
+	return result
 }
 
 func buildTree(result query.Result) *treeNode {

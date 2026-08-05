@@ -83,8 +83,8 @@
   </aside>
   <section class="editor-pane">
     <div class="toolbar">
-      <button type="button" on:click={validate} disabled={loading}>Validate</button>
-      <button type="button" on:click={save} disabled={loading}>Save</button>
+      <button id="editor-validate" type="button" on:click={validate} disabled={loading}>Validate</button>
+      <button id="editor-save" type="button" on:click={save} disabled={loading}>Save</button>
       <span class="muted" role="status">{status}</span>
     </div>
     <textarea id="editor-buffer" bind:value={content} spellcheck="false" aria-label="Ledger source"></textarea>

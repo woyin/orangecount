@@ -522,3 +522,230 @@ func TestHoldingsAsOfAndValuationControlsAreDeterministic(t *testing.T) {
 		t.Fatalf("unsupported currency status=%+v", unavailable.Rows[0])
 	}
 }
+
+func TestValuedBalancesConvertsLotsWithoutTouchingPlainCurrency(t *testing.T) {
+	dec := func(raw string) ledger.Decimal {
+		value, err := ledger.ParseDecimal(raw)
+		if err != nil {
+			t.Fatalf("parse %q: %v", raw, err)
+		}
+		return value
+	}
+	date := ledger.Date{Raw: "2024-01-01", Year: 2024, Month: 1, Day: 1}
+	// The account holds two share lots at different costs plus a plain cash
+	// balance in the same currency the lots cost out to.
+	evaluation := ledger.Evaluation{
+		Accounts: map[string]ledger.AccountState{"Assets:Broker": {
+			Name:     "Assets:Broker",
+			Balances: map[string]ledger.Decimal{"SH": dec("30"), "USD": dec("5")},
+			Positions: []ledger.Position{
+				{Units: dec("10"), Currency: "SH", Cost: &ledger.Cost{Number: dec("10"), Currency: "USD", Date: &date}},
+				{Units: dec("20"), Currency: "SH", Cost: &ledger.Cost{Number: dec("12"), Currency: "USD", Date: &date}},
+			},
+		}},
+		Prices: map[string][]ledger.PriceQuote{"SH": {{Date: date, Base: "SH", Amount: dec("15"), Currency: "USD"}}},
+	}
+
+	units := ValuedBalances(evaluation, "Assets:Broker", "units")
+	if units["SH"].String() != "30" || units["USD"].String() != "5" {
+		t.Fatalf("units valuation must not convert: %v", display(units))
+	}
+
+	// 10*10 + 20*12 = 340, plus the untouched 5 USD of cash.
+	atCost := ValuedBalances(evaluation, "Assets:Broker", "at-cost")
+	if atCost["USD"].String() != "345" {
+		t.Fatalf("at-cost USD=%v want 345", display(atCost))
+	}
+	if _, ok := atCost["SH"]; ok {
+		t.Fatalf("fully converted commodity must not linger: %v", display(atCost))
+	}
+
+	// 30*15 = 450 at the latest quote, plus the same 5 USD of cash.
+	atMarket := ValuedBalances(evaluation, "Assets:Broker", "market-value")
+	if atMarket["USD"].String() != "455" {
+		t.Fatalf("market-value USD=%v want 455", display(atMarket))
+	}
+}
+
+func TestValuedBalancesKeepsUnquotedLotsInTheirOwnCommodity(t *testing.T) {
+	dec := func(raw string) ledger.Decimal {
+		value, err := ledger.ParseDecimal(raw)
+		if err != nil {
+			t.Fatalf("parse %q: %v", raw, err)
+		}
+		return value
+	}
+	date := ledger.Date{Raw: "2024-01-01", Year: 2024, Month: 1, Day: 1}
+	// No price quote exists for FUND, so market-value must leave the lot in
+	// its own commodity rather than inventing a conversion.
+	evaluation := ledger.Evaluation{
+		Accounts: map[string]ledger.AccountState{"Assets:Fund": {
+			Name:      "Assets:Fund",
+			Balances:  map[string]ledger.Decimal{"FUND": dec("100")},
+			Positions: []ledger.Position{{Units: dec("100"), Currency: "FUND", Cost: &ledger.Cost{Number: dec("2"), Currency: "CNY", Date: &date}}},
+		}},
+	}
+	atMarket := ValuedBalances(evaluation, "Assets:Fund", "market-value")
+	if atMarket["FUND"].String() != "100" {
+		t.Fatalf("unquoted lot must stay in its commodity: %v", display(atMarket))
+	}
+	if _, ok := atMarket["CNY"]; ok {
+		t.Fatalf("unquoted lot must not produce a converted amount: %v", display(atMarket))
+	}
+	atCost := ValuedBalances(evaluation, "Assets:Fund", "at-cost")
+	if atCost["CNY"].String() != "200" {
+		t.Fatalf("at-cost CNY=%v want 200", display(atCost))
+	}
+}
+
+func display(values map[string]ledger.Decimal) map[string]string {
+	out := make(map[string]string, len(values))
+	for currency, amount := range values {
+		out[currency] = amount.String()
+	}
+	return out
+}
+
+func TestReportChartsPlotEveryCurrencyWithoutConversion(t *testing.T) {
+	// Two currencies with no price quote between them. A single-display-currency
+	// chart has to drop one of them; the per-currency chart set must keep both.
+	text := `2000-01-01 open Assets:Cash USD
+2000-01-01 open Assets:Yen JPY
+2000-01-01 open Equity:Opening
+2000-01-02 * "usd opening"
+  Assets:Cash 100 USD
+  Equity:Opening -100 USD
+2000-01-03 * "jpy opening"
+  Assets:Yen 5000 JPY
+  Equity:Opening -5000 JPY
+`
+	file, parseDiagnostics := ledger.ParseText("multi-currency.bean", []byte(text))
+	if parseDiagnostics.HasErrors() {
+		t.Fatalf("parse diagnostics=%+v", parseDiagnostics.All())
+	}
+	evaluation := ledger.EvaluateFiles(map[source.FileID]*ledger.File{1: file}, []source.FileID{1}, ledger.EvalOptions{})
+	if !evaluation.Valid {
+		t.Fatalf("evaluation=%s diagnostics=%+v", evaluation, evaluation.Diagnostics)
+	}
+
+	charts := ReportCharts(*evaluation, "balance-sheet", "month", "at-cost")
+	if len(charts) == 0 {
+		t.Fatal("expected at least one balance-sheet chart")
+	}
+	byTitle := map[string]ChartSpec{}
+	for _, chart := range charts {
+		byTitle[chart.Title] = chart
+	}
+	assets, ok := byTitle["Assets"]
+	if !ok {
+		t.Fatalf("no Assets chart in %v", byTitle)
+	}
+	labels := map[string]ChartSeries{}
+	for _, series := range assets.Series {
+		labels[series.Label] = series
+	}
+	if len(labels) != 2 || labels["USD"].Label == "" || labels["JPY"].Label == "" {
+		t.Fatalf("want one series per currency, got %+v", assets.Series)
+	}
+	if assets.Availability != "" {
+		t.Fatalf("per-currency charts never need a conversion quote, got %q", assets.Availability)
+	}
+	// Series must be dense and equal length: the renderer positions points by
+	// index, so a short series would be drawn against the wrong dates.
+	if len(labels["USD"].Points) != len(labels["JPY"].Points) {
+		t.Fatalf("series lengths differ: USD=%d JPY=%d", len(labels["USD"].Points), len(labels["JPY"].Points))
+	}
+	for _, series := range assets.Series {
+		last := series.Points[len(series.Points)-1]
+		want := map[string]string{"USD": "100", "JPY": "5000"}[series.Label]
+		if last.Value.String() != want {
+			t.Fatalf("%s final balance=%s want %s", series.Label, last.Value.String(), want)
+		}
+	}
+}
+
+func TestReportChartsValueLotsAtCost(t *testing.T) {
+	text := `2000-01-01 open Assets:Cash USD
+2000-01-01 open Assets:Shares SH
+2000-01-02 * "buy"
+  Assets:Shares 10 SH {7 USD}
+  Assets:Cash -70 USD
+`
+	file, parseDiagnostics := ledger.ParseText("lots.bean", []byte(text))
+	if parseDiagnostics.HasErrors() {
+		t.Fatalf("parse diagnostics=%+v", parseDiagnostics.All())
+	}
+	evaluation := ledger.EvaluateFiles(map[source.FileID]*ledger.File{1: file}, []source.FileID{1}, ledger.EvalOptions{})
+	charts := ReportCharts(*evaluation, "balance-sheet", "month", "at-cost")
+	for _, chart := range charts {
+		if chart.Title != "Assets" {
+			continue
+		}
+		// The shares cost exactly what the cash posting paid, so at cost the
+		// account nets to zero USD and no SH series remains.
+		for _, series := range chart.Series {
+			if series.Label == "SH" {
+				t.Fatalf("at-cost chart must not keep raw lot units: %+v", series)
+			}
+		}
+	}
+	units := ReportCharts(*evaluation, "balance-sheet", "month", "units")
+	found := false
+	for _, chart := range units {
+		if chart.Title != "Assets" {
+			continue
+		}
+		for _, series := range chart.Series {
+			if series.Label == "SH" {
+				found = true
+			}
+		}
+	}
+	if !found {
+		t.Fatal("units chart must keep the raw lot units series")
+	}
+}
+
+func TestTrialBalanceChartEmitsEachAccountOnce(t *testing.T) {
+	// One account holding several commodities produces one report row per
+	// (account, currency). Registering a child once per row repeated it under
+	// its parent for every currency, and because that repetition compounds at
+	// each level the emitted hierarchy grew multiplicatively rather than
+	// linearly with the account count.
+	text := `2000-01-01 open Assets:Broker:Shares
+2000-01-01 open Assets:Broker:Cash USD
+2000-01-01 open Equity:Opening
+2000-01-02 * "three commodities in one account"
+  Assets:Broker:Shares 1 AAA {1 USD}
+  Assets:Broker:Shares 1 BBB {1 USD}
+  Assets:Broker:Shares 1 CCC {1 USD}
+  Equity:Opening -3 USD
+2000-01-03 * "cash"
+  Assets:Broker:Cash 5 USD
+  Equity:Opening -5 USD
+`
+	file, parseDiagnostics := ledger.ParseText("dup.bean", []byte(text))
+	if parseDiagnostics.HasErrors() {
+		t.Fatalf("parse diagnostics=%+v", parseDiagnostics.All())
+	}
+	evaluation := ledger.EvaluateFiles(map[source.FileID]*ledger.File{1: file}, []source.FileID{1}, ledger.EvalOptions{})
+	chart := ReportChart(*evaluation, "trial-balance", "month", "USD", "at-cost", "")
+
+	counts := map[string]int{}
+	var walk func(nodes []ChartNode)
+	walk = func(nodes []ChartNode) {
+		for _, node := range nodes {
+			counts[node.Name]++
+			walk(node.Children)
+		}
+	}
+	walk(chart.Nodes)
+	if len(counts) == 0 {
+		t.Fatal("hierarchy chart produced no nodes")
+	}
+	for name, seen := range counts {
+		if seen != 1 {
+			t.Fatalf("account %q appears %d times in the hierarchy; each account must appear once", name, seen)
+		}
+	}
+}

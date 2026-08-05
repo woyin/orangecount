@@ -53,6 +53,19 @@ func TestServerStatusAndDocumentContainment(t *testing.T) {
 	if recorder.Code != http.StatusNotFound {
 		t.Fatalf("traversal status=%d", recorder.Code)
 	}
+	// Fava links the Documents report with a trailing slash, so "/documents/"
+	// is a UI route rather than a request for an attachment named "". It must
+	// serve the shell so the page stays bookmarkable and survives a refresh.
+	for _, path := range []string{"/documents", "/documents/"} {
+		recorder = httptest.NewRecorder()
+		server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
+		if recorder.Code != http.StatusOK {
+			t.Fatalf("documents route %q status=%d", path, recorder.Code)
+		}
+		if contentType := recorder.Header().Get("Content-Type"); !strings.HasPrefix(contentType, "text/html") {
+			t.Fatalf("documents route %q content-type=%q", path, contentType)
+		}
+	}
 }
 
 func TestServerRejectsNonLoopbackAndServesLoopback(t *testing.T) {

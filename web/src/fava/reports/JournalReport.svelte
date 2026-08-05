@@ -1,151 +1,182 @@
 <script lang="ts">
-  import type { TableReport } from "./types";
+  import { formatAmount, type JournalAmount, type JournalEntry, type JournalReport } from "./types";
 
-  export let report: TableReport;
-  export let account = "";
+  export let report: JournalReport;
+  export let renderCommas = false;
+  /** Rendered on the account page, which adds a running-balance column. */
+  export let runningBalances: Map<JournalEntry, string> | null = null;
 
-  interface Posting {
-    account: string;
-    units: unknown;
-    currency: unknown;
-    flag: unknown;
-    file: unknown;
-    span: unknown;
-    running: string;
+  // Fava drives journal visibility entirely from `show-*` classes on the list,
+  // so the chips only toggle class names and never re-request the report. The
+  // defaults match Fava's own initial set.
+  const chips: { label: string; cls: string; title: string }[] = [
+    { label: "Open", cls: "show-open", title: "Toggle Open entries" },
+    { label: "Close", cls: "show-close", title: "Toggle Close entries" },
+    { label: "Transaction", cls: "show-transaction", title: "Toggle Transaction entries" },
+    { label: "*", cls: "show-cleared", title: "Cleared transactions" },
+    { label: "!", cls: "show-pending", title: "Pending transactions" },
+    { label: "x", cls: "show-other", title: "Other transactions" },
+    { label: "Balance", cls: "show-balance", title: "Toggle Balance entries" },
+    { label: "Note", cls: "show-note", title: "Toggle Note entries" },
+    { label: "Document", cls: "show-document", title: "Toggle Document entries" },
+    { label: "Pad", cls: "show-pad", title: "Toggle Pad entries" },
+    { label: "Query", cls: "show-query", title: "Toggle Query entries" },
+    { label: "Custom", cls: "show-custom", title: "Toggle Custom entries" },
+    { label: "Metadata", cls: "show-metadata", title: "Toggle metadata" },
+    { label: "Postings", cls: "show-postings", title: "Toggle postings" },
+  ];
+  let active = new Set([
+    "show-transaction", "show-cleared", "show-pending",
+    "show-balance", "show-note", "show-document",
+    "show-query", "show-custom",
+  ]);
+  function toggle(cls: string) {
+    const next = new Set(active);
+    if (next.has(cls)) next.delete(cls); else next.add(cls);
+    active = next;
   }
+  $: listClasses = ["flex-table", "journal", ...active].join(" ");
 
-  interface Group {
-    key: string;
-    date: unknown;
-    kind: unknown;
-    flag: unknown;
-    payee: unknown;
-    narration: unknown;
-    tags: unknown;
-    links: unknown;
-    postings: Posting[];
-  }
-
-  let expanded = new Set<string>();
-  let kindFilter = "";
-
-  function text(value: unknown): string {
-    if (value && typeof value === "object" && "display" in value && typeof value.display === "string") return value.display;
-    if (Array.isArray(value)) return value.join(", ");
-    if (value && typeof value === "object") return JSON.stringify(value);
-    return value == null ? "" : String(value);
-  }
-
-  function groupRows(rows: Record<string, unknown>[]): Group[] {
-    const groups: Group[] = [];
-    const byKey = new Map<string, Group>();
-    const running = new Map<string, number>();
-    for (const row of rows) {
-      const key = [row.date, row.file, row.span, row.payee, row.narration, row.kind].map(text).join("\u0000");
-      let group = byKey.get(key);
-      if (!group) {
-        group = { key, date: row.date, kind: row.kind, flag: row.flag, payee: row.payee, narration: row.narration, tags: row.tags, links: row.links, postings: [] };
-        byKey.set(key, group);
-        groups.push(group);
-      }
-      const currency = text(row.currency);
-      const amount = Number(text(row.units));
-      if (account && text(row.account) === account && currency && Number.isFinite(amount)) running.set(currency, (running.get(currency) || 0) + amount);
-      group.postings.push({ account: text(row.account), units: row.units, currency: row.currency, flag: row.flag, file: row.file, span: row.span, running: account && text(row.account) === account && currency ? String(running.get(currency) || 0) : "" });
-    }
-    return groups;
-  }
-
-  $: filteredRows = kindFilter ? report.rows.filter((row) => text(row.kind).toLowerCase() === kindFilter.toLowerCase() || text(row.flag) === kindFilter) : report.rows;
-  $: groups = groupRows(filteredRows);
-
-  function isExpanded(key: string): boolean {
-    return expanded.has(key);
-  }
-
-  function toggle(key: string) {
+  // Per-entry expansion, matching Fava's `.show-full-entry` row modifier.
+  let expanded = new Set<JournalEntry>();
+  function toggleEntry(entry: JournalEntry) {
     const next = new Set(expanded);
-    if (next.has(key)) next.delete(key);
-    else next.add(key);
+    if (next.has(entry)) next.delete(entry); else next.add(entry);
     expanded = next;
+  }
+
+  function flagClass(entry: JournalEntry): string {
+    if (entry.type !== "transaction") return "";
+    if (entry.flag === "*") return "cleared";
+    if (entry.flag === "!") return "pending";
+    return "other";
+  }
+
+  function amountText(amount: JournalAmount | undefined): string {
+    if (!amount) return "";
+    return `${formatAmount(amount.number, renderCommas)} ${amount.currency}`;
+  }
+
+  function accountHref(account: string): string {
+    return `/account/${encodeURIComponent(account)}`;
+  }
+
+  /** The description cell differs per directive type, the way Fava's does. */
+  function describe(entry: JournalEntry): string {
+    switch (entry.type) {
+      case "open": return entry.extra?.currencies ?? "";
+      case "pad": return entry.extra?.source_account ?? "";
+      case "query": return entry.extra?.query ?? "";
+      case "custom": return entry.extra?.values ?? "";
+      case "event": return entry.extra?.value ?? "";
+      default: return entry.narration ?? "";
+    }
   }
 </script>
 
-<div class="headerline">
-  <h2>Journal</h2>
-  <span class="muted">{groups.length} transactions · {filteredRows.length} postings</span>
-  <a class="button" href="/api/v1/reports/journal?format=csv">Export CSV</a>
-</div>
-<div class="journal-filters" aria-label="Entry type filters">
-  <button class:active={!kindFilter} type="button" onclick={() => kindFilter = ""}>All</button>
-  {#each ["transaction", "open", "close", "balance", "note", "document", "query", "custom", "pad", "price"] as kind (kind)}
-    <button class:active={kindFilter === kind} type="button" onclick={() => kindFilter = kind}>{kind}</button>
+<form class="flex-row journal-chips">
+  {#each chips as chip (chip.cls)}
+    <button
+      type="button"
+      class:inactive={!active.has(chip.cls)}
+      title={chip.title}
+      aria-pressed={active.has(chip.cls)}
+      onclick={() => toggle(chip.cls)}
+    >{chip.label}</button>
   {/each}
-</div>
-<div class="journal-table-wrapper">
-  <table class="journal-table">
-    <thead>
-      <tr><th>Date</th><th>Transaction</th><th>Account</th><th class="num">Amount</th><th>Currency</th>{#if account}<th class="num">Running balance</th>{/if}</tr>
-    </thead>
-    <tbody>
-      {#each groups as group (group.key)}
-        <tr class="journal-transaction-row">
-          <th scope="row">{text(group.date)}</th>
-          <td colspan={account ? 5 : 4}>
-            <button class="journal-transaction-toggle link" type="button" aria-expanded={isExpanded(group.key)} onclick={() => toggle(group.key)}>
-              {isExpanded(group.key) ? "▾" : "▸"} {text(group.flag)} {text(group.payee)} {text(group.narration)}
-            </button>
-            {#if text(group.tags)} <span class="journal-meta">#{text(group.tags)}</span>{/if}
-            {#if text(group.links)} <span class="journal-meta">^{text(group.links)}</span>{/if}
-          </td>
-        </tr>
-        {#if isExpanded(group.key)}
-          {#each group.postings as posting, index (group.key + index)}
-            <tr class="journal-posting-row">
-              <td></td>
-              <td></td>
-              <td><a href={`/account/${encodeURIComponent(posting.account)}`}>{posting.account}</a></td>
-              <td class="num">{text(posting.units)}</td>
-              <td>{text(posting.currency)}</td>
-              {#if account}<td class="num">{posting.running}</td>{/if}
-            </tr>
-          {/each}
+  <span class="spacer"></span>
+  <a class="button" href="/api/v1/reports/journal?format=csv">Export CSV</a>
+</form>
+
+<ol class={listClasses}>
+  <li class="head">
+    <p>
+      <span class="datecell">Date</span>
+      <span class="flag">F</span>
+      <span class="description">Payee/Narration</span>
+      <span class="num">Units</span>
+      <span class="num">Cost</span>
+      <span class="num">{runningBalances ? "Balance" : "Price"}</span>
+    </p>
+  </li>
+  {#each report.entries as entry, index (entry.type + entry.date + index)}
+    <li class="{entry.type} {flagClass(entry)}" class:show-full-entry={expanded.has(entry)}>
+      <p>
+        <span class="datecell">{entry.date}</span>
+        <span class="flag">{entry.flag ?? ""}</span>
+        <span class="description">
+          {#if entry.account}
+            <a href={accountHref(entry.account)}>{entry.account}</a>
+          {/if}
+          {#if entry.payee}
+            <strong class="payee">{entry.payee}</strong><span class="separator"></span>
+          {/if}
+          {describe(entry)}
+          {#each entry.tags ?? [] as tag (tag)}<span class="tag">#{tag}</span>{/each}
+          {#each entry.links ?? [] as link (link)}<span class="link">^{link}</span>{/each}
+          {#each entry.filenames ?? [] as filename (filename)}<span class="filename">{filename}</span>{/each}
+        </span>
+        {#if entry.postings?.length}
+          <!-- Fava shows one dot per posting; clicking expands the entry. -->
+          <span
+            class="indicators"
+            role="button"
+            tabindex="0"
+            title="Toggle postings"
+            onclick={() => toggleEntry(entry)}
+            onkeydown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); toggleEntry(entry); } }}
+          >{#each entry.postings as posting, dot (dot)}<span class={posting.flag === "!" ? "pending" : ""}></span>{/each}</span>
+        {:else}
+          <span class="indicators"></span>
         {/if}
-      {:else}
-        <tr><td colspan={account ? 6 : 5}>No journal entries.</td></tr>
-      {/each}
-    </tbody>
-  </table>
-</div>
+        {#if entry.amount}
+          <span class="num bal" title={entry.amount.currency}>{amountText(entry.amount)}</span>
+          <span class="change num"></span>
+          <span class="change num"></span>
+        {:else if runningBalances}
+          <span class="num"></span>
+          <span class="num"></span>
+          <span class="num">{runningBalances.get(entry) ?? ""}</span>
+        {/if}
+      </p>
+      {#if entry.postings?.length}
+        <ul class="postings">
+          {#each entry.postings as posting, postingIndex (posting.account + postingIndex)}
+            <li>
+              <p>
+                <span class="datecell"></span>
+                <span class="flag">{posting.flag ?? ""}</span>
+                <span class="description"><a href={accountHref(posting.account)}>{posting.account}</a></span>
+                <span class="num">{amountText(posting.units)}</span>
+                <span class="num">{amountText(posting.cost)}</span>
+                <span class="num">{amountText(posting.price)}</span>
+              </p>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+      {#if entry.metadata?.length}
+        <dl class="metadata">
+          {#each entry.metadata as meta (meta.key)}
+            <dt>{meta.key}:</dt>
+            <dd>{meta.value}</dd>
+          {/each}
+        </dl>
+      {/if}
+    </li>
+  {/each}
+</ol>
 
 <style>
-  .journal-filters { display: flex; flex-wrap: wrap; gap: .25rem; margin-bottom: .75rem; }
-  .journal-filters button { padding: .2rem .5rem; color: var(--text-color); background: var(--background-darker); border: 1px solid var(--border); }
-  .journal-filters button.active { color: var(--button-color); background: var(--button-background); }
-
-  .muted,
-  .journal-meta {
-    color: var(--text-color-lightest);
+  .journal-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    align-items: center;
+    margin-bottom: 0.5rem;
   }
 
-  .journal-meta {
-    margin-left: 0.5rem;
-  }
-
-  .journal-table-wrapper {
-    overflow-x: auto;
-  }
-
-  .journal-table {
-    min-width: 48rem;
-  }
-
-  .journal-transaction-row th,
-  .journal-transaction-row td {
-    background-color: var(--background-darker);
-  }
-
-  .journal-posting-row td {
-    border-top: 0;
+  .journal-chips .spacer {
+    flex: 1;
   }
 </style>

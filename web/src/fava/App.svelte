@@ -79,7 +79,7 @@
     shell.dispatch({ type: "loading", value: true });
     try {
       const payload = await adapter.bootstrap();
-      shell.dispatch({ type: "bootstrap", ledgerTitle: payload.ledger_title, locale: payload.locale, theme: payload.theme, errors: payload.errors });
+      shell.dispatch({ type: "bootstrap", ledgerTitle: payload.ledger_title, locale: payload.locale, theme: payload.theme, errors: payload.errors, operatingCurrencies: payload.operating_currencies, renderCommas: payload.render_commas });
     } catch (error) {
       shell.dispatch({ type: "error", message: error instanceof Error ? error.message : "The local adapter could not load this view." });
     }
@@ -144,6 +144,9 @@
         <ReportOutlet
           adapter={adapter}
           route={current.route}
+          locale={current.locale}
+          operatingCurrencies={current.operatingCurrencies}
+          renderCommas={current.renderCommas}
           query={{ ...current.query, ...(current.account ? { account: current.account } : {}) }}
         />
       {/key}

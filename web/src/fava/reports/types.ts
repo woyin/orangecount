@@ -25,6 +25,16 @@ export interface ChartSeries {
   stacked?: boolean;
 }
 
+/** One account of a hierarchy (treemap) chart; children nest the account tree. */
+export interface HierarchyNode {
+  name: string;
+  value: DecimalWire;
+  depth: number;
+  currency?: string;
+  parent?: string;
+  children?: HierarchyNode[];
+}
+
 export interface ReportChart {
   kind: string;
   title: string;
@@ -36,7 +46,7 @@ export interface ReportChart {
   measure: string;
   availability?: string;
   series: ChartSeries[];
-  nodes?: { name: string; value: DecimalWire; depth: number }[];
+  nodes?: HierarchyNode[];
 }
 
 export interface TreeReport {
@@ -111,8 +121,19 @@ export function parseTreeReport(value: unknown): TreeReport {
   };
 }
 
-export function formatAmount(value: DecimalWire | undefined): string {
-  return value?.display ?? "";
+/**
+ * Renders a wire decimal for display, optionally grouping thousands the way
+ * the ledger's `render_commas` option asks for. Grouping is applied to the
+ * already-rounded `display` string only; `exact` stays the canonical value.
+ * A non-terminating rational (rendered as "a/b") is left alone.
+ */
+export function formatAmount(value: DecimalWire | undefined, group = false): string {
+  const display = value?.display ?? "";
+  if (!group || display === "" || display.includes("/")) return display;
+  const match = /^(-?)(\d+)(\.\d+)?$/.exec(display);
+  if (!match) return display;
+  const [, sign, integer, fraction = ""] = match;
+  return `${sign}${integer.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}${fraction}`;
 }
 
 export function currenciesInTree(tree: TreeNode): string[] {
@@ -124,4 +145,54 @@ export function currenciesInTree(tree: TreeNode): string[] {
   }
   visit(tree);
   return [...values].sort();
+}
+
+/** Amount as the journal adapter serialises it. */
+export interface JournalAmount {
+  number: DecimalWire;
+  currency: string;
+}
+
+export interface JournalMeta {
+  key: string;
+  value: string;
+}
+
+export interface JournalPosting {
+  account: string;
+  flag?: string;
+  units?: JournalAmount;
+  cost?: JournalAmount;
+  price?: JournalAmount;
+  metadata?: JournalMeta[];
+}
+
+/** One ledger directive in the journal, mirroring Fava's entry list. */
+export interface JournalEntry {
+  type: string;
+  date: string;
+  flag?: string;
+  payee?: string;
+  narration?: string;
+  account?: string;
+  amount?: JournalAmount;
+  tags?: string[];
+  links?: string[];
+  metadata?: JournalMeta[];
+  postings?: JournalPosting[];
+  filenames?: string[];
+  file?: string;
+  span?: string;
+  extra?: Record<string, string>;
+}
+
+export interface JournalReport {
+  entries: JournalEntry[];
+}
+
+export function parseJournalReport(value: unknown): JournalReport {
+  if (!isRecord(value) || !Array.isArray(value.entries) || !value.entries.every(isRecord)) {
+    throw new Error("Adapter returned an invalid journal payload");
+  }
+  return { entries: value.entries as unknown as JournalEntry[] };
 }

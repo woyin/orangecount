@@ -14,6 +14,11 @@ export interface BootstrapPayload {
   routes: string[];
   accounts: string[];
   currencies: string[];
+  /** Declared operating currencies, in ledger order; these get their own
+   * report columns while every other currency shares an "Other" column. */
+  operating_currencies: string[];
+  /** Ledger `render_commas` option: group thousands in displayed amounts. */
+  render_commas: boolean;
   errors: unknown[];
   mtime?: string;
 }
@@ -50,6 +55,10 @@ function bootstrapPayload(wire: BootstrapWire, mtime = ""): BootstrapPayload {
     routes: ["income_statement", "balance_sheet", "trial_balance", "journal", "query", "holdings", "commodities", "documents", "events", "statistics", "editor", "import", "options", "help", "account"],
     accounts: wire.accounts || [],
     currencies: wire.currencies || [],
+    // The evaluator joins repeated operating_currency declarations into one
+    // space-separated value, preserving declaration order.
+    operating_currencies: (wire.options?.operating_currency || "").split(/\s+/).filter(Boolean),
+    render_commas: (wire.options?.render_commas || "").toUpperCase() === "TRUE",
     errors: wire.errors || [],
     mtime,
   };
@@ -80,7 +89,7 @@ export function createAdapterClient(
     changed: async () => get<boolean>("changed", lastMtime ? { mtime: lastMtime } : {}),
     load: (route, query = {}) => {
       const treeRoutes = new Set(["income_statement", "balance_sheet", "trial_balance"]);
-      const directRoutes = new Set(["options", "help", "diagnostics", "source", "editor", "import"]);
+      const directRoutes = new Set(["options", "help", "diagnostics", "source", "editor", "import", "journal"]);
       const resource = treeRoutes.has(route) || directRoutes.has(route)
         ? route
         : route.startsWith("holdings_by_")
@@ -101,6 +110,8 @@ export function createSyntheticAdapter(): AdapterClient {
     routes: ["journal", "balance_sheet", "trial_balance", "account"],
     accounts: [],
     currencies: ["USD"],
+    operating_currencies: ["USD"],
+    render_commas: false,
     errors: [],
   };
   return {

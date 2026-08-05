@@ -6,18 +6,21 @@ import path from "node:path";
 const webRoot = import.meta.dirname;
 const staging = path.join(webRoot, "staging", "fava-shell");
 
+// Asset hrefs must be root-absolute: the Go server serves this same shell for
+// every client route, so a relative "./app.js" under /income_statement/ would
+// resolve to /income_statement/app.js and load the shell HTML as the module.
 const indexHTML = `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>OrangeCount</title>
-    <link rel="stylesheet" href="./app.css">
+    <link rel="stylesheet" href="/app.css">
     <style>#app { display: contents; }</style>
   </head>
   <body>
     <div id="app"></div>
-    <script type="module" src="./app.js"></script>
+    <script type="module" src="/app.js"></script>
   </body>
 </html>
 `;

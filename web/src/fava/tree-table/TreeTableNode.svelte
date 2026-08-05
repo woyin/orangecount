@@ -3,14 +3,25 @@
 
   export let node: TreeNode;
   export let currencies: string[] = [];
+  export let otherCurrencies: string[] = [];
+  export let renderCommas = false;
   export let collapsed: Set<string>;
   export let depth = 0;
   export let onToggle: (account: string) => void;
 
   $: isCollapsed = collapsed.has(node.account);
-  $: shown = isCollapsed ? node.balance_children : node.balance;
+  // Fava shows a node's own balance only when it actually has postings, and
+  // otherwise falls back to the subtree total; a collapsed node always reports
+  // its subtree. Showing node.balance unconditionally left every pure-parent
+  // account (Income, Expenses, Health, …) displaying its own empty 0 balance.
+  $: shown = isCollapsed || !node.has_txns ? node.balance_children : node.balance;
   $: hasChildren = node.children.length > 0;
   $: leaf = node.account.includes(":") ? node.account.slice(node.account.lastIndexOf(":") + 1) : node.account;
+  // Non-operating currencies share one cell, each on its own line and suffixed
+  // with its currency code, the way Fava renders its "Other" column.
+  $: otherAmounts = otherCurrencies
+    .filter((currency) => shown[currency])
+    .map((currency) => `${formatAmount(shown[currency], renderCommas)} ${currency}`);
 </script>
 
 <li>
@@ -29,14 +40,19 @@
     </span>
     {#each currencies as currency (currency)}
       <span class="num" class:dimmed={!shown[currency]} title={shown[currency]?.exact ?? ""}>
-        {formatAmount(shown[currency])}
+        {formatAmount(shown[currency], renderCommas)}
       </span>
     {/each}
+    {#if otherCurrencies.length}
+      <span class="other num">
+        {#each otherAmounts as amount (amount)}<span class="other-line">{amount}</span>{/each}
+      </span>
+    {/if}
   </p>
   {#if !isCollapsed && hasChildren}
     <ol>
       {#each node.children as child (child.account)}
-        <svelte:self node={child} {currencies} {collapsed} depth={depth + 1} {onToggle} />
+        <svelte:self node={child} {currencies} {otherCurrencies} {renderCommas} {collapsed} depth={depth + 1} {onToggle} />
       {/each}
     </ol>
   {/if}
@@ -63,6 +79,11 @@
 
   .num {
     min-width: 7em;
+  }
+
+  .other-line {
+    display: block;
+    white-space: nowrap;
   }
 
   .dimmed {

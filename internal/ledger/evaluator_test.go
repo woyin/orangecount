@@ -67,6 +67,85 @@ func TestEvaluateExcludesOptionsFromEntries(t *testing.T) {
 	}
 }
 
+func TestEvaluateCompletesInterpolatedPostingInEntryStream(t *testing.T) {
+	// Beancount hands back a fully interpolated transaction, so the elided
+	// posting must carry its computed amount in Entries. Consumers that walk
+	// the entry stream (journal rows, query results, report charts) otherwise
+	// skip it: a purchase would count the shares it received but not the cash
+	// it paid, silently inflating asset charts.
+	text := `2000-01-01 open Assets:Cash USD
+2000-01-01 open Assets:Shares SH
+2000-01-01 open Expenses:Fees USD
+2000-01-02 * "buy with an elided cash posting"
+  Assets:Cash
+  Assets:Shares 10 SH {7 USD}
+  Expenses:Fees 1 USD
+`
+	file, parseDiagnostics := ParseText("interpolated.bean", []byte(text))
+	if parseDiagnostics.HasErrors() {
+		t.Fatalf("parse diagnostics=%+v", parseDiagnostics.All())
+	}
+	evaluation := EvaluateFiles(map[source.FileID]*File{1: file}, []source.FileID{1}, EvalOptions{})
+	if !evaluation.Valid {
+		t.Fatalf("evaluation=%s diagnostics=%+v", evaluation, evaluation.Diagnostics)
+	}
+	var booked *Transaction
+	for index := len(evaluation.Entries) - 1; index >= 0; index-- {
+		if tx, ok := evaluation.Entries[index].Directive.(*Transaction); ok {
+			booked = tx
+			break
+		}
+	}
+	if booked == nil {
+		t.Fatal("no booked transaction in the entry stream")
+	}
+	var cash *Posting
+	for index := range booked.Postings {
+		if booked.Postings[index].Account == "Assets:Cash" {
+			cash = &booked.Postings[index]
+		}
+	}
+	if cash == nil || cash.Units == nil {
+		t.Fatalf("interpolated posting has no units: %+v", booked.Postings)
+	}
+	if got := DecimalFromNumber(cash.Units.Number).String(); got != "-71" {
+		t.Fatalf("interpolated cash units=%s want -71", got)
+	}
+	if cash.Units.Currency != "USD" {
+		t.Fatalf("interpolated cash currency=%q want USD", cash.Units.Currency)
+	}
+}
+
+func TestEvaluateWeighsCostOverPriceWhenBothPresent(t *testing.T) {
+	// A posting carrying both a cost and a price balances at its cost; the
+	// price is reporting information. Weighting at the price instead makes the
+	// proceeds cancel the reduction exactly, so the realized gain silently
+	// collapses to zero instead of landing on the inferred income posting.
+	text := `2000-01-01 open Assets:Cash USD
+2000-01-01 open Assets:Shares SH
+2000-01-01 open Income:Gains USD
+2000-01-02 * "buy"
+  Assets:Shares 10 SH {10 USD}
+  Assets:Cash -100 USD
+2000-01-03 * "sell at a gain"
+  Assets:Shares -10 SH {10 USD} @ 15 USD
+  Assets:Cash 150 USD
+  Income:Gains
+`
+	file, parseDiagnostics := ParseText("cost-over-price.bean", []byte(text))
+	if parseDiagnostics.HasErrors() {
+		t.Fatalf("parse diagnostics=%+v", parseDiagnostics.All())
+	}
+	evaluation := EvaluateFiles(map[source.FileID]*File{1: file}, []source.FileID{1}, EvalOptions{})
+	if !evaluation.Valid {
+		t.Fatalf("evaluation=%s diagnostics=%+v", evaluation, evaluation.Diagnostics)
+	}
+	gains, ok := evaluation.Account("Income:Gains")
+	if !ok || gains.Balances["USD"].String() != "-50" {
+		t.Fatalf("realized gain=%+v want -50 USD", gains)
+	}
+}
+
 func TestEvaluateAccumulatesRepeatedOperatingCurrency(t *testing.T) {
 	text := `option "operating_currency" "CNY"
 option "operating_currency" "USD"
@@ -197,9 +276,14 @@ func TestEvaluateLotsPricesAndPad(t *testing.T) {
 }
 
 func TestEvaluateBooksReductionAcrossLots(t *testing.T) {
+	// The reduction is weighted at the cost of the lots removed (1x10 + 2x12 =
+	// 34 USD), not at the 15 USD sale price, so the 45 USD proceeds leave an
+	// 11 USD realized gain for the inferred posting to absorb. Beancount
+	// rejects this transaction outright without that gain posting.
 	text := `2000-01-01 open Assets:Cash USD
 2000-01-01 open Assets:Shares SH
 2000-01-01 open Equity:Opening USD
+2000-01-01 open Income:Gains USD
 2000-01-02 * "buy one"
   Assets:Shares 1 SH {10 USD}
   Assets:Cash -10 USD
@@ -209,6 +293,7 @@ func TestEvaluateBooksReductionAcrossLots(t *testing.T) {
 2000-01-04 * "sell both lots"
   Assets:Shares -3 SH {} @ 15 USD
   Assets:Cash 45 USD
+  Income:Gains
 `
 	file, parseDiagnostics := ParseText("book-lots.bean", []byte(text))
 	if parseDiagnostics.HasErrors() {
@@ -229,8 +314,12 @@ func TestEvaluateBooksReductionAcrossLots(t *testing.T) {
 			break
 		}
 	}
-	if booked == nil || len(booked.Postings) != 3 {
+	if booked == nil || len(booked.Postings) != 4 {
 		t.Fatalf("booked transaction=%+v", booked)
+	}
+	gains, ok := evaluation.Account("Income:Gains")
+	if !ok || gains.Balances["USD"].String() != "-11" {
+		t.Fatalf("realized gain=%+v", gains)
 	}
 	if booked.Postings[0].Units == nil || booked.Postings[0].Units.Number.String() != "-1" || booked.Postings[1].Units == nil || booked.Postings[1].Units.Number.String() != "-2" {
 		t.Fatalf("booked reduction postings=%+v", booked.Postings)

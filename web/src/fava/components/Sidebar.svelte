@@ -75,6 +75,7 @@
       position: fixed;
       top: 0;
       bottom: 0;
+      visibility: hidden;
       z-index: var(--z-index-floating-ui);
       width: 200px;
       margin-left: -200px;
@@ -92,6 +93,7 @@
 
     aside.active {
       margin-left: 0;
+      visibility: visible;
     }
 
     .aside-buttons {

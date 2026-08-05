@@ -5,10 +5,12 @@
   export let report: TableReport;
   export let title: string;
   export let route = "";
+  export let locale = "en";
+  export let renderCommas = false;
 
   function display(value: unknown): string {
     if (value && typeof value === "object" && "display" in value && typeof value.display === "string") {
-      return formatAmount(value as { display: string; exact: string; approximate: boolean });
+      return formatAmount(value as { display: string; exact: string; approximate: boolean }, renderCommas);
     }
     if (Array.isArray(value)) return value.join(", ");
     if (value && typeof value === "object") return JSON.stringify(value);
@@ -26,7 +28,7 @@
   {#if route}<a class="button" href={`/api/v1/reports/${route}?format=csv`}>Export CSV</a>{/if}
 </div>
 {#if report.chart}
-  <ReportChart chart={report.chart} />
+  <ReportChart chart={report.chart} {locale} />
 {/if}
 <div class="table-scroll">
   <table class="report-table">

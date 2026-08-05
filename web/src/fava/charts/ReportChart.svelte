@@ -1,7 +1,26 @@
 <script lang="ts">
-  import { formatAmount, type ReportChart } from "../reports/types";
+  import { translations, type Locale } from "../../translations";
+  import { formatAmount, type HierarchyNode, type ReportChart } from "../reports/types";
 
   export let chart: ReportChart;
+  export let locale = "en";
+
+  $: catalog = translations[(locale === "zh-CN" ? "zh-CN" : "en") as Locale];
+  function label(key: string): string { return catalog[key] ?? translations.en[key] ?? key; }
+
+  // The adapter reports availability as a machine status; render the same
+  // human-readable copy the rest of the shell uses instead of the raw enum.
+  //
+  // "native-multi" is deliberately absent: in this shell every chart plots one
+  // series per currency, so holding several currencies is the normal case and
+  // nothing has been dropped. Reporting it as "Not valued" told the user their
+  // data was missing while it was on screen.
+  const availabilityKeys: Record<string, string> = {
+    "unavailable-price": "unavailablePrice",
+    "unavailable-currency": "unavailableCurrency",
+  };
+  $: availabilityKey = chart.availability ? availabilityKeys[chart.availability] ?? "" : "";
+  $: availabilityText = availabilityKey ? label(availabilityKey) : "";
 
   const colors = ["var(--series-0, #2563eb)", "var(--series-1, #d97706)", "var(--series-2, #16a34a)", "var(--series-3, #9333ea)"];
 
@@ -27,15 +46,75 @@
   }
   function barHeight(value: number): number { return Math.max(0.5, Math.abs(y(value) - y(0))); }
   function barY(value: number): number { return value >= 0 ? y(value) : y(0); }
+
+  // --- Treemap -------------------------------------------------------------
+  // Only leaf accounts are laid out: an aggregate's area is the sum of its
+  // children, so drawing both would double-count the canvas.
+  interface Leaf { name: string; root: string; value: number; display: string }
+  interface Tile extends Leaf { x: number; y: number; w: number; h: number }
+
+  function collectLeaves(nodes: HierarchyNode[], root = ""): Leaf[] {
+    const out: Leaf[] = [];
+    for (const node of nodes) {
+      const top = root || node.name.split(":")[0];
+      if (node.children?.length) {
+        out.push(...collectLeaves(node.children, top));
+      } else {
+        out.push({ name: node.name, root: top, value: Math.abs(numberValue(node.value)), display: node.value.display });
+      }
+    }
+    return out;
+  }
+
+  // Recursive bisection: split the items into two value-balanced groups, cut
+  // the rectangle along its longer side, and recurse. This keeps every tile
+  // proportional to its value while staying two-dimensional, where a single
+  // row of rectangles degenerates into slivers as soon as values are skewed.
+  function tile(items: Leaf[], x0: number, y0: number, w: number, h: number): Tile[] {
+    if (!items.length || w <= 0 || h <= 0) return [];
+    if (items.length === 1) return [{ ...items[0], x: x0, y: y0, w, h }];
+    const total = items.reduce((sum, item) => sum + item.value, 0);
+    if (!total) return [];
+    let running = 0;
+    let split = 1;
+    for (let index = 0; index < items.length; index += 1) {
+      running += items[index].value;
+      if (running >= total / 2) { split = index + 1; break; }
+    }
+    split = Math.min(Math.max(split, 1), items.length - 1);
+    const head = items.slice(0, split);
+    const tail = items.slice(split);
+    const share = head.reduce((sum, item) => sum + item.value, 0) / total;
+    if (w >= h) {
+      const headWidth = w * share;
+      return [...tile(head, x0, y0, headWidth, h), ...tile(tail, x0 + headWidth, y0, w - headWidth, h)];
+    }
+    const headHeight = h * share;
+    return [...tile(head, x0, y0, w, headHeight), ...tile(tail, x0, y0 + headHeight, w, h - headHeight)];
+  }
+
+  $: leaves = (chart.nodes ?? [])
+    .flatMap((node) => collectLeaves([node]))
+    .filter((leaf) => leaf.value > 0)
+    .sort((left, right) => right.value - left.value);
+  $: roots = [...new Set(leaves.map((leaf) => leaf.root))].sort();
+  $: tiles = tile(leaves, 0, 0, 100, 52);
+  function tileColor(leaf: Leaf): string { return colors[roots.indexOf(leaf.root) % colors.length]; }
 </script>
 
 <section class="chart-card" aria-label={chart.title}>
   <h3>{chart.title}</h3>
-  {#if chart.kind === "hierarchy" && chart.nodes?.length}
-    <svg class="report-chart report-hierarchy-chart" viewBox="0 0 100 52" role="img" aria-label={chart.title}>
-      {#each chart.nodes.slice(0, 24) as node, index (node.name + index)}
-        {@const nodeWidth = 96 / Math.min(chart.nodes.length, 24)}
-        <rect x={2 + index * nodeWidth} y={8 + node.depth * 5} width={Math.max(0.5, nodeWidth - 0.5)} height={Math.max(2, 40 - node.depth * 5)} style={`fill:${colors[index % colors.length]}`} opacity=".75" />
+  {#if chart.kind === "hierarchy" && tiles.length}
+    <svg class="report-chart report-hierarchy-chart" viewBox="0 0 100 52" preserveAspectRatio="none" role="img" aria-label={chart.title}>
+      {#each tiles as item (item.name)}
+        <rect
+          x={item.x + 0.15}
+          y={item.y + 0.15}
+          width={Math.max(0.3, item.w - 0.3)}
+          height={Math.max(0.3, item.h - 0.3)}
+          style={`fill:${tileColor(item)}`}
+          opacity=".8"
+        ><title>{item.name}: {item.display} {chart.currency}</title></rect>
       {/each}
     </svg>
   {:else if chart.kind === "stacked-bar" || chart.kind === "bar"}
@@ -61,10 +140,15 @@
   {#each chart.series as series, index (series.label)}
     <span class="legend"><i style={`background:${colors[index % colors.length]}`}></i>{series.label}</span>
   {/each}
-  {#if chart.availability}
-    <p class="chart-availability">{chart.availability}</p>
+  {#if availabilityText}
+    <p class="chart-availability">{availabilityText}</p>
   {/if}
-  <div class="chart-scroll">
+  <!-- The tabular fallback stays reachable for keyboard and screen-reader use,
+       but starts collapsed: an unbounded per-period dump above the account
+       trees pushed the actual report off the first screen. -->
+  <details class="chart-data">
+    <summary>{label("chartData")}</summary>
+    <div class="chart-scroll">
     <table>
       <thead>
         <tr>
@@ -87,13 +171,16 @@
         {/each}
       </tbody>
     </table>
-  </div>
+    </div>
+  </details>
 </section>
 
 <style>
   .chart-card { margin-bottom: 1rem; }
   .chart-meta, .chart-availability { color: var(--text-color-lightest); }
-  .chart-scroll { overflow-x: auto; }
+  .chart-data { margin-top: .5rem; }
+  .chart-data summary { color: var(--text-color-lightest); cursor: pointer; }
+  .chart-scroll { overflow-x: auto; max-height: 22rem; overflow-y: auto; }
   .report-chart { display: block; width: min(100%, 52rem); height: 14rem; margin-bottom: .5rem; background: var(--background-darker); border: 1px solid var(--border); }
   .report-chart path { fill: none; stroke-width: .8; vector-effect: non-scaling-stroke; }
   .chart-axis { stroke: var(--chart-axis); stroke-width: .25; vector-effect: non-scaling-stroke; }

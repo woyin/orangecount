@@ -369,6 +369,21 @@ func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 			Path    string `json:"path"`
 			Content string `json:"content"`
 		}{Path: graph.DisplayPath(id), Content: string(file.Data)}, current.BuiltAt))
+	case "journal":
+		filters, err := globalReportFilters(r)
+		if err != nil {
+			writeAPIError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		projection := favaadapter.ProjectJournal(current.Evaluation(), current.Graph(), filters, report.JournalFilters{
+			Flag:      r.URL.Query().Get("flag"),
+			Tag:       r.URL.Query().Get("tag"),
+			Link:      r.URL.Query().Get("link"),
+			Payee:     r.URL.Query().Get("payee"),
+			Narration: r.URL.Query().Get("narration"),
+			Kind:      r.URL.Query().Get("kind"),
+		})
+		writeJSON(w, favaadapter.NewEnvelope(projection, current.BuiltAt))
 	case "income_statement", "balance_sheet", "trial_balance":
 		filters, err := globalReportFilters(r)
 		if err != nil {
@@ -377,9 +392,17 @@ func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 		}
 		valuation := strings.TrimSpace(r.URL.Query().Get("valuation"))
 		if valuation == "" {
-			valuation = "at-cost"
-			if strings.EqualFold(strings.TrimSpace(r.URL.Query().Get("conversion")), "market_value") {
+			// The shell's conversion selector uses Fava's vocabulary; map it to
+			// the valuation names the report layer understands. "units" must
+			// stay distinct from "at-cost", otherwise choosing it still
+			// converts lots and the control looks broken.
+			switch strings.ToLower(strings.TrimSpace(r.URL.Query().Get("conversion"))) {
+			case "market_value":
 				valuation = "market-value"
+			case "units":
+				valuation = "units"
+			default:
+				valuation = "at-cost"
 			}
 		}
 		projection := favaadapter.ProjectTreeReport(
@@ -1500,6 +1523,13 @@ func (s *Server) handleDocument(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	encoded := strings.TrimPrefix(r.URL.Path, "/documents/")
+	if encoded == "" {
+		// Bare "/documents/" is the Documents UI route, not an attachment
+		// request: Fava links documents with a trailing slash, so serving the
+		// shell here keeps that URL bookmarkable and refreshable.
+		s.handleIndex(w, r)
+		return
+	}
 	name, err := url.PathUnescape(encoded)
 	if err != nil {
 		http.NotFound(w, r)
