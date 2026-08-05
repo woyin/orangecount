@@ -41,7 +41,7 @@
     report = null;
     table = null;
     journal = null;
-    if (["query", "options", "help", "diagnostics", "source", "editor", "import"].includes(route) || !["income_statement", "balance_sheet", "trial_balance", "accounts", "account", "journal", "holdings", "holdings_by_account", "holdings_by_currency", "holdings_by_root_account", "holdings_by_commodity", "commodities", "events", "documents", "statistics", "errors"].includes(route)) {
+    if (["query", "options", "help", "diagnostics", "source", "editor", "import"].includes(route) || !["income_statement", "balance_sheet", "trial_balance", "accounts", "journal", "holdings", "holdings_by_account", "holdings_by_currency", "holdings_by_root_account", "holdings_by_commodity", "commodities", "events", "documents", "statistics", "errors"].includes(route)) {
       loading = false;
       return;
     }
@@ -72,7 +72,7 @@
 {:else if route === "query"}
   <QueryReport {adapter} />
 {:else if route === "account"}
-  <AccountReport adapter={adapter} account={query.account || ""} />
+  <AccountReport adapter={adapter} {query} {locale} {renderCommas} />
 {:else if route === "editor"}
   <EditorReport {adapter} />
 {:else if route === "import"}

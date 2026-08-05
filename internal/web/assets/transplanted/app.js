@@ -6427,27 +6427,46 @@ delegate(["click", "keydown"]);
 
 // src/fava/reports/AccountReport.svelte
 var root_19 = template(`<section class="state-panel error-panel" role="alert"> </section>`);
-var root_24 = template(`<div class="headerline"><h2> </h2><span class="muted">Account detail</span></div> <!> <!>`, 1);
+var root_24 = template(`<div class="headerline"><h2> </h2></div> <!> <!> <!>`, 1);
 function AccountReport($$anchor, $$props) {
   push($$props, false);
+  const account = mutable_state();
   let adapter = prop($$props, "adapter", 8);
-  let account = prop($$props, "account", 8);
+  let query = prop($$props, "query", 8);
+  let locale = prop($$props, "locale", 8, "en");
+  let renderCommas = prop($$props, "renderCommas", 8, false);
   let balance = mutable_state(null);
   let journal = mutable_state(null);
   let error = mutable_state("");
-  async function load() {
+  let requestKey = mutable_state("");
+  async function load(key) {
     try {
       const [accountValue, journalValue] = await Promise.all([
-        adapter().load("account", { account: account() }),
-        adapter().load("journal", { account: account() })
+        adapter().load("account", query()),
+        adapter().load("journal", query())
       ]);
+      if (key !== get(requestKey)) return;
       set(balance, parseTableReport(accountValue));
-      set(journal, parseTableReport(journalValue));
+      set(journal, parseJournalReport(journalValue));
+      set(error, "");
     } catch (value) {
+      if (key !== get(requestKey)) return;
       set(error, value instanceof Error ? value.message : "The account report could not be loaded.");
     }
   }
-  load();
+  legacy_pre_effect(() => deep_read_state(query()), () => {
+    set(account, query().account || "");
+  });
+  legacy_pre_effect(
+    () => (get(requestKey), deep_read_state(query())),
+    () => {
+      if (get(requestKey) !== JSON.stringify(query())) {
+        set(requestKey, JSON.stringify(query()));
+        void load(get(requestKey));
+      }
+    }
+  );
+  legacy_pre_effect_reset();
   init();
   var fragment = comment();
   var node = first_child(fragment);
@@ -6465,39 +6484,60 @@ function AccountReport($$anchor, $$props) {
       var h2 = child(div);
       var text_1 = child(h2, true);
       reset(h2);
-      next();
       reset(div);
       var node_1 = sibling(div, 2);
       {
         var consequent_1 = ($$anchor3) => {
-          GenericReport($$anchor3, {
-            get report() {
-              return get(balance);
+          ReportChart($$anchor3, {
+            get chart() {
+              return get(balance).chart;
             },
-            title: "Balance"
+            get locale() {
+              return locale();
+            }
           });
         };
         if_block(node_1, ($$render) => {
-          if (get(balance)) $$render(consequent_1);
+          if (get(balance)?.chart) $$render(consequent_1);
         });
       }
       var node_2 = sibling(node_1, 2);
       {
         var consequent_2 = ($$anchor3) => {
-          JournalReport($$anchor3, {
+          GenericReport($$anchor3, {
             get report() {
-              return get(journal);
+              return get(balance);
             },
-            get account() {
-              return account();
+            title: "Balance",
+            get locale() {
+              return locale();
+            },
+            get renderCommas() {
+              return renderCommas();
             }
           });
         };
         if_block(node_2, ($$render) => {
-          if (get(journal)) $$render(consequent_2);
+          if (get(balance)) $$render(consequent_2);
         });
       }
-      template_effect(() => set_text(text_1, account()));
+      var node_3 = sibling(node_2, 2);
+      {
+        var consequent_3 = ($$anchor3) => {
+          JournalReport($$anchor3, {
+            get report() {
+              return get(journal);
+            },
+            get renderCommas() {
+              return renderCommas();
+            }
+          });
+        };
+        if_block(node_3, ($$render) => {
+          if (get(journal)) $$render(consequent_3);
+        });
+      }
+      template_effect(() => set_text(text_1, get(account)));
       append($$anchor2, fragment_1);
     };
     if_block(node, ($$render) => {
@@ -7692,7 +7732,6 @@ function ReportOutlet($$anchor, $$props) {
       "balance_sheet",
       "trial_balance",
       "accounts",
-      "account",
       "journal",
       "holdings",
       "holdings_by_account",
@@ -7778,13 +7817,18 @@ function ReportOutlet($$anchor, $$props) {
               var node_3 = first_child(fragment_4);
               {
                 var consequent_3 = ($$anchor5) => {
-                  var account = derived_safe_equal(() => query().account || "");
                   AccountReport($$anchor5, {
                     get adapter() {
                       return adapter();
                     },
-                    get account() {
-                      return get(account);
+                    get query() {
+                      return query();
+                    },
+                    get locale() {
+                      return locale();
+                    },
+                    get renderCommas() {
+                      return renderCommas();
                     }
                   });
                 };
