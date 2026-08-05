@@ -106,12 +106,25 @@
 货币 + Other 列、图表与 journal 适配器），提交后复核 T1/H5 并勾销已修复
 项。**在完成前不再叠加新的界面改动**，保证"一次修复对一条差距"可追溯。
 
+> **进度（2026-08-05 晚）**：任务 0 已完成——WIP 拆分为两个提交
+> （`265f351` 文档、`2c6590a` 移植实现）。随后又落地：D1（Accounts 移入
+> 标注扩展区，`bbd232b`）、D2（主题/语言入口移入 Options，`bbd232b`）、
+> D4（确认无用户可见差异、无需登记）、M5（三份页面样式表补齐，12/12，
+> `201f9e9`）。T1/H5 的 WIP 覆盖部分仍待稠密夹具复比勾销。
+
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
+
+> **现状修正（2026-08-05 复核）**：稠密合成账本与参照捕获的基础设施
+> **已经存在**——`tools/fixturegen` 生成已提交的稠密夹具（87 科目、304
+> 交易、10 货币/商品，`testdata/fixtures/fava-reference`，含
+> generator-lock.json 内容哈希），OCI 参照环境已产出 5 条代表路由 × 4 格
+> 的候选截图（`testdata/visual-candidates/fava-reference/`）。剩余工作是
+> 批准与覆盖，不是从零建造。
 
 | 项 | 内容 | 完成判据 |
 | --- | --- | --- |
-| P0-1 | 稠密多币种合成参照账本 + 确定性生成器与内容哈希 | 80–100 嵌套科目、6–10 货币、含无报价/断链汇率路径、长 Unicode 标签、分页级条目量、全指令/旗标族、lots、documents、events、诊断与 import 候选 |
-| P0-2 | OCI 参照环境用同一账本生成 Fava 四格批准基线 | `testdata/visual-baselines/` 四格（desktop/narrow × light/dark）经产品 owner 批准 |
+| P0-1 | 稠密夹具缺口复核 | 核对 fixturegen 输出是否覆盖全部差距复现所需状态（无报价货币、断链汇率、分页量、全指令族）；缺口以固定输入扩展生成器，而不是手工改 .bean |
+| P0-2 | 候选截图扩面 + 产品 owner 批准 | 候选捕获从 5 条代表路由扩到全部在案路由/状态；`testdata/visual-baselines/` 四格经产品 owner 批准后落地 |
 | P0-3 | 每条可复现差距在合成账本上落回归证据 | 差距条目与测试/截图证据一一挂钩，私有观察不再承担回归职责 |
 
 ### 优先级 2 — 跨路由共享基础（可与 Wave 1/2 并行）
@@ -144,7 +157,7 @@
 | D1 | OC 独有 `Accounts` 导航项混在标准导航 | 移入明确标注的 OrangeCount 扩展区（符合移植计划不可妥协项 #6），不登记为偏差 |
 | D2 | 顶栏 Language/Theme 下拉 | 恢复 Fava 入口：主题进 Options→Color scheme，locale 作为 fava option；顶栏原创下拉移除。若坚持保留，需登记 Approved Fava deviation |
 | D3 | Import 页 OC 原创表单 | 对齐 Fava 流程（文件列表 + 上传 + extract/review）；Python importer 排除维持既有批准偏差 |
-| D4 | i18n 静态字典 vs gettext | 登记为实现性 Approved Fava deviation（无用户可见差异） |
+| D4 | i18n 静态字典 vs gettext | 无用户可见差异，不构成偏差、无需登记（实现自由度）；仅需在 zh-CN 结构检查中持续验证覆盖完整性 |
 
 ## 与 QA 流程的口径
 

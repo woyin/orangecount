@@ -1,8 +1,17 @@
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/components/PageTitle.esbuild-svelte-fake-css */
-strong.svelte-1mx7cyo::before {
+strong.svelte-95cklu::before {
   margin: 0 10px;
   font-weight: normal;
   content: "\203a";
+  opacity: 0.5;
+}
+.account-crumb.svelte-95cklu {
+  color: inherit;
+  font-weight: normal;
+}
+.crumb-sep.svelte-95cklu {
+  margin: 0 0.35em;
+  font-weight: normal;
   opacity: 0.5;
 }
 

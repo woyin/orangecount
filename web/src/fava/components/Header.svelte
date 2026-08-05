@@ -26,7 +26,7 @@
 <header>
   <h1>
     <a class="ledger-title" href="/" on:click|preventDefault={() => onNavigate("/")}>{ledgerTitle}</a>
-    <PageTitle {route} {account} {locale} />
+    <PageTitle {route} {account} {locale} {onNavigate} />
   </h1>
   <span class="spacer"></span>
   <form class="flex-row" aria-label="Global filters" on:submit|preventDefault>
