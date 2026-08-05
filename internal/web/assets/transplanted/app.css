@@ -166,19 +166,27 @@ table.svelte-15jud14 {
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/GenericReport.esbuild-svelte-fake-css */
-.muted.svelte-1ssax5s {
+.muted.svelte-8vbrz2 {
   color: var(--text-color-lightest);
 }
-.table-scroll.svelte-1ssax5s {
+.table-scroll.svelte-8vbrz2 {
   max-width: 100%;
   overflow-x: auto;
 }
-.report-table.svelte-1ssax5s {
+.report-table.svelte-8vbrz2 {
   width: max-content;
   min-width: 100%;
 }
-.report-table.svelte-1ssax5s .num:where(.svelte-1ssax5s) {
+.report-table.svelte-8vbrz2 .num:where(.svelte-8vbrz2) {
   text-align: right;
+}
+.report-table.svelte-8vbrz2 .sort-toggle:where(.svelte-8vbrz2) {
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/JournalReport.esbuild-svelte-fake-css */

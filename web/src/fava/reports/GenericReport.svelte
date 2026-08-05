@@ -20,6 +20,43 @@
   function isNumberLike(value: unknown): boolean {
     return typeof value === "number" || (typeof value === "object" && value !== null && "display" in value);
   }
+
+  function numericValue(value: unknown): number {
+    if (typeof value === "number") return value;
+    if (value && typeof value === "object" && "display" in value && typeof value.display === "string") {
+      const parsed = Number(value.display.replace(/,/g, ""));
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+    return 0;
+  }
+
+  let sortColumn = "";
+  let sortDirection: "ascending" | "descending" | null = null;
+
+  function toggleSort(column: string) {
+    if (sortColumn !== column) {
+      sortColumn = column;
+      sortDirection = "ascending";
+    } else if (sortDirection === "ascending") {
+      sortDirection = "descending";
+    } else {
+      sortColumn = "";
+      sortDirection = null;
+    }
+  }
+
+  $: sortedRows = (() => {
+    if (!sortDirection) return report.rows;
+    const factor = sortDirection === "ascending" ? 1 : -1;
+    return [...report.rows].sort((a, b) => {
+      const left = a[sortColumn];
+      const right = b[sortColumn];
+      if (isNumberLike(left) || isNumberLike(right)) {
+        return factor * (numericValue(left) - numericValue(right));
+      }
+      return factor * display(left).localeCompare(display(right));
+    });
+  })();
 </script>
 
 <div class="headerline">
@@ -35,12 +72,20 @@
     <thead>
       <tr>
         {#each report.columns as column (column)}
-          <th scope="col" class:num={report.rows.some((row) => isNumberLike(row[column]))}>{column}</th>
+          <th
+            scope="col"
+            class:num={report.rows.some((row) => isNumberLike(row[column]))}
+            aria-sort={sortColumn === column ? sortDirection : undefined}
+          >
+            <button type="button" class="sort-toggle" onclick={() => toggleSort(column)}>
+              {column}{#if sortColumn === column}<span aria-hidden="true">{sortDirection === "ascending" ? " ▲" : " ▼"}</span>{/if}
+            </button>
+          </th>
         {/each}
       </tr>
     </thead>
     <tbody>
-      {#each report.rows as row, index (index)}
+      {#each sortedRows as row, index (index)}
         <tr>
           {#each report.columns as column (column)}
             <td class:num={isNumberLike(row[column])}>
@@ -78,5 +123,14 @@
 
   .report-table .num {
     text-align: right;
+  }
+
+  .report-table .sort-toggle {
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
   }
 </style>
