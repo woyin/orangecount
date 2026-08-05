@@ -114,7 +114,11 @@
 > S6 基础（移植 keyboard-shortcuts 并绑定上游 g 系导航快捷键与 ? 提示，
 > `8e4105d`）、H7 基础（移植 notifications/errors 帮助函数，适配失败
 > 弹 Fava 式错误提示，`056d787`）、S2 第一步（移植 AutocompleteInput
-> 与 fuzzy 帮助函数，Header 账户过滤改为模糊建议组合框，`052a128`）。
+> 与 fuzzy 帮助函数，Header 账户过滤改为模糊建议组合框，`052a128`）、
+> S2 完成（Time/FQL 过滤同样改为组合框：年份、#tag/^link/payee 建议，
+> `1f919fb`）、S6 日志过滤（journal 过滤芯片绑定上游 s/t/m/p 快捷键与
+> 超类级联，`c78baa1`）、T2 第一步（账户页修复日志解析、渲染余额图表、
+> 遵循 time/filter 参数，`4d50b49`）。
 > T1/H5 的 WIP 覆盖部分仍待稠密夹具复比勾销。
 
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
