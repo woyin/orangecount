@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { keyboardShortcut, type KeySpec } from "../keyboard-shortcuts";
   import { formatAmount, type JournalAmount, type JournalEntry, type JournalReport } from "./types";
 
   export let report: JournalReport;
@@ -9,30 +10,35 @@
   // Fava drives journal visibility entirely from `show-*` classes on the list,
   // so the chips only toggle class names and never re-request the report. The
   // defaults match Fava's own initial set.
-  const chips: { label: string; cls: string; title: string }[] = [
-    { label: "Open", cls: "show-open", title: "Toggle Open entries" },
-    { label: "Close", cls: "show-close", title: "Toggle Close entries" },
-    { label: "Transaction", cls: "show-transaction", title: "Toggle Transaction entries" },
-    { label: "*", cls: "show-cleared", title: "Cleared transactions" },
-    { label: "!", cls: "show-pending", title: "Pending transactions" },
-    { label: "x", cls: "show-other", title: "Other transactions" },
-    { label: "Balance", cls: "show-balance", title: "Toggle Balance entries" },
-    { label: "Note", cls: "show-note", title: "Toggle Note entries" },
-    { label: "Document", cls: "show-document", title: "Toggle Document entries" },
-    { label: "Pad", cls: "show-pad", title: "Toggle Pad entries" },
-    { label: "Query", cls: "show-query", title: "Toggle Query entries" },
-    { label: "Custom", cls: "show-custom", title: "Toggle Custom entries" },
-    { label: "Metadata", cls: "show-metadata", title: "Toggle metadata" },
-    { label: "Postings", cls: "show-postings", title: "Toggle postings" },
+  const chips: { label: string; cls: string; title: string; shortcut: KeySpec; children?: string[] }[] = [
+    { label: "Open", cls: "show-open", title: "Toggle Open entries", shortcut: "s o" },
+    { label: "Close", cls: "show-close", title: "Toggle Close entries", shortcut: "s c" },
+    { label: "Transaction", cls: "show-transaction", title: "Toggle Transaction entries", shortcut: "s t", children: ["show-cleared", "show-pending", "show-other"] },
+    { label: "*", cls: "show-cleared", title: "Cleared transactions", shortcut: "t c" },
+    { label: "!", cls: "show-pending", title: "Pending transactions", shortcut: "t p" },
+    { label: "x", cls: "show-other", title: "Other transactions", shortcut: "t o" },
+    { label: "Balance", cls: "show-balance", title: "Toggle Balance entries", shortcut: "s b" },
+    { label: "Note", cls: "show-note", title: "Toggle Note entries", shortcut: "s n" },
+    { label: "Document", cls: "show-document", title: "Toggle Document entries", shortcut: "s d" },
+    { label: "Pad", cls: "show-pad", title: "Toggle Pad entries", shortcut: "s p" },
+    { label: "Query", cls: "show-query", title: "Toggle Query entries", shortcut: "s q" },
+    { label: "Custom", cls: "show-custom", title: "Toggle Custom entries", shortcut: "s C" },
+    { label: "Metadata", cls: "show-metadata", title: "Toggle metadata", shortcut: "m" },
+    { label: "Postings", cls: "show-postings", title: "Toggle postings", shortcut: "p" },
   ];
   let active = new Set([
     "show-transaction", "show-cleared", "show-pending",
     "show-balance", "show-note", "show-document",
     "show-query", "show-custom",
   ]);
-  function toggle(cls: string) {
+  function toggleChip(chip: (typeof chips)[number]) {
     const next = new Set(active);
-    if (next.has(cls)) next.delete(cls); else next.add(cls);
+    const flip = (cls: string) => {
+      if (next.has(cls)) next.delete(cls); else next.add(cls);
+    };
+    flip(chip.cls);
+    // Fava also toggles all subtype entries together with their supertype.
+    chip.children?.forEach(flip);
     active = next;
   }
   $: listClasses = ["flex-table", "journal", ...active].join(" ");
@@ -81,7 +87,8 @@
       class:inactive={!active.has(chip.cls)}
       title={chip.title}
       aria-pressed={active.has(chip.cls)}
-      onclick={() => toggle(chip.cls)}
+      use:keyboardShortcut={chip.shortcut}
+      onclick={() => toggleChip(chip)}
     >{chip.label}</button>
   {/each}
   <span class="spacer"></span>

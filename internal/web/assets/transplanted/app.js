@@ -5995,7 +5995,7 @@ function GenericReport($$anchor, $$props) {
 }
 
 // src/fava/reports/JournalReport.svelte
-var on_click = (_, toggle, chip) => toggle(get(chip).cls);
+var on_click = (_, toggleChip, chip) => toggleChip(get(chip));
 var root_18 = template(`<button type="button"> </button>`);
 var root_35 = template(`<a> </a>`);
 var root_42 = template(`<strong class="payee"> </strong><span class="separator"></span>`, 1);
@@ -6030,72 +6030,87 @@ function JournalReport($$anchor, $$props) {
     {
       label: "Open",
       cls: "show-open",
-      title: "Toggle Open entries"
+      title: "Toggle Open entries",
+      shortcut: "s o"
     },
     {
       label: "Close",
       cls: "show-close",
-      title: "Toggle Close entries"
+      title: "Toggle Close entries",
+      shortcut: "s c"
     },
     {
       label: "Transaction",
       cls: "show-transaction",
-      title: "Toggle Transaction entries"
+      title: "Toggle Transaction entries",
+      shortcut: "s t",
+      children: ["show-cleared", "show-pending", "show-other"]
     },
     {
       label: "*",
       cls: "show-cleared",
-      title: "Cleared transactions"
+      title: "Cleared transactions",
+      shortcut: "t c"
     },
     {
       label: "!",
       cls: "show-pending",
-      title: "Pending transactions"
+      title: "Pending transactions",
+      shortcut: "t p"
     },
     {
       label: "x",
       cls: "show-other",
-      title: "Other transactions"
+      title: "Other transactions",
+      shortcut: "t o"
     },
     {
       label: "Balance",
       cls: "show-balance",
-      title: "Toggle Balance entries"
+      title: "Toggle Balance entries",
+      shortcut: "s b"
     },
     {
       label: "Note",
       cls: "show-note",
-      title: "Toggle Note entries"
+      title: "Toggle Note entries",
+      shortcut: "s n"
     },
     {
       label: "Document",
       cls: "show-document",
-      title: "Toggle Document entries"
+      title: "Toggle Document entries",
+      shortcut: "s d"
     },
     {
       label: "Pad",
       cls: "show-pad",
-      title: "Toggle Pad entries"
+      title: "Toggle Pad entries",
+      shortcut: "s p"
     },
     {
       label: "Query",
       cls: "show-query",
-      title: "Toggle Query entries"
+      title: "Toggle Query entries",
+      shortcut: "s q"
     },
     {
       label: "Custom",
       cls: "show-custom",
-      title: "Toggle Custom entries"
+      title: "Toggle Custom entries",
+      shortcut: "s C"
     },
     {
       label: "Metadata",
       cls: "show-metadata",
-      title: "Toggle metadata"
+      title: "Toggle metadata",
+      shortcut: "m"
     },
     {
       label: "Postings",
       cls: "show-postings",
-      title: "Toggle postings"
+      title: "Toggle postings",
+      shortcut: "p"
     }
   ];
   let active = mutable_state(/* @__PURE__ */ new Set([
@@ -6108,10 +6123,14 @@ function JournalReport($$anchor, $$props) {
     "show-query",
     "show-custom"
   ]));
-  function toggle(cls) {
+  function toggleChip(chip) {
     const next2 = new Set(get(active));
-    if (next2.has(cls)) next2.delete(cls);
-    else next2.add(cls);
+    const flip = (cls) => {
+      if (next2.has(cls)) next2.delete(cls);
+      else next2.add(cls);
+    };
+    flip(chip.cls);
+    chip.children?.forEach(flip);
     set(active, next2);
   }
   let expanded = mutable_state(/* @__PURE__ */ new Set());
@@ -6165,10 +6184,11 @@ function JournalReport($$anchor, $$props) {
   each(node, 1, () => chips, (chip) => chip.cls, ($$anchor2, chip) => {
     var button = root_18();
     template_effect(() => set_attribute(button, "aria-pressed", get(active).has(get(chip).cls)));
-    button.__click = [on_click, toggle, chip];
+    button.__click = [on_click, toggleChip, chip];
     const class_directive = derived_safe_equal(() => !get(active).has(get(chip).cls));
     var text2 = child(button, true);
     reset(button);
+    action(button, ($$node, $$action_arg) => keyboardShortcut?.($$node, $$action_arg), () => get(chip).shortcut);
     template_effect(() => {
       set_attribute(button, "title", get(chip).title);
       toggle_class(button, "inactive", get(class_directive));
