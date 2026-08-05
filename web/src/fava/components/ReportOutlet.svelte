@@ -15,8 +15,11 @@
   export let route: string;
   export let query: Record<string, string> = {};
   export let locale = "en";
+  export let theme = "system";
   export let operatingCurrencies: string[] = [];
   export let renderCommas = false;
+  export let onLocale: (value: string) => void = () => {};
+  export let onTheme: (value: string) => void = () => {};
 
   let loadedKey = "";
   let loading = false;
@@ -73,7 +76,7 @@
 {:else if route === "import"}
   <ImportReport {adapter} />
 {:else if ["options", "help", "diagnostics", "source"].includes(route)}
-  <UtilityReport {adapter} {route} query={query} />
+  <UtilityReport {adapter} {route} query={query} {locale} {theme} {onLocale} {onTheme} />
 {:else if report}
   <TreeReport {report} {locale} {operatingCurrencies} {renderCommas} />
 {:else if journal}

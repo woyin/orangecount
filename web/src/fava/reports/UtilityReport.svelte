@@ -4,6 +4,10 @@
   export let adapter: AdapterClient;
   export let route: string;
   export let query: Record<string, string> = {};
+  export let locale = "en";
+  export let theme = "system";
+  export let onLocale: (value: string) => void = () => {};
+  export let onTheme: (value: string) => void = () => {};
 
   let loading = true;
   let error = "";
@@ -50,6 +54,26 @@
   </ul>
 {:else if route === "options"}
   <div class="headerline"><h2>Options</h2></div>
+  <h3>Color scheme</h3>
+  <div class="color-scheme" role="radiogroup" aria-label="Color scheme">
+    <label><input type="radio" name="color-scheme" value="system" checked={theme === "system"} on:change={() => onTheme("system")} /> ⚙️ System</label>
+    <label><input type="radio" name="color-scheme" value="dark" checked={theme === "dark"} on:change={() => onTheme("dark")} /> 🌙 Dark</label>
+    <label><input type="radio" name="color-scheme" value="light" checked={theme === "light"} on:change={() => onTheme("light")} /> ☀️ Light</label>
+  </div>
+  <h3>Fava options</h3>
+  <table><thead><tr><th>Key</th><th>Value</th></tr></thead><tbody>
+    <tr>
+      <th scope="row">locale</th>
+      <td>
+        <select id="fava-option-locale" value={locale} on:change={(event) => onLocale((event.currentTarget as HTMLSelectElement).value)}>
+          <option value="en">English</option>
+          <option value="zh-CN">简体中文</option>
+        </select>
+      </td>
+    </tr>
+    <tr><th scope="row">theme</th><td>{theme}</td></tr>
+  </tbody></table>
+  <h3>Beancount options</h3>
   <table><thead><tr><th>Option</th><th>Value</th></tr></thead><tbody>
     {#each objectEntries(data?.options) as [key, value] (key)}<tr><th scope="row">{key}</th><td>{String(value)}</td></tr>{/each}
   </tbody></table>
@@ -68,6 +92,12 @@
 
   .source-list {
     padding-left: 1.5rem;
+  }
+
+  .color-scheme {
+    display: flex;
+    gap: 1rem;
+    padding-bottom: 0.5rem;
   }
 
   pre {

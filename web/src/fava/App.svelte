@@ -121,13 +121,10 @@
   route={current.route}
   account={current.account}
   locale={current.locale}
-  theme={current.theme}
   time={current.query.time || ""}
   accountFilter={current.query.account || ""}
   filter={current.query.filter || ""}
   onNavigate={navigate}
-  onLocale={setLocale}
-  onTheme={setTheme}
   onTime={setTime}
   onAccount={setAccount}
   conversion={current.query.conversion || "at_cost"}
@@ -145,8 +142,11 @@
           adapter={adapter}
           route={current.route}
           locale={current.locale}
+          theme={current.theme}
           operatingCurrencies={current.operatingCurrencies}
           renderCommas={current.renderCommas}
+          onLocale={setLocale}
+          onTheme={setTheme}
           query={{ ...current.query, ...(current.account ? { account: current.account } : {}) }}
         />
       {/key}

@@ -6,15 +6,12 @@
   export let route: string;
   export let account = "";
   export let locale: string;
-  export let theme: string;
   export let time = "";
   export let accountFilter = "";
   export let filter = "";
   export let conversion = "at_cost";
   export let interval = "month";
   export let onNavigate: (href: string) => void;
-  export let onLocale: (value: string) => void;
-  export let onTheme: (value: string) => void;
   export let onTime: (value: string) => void;
   export let onAccount: (value: string) => void;
   export let onQuery: (value: string) => void;
@@ -73,21 +70,6 @@
       <option value="month">{t("monthly")}</option>
       <option value="quarter">{t("quarterly")}</option>
       <option value="year">{t("yearly")}</option>
-    </select>
-  </label>
-  <label class="header-select">
-    <span>{t("language")}</span>
-    <select id="locale" value={locale} on:change={(event) => onLocale((event.currentTarget as HTMLSelectElement).value)}>
-      <option value="en">English</option>
-      <option value="zh-CN">简体中文</option>
-    </select>
-  </label>
-  <label class="header-select">
-    <span>{t("theme")}</span>
-    <select id="theme" value={theme} on:change={(event) => onTheme((event.currentTarget as HTMLSelectElement).value)}>
-      <option value="system">System</option>
-      <option value="dark">Dark</option>
-      <option value="light">Light</option>
     </select>
   </label>
 </header>

@@ -274,23 +274,28 @@ textarea.svelte-1k81p2c {
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/UtilityReport.esbuild-svelte-fake-css */
-details.svelte-x7ei0f,
-.source-list.svelte-x7ei0f,
-table.svelte-x7ei0f,
-pre.svelte-x7ei0f {
+details.svelte-16ywk3n,
+.source-list.svelte-16ywk3n,
+table.svelte-16ywk3n,
+pre.svelte-16ywk3n {
   max-width: 70rem;
 }
-.source-list.svelte-x7ei0f {
+.source-list.svelte-16ywk3n {
   padding-left: 1.5rem;
 }
-pre.svelte-x7ei0f {
+.color-scheme.svelte-16ywk3n {
+  display: flex;
+  gap: 1rem;
+  padding-bottom: 0.5rem;
+}
+pre.svelte-16ywk3n {
   padding: 0.75rem;
   overflow: auto;
   background: var(--code-background);
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/components/Sidebar.esbuild-svelte-fake-css */
-aside.svelte-ma44ld {
+aside.svelte-16iwe3x {
   grid-area: aside;
   padding-top: 0.5rem;
   margin: 0;
@@ -299,14 +304,14 @@ aside.svelte-ma44ld {
   background-color: var(--sidebar-background);
   border-right: 1px solid var(--sidebar-border);
 }
-.aside-buttons.svelte-ma44ld {
+.aside-buttons.svelte-16iwe3x {
   display: none;
 }
 @media (width <= 767px) {
   :root {
     --aside-width: 200px;
   }
-  aside.svelte-ma44ld {
+  aside.svelte-16iwe3x {
     position: fixed;
     top: 0;
     bottom: 0;
@@ -316,7 +321,7 @@ aside.svelte-ma44ld {
     margin-left: -200px;
     transition: var(--transitions);
   }
-  .overlay.svelte-ma44ld {
+  .overlay.svelte-16iwe3x {
     position: fixed;
     inset: 0;
     z-index: var(--z-index-floating-ui);
@@ -324,11 +329,11 @@ aside.svelte-ma44ld {
     background: var(--overlay-wrapper-background);
     transition: var(--transitions);
   }
-  aside.active.svelte-ma44ld {
+  aside.active.svelte-16iwe3x {
     margin-left: 0;
     visibility: visible;
   }
-  .aside-buttons.svelte-ma44ld {
+  .aside-buttons.svelte-16iwe3x {
     position: fixed;
     top: 0;
     left: 0;
@@ -337,10 +342,10 @@ aside.svelte-ma44ld {
     flex-direction: column;
     transition: var(--transitions);
   }
-  .active.aside-buttons.svelte-ma44ld {
+  .active.aside-buttons.svelte-16iwe3x {
     left: 200px;
   }
-  .aside-buttons.svelte-ma44ld > :where(.svelte-ma44ld) {
+  .aside-buttons.svelte-16iwe3x > :where(.svelte-16iwe3x) {
     width: 42px;
     height: 42px;
     color: var(--mobile-button-text);
@@ -348,40 +353,47 @@ aside.svelte-ma44ld {
     background-color: var(--sidebar-background);
     border: 1px solid var(--sidebar-border);
   }
-  .aside-buttons.svelte-ma44ld a:where(.svelte-ma44ld) {
+  .aside-buttons.svelte-16iwe3x a:where(.svelte-16iwe3x) {
     font-size: 28px;
   }
 }
 @media print {
-  aside.svelte-ma44ld,
-  .aside-buttons.svelte-ma44ld {
+  aside.svelte-16iwe3x,
+  .aside-buttons.svelte-16iwe3x {
     display: none;
   }
 }
-.navigation.svelte-ma44ld {
+.navigation.svelte-16iwe3x {
   padding-bottom: 0.5rem;
   margin: 0;
 }
-.navigation.svelte-ma44ld + .navigation:where(.svelte-ma44ld) {
+.navigation.svelte-16iwe3x + .navigation:where(.svelte-16iwe3x) {
   padding-top: 0.5rem;
   border-top: 1px solid var(--sidebar-border);
 }
-.navigation.svelte-ma44ld a.selected:where(.svelte-ma44ld),
-.navigation.svelte-ma44ld a:where(.svelte-ma44ld):hover {
+.navigation.svelte-16iwe3x a.selected:where(.svelte-16iwe3x),
+.navigation.svelte-16iwe3x a:where(.svelte-16iwe3x):hover {
   color: var(--sidebar-hover-color);
   background-color: var(--sidebar-border);
 }
-.navigation.svelte-ma44ld li:where(.svelte-ma44ld) {
+.navigation.svelte-16iwe3x li:where(.svelte-16iwe3x) {
   display: flex;
   flex-wrap: wrap;
 }
-.navigation.svelte-ma44ld a:where(.svelte-ma44ld) {
+.navigation-heading.svelte-16iwe3x {
+  padding: 0.25em 0.5em 0 1em;
+  font-size: 0.75em;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+.navigation.svelte-16iwe3x a:where(.svelte-16iwe3x) {
   display: block;
   flex: 1;
   padding: 0.25em 0.5em 0.25em 1em;
   color: inherit;
 }
-.aside-buttons.svelte-ma44ld button:where(.svelte-ma44ld) {
+.aside-buttons.svelte-16iwe3x button:where(.svelte-16iwe3x) {
   font-size: 1.2rem;
 }
 

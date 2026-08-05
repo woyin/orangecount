@@ -10,9 +10,10 @@
   export let onNavigate: (href: string) => void;
 
   const sections = [
-    ["", ["income_statement", "balance_sheet", "trial_balance", "journal", "query", "account"]],
+    ["", ["income_statement", "balance_sheet", "trial_balance", "journal", "query"]],
     ["", ["holdings", "commodities", "documents", "events", "statistics"]],
     ["", ["editor", "import", "options", "help"]],
+    ["OrangeCount", ["account"]],
   ];
   const known = new Set([...ROUTES, "account"]);
   const keys: Record<string, string> = { income_statement: "incomeStatement", balance_sheet: "balanceSheet", trial_balance: "trialBalance", journal: "journal", query: "query", holdings: "holdings", commodities: "commodities", documents: "documents", events: "events", statistics: "statistics", editor: "editor", import: "import", options: "options", help: "help", account: "accounts" };
@@ -29,6 +30,9 @@
 <aside id="sidebar" class:active={open} aria-label="Primary navigation">
   {#each sections as [heading, items], sectionIndex}
     <ul class="navigation" aria-label={heading || "Reports"}>
+      {#if heading}
+        <li class="navigation-heading" aria-hidden="true">{heading}</li>
+      {/if}
       {#each items as item}
         {#if known.has(item)}
           <li>
@@ -150,6 +154,14 @@
   .navigation li {
     display: flex;
     flex-wrap: wrap;
+  }
+
+  .navigation-heading {
+    padding: 0.25em 0.5em 0 1em;
+    font-size: 0.75em;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    opacity: 0.7;
   }
 
   .navigation a {
