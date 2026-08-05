@@ -354,6 +354,11 @@
       "upstream": null,
       "notes": "Per-type event grouping over the flat adapter table; layout modeled on Fava events page, written for the OrangeCount adapter."
     },
+    "web/src/fava/reports/StatisticsReport.svelte": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Postings-per-account and entries-per-type sections over the statistics envelope; layout modeled on Fava statistics page, written for the OrangeCount adapter."
+    },
     "web/src/fava/reports/JournalReport.svelte": {
       "current_kind": "derived",
       "upstream": "frontend/src/reports/journal/Journal.svelte",

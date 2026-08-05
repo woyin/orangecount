@@ -253,6 +253,41 @@ func Statistics(e ledger.Evaluation) query.Result {
 	return query.Result{Columns: []string{"directive", "count"}, Rows: rows}
 }
 
+// PostingsPerAccount counts how many postings each account received, the
+// counterpart of Fava's "Postings per Account" statistics section. Rows are
+// ordered by count descending, then account, so the busiest accounts lead.
+func PostingsPerAccount(e ledger.Evaluation) query.Result {
+	counts := map[string]int{}
+	for _, entry := range e.Entries {
+		var transaction *ledger.Transaction
+		switch value := entry.Directive.(type) {
+		case ledger.Transaction:
+			copy := value
+			transaction = &copy
+		case *ledger.Transaction:
+			transaction = value
+		}
+		if transaction == nil {
+			continue
+		}
+		for _, posting := range transaction.Postings {
+			counts[posting.Account]++
+		}
+	}
+	rows := make([]query.Row, 0, len(counts))
+	for account, count := range counts {
+		rows = append(rows, query.Row{"account": account, "postings": count})
+	}
+	sort.Slice(rows, func(i, j int) bool {
+		left, right := rows[i]["postings"].(int), rows[j]["postings"].(int)
+		if left != right {
+			return left > right
+		}
+		return rows[i]["account"].(string) < rows[j]["account"].(string)
+	})
+	return query.Result{Columns: []string{"account", "postings"}, Rows: rows}
+}
+
 func TrialBalance(e ledger.Evaluation) query.Result {
 	return evaluate("SELECT account, currency, sum(balance) AS balance FROM accounts GROUP BY account, currency ORDER BY account, currency", e)
 }

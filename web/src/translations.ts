@@ -33,6 +33,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     holdingsByAccount: "Holdings by Account", holdingsByCurrency: "Holdings by Currency",
     holdingsByRootAccount: "Holdings by Root Account", holdingsByCommodity: "Holdings by Commodity",
     eventHeading: "Event:", date: "Date", description: "Description", noEvents: "No events.",
+    postingsPerAccount: "Postings per Account", entriesPerType: "Entries per Type",
+    type: "Type", entriesCount: "# Entries", total: "Total",
   },
   "zh-CN": {
     subtitle: "只读本地账本视图。", language: "语言", overview: "概览", accounts: "账户", journal: "日记账",
@@ -59,5 +61,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     holdingsByAccount: "按账户持仓", holdingsByCurrency: "按货币持仓",
     holdingsByRootAccount: "按根账户持仓", holdingsByCommodity: "按商品持仓",
     eventHeading: "事件：", date: "日期", description: "描述", noEvents: "没有事件。",
+    postingsPerAccount: "每账户分录数", entriesPerType: "按类型条目数",
+    type: "类型", entriesCount: "条目数", total: "合计",
   },
 };

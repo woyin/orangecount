@@ -5,6 +5,7 @@
   import HoldingsReport from "../reports/HoldingsReport.svelte";
   import ImportReport from "../reports/ImportReport.svelte";
   import JournalReport from "../reports/JournalReport.svelte";
+  import StatisticsReport from "../reports/StatisticsReport.svelte";
   import QueryReport from "../reports/QueryReport.svelte";
   import EditorReport from "../reports/EditorReport.svelte";
   import EventsReport from "../reports/EventsReport.svelte";
@@ -30,6 +31,7 @@
   let report: TreeReportData | null = null;
   let table: TableReport | null = null;
   let journal: JournalReportData | null = null;
+  let statistics: { entriesByType: [string, number][]; postings: TableReport } | null = null;
 
   $: requestKey = `${route}?${new URLSearchParams(query).toString()}`;
   $: if (requestKey !== loadedKey) {
@@ -43,6 +45,7 @@
     report = null;
     table = null;
     journal = null;
+    statistics = null;
     if (["query", "options", "help", "diagnostics", "source", "editor", "import"].includes(route) || !["income_statement", "balance_sheet", "trial_balance", "accounts", "journal", "holdings", "holdings_by_account", "holdings_by_currency", "holdings_by_root_account", "holdings_by_commodity", "commodities", "events", "documents", "statistics", "errors"].includes(route)) {
       loading = false;
       return;
@@ -54,6 +57,10 @@
         report = parseTreeReport(payload);
       } else if (route === "journal") {
         journal = parseJournalReport(payload);
+      } else if (route === "statistics") {
+        const composite = payload as { entries_by_type?: Record<string, number>; postings_per_account?: unknown };
+        const entriesByType = Object.entries(composite.entries_by_type ?? {}).sort(([left], [right]) => left.localeCompare(right));
+        statistics = { entriesByType, postings: parseTableReport(composite.postings_per_account) };
       } else {
         table = parseTableReport(payload);
       }
@@ -85,6 +92,8 @@
   <TreeReport {report} {locale} {operatingCurrencies} {renderCommas} />
 {:else if journal}
   <JournalReport report={journal} {renderCommas} />
+{:else if statistics}
+  <StatisticsReport entriesByType={statistics.entriesByType} postings={statistics.postings} {locale} {renderCommas} />
 {:else if table && (route === "holdings" || route.startsWith("holdings_by_"))}
   <HoldingsReport report={table} {route} {locale} {renderCommas} />
 {:else if table && route === "events"}

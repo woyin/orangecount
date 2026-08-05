@@ -223,6 +223,14 @@ table.svelte-15jud14 {
   border: 1px solid var(--error);
 }
 
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/StatisticsReport.esbuild-svelte-fake-css */
+.entries-by-type.svelte-128xnnn .num:where(.svelte-128xnnn) {
+  text-align: right;
+}
+.entries-by-type.svelte-128xnnn tfoot:where(.svelte-128xnnn) td:where(.svelte-128xnnn) {
+  font-weight: 500;
+}
+
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/QueryReport.esbuild-svelte-fake-css */
 .query-form.svelte-1k81p2c {
   display: grid;

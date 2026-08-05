@@ -435,6 +435,21 @@ func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 				writeJSON(w, favaadapter.NewEnvelope(report.Present(result), current.BuiltAt))
 				return
 			}
+			if name == "statistics" {
+				// Fava's statistics page composes several datasets; the flat
+				// directive-count table alone cannot feed it.
+				evaluation := current.Evaluation()
+				entriesByType := map[string]int{}
+				for _, row := range report.Statistics(evaluation).Rows {
+					entriesByType[row["directive"].(string)] = row["count"].(int)
+				}
+				payload := struct {
+					EntriesByType        map[string]int `json:"entries_by_type"`
+					PostingsPerAccount   query.Result   `json:"postings_per_account"`
+				}{EntriesByType: entriesByType, PostingsPerAccount: report.Present(report.PostingsPerAccount(evaluation))}
+				writeJSON(w, favaadapter.NewEnvelope(payload, current.BuiltAt))
+				return
+			}
 			result, chartRoute, known, err := s.buildReport(r, current, name)
 			if err != nil {
 				writeAPIError(w, http.StatusBadRequest, err.Error())

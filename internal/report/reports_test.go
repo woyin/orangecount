@@ -492,6 +492,44 @@ func TestStatisticsHasStableDirectiveCounts(t *testing.T) {
 	}
 }
 
+func TestPostingsPerAccountSortsByCountThenAccount(t *testing.T) {
+	text := `2000-01-01 open Assets:Cash USD
+2000-01-01 open Assets:Bank USD
+2000-01-01 open Equity:Opening USD
+2000-01-02 * "seed"
+  Assets:Cash 1 USD
+  Equity:Opening -1 USD
+2000-01-03 * "transfer"
+  Assets:Cash 2 USD
+  Assets:Bank -2 USD
+`
+	file, diagnostics := ledger.ParseText("postings-stats.bean", []byte(text))
+	if diagnostics.HasErrors() {
+		t.Fatalf("parse=%+v", diagnostics.All())
+	}
+	evaluation := ledger.EvaluateFiles(map[source.FileID]*ledger.File{1: file}, []source.FileID{1}, ledger.EvalOptions{})
+	if !evaluation.Valid {
+		t.Fatalf("evaluation=%+v", evaluation.Diagnostics)
+	}
+	result := PostingsPerAccount(*evaluation)
+	if len(result.Columns) != 2 || result.Columns[0] != "account" || result.Columns[1] != "postings" {
+		t.Fatalf("columns=%+v", result.Columns)
+	}
+	want := []struct{ account string; count int }{
+		{"Assets:Cash", 2},
+		{"Assets:Bank", 1},
+		{"Equity:Opening", 1},
+	}
+	if len(result.Rows) != len(want) {
+		t.Fatalf("rows=%+v", result.Rows)
+	}
+	for i, expected := range want {
+		if result.Rows[i]["account"] != expected.account || result.Rows[i]["postings"] != expected.count {
+			t.Fatalf("row %d=%+v want %+v", i, result.Rows[i], expected)
+		}
+	}
+}
+
 func TestHoldingsAsOfAndValuationControlsAreDeterministic(t *testing.T) {
 	cost, err := ledger.ParseDecimal("10")
 	if err != nil {
