@@ -4242,6 +4242,10 @@ function bootstrapPayload(wire, mtime = "") {
     routes: ["income_statement", "balance_sheet", "trial_balance", "journal", "query", "holdings", "commodities", "documents", "events", "statistics", "editor", "import", "options", "help", "account"],
     accounts: wire.accounts || [],
     currencies: wire.currencies || [],
+    tags: wire.tags || [],
+    links: wire.links || [],
+    payees: wire.payees || [],
+    years: wire.years || [],
     // The evaluator joins repeated operating_currency declarations into one
     // space-separated value, preserving declaration order.
     operating_currencies: (wire.options?.operating_currency || "").split(/\s+/).filter(Boolean),
@@ -4509,6 +4513,11 @@ var translations = {
     notValued: "\u672A\u4F30\u503C"
   }
 };
+
+// src/fava/lib/regex.ts
+function escape_for_regex(value) {
+  return value.replace(/[.*+\-?^${}()|[\]\\]/g, "\\$&");
+}
 
 // src/fava/keyboard-shortcuts.ts
 function showTooltip(target2, description) {
@@ -5167,13 +5176,18 @@ function PageTitle($$anchor, $$props) {
 }
 
 // src/fava/components/Header.svelte
-var root3 = template(`<header><h1 class="svelte-ql43fz"><a class="ledger-title svelte-ql43fz" href="/"> </a> <!></h1> <span class="spacer svelte-ql43fz"></span> <form class="flex-row svelte-ql43fz" aria-label="Global filters"><input id="global-time" type="text" placeholder="Time" aria-label="Time"> <!> <input id="global-filter" type="text" placeholder="Filter by tag, payee, ..." aria-label="Filter by tag, payee, or narration"></form> <label class="header-select svelte-ql43fz"><span class="svelte-ql43fz"> </span> <select id="conversion" class="svelte-ql43fz"><option> </option><option> </option><option>Units</option><option> </option></select></label> <label class="header-select svelte-ql43fz"><span class="svelte-ql43fz"> </span> <select id="interval" class="svelte-ql43fz"><option> </option><option> </option><option> </option></select></label></header>`);
+var root3 = template(`<header><h1 class="svelte-cwf4f0"><a class="ledger-title svelte-cwf4f0" href="/"> </a> <!></h1> <span class="spacer svelte-cwf4f0"></span> <form class="flex-row svelte-cwf4f0" aria-label="Global filters"><!> <!> <!></form> <label class="header-select svelte-cwf4f0"><span class="svelte-cwf4f0"> </span> <select id="conversion" class="svelte-cwf4f0"><option> </option><option> </option><option>Units</option><option> </option></select></label> <label class="header-select svelte-cwf4f0"><span class="svelte-cwf4f0"> </span> <select id="interval" class="svelte-cwf4f0"><option> </option><option> </option><option> </option></select></label></header>`);
 function Header($$anchor, $$props) {
   push($$props, false);
+  const filterSuggestions = mutable_state();
   let ledgerTitle = prop($$props, "ledgerTitle", 8);
   let route = prop($$props, "route", 8);
   let account = prop($$props, "account", 8, "");
   let accounts = prop($$props, "accounts", 24, () => []);
+  let tags = prop($$props, "tags", 24, () => []);
+  let links = prop($$props, "links", 24, () => []);
+  let payees = prop($$props, "payees", 24, () => []);
+  let years = prop($$props, "years", 24, () => []);
   let locale = prop($$props, "locale", 8);
   let time = prop($$props, "time", 8, "");
   let accountFilter = prop($$props, "accountFilter", 8, "");
@@ -5189,9 +5203,37 @@ function Header($$anchor, $$props) {
   function t(key) {
     return translations[locale() === "zh-CN" ? "zh-CN" : "en"][key] || translations.en[key] || key;
   }
+  function valueExtractor(value, input) {
+    const match = /\S*$/.exec(value.slice(0, input.selectionStart ?? void 0));
+    return match?.[0] ?? value;
+  }
+  function valueSelector(value, input) {
+    const selectionStart = input.selectionStart ?? 0;
+    const match = /\S*$/.exec(input.value.slice(0, selectionStart));
+    const matchLength = match?.[0]?.length;
+    return matchLength !== void 0 ? `${input.value.slice(0, selectionStart - matchLength)}${value}${input.value.slice(selectionStart)}` : value;
+  }
+  let timeDraft = mutable_state(time());
   let accountDraft = mutable_state(accountFilter());
+  let filterDraft = mutable_state(filter());
+  legacy_pre_effect(
+    () => (deep_read_state(tags()), deep_read_state(links()), deep_read_state(payees()), escape_for_regex),
+    () => {
+      set(filterSuggestions, [
+        ...tags().map((tag) => `#${tag}`),
+        ...links().map((link2) => `^${link2}`),
+        ...payees().map((payee) => `payee:"${escape_for_regex(payee)}"`)
+      ]);
+    }
+  );
+  legacy_pre_effect(() => deep_read_state(time()), () => {
+    set(timeDraft, time());
+  });
   legacy_pre_effect(() => deep_read_state(accountFilter()), () => {
     set(accountDraft, accountFilter());
+  });
+  legacy_pre_effect(() => deep_read_state(filter()), () => {
+    set(filterDraft, filter());
   });
   legacy_pre_effect_reset();
   init();
@@ -5217,10 +5259,29 @@ function Header($$anchor, $$props) {
   });
   reset(h1);
   var form = sibling(h1, 4);
-  var input = child(form);
-  remove_input_defaults(input);
-  var node_1 = sibling(input, 2);
+  var node_1 = child(form);
   AutocompleteInput(node_1, {
+    get value() {
+      return get(timeDraft);
+    },
+    placeholder: "Time",
+    get suggestions() {
+      return years();
+    },
+    key: "f t",
+    clearButton: true,
+    setSize: true,
+    onBlur: () => onTime()(get(timeDraft)),
+    onSelect: () => onTime()(get(timeDraft)),
+    onEnter: () => onTime()(get(timeDraft)),
+    $$events: {
+      change: (event2) => {
+        set(timeDraft, event2.detail);
+      }
+    }
+  });
+  var node_2 = sibling(node_1, 2);
+  AutocompleteInput(node_2, {
     get value() {
       return get(accountDraft);
     },
@@ -5240,8 +5301,29 @@ function Header($$anchor, $$props) {
       }
     }
   });
-  var input_1 = sibling(node_1, 2);
-  remove_input_defaults(input_1);
+  var node_3 = sibling(node_2, 2);
+  AutocompleteInput(node_3, {
+    get value() {
+      return get(filterDraft);
+    },
+    placeholder: "Filter by tag, payee, ...",
+    get suggestions() {
+      return get(filterSuggestions);
+    },
+    key: "f f",
+    clearButton: true,
+    setSize: true,
+    valueExtractor,
+    valueSelector,
+    onBlur: () => onQuery()(get(filterDraft)),
+    onSelect: () => onQuery()(get(filterDraft)),
+    onEnter: () => onQuery()(get(filterDraft)),
+    $$events: {
+      change: (event2) => {
+        set(filterDraft, event2.detail);
+      }
+    }
+  });
   reset(form);
   var label = sibling(form, 2);
   var span = child(label);
@@ -5298,8 +5380,6 @@ function Header($$anchor, $$props) {
   reset(header);
   template_effect(() => {
     set_text(text2, ledgerTitle());
-    set_value(input, time());
-    set_value(input_1, filter());
     if (select_value !== (select_value = conversion())) {
       select.value = null == (select.__value = conversion()) ? "" : conversion(), select_option(select, conversion());
     }
@@ -5308,8 +5388,6 @@ function Header($$anchor, $$props) {
     }
   });
   event("click", a, preventDefault(() => onNavigate()("/")));
-  event("change", input, (event2) => onTime()(event2.currentTarget.value));
-  event("change", input_1, (event2) => onQuery()(event2.currentTarget.value));
   event("submit", form, preventDefault(function($$arg) {
     bubble_event.call(this, $$props, $$arg);
   }));
@@ -8183,6 +8261,10 @@ function initialShellState(route) {
     sidebarOpen: false,
     ledgerTitle: "OrangeCount",
     accounts: [],
+    tags: [],
+    links: [],
+    payees: [],
+    years: [],
     operatingCurrencies: [],
     renderCommas: false,
     query: {},
@@ -8215,6 +8297,10 @@ function reduceShellState(state2, action2) {
         ...state2,
         ledgerTitle: action2.ledgerTitle || state2.ledgerTitle,
         accounts: Array.isArray(action2.accounts) ? action2.accounts : state2.accounts,
+        tags: Array.isArray(action2.tags) ? action2.tags : state2.tags,
+        links: Array.isArray(action2.links) ? action2.links : state2.links,
+        payees: Array.isArray(action2.payees) ? action2.payees : state2.payees,
+        years: Array.isArray(action2.years) ? action2.years : state2.years,
         operatingCurrencies: Array.isArray(action2.operatingCurrencies) ? action2.operatingCurrencies : state2.operatingCurrencies,
         renderCommas: typeof action2.renderCommas === "boolean" ? action2.renderCommas : state2.renderCommas,
         locale: action2.locale === "zh-CN" ? "zh-CN" : state2.locale,
@@ -8318,6 +8404,10 @@ function App($$anchor, $$props) {
         locale: payload.locale,
         theme: payload.theme,
         accounts: payload.accounts,
+        tags: payload.tags,
+        links: payload.links,
+        payees: payload.payees,
+        years: payload.years,
         errors: payload.errors,
         operatingCurrencies: payload.operating_currencies,
         renderCommas: payload.render_commas
@@ -8398,6 +8488,18 @@ function App($$anchor, $$props) {
     },
     get accounts() {
       return get(current).accounts;
+    },
+    get tags() {
+      return get(current).tags;
+    },
+    get links() {
+      return get(current).links;
+    },
+    get payees() {
+      return get(current).payees;
+    },
+    get years() {
+      return get(current).years;
     },
     get locale() {
       return get(current).locale;

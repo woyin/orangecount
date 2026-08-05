@@ -14,6 +14,10 @@ export interface BootstrapPayload {
   routes: string[];
   accounts: string[];
   currencies: string[];
+  tags: string[];
+  links: string[];
+  payees: string[];
+  years: string[];
   /** Declared operating currencies, in ledger order; these get their own
    * report columns while every other currency shares an "Other" column. */
   operating_currencies: string[];
@@ -39,6 +43,10 @@ interface AdapterEnvelope<T> {
 interface BootstrapWire {
   accounts: string[];
   currencies: string[];
+  tags?: string[];
+  links?: string[];
+  payees?: string[];
+  years?: string[];
   errors: unknown[];
   options?: Record<string, string>;
   fava_options?: Record<string, string>;
@@ -55,6 +63,10 @@ function bootstrapPayload(wire: BootstrapWire, mtime = ""): BootstrapPayload {
     routes: ["income_statement", "balance_sheet", "trial_balance", "journal", "query", "holdings", "commodities", "documents", "events", "statistics", "editor", "import", "options", "help", "account"],
     accounts: wire.accounts || [],
     currencies: wire.currencies || [],
+    tags: wire.tags || [],
+    links: wire.links || [],
+    payees: wire.payees || [],
+    years: wire.years || [],
     // The evaluator joins repeated operating_currency declarations into one
     // space-separated value, preserving declaration order.
     operating_currencies: (wire.options?.operating_currency || "").split(/\s+/).filter(Boolean),
@@ -110,6 +122,10 @@ export function createSyntheticAdapter(): AdapterClient {
     routes: ["journal", "balance_sheet", "trial_balance", "account"],
     accounts: [],
     currencies: ["USD"],
+    tags: [],
+    links: [],
+    payees: [],
+    years: [],
     operating_currencies: ["USD"],
     render_commas: false,
     errors: [],

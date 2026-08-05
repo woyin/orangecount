@@ -81,7 +81,7 @@
     shell.dispatch({ type: "loading", value: true });
     try {
       const payload = await adapter.bootstrap();
-      shell.dispatch({ type: "bootstrap", ledgerTitle: payload.ledger_title, locale: payload.locale, theme: payload.theme, accounts: payload.accounts, errors: payload.errors, operatingCurrencies: payload.operating_currencies, renderCommas: payload.render_commas });
+      shell.dispatch({ type: "bootstrap", ledgerTitle: payload.ledger_title, locale: payload.locale, theme: payload.theme, accounts: payload.accounts, tags: payload.tags, links: payload.links, payees: payload.payees, years: payload.years, errors: payload.errors, operatingCurrencies: payload.operating_currencies, renderCommas: payload.render_commas });
     } catch (error) {
       notify_err(error);
       shell.dispatch({ type: "error", message: error instanceof Error ? error.message : "The local adapter could not load this view." });
@@ -125,6 +125,10 @@
   route={current.route}
   account={current.account}
   accounts={current.accounts}
+  tags={current.tags}
+  links={current.links}
+  payees={current.payees}
+  years={current.years}
   locale={current.locale}
   time={current.query.time || ""}
   accountFilter={current.query.account || ""}

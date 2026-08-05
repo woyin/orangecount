@@ -63,7 +63,7 @@ strong.svelte-95cklu::before {
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/components/Header.esbuild-svelte-fake-css */
-h1.svelte-ql43fz {
+h1.svelte-cwf4f0 {
   display: inline-block;
   padding: 0.5rem;
   margin: 0;
@@ -71,25 +71,28 @@ h1.svelte-ql43fz {
   font-size: 16px;
   font-weight: normal;
 }
-.ledger-title.svelte-ql43fz {
+.ledger-title.svelte-cwf4f0 {
   color: inherit;
 }
-.spacer.svelte-ql43fz {
+.spacer.svelte-cwf4f0 {
   flex: 1;
 }
-.header-select.svelte-ql43fz {
+form.svelte-cwf4f0 > span {
+  max-width: 18rem;
+}
+.header-select.svelte-cwf4f0 {
   display: flex;
   gap: 0.25rem;
   align-items: center;
   white-space: nowrap;
 }
-.header-select.svelte-ql43fz select:where(.svelte-ql43fz) {
+.header-select.svelte-cwf4f0 select:where(.svelte-cwf4f0) {
   color: var(--header-color);
   background-color: var(--header-background);
   border: 1px solid var(--header-placeholder-background);
 }
 @media (width <= 767px) {
-  .header-select.svelte-ql43fz span:where(.svelte-ql43fz) {
+  .header-select.svelte-cwf4f0 span:where(.svelte-cwf4f0) {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -99,10 +102,10 @@ h1.svelte-ql43fz {
     white-space: nowrap;
     border: 0;
   }
-  form.svelte-ql43fz {
+  form.svelte-cwf4f0 {
     width: 100%;
   }
-  form.svelte-ql43fz input {
+  form.svelte-cwf4f0 input {
     min-width: 0;
     flex: 1;
   }

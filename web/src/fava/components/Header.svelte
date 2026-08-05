@@ -1,5 +1,6 @@
 <script lang="ts">
   import { translations, type Locale } from "../../translations";
+  import { escape_for_regex } from "../lib/regex";
   import AutocompleteInput from "./AutocompleteInput.svelte";
   import PageTitle from "./PageTitle.svelte";
 
@@ -7,6 +8,10 @@
   export let route: string;
   export let account = "";
   export let accounts: string[] = [];
+  export let tags: string[] = [];
+  export let links: string[] = [];
+  export let payees: string[] = [];
+  export let years: string[] = [];
   export let locale: string;
   export let time = "";
   export let accountFilter = "";
@@ -24,8 +29,32 @@
     return translations[(locale === "zh-CN" ? "zh-CN" : "en") as Locale][key] || translations.en[key] || key;
   }
 
+  $: filterSuggestions = [
+    ...tags.map((tag) => `#${tag}`),
+    ...links.map((link) => `^${link}`),
+    ...payees.map((payee) => `payee:"${escape_for_regex(payee)}"`),
+  ];
+
+  function valueExtractor(value: string, input: HTMLInputElement): string {
+    const match = /\S*$/.exec(value.slice(0, input.selectionStart ?? undefined));
+    return match?.[0] ?? value;
+  }
+
+  function valueSelector(value: string, input: HTMLInputElement): string {
+    const selectionStart = input.selectionStart ?? 0;
+    const match = /\S*$/.exec(input.value.slice(0, selectionStart));
+    const matchLength = match?.[0]?.length;
+    return matchLength !== undefined
+      ? `${input.value.slice(0, selectionStart - matchLength)}${value}${input.value.slice(selectionStart)}`
+      : value;
+  }
+
+  let timeDraft = time;
+  $: timeDraft = time;
   let accountDraft = accountFilter;
   $: accountDraft = accountFilter;
+  let filterDraft = filter;
+  $: filterDraft = filter;
 </script>
 
 <header>
@@ -35,13 +64,17 @@
   </h1>
   <span class="spacer"></span>
   <form class="flex-row" aria-label="Global filters" on:submit|preventDefault>
-    <input
-      id="global-time"
-      type="text"
-      value={time}
+    <AutocompleteInput
+      value={timeDraft}
+      on:change={(event) => { timeDraft = event.detail; }}
       placeholder="Time"
-      aria-label="Time"
-      on:change={(event) => onTime((event.currentTarget as HTMLInputElement).value)}
+      suggestions={years}
+      key="f t"
+      clearButton={true}
+      setSize={true}
+      onBlur={() => onTime(timeDraft)}
+      onSelect={() => onTime(timeDraft)}
+      onEnter={() => onTime(timeDraft)}
     />
     <AutocompleteInput
       value={accountDraft}
@@ -55,13 +88,19 @@
       onSelect={() => onAccount(accountDraft)}
       onEnter={() => onAccount(accountDraft)}
     />
-    <input
-      id="global-filter"
-      type="text"
-      value={filter}
+    <AutocompleteInput
+      value={filterDraft}
+      on:change={(event) => { filterDraft = event.detail; }}
       placeholder="Filter by tag, payee, ..."
-      aria-label="Filter by tag, payee, or narration"
-      on:change={(event) => onQuery((event.currentTarget as HTMLInputElement).value)}
+      suggestions={filterSuggestions}
+      key="f f"
+      clearButton={true}
+      setSize={true}
+      {valueExtractor}
+      {valueSelector}
+      onBlur={() => onQuery(filterDraft)}
+      onSelect={() => onQuery(filterDraft)}
+      onEnter={() => onQuery(filterDraft)}
     />
   </form>
   <label class="header-select">
@@ -99,6 +138,10 @@
 
   .spacer {
     flex: 1;
+  }
+
+  form > :global(span) {
+    max-width: 18rem;
   }
 
   .header-select {
