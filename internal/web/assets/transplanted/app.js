@@ -4414,7 +4414,15 @@ var translations = {
     unavailablePrice: "Unavailable: no local price",
     unavailableCurrency: "Unavailable: no conversion quote",
     notValued: "Not valued",
-    goToAccount: "Go to account"
+    goToAccount: "Go to account",
+    colorScheme: "Color scheme",
+    favaOptions: "Fava options",
+    beancountOptions: "Beancount options",
+    system: "System",
+    dark: "Dark",
+    light: "Light",
+    optionKey: "Key",
+    optionValue: "Value"
   },
   "zh-CN": {
     subtitle: "\u53EA\u8BFB\u672C\u5730\u8D26\u672C\u89C6\u56FE\u3002",
@@ -4512,7 +4520,15 @@ var translations = {
     unavailablePrice: "\u4E0D\u53EF\u7528\uFF1A\u6CA1\u6709\u672C\u5730\u4EF7\u683C",
     unavailableCurrency: "\u4E0D\u53EF\u7528\uFF1A\u6CA1\u6709\u6362\u7B97\u62A5\u4EF7",
     notValued: "\u672A\u4F30\u503C",
-    goToAccount: "\u8DF3\u8F6C\u5230\u8D26\u6237"
+    goToAccount: "\u8DF3\u8F6C\u5230\u8D26\u6237",
+    colorScheme: "\u914D\u8272\u65B9\u6848",
+    favaOptions: "Fava \u9009\u9879",
+    beancountOptions: "Beancount \u9009\u9879",
+    system: "\u8DDF\u968F\u7CFB\u7EDF",
+    dark: "\u6DF1\u8272",
+    light: "\u6D45\u8272",
+    optionKey: "\u952E",
+    optionValue: "\u503C"
   }
 };
 
@@ -7435,16 +7451,23 @@ delegate(["click"]);
 // src/fava/reports/UtilityReport.svelte
 var root_118 = template(`<section class="state-panel" role="status">Loading\u2026</section>`);
 var root_311 = template(`<section class="state-panel error-panel" role="alert"> </section>`);
-var root_64 = template(`<details open class="svelte-16ywk3n"><summary> </summary> <div> </div></details>`);
+var root_64 = template(`<details open class="svelte-1o4zw0m"><summary> </summary> <div> </div></details>`);
 var root_56 = template(`<div class="headerline"><h2>Help</h2></div> <!>`, 1);
-var root_83 = template(`<div class="headerline"><h2> </h2></div> <pre class="source-content svelte-16ywk3n"> </pre>`, 1);
+var root_83 = template(`<div class="headerline"><h2> </h2></div> <pre class="source-content svelte-1o4zw0m"> </pre>`, 1);
 var root_119 = template(`<li><a> </a></li>`);
-var root_103 = template(`<div class="headerline"><h2>Source files</h2></div> <ul class="source-list svelte-16ywk3n"></ul>`, 1);
-var root_143 = template(`<tr><th scope="row"> </th><td> </td></tr>`);
-var root_134 = template(`<div class="headerline"><h2>Options</h2></div> <h3>Color scheme</h3> <div class="color-scheme svelte-16ywk3n" role="radiogroup" aria-label="Color scheme"><label><input type="radio" name="color-scheme" value="system"> \u2699\uFE0F System</label> <label><input type="radio" name="color-scheme" value="dark"> \u{1F319} Dark</label> <label><input type="radio" name="color-scheme" value="light"> \u2600\uFE0F Light</label></div> <h3>Fava options</h3> <table class="svelte-16ywk3n"><thead><tr><th>Key</th><th>Value</th></tr></thead><tbody><tr><th scope="row">locale</th><td><select id="fava-option-locale"><option>English</option><option>\u7B80\u4F53\u4E2D\u6587</option></select></td></tr><tr><th scope="row">theme</th><td> </td></tr></tbody></table> <h3>Beancount options</h3> <table class="svelte-16ywk3n"><thead><tr><th>Option</th><th>Value</th></tr></thead><tbody></tbody></table>`, 1);
-var root_153 = template(`<div class="headerline"><h2> </h2></div> <pre class="svelte-16ywk3n"> </pre>`, 1);
+var root_103 = template(`<div class="headerline"><h2>Source files</h2></div> <ul class="source-list svelte-1o4zw0m"></ul>`, 1);
+var root_143 = template(`<label class="button svelte-1o4zw0m"><input type="radio" name="color-scheme" class="svelte-1o4zw0m"> </label>`);
+var root_163 = template(`<select id="fava-option-locale"><option>English</option><option>\u7B80\u4F53\u4E2D\u6587</option></select>`);
+var root_173 = template(`<pre class="svelte-1o4zw0m"> </pre>`);
+var root_153 = template(`<tr><td class="svelte-1o4zw0m"> </td><td class="svelte-1o4zw0m"><!></td></tr>`);
+var root_182 = template(`<tr><td class="svelte-1o4zw0m"> </td><td class="svelte-1o4zw0m"><pre class="svelte-1o4zw0m"> </pre></td></tr>`);
+var root_134 = template(`<div class="headerline"><h2> </h2></div> <h3> </h3> <p><span class="mode-switch svelte-1o4zw0m" role="radiogroup"></span></p> <h3> <a href="/help"> </a></h3> <table class="options-table svelte-1o4zw0m"><thead><tr><th> </th><th> </th></tr></thead><tbody></tbody></table> <h3> </h3> <table class="options-table svelte-1o4zw0m"><thead><tr><th> </th><th> </th></tr></thead><tbody></tbody></table>`, 1);
+var root_192 = template(`<div class="headerline"><h2> </h2></div> <pre class="svelte-1o4zw0m"> </pre>`, 1);
 function UtilityReport($$anchor, $$props) {
   push($$props, false);
+  const colorSchemes = mutable_state();
+  const favaRows = mutable_state();
+  const beancountRows = mutable_state();
   let adapter = prop($$props, "adapter", 8);
   let route = prop($$props, "route", 8);
   let query = prop($$props, "query", 24, () => ({}));
@@ -7454,6 +7477,10 @@ function UtilityReport($$anchor, $$props) {
   });
   let onTheme = prop($$props, "onTheme", 8, () => {
   });
+  function t(key) {
+    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+    return catalog[key] || key;
+  }
   let loading = mutable_state(true);
   let error = mutable_state("");
   let data = mutable_state(null);
@@ -7472,6 +7499,31 @@ function UtilityReport($$anchor, $$props) {
   function objectEntries(value) {
     return value && typeof value === "object" && !Array.isArray(value) ? Object.entries(value) : [];
   }
+  legacy_pre_effect(() => {
+  }, () => {
+    set(colorSchemes, [
+      ["system", `\u2699\uFE0F ${t("system")}`],
+      ["dark", `\u{1F319} ${t("dark")}`],
+      ["light", `\u2600\uFE0F ${t("light")}`]
+    ]);
+  });
+  legacy_pre_effect(
+    () => (get(data), deep_read_state(locale()), deep_read_state(theme())),
+    () => {
+      set(favaRows, (() => {
+        const extras = objectEntries(get(data)?.fava_options).filter(([key]) => key !== "locale" && key !== "theme").map(([key, value]) => [key, String(value)]);
+        return [
+          ...extras,
+          ["locale", locale()],
+          ["theme", theme()]
+        ].sort(([a], [b]) => a.localeCompare(b));
+      })());
+    }
+  );
+  legacy_pre_effect(() => get(data), () => {
+    set(beancountRows, objectEntries(get(data)?.options).map(([key, value]) => [key, String(value)]).sort(([a], [b]) => a.localeCompare(b)));
+  });
+  legacy_pre_effect_reset();
   init();
   var fragment = comment();
   var node = first_child(fragment);
@@ -7480,7 +7532,7 @@ function UtilityReport($$anchor, $$props) {
       var section_1 = root_118();
       append($$anchor2, section_1);
     };
-    var alternate_5 = ($$anchor2) => {
+    var alternate_6 = ($$anchor2) => {
       var fragment_1 = comment();
       var node_1 = first_child(fragment_1);
       {
@@ -7491,7 +7543,7 @@ function UtilityReport($$anchor, $$props) {
           template_effect(() => set_text(text2, get(error)));
           append($$anchor3, section_2);
         };
-        var alternate_4 = ($$anchor3) => {
+        var alternate_5 = ($$anchor3) => {
           var fragment_2 = comment();
           var node_2 = first_child(fragment_2);
           {
@@ -7515,7 +7567,7 @@ function UtilityReport($$anchor, $$props) {
               });
               append($$anchor4, fragment_3);
             };
-            var alternate_3 = ($$anchor4) => {
+            var alternate_4 = ($$anchor4) => {
               var fragment_4 = comment();
               var node_4 = first_child(fragment_4);
               {
@@ -7535,7 +7587,7 @@ function UtilityReport($$anchor, $$props) {
                   });
                   append($$anchor5, fragment_5);
                 };
-                var alternate_2 = ($$anchor5) => {
+                var alternate_3 = ($$anchor5) => {
                   var fragment_6 = comment();
                   var node_5 = first_child(fragment_6);
                   {
@@ -7544,10 +7596,10 @@ function UtilityReport($$anchor, $$props) {
                       var ul = sibling(first_child(fragment_7), 2);
                       each(ul, 5, () => get(data).paths, (path) => path, ($$anchor7, path) => {
                         var li = root_119();
-                        var a = child(li);
-                        template_effect(() => set_attribute(a, "href", `/source?path=${encodeURIComponent(get(path))}`));
-                        var text_5 = child(a, true);
-                        reset(a);
+                        var a_1 = child(li);
+                        template_effect(() => set_attribute(a_1, "href", `/source?path=${encodeURIComponent(get(path))}`));
+                        var text_5 = child(a_1, true);
+                        reset(a_1);
                         reset(li);
                         template_effect(() => set_text(text_5, get(path)));
                         append($$anchor7, li);
@@ -7555,103 +7607,172 @@ function UtilityReport($$anchor, $$props) {
                       reset(ul);
                       append($$anchor6, fragment_7);
                     };
-                    var alternate_1 = ($$anchor6) => {
+                    var alternate_2 = ($$anchor6) => {
                       var fragment_8 = comment();
                       var node_6 = first_child(fragment_8);
                       {
-                        var consequent_5 = ($$anchor7) => {
+                        var consequent_6 = ($$anchor7) => {
                           var fragment_9 = root_134();
-                          var div_2 = sibling(first_child(fragment_9), 4);
-                          var label = child(div_2);
-                          var input = child(label);
-                          remove_input_defaults(input);
-                          next();
-                          reset(label);
-                          var label_1 = sibling(label, 2);
-                          var input_1 = child(label_1);
-                          remove_input_defaults(input_1);
-                          next();
-                          reset(label_1);
-                          var label_2 = sibling(label_1, 2);
-                          var input_2 = child(label_2);
-                          remove_input_defaults(input_2);
-                          next();
-                          reset(label_2);
+                          var div_2 = first_child(fragment_9);
+                          var h2_1 = child(div_2);
+                          var text_6 = child(h2_1, true);
+                          template_effect(() => set_text(text_6, t("options")));
+                          reset(h2_1);
                           reset(div_2);
-                          var table = sibling(div_2, 4);
-                          var tbody = sibling(child(table));
-                          var tr = child(tbody);
-                          var td = sibling(child(tr));
-                          var select = child(td);
-                          init_select(select, locale);
-                          var select_value;
-                          var option = child(select);
-                          option.value = null == (option.__value = "en") ? "" : "en";
-                          var option_1 = sibling(option);
-                          option_1.value = null == (option_1.__value = "zh-CN") ? "" : "zh-CN";
-                          reset(select);
-                          reset(td);
+                          var h3 = sibling(div_2, 2);
+                          var text_7 = child(h3, true);
+                          template_effect(() => set_text(text_7, t("colorScheme")));
+                          reset(h3);
+                          var p = sibling(h3, 2);
+                          var span = child(p);
+                          template_effect(() => set_attribute(span, "aria-label", t("colorScheme")));
+                          each(span, 5, () => get(colorSchemes), ([value, label]) => value, ($$anchor8, $$item) => {
+                            let value = () => get($$item)[0];
+                            let label = () => get($$item)[1];
+                            var label_1 = root_143();
+                            var input = child(label_1);
+                            remove_input_defaults(input);
+                            var text_8 = sibling(input);
+                            reset(label_1);
+                            template_effect(() => {
+                              toggle_class(label_1, "muted", theme() !== value());
+                              set_value(input, value());
+                              set_checked(input, theme() === value());
+                              set_text(text_8, ` ${label() ?? ""}`);
+                            });
+                            event("change", input, () => onTheme()(value()));
+                            append($$anchor8, label_1);
+                          });
+                          reset(span);
+                          reset(p);
+                          var h3_1 = sibling(p, 2);
+                          var text_9 = child(h3_1);
+                          template_effect(() => set_text(text_9, `${t("favaOptions") ?? ""} `));
+                          var a_2 = sibling(text_9);
+                          var text_10 = child(a_2);
+                          template_effect(() => set_text(text_10, `(${t("help") ?? ""})`));
+                          reset(a_2);
+                          reset(h3_1);
+                          var table = sibling(h3_1, 2);
+                          var thead = child(table);
+                          var tr = child(thead);
+                          var th = child(tr);
+                          var text_11 = child(th, true);
+                          template_effect(() => set_text(text_11, t("optionKey")));
+                          reset(th);
+                          var th_1 = sibling(th);
+                          var text_12 = child(th_1, true);
+                          template_effect(() => set_text(text_12, t("optionValue")));
+                          reset(th_1);
                           reset(tr);
-                          var tr_1 = sibling(tr);
-                          var td_1 = sibling(child(tr_1));
-                          var text_6 = child(td_1, true);
-                          reset(td_1);
-                          reset(tr_1);
-                          reset(tbody);
-                          reset(table);
-                          var table_1 = sibling(table, 4);
-                          var tbody_1 = sibling(child(table_1));
-                          each(tbody_1, 5, () => objectEntries(get(data)?.options), ([key, value]) => key, ($$anchor8, $$item) => {
+                          reset(thead);
+                          var tbody = sibling(thead);
+                          each(tbody, 5, () => get(favaRows), ([key, value]) => key, ($$anchor8, $$item) => {
                             let key = () => get($$item)[0];
                             let value = () => get($$item)[1];
-                            var tr_2 = root_143();
-                            var th = child(tr_2);
-                            var text_7 = child(th, true);
-                            reset(th);
-                            var td_2 = sibling(th);
-                            var text_8 = child(td_2, true);
-                            template_effect(() => set_text(text_8, String(value())));
+                            var tr_1 = root_153();
+                            var td = child(tr_1);
+                            var text_13 = child(td, true);
+                            reset(td);
+                            var td_1 = sibling(td);
+                            var node_7 = child(td_1);
+                            {
+                              var consequent_5 = ($$anchor9) => {
+                                var select = root_163();
+                                init_select(select, locale);
+                                var select_value;
+                                var option = child(select);
+                                option.value = null == (option.__value = "en") ? "" : "en";
+                                var option_1 = sibling(option);
+                                option_1.value = null == (option_1.__value = "zh-CN") ? "" : "zh-CN";
+                                reset(select);
+                                template_effect(() => {
+                                  if (select_value !== (select_value = locale())) {
+                                    select.value = null == (select.__value = locale()) ? "" : locale(), select_option(select, locale());
+                                  }
+                                });
+                                event("change", select, (event2) => onLocale()(event2.currentTarget.value));
+                                append($$anchor9, select);
+                              };
+                              var alternate = ($$anchor9) => {
+                                var pre_1 = root_173();
+                                var text_14 = child(pre_1, true);
+                                reset(pre_1);
+                                template_effect(() => set_text(text_14, value()));
+                                append($$anchor9, pre_1);
+                              };
+                              if_block(node_7, ($$render) => {
+                                if (key() === "locale") $$render(consequent_5);
+                                else $$render(alternate, false);
+                              });
+                            }
+                            reset(td_1);
+                            reset(tr_1);
+                            template_effect(() => set_text(text_13, key()));
+                            append($$anchor8, tr_1);
+                          });
+                          reset(tbody);
+                          reset(table);
+                          var h3_2 = sibling(table, 2);
+                          var text_15 = child(h3_2, true);
+                          template_effect(() => set_text(text_15, t("beancountOptions")));
+                          reset(h3_2);
+                          var table_1 = sibling(h3_2, 2);
+                          var thead_1 = child(table_1);
+                          var tr_2 = child(thead_1);
+                          var th_2 = child(tr_2);
+                          var text_16 = child(th_2, true);
+                          template_effect(() => set_text(text_16, t("optionKey")));
+                          reset(th_2);
+                          var th_3 = sibling(th_2);
+                          var text_17 = child(th_3, true);
+                          template_effect(() => set_text(text_17, t("optionValue")));
+                          reset(th_3);
+                          reset(tr_2);
+                          reset(thead_1);
+                          var tbody_1 = sibling(thead_1);
+                          each(tbody_1, 5, () => get(beancountRows), ([key, value]) => key, ($$anchor8, $$item) => {
+                            let key = () => get($$item)[0];
+                            let value = () => get($$item)[1];
+                            var tr_3 = root_182();
+                            var td_2 = child(tr_3);
+                            var text_18 = child(td_2, true);
                             reset(td_2);
-                            reset(tr_2);
-                            template_effect(() => set_text(text_7, key()));
-                            append($$anchor8, tr_2);
+                            var td_3 = sibling(td_2);
+                            var pre_2 = child(td_3);
+                            var text_19 = child(pre_2, true);
+                            reset(pre_2);
+                            reset(td_3);
+                            reset(tr_3);
+                            template_effect(() => {
+                              set_text(text_18, key());
+                              set_text(text_19, value());
+                            });
+                            append($$anchor8, tr_3);
                           });
                           reset(tbody_1);
                           reset(table_1);
-                          template_effect(() => {
-                            set_checked(input, theme() === "system");
-                            set_checked(input_1, theme() === "dark");
-                            set_checked(input_2, theme() === "light");
-                            if (select_value !== (select_value = locale())) {
-                              select.value = null == (select.__value = locale()) ? "" : locale(), select_option(select, locale());
-                            }
-                            set_text(text_6, theme());
-                          });
-                          event("change", input, () => onTheme()("system"));
-                          event("change", input_1, () => onTheme()("dark"));
-                          event("change", input_2, () => onTheme()("light"));
-                          event("change", select, (event2) => onLocale()(event2.currentTarget.value));
                           append($$anchor7, fragment_9);
                         };
-                        var alternate = ($$anchor7) => {
-                          var fragment_10 = root_153();
+                        var alternate_1 = ($$anchor7) => {
+                          var fragment_10 = root_192();
                           var div_3 = first_child(fragment_10);
-                          var h2_1 = child(div_3);
-                          var text_9 = child(h2_1, true);
-                          reset(h2_1);
+                          var h2_2 = child(div_3);
+                          var text_20 = child(h2_2, true);
+                          reset(h2_2);
                           reset(div_3);
-                          var pre_1 = sibling(div_3, 2);
-                          var text_10 = child(pre_1, true);
-                          template_effect(() => set_text(text_10, JSON.stringify(get(data), null, 2)));
-                          reset(pre_1);
-                          template_effect(() => set_text(text_9, route()));
+                          var pre_3 = sibling(div_3, 2);
+                          var text_21 = child(pre_3, true);
+                          template_effect(() => set_text(text_21, JSON.stringify(get(data), null, 2)));
+                          reset(pre_3);
+                          template_effect(() => set_text(text_20, route()));
                           append($$anchor7, fragment_10);
                         };
                         if_block(
                           node_6,
                           ($$render) => {
-                            if (route() === "options") $$render(consequent_5);
-                            else $$render(alternate, false);
+                            if (route() === "options") $$render(consequent_6);
+                            else $$render(alternate_1, false);
                           },
                           true
                         );
@@ -7662,7 +7783,7 @@ function UtilityReport($$anchor, $$props) {
                       node_5,
                       ($$render) => {
                         if (route() === "source" && get(data)?.paths) $$render(consequent_4);
-                        else $$render(alternate_1, false);
+                        else $$render(alternate_2, false);
                       },
                       true
                     );
@@ -7673,7 +7794,7 @@ function UtilityReport($$anchor, $$props) {
                   node_4,
                   ($$render) => {
                     if (route() === "source" && get(data)?.content !== void 0) $$render(consequent_3);
-                    else $$render(alternate_2, false);
+                    else $$render(alternate_3, false);
                   },
                   true
                 );
@@ -7684,7 +7805,7 @@ function UtilityReport($$anchor, $$props) {
               node_2,
               ($$render) => {
                 if (route() === "help" && get(data)?.sections) $$render(consequent_2);
-                else $$render(alternate_3, false);
+                else $$render(alternate_4, false);
               },
               true
             );
@@ -7695,7 +7816,7 @@ function UtilityReport($$anchor, $$props) {
           node_1,
           ($$render) => {
             if (get(error)) $$render(consequent_1);
-            else $$render(alternate_4, false);
+            else $$render(alternate_5, false);
           },
           true
         );
@@ -7704,7 +7825,7 @@ function UtilityReport($$anchor, $$props) {
     };
     if_block(node, ($$render) => {
       if (get(loading)) $$render(consequent);
-      else $$render(alternate_5, false);
+      else $$render(alternate_6, false);
     });
   }
   append($$anchor, fragment);

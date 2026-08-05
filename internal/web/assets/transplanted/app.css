@@ -341,21 +341,30 @@ textarea.svelte-1k81p2c {
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/UtilityReport.esbuild-svelte-fake-css */
-details.svelte-16ywk3n,
-.source-list.svelte-16ywk3n,
-table.svelte-16ywk3n,
-pre.svelte-16ywk3n {
+details.svelte-1o4zw0m,
+.source-list.svelte-1o4zw0m,
+table.svelte-1o4zw0m,
+pre.svelte-1o4zw0m {
   max-width: 70rem;
 }
-.source-list.svelte-16ywk3n {
+.source-list.svelte-1o4zw0m {
   padding-left: 1.5rem;
 }
-.color-scheme.svelte-16ywk3n {
-  display: flex;
-  gap: 1rem;
-  padding-bottom: 0.5rem;
+.mode-switch.svelte-1o4zw0m input:where(.svelte-1o4zw0m) {
+  display: none;
 }
-pre.svelte-16ywk3n {
+.mode-switch.svelte-1o4zw0m label:where(.svelte-1o4zw0m) + label:where(.svelte-1o4zw0m) {
+  margin-left: 0.125rem;
+}
+.options-table.svelte-1o4zw0m td:where(.svelte-1o4zw0m):nth-child(1) {
+  font-weight: 500;
+}
+.options-table.svelte-1o4zw0m pre:where(.svelte-1o4zw0m) {
+  padding: 0;
+  margin: 0;
+  background: transparent;
+}
+pre.svelte-1o4zw0m {
   padding: 0.75rem;
   overflow: auto;
   background: var(--code-background);
