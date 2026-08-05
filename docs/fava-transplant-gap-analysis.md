@@ -130,7 +130,16 @@
 > 不跨成本货币合并；前端 HoldingsReport 提供上游 headerline 式页签与
 > 可读列名、CSV 导出带 aggregation 参数，含单测与四页签冒烟，
 > `3c9fef1`。页签集合保留 OC 扩展的 by_root_account/by_commodity、
-> 缺上游 by_cost_currency，待 L2 偏差登记）。
+> 缺上游 by_cost_currency，待 L2 偏差登记）、
+> H4 Events（事件页按 type 分组渲染，组内按日期倒序，空态文案，
+> 冒烟验证唯一 event 指令，`696bf81`）、
+> H4 Statistics 第一步（后端新增 PostingsPerAccount 与 statistics
+> 专用载荷 entries_by_type + postings_per_account；前端两节：
+> Postings per Account 表按数量倒序、Entries per Type 带 Total 脚注，
+> 冒烟验证合计 420，`f6474a5`。上游 Update Activity 节依赖缺失的
+> account_details 契约（last_entry/uptodate_status/balances，即 T2
+> 缺口），标题 Query 链接依赖上游 postings BQL，本步均未实现；
+> 载荷暂不应用全局 time/filter，作为限制记录）。
 > T1/H5 的 WIP 覆盖部分仍待稠密夹具复比勾销。
 
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
