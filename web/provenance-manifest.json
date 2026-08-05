@@ -443,6 +443,14 @@
       "upstream_hash": "53d970a1427a7ccfe1201ddf9bf9b357cda2f662c0252454bb1e45f3c03311a6",
       "notice": "NOTICE",
       "notes": "Fava page stylesheet transplanted at the pinned reference revision."
+    },
+    "web/src/fava/keyboard-shortcuts.ts": {
+      "current_kind": "derived",
+      "upstream": "frontend/src/keyboard-shortcuts.ts",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "793d0036379737db66b743c8474cfd9d71fa9cd2137545da9b7a15c9420529dc",
+      "notice": "NOTICE",
+      "notes": "Keyboard shortcut handling transplanted at the pinned reference revision; exposed as a Svelte action because the pinned Svelte version lacks the upstream attachment API."
     }
   }
 }

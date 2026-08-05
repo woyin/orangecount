@@ -1,5 +1,6 @@
 <script lang="ts">
   import { translations, type Locale } from "../../translations";
+  import { keyboardShortcut, type KeySpec } from "../keyboard-shortcuts";
   import { ROUTES, pageLabel, routeHref } from "../router.mjs";
 
   export let route: string;
@@ -16,6 +17,22 @@
     ["OrangeCount", ["account"]],
   ];
   const known = new Set([...ROUTES, "account"]);
+  const shortcuts: Record<string, KeySpec> = {
+    income_statement: "g i",
+    balance_sheet: "g b",
+    trial_balance: "g t",
+    journal: "g j",
+    query: "g q",
+    holdings: "g h",
+    commodities: "g c",
+    documents: "g d",
+    events: "g E",
+    statistics: "g s",
+    editor: "g e",
+    import: "g n",
+    options: "g o",
+    help: "g H",
+  };
   const keys: Record<string, string> = { income_statement: "incomeStatement", balance_sheet: "balanceSheet", trial_balance: "trialBalance", journal: "journal", query: "query", holdings: "holdings", commodities: "commodities", documents: "documents", events: "events", statistics: "statistics", editor: "editor", import: "import", options: "options", help: "help", account: "accounts" };
   function label(routeName: string): string { const catalog = translations[(locale === "zh-CN" ? "zh-CN" : "en") as Locale]; return catalog[keys[routeName] || ""] || pageLabel(routeName); }
 </script>
@@ -41,6 +58,7 @@
               class:selected={route === item}
               aria-current={route === item ? "page" : undefined}
               data-route={item}
+              use:keyboardShortcut={shortcuts[item]}
               onclick={(event) => { event.preventDefault(); onNavigate(routeHref(item)); }}
             >{label(item)}</a>
           </li>

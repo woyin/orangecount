@@ -3215,6 +3215,35 @@ function slot(anchor, $$props, name, slot_props, fallback_fn) {
   }
 }
 
+// node_modules/svelte/src/internal/client/dom/elements/actions.js
+function action(dom, action2, get_value) {
+  effect(() => {
+    var payload = untrack(() => action2(dom, get_value?.()) || {});
+    if (get_value && payload?.update) {
+      var inited = false;
+      var prev = (
+        /** @type {any} */
+        {}
+      );
+      render_effect(() => {
+        var value = get_value();
+        deep_read_state(value);
+        if (inited && safe_not_equal(prev, value)) {
+          prev = value;
+          payload.update(value);
+        }
+      });
+      inited = true;
+    }
+    if (payload?.destroy) {
+      return () => (
+        /** @type {Function} */
+        payload.destroy()
+      );
+    }
+  });
+}
+
 // node_modules/svelte/src/internal/client/dom/elements/attributes.js
 function remove_input_defaults(input) {
   if (!hydrating) return;
@@ -7338,6 +7367,138 @@ function ReportOutlet($$anchor, $$props) {
   pop();
 }
 
+// src/fava/keyboard-shortcuts.ts
+function showTooltip(target2, description) {
+  const { hidden } = target2;
+  if (hidden) {
+    target2.hidden = false;
+  }
+  const tooltip = document.createElement("div");
+  tooltip.className = "keyboard-tooltip";
+  tooltip.textContent = description;
+  document.body.appendChild(tooltip);
+  const targetRect = target2.getBoundingClientRect();
+  const left = targetRect.left + Math.min((target2.offsetWidth - tooltip.offsetWidth) / 2, 10);
+  const top = targetRect.top + (target2.offsetHeight - tooltip.offsetHeight) / 2;
+  tooltip.style.left = `${left.toString()}px`;
+  tooltip.style.top = `${(top + window.scrollY).toString()}px`;
+  return () => {
+    tooltip.remove();
+    if (hidden) {
+      target2.hidden = true;
+    }
+  };
+}
+function showTooltips() {
+  const removes = [];
+  document.querySelectorAll("[data-key]").forEach((el) => {
+    const key = el.getAttribute("data-key");
+    if (el instanceof HTMLElement && key != null) {
+      removes.push(showTooltip(el, key));
+    }
+  });
+  return () => {
+    removes.forEach((r) => {
+      r();
+    });
+  };
+}
+function isEditableElement(element2) {
+  return element2 instanceof HTMLElement && (element2 instanceof HTMLInputElement || element2 instanceof HTMLSelectElement || element2 instanceof HTMLTextAreaElement || element2.isContentEditable);
+}
+var keyboardShortcuts = /* @__PURE__ */ new Map();
+var lastChar = "";
+function keydown(event2) {
+  if (isEditableElement(event2.target)) {
+    return;
+  }
+  let eventKey = event2.key;
+  if (event2.metaKey) {
+    eventKey = `Meta+${eventKey}`;
+  }
+  if (event2.altKey) {
+    eventKey = `Alt+${eventKey}`;
+  }
+  if (event2.ctrlKey) {
+    eventKey = `Control+${eventKey}`;
+  }
+  const lastTwoKeys = `${lastChar} ${eventKey}`;
+  const handler = keyboardShortcuts.get(lastTwoKeys) ?? keyboardShortcuts.get(eventKey);
+  if (handler) {
+    if (handler instanceof HTMLInputElement) {
+      event2.preventDefault();
+      handler.focus();
+    } else if (handler instanceof HTMLElement) {
+      event2.preventDefault();
+      handler.click();
+    } else {
+      handler(event2);
+    }
+  }
+  if (event2.key !== "Alt" && event2.key !== "Control" && event2.key !== "Shift") {
+    lastChar = eventKey;
+  }
+}
+var isMac = (
+  // eslint-disable-next-line @typescript-eslint/no-deprecated
+  navigator.platform.startsWith("Mac") || navigator.platform === "iPhone"
+);
+function getKeySpecKey(spec) {
+  if (typeof spec === "string") {
+    return spec;
+  }
+  return isMac ? spec.mac ?? spec.key : spec.key;
+}
+function getKeySpecDescription(spec) {
+  if (typeof spec === "string") {
+    return spec;
+  }
+  const key = isMac ? spec.mac ?? spec.key : spec.key;
+  return spec.note != null ? `${key} - ${spec.note}` : key;
+}
+function bindKey(spec, handler) {
+  const key = getKeySpecKey(spec);
+  const sequence = key.split(" ");
+  if (sequence.length > 2) {
+    console.error("Only key sequences of length <=2 are supported: ", key);
+  }
+  if (keyboardShortcuts.has(key)) {
+    console.warn("Duplicate keyboard shortcut: ", key, handler);
+  }
+  keyboardShortcuts.set(key, handler);
+  return () => {
+    keyboardShortcuts.delete(key);
+  };
+}
+function keyboardShortcut(node, spec) {
+  if (spec == null) {
+    return void 0;
+  }
+  node.setAttribute("data-key", getKeySpecDescription(spec));
+  const unbind = bindKey(spec, node);
+  return {
+    destroy: () => {
+      unbind();
+      node.removeAttribute("data-key");
+    }
+  };
+}
+function initGlobalKeyboardShortcuts() {
+  document.addEventListener("keydown", keydown);
+  bindKey("?", () => {
+    const hide = showTooltips();
+    const once2 = () => {
+      hide();
+      document.removeEventListener("mousedown", once2);
+      document.removeEventListener("keydown", once2);
+      document.removeEventListener("scroll", once2);
+    };
+    document.addEventListener("mousedown", once2);
+    document.addEventListener("keydown", once2);
+    document.addEventListener("scroll", once2);
+  });
+}
+
 // src/fava/components/Sidebar.svelte
 var root_120 = template(`<div class="overlay svelte-16iwe3x" aria-hidden="true"></div>`);
 var root_312 = template(`<li class="navigation-heading svelte-16iwe3x" aria-hidden="true"> </li>`);
@@ -7389,6 +7550,22 @@ function Sidebar($$anchor, $$props) {
     ["OrangeCount", ["account"]]
   ];
   const known = /* @__PURE__ */ new Set([...ROUTES, "account"]);
+  const shortcuts = {
+    income_statement: "g i",
+    balance_sheet: "g b",
+    trial_balance: "g t",
+    journal: "g j",
+    query: "g q",
+    holdings: "g h",
+    commodities: "g c",
+    documents: "g d",
+    events: "g E",
+    statistics: "g s",
+    editor: "g e",
+    import: "g n",
+    options: "g o",
+    help: "g H"
+  };
   const keys = {
     income_statement: "incomeStatement",
     balance_sheet: "balanceSheet",
@@ -7464,6 +7641,7 @@ function Sidebar($$anchor, $$props) {
           var text_1 = child(a, true);
           template_effect(() => set_text(text_1, label(get(item))));
           reset(a);
+          action(a, ($$node, $$action_arg) => keyboardShortcut?.($$node, $$action_arg), () => shortcuts[get(item)]);
           reset(li_1);
           template_effect(() => {
             set_attribute(a, "aria-current", route() === get(item) ? "page" : void 0);
@@ -7731,6 +7909,7 @@ function App($$anchor, $$props) {
     }
   }
   onMount(() => {
+    initGlobalKeyboardShortcuts();
     const onPopState = () => {
       const next2 = parseRoute(window.location.href);
       shell.dispatch({

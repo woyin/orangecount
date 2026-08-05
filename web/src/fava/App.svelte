@@ -6,6 +6,7 @@
   import LoadingBoundary from "./components/LoadingBoundary.svelte";
   import ReportOutlet from "./components/ReportOutlet.svelte";
   import Sidebar from "./components/Sidebar.svelte";
+  import { initGlobalKeyboardShortcuts } from "./keyboard-shortcuts";
   import { parseRoute, updateQuery } from "./router.mjs";
   import { createShellStore, initialShellState } from "./state.mjs";
 
@@ -86,6 +87,7 @@
   }
 
   onMount(() => {
+    initGlobalKeyboardShortcuts();
     const onPopState = () => {
       const next = parseRoute(window.location.href);
       shell.dispatch({ type: "route", route: next.route, query: next.query });
