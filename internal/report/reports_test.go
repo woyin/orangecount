@@ -749,3 +749,78 @@ func TestTrialBalanceChartEmitsEachAccountOnce(t *testing.T) {
 		}
 	}
 }
+
+func TestHoldingsAggregateGroupsAndSumsWithinCostCurrency(t *testing.T) {
+	decimal := func(raw string) ledger.Decimal {
+		value, err := ledger.ParseDecimal(raw)
+		if err != nil {
+			t.Fatalf("parse %q: %v", raw, err)
+		}
+		return value
+	}
+	flat := query.Result{
+		Columns: []string{"account", "currency", "units", "cost_currency", "cost"},
+		Rows: []query.Row{
+			{"account": "Assets:Cash:Reserve01", "currency": "FUND", "units": decimal("2"), "cost_currency": "USD", "cost": decimal("10")},
+			{"account": "Assets:Cash:Reserve01", "currency": "FUND", "units": decimal("3"), "cost_currency": "USD", "cost": decimal("12")},
+			{"account": "Assets:Broker:Index01", "currency": "FUND", "units": decimal("1"), "cost_currency": "EUR", "cost": decimal("7")},
+			{"account": "Assets:Broker:Index01", "currency": "USD", "units": decimal("5")},
+		},
+	}
+
+	byAccount := HoldingsAggregate(flat, "by_account")
+	if len(byAccount.Rows) != 3 {
+		t.Fatalf("by_account produced %d rows, want 3 groups", len(byAccount.Rows))
+	}
+	first := byAccount.Rows[0]
+	if first["account"] != "Assets:Broker:Index01" || first["currency"] != "FUND" {
+		t.Fatalf("expected sorted first group Assets:Broker:Index01/FUND, got %v/%v", first["account"], first["currency"])
+	}
+	reserve := byAccount.Rows[2]
+	if got := reserve["units"].(ledger.Decimal).String(); got != decimal("5").String() {
+		t.Fatalf("reserve units = %s, want 5", got)
+	}
+	if got := reserve["book_value"].(ledger.Decimal).String(); got != decimal("56").String() {
+		t.Fatalf("reserve book_value = %s, want 56 (2*10 + 3*12)", got)
+	}
+
+	byCurrency := HoldingsAggregate(flat, "by_currency")
+	var fundUSD query.Row
+	for _, row := range byCurrency.Rows {
+		if row["currency"] == "FUND" && row["cost_currency"] == "USD" {
+			fundUSD = row
+		}
+	}
+	if fundUSD == nil {
+		t.Fatal("by_currency missing FUND/USD group")
+	}
+	average := fundUSD["average_cost"].(ledger.Decimal)
+	if average.Mul(decimal("5")).Cmp(decimal("56")) != 0 {
+		t.Fatalf("average_cost*units = %s, want 56", average.Mul(decimal("5")).String())
+	}
+
+	byRoot := HoldingsAggregate(flat, "by_root_account")
+	roots := map[string]bool{}
+	for _, row := range byRoot.Rows {
+		roots[row["root_account"].(string)] = true
+	}
+	if len(byRoot.Rows) != 3 || !roots["Assets"] {
+		t.Fatalf("by_root_account rows=%d roots=%v, want 3 rows under Assets", len(byRoot.Rows), roots)
+	}
+
+	byCommodity := HoldingsAggregate(flat, "by_commodity")
+	for _, row := range byCommodity.Rows {
+		if row["currency"] == "FUND" {
+			if _, hasBook := row["book_value"]; hasBook {
+				t.Fatal("by_commodity FUND group must omit book_value when cost currencies are mixed")
+			}
+			if got := row["units"].(ledger.Decimal).String(); got != decimal("6").String() {
+				t.Fatalf("by_commodity FUND units = %s, want 6", got)
+			}
+		}
+	}
+
+	if passthrough := HoldingsAggregate(flat, ""); len(passthrough.Rows) != len(flat.Rows) {
+		t.Fatal("empty aggregation must return the flat result untouched")
+	}
+}

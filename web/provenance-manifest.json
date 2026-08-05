@@ -344,6 +344,11 @@
       "upstream": null,
       "notes": "OrangeCount exact-value table fallback shared by staged read-only routes."
     },
+    "web/src/fava/reports/HoldingsReport.svelte": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Holdings aggregation tabs and readable headers; layout modeled on Fava holdings headerline, written for the OrangeCount adapter."
+    },
     "web/src/fava/reports/JournalReport.svelte": {
       "current_kind": "derived",
       "upstream": "frontend/src/reports/journal/Journal.svelte",

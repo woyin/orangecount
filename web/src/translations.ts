@@ -30,6 +30,8 @@ export const translations: Record<Locale, Record<string, string>> = {
     unavailableCurrency: "Unavailable: no conversion quote", notValued: "Not valued", goToAccount: "Go to account",
     colorScheme: "Color scheme", favaOptions: "Fava options", beancountOptions: "Beancount options",
     system: "System", dark: "Dark", light: "Light", optionKey: "Key", optionValue: "Value",
+    holdingsByAccount: "Holdings by Account", holdingsByCurrency: "Holdings by Currency",
+    holdingsByRootAccount: "Holdings by Root Account", holdingsByCommodity: "Holdings by Commodity",
   },
   "zh-CN": {
     subtitle: "只读本地账本视图。", language: "语言", overview: "概览", accounts: "账户", journal: "日记账",
@@ -53,5 +55,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     unavailableCurrency: "不可用：没有换算报价", notValued: "未估值", goToAccount: "跳转到账户",
     colorScheme: "配色方案", favaOptions: "Fava 选项", beancountOptions: "Beancount 选项",
     system: "跟随系统", dark: "深色", light: "浅色", optionKey: "键", optionValue: "值",
+    holdingsByAccount: "按账户持仓", holdingsByCurrency: "按货币持仓",
+    holdingsByRootAccount: "按根账户持仓", holdingsByCommodity: "按商品持仓",
   },
 };

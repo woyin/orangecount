@@ -598,6 +598,7 @@ func (s *Server) buildReport(r *http.Request, current *snapshot.Snapshot, name s
 			valuation = "at-cost"
 		}
 		result = report.HoldingsAtCurrency(evaluation, asOf, valuation, strings.TrimSpace(r.URL.Query().Get("currency")))
+		result = report.HoldingsAggregate(result, strings.TrimSpace(r.URL.Query().Get("aggregation")))
 	case "prices", "price", "commodities", "commodity":
 		result = report.Prices(evaluation)
 	case "events", "event":

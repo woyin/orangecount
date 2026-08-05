@@ -60,7 +60,7 @@
 </script>
 
 <div class="headerline">
-  <h2>{title}</h2>
+  {#if title}<h2>{title}</h2>{/if}
   <span class="muted">{report.rows.length} rows</span>
   {#if route}<a class="button" href={`/api/v1/reports/${route}?format=csv`}>Export CSV</a>{/if}
 </div>

@@ -9,6 +9,7 @@ package report
 
 import (
 	"fmt"
+	"math/big"
 	"sort"
 	"strconv"
 	"strings"
@@ -398,6 +399,107 @@ func HoldingsAtCurrency(e ledger.Evaluation, asOf, valuation, displayCurrency st
 		}
 	}
 	return query.Result{Columns: columns, Rows: rows}
+}
+
+// HoldingsAggregate collapses flat holdings rows the way Fava's holdings-by
+// views do: units are summed per group, and book value is summed only within
+// one cost currency so cross-currency totals are never invented. "all" (or an
+// unknown key) returns the input untouched.
+func HoldingsAggregate(result query.Result, aggregation string) query.Result {
+	type group struct {
+		units        ledger.Decimal
+		book         ledger.Decimal
+		bookCurrency string
+		bookMixed    bool
+		hasCost      bool
+	}
+	var columns []string
+	var keyOf func(query.Row) []string
+	switch aggregation {
+	case "by_account":
+		columns = []string{"account", "currency", "cost_currency", "units", "book_value"}
+		keyOf = func(row query.Row) []string {
+			return []string{asString(row["account"]), asString(row["currency"]), asString(row["cost_currency"])}
+		}
+	case "by_currency":
+		columns = []string{"currency", "cost_currency", "units", "average_cost", "book_value"}
+		keyOf = func(row query.Row) []string {
+			return []string{asString(row["currency"]), asString(row["cost_currency"])}
+		}
+	case "by_root_account":
+		columns = []string{"root_account", "currency", "cost_currency", "units", "book_value"}
+		keyOf = func(row query.Row) []string {
+			account := asString(row["account"])
+			if index := strings.Index(account, ":"); index > 0 {
+				account = account[:index]
+			}
+			return []string{account, asString(row["currency"]), asString(row["cost_currency"])}
+		}
+	case "by_commodity":
+		columns = []string{"currency", "units", "book_value"}
+		keyOf = func(row query.Row) []string { return []string{asString(row["currency"])} }
+	default:
+		return result
+	}
+
+	groups := map[string]*group{}
+	keys := map[string][]string{}
+	order := []string{}
+	for _, row := range result.Rows {
+		keyParts := keyOf(row)
+		id := strings.Join(keyParts, "\x00")
+		aggregate, ok := groups[id]
+		if !ok {
+			aggregate = &group{}
+			groups[id] = aggregate
+			keys[id] = keyParts
+			order = append(order, id)
+		}
+		if units, ok := row["units"].(ledger.Decimal); ok {
+			aggregate.units = aggregate.units.Add(units)
+			if cost, hasCost := row["cost"].(ledger.Decimal); hasCost {
+				value := units.Mul(cost)
+				aggregate.book = aggregate.book.Add(value)
+				aggregate.hasCost = true
+				costCurrency := asString(row["cost_currency"])
+				switch {
+				case aggregate.bookCurrency == "":
+					aggregate.bookCurrency = costCurrency
+				case aggregate.bookCurrency != costCurrency:
+					aggregate.bookMixed = true
+				}
+			}
+		}
+	}
+	sort.Slice(order, func(i, j int) bool { return order[i] < order[j] })
+
+	rows := make([]query.Row, 0, len(order))
+	for _, id := range order {
+		aggregate := groups[id]
+		row := query.Row{}
+		for index, column := range keys[id] {
+			// The key columns lead the result, matching the column order
+			// declared above for each aggregation.
+			row[columns[index]] = column
+		}
+		row["units"] = aggregate.units
+		if aggregate.hasCost && !aggregate.bookMixed {
+			row["book_value"] = aggregate.book
+			if aggregation == "by_currency" && !aggregate.units.IsZero() {
+				ratio := new(big.Rat).Quo(aggregate.book.Rat(), aggregate.units.Rat())
+				row["average_cost"] = ledger.NewDecimal(ratio)
+			}
+		}
+		rows = append(rows, row)
+	}
+	return query.Result{Columns: columns, Rows: rows}
+}
+
+func asString(value any) string {
+	if text, ok := value.(string); ok {
+		return text
+	}
+	return ""
 }
 
 func latestQuote(e ledger.Evaluation, base, asOf string) (ledger.PriceQuote, bool) {

@@ -107,7 +107,10 @@ export function createAdapterClient(
         : route.startsWith("holdings_by_")
           ? "reports/holdings"
           : `reports/${route}`;
-      return get(resource, query);
+      const params = route.startsWith("holdings_by_")
+        ? { ...query, aggregation: route.slice("holdings_".length) }
+        : query;
+      return get(resource, params);
     },
   };
 }

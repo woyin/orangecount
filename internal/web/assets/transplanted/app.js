@@ -2467,21 +2467,21 @@ function ns_template(content, flags, ns = "svg") {
         /** @type {DocumentFragment} */
         create_fragment_from_html(wrapped)
       );
-      var root14 = (
+      var root15 = (
         /** @type {Element} */
         get_first_child(fragment)
       );
       if (is_fragment) {
         node = document.createDocumentFragment();
-        while (get_first_child(root14)) {
+        while (get_first_child(root15)) {
           node.appendChild(
             /** @type {Node} */
-            get_first_child(root14)
+            get_first_child(root15)
           );
         }
       } else {
         node = /** @type {Element} */
-        get_first_child(root14);
+        get_first_child(root15);
       }
     }
     var clone = (
@@ -4276,7 +4276,8 @@ function createAdapterClient(fetcher = fetch, base = PRIVATE_ADAPTER_BASE) {
       const treeRoutes = /* @__PURE__ */ new Set(["income_statement", "balance_sheet", "trial_balance"]);
       const directRoutes = /* @__PURE__ */ new Set(["options", "help", "diagnostics", "source", "editor", "import", "journal"]);
       const resource = treeRoutes.has(route) || directRoutes.has(route) ? route : route.startsWith("holdings_by_") ? "reports/holdings" : `reports/${route}`;
-      return get3(resource, query);
+      const params = route.startsWith("holdings_by_") ? { ...query, aggregation: route.slice("holdings_".length) } : query;
+      return get3(resource, params);
     }
   };
 }
@@ -4422,7 +4423,11 @@ var translations = {
     dark: "Dark",
     light: "Light",
     optionKey: "Key",
-    optionValue: "Value"
+    optionValue: "Value",
+    holdingsByAccount: "Holdings by Account",
+    holdingsByCurrency: "Holdings by Currency",
+    holdingsByRootAccount: "Holdings by Root Account",
+    holdingsByCommodity: "Holdings by Commodity"
   },
   "zh-CN": {
     subtitle: "\u53EA\u8BFB\u672C\u5730\u8D26\u672C\u89C6\u56FE\u3002",
@@ -4528,7 +4533,11 @@ var translations = {
     dark: "\u6DF1\u8272",
     light: "\u6D45\u8272",
     optionKey: "\u952E",
-    optionValue: "\u503C"
+    optionValue: "\u503C",
+    holdingsByAccount: "\u6309\u8D26\u6237\u6301\u4ED3",
+    holdingsByCurrency: "\u6309\u8D27\u5E01\u6301\u4ED3",
+    holdingsByRootAccount: "\u6309\u6839\u8D26\u6237\u6301\u4ED3",
+    holdingsByCommodity: "\u6309\u5546\u54C1\u6301\u4ED3"
   }
 };
 
@@ -5577,10 +5586,10 @@ function ReportChart($$anchor, $$props) {
   function barY(value) {
     return value >= 0 ? y(value) : y(0);
   }
-  function collectLeaves(nodes, root14 = "") {
+  function collectLeaves(nodes, root15 = "") {
     const out = [];
     for (const node of nodes) {
-      const top = root14 || node.name.split(":")[0];
+      const top = root15 || node.name.split(":")[0];
       if (node.children?.length) {
         out.push(...collectLeaves(node.children, top));
       } else {
@@ -5854,16 +5863,17 @@ function ReportChart($$anchor, $$props) {
 }
 
 // src/fava/reports/GenericReport.svelte
-var root_17 = template(`<a class="button">Export CSV</a>`);
+var root_17 = template(`<h2> </h2>`);
+var root_23 = template(`<a class="button">Export CSV</a>`);
 var on_click = (_, toggleSort, column) => toggleSort(get(column));
-var root_4 = template(`<span aria-hidden="true"> </span>`);
-var root_34 = template(`<th scope="col" class="svelte-8vbrz2"><button type="button" class="sort-toggle svelte-8vbrz2"> <!></button></th>`);
-var root_72 = template(`<a> </a>`);
-var root_92 = template(`<a> </a>`);
-var root_62 = template(`<td class="svelte-8vbrz2"><!></td>`);
-var root_52 = template(`<tr></tr>`);
-var root_112 = template(`<tr><td>No rows.</td></tr>`);
-var root4 = template(`<div class="headerline"><h2> </h2> <span class="muted svelte-8vbrz2"> </span> <!></div> <!> <div class="table-scroll svelte-8vbrz2"><table class="report-table svelte-8vbrz2"><thead><tr></tr></thead><tbody></tbody></table></div>`, 1);
+var root_52 = template(`<span aria-hidden="true"> </span>`);
+var root_4 = template(`<th scope="col" class="svelte-8vbrz2"><button type="button" class="sort-toggle svelte-8vbrz2"> <!></button></th>`);
+var root_82 = template(`<a> </a>`);
+var root_102 = template(`<a> </a>`);
+var root_72 = template(`<td class="svelte-8vbrz2"><!></td>`);
+var root_62 = template(`<tr></tr>`);
+var root_123 = template(`<tr><td>No rows.</td></tr>`);
+var root4 = template(`<div class="headerline"><!> <span class="muted svelte-8vbrz2"> </span> <!></div> <!> <div class="table-scroll svelte-8vbrz2"><table class="report-table svelte-8vbrz2"><thead><tr></tr></thead><tbody></tbody></table></div>`, 1);
 function GenericReport($$anchor, $$props) {
   push($$props, false);
   const sortedRows = mutable_state();
@@ -5925,27 +5935,37 @@ function GenericReport($$anchor, $$props) {
   init();
   var fragment = root4();
   var div = first_child(fragment);
-  var h2 = child(div);
-  var text2 = child(h2, true);
-  reset(h2);
-  var span = sibling(h2, 2);
-  var text_1 = child(span);
-  reset(span);
-  var node = sibling(span, 2);
+  var node = child(div);
   {
     var consequent = ($$anchor2) => {
-      var a_1 = root_17();
+      var h2 = root_17();
+      var text2 = child(h2, true);
+      reset(h2);
+      template_effect(() => set_text(text2, title()));
+      append($$anchor2, h2);
+    };
+    if_block(node, ($$render) => {
+      if (title()) $$render(consequent);
+    });
+  }
+  var span = sibling(node, 2);
+  var text_1 = child(span);
+  reset(span);
+  var node_1 = sibling(span, 2);
+  {
+    var consequent_1 = ($$anchor2) => {
+      var a_1 = root_23();
       template_effect(() => set_attribute(a_1, "href", `/api/v1/reports/${route()}?format=csv`));
       append($$anchor2, a_1);
     };
-    if_block(node, ($$render) => {
-      if (route()) $$render(consequent);
+    if_block(node_1, ($$render) => {
+      if (route()) $$render(consequent_1);
     });
   }
   reset(div);
-  var node_1 = sibling(div, 2);
+  var node_2 = sibling(div, 2);
   {
-    var consequent_1 = ($$anchor2) => {
+    var consequent_2 = ($$anchor2) => {
       ReportChart($$anchor2, {
         get chart() {
           return report().chart;
@@ -5955,31 +5975,31 @@ function GenericReport($$anchor, $$props) {
         }
       });
     };
-    if_block(node_1, ($$render) => {
-      if (report().chart) $$render(consequent_1);
+    if_block(node_2, ($$render) => {
+      if (report().chart) $$render(consequent_2);
     });
   }
-  var div_1 = sibling(node_1, 2);
+  var div_1 = sibling(node_2, 2);
   var table = child(div_1);
   var thead = child(table);
   var tr = child(thead);
   each(tr, 5, () => report().columns, (column) => column, ($$anchor2, column) => {
-    var th = root_34();
+    var th = root_4();
     const class_directive = derived_safe_equal(() => report().rows.some((row) => isNumberLike(row[get(column)])));
     var button = child(th);
     button.__click = [on_click, toggleSort, column];
     var text_2 = child(button, true);
-    var node_2 = sibling(text_2);
+    var node_3 = sibling(text_2);
     {
-      var consequent_2 = ($$anchor3) => {
-        var span_1 = root_4();
+      var consequent_3 = ($$anchor3) => {
+        var span_1 = root_52();
         var text_3 = child(span_1, true);
         reset(span_1);
         template_effect(() => set_text(text_3, get(sortDirection) === "ascending" ? " \u25B2" : " \u25BC"));
         append($$anchor3, span_1);
       };
-      if_block(node_2, ($$render) => {
-        if (get(sortColumn) === get(column)) $$render(consequent_2);
+      if_block(node_3, ($$render) => {
+        if (get(sortColumn) === get(column)) $$render(consequent_3);
       });
     }
     reset(button);
@@ -6000,15 +6020,15 @@ function GenericReport($$anchor, $$props) {
     () => get(sortedRows),
     index,
     ($$anchor2, row) => {
-      var tr_1 = root_52();
+      var tr_1 = root_62();
       each(tr_1, 5, () => report().columns, (column) => column, ($$anchor3, column) => {
-        var td = root_62();
+        var td = root_72();
         const class_directive_1 = derived_safe_equal(() => isNumberLike(get(row)[get(column)]));
         template_effect(() => toggle_class(td, "num", get(class_directive_1)));
-        var node_3 = child(td);
+        var node_4 = child(td);
         {
-          var consequent_3 = ($$anchor4) => {
-            var a_2 = root_72();
+          var consequent_4 = ($$anchor4) => {
+            var a_2 = root_82();
             template_effect(() => set_attribute(a_2, "href", `/documents/${encodeURIComponent(get(row)[get(column)])}`));
             var text_4 = child(a_2, true);
             template_effect(() => set_text(text_4, display(get(row)[get(column)])));
@@ -6017,10 +6037,10 @@ function GenericReport($$anchor, $$props) {
           };
           var alternate_1 = ($$anchor4) => {
             var fragment_2 = comment();
-            var node_4 = first_child(fragment_2);
+            var node_5 = first_child(fragment_2);
             {
-              var consequent_4 = ($$anchor5) => {
-                var a_3 = root_92();
+              var consequent_5 = ($$anchor5) => {
+                var a_3 = root_102();
                 template_effect(() => set_attribute(a_3, "href", `/source?path=${encodeURIComponent(get(row)[get(column)])}`));
                 var text_5 = child(a_3, true);
                 template_effect(() => set_text(text_5, display(get(row)[get(column)])));
@@ -6033,9 +6053,9 @@ function GenericReport($$anchor, $$props) {
                 append($$anchor5, text_6);
               };
               if_block(
-                node_4,
+                node_5,
                 ($$render) => {
-                  if (["file", "path"].includes(get(column)) && typeof get(row)[get(column)] === "string") $$render(consequent_4);
+                  if (["file", "path"].includes(get(column)) && typeof get(row)[get(column)] === "string") $$render(consequent_5);
                   else $$render(alternate, false);
                 },
                 true
@@ -6043,8 +6063,8 @@ function GenericReport($$anchor, $$props) {
             }
             append($$anchor4, fragment_2);
           };
-          if_block(node_3, ($$render) => {
-            if (route() === "documents" && get(column) === "filename" && typeof get(row)[get(column)] === "string") $$render(consequent_3);
+          if_block(node_4, ($$render) => {
+            if (route() === "documents" && get(column) === "filename" && typeof get(row)[get(column)] === "string") $$render(consequent_4);
             else $$render(alternate_1, false);
           });
         }
@@ -6055,7 +6075,7 @@ function GenericReport($$anchor, $$props) {
       append($$anchor2, tr_1);
     },
     ($$anchor2) => {
-      var tr_2 = root_112();
+      var tr_2 = root_123();
       var td_1 = child(tr_2);
       reset(tr_2);
       template_effect(() => set_attribute(td_1, "colspan", report().columns.length));
@@ -6065,10 +6085,7 @@ function GenericReport($$anchor, $$props) {
   reset(tbody);
   reset(table);
   reset(div_1);
-  template_effect(() => {
-    set_text(text2, title());
-    set_text(text_1, `${report().rows.length ?? ""} rows`);
-  });
+  template_effect(() => set_text(text_1, `${report().rows.length ?? ""} rows`));
   append($$anchor, fragment);
   pop();
 }
@@ -6077,7 +6094,7 @@ delegate(["click"]);
 // src/fava/reports/JournalReport.svelte
 var on_click2 = (_, toggleChip, chip) => toggleChip(get(chip));
 var root_18 = template(`<button type="button"> </button>`);
-var root_35 = template(`<a> </a>`);
+var root_34 = template(`<a> </a>`);
 var root_42 = template(`<strong class="payee"> </strong><span class="separator"></span>`, 1);
 var root_53 = template(`<span class="tag"> </span>`);
 var root_63 = template(`<span class="link"> </span>`);
@@ -6089,16 +6106,16 @@ var on_keydown = (event2, toggleEntry, entry) => {
     toggleEntry(get(entry));
   }
 };
-var root_93 = template(`<span></span>`);
-var root_82 = template(`<span class="indicators" role="button" tabindex="0" title="Toggle postings"></span>`);
-var root_102 = template(`<span class="indicators"></span>`);
-var root_113 = template(`<span class="num bal"> </span> <span class="change num"></span> <span class="change num"></span>`, 1);
+var root_92 = template(`<span></span>`);
+var root_83 = template(`<span class="indicators" role="button" tabindex="0" title="Toggle postings"></span>`);
+var root_103 = template(`<span class="indicators"></span>`);
+var root_112 = template(`<span class="num bal"> </span> <span class="change num"></span> <span class="change num"></span>`, 1);
 var root_133 = template(`<span class="num"></span> <span class="num"></span> <span class="num"> </span>`, 1);
 var root_152 = template(`<li><p><span class="datecell"></span> <span class="flag"> </span> <span class="description"><a> </a></span> <span class="num"> </span> <span class="num"> </span> <span class="num"> </span></p></li>`);
 var root_142 = template(`<ul class="postings"></ul>`);
 var root_172 = template(`<dt> </dt> <dd> </dd>`, 1);
 var root_162 = template(`<dl class="metadata"></dl>`);
-var root_23 = template(`<li><p><span class="datecell"> </span> <span class="flag"> </span> <span class="description"><!> <!> <!> <!> <!></span> <!> <!></p> <!> <!></li>`);
+var root_24 = template(`<li><p><span class="datecell"> </span> <span class="flag"> </span> <span class="description"><!> <!> <!> <!> <!></span> <!> <!></p> <!> <!></li>`);
 var root5 = template(`<form class="flex-row journal-chips svelte-3l7lkh"><!> <span class="spacer svelte-3l7lkh"></span> <a class="button" href="/api/v1/reports/journal?format=csv">Export CSV</a></form> <ol><li class="head"><p><span class="datecell">Date</span> <span class="flag">F</span> <span class="description">Payee/Narration</span> <span class="num">Units</span> <span class="num">Cost</span> <span class="num"> </span></p></li> <!></ol>`, 1);
 function JournalReport($$anchor, $$props) {
   push($$props, false);
@@ -6288,7 +6305,7 @@ function JournalReport($$anchor, $$props) {
   reset(li);
   var node_1 = sibling(li, 2);
   each(node_1, 3, () => report().entries, (entry, index2) => entry.type + entry.date + index2, ($$anchor2, entry) => {
-    var li_1 = root_23();
+    var li_1 = root_24();
     const class_derived = derived_safe_equal(() => `${get(entry).type ?? ""} ${flagClass(get(entry)) ?? ""} svelte-3l7lkh`);
     const class_directive_1 = derived_safe_equal(() => get(expanded).has(get(entry)));
     var p_1 = child(li_1);
@@ -6302,7 +6319,7 @@ function JournalReport($$anchor, $$props) {
     var node_2 = child(span_3);
     {
       var consequent = ($$anchor3) => {
-        var a = root_35();
+        var a = root_34();
         template_effect(() => set_attribute(a, "href", accountHref(get(entry).account)));
         var text_4 = child(a, true);
         reset(a);
@@ -6358,11 +6375,11 @@ function JournalReport($$anchor, $$props) {
     var node_7 = sibling(span_3, 2);
     {
       var consequent_2 = ($$anchor3) => {
-        var span_7 = root_82();
+        var span_7 = root_83();
         span_7.__click = [on_click_1, toggleEntry, entry];
         span_7.__keydown = [on_keydown, toggleEntry, entry];
         each(span_7, 5, () => get(entry).postings, index, ($$anchor4, posting) => {
-          var span_8 = root_93();
+          var span_8 = root_92();
           template_effect(() => set_class(span_8, get(posting).flag === "!" ? "pending" : ""));
           append($$anchor4, span_8);
         });
@@ -6370,7 +6387,7 @@ function JournalReport($$anchor, $$props) {
         append($$anchor3, span_7);
       };
       var alternate = ($$anchor3) => {
-        var span_9 = root_102();
+        var span_9 = root_103();
         append($$anchor3, span_9);
       };
       if_block(node_7, ($$render) => {
@@ -6381,7 +6398,7 @@ function JournalReport($$anchor, $$props) {
     var node_8 = sibling(node_7, 2);
     {
       var consequent_3 = ($$anchor3) => {
-        var fragment_2 = root_113();
+        var fragment_2 = root_112();
         var span_10 = first_child(fragment_2);
         var text_10 = child(span_10, true);
         template_effect(() => set_text(text_10, amountText(get(entry).amount)));
@@ -6507,7 +6524,7 @@ delegate(["click", "keydown"]);
 
 // src/fava/reports/AccountReport.svelte
 var root_19 = template(`<section class="state-panel error-panel" role="alert"> </section>`);
-var root_24 = template(`<div class="headerline"><h2> </h2></div> <!> <!> <!>`, 1);
+var root_25 = template(`<div class="headerline"><h2> </h2></div> <!> <!> <!>`, 1);
 function AccountReport($$anchor, $$props) {
   push($$props, false);
   const account = mutable_state();
@@ -6559,7 +6576,7 @@ function AccountReport($$anchor, $$props) {
       append($$anchor2, section);
     };
     var alternate = ($$anchor2) => {
-      var fragment_1 = root_24();
+      var fragment_1 = root_25();
       var div = first_child(fragment_1);
       var h2 = child(div);
       var text_1 = child(h2, true);
@@ -6629,13 +6646,121 @@ function AccountReport($$anchor, $$props) {
   pop();
 }
 
+// src/fava/reports/HoldingsReport.svelte
+var root_35 = template(`<a> </a>`);
+var root_110 = template(`<h3><!></h3>`);
+var root6 = template(`<div class="headerline"><!> <a class="button"> </a></div> <!>`, 1);
+function HoldingsReport($$anchor, $$props) {
+  push($$props, false);
+  const aggregation = mutable_state();
+  const csvHref = mutable_state();
+  const labeled = mutable_state();
+  let report = prop($$props, "report", 8);
+  let route = prop($$props, "route", 8);
+  let locale = prop($$props, "locale", 8, "en");
+  let renderCommas = prop($$props, "renderCommas", 8, false);
+  function t(key) {
+    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+    return catalog[key] || key;
+  }
+  const tabs = [
+    { route: "holdings", key: "holdings" },
+    {
+      route: "holdings_by_account",
+      key: "holdingsByAccount"
+    },
+    {
+      route: "holdings_by_currency",
+      key: "holdingsByCurrency"
+    },
+    {
+      route: "holdings_by_root_account",
+      key: "holdingsByRootAccount"
+    },
+    {
+      route: "holdings_by_commodity",
+      key: "holdingsByCommodity"
+    }
+  ];
+  function columnLabel(column) {
+    return column.split("_").map((part) => part ? part[0].toUpperCase() + part.slice(1) : part).join(" ");
+  }
+  legacy_pre_effect(() => deep_read_state(route()), () => {
+    set(aggregation, route().startsWith("holdings_by_") ? route().slice("holdings_".length) : "");
+  });
+  legacy_pre_effect(() => get(aggregation), () => {
+    set(csvHref, get(aggregation) ? `/api/v1/reports/holdings?format=csv&aggregation=${encodeURIComponent(get(aggregation))}` : "/api/v1/reports/holdings?format=csv");
+  });
+  legacy_pre_effect(() => deep_read_state(report()), () => {
+    set(labeled, (() => {
+      const rename = new Map(report().columns.map((column) => [column, columnLabel(column)]));
+      return {
+        ...report(),
+        columns: report().columns.map((column) => rename.get(column) ?? column),
+        rows: report().rows.map((row) => Object.fromEntries(Object.entries(row).map(([key, value]) => [rename.get(key) ?? key, value])))
+      };
+    })());
+  });
+  legacy_pre_effect_reset();
+  init();
+  var fragment = root6();
+  var div = first_child(fragment);
+  var node = child(div);
+  each(node, 1, () => tabs, (tab) => tab.route, ($$anchor2, tab) => {
+    var h3 = root_110();
+    var node_1 = child(h3);
+    {
+      var consequent = ($$anchor3) => {
+        var text2 = text();
+        template_effect(() => set_text(text2, t(get(tab).key)));
+        append($$anchor3, text2);
+      };
+      var alternate = ($$anchor3) => {
+        var a = root_35();
+        template_effect(() => set_attribute(a, "href", routeHref(get(tab).route)));
+        var text_1 = child(a, true);
+        template_effect(() => set_text(text_1, t(get(tab).key)));
+        reset(a);
+        append($$anchor3, a);
+      };
+      if_block(node_1, ($$render) => {
+        if (get(tab).route === route()) $$render(consequent);
+        else $$render(alternate, false);
+      });
+    }
+    reset(h3);
+    append($$anchor2, h3);
+  });
+  var a_1 = sibling(node, 2);
+  var text_2 = child(a_1, true);
+  template_effect(() => set_text(text_2, t("exportCSV")));
+  reset(a_1);
+  reset(div);
+  var node_2 = sibling(div, 2);
+  GenericReport(node_2, {
+    get report() {
+      return get(labeled);
+    },
+    title: "",
+    get locale() {
+      return locale();
+    },
+    get renderCommas() {
+      return renderCommas();
+    }
+  });
+  template_effect(() => set_attribute(a_1, "href", get(csvHref)));
+  append($$anchor, fragment);
+  pop();
+}
+
 // src/fava/reports/ImportReport.svelte
-var root_110 = template(`<option> </option>`);
+var root_111 = template(`<option> </option>`);
 var root_36 = template(`<li> </li>`);
-var root_25 = template(`<ul class="diagnostics svelte-1iufbd5"></ul>`);
+var root_26 = template(`<ul class="diagnostics svelte-1iufbd5"></ul>`);
 var root_54 = template(`<tr><td> </td><td> </td><td> </td><td> </td></tr>`);
 var root_43 = template(`<table><thead><tr><th>Date</th><th>Account</th><th>Units</th><th>Currency</th></tr></thead><tbody></tbody></table>`);
-var root6 = template(`<div class="headerline"><h2>Import</h2><span class="muted svelte-1iufbd5">Preview before commit</span></div> <div class="toolbar svelte-1iufbd5"><label>Source path <input></label> <label>Adapter <select><option>Beancount</option><option>CSV</option></select></label> <label>Target <select></select></label></div> <textarea class="import-buffer svelte-1iufbd5" placeholder="Paste Beancount or CSV content" spellcheck="false"></textarea> <div class="toolbar svelte-1iufbd5"><button type="button">Preview</button> <button type="button">Commit</button> <span class="muted svelte-1iufbd5" role="status"> </span></div> <!> <!>`, 1);
+var root7 = template(`<div class="headerline"><h2>Import</h2><span class="muted svelte-1iufbd5">Preview before commit</span></div> <div class="toolbar svelte-1iufbd5"><label>Source path <input></label> <label>Adapter <select><option>Beancount</option><option>CSV</option></select></label> <label>Target <select></select></label></div> <textarea class="import-buffer svelte-1iufbd5" placeholder="Paste Beancount or CSV content" spellcheck="false"></textarea> <div class="toolbar svelte-1iufbd5"><button type="button">Preview</button> <button type="button">Commit</button> <span class="muted svelte-1iufbd5" role="status"> </span></div> <!> <!>`, 1);
 function ImportReport($$anchor, $$props) {
   push($$props, false);
   let adapter = prop($$props, "adapter", 8);
@@ -6705,7 +6830,7 @@ function ImportReport($$anchor, $$props) {
     void loadTargets();
   });
   init();
-  var fragment = root6();
+  var fragment = root7();
   var div = sibling(first_child(fragment), 2);
   var label = child(div);
   var input = sibling(child(label));
@@ -6733,7 +6858,7 @@ function ImportReport($$anchor, $$props) {
     });
   });
   each(select_1, 5, () => get(paths), (path) => path, ($$anchor2, path) => {
-    var option_2 = root_110();
+    var option_2 = root_111();
     var option_2_value = {};
     var text2 = child(option_2, true);
     reset(option_2);
@@ -6760,7 +6885,7 @@ function ImportReport($$anchor, $$props) {
   var node = sibling(div_1, 2);
   {
     var consequent = ($$anchor2) => {
-      var ul = root_25();
+      var ul = root_26();
       each(ul, 5, () => get(diagnostics), (diagnostic) => diagnostic.code + diagnostic.line + diagnostic.message, ($$anchor3, diagnostic) => {
         var li = root_36();
         var text_2 = child(li);
@@ -6824,9 +6949,9 @@ function ImportReport($$anchor, $$props) {
 }
 
 // src/fava/reports/QueryReport.svelte
-var root_111 = template(`<p class="error-panel svelte-1k81p2c" role="alert"> </p>`);
+var root_113 = template(`<p class="error-panel svelte-1k81p2c" role="alert"> </p>`);
 var root_37 = template(`<p><a class="button">Export CSV</a></p> <!>`, 1);
-var root7 = template(`<div class="headerline"><h2>Query</h2></div> <form class="query-form svelte-1k81p2c"><label for="query-editor">BeanQuery</label> <textarea id="query-editor" spellcheck="false" rows="4" class="svelte-1k81p2c"></textarea> <button type="submit"> </button></form> <!>`, 1);
+var root8 = template(`<div class="headerline"><h2>Query</h2></div> <form class="query-form svelte-1k81p2c"><label for="query-editor">BeanQuery</label> <textarea id="query-editor" spellcheck="false" rows="4" class="svelte-1k81p2c"></textarea> <button type="submit"> </button></form> <!>`, 1);
 function QueryReport($$anchor, $$props) {
   push($$props, false);
   let adapter = prop($$props, "adapter", 8);
@@ -6849,7 +6974,7 @@ function QueryReport($$anchor, $$props) {
     void run2();
   });
   init();
-  var fragment = root7();
+  var fragment = root8();
   var form = sibling(first_child(fragment), 2);
   var textarea = sibling(child(form), 2);
   remove_textarea_child(textarea);
@@ -6860,7 +6985,7 @@ function QueryReport($$anchor, $$props) {
   var node = sibling(form, 2);
   {
     var consequent = ($$anchor2) => {
-      var p = root_111();
+      var p = root_113();
       var text_1 = child(p, true);
       reset(p);
       template_effect(() => set_text(text_1, get(error)));
@@ -6913,8 +7038,8 @@ function QueryReport($$anchor, $$props) {
 // src/fava/reports/EditorReport.svelte
 var root_114 = template(`<option> </option>`);
 var root_38 = template(`<li> </li>`);
-var root_26 = template(`<ul class="diagnostics svelte-1c22f1y"></ul>`);
-var root8 = template(`<div class="headerline"><h2>Editor</h2><span class="muted svelte-1c22f1y">Reviewed writes only</span></div> <div class="editor-layout svelte-1c22f1y"><aside class="editor-files svelte-1c22f1y"><label for="editor-file">Files</label> <select id="editor-file" class="svelte-1c22f1y"></select></aside> <section class="editor-pane svelte-1c22f1y"><div class="toolbar svelte-1c22f1y"><button id="editor-validate" type="button">Validate</button> <button id="editor-save" type="button">Save</button> <span class="muted svelte-1c22f1y" role="status"> </span></div> <textarea id="editor-buffer" spellcheck="false" aria-label="Ledger source" class="svelte-1c22f1y"></textarea> <!></section></div>`, 1);
+var root_27 = template(`<ul class="diagnostics svelte-1c22f1y"></ul>`);
+var root9 = template(`<div class="headerline"><h2>Editor</h2><span class="muted svelte-1c22f1y">Reviewed writes only</span></div> <div class="editor-layout svelte-1c22f1y"><aside class="editor-files svelte-1c22f1y"><label for="editor-file">Files</label> <select id="editor-file" class="svelte-1c22f1y"></select></aside> <section class="editor-pane svelte-1c22f1y"><div class="toolbar svelte-1c22f1y"><button id="editor-validate" type="button">Validate</button> <button id="editor-save" type="button">Save</button> <span class="muted svelte-1c22f1y" role="status"> </span></div> <textarea id="editor-buffer" spellcheck="false" aria-label="Ledger source" class="svelte-1c22f1y"></textarea> <!></section></div>`, 1);
 function EditorReport($$anchor, $$props) {
   push($$props, false);
   let adapter = prop($$props, "adapter", 8);
@@ -6994,7 +7119,7 @@ function EditorReport($$anchor, $$props) {
     void loadIndex();
   });
   init();
-  var fragment = root8();
+  var fragment = root9();
   var div = sibling(first_child(fragment), 2);
   var aside = child(div);
   var select = sibling(child(aside), 2);
@@ -7035,7 +7160,7 @@ function EditorReport($$anchor, $$props) {
   var node = sibling(textarea, 2);
   {
     var consequent = ($$anchor2) => {
-      var ul = root_26();
+      var ul = root_27();
       each(ul, 5, () => get(diagnostics), (diagnostic) => diagnostic.code + diagnostic.line + diagnostic.message, ($$anchor3, diagnostic) => {
         var li = root_38();
         var text_2 = child(li);
@@ -7069,11 +7194,11 @@ function EditorReport($$anchor, $$props) {
 // src/fava/tree-table/TreeTableNode.svelte
 var on_click3 = (_, onToggle, node) => onToggle()(node().account);
 var root_115 = template(`<button type="button" class="unset expander svelte-xjp7mv"> </button>`);
-var root_27 = template(`<span class="num svelte-xjp7mv"> </span>`);
+var root_28 = template(`<span class="num svelte-xjp7mv"> </span>`);
 var root_44 = template(`<span class="other-line svelte-xjp7mv"> </span>`);
 var root_39 = template(`<span class="other num svelte-xjp7mv"></span>`);
 var root_55 = template(`<ol></ol>`);
-var root9 = template(`<li><p><span class="account-cell svelte-xjp7mv"><!> <a class="account svelte-xjp7mv"> </a></span> <!> <!></p> <!></li>`);
+var root10 = template(`<li><p><span class="account-cell svelte-xjp7mv"><!> <a class="account svelte-xjp7mv"> </a></span> <!> <!></p> <!></li>`);
 function TreeTableNode($$anchor, $$props) {
   push($$props, false);
   const isCollapsed = mutable_state();
@@ -7114,7 +7239,7 @@ function TreeTableNode($$anchor, $$props) {
   );
   legacy_pre_effect_reset();
   init();
-  var li = root9();
+  var li = root10();
   var p = child(li);
   var span = child(p);
   var node_1 = child(span);
@@ -7142,7 +7267,7 @@ function TreeTableNode($$anchor, $$props) {
   reset(span);
   var node_2 = sibling(span, 2);
   each(node_2, 1, currencies, (currency) => currency, ($$anchor2, currency) => {
-    var span_1 = root_27();
+    var span_1 = root_28();
     var text_2 = child(span_1, true);
     template_effect(() => set_text(text_2, formatAmount(get(shown)[get(currency)], renderCommas())));
     reset(span_1);
@@ -7223,8 +7348,8 @@ delegate(["click"]);
 
 // src/fava/tree-table/TreeTable.svelte
 var root_116 = template(`<span class="num"> </span>`);
-var root_28 = template(`<span class="other">Other</span>`);
-var root10 = template(`<ol class="flex-table tree-table-new" data-tree-table=""><li class="head"><p><span class="account-cell svelte-1xyup19"> </span> <!> <!></p></li> <!></ol>`);
+var root_29 = template(`<span class="other">Other</span>`);
+var root11 = template(`<ol class="flex-table tree-table-new" data-tree-table=""><li class="head"><p><span class="account-cell svelte-1xyup19"> </span> <!> <!></p></li> <!></ol>`);
 function TreeTable($$anchor, $$props) {
   push($$props, false);
   const present = mutable_state();
@@ -7262,7 +7387,7 @@ function TreeTable($$anchor, $$props) {
   });
   legacy_pre_effect_reset();
   init();
-  var ol = root10();
+  var ol = root11();
   var li = child(ol);
   var p = child(li);
   var span = child(p);
@@ -7282,7 +7407,7 @@ function TreeTable($$anchor, $$props) {
   var node_2 = sibling(node_1, 2);
   {
     var consequent = ($$anchor2) => {
-      var span_2 = root_28();
+      var span_2 = root_29();
       append($$anchor2, span_2);
     };
     if_block(node_2, ($$render) => {
@@ -7323,9 +7448,9 @@ function TreeTable($$anchor, $$props) {
 
 // src/fava/reports/TreeReport.svelte
 var root_310 = template(`<button type="button" class="unset svelte-1dzjfb9"> </button>`);
-var root_29 = template(`<nav class="chart-picker svelte-1dzjfb9"></nav>`);
+var root_210 = template(`<nav class="chart-picker svelte-1dzjfb9"></nav>`);
 var root_117 = template(`<div class="report-charts"><!> <!></div>`);
-var root11 = template(`<!> <div class="row"><div class="column"></div> <div class="column"></div></div>`, 1);
+var root12 = template(`<!> <div class="row"><div class="column"></div> <div class="column"></div></div>`, 1);
 function TreeReport($$anchor, $$props) {
   push($$props, false);
   const chart2 = mutable_state();
@@ -7360,7 +7485,7 @@ function TreeReport($$anchor, $$props) {
   });
   legacy_pre_effect_reset();
   init();
-  var fragment = root11();
+  var fragment = root12();
   var node = first_child(fragment);
   {
     var consequent_1 = ($$anchor2) => {
@@ -7377,7 +7502,7 @@ function TreeReport($$anchor, $$props) {
       var node_2 = sibling(node_1, 2);
       {
         var consequent = ($$anchor3) => {
-          var nav = root_29();
+          var nav = root_210();
           each(nav, 7, () => report().charts, (option) => option.title, ($$anchor4, option, index2) => {
             var button = root_310();
             button.__click = () => set(selected, get(index2));
@@ -7453,9 +7578,9 @@ var root_118 = template(`<section class="state-panel" role="status">Loading\u202
 var root_311 = template(`<section class="state-panel error-panel" role="alert"> </section>`);
 var root_64 = template(`<details open class="svelte-1o4zw0m"><summary> </summary> <div> </div></details>`);
 var root_56 = template(`<div class="headerline"><h2>Help</h2></div> <!>`, 1);
-var root_83 = template(`<div class="headerline"><h2> </h2></div> <pre class="source-content svelte-1o4zw0m"> </pre>`, 1);
+var root_84 = template(`<div class="headerline"><h2> </h2></div> <pre class="source-content svelte-1o4zw0m"> </pre>`, 1);
 var root_119 = template(`<li><a> </a></li>`);
-var root_103 = template(`<div class="headerline"><h2>Source files</h2></div> <ul class="source-list svelte-1o4zw0m"></ul>`, 1);
+var root_104 = template(`<div class="headerline"><h2>Source files</h2></div> <ul class="source-list svelte-1o4zw0m"></ul>`, 1);
 var root_143 = template(`<label class="button svelte-1o4zw0m"><input type="radio" name="color-scheme" class="svelte-1o4zw0m"> </label>`);
 var root_163 = template(`<select id="fava-option-locale"><option>English</option><option>\u7B80\u4F53\u4E2D\u6587</option></select>`);
 var root_173 = template(`<pre class="svelte-1o4zw0m"> </pre>`);
@@ -7572,7 +7697,7 @@ function UtilityReport($$anchor, $$props) {
               var node_4 = first_child(fragment_4);
               {
                 var consequent_3 = ($$anchor5) => {
-                  var fragment_5 = root_83();
+                  var fragment_5 = root_84();
                   var div_1 = first_child(fragment_5);
                   var h2 = child(div_1);
                   var text_3 = child(h2, true);
@@ -7592,7 +7717,7 @@ function UtilityReport($$anchor, $$props) {
                   var node_5 = first_child(fragment_6);
                   {
                     var consequent_4 = ($$anchor6) => {
-                      var fragment_7 = root_103();
+                      var fragment_7 = root_104();
                       var ul = sibling(first_child(fragment_7), 2);
                       each(ul, 5, () => get(data).paths, (path) => path, ($$anchor7, path) => {
                         var li = root_119();
@@ -7877,7 +8002,7 @@ function notify_err(error, msg = errorWithCauses) {
 // src/fava/components/ReportOutlet.svelte
 var root_120 = template(`<section class="state-panel" role="status" aria-live="polite">Loading report\u2026</section>`);
 var root_312 = template(`<section class="state-panel error-panel" role="alert"> </section>`);
-var root_20 = template(`<section class="route-placeholder"><p class="headerline"><strong>Fava-aligned shell</strong></p> <h2> </h2> <p>This route is staged until its OrangeCount adapter contract is implemented.</p></section>`);
+var root_222 = template(`<section class="route-placeholder"><p class="headerline"><strong>Fava-aligned shell</strong></p> <h2> </h2> <p>This route is staged until its OrangeCount adapter contract is implemented.</p></section>`);
 function ReportOutlet($$anchor, $$props) {
   push($$props, false);
   const requestKey = mutable_state();
@@ -7975,7 +8100,7 @@ function ReportOutlet($$anchor, $$props) {
       var section = root_120();
       append($$anchor2, section);
     };
-    var alternate_9 = ($$anchor2) => {
+    var alternate_10 = ($$anchor2) => {
       var fragment_1 = comment();
       var node_1 = first_child(fragment_1);
       {
@@ -7986,7 +8111,7 @@ function ReportOutlet($$anchor, $$props) {
           template_effect(() => set_text(text2, get(error)));
           append($$anchor3, section_1);
         };
-        var alternate_8 = ($$anchor3) => {
+        var alternate_9 = ($$anchor3) => {
           var fragment_2 = comment();
           var node_2 = first_child(fragment_2);
           {
@@ -7997,7 +8122,7 @@ function ReportOutlet($$anchor, $$props) {
                 }
               });
             };
-            var alternate_7 = ($$anchor4) => {
+            var alternate_8 = ($$anchor4) => {
               var fragment_4 = comment();
               var node_3 = first_child(fragment_4);
               {
@@ -8017,7 +8142,7 @@ function ReportOutlet($$anchor, $$props) {
                     }
                   });
                 };
-                var alternate_6 = ($$anchor5) => {
+                var alternate_7 = ($$anchor5) => {
                   var fragment_6 = comment();
                   var node_4 = first_child(fragment_6);
                   {
@@ -8028,7 +8153,7 @@ function ReportOutlet($$anchor, $$props) {
                         }
                       });
                     };
-                    var alternate_5 = ($$anchor6) => {
+                    var alternate_6 = ($$anchor6) => {
                       var fragment_8 = comment();
                       var node_5 = first_child(fragment_8);
                       {
@@ -8039,7 +8164,7 @@ function ReportOutlet($$anchor, $$props) {
                             }
                           });
                         };
-                        var alternate_4 = ($$anchor7) => {
+                        var alternate_5 = ($$anchor7) => {
                           var fragment_10 = comment();
                           var node_6 = first_child(fragment_10);
                           {
@@ -8068,7 +8193,7 @@ function ReportOutlet($$anchor, $$props) {
                                 }
                               });
                             };
-                            var alternate_3 = ($$anchor8) => {
+                            var alternate_4 = ($$anchor8) => {
                               var fragment_12 = comment();
                               var node_7 = first_child(fragment_12);
                               {
@@ -8088,7 +8213,7 @@ function ReportOutlet($$anchor, $$props) {
                                     }
                                   });
                                 };
-                                var alternate_2 = ($$anchor9) => {
+                                var alternate_3 = ($$anchor9) => {
                                   var fragment_14 = comment();
                                   var node_8 = first_child(fragment_14);
                                   {
@@ -8102,18 +8227,14 @@ function ReportOutlet($$anchor, $$props) {
                                         }
                                       });
                                     };
-                                    var alternate_1 = ($$anchor10) => {
+                                    var alternate_2 = ($$anchor10) => {
                                       var fragment_16 = comment();
                                       var node_9 = first_child(fragment_16);
                                       {
                                         var consequent_9 = ($$anchor11) => {
-                                          var title = derived_safe_equal(() => pageLabel(route()));
-                                          GenericReport($$anchor11, {
+                                          HoldingsReport($$anchor11, {
                                             get report() {
                                               return get(table);
-                                            },
-                                            get title() {
-                                              return get(title);
                                             },
                                             get route() {
                                               return route();
@@ -8126,21 +8247,56 @@ function ReportOutlet($$anchor, $$props) {
                                             }
                                           });
                                         };
-                                        var alternate = ($$anchor11) => {
-                                          var section_2 = root_20();
-                                          var h2 = sibling(child(section_2), 2);
-                                          var text_1 = child(h2, true);
-                                          reset(h2);
-                                          next(2);
-                                          reset(section_2);
-                                          template_effect(() => set_text(text_1, route()));
-                                          append($$anchor11, section_2);
+                                        var alternate_1 = ($$anchor11) => {
+                                          var fragment_18 = comment();
+                                          var node_10 = first_child(fragment_18);
+                                          {
+                                            var consequent_10 = ($$anchor12) => {
+                                              var title = derived_safe_equal(() => pageLabel(route()));
+                                              GenericReport($$anchor12, {
+                                                get report() {
+                                                  return get(table);
+                                                },
+                                                get title() {
+                                                  return get(title);
+                                                },
+                                                get route() {
+                                                  return route();
+                                                },
+                                                get locale() {
+                                                  return locale();
+                                                },
+                                                get renderCommas() {
+                                                  return renderCommas();
+                                                }
+                                              });
+                                            };
+                                            var alternate = ($$anchor12) => {
+                                              var section_2 = root_222();
+                                              var h2 = sibling(child(section_2), 2);
+                                              var text_1 = child(h2, true);
+                                              reset(h2);
+                                              next(2);
+                                              reset(section_2);
+                                              template_effect(() => set_text(text_1, route()));
+                                              append($$anchor12, section_2);
+                                            };
+                                            if_block(
+                                              node_10,
+                                              ($$render) => {
+                                                if (get(table)) $$render(consequent_10);
+                                                else $$render(alternate, false);
+                                              },
+                                              true
+                                            );
+                                          }
+                                          append($$anchor11, fragment_18);
                                         };
                                         if_block(
                                           node_9,
                                           ($$render) => {
-                                            if (get(table)) $$render(consequent_9);
-                                            else $$render(alternate, false);
+                                            if (get(table) && (route() === "holdings" || route().startsWith("holdings_by_"))) $$render(consequent_9);
+                                            else $$render(alternate_1, false);
                                           },
                                           true
                                         );
@@ -8151,7 +8307,7 @@ function ReportOutlet($$anchor, $$props) {
                                       node_8,
                                       ($$render) => {
                                         if (get(journal)) $$render(consequent_8);
-                                        else $$render(alternate_1, false);
+                                        else $$render(alternate_2, false);
                                       },
                                       true
                                     );
@@ -8162,7 +8318,7 @@ function ReportOutlet($$anchor, $$props) {
                                   node_7,
                                   ($$render) => {
                                     if (get(report)) $$render(consequent_7);
-                                    else $$render(alternate_2, false);
+                                    else $$render(alternate_3, false);
                                   },
                                   true
                                 );
@@ -8173,7 +8329,7 @@ function ReportOutlet($$anchor, $$props) {
                               node_6,
                               ($$render) => {
                                 if (["options", "help", "diagnostics", "source"].includes(route())) $$render(consequent_6);
-                                else $$render(alternate_3, false);
+                                else $$render(alternate_4, false);
                               },
                               true
                             );
@@ -8184,7 +8340,7 @@ function ReportOutlet($$anchor, $$props) {
                           node_5,
                           ($$render) => {
                             if (route() === "import") $$render(consequent_5);
-                            else $$render(alternate_4, false);
+                            else $$render(alternate_5, false);
                           },
                           true
                         );
@@ -8195,7 +8351,7 @@ function ReportOutlet($$anchor, $$props) {
                       node_4,
                       ($$render) => {
                         if (route() === "editor") $$render(consequent_4);
-                        else $$render(alternate_5, false);
+                        else $$render(alternate_6, false);
                       },
                       true
                     );
@@ -8206,7 +8362,7 @@ function ReportOutlet($$anchor, $$props) {
                   node_3,
                   ($$render) => {
                     if (route() === "account") $$render(consequent_3);
-                    else $$render(alternate_6, false);
+                    else $$render(alternate_7, false);
                   },
                   true
                 );
@@ -8217,7 +8373,7 @@ function ReportOutlet($$anchor, $$props) {
               node_2,
               ($$render) => {
                 if (route() === "query") $$render(consequent_2);
-                else $$render(alternate_7, false);
+                else $$render(alternate_8, false);
               },
               true
             );
@@ -8228,7 +8384,7 @@ function ReportOutlet($$anchor, $$props) {
           node_1,
           ($$render) => {
             if (get(error)) $$render(consequent_1);
-            else $$render(alternate_8, false);
+            else $$render(alternate_9, false);
           },
           true
         );
@@ -8237,7 +8393,7 @@ function ReportOutlet($$anchor, $$props) {
     };
     if_block(node, ($$render) => {
       if (get(loading)) $$render(consequent);
-      else $$render(alternate_9, false);
+      else $$render(alternate_10, false);
     });
   }
   append($$anchor, fragment);
@@ -8258,8 +8414,8 @@ var on_click_12 = (event2, onNavigate) => {
   onNavigate()(routeHref("errors"));
 };
 var root_74 = template(`<ul class="navigation svelte-611do5"><li class="svelte-611do5"><a class="svelte-611do5"> </a></li></ul>`);
-var root_210 = template(`<ul class="navigation svelte-611do5"><!> <!> <!></ul> <!>`, 1);
-var root12 = template(`<!> <div class="aside-buttons svelte-611do5"><button id="menu-toggle" type="button" aria-controls="sidebar" aria-label="Menu" class="svelte-611do5">\u2630</button> <a class="button svelte-611do5" href="#add-transaction" aria-label="Add transaction">+</a></div> <aside id="sidebar" aria-label="Primary navigation" class="svelte-611do5"></aside>`, 1);
+var root_211 = template(`<ul class="navigation svelte-611do5"><!> <!> <!></ul> <!>`, 1);
+var root13 = template(`<!> <div class="aside-buttons svelte-611do5"><button id="menu-toggle" type="button" aria-controls="sidebar" aria-label="Menu" class="svelte-611do5">\u2630</button> <a class="button svelte-611do5" href="#add-transaction" aria-label="Add transaction">+</a></div> <aside id="sidebar" aria-label="Primary navigation" class="svelte-611do5"></aside>`, 1);
 function Sidebar($$anchor, $$props) {
   push($$props, false);
   let route = prop($$props, "route", 8);
@@ -8347,7 +8503,7 @@ function Sidebar($$anchor, $$props) {
     return catalog[key] || key;
   }
   init();
-  var fragment = root12();
+  var fragment = root13();
   var node = first_child(fragment);
   {
     var consequent = ($$anchor2) => {
@@ -8372,7 +8528,7 @@ function Sidebar($$anchor, $$props) {
   each(aside, 5, () => sections, index, ($$anchor2, $$item, sectionIndex) => {
     let heading = () => get($$item)[0];
     let items = () => get($$item)[1];
-    var fragment_1 = root_210();
+    var fragment_1 = root_211();
     var ul = first_child(fragment_1);
     var node_1 = child(ul);
     {
@@ -8619,8 +8775,8 @@ function createShellStore(initial) {
 }
 
 // src/fava/App.svelte
-var root_123 = template(`<meta name="description" content="OrangeCount local ledger interface">`);
-var root13 = template(`<!> <!> <article id="main-content" tabindex="-1"><!></article>`, 1);
+var root_124 = template(`<meta name="description" content="OrangeCount local ledger interface">`);
+var root14 = template(`<!> <!> <article id="main-content" tabindex="-1"><!></article>`, 1);
 function App($$anchor, $$props) {
   push($$props, false);
   const $$stores = setup_stores();
@@ -8758,9 +8914,9 @@ function App($$anchor, $$props) {
   });
   legacy_pre_effect_reset();
   init();
-  var fragment = root13();
+  var fragment = root14();
   head(($$anchor2) => {
-    var meta = root_123();
+    var meta = root_124();
     template_effect(() => $document.title = `${get(current).ledgerTitle ?? ""} \u203A ${(get(current).account || get(current).route) ?? ""}`);
     append($$anchor2, meta);
   });

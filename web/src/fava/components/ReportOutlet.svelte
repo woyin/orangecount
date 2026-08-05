@@ -2,6 +2,7 @@
   import type { AdapterClient } from "../adapter-client";
   import AccountReport from "../reports/AccountReport.svelte";
   import GenericReport from "../reports/GenericReport.svelte";
+  import HoldingsReport from "../reports/HoldingsReport.svelte";
   import ImportReport from "../reports/ImportReport.svelte";
   import JournalReport from "../reports/JournalReport.svelte";
   import QueryReport from "../reports/QueryReport.svelte";
@@ -83,6 +84,8 @@
   <TreeReport {report} {locale} {operatingCurrencies} {renderCommas} />
 {:else if journal}
   <JournalReport report={journal} {renderCommas} />
+{:else if table && (route === "holdings" || route.startsWith("holdings_by_"))}
+  <HoldingsReport report={table} {route} {locale} {renderCommas} />
 {:else if table}
   <GenericReport report={table} title={pageLabel(route)} {route} {locale} {renderCommas} />
 {:else}
