@@ -7002,6 +7002,48 @@ function UtilityReport($$anchor, $$props) {
   pop();
 }
 
+// src/fava/lib/errors.ts
+function errorWithCauses(error) {
+  const msg = error.message;
+  return error.cause instanceof Error ? `${msg}
+  Caused by: ${errorWithCauses(error.cause)}` : error.message;
+}
+
+// src/fava/notifications.ts
+var notificationList = /* @__PURE__ */ (() => {
+  let value = null;
+  return () => {
+    if (value == null) {
+      value = document.createElement("div");
+      value.className = "notifications";
+      value.style.right = "10px";
+      document.body.appendChild(value);
+    }
+    const headerHeight = document.querySelector("header")?.getBoundingClientRect().height ?? 50;
+    value.style.top = `${(headerHeight + 10).toString()}px`;
+    return value;
+  };
+})();
+function notify(msg, cls = "info", callback) {
+  const notification = document.createElement("li");
+  notification.classList.add(cls);
+  notification.appendChild(document.createTextNode(msg));
+  notificationList().append(notification);
+  notification.addEventListener("click", () => {
+    notification.remove();
+    callback?.();
+  });
+  setTimeout(() => {
+    notification.remove();
+  }, 5e3);
+}
+function notify_err(error, msg = errorWithCauses) {
+  if (error instanceof Error) {
+    notify(msg(error), "error");
+  }
+  console.error(error);
+}
+
 // src/fava/components/ReportOutlet.svelte
 var root_119 = template(`<section class="state-panel" role="status" aria-live="polite">Loading report\u2026</section>`);
 var root_311 = template(`<section class="state-panel error-panel" role="alert"> </section>`);
@@ -7077,6 +7119,7 @@ function ReportOutlet($$anchor, $$props) {
       }
     } catch (value) {
       if (key !== get(requestKey)) return;
+      notify_err(value);
       set(error, value instanceof Error ? value.message : "The report could not be loaded.");
     } finally {
       if (key === get(requestKey)) set(loading, false);
@@ -7902,6 +7945,7 @@ function App($$anchor, $$props) {
         renderCommas: payload.render_commas
       });
     } catch (error) {
+      notify_err(error);
       shell.dispatch({
         type: "error",
         message: error instanceof Error ? error.message : "The local adapter could not load this view."

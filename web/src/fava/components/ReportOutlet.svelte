@@ -8,6 +8,7 @@
   import EditorReport from "../reports/EditorReport.svelte";
   import TreeReport from "../reports/TreeReport.svelte";
   import UtilityReport from "../reports/UtilityReport.svelte";
+  import { notify_err } from "../notifications";
   import { pageLabel } from "../router.mjs";
   import { parseJournalReport, parseTableReport, parseTreeReport, type JournalReport as JournalReportData, type TableReport, type TreeReport as TreeReportData } from "../reports/types";
 
@@ -56,6 +57,7 @@
       }
     } catch (value) {
       if (key !== requestKey) return;
+      notify_err(value);
       error = value instanceof Error ? value.message : "The report could not be loaded.";
     } finally {
       if (key === requestKey) loading = false;

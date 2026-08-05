@@ -451,6 +451,22 @@
       "upstream_hash": "793d0036379737db66b743c8474cfd9d71fa9cd2137545da9b7a15c9420529dc",
       "notice": "NOTICE",
       "notes": "Keyboard shortcut handling transplanted at the pinned reference revision; exposed as a Svelte action because the pinned Svelte version lacks the upstream attachment API."
+    },
+    "web/src/fava/lib/errors.ts": {
+      "current_kind": "derived",
+      "upstream": "frontend/src/lib/errors.ts",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "b3206254d0b8b53510278be4798fce71c45f87051a8a874bed79e601eab4addd",
+      "notice": "NOTICE",
+      "notes": "Error rendering helpers transplanted at the pinned reference revision; console logging replaces Fava's log store."
+    },
+    "web/src/fava/notifications.ts": {
+      "current_kind": "derived",
+      "upstream": "frontend/src/notifications.ts",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "3f83a2f2ce313f5fa588bfa204293346e3c5532f0298379af98c2267e3fc708e",
+      "notice": "NOTICE",
+      "notes": "Toast notification helpers transplanted at the pinned reference revision; console logging replaces Fava's log store."
     }
   }
 }
