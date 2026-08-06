@@ -33,7 +33,21 @@
     return Number.isFinite(parsed) ? parsed : 0;
   }
 
-  $: pointValues = chart.series.flatMap((series) => series.points.map((point) => numberValue(point.value)));
+  // Fava's chart legend doubles as a per-currency selector: clicking an entry
+  // toggles that series out of the plot (and back in). Hidden labels live here;
+  // the value extent below re-derives from whatever stays visible so the
+  // y-scale re-fits.
+  let hidden: string[] = [];
+  function toggleSeries(seriesLabel: string) {
+    hidden = hidden.includes(seriesLabel) ? hidden.filter((value) => value !== seriesLabel) : [...hidden, seriesLabel];
+  }
+  $: visibleSeries = chart.series.filter((series) => !hidden.includes(series.label));
+  function colorFor(seriesLabel: string): string {
+    const index = chart.series.findIndex((series) => series.label === seriesLabel);
+    return colors[(index < 0 ? 0 : index) % colors.length];
+  }
+
+  $: pointValues = visibleSeries.flatMap((series) => series.points.map((point) => numberValue(point.value)));
   $: min = Math.min(0, ...(pointValues.length ? pointValues : [0]));
   $: max = Math.max(0, ...(pointValues.length ? pointValues : [0]));
   $: range = max - min || 1;
@@ -280,11 +294,11 @@
         <text x={X0 - 1} y={y(tick) + 1} class="chart-tick" text-anchor="end">{tickLabel(tick)}</text>
       {/each}
       <line x1={X0} y1={y(0)} x2={X1} y2={y(0)} class="chart-axis" />
-      {#each chart.series as series, seriesIndex (series.label)}
+      {#each visibleSeries as series, seriesIndex (series.label)}
         {#each series.points as point, index (point.date)}
           {@const value = numberValue(point.value)}
-          {@const barWidth = Math.max(1, (X1 - X0) / Math.max(1, width) / Math.max(1, chart.series.length))}
-          <rect x={x(index) - (X1 - X0) / (2 * Math.max(1, width)) + seriesIndex * barWidth} y={barY(value)} width={barWidth - .25} height={barHeight(value)} style={`fill:${colors[seriesIndex % colors.length]}`} />
+          {@const barWidth = Math.max(1, (X1 - X0) / Math.max(1, width) / Math.max(1, visibleSeries.length))}
+          <rect x={x(index) - (X1 - X0) / (2 * Math.max(1, width)) + seriesIndex * barWidth} y={barY(value)} width={barWidth - .25} height={barHeight(value)} style={`fill:${colorFor(series.label)}`} />
         {/each}
       {/each}
       {#each xTickIndices as index (index)}
@@ -301,8 +315,8 @@
         <text x={X0 - 1} y={y(tick) + 1} class="chart-tick" text-anchor="end">{tickLabel(tick)}</text>
       {/each}
       <line x1={X0} y1={y(0)} x2={X1} y2={y(0)} class="chart-axis" />
-      {#each chart.series as series, index (series.label)}
-        <path d={linePath(series.points)} style={`stroke:${colors[index % colors.length]}`} />
+      {#each visibleSeries as series (series.label)}
+        <path d={linePath(series.points)} style={`stroke:${colorFor(series.label)}`} />
       {/each}
       {#each xTickIndices as index (index)}
         {@const point = chart.series[0]?.points[index]}
@@ -313,8 +327,14 @@
     </svg>
   {/if}
   <p class="chart-meta">{chart.interval} · {chart.valuation}{chart.currency ? ` · ${chart.currency}` : ""}</p>
-  {#each chart.series as series, index (series.label)}
-    <span class="legend"><i style={`background:${colors[index % colors.length]}`}></i>{series.label}</span>
+  {#each chart.series as series (series.label)}
+    <button
+      type="button"
+      class="legend"
+      class:inactive={hidden.includes(series.label)}
+      aria-pressed={!hidden.includes(series.label)}
+      on:click={() => toggleSeries(series.label)}
+    ><i style={`background:${colorFor(series.label)}`}></i><span>{series.label}</span></button>
   {/each}
   {#if availabilityText}
     <p class="chart-availability">{availabilityText}</p>
@@ -367,7 +387,9 @@
   .chart-axis { stroke: var(--chart-axis); stroke-width: .25; vector-effect: non-scaling-stroke; }
   .chart-grid { stroke: var(--border); stroke-width: .2; vector-effect: non-scaling-stroke; opacity: .5; }
   .chart-tick { font-size: 2.6px; fill: var(--text-color-lighter); }
-  .legend { display: inline-flex; gap: .3rem; align-items: center; margin: 0 .75rem .5rem 0; }
+  .legend { display: inline-flex; gap: .3rem; align-items: center; margin: 0 .75rem .5rem 0; background: none; border: none; padding: 0; font: inherit; color: inherit; cursor: pointer; }
   .legend i { display: inline-block; width: .7rem; height: .7rem; border-radius: 50%; }
+  .legend.inactive span { text-decoration: line-through; }
+  .legend.inactive i { filter: grayscale(); }
   table { min-width: 32rem; }
 </style>

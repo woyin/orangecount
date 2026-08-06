@@ -5572,33 +5572,34 @@ function parseJournalReport(value) {
 }
 
 // src/fava/charts/ReportChart.svelte
-var root_4 = ns_template(`<path opacity=".8" class="svelte-asj929"><title> </title></path>`);
-var root_33 = template(`<svg class="report-chart report-hierarchy-chart report-sunburst-chart svelte-asj929" viewBox="0 0 100 100" role="img"></svg>`);
+var root_4 = ns_template(`<path opacity=".8" class="svelte-9hvjby"><title> </title></path>`);
+var root_33 = template(`<svg class="report-chart report-hierarchy-chart report-sunburst-chart svelte-9hvjby" viewBox="0 0 100 100" role="img"></svg>`);
 var root_7 = ns_template(`<rect opacity=".8"><title> </title></rect>`);
-var root_62 = template(`<svg class="report-chart report-hierarchy-chart svelte-asj929" preserveAspectRatio="none" role="img"></svg>`);
+var root_62 = template(`<svg class="report-chart report-hierarchy-chart svelte-9hvjby" preserveAspectRatio="none" role="img"></svg>`);
 var root_9 = ns_template(`<rect opacity=".8"><title> </title></rect>`);
-var root_8 = template(`<svg class="report-chart report-hierarchy-chart svelte-asj929" viewBox="0 0 100 52" preserveAspectRatio="none" role="img"></svg>`);
-var root_22 = template(`<div class="hierarchy-picker svelte-asj929"><button type="button" class="unset svelte-asj929"> </button> <button type="button" class="unset svelte-asj929"> </button> <button type="button" class="unset svelte-asj929"> </button></div> <!>`, 1);
-var root_122 = ns_template(`<line class="chart-grid svelte-asj929"></line><text class="chart-tick svelte-asj929" text-anchor="end"> </text>`, 1);
+var root_8 = template(`<svg class="report-chart report-hierarchy-chart svelte-9hvjby" viewBox="0 0 100 52" preserveAspectRatio="none" role="img"></svg>`);
+var root_22 = template(`<div class="hierarchy-picker svelte-9hvjby"><button type="button" class="unset svelte-9hvjby"> </button> <button type="button" class="unset svelte-9hvjby"> </button> <button type="button" class="unset svelte-9hvjby"> </button></div> <!>`, 1);
+var root_122 = ns_template(`<line class="chart-grid svelte-9hvjby"></line><text class="chart-tick svelte-9hvjby" text-anchor="end"> </text>`, 1);
 var root_14 = ns_template(`<rect></rect>`);
-var root_16 = ns_template(`<text y="51" class="chart-tick svelte-asj929" text-anchor="middle"> </text>`);
-var root_11 = template(`<svg class="report-chart report-bar-chart svelte-asj929" viewBox="0 0 100 52" role="img"><!><line class="chart-axis svelte-asj929"></line><!><!></svg>`);
-var root_18 = ns_template(`<line class="chart-grid svelte-asj929"></line><text class="chart-tick svelte-asj929" text-anchor="end"> </text>`, 1);
-var root_19 = ns_template(`<path class="svelte-asj929"></path>`);
-var root_21 = ns_template(`<text y="51" class="chart-tick svelte-asj929" text-anchor="middle"> </text>`);
-var root_17 = template(`<svg class="report-chart report-line-chart svelte-asj929" viewBox="0 0 100 52" role="img"><!><line class="chart-axis svelte-asj929"></line><!><!></svg>`);
-var root_222 = template(`<span class="legend svelte-asj929"><i class="svelte-asj929"></i> </span>`);
-var root_23 = template(`<p class="chart-availability svelte-asj929"> </p>`);
+var root_16 = ns_template(`<text y="51" class="chart-tick svelte-9hvjby" text-anchor="middle"> </text>`);
+var root_11 = template(`<svg class="report-chart report-bar-chart svelte-9hvjby" viewBox="0 0 100 52" role="img"><!><line class="chart-axis svelte-9hvjby"></line><!><!></svg>`);
+var root_18 = ns_template(`<line class="chart-grid svelte-9hvjby"></line><text class="chart-tick svelte-9hvjby" text-anchor="end"> </text>`, 1);
+var root_19 = ns_template(`<path class="svelte-9hvjby"></path>`);
+var root_21 = ns_template(`<text y="51" class="chart-tick svelte-9hvjby" text-anchor="middle"> </text>`);
+var root_17 = template(`<svg class="report-chart report-line-chart svelte-9hvjby" viewBox="0 0 100 52" role="img"><!><line class="chart-axis svelte-9hvjby"></line><!><!></svg>`);
+var root_222 = template(`<button type="button" class="legend svelte-9hvjby"><i class="svelte-9hvjby"></i><span class="svelte-9hvjby"> </span></button>`);
+var root_23 = template(`<p class="chart-availability svelte-9hvjby"> </p>`);
 var root_24 = template(`<th scope="col" class="num"> </th>`);
 var root_26 = template(`<td class="num"> </td>`);
 var root_25 = template(`<tr><th scope="row"> </th><!></tr>`);
 var root_27 = template(`<tr><td>No chart data.</td></tr>`);
-var root_15 = template(`<section class="chart-card svelte-asj929"><h3> </h3> <!> <p class="chart-meta svelte-asj929"> </p> <!> <!> <details class="chart-data svelte-asj929"><summary class="svelte-asj929"> </summary> <div class="chart-scroll svelte-asj929"><table class="svelte-asj929"><thead><tr><th scope="col">Period</th><!></tr></thead><tbody></tbody></table></div></details></section>`);
+var root_15 = template(`<section class="chart-card svelte-9hvjby"><h3> </h3> <!> <p class="chart-meta svelte-9hvjby"> </p> <!> <!> <details class="chart-data svelte-9hvjby"><summary class="svelte-9hvjby"> </summary> <div class="chart-scroll svelte-9hvjby"><table class="svelte-9hvjby"><thead><tr><th scope="col">Period</th><!></tr></thead><tbody></tbody></table></div></details></section>`);
 function ReportChart($$anchor, $$props) {
   push($$props, false);
   const catalog = mutable_state();
   const availabilityKey = mutable_state();
   const availabilityText = mutable_state();
+  const visibleSeries = mutable_state();
   const pointValues = mutable_state();
   const min = mutable_state();
   const max = mutable_state();
@@ -5636,6 +5637,14 @@ function ReportChart($$anchor, $$props) {
     }
     const parsed = Number(value.display);
     return Number.isFinite(parsed) ? parsed : 0;
+  }
+  let hidden = mutable_state([]);
+  function toggleSeries(seriesLabel) {
+    set(hidden, get(hidden).includes(seriesLabel) ? get(hidden).filter((value) => value !== seriesLabel) : [...get(hidden), seriesLabel]);
+  }
+  function colorFor(seriesLabel) {
+    const index2 = chart2().series.findIndex((series) => series.label === seriesLabel);
+    return colors[(index2 < 0 ? 0 : index2) % colors.length];
   }
   const X0 = 14;
   const X1 = 98;
@@ -5822,8 +5831,14 @@ function ReportChart($$anchor, $$props) {
   legacy_pre_effect(() => get(availabilityKey), () => {
     set(availabilityText, get(availabilityKey) ? label(get(availabilityKey)) : "");
   });
-  legacy_pre_effect(() => deep_read_state(chart2()), () => {
-    set(pointValues, chart2().series.flatMap((series) => series.points.map((point) => numberValue(point.value))));
+  legacy_pre_effect(
+    () => (deep_read_state(chart2()), get(hidden)),
+    () => {
+      set(visibleSeries, chart2().series.filter((series) => !get(hidden).includes(series.label)));
+    }
+  );
+  legacy_pre_effect(() => get(visibleSeries), () => {
+    set(pointValues, get(visibleSeries).flatMap((series) => series.points.map((point) => numberValue(point.value))));
   });
   legacy_pre_effect(() => get(pointValues), () => {
     set(min, Math.min(0, ...get(pointValues).length ? get(pointValues) : [0]));
@@ -6029,19 +6044,20 @@ function ReportChart($$anchor, $$props) {
           set_attribute(line_1, "x2", X1);
           template_effect(() => set_attribute(line_1, "y2", y(0)));
           var node_6 = sibling(line_1);
-          each(node_6, 3, () => chart2().series, (series) => series.label, ($$anchor4, series, seriesIndex) => {
+          each(node_6, 3, () => get(visibleSeries), (series) => series.label, ($$anchor4, series, seriesIndex) => {
             var fragment_4 = comment();
             var node_7 = first_child(fragment_4);
             each(node_7, 3, () => get(series).points, (point) => point.date, ($$anchor5, point, index2) => {
               var rect_3 = root_14();
               const value = derived_safe_equal(() => numberValue(get(point).value));
-              const barWidth = derived_safe_equal(() => Math.max(1, (X1 - X0) / Math.max(1, get(width)) / Math.max(1, chart2().series.length)));
+              const barWidth = derived_safe_equal(() => Math.max(1, (X1 - X0) / Math.max(1, get(width)) / Math.max(1, get(visibleSeries).length)));
               template_effect(() => set_attribute(rect_3, "x", x(get(index2)) - (X1 - X0) / (2 * Math.max(1, get(width))) + get(seriesIndex) * get(barWidth)));
               template_effect(() => set_attribute(rect_3, "y", barY(get(value))));
               template_effect(() => set_attribute(rect_3, "height", barHeight(get(value))));
+              const style_derived_3 = derived_safe_equal(() => `fill:${colorFor(get(series).label)}`);
               template_effect(() => {
                 set_attribute(rect_3, "width", get(barWidth) - 0.25);
-                set_attribute(rect_3, "style", `fill:${colors[get(seriesIndex) % colors.length]}`);
+                set_attribute(rect_3, "style", get(style_derived_3));
               });
               append($$anchor5, rect_3);
             });
@@ -6095,10 +6111,11 @@ function ReportChart($$anchor, $$props) {
           set_attribute(line_3, "x2", X1);
           template_effect(() => set_attribute(line_3, "y2", y(0)));
           var node_11 = sibling(line_3);
-          each(node_11, 3, () => chart2().series, (series) => series.label, ($$anchor4, series, index2) => {
+          each(node_11, 1, () => get(visibleSeries), (series) => series.label, ($$anchor4, series) => {
             var path_1 = root_19();
             template_effect(() => set_attribute(path_1, "d", linePath(get(series).points)));
-            template_effect(() => set_attribute(path_1, "style", `stroke:${colors[get(index2) % colors.length]}`));
+            const style_derived_4 = derived_safe_equal(() => `stroke:${colorFor(get(series).label)}`);
+            template_effect(() => set_attribute(path_1, "style", get(style_derived_4)));
             append($$anchor4, path_1);
           });
           var node_12 = sibling(node_11);
@@ -6145,16 +6162,23 @@ function ReportChart($$anchor, $$props) {
   var text_15 = child(p);
   reset(p);
   var node_14 = sibling(p, 2);
-  each(node_14, 3, () => chart2().series, (series) => series.label, ($$anchor2, series, index2) => {
-    var span_1 = root_222();
-    var i = child(span_1);
-    var text_16 = sibling(i, 1, true);
+  each(node_14, 1, () => chart2().series, (series) => series.label, ($$anchor2, series) => {
+    var button_3 = root_222();
+    template_effect(() => set_attribute(button_3, "aria-pressed", !get(hidden).includes(get(series).label)));
+    const class_directive = derived_safe_equal(() => get(hidden).includes(get(series).label));
+    var i = child(button_3);
+    const style_derived_5 = derived_safe_equal(() => `background:${colorFor(get(series).label)}`);
+    var span_1 = sibling(i);
+    var text_16 = child(span_1, true);
     reset(span_1);
+    reset(button_3);
     template_effect(() => {
-      set_attribute(i, "style", `background:${colors[get(index2) % colors.length]}`);
+      toggle_class(button_3, "inactive", get(class_directive));
+      set_attribute(i, "style", get(style_derived_5));
       set_text(text_16, get(series).label);
     });
-    append($$anchor2, span_1);
+    event("click", button_3, () => toggleSeries(get(series).label));
+    append($$anchor2, button_3);
   });
   var node_15 = sibling(node_14, 2);
   {
