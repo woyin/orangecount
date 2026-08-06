@@ -39,13 +39,53 @@
   $: range = max - min || 1;
   $: width = Math.max(1, chart.series[0]?.points.length ?? 1);
 
-  function x(index: number): number { return width === 1 ? 50 : (index / (width - 1)) * 96 + 2; }
-  function y(value: number): number { return 48 - ((value - min) / range) * 44; }
+  // Plot area: a left gutter carries the value labels, the bottom strip the
+  // period labels.
+  const X0 = 14;
+  const X1 = 98;
+  function x(index: number): number { return width === 1 ? (X0 + X1) / 2 : X0 + (index / (width - 1)) * (X1 - X0); }
+  function y(value: number): number { return 44 - ((value - min) / range) * 42; }
   function linePath(points: { value: { display: string } }[]): string {
     return points.map((point, index) => `${index ? "L" : "M"}${x(index).toFixed(2)},${y(numberValue(point.value)).toFixed(2)}`).join(" ");
   }
   function barHeight(value: number): number { return Math.max(0.5, Math.abs(y(value) - y(0))); }
   function barY(value: number): number { return value >= 0 ? y(value) : y(0); }
+
+  // "Nice" value ticks: step rounds to 1/2/5 times a power of ten, like the
+  // d3 axis the upstream charts use.
+  function niceTicks(lo: number, hi: number, count = 4): number[] {
+    if (!(hi > lo)) return [lo];
+    const step0 = (hi - lo) / count;
+    const magnitude = Math.pow(10, Math.floor(Math.log10(step0)));
+    const residual = step0 / magnitude;
+    const step = (residual >= 5 ? 5 : residual >= 2 ? 2 : 1) * magnitude;
+    const ticks: number[] = [];
+    for (let value = Math.ceil(lo / step) * step; value <= hi + step / 1e6; value += step) {
+      ticks.push(value);
+    }
+    return ticks;
+  }
+  $: yTicks = niceTicks(min, max);
+  $: tickFormat = new Intl.NumberFormat(locale === "zh-CN" ? "zh-CN" : "en", { notation: "compact", maximumFractionDigits: 1 });
+  function tickLabel(value: number): string { return tickFormat.format(Math.abs(value) < 1e-9 ? 0 : value); }
+
+  // Sparse period labels: always the first and last point, plus evenly spaced
+  // stops between when the series is long.
+  $: xTickIndices = (() => {
+    const points = chart.series[0]?.points ?? [];
+    if (points.length <= 6) return points.map((_, index) => index);
+    const count = 5;
+    const indices: number[] = [];
+    for (let stop = 0; stop < count; stop += 1) {
+      indices.push(Math.round((stop * (points.length - 1)) / (count - 1)));
+    }
+    return indices;
+  })();
+  function xTickLabel(date: string): string {
+    if (chart.interval === "year") return date.slice(0, 4);
+    if (chart.interval === "day") return date;
+    return date.slice(0, 7);
+  }
 
   // --- Treemap -------------------------------------------------------------
   // Only leaf accounts are laid out: an aggregate's area is the sum of its
@@ -235,20 +275,40 @@
     {/if}
   {:else if chart.kind === "stacked-bar" || chart.kind === "bar"}
     <svg class="report-chart report-bar-chart" viewBox="0 0 100 52" role="img" aria-label={chart.title}>
-      <line x1="2" y1={y(0)} x2="98" y2={y(0)} class="chart-axis" />
+      {#each yTicks as tick (tick)}
+        <line x1={X0} y1={y(tick)} x2={X1} y2={y(tick)} class="chart-grid" />
+        <text x={X0 - 1} y={y(tick) + 1} class="chart-tick" text-anchor="end">{tickLabel(tick)}</text>
+      {/each}
+      <line x1={X0} y1={y(0)} x2={X1} y2={y(0)} class="chart-axis" />
       {#each chart.series as series, seriesIndex (series.label)}
         {#each series.points as point, index (point.date)}
           {@const value = numberValue(point.value)}
-          {@const barWidth = Math.max(1, 90 / Math.max(1, width) / Math.max(1, chart.series.length))}
-          <rect x={x(index) - 45 / Math.max(1, width) + seriesIndex * barWidth} y={barY(value)} width={barWidth - .25} height={barHeight(value)} style={`fill:${colors[seriesIndex % colors.length]}`} />
+          {@const barWidth = Math.max(1, (X1 - X0) / Math.max(1, width) / Math.max(1, chart.series.length))}
+          <rect x={x(index) - (X1 - X0) / (2 * Math.max(1, width)) + seriesIndex * barWidth} y={barY(value)} width={barWidth - .25} height={barHeight(value)} style={`fill:${colors[seriesIndex % colors.length]}`} />
         {/each}
+      {/each}
+      {#each xTickIndices as index (index)}
+        {@const point = chart.series[0]?.points[index]}
+        {#if point}
+          <text x={x(index)} y="51" class="chart-tick" text-anchor="middle">{xTickLabel(point.date)}</text>
+        {/if}
       {/each}
     </svg>
   {:else}
     <svg class="report-chart report-line-chart" viewBox="0 0 100 52" role="img" aria-label={chart.title}>
-      <line x1="2" y1={y(0)} x2="98" y2={y(0)} class="chart-axis" />
+      {#each yTicks as tick (tick)}
+        <line x1={X0} y1={y(tick)} x2={X1} y2={y(tick)} class="chart-grid" />
+        <text x={X0 - 1} y={y(tick) + 1} class="chart-tick" text-anchor="end">{tickLabel(tick)}</text>
+      {/each}
+      <line x1={X0} y1={y(0)} x2={X1} y2={y(0)} class="chart-axis" />
       {#each chart.series as series, index (series.label)}
         <path d={linePath(series.points)} style={`stroke:${colors[index % colors.length]}`} />
+      {/each}
+      {#each xTickIndices as index (index)}
+        {@const point = chart.series[0]?.points[index]}
+        {#if point}
+          <text x={x(index)} y="51" class="chart-tick" text-anchor="middle">{xTickLabel(point.date)}</text>
+        {/if}
       {/each}
     </svg>
   {/if}
@@ -305,6 +365,8 @@
   .report-sunburst-chart { width: 14rem; }
   .report-chart path { fill: none; stroke-width: .8; vector-effect: non-scaling-stroke; }
   .chart-axis { stroke: var(--chart-axis); stroke-width: .25; vector-effect: non-scaling-stroke; }
+  .chart-grid { stroke: var(--border); stroke-width: .2; vector-effect: non-scaling-stroke; opacity: .5; }
+  .chart-tick { font-size: 2.6px; fill: var(--text-color-lighter); }
   .legend { display: inline-flex; gap: .3rem; align-items: center; margin: 0 .75rem .5rem 0; }
   .legend i { display: inline-block; width: .7rem; height: .7rem; border-radius: 50%; }
   table { min-width: 32rem; }
