@@ -46,8 +46,8 @@
 | --- | --- | --- | --- | --- | --- |
 | T1 | R-IS/R-BS/R-TB | 图表系统为手写内联 SVG | d3 套件：坐标轴、刻度、日期标注、tooltip、图例、货币圆点选择器、图表类型切换（Stacked/Single Bars、Line/Area、Treemap/Sunburst/Icicle）、层级钻取 | 粗粒度 SVG；实测 IS/BS/TB/账户页均**无货币圆点**；TB 层级图已有 Treemap/Sunburst/Icicle 三视图切换（`b079d3b`/`b1247c8`）；无 tooltip/刻度 | 前端组件缺失 |
 | T2 | R-ACCOUNT | 账户详情页过薄 | 标题含 `(Last entry: date)` 与科目层级面包屑；Balance/Changes 切换；Account Balance/Changes(monthly)/Balances(monthly) 三区块；账户图 + 货币圆点；Account Journal 带徽章 | 面包屑与 Last entry 指示器已实现（`88d90b9`/`eefbf83`），Journal 带 change 列（`ae4eedc`）；仍无 Balance/Changes、无区间变化表、无账户图 | 前端 + 适配器（缺区间统计与 up-to-date 状态契约） |
-| T3 | G-SHELL/G-FILTERS | shell 控件缺口 | 导航含 `Go to account` 组合框、`+`（Add Entry）、`⬇`（Export）；Time/Account/FQL 为带建议下拉的 combobox，账户模糊自动补全、FQL 解析校验、`r` 重载与变更提示 | 无 `Go to account`；`+` 为死链接；无 `⬇`；三个筛选为纯文本框，无补全、无 FQL 校验 | 前端组件 + 适配器（FQL 解析契约已有计划未落 UI） |
-| T4 | G-SHELL | 标准导航被 OC 原创项污染 | 导航严格等于 Fava 标准面 | 导航含 OC 独有 `Accounts` 项；顶栏含 OC 原创 Language/Theme 下拉（Fava 的主题入口在 Options→Color scheme，locale 是 fava option） | 结构决策（违反移植计划不可妥协项 #6，见决策项 D1/D2） |
+| T3 | G-SHELL/G-FILTERS | shell 控件缺口 | 导航含 `Go to account` 组合框、`+`（Add Entry）、`⬇`（Export）；Time/Account/FQL 为带建议下拉的 combobox，账户模糊自动补全、FQL 解析校验、`r` 重载与变更提示 | `Go to account`（侧栏）与 Time/Account/FQL 三个 AutocompleteInput combobox 已实现；`+` 为死链接（Add Entry 模态属 S5）；无 `⬇`（download-journal 端点属 S5）；无 FQL 校验、无 `r` 重载与变更提示 | 前端组件 + 适配器（FQL 解析契约已有计划未落 UI） |
+| T4 | G-SHELL | 标准导航被 OC 原创项污染 | 导航严格等于 Fava 标准面 | D1/D2 已落地：OC 独有 `Accounts` 项移入标注的 OrangeCount 扩展区；顶栏原创 Language/Theme 下拉已移除，主题入口在 Options→Color scheme，locale 作为 fava option | 结构决策（见决策项 D1/D2，均已实现） |
 
 ### High
 
@@ -219,8 +219,8 @@
 
 | # | 问题 | 建议 |
 | --- | --- | --- |
-| D1 | OC 独有 `Accounts` 导航项混在标准导航 | 移入明确标注的 OrangeCount 扩展区（符合移植计划不可妥协项 #6），不登记为偏差 |
-| D2 | 顶栏 Language/Theme 下拉 | 恢复 Fava 入口：主题进 Options→Color scheme，locale 作为 fava option；顶栏原创下拉移除。若坚持保留，需登记 Approved Fava deviation |
+| D1 | OC 独有 `Accounts` 导航项混在标准导航 | **已落地**：移入标注的 OrangeCount 扩展区，无需登记偏差 |
+| D2 | 顶栏 Language/Theme 下拉 | **已落地**：顶栏原创下拉已移除，主题进 Options→Color scheme，locale 作为 fava option |
 | D3 | Import 页 OC 原创表单 | 对齐 Fava 流程（文件列表 + 上传 + extract/review）；Python importer 排除维持既有批准偏差 |
 | D4 | i18n 静态字典 vs gettext | 无用户可见差异，不构成偏差、无需登记（实现自由度）；仅需在 zh-CN 结构检查中持续验证覆盖完整性 |
 
