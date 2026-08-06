@@ -76,7 +76,7 @@
 
 | # | Manifest | 差距 | 说明 |
 | --- | --- | --- | --- |
-| L1 | R-ACCOUNT | 账户页标题无层级面包屑 | Fava：`Assets › Bank › <科目>`；移植版为完整科目名 |
+| L1 | R-ACCOUNT | ~~账户页标题无层级面包屑~~（已完成，`88d90b9`） | 标题现为祖先面包屑，每段链接到对应层级账户；Last entry 指示器仍属 T2 范围 |
 | L2 | G-LOCALE | i18n 为静态 en/zh-CN 字典 | 上游为 gettext 目录；用户可见行为等价，建议登记为实现性偏差（D4） |
 | L3 | R-HOLDINGS | Holdings 页签集合与上游不一致（偏差登记） | 保留 OC 扩展页签 by_root_account/by_commodity，缺上游 by_cost_currency（适配器无 lot 成本货币维度，`3c9fef1`）。登记为实现性偏差：不补齐 by_cost_currency，除非后续引入成本货币分组数据 |
 | L4 | R-ERRORS | serve 拒绝加载含 error 级诊断的账本（偏差登记） | Fava 带错服务并在 /errors 展示全部诊断；OC `serve` 在 main.go:181 检测到 error 即退出，/errors 页面只能展示 warning（`b902d7d`）。登记为实现性偏差：若要对齐 Fava，需 owner 批准放宽启动门禁 |
@@ -158,7 +158,9 @@
 > 警告夹具与干净夹具双端冒烟，`b902d7d`。发现 serve 拒绝加载含 error
 > 级诊断的账本（main.go:181），故 /errors 实际只能展示 warning 级
 > 诊断——与 Fava 带错服务行为不一致，登记为实现性偏差 L4；上游消息内
-> 账户名自动链接本步未实现，作为限制记录）。
+> 账户名自动链接本步未实现，作为限制记录）、
+> L1（账户页标题改为祖先面包屑：每段显示 leaf 并链接到对应层级账户，
+> title 保留全名，冒烟验证三级账户渲染与点击导航，`88d90b9`）。
 > T1/H5 的 WIP 覆盖部分仍待稠密夹具复比勾销。
 
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
@@ -192,7 +194,7 @@
 | 波次 | 本清单工作项 |
 | --- | --- |
 | Wave 1 收尾 | T3/T4（shell 与导航保真，含 D1/D2 决策落地）、H6（Options Color scheme + fava options 表）、M5 样式补齐 |
-| Wave 2 | T1 验收（BS/TB 图表货币圆点、Treemap/Sunburst/Icicle）、L1 |
+| Wave 2 | T1 验收（BS/TB 图表货币圆点、Treemap/Sunburst/Icicle）、L1（已完成，`88d90b9`） |
 | Wave 3 | T2（账户详情完整化）、H5 收尾、M-CONTEXT/M-EXPORT 模态、账户 Journal change 列（已完成，`ae4eedc`） |
 | Wave 4 | H4（Holdings/Events/Statistics/Documents/Commodities/Errors 专用组件已完成）、M3 |
 | Wave 5 | M1（Query 完整形态，依赖 S4） |
