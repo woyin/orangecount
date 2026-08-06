@@ -4450,7 +4450,8 @@ var translations = {
     treemap: "Treemap",
     icicle: "Icicle",
     sunburst: "Sunburst",
-    fileChangeDetected: "File change detected. Click to reload."
+    fileChangeDetected: "File change detected. Click to reload.",
+    reload: "Reload"
   },
   "zh-CN": {
     subtitle: "\u53EA\u8BFB\u672C\u5730\u8D26\u672C\u89C6\u56FE\u3002",
@@ -4583,7 +4584,8 @@ var translations = {
     treemap: "\u77E9\u5F62\u6811\u56FE",
     icicle: "\u51B0\u67F1\u56FE",
     sunburst: "\u65ED\u65E5\u56FE",
-    fileChangeDetected: "\u68C0\u6D4B\u5230\u6587\u4EF6\u53D8\u66F4\u3002\u70B9\u51FB\u4EE5\u91CD\u65B0\u52A0\u8F7D\u3002"
+    fileChangeDetected: "\u68C0\u6D4B\u5230\u6587\u4EF6\u53D8\u66F4\u3002\u70B9\u51FB\u4EE5\u91CD\u65B0\u52A0\u8F7D\u3002",
+    reload: "\u91CD\u65B0\u52A0\u8F7D"
   }
 };
 
@@ -5253,7 +5255,7 @@ function PageTitle($$anchor, $$props) {
 }
 
 // src/fava/components/Header.svelte
-var root3 = template(`<header><h1 class="svelte-cwf4f0"><a class="ledger-title svelte-cwf4f0" href="/"> </a> <!></h1> <span class="spacer svelte-cwf4f0"></span> <form class="flex-row svelte-cwf4f0" aria-label="Global filters"><!> <!> <!></form> <label class="header-select svelte-cwf4f0"><span class="svelte-cwf4f0"> </span> <select id="conversion" class="svelte-cwf4f0"><option> </option><option> </option><option>Units</option><option> </option></select></label> <label class="header-select svelte-cwf4f0"><span class="svelte-cwf4f0"> </span> <select id="interval" class="svelte-cwf4f0"><option> </option><option> </option><option> </option></select></label></header>`);
+var root3 = template(`<header><h1 class="svelte-1m9wvh0"><a class="ledger-title svelte-1m9wvh0" href="/"> </a> <!></h1> <button type="button" class="reload-page svelte-1m9wvh0">&#8635;</button> <span class="spacer svelte-1m9wvh0"></span> <form class="flex-row svelte-1m9wvh0" aria-label="Global filters"><!> <!> <!></form> <label class="header-select svelte-1m9wvh0"><span class="svelte-1m9wvh0"> </span> <select id="conversion" class="svelte-1m9wvh0"><option> </option><option> </option><option>Units</option><option> </option></select></label> <label class="header-select svelte-1m9wvh0"><span class="svelte-1m9wvh0"> </span> <select id="interval" class="svelte-1m9wvh0"><option> </option><option> </option><option> </option></select></label></header>`);
 function Header($$anchor, $$props) {
   push($$props, false);
   const filterSuggestions = mutable_state();
@@ -5272,6 +5274,7 @@ function Header($$anchor, $$props) {
   let conversion = prop($$props, "conversion", 8, "at_cost");
   let interval = prop($$props, "interval", 8, "month");
   let onNavigate = prop($$props, "onNavigate", 8);
+  let onReload = prop($$props, "onReload", 8);
   let onTime = prop($$props, "onTime", 8);
   let onAccount = prop($$props, "onAccount", 8);
   let onQuery = prop($$props, "onQuery", 8);
@@ -5335,7 +5338,12 @@ function Header($$anchor, $$props) {
     }
   });
   reset(h1);
-  var form = sibling(h1, 4);
+  var button = sibling(h1, 2);
+  template_effect(() => set_attribute(button, "title", `${t("reload")} (r)`));
+  template_effect(() => set_attribute(button, "aria-label", t("reload")));
+  action(button, ($$node, $$action_arg) => keyboardShortcut?.($$node, $$action_arg), () => "r");
+  effect(() => event("click", button, () => onReload()()));
+  var form = sibling(button, 4);
   var node_1 = child(form);
   AutocompleteInput(node_1, {
     get value() {
@@ -10735,6 +10743,7 @@ function App($$anchor, $$props) {
       return get(filter);
     },
     onNavigate: navigate,
+    onReload: retry,
     onTime: setTime,
     onAccount: setAccount,
     get conversion() {

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { translations, type Locale } from "../../translations";
   import { escape_for_regex } from "../lib/regex";
+  import { keyboardShortcut } from "../keyboard-shortcuts";
   import AutocompleteInput from "./AutocompleteInput.svelte";
   import PageTitle from "./PageTitle.svelte";
 
@@ -19,6 +20,7 @@
   export let conversion = "at_cost";
   export let interval = "month";
   export let onNavigate: (href: string) => void;
+  export let onReload: () => void;
   export let onTime: (value: string) => void;
   export let onAccount: (value: string) => void;
   export let onQuery: (value: string) => void;
@@ -62,6 +64,14 @@
     <a class="ledger-title" href="/" on:click|preventDefault={() => onNavigate("/")}>{ledgerTitle}</a>
     <PageTitle {route} {account} {locale} {onNavigate} />
   </h1>
+  <button
+    type="button"
+    class="reload-page"
+    title={`${t("reload")} (r)`}
+    aria-label={t("reload")}
+    use:keyboardShortcut={"r"}
+    on:click={() => onReload()}
+  >&#8635;</button>
   <span class="spacer"></span>
   <form class="flex-row" aria-label="Global filters" on:submit|preventDefault>
     <AutocompleteInput
@@ -134,6 +144,15 @@
 
   .ledger-title {
     color: inherit;
+  }
+
+  .reload-page {
+    padding: 0.25rem 0.4rem;
+    font-size: 16px;
+    color: var(--header-color);
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
   }
 
   .spacer {

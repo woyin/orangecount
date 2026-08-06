@@ -142,6 +142,7 @@
   accountFilter={current.query.account || ""}
   filter={current.query.filter || ""}
   onNavigate={navigate}
+  onReload={retry}
   onTime={setTime}
   onAccount={setAccount}
   conversion={current.query.conversion || "at_cost"}
