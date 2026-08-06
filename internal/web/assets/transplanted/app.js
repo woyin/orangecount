@@ -4449,7 +4449,8 @@ var translations = {
     lastEntry: "Last entry:",
     treemap: "Treemap",
     icicle: "Icicle",
-    sunburst: "Sunburst"
+    sunburst: "Sunburst",
+    fileChangeDetected: "File change detected. Click to reload."
   },
   "zh-CN": {
     subtitle: "\u53EA\u8BFB\u672C\u5730\u8D26\u672C\u89C6\u56FE\u3002",
@@ -4581,7 +4582,8 @@ var translations = {
     lastEntry: "\u6700\u540E\u6761\u76EE\uFF1A",
     treemap: "\u77E9\u5F62\u6811\u56FE",
     icicle: "\u51B0\u67F1\u56FE",
-    sunburst: "\u65ED\u65E5\u56FE"
+    sunburst: "\u65ED\u65E5\u56FE",
+    fileChangeDetected: "\u68C0\u6D4B\u5230\u6587\u4EF6\u53D8\u66F4\u3002\u70B9\u51FB\u4EE5\u91CD\u65B0\u52A0\u8F7D\u3002"
   }
 };
 
@@ -7470,6 +7472,48 @@ function QueryReport($$anchor, $$props) {
   pop();
 }
 
+// src/fava/lib/errors.ts
+function errorWithCauses(error) {
+  const msg = error.message;
+  return error.cause instanceof Error ? `${msg}
+  Caused by: ${errorWithCauses(error.cause)}` : error.message;
+}
+
+// src/fava/notifications.ts
+var notificationList = /* @__PURE__ */ (() => {
+  let value = null;
+  return () => {
+    if (value == null) {
+      value = document.createElement("div");
+      value.className = "notifications";
+      value.style.right = "10px";
+      document.body.appendChild(value);
+    }
+    const headerHeight = document.querySelector("header")?.getBoundingClientRect().height ?? 50;
+    value.style.top = `${(headerHeight + 10).toString()}px`;
+    return value;
+  };
+})();
+function notify(msg, cls = "info", callback) {
+  const notification = document.createElement("li");
+  notification.classList.add(cls);
+  notification.appendChild(document.createTextNode(msg));
+  notificationList().append(notification);
+  notification.addEventListener("click", () => {
+    notification.remove();
+    callback?.();
+  });
+  setTimeout(() => {
+    notification.remove();
+  }, 5e3);
+}
+function notify_err(error, msg = errorWithCauses) {
+  if (error instanceof Error) {
+    notify(msg(error), "error");
+  }
+  console.error(error);
+}
+
 // src/fava/reports/EditorReport.svelte
 var root_119 = template(`<option> </option>`);
 var root_39 = template(`<li> </li>`);
@@ -7543,11 +7587,14 @@ function EditorReport($$anchor, $$props) {
       if (value.published) {
         snapshotID = value.snapshot_id;
         set(status, `Saved; backup: ${value.backup}`);
+        notify("File saved.");
       } else {
         set(status, "Save rejected; the previous snapshot remains active.");
+        notify(get(status), "warning");
       }
     } catch (value) {
       set(status, value instanceof Error ? value.message : "Save failed.");
+      notify_err(value, (error) => `Saving failed: ${error.message}`);
     }
   }
   onMount(() => {
@@ -8896,48 +8943,6 @@ function UtilityReport($$anchor, $$props) {
   pop();
 }
 
-// src/fava/lib/errors.ts
-function errorWithCauses(error) {
-  const msg = error.message;
-  return error.cause instanceof Error ? `${msg}
-  Caused by: ${errorWithCauses(error.cause)}` : error.message;
-}
-
-// src/fava/notifications.ts
-var notificationList = /* @__PURE__ */ (() => {
-  let value = null;
-  return () => {
-    if (value == null) {
-      value = document.createElement("div");
-      value.className = "notifications";
-      value.style.right = "10px";
-      document.body.appendChild(value);
-    }
-    const headerHeight = document.querySelector("header")?.getBoundingClientRect().height ?? 50;
-    value.style.top = `${(headerHeight + 10).toString()}px`;
-    return value;
-  };
-})();
-function notify(msg, cls = "info", callback) {
-  const notification = document.createElement("li");
-  notification.classList.add(cls);
-  notification.appendChild(document.createTextNode(msg));
-  notificationList().append(notification);
-  notification.addEventListener("click", () => {
-    notification.remove();
-    callback?.();
-  });
-  setTimeout(() => {
-    notification.remove();
-  }, 5e3);
-}
-function notify_err(error, msg = errorWithCauses) {
-  if (error instanceof Error) {
-    notify(msg(error), "error");
-  }
-  console.error(error);
-}
-
 // src/fava/components/ReportOutlet.svelte
 var root_127 = template(`<section class="state-panel" role="status" aria-live="polite">Loading report\u2026</section>`);
 var root_317 = template(`<section class="state-panel error-panel" role="alert"> </section>`);
@@ -9968,7 +9973,13 @@ function App($$anchor, $$props) {
     const poll = window.setInterval(
       async () => {
         try {
-          if (await adapter.changed()) await bootstrap();
+          if (await adapter.changed()) {
+            const catalog = translations[$shell().locale === "zh-CN" ? "zh-CN" : "en"];
+            notify(catalog.fileChangeDetected ?? "File change detected. Click to reload.", "warning", () => {
+              void bootstrap();
+            });
+            await bootstrap();
+          }
         } catch {
         }
       },

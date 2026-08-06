@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import type { AdapterClient } from "../adapter-client";
+  import { notify, notify_err } from "../notifications";
 
   export let adapter: AdapterClient;
 
@@ -62,11 +63,14 @@
       if (value.published) {
         snapshotID = value.snapshot_id;
         status = `Saved; backup: ${value.backup}`;
+        notify("File saved.");
       } else {
         status = "Save rejected; the previous snapshot remains active.";
+        notify(status, "warning");
       }
     } catch (value) {
       status = value instanceof Error ? value.message : "Save failed.";
+      notify_err(value, (error) => `Saving failed: ${error.message}`);
     }
   }
 

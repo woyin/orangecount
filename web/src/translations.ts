@@ -40,6 +40,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     file: "File", line: "Line", error: "Error", noErrors: "No errors.",
     lastEntry: "Last entry:",
     treemap: "Treemap", icicle: "Icicle", sunburst: "Sunburst",
+    fileChangeDetected: "File change detected. Click to reload.",
   },
   "zh-CN": {
     subtitle: "只读本地账本视图。", language: "语言", overview: "概览", accounts: "账户", journal: "日记账",
@@ -73,5 +74,6 @@ export const translations: Record<Locale, Record<string, string>> = {
     file: "文件", line: "行", error: "错误", noErrors: "没有错误。",
     lastEntry: "最后条目：",
     treemap: "矩形树图", icicle: "冰柱图", sunburst: "旭日图",
+    fileChangeDetected: "检测到文件变更。点击以重新加载。",
   },
 };

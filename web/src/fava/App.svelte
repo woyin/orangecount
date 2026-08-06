@@ -7,9 +7,10 @@
   import ReportOutlet from "./components/ReportOutlet.svelte";
   import Sidebar from "./components/Sidebar.svelte";
   import { initGlobalKeyboardShortcuts } from "./keyboard-shortcuts";
-  import { notify_err } from "./notifications";
+  import { notify, notify_err } from "./notifications";
   import { parseRoute, updateQuery } from "./router.mjs";
   import { createShellStore, initialShellState } from "./state.mjs";
+  import { translations, type Locale } from "../translations";
 
   const initialRoute = parseRoute(window.location.href);
   const shell = createShellStore({
@@ -99,7 +100,13 @@
     void bootstrap();
     const poll = window.setInterval(async () => {
       try {
-        if (await adapter.changed()) await bootstrap();
+        if (await adapter.changed()) {
+          // The reload happens either way; the toast exists so the refresh is
+          // perceptible, and clicking it forces one more pass.
+          const catalog = translations[($shell.locale === "zh-CN" ? "zh-CN" : "en") as Locale];
+          notify(catalog.fileChangeDetected ?? "File change detected. Click to reload.", "warning", () => { void bootstrap(); });
+          await bootstrap();
+        }
       } catch {
         // A transient poll failure must not replace the last usable report.
       }
