@@ -67,7 +67,7 @@
 | --- | --- | --- | --- |
 | M1 | R-QUERY | Query 页不完整 | 无保存查询、无结果排序、无查询图表；BQL 编辑器为裸 textarea（依赖 H1） |
 | M2 | R-IMPORT | Import 为 OC 原创表单 | Source path/Adapter/Target 表单 vs Fava 的文件列表 + 上传 + extract/review 流程（Python importer 排除已是批准偏差，但 UI 流程应对齐） |
-| M3 | R-HELP | Help 无页面索引 | Fava 有 Index/Beancount Syntax/Budgets/Conversion/Extensions/Features 等子页 |
+| M3 | R-HELP | ~~Help 无页面索引~~（已完成，`f1a01f0`） | `/help` 现渲染子页索引，`/help/<id>` 渲染单节页面 + 返回链接；Options 页标题链接 `/help/options`（限制：子页集合为 OC 自有 8 节，非上游 Index/Syntax/Budgets 全集） |
 | M4 | 跨路由 | 排序基建缺失 | `SortHeader`/`sortable-table` 未移植，次要路由表头不可排序 |
 | M5 | 跨路由 | ~~三份 CSS 未移植~~（已完成） | `editor.css`、`help.css`、`notifications.css` 均已移植，main.ts 引入 11/11 |
 | M6 | G-FILTERS | URL 状态对齐未逐项验证 | `state.mjs` 单一 reducer 替代上游 stores/*，直链/历史/重载行为需逐路由核对 |
@@ -185,7 +185,13 @@
 > 跟随 locale），编辑器 Save 成功/拒绝/失败分别弹 info/warning/error
 > toast；冒烟以临时夹具触发 watcher 与保存双路径验证，`a5251c8`。
 > 上游 auto-reload 默认为静默重载、toast 仅在关闭 auto-reload 时出现；
-> 本实现选择重载与提示并存以保证可感知，登记为实现性偏差 L5）。
+> 本实现选择重载与提示并存以保证可感知，登记为实现性偏差 L5）、
+> M3（`/help` 渲染 8 节子页索引，`/help/<id>` 渲染单节页面 +
+> "‹ Help" 返回链接；router/state/App/ReportOutlet/UtilityReport
+> 贯通 helpPage，server.go 补 options 节并使 Options 页标题链接
+> `/help/options`；冒烟验证索引链接全集、editor 子页与 SPA 内点击
+> 跳转，`f1a01f0`。子页集合为 OC 自有 8 节，非上游 Index/Syntax/
+> Budgets 全集，作为限制记录）。
 > T1/H5 的 WIP 覆盖部分仍待稠密夹具复比勾销。
 
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
@@ -221,7 +227,7 @@
 | Wave 1 收尾 | T3/T4（shell 与导航保真，含 D1/D2 决策落地）、H6（已完成）、M5（已完成，11/11 CSS） |
 | Wave 2 | T1 验收（BS/TB 图表货币圆点、Treemap/Sunburst/Icicle；三视图已完成，`b079d3b`/`b1247c8`）、L1（已完成，`88d90b9`） |
 | Wave 3 | T2（账户详情完整化）、H5 收尾、M-CONTEXT/M-EXPORT 模态、账户 Journal change 列（已完成，`ae4eedc`） |
-| Wave 4 | H4（Holdings/Events/Statistics/Documents/Commodities/Errors 专用组件已完成）、M3 |
+| Wave 4 | H4（Holdings/Events/Statistics/Documents/Commodities/Errors 专用组件已完成）、M3（已完成，`f1a01f0`） |
 | Wave 5 | M1（Query 完整形态，依赖 S4） |
 | Wave 6 | Editor/Import/AddEntry 写入路径（依赖 S4/S5）、M2 |
 | Wave 7 | M6 全路由 URL 状态核对、L2 偏差登记（holdings 页签集合已登记 L3，`cf397c4`）、清理 |
