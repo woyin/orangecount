@@ -20,6 +20,7 @@
 
   export let adapter: AdapterClient;
   export let route: string;
+  export let helpPage = "";
   export let query: Record<string, string> = {};
   export let locale = "en";
   export let theme = "system";
@@ -90,7 +91,7 @@
 {:else if route === "import"}
   <ImportReport {adapter} />
 {:else if ["options", "help", "diagnostics", "source"].includes(route)}
-  <UtilityReport {adapter} {route} query={query} {locale} {theme} {onLocale} {onTheme} />
+  <UtilityReport {adapter} {route} query={query} helpPage={helpPage} {locale} {theme} {onLocale} {onTheme} />
 {:else if report}
   <TreeReport {report} {locale} {operatingCurrencies} {renderCommas} />
 {:else if journal}

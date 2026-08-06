@@ -1462,6 +1462,7 @@ func helpSections() []map[string]string {
 	return []map[string]string{
 		{"id": "navigation", "title": "Navigation", "body": "Use the sidebar or the menu button to move between reports."},
 		{"id": "filters", "title": "Filters", "body": "Global time, account, and text filters are bookmarkable URL state."},
+		{"id": "options", "title": "Options", "body": "The color scheme, locale, and fava options live on the Options page. Beancount options are declared in the ledger and shown there read-only."},
 		{"id": "editor", "title": "Editor safety", "body": "Validate before saving. Saves are atomic, backed up, and revalidated before publication."},
 		{"id": "import", "title": "Import review", "body": "Preview imported postings and explicitly commit them to a selected ledger file."},
 		{"id": "prices", "title": "Local prices", "body": "Market valuation uses only price directives in the local ledger. Missing quotes are shown as unavailable; no external provider is contacted."},

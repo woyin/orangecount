@@ -4,6 +4,7 @@
 
   export let adapter: AdapterClient;
   export let route: string;
+  export let helpPage = "";
   export let query: Record<string, string> = {};
   export let locale = "en";
   export let theme = "system";
@@ -56,20 +57,28 @@
   $: beancountRows = objectEntries(data?.options)
     .map(([key, value]) => [key, String(value)] as [string, string])
     .sort(([a], [b]) => a.localeCompare(b));
+
+  // Like upstream, help lives under /help/<page>; the bare /help route is the
+  // index listing every topic.
+  $: helpSections = Array.isArray(data?.sections) ? data.sections : [];
+  $: activeHelpSection = helpSections.find((section: { id: string }) => section.id === helpPage);
 </script>
 
 {#if loading}
   <section class="state-panel" role="status">Loading…</section>
 {:else if error}
   <section class="state-panel error-panel" role="alert">{error}</section>
+{:else if route === "help" && activeHelpSection}
+  <div class="headerline"><h2>{activeHelpSection.title}</h2></div>
+  <p><a href="/help">‹ {t("help")}</a></p>
+  <div class="help-body">{activeHelpSection.body}</div>
 {:else if route === "help" && data?.sections}
   <div class="headerline"><h2>Help</h2></div>
-  {#each data.sections as section (section.id)}
-    <details open>
-      <summary>{section.title}</summary>
-      <div>{section.body}</div>
-    </details>
-  {/each}
+  <ul class="help-index">
+    {#each helpSections as section (section.id)}
+      <li><a href={`/help/${encodeURIComponent(section.id)}`}>{section.title}</a></li>
+    {/each}
+  </ul>
 {:else if route === "source" && data?.content !== undefined}
   <div class="headerline"><h2>{data.path}</h2></div>
   <pre class="source-content">{data.content}</pre>
@@ -91,7 +100,7 @@
       {/each}
     </span>
   </p>
-  <h3>{t("favaOptions")} <a href="/help">({t("help")})</a></h3>
+  <h3>{t("favaOptions")} <a href="/help/options">({t("help")})</a></h3>
   <table class="options-table">
     <thead><tr><th>{t("optionKey")}</th><th>{t("optionValue")}</th></tr></thead>
     <tbody>
@@ -129,9 +138,15 @@
 <style>
   details,
   .source-list,
+  .help-index,
+  .help-body,
   table,
   pre {
     max-width: 70rem;
+  }
+
+  .help-index {
+    padding-left: 1.5rem;
   }
 
   .source-list {

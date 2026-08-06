@@ -16,6 +16,7 @@
   const shell = createShellStore({
     ...initialShellState(initialRoute.route),
     account: initialRoute.account,
+    helpPage: initialRoute.helpPage,
     query: initialRoute.query,
   });
   const adapter = createAdapterClient();
@@ -29,7 +30,7 @@
     const target = new URL(href, window.location.href);
     const next = parseRoute(target.href);
     window.history.pushState({}, "", target.href);
-    shell.dispatch({ type: "route", route: next.route, query: next.query });
+    shell.dispatch({ type: "route", route: next.route, query: next.query, helpPage: next.helpPage });
     shell.dispatch({ type: "account", account: next.account });
   }
 
@@ -93,7 +94,7 @@
     initGlobalKeyboardShortcuts();
     const onPopState = () => {
       const next = parseRoute(window.location.href);
-      shell.dispatch({ type: "route", route: next.route, query: next.query });
+      shell.dispatch({ type: "route", route: next.route, query: next.query, helpPage: next.helpPage });
       shell.dispatch({ type: "account", account: next.account });
     };
     window.addEventListener("popstate", onPopState);
@@ -157,6 +158,7 @@
         <ReportOutlet
           adapter={adapter}
           route={current.route}
+          helpPage={current.helpPage || ""}
           locale={current.locale}
           theme={current.theme}
           operatingCurrencies={current.operatingCurrencies}

@@ -426,30 +426,34 @@ textarea.svelte-1k81p2c {
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/UtilityReport.esbuild-svelte-fake-css */
-details.svelte-1o4zw0m,
-.source-list.svelte-1o4zw0m,
-table.svelte-1o4zw0m,
-pre.svelte-1o4zw0m {
+.source-list.svelte-1hd97ci,
+.help-index.svelte-1hd97ci,
+.help-body.svelte-1hd97ci,
+table.svelte-1hd97ci,
+pre.svelte-1hd97ci {
   max-width: 70rem;
 }
-.source-list.svelte-1o4zw0m {
+.help-index.svelte-1hd97ci {
   padding-left: 1.5rem;
 }
-.mode-switch.svelte-1o4zw0m input:where(.svelte-1o4zw0m) {
+.source-list.svelte-1hd97ci {
+  padding-left: 1.5rem;
+}
+.mode-switch.svelte-1hd97ci input:where(.svelte-1hd97ci) {
   display: none;
 }
-.mode-switch.svelte-1o4zw0m label:where(.svelte-1o4zw0m) + label:where(.svelte-1o4zw0m) {
+.mode-switch.svelte-1hd97ci label:where(.svelte-1hd97ci) + label:where(.svelte-1hd97ci) {
   margin-left: 0.125rem;
 }
-.options-table.svelte-1o4zw0m td:where(.svelte-1o4zw0m):nth-child(1) {
+.options-table.svelte-1hd97ci td:where(.svelte-1hd97ci):nth-child(1) {
   font-weight: 500;
 }
-.options-table.svelte-1o4zw0m pre:where(.svelte-1o4zw0m) {
+.options-table.svelte-1hd97ci pre:where(.svelte-1hd97ci) {
   padding: 0;
   margin: 0;
   background: transparent;
 }
-pre.svelte-1o4zw0m {
+pre.svelte-1hd97ci {
   padding: 0.75rem;
   overflow: auto;
   background: var(--code-background);

@@ -68,7 +68,11 @@ export function parseRoute(input, basePath = "") {
     pathname = pathWithoutTrailingSlash(pathname.slice(basePath.length));
   }
   let route = pathname === "/" ? "income_statement" : Object.entries(PATHS).find(([, path]) => path === pathname)?.[0] || "journal";
-  if (pathname.startsWith("/help/")) route = "help";
+  let helpPage = "";
+  if (pathname.startsWith("/help/")) {
+    route = "help";
+    helpPage = decodeAccount(pathname.slice("/help/".length));
+  }
   let account = "";
   const accountPrefix = "/account/";
   if (pathname.startsWith(accountPrefix)) {
@@ -80,7 +84,7 @@ export function parseRoute(input, basePath = "") {
     const value = url.searchParams.get(key);
     if (value) query[key] = value;
   }
-  return { route, account, query, pathname };
+  return { route, account, query, pathname, helpPage };
 }
 
 export function routeHref(route, { account = "", query = {} } = {}) {

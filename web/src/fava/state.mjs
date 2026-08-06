@@ -15,6 +15,7 @@ function stored(key, fallback, values) {
 export function initialShellState(route) {
   return {
     route,
+    helpPage: "",
     locale: stored("orangecount-locale", DEFAULT_LOCALE, ["en", "zh-CN"]),
     theme: stored("orangecount-theme", DEFAULT_THEME, ["system", "dark", "light"]),
     loading: false,
@@ -37,7 +38,7 @@ export function initialShellState(route) {
 export function reduceShellState(state, action) {
   switch (action.type) {
     case "route":
-      return { ...state, route: action.route, query: action.query || {}, sidebarOpen: false, error: null };
+      return { ...state, route: action.route, helpPage: action.helpPage || "", query: action.query || {}, sidebarOpen: false, error: null };
     case "locale":
       return { ...state, locale: action.locale === "zh-CN" ? "zh-CN" : DEFAULT_LOCALE };
     case "theme":
