@@ -68,7 +68,7 @@
 | M1 | R-QUERY | Query 页不完整 | 无保存查询、无结果排序、无查询图表；BQL 编辑器为裸 textarea（依赖 H1） |
 | M2 | R-IMPORT | Import 为 OC 原创表单 | Source path/Adapter/Target 表单 vs Fava 的文件列表 + 上传 + extract/review 流程（Python importer 排除已是批准偏差，但 UI 流程应对齐） |
 | M3 | R-HELP | ~~Help 无页面索引~~（已完成，`f1a01f0`） | `/help` 现渲染子页索引，`/help/<id>` 渲染单节页面 + 返回链接；Options 页标题链接 `/help/options`（限制：子页集合为 OC 自有 8 节，非上游 Index/Syntax/Budgets 全集） |
-| M4 | 跨路由 | 排序基建缺失 | `SortHeader`/`sortable-table` 未移植，次要路由表头不可排序 |
+| M4 | 跨路由 | ~~排序基建缺失~~（已完成，`62de047`） | `sort/index.ts`（Sorter/SortColumn 契约，同上游点击语义，无 d3 依赖）+ `SortHeader.svelte`（legacy 模式，含 aria-sort 与箭头提示）已落地；events/commodities/documents/statistics/options 表头可排序，冒烟验证方向切换与列切换重排（限制：Query 结果排序仍属 M1；holdings 与上游一致不可排序） |
 | M5 | 跨路由 | ~~三份 CSS 未移植~~（已完成） | `editor.css`、`help.css`、`notifications.css` 均已移植，main.ts 引入 11/11 |
 | M6 | G-FILTERS | URL 状态对齐未逐项验证 | `state.mjs` 单一 reducer 替代上游 stores/*，直链/历史/重载行为需逐路由核对 |
 
@@ -191,7 +191,12 @@
 > 贯通 helpPage，server.go 补 options 节并使 Options 页标题链接
 > `/help/options`；冒烟验证索引链接全集、editor 子页与 SPA 内点击
 > 跳转，`f1a01f0`。子页集合为 OC 自有 8 节，非上游 Index/Syntax/
-> Budgets 全集，作为限制记录）。
+> Budgets 全集，作为限制记录）、
+> M4（新增 `sort/index.ts` 与 `SortHeader.svelte`（legacy 模式、
+> aria-sort + 箭头提示），events/commodities/documents/statistics/
+> options 的表头全部可排序；events 与 commodities 按上游拆为每组一张
+> 独立排序表，documents 保留账户列，冒烟验证方向切换、列切换与实际
+> 重排，`62de047`。Query 结果排序仍属 M1 范围，作为限制记录）。
 > T1/H5 的 WIP 覆盖部分仍待稠密夹具复比勾销。
 
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
@@ -215,7 +220,7 @@
 | --- | --- | --- |
 | S1 | 移植上游 d3 图表套件（含货币圆点图例、图表类型切换、tooltip、层级钻取） | T1（T2 账户图亦依赖） |
 | S2 | FQL 完整解析落 UI + 账户模糊自动补全 + 筛选 combobox 化 + 重载提示 | T3、M6 |
-| S3 | 排序基建 + 通知区 | M4、H7 |
+| S3 | 排序基建 + 通知区（已完成：M4 `62de047`、H7 `a5251c8`） | M4、H7 |
 | S4 | CodeMirror 资产移植（beancount + BQL，tree-sitter wasm 已在参照锁哈希内） | H1、M1、F2 |
 | S5 | 模态系统 + 五个缺失适配器契约 | H2 |
 | S6 | 键盘快捷键 | H3 |
