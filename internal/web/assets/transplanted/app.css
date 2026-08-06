@@ -202,11 +202,18 @@ table.svelte-15jud14 {
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/AccountReport.esbuild-svelte-fake-css */
-.account-breadcrumb.svelte-g9xr57 a:where(.svelte-g9xr57) {
+.account-breadcrumb.svelte-3c70r9 a:where(.svelte-3c70r9) {
   color: unset;
 }
-.account-breadcrumb.svelte-g9xr57 .sep:where(.svelte-g9xr57) {
+.account-breadcrumb.svelte-3c70r9 .sep:where(.svelte-3c70r9) {
   color: var(--text-color-lightest);
+}
+.account-breadcrumb.svelte-3c70r9 .last-activity:where(.svelte-3c70r9) {
+  display: inline-block;
+  margin-left: 10px;
+  font-size: 12px;
+  font-weight: normal;
+  opacity: 0.8;
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/ImportReport.esbuild-svelte-fake-css */

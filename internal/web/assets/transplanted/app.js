@@ -4445,7 +4445,8 @@ var translations = {
     file: "File",
     line: "Line",
     error: "Error",
-    noErrors: "No errors."
+    noErrors: "No errors.",
+    lastEntry: "Last entry:"
   },
   "zh-CN": {
     subtitle: "\u53EA\u8BFB\u672C\u5730\u8D26\u672C\u89C6\u56FE\u3002",
@@ -4573,7 +4574,8 @@ var translations = {
     file: "\u6587\u4EF6",
     line: "\u884C",
     error: "\u9519\u8BEF",
-    noErrors: "\u6CA1\u6709\u9519\u8BEF\u3002"
+    noErrors: "\u6CA1\u6709\u9519\u8BEF\u3002",
+    lastEntry: "\u6700\u540E\u6761\u76EE\uFF1A"
   }
 };
 
@@ -6592,17 +6594,23 @@ delegate(["click", "keydown"]);
 
 // src/fava/reports/AccountReport.svelte
 var root_110 = template(`<section class="state-panel error-panel" role="alert"> </section>`);
-var root_43 = template(`<span class="sep svelte-g9xr57">:</span>`);
-var root_35 = template(`<a class="svelte-g9xr57"> </a><!>`, 1);
-var root_25 = template(`<div class="headerline"><h2 class="account-breadcrumb svelte-g9xr57"></h2></div> <!> <!> <!>`, 1);
+var root_43 = template(`<span class="sep svelte-3c70r9">:</span>`);
+var root_35 = template(`<a class="svelte-3c70r9"> </a><!>`, 1);
+var root_54 = template(`<span class="last-activity svelte-3c70r9"> </span>`);
+var root_25 = template(`<div class="headerline"><h2 class="account-breadcrumb svelte-3c70r9"><!><!></h2></div> <!> <!> <!>`, 1);
 function AccountReport($$anchor, $$props) {
   push($$props, false);
   const account = mutable_state();
   const parts = mutable_state();
+  const lastEntry = mutable_state();
   let adapter = prop($$props, "adapter", 8);
   let query = prop($$props, "query", 8);
   let locale = prop($$props, "locale", 8, "en");
   let renderCommas = prop($$props, "renderCommas", 8, false);
+  function t(key) {
+    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+    return catalog[key] || key;
+  }
   function ancestors(name) {
     const result = [];
     let index2 = name.indexOf(":");
@@ -6645,6 +6653,9 @@ function AccountReport($$anchor, $$props) {
   legacy_pre_effect(() => get(account), () => {
     set(parts, ancestors(get(account)));
   });
+  legacy_pre_effect(() => get(journal), () => {
+    set(lastEntry, get(journal) && get(journal).entries.length ? get(journal).entries[0].date : "");
+  });
   legacy_pre_effect(
     () => (get(requestKey), deep_read_state(query())),
     () => {
@@ -6670,31 +6681,45 @@ function AccountReport($$anchor, $$props) {
       var fragment_1 = root_25();
       var div = first_child(fragment_1);
       var h2 = child(div);
-      each(h2, 7, () => get(parts), (name) => name, ($$anchor3, name, index2) => {
+      var node_1 = child(h2);
+      each(node_1, 3, () => get(parts), (name) => name, ($$anchor3, name, index2) => {
         var fragment_2 = root_35();
         var a = first_child(fragment_2);
         template_effect(() => set_attribute(a, "href", accountHref(get(name))));
         var text_1 = child(a, true);
         template_effect(() => set_text(text_1, leaf(get(name))));
         reset(a);
-        var node_1 = sibling(a);
+        var node_2 = sibling(a);
         {
           var consequent_1 = ($$anchor4) => {
             var span = root_43();
             append($$anchor4, span);
           };
-          if_block(node_1, ($$render) => {
+          if_block(node_2, ($$render) => {
             if (get(index2) < get(parts).length - 1) $$render(consequent_1);
           });
         }
         template_effect(() => set_attribute(a, "title", get(name)));
         append($$anchor3, fragment_2);
       });
-      reset(h2);
-      reset(div);
-      var node_2 = sibling(div, 2);
+      var node_3 = sibling(node_1);
       {
         var consequent_2 = ($$anchor3) => {
+          var span_1 = root_54();
+          var text_2 = child(span_1);
+          template_effect(() => set_text(text_2, `(${t("lastEntry") ?? ""} ${get(lastEntry) ?? ""})`));
+          reset(span_1);
+          append($$anchor3, span_1);
+        };
+        if_block(node_3, ($$render) => {
+          if (get(lastEntry)) $$render(consequent_2);
+        });
+      }
+      reset(h2);
+      reset(div);
+      var node_4 = sibling(div, 2);
+      {
+        var consequent_3 = ($$anchor3) => {
           ReportChart($$anchor3, {
             get chart() {
               return get(balance).chart;
@@ -6704,13 +6729,13 @@ function AccountReport($$anchor, $$props) {
             }
           });
         };
-        if_block(node_2, ($$render) => {
-          if (get(balance)?.chart) $$render(consequent_2);
+        if_block(node_4, ($$render) => {
+          if (get(balance)?.chart) $$render(consequent_3);
         });
       }
-      var node_3 = sibling(node_2, 2);
+      var node_5 = sibling(node_4, 2);
       {
-        var consequent_3 = ($$anchor3) => {
+        var consequent_4 = ($$anchor3) => {
           GenericReport($$anchor3, {
             get report() {
               return get(balance);
@@ -6724,13 +6749,13 @@ function AccountReport($$anchor, $$props) {
             }
           });
         };
-        if_block(node_3, ($$render) => {
-          if (get(balance)) $$render(consequent_3);
+        if_block(node_5, ($$render) => {
+          if (get(balance)) $$render(consequent_4);
         });
       }
-      var node_4 = sibling(node_3, 2);
+      var node_6 = sibling(node_5, 2);
       {
-        var consequent_4 = ($$anchor3) => {
+        var consequent_5 = ($$anchor3) => {
           JournalReport($$anchor3, {
             get report() {
               return get(journal);
@@ -6743,8 +6768,8 @@ function AccountReport($$anchor, $$props) {
             }
           });
         };
-        if_block(node_4, ($$render) => {
-          if (get(journal)) $$render(consequent_4);
+        if_block(node_6, ($$render) => {
+          if (get(journal)) $$render(consequent_5);
         });
       }
       append($$anchor2, fragment_1);
@@ -6870,7 +6895,7 @@ function HoldingsReport($$anchor, $$props) {
 var root_113 = template(`<option> </option>`);
 var root_37 = template(`<li> </li>`);
 var root_26 = template(`<ul class="diagnostics svelte-1iufbd5"></ul>`);
-var root_54 = template(`<tr><td> </td><td> </td><td> </td><td> </td></tr>`);
+var root_55 = template(`<tr><td> </td><td> </td><td> </td><td> </td></tr>`);
 var root_44 = template(`<table><thead><tr><th>Date</th><th>Account</th><th>Units</th><th>Currency</th></tr></thead><tbody></tbody></table>`);
 var root7 = template(`<div class="headerline"><h2>Import</h2><span class="muted svelte-1iufbd5">Preview before commit</span></div> <div class="toolbar svelte-1iufbd5"><label>Source path <input></label> <label>Adapter <select><option>Beancount</option><option>CSV</option></select></label> <label>Target <select></select></label></div> <textarea class="import-buffer svelte-1iufbd5" placeholder="Paste Beancount or CSV content" spellcheck="false"></textarea> <div class="toolbar svelte-1iufbd5"><button type="button">Preview</button> <button type="button">Commit</button> <span class="muted svelte-1iufbd5" role="status"> </span></div> <!> <!>`, 1);
 function ImportReport($$anchor, $$props) {
@@ -7018,7 +7043,7 @@ function ImportReport($$anchor, $$props) {
       var table = root_44();
       var tbody = sibling(child(table));
       each(tbody, 5, () => get(rows), index, ($$anchor3, row) => {
-        var tr = root_54();
+        var tr = root_55();
         var td = child(tr);
         var text_3 = child(td, true);
         template_effect(() => set_text(text_3, String(get(row).date ?? "")));
@@ -7595,7 +7620,7 @@ var root_46 = template(`<span aria-hidden="true"> </span>`);
 var root_64 = template(`<td class="svelte-1tweq4j"><a> </a></td> <td class="num svelte-1tweq4j"><a> </a></td>`, 1);
 var root_74 = template(`<td class="svelte-1tweq4j"></td> <td class="num svelte-1tweq4j"></td>`, 1);
 var root_84 = template(`<span class="code svelte-1tweq4j"> </span>`);
-var root_55 = template(`<tr><!><td class="pre svelte-1tweq4j"><!> </td></tr>`);
+var root_56 = template(`<tr><!><td class="pre svelte-1tweq4j"><!> </td></tr>`);
 var root_118 = template(`<table class="errors-table svelte-1tweq4j"><thead><tr><th><button type="button" class="sort-toggle svelte-1tweq4j"> <!></button></th><th class="num svelte-1tweq4j"><button type="button" class="sort-toggle svelte-1tweq4j"> <!></button></th><th><button type="button" class="sort-toggle svelte-1tweq4j"> <!></button></th></tr></thead><tbody></tbody></table>`);
 var root_93 = template(`<p> </p>`);
 function ErrorsReport($$anchor, $$props) {
@@ -7720,7 +7745,7 @@ function ErrorsReport($$anchor, $$props) {
       reset(thead);
       var tbody = sibling(thead);
       each(tbody, 5, () => get(sortedRows), index, ($$anchor3, error) => {
-        var tr_1 = root_55();
+        var tr_1 = root_56();
         var node_4 = child(tr_1);
         {
           var consequent_3 = ($$anchor4) => {
@@ -7907,7 +7932,7 @@ var root_119 = template(`<button type="button" class="unset expander svelte-xjp7
 var root_212 = template(`<span class="num svelte-xjp7mv"> </span>`);
 var root_48 = template(`<span class="other-line svelte-xjp7mv"> </span>`);
 var root_314 = template(`<span class="other num svelte-xjp7mv"></span>`);
-var root_56 = template(`<ol></ol>`);
+var root_57 = template(`<ol></ol>`);
 var root11 = template(`<li><p><span class="account-cell svelte-xjp7mv"><!> <a class="account svelte-xjp7mv"> </a></span> <!> <!></p> <!></li>`);
 function TreeTableNode($$anchor, $$props) {
   push($$props, false);
@@ -8009,7 +8034,7 @@ function TreeTableNode($$anchor, $$props) {
   var node_4 = sibling(p, 2);
   {
     var consequent_2 = ($$anchor2) => {
-      var ol = root_56();
+      var ol = root_57();
       each(ol, 5, () => node().children, (child2) => child2.account, ($$anchor3, child2) => {
         var fragment = comment();
         var node_5 = first_child(fragment);
@@ -8287,7 +8312,7 @@ delegate(["click"]);
 var root_124 = template(`<section class="state-panel" role="status">Loading\u2026</section>`);
 var root_316 = template(`<section class="state-panel error-panel" role="alert"> </section>`);
 var root_65 = template(`<details open class="svelte-1o4zw0m"><summary> </summary> <div> </div></details>`);
-var root_57 = template(`<div class="headerline"><h2>Help</h2></div> <!>`, 1);
+var root_58 = template(`<div class="headerline"><h2>Help</h2></div> <!>`, 1);
 var root_85 = template(`<div class="headerline"><h2> </h2></div> <pre class="source-content svelte-1o4zw0m"> </pre>`, 1);
 var root_1110 = template(`<li><a> </a></li>`);
 var root_104 = template(`<div class="headerline"><h2>Source files</h2></div> <ul class="source-list svelte-1o4zw0m"></ul>`, 1);
@@ -8383,7 +8408,7 @@ function UtilityReport($$anchor, $$props) {
           var node_2 = first_child(fragment_2);
           {
             var consequent_2 = ($$anchor4) => {
-              var fragment_3 = root_57();
+              var fragment_3 = root_58();
               var node_3 = sibling(first_child(fragment_3), 2);
               each(node_3, 1, () => get(data).sections, (section) => section.id, ($$anchor5, section) => {
                 var details = root_65();
@@ -9260,7 +9285,7 @@ var on_click5 = (event2, onNavigate, item) => {
   event2.preventDefault();
   onNavigate()(routeHref(get(item)));
 };
-var root_58 = template(`<li class="svelte-611do5"><a class="svelte-611do5"> </a></li>`);
+var root_59 = template(`<li class="svelte-611do5"><a class="svelte-611do5"> </a></li>`);
 var root_66 = template(`<li class="account-selector svelte-611do5"><!></li>`);
 var on_click_13 = (event2, onNavigate) => {
   event2.preventDefault();
@@ -9402,7 +9427,7 @@ function Sidebar($$anchor, $$props) {
       var node_3 = first_child(fragment_2);
       {
         var consequent_2 = ($$anchor4) => {
-          var li_1 = root_58();
+          var li_1 = root_59();
           var a = child(li_1);
           template_effect(() => set_attribute(a, "href", routeHref(get(item))));
           a.__click = [on_click5, onNavigate, item];

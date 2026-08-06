@@ -1,5 +1,6 @@
 <script lang="ts">
   import type { AdapterClient } from "../adapter-client";
+  import { translations, type Locale } from "../../translations";
   import ReportChart from "../charts/ReportChart.svelte";
   import GenericReport from "./GenericReport.svelte";
   import JournalReport from "./JournalReport.svelte";
@@ -9,6 +10,11 @@
   export let query: Record<string, string>;
   export let locale = "en";
   export let renderCommas = false;
+
+  function t(key: string): string {
+    const catalog = translations[(locale === "zh-CN" ? "zh-CN" : "en") as Locale];
+    return catalog[key] || key;
+  }
 
   $: account = query.account || "";
 
@@ -41,6 +47,10 @@
   let error = "";
   let requestKey = "";
 
+  // The journal arrives newest-first, so the first entry's date is the most
+  // recent activity inside the current filters.
+  $: lastEntry = journal && journal.entries.length ? journal.entries[0].date : "";
+
   $: if (requestKey !== JSON.stringify(query)) {
     requestKey = JSON.stringify(query);
     void load(requestKey);
@@ -66,7 +76,7 @@
 {#if error}
   <section class="state-panel error-panel" role="alert">{error}</section>
 {:else}
-  <div class="headerline"><h2 class="account-breadcrumb">{#each parts as name, index (name)}<a href={accountHref(name)} title={name}>{leaf(name)}</a>{#if index < parts.length - 1}<span class="sep">:</span>{/if}{/each}</h2></div>
+  <div class="headerline"><h2 class="account-breadcrumb">{#each parts as name, index (name)}<a href={accountHref(name)} title={name}>{leaf(name)}</a>{#if index < parts.length - 1}<span class="sep">:</span>{/if}{/each}{#if lastEntry}<span class="last-activity">({t("lastEntry")} {lastEntry})</span>{/if}</h2></div>
   {#if balance?.chart}
     <ReportChart chart={balance.chart} {locale} />
   {/if}
@@ -81,5 +91,13 @@
 
   .account-breadcrumb .sep {
     color: var(--text-color-lightest);
+  }
+
+  .account-breadcrumb .last-activity {
+    display: inline-block;
+    margin-left: 10px;
+    font-size: 12px;
+    font-weight: normal;
+    opacity: 0.8;
   }
 </style>
