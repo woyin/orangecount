@@ -148,7 +148,10 @@
 > 账户 Journal change 列（journal 适配器在账户过滤下为每条 transaction
 > 计算账户内过账的按货币求和 change；账户页表头第三列由 Price 换为
 > Change 并渲染该值，全局 journal 保持 Price，含适配器单测与双端冒烟，
-> `ae4eedc`）。
+> `ae4eedc`）、
+> H4 Commodities（商品页按 base/quote 对分组渲染价格表，组内按日期
+> 倒序，冒烟验证 9 个货币对，`132ad60`。上游每对的 d3 折线图与
+> ChartSwitcher 属 S1 范围，本步未实现，作为限制记录）。
 > T1/H5 的 WIP 覆盖部分仍待稠密夹具复比勾销。
 
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
@@ -184,7 +187,7 @@
 | Wave 1 收尾 | T3/T4（shell 与导航保真，含 D1/D2 决策落地）、H6（Options Color scheme + fava options 表）、M5 样式补齐 |
 | Wave 2 | T1 验收（BS/TB 图表货币圆点、Treemap/Sunburst/Icicle）、L1 |
 | Wave 3 | T2（账户详情完整化）、H5 收尾、M-CONTEXT/M-EXPORT 模态、账户 Journal change 列（已完成，`ae4eedc`） |
-| Wave 4 | H4（Holdings/Commodities/Events/Statistics/Documents/Errors 专用组件）、M3 |
+| Wave 4 | H4（Holdings/Events/Statistics/Documents/Commodities 专用组件已完成；Errors 专用组件仍待办）、M3 |
 | Wave 5 | M1（Query 完整形态，依赖 S4） |
 | Wave 6 | Editor/Import/AddEntry 写入路径（依赖 S4/S5）、M2 |
 | Wave 7 | M6 全路由 URL 状态核对、L2 偏差登记（holdings 页签集合已登记 L3，`cf397c4`）、清理 |
