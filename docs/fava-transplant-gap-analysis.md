@@ -78,6 +78,7 @@
 | --- | --- | --- | --- |
 | L1 | R-ACCOUNT | 账户页标题无层级面包屑 | Fava：`Assets › Bank › <科目>`；移植版为完整科目名 |
 | L2 | G-LOCALE | i18n 为静态 en/zh-CN 字典 | 上游为 gettext 目录；用户可见行为等价，建议登记为实现性偏差（D4） |
+| L3 | R-HOLDINGS | Holdings 页签集合与上游不一致（偏差登记） | 保留 OC 扩展页签 by_root_account/by_commodity，缺上游 by_cost_currency（适配器无 lot 成本货币维度，`3c9fef1`）。登记为实现性偏差：不补齐 by_cost_currency，除非后续引入成本货币分组数据 |
 
 ### 适配器契约缺口（数据层）
 
@@ -130,7 +131,7 @@
 > 不跨成本货币合并；前端 HoldingsReport 提供上游 headerline 式页签与
 > 可读列名、CSV 导出带 aggregation 参数，含单测与四页签冒烟，
 > `3c9fef1`。页签集合保留 OC 扩展的 by_root_account/by_commodity、
-> 缺上游 by_cost_currency，待 L2 偏差登记）、
+> 缺上游 by_cost_currency，已登记为实现性偏差 L3）、
 > H4 Events（事件页按 type 分组渲染，组内按日期倒序，空态文案，
 > 冒烟验证唯一 event 指令，`696bf81`）、
 > H4 Statistics 第一步（后端新增 PostingsPerAccount 与 statistics
@@ -139,7 +140,11 @@
 > 冒烟验证合计 420，`f6474a5`。上游 Update Activity 节依赖缺失的
 > account_details 契约（last_entry/uptodate_status/balances，即 T2
 > 缺口），标题 Query 链接依赖上游 postings BQL，本步均未实现；
-> 载荷暂不应用全局 time/filter，作为限制记录）。
+> 载荷暂不应用全局 time/filter，作为限制记录）、
+> H4 Documents（文档页改为 Date/Account/Name 表格：basename 去日期
+> 前缀、按日期倒序、行 title 保留完整路径，冒烟验证 3 条文档，
+> `4bb03e3`。上游三栏布局的账户树与文档预览依赖文档文件服务端点，
+> 本步未实现，作为限制记录）。
 > T1/H5 的 WIP 覆盖部分仍待稠密夹具复比勾销。
 
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
