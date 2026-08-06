@@ -6,6 +6,7 @@
 package favaadapter
 
 import (
+	"math/big"
 	"sort"
 	"strings"
 
@@ -275,10 +276,15 @@ func journalChange(record ledger.EntryRecord, account string) []JournalAmount {
 
 // filterJournalEntries applies the same global and journal-specific filters the
 // table report honours, so switching representation does not change which
-// entries a bookmarked URL selects.
+// entries a bookmarked URL selects. The text filter is Fava's filter query
+// (tags, links, key:value, and/or/-); unparseable input degrades to the
+// legacy substring match so a caller that skipped validation never loses
+// entries silently.
 func filterJournalEntries(entries []JournalEntry, filters report.Filters, journal report.JournalFilters) []JournalEntry {
 	account := strings.TrimSpace(filters.Account)
-	text := strings.ToLower(strings.TrimSpace(filters.Text))
+	rawText := strings.TrimSpace(filters.Text)
+	text := strings.ToLower(rawText)
+	textFilter, textErr := report.ParseFQL(rawText)
 	hasTime := strings.TrimSpace(filters.TimePrefix) != "" || strings.TrimSpace(filters.TimeBegin) != "" || strings.TrimSpace(filters.TimeEnd) != ""
 	flag := strings.TrimSpace(journal.Flag)
 	tag := strings.ToLower(strings.TrimSpace(journal.Tag))
@@ -313,12 +319,64 @@ func filterJournalEntries(entries []JournalEntry, filters report.Filters, journa
 		if narration != "" && !strings.Contains(strings.ToLower(entry.Narration), narration) {
 			continue
 		}
-		if text != "" && !entryMatchesText(entry, text) {
-			continue
+		if text != "" {
+			if textFilter != nil && textErr == nil {
+				if !textFilter.Match(journalFQLTarget(entry)) {
+					continue
+				}
+			} else if !entryMatchesText(entry, text) {
+				continue
+			}
 		}
 		out = append(out, entry)
 	}
 	return out
+}
+
+// journalFQLTarget maps a projected entry onto the shape Fava's filter query
+// evaluates: tags and links are exact, metadata keys are reachable as
+// key:value terms, and balance assertions expose their amount as "number".
+func journalFQLTarget(entry JournalEntry) report.FQLTarget {
+	target := report.FQLTarget{
+		Tags:      entry.Tags,
+		Links:     entry.Links,
+		Payee:     entry.Payee,
+		Narration: entry.Narration,
+		Account:   entry.Account,
+		Flag:      entry.Flag,
+		Date:      entry.Date,
+		Metadata:  map[string]string{},
+	}
+	for _, meta := range entry.Metadata {
+		target.Metadata[meta.Key] = meta.Value
+	}
+	if entry.Type == "balance" {
+		target.Amount = presentedNumber(entry.Amount)
+	}
+	for _, posting := range entry.Postings {
+		target.Postings = append(target.Postings, report.FQLPosting{
+			Account: posting.Account,
+			Units:   presentedNumber(posting.Units),
+		})
+	}
+	return target
+}
+
+// presentedNumber recovers the machine value behind a presented amount so
+// amount comparisons can run; it returns nil when nothing parseable exists.
+func presentedNumber(amount *JournalAmount) *big.Float {
+	if amount == nil {
+		return nil
+	}
+	for _, candidate := range []string{amount.Number.Exact, strings.ReplaceAll(amount.Number.Display, ",", "")} {
+		if strings.TrimSpace(candidate) == "" {
+			continue
+		}
+		if number, _, err := big.ParseFloat(strings.TrimSpace(candidate), 10, 128, big.ToNearestEven); err == nil {
+			return number
+		}
+	}
+	return nil
 }
 
 func entryTouchesAccount(entry JournalEntry, account string) bool {

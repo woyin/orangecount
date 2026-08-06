@@ -312,3 +312,36 @@ func TestProjectJournalCarriesAccountChange(t *testing.T) {
 		}
 	}
 }
+
+func TestProjectJournalHonorsFQLFilters(t *testing.T) {
+	evaluation := testEvaluation(t)
+	countTransactions := func(projection JournalReport) int {
+		count := 0
+		for _, entry := range projection.Entries {
+			if entry.Type == "transaction" {
+				count++
+			}
+		}
+		return count
+	}
+	// Juxtaposition is AND: only the Lunch transaction carries both terms.
+	tagged := ProjectJournal(evaluation, nil, report.Filters{Text: "#meal ^trip"}, report.JournalFilters{})
+	if got := countTransactions(tagged); got != 1 || tagged.Entries[0].Narration != "Lunch" {
+		t.Fatalf("tagged=%+v", tagged.Entries)
+	}
+	// Comma is OR and string terms are case-insensitive regexes.
+	alternation := ProjectJournal(evaluation, nil, report.Filters{Text: "dinner, LUNCH"}, report.JournalFilters{})
+	if got := countTransactions(alternation); got != 2 {
+		t.Fatalf("alternation transactions=%d entries=%+v", got, alternation.Entries)
+	}
+	// Posting-amount comparison uses magnitudes.
+	amount := ProjectJournal(evaluation, nil, report.Filters{Text: ">2"}, report.JournalFilters{})
+	if got := countTransactions(amount); got != 1 {
+		t.Fatalf("amount transactions=%d entries=%+v", got, amount.Entries)
+	}
+	// Negation keeps the directives that lack the tag (the open directives).
+	negated := ProjectJournal(evaluation, nil, report.Filters{Text: "-#meal"}, report.JournalFilters{})
+	if got := countTransactions(negated); got != 0 || len(negated.Entries) == 0 {
+		t.Fatalf("negated entries=%+v", negated.Entries)
+	}
+}

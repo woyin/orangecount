@@ -647,7 +647,16 @@ func (s *Server) buildReport(r *http.Request, current *snapshot.Snapshot, name s
 }
 
 func globalReportFilters(r *http.Request) (report.Filters, error) {
-	filters := report.Filters{Account: strings.TrimSpace(r.URL.Query().Get("account")), Text: strings.TrimSpace(r.URL.Query().Get("filter"))}
+	text := strings.TrimSpace(r.URL.Query().Get("filter"))
+	if text != "" {
+		// Fava rejects an unparseable filter at the API edge; validating here
+		// lets the shell show the parse error instead of silently dropping
+		// entries with a different filter semantics.
+		if _, err := report.ParseFQL(text); err != nil {
+			return report.Filters{}, err
+		}
+	}
+	filters := report.Filters{Account: strings.TrimSpace(r.URL.Query().Get("account")), Text: text}
 	if period := strings.TrimSpace(r.URL.Query().Get("period")); period != "" {
 		switch period {
 		case "all", "month", "quarter", "year":

@@ -76,11 +76,17 @@ type JournalFilters struct {
 	Kind      string
 }
 
-// Filter applies global account, free-text, and ISO time-prefix filters while
-// preserving the exact values and deterministic row order of the report.
+// Filter applies global account, FQL text, and ISO time-prefix filters while
+// preserving the exact values and deterministic row order of the report. The
+// text filter is parsed as Fava's filter query; rows are derived values, so
+// the predicate evaluates against the row's own columns (see FQLTargetFromRow)
+// and unparseable input degrades to the legacy case-insensitive substring so
+// a caller that skipped validation never loses rows silently.
 func Filter(result query.Result, filters Filters) query.Result {
 	account := strings.TrimSpace(filters.Account)
-	text := strings.ToLower(strings.TrimSpace(filters.Text))
+	rawText := strings.TrimSpace(filters.Text)
+	text := strings.ToLower(rawText)
+	textFilter, textErr := ParseFQL(rawText)
 	prefix := strings.TrimSpace(filters.TimePrefix)
 	begin := strings.TrimSpace(filters.TimeBegin)
 	end := strings.TrimSpace(filters.TimeEnd)
@@ -115,8 +121,14 @@ func Filter(result query.Result, filters Filters) query.Result {
 				continue
 			}
 		}
-		if text != "" && !strings.Contains(strings.ToLower(fmt.Sprint(row)), text) {
-			continue
+		if text != "" {
+			if textFilter != nil && textErr == nil {
+				if !textFilter.Match(FQLTargetFromRow(row)) {
+					continue
+				}
+			} else if !strings.Contains(strings.ToLower(fmt.Sprint(row)), text) {
+				continue
+			}
 		}
 		filtered.Rows = append(filtered.Rows, row)
 	}
