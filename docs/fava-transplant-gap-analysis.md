@@ -55,10 +55,10 @@
 | --- | --- | --- | --- | --- | --- |
 | H1 | R-EDITOR/R-QUERY | CodeMirror 未移植（上游 19 文件 + tree-sitter wasm） | 语法高亮、行号、折叠、补全、snippets、File/Edit 菜单、文件树 | 裸 textarea + Files listbox；无菜单 | 前端组件缺失 |
 | H2 | M-ADD/M-CONTEXT/M-EXPORT/M-DOCUMENT | 模态系统整体缺失（上游 9 文件） | Add Entry 表单、条目 Context（余额/位置）、Export/Download、文档上传 | 无 modals 目录；侧栏 `+` 死链 | 前端 + 适配器（缺 add_entries、entry context、export 契约） |
-| H3 | G-KEYBOARD | 全局键盘快捷键缺失 | `g-*` 路由跳转、`t/f/a/d/s`、`?` 快捷键提示 | 无任何 keydown 监听 | 前端组件缺失 |
+| H3 | G-KEYBOARD | 全局键盘快捷键缺失 | `g-*` 路由跳转、`t/f/a/d/s`、`?` 快捷键提示 | 已实现：`g-*` 路由跳转、`f t/f a/f f` 筛选快捷键、`?` 快捷键 tooltip（冒烟验证 18 条提示）；上游其余单键快捷键未登记为缺口 | 已完成 |
 | H4 | R-HOLD-*/R-COMMODITIES/R-EVENTS/R-STATISTICS/R-DOCUMENTS | 六路由降级为通用平表 | Holdings 四子页签与成本分组；Commodities 商品列表 + 每商品页（元数据/精度/价格历史）；Events 按事件类型侧栏分组；Statistics 指令计数 + Postings-per-Account + 活动图；Documents 账户树 + 内嵌预览 | 统一 `GenericReport` 平表：Holdings 无子页签、列头为 snake_case 字段名；Commodities 渲染成价格明细表且实测空表；Events 无分组；Statistics 仅计数表；Documents 无预览 | 前端组件 + 适配器（专用契约未建） |
 | H5 | R-JOURNAL | Journal 交互层不完整 | 全量条目类型徽章（含 Custom/B/Metadata/Postings）、排序与列菜单、点击条目→Context、URL 同步筛选、拖拽上传文档 | 核心徽章组与展开已现（**WIP**），其余未移植；Custom/B/Metadata/Postings 徽章覆盖待复核 | 前端组件缺失 |
-| H6 | R-OPTIONS | Options 页不完整 | Color scheme（System/Dark/Light）单选组 + Fava options 表（带 help 链接）+ Beancount options 表 | 仅 Beancount options 表；主题入口被移到顶栏原创下拉 | 前端 + 适配器（fava_options 已有雏形未成表） |
+| H6 | R-OPTIONS | Options 页不完整 | Color scheme（System/Dark/Light）单选组 + Fava options 表（带 help 链接）+ Beancount options 表 | 已实现：UtilityReport 含 Color scheme 单选组 + Fava options 表 + Beancount options 表；顶栏原创主题下拉已移除（D2） | 已完成（UtilityReport + `/__orangecount/fava/options` 契约） |
 | H7 | M-NOTIFY | 通知区缺失 | 文件变更/保存结果 toast，带点击重载 | 5s 轮询已对齐，但无可感通知 | 前端组件缺失 |
 
 ### Medium
@@ -69,7 +69,7 @@
 | M2 | R-IMPORT | Import 为 OC 原创表单 | Source path/Adapter/Target 表单 vs Fava 的文件列表 + 上传 + extract/review 流程（Python importer 排除已是批准偏差，但 UI 流程应对齐） |
 | M3 | R-HELP | Help 无页面索引 | Fava 有 Index/Beancount Syntax/Budgets/Conversion/Extensions/Features 等子页 |
 | M4 | 跨路由 | 排序基建缺失 | `SortHeader`/`sortable-table` 未移植，次要路由表头不可排序 |
-| M5 | 跨路由 | 三份 CSS 未移植 | `editor.css`、`help.css`、`notifications.css`（main 仅引入 9/11） |
+| M5 | 跨路由 | ~~三份 CSS 未移植~~（已完成） | `editor.css`、`help.css`、`notifications.css` 均已移植，main.ts 引入 11/11 |
 | M6 | G-FILTERS | URL 状态对齐未逐项验证 | `state.mjs` 单一 reducer 替代上游 stores/*，直链/历史/重载行为需逐路由核对 |
 
 ### Low
@@ -174,7 +174,11 @@
 > 成环，扇区角度按值占比，满圆扇区留发丝缺口防退化，冒烟验证
 > trial_balance 三视图循环切换（Sunburst 98 扇区），`b1247c8`。
 > 上游 d3 的 tooltip、钻取缩放与货币圆点仍属 S1 剩余范围，作为限制
-> 记录）。
+> 记录）、
+> 清单复核（逐行比对在案实现：H3 快捷键（含 `?` tooltip，冒烟 18 条）、
+> H6 Options 三表、M5 三份 CSS、T3 Go-to-account 与三个筛选 combobox、
+> T4/D1/D2 导航与主题入口均已落地，相应现状列与 D1/D2 标记更新，
+> `e631330`/本次；未改任何代码）。
 > T1/H5 的 WIP 覆盖部分仍待稠密夹具复比勾销。
 
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
@@ -207,7 +211,7 @@
 
 | 波次 | 本清单工作项 |
 | --- | --- |
-| Wave 1 收尾 | T3/T4（shell 与导航保真，含 D1/D2 决策落地）、H6（Options Color scheme + fava options 表）、M5 样式补齐 |
+| Wave 1 收尾 | T3/T4（shell 与导航保真，含 D1/D2 决策落地）、H6（已完成）、M5（已完成，11/11 CSS） |
 | Wave 2 | T1 验收（BS/TB 图表货币圆点、Treemap/Sunburst/Icicle；三视图已完成，`b079d3b`/`b1247c8`）、L1（已完成，`88d90b9`） |
 | Wave 3 | T2（账户详情完整化）、H5 收尾、M-CONTEXT/M-EXPORT 模态、账户 Journal change 列（已完成，`ae4eedc`） |
 | Wave 4 | H4（Holdings/Events/Statistics/Documents/Commodities/Errors 专用组件已完成）、M3 |
