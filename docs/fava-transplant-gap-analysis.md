@@ -70,7 +70,7 @@
 | M3 | R-HELP | ~~Help 无页面索引~~（已完成，`f1a01f0`） | `/help` 现渲染子页索引，`/help/<id>` 渲染单节页面 + 返回链接；Options 页标题链接 `/help/options`（限制：子页集合为 OC 自有 8 节，非上游 Index/Syntax/Budgets 全集） |
 | M4 | 跨路由 | ~~排序基建缺失~~（已完成，`62de047`） | `sort/index.ts`（Sorter/SortColumn 契约，同上游点击语义，无 d3 依赖）+ `SortHeader.svelte`（legacy 模式，含 aria-sort 与箭头提示）已落地；events/commodities/documents/statistics/options 表头可排序，冒烟验证方向切换与列切换重排（限制：Query 结果排序仍属 M1；holdings 与上游一致不可排序） |
 | M5 | 跨路由 | ~~三份 CSS 未移植~~（已完成） | `editor.css`、`help.css`、`notifications.css` 均已移植，main.ts 引入 11/11 |
-| M6 | G-FILTERS | URL 状态对齐未逐项验证 | `state.mjs` 单一 reducer 替代上游 stores/*，直链/历史/重载行为需逐路由核对 |
+| M6 | G-FILTERS | ~~URL 状态对齐未逐项验证~~（已核对，`d68e5e9`/`36fb31b`） | 全路由深链、筛选回显、history back/forward、reload 逐项冒烟通过；核对发现并修复三处：`time=2025-Q2` 季度语法被拒（新增 Filters.TimeBegin/End 半开区间）、`/editor?path=` 与 `/query?query_string=` 未回显（限制：diagnostics 仍为 JSON 兜底视图；Query 页保存/排序/图表仍属 M1） |
 
 ### Low
 
@@ -196,7 +196,14 @@
 > aria-sort + 箭头提示），events/commodities/documents/statistics/
 > options 的表头全部可排序；events 与 commodities 按上游拆为每组一张
 > 独立排序表，documents 保留账户列，冒烟验证方向切换、列切换与实际
-> 重排，`62de047`。Query 结果排序仍属 M1 范围，作为限制记录）。
+> 重排，`62de047`。Query 结果排序仍属 M1 范围，作为限制记录）、
+> M6（全路由 URL 状态逐项冒烟：深链 income/journal/account/holdings/
+> query/editor/import/options/help/source/errors/diagnostics、time 与
+> query 参数回显、history back/forward、reload 均通过；核对暴露三处
+> 缺口并修复——`time=2025-Q2` 季度语法新增 Filters.TimeBegin/End
+> 半开区间支持（`d68e5e9`，含单元与集成测试），`/editor?path=`、
+> `/query?query_string=` 深链回显（`36fb31b`）。diagnostics 仍为 JSON
+> 兜底视图，作为限制记录）。
 > T1/H5 的 WIP 覆盖部分仍待稠密夹具复比勾销。
 
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
@@ -235,7 +242,7 @@
 | Wave 4 | H4（Holdings/Events/Statistics/Documents/Commodities/Errors 专用组件已完成）、M3（已完成，`f1a01f0`） |
 | Wave 5 | M1（Query 完整形态，依赖 S4） |
 | Wave 6 | Editor/Import/AddEntry 写入路径（依赖 S4/S5）、M2 |
-| Wave 7 | M6 全路由 URL 状态核对、L2 偏差登记（holdings 页签集合已登记 L3，`cf397c4`）、清理 |
+| Wave 7 | M6 全路由 URL 状态核对（已完成，`d68e5e9`/`36fb31b`）、L2 偏差登记（holdings 页签集合已登记 L3，`cf397c4`）、清理 |
 
 ### 需产品 owner 拍板的决策项
 
