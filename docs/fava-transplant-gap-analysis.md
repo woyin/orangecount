@@ -44,7 +44,7 @@
 
 | # | Manifest | 差距 | Fava 行为 | 移植版现状 | 根因层 |
 | --- | --- | --- | --- | --- | --- |
-| T1 | R-IS/R-BS/R-TB | 图表系统为手写内联 SVG | d3 套件：坐标轴、刻度、日期标注、tooltip、图例、货币圆点选择器、图表类型切换（Stacked/Single Bars、Line/Area、Treemap/Sunburst/Icicle）、层级钻取 | 粗粒度 SVG；实测 IS/BS/TB/账户页均**无货币圆点**；TB 层级图已有 Treemap/Icicle 切换（`b079d3b`），Sunburst 缺失；无 tooltip/刻度 | 前端组件缺失 |
+| T1 | R-IS/R-BS/R-TB | 图表系统为手写内联 SVG | d3 套件：坐标轴、刻度、日期标注、tooltip、图例、货币圆点选择器、图表类型切换（Stacked/Single Bars、Line/Area、Treemap/Sunburst/Icicle）、层级钻取 | 粗粒度 SVG；实测 IS/BS/TB/账户页均**无货币圆点**；TB 层级图已有 Treemap/Sunburst/Icicle 三视图切换（`b079d3b`/`b1247c8`）；无 tooltip/刻度 | 前端组件缺失 |
 | T2 | R-ACCOUNT | 账户详情页过薄 | 标题含 `(Last entry: date)` 与科目层级面包屑；Balance/Changes 切换；Account Balance/Changes(monthly)/Balances(monthly) 三区块；账户图 + 货币圆点；Account Journal 带徽章 | 面包屑与 Last entry 指示器已实现（`88d90b9`/`eefbf83`），Journal 带 change 列（`ae4eedc`）；仍无 Balance/Changes、无区间变化表、无账户图 | 前端 + 适配器（缺区间统计与 up-to-date 状态契约） |
 | T3 | G-SHELL/G-FILTERS | shell 控件缺口 | 导航含 `Go to account` 组合框、`+`（Add Entry）、`⬇`（Export）；Time/Account/FQL 为带建议下拉的 combobox，账户模糊自动补全、FQL 解析校验、`r` 重载与变更提示 | 无 `Go to account`；`+` 为死链接；无 `⬇`；三个筛选为纯文本框，无补全、无 FQL 校验 | 前端组件 + 适配器（FQL 解析契约已有计划未落 UI） |
 | T4 | G-SHELL | 标准导航被 OC 原创项污染 | 导航严格等于 Fava 标准面 | 导航含 OC 独有 `Accounts` 项；顶栏含 OC 原创 Language/Theme 下拉（Fava 的主题入口在 Options→Color scheme，locale 是 fava option） | 结构决策（违反移植计划不可妥协项 #6，见决策项 D1/D2） |
@@ -169,7 +169,12 @@
 > 铺排矩形、宽度按值占比、聚合行与其子行同框可见，切换按钮采用上游
 > ChartSwitcher 的居中弱化样式，冒烟验证 trial_balance 双视图切换
 > （Treemap 86 叶块 / Icicle 98 块三层），`b079d3b`。上游第三视图
-> Sunburst 与 d3 钻取交互属 S1 剩余范围，作为限制记录）。
+> Sunburst 与 d3 钻取交互属 S1 剩余范围，作为限制记录）、
+> S1 Sunburst（层级图补齐第三视图：极坐标分区，根账户居内环、逐层
+> 成环，扇区角度按值占比，满圆扇区留发丝缺口防退化，冒烟验证
+> trial_balance 三视图循环切换（Sunburst 98 扇区），`b1247c8`。
+> 上游 d3 的 tooltip、钻取缩放与货币圆点仍属 S1 剩余范围，作为限制
+> 记录）。
 > T1/H5 的 WIP 覆盖部分仍待稠密夹具复比勾销。
 
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
@@ -203,7 +208,7 @@
 | 波次 | 本清单工作项 |
 | --- | --- |
 | Wave 1 收尾 | T3/T4（shell 与导航保真，含 D1/D2 决策落地）、H6（Options Color scheme + fava options 表）、M5 样式补齐 |
-| Wave 2 | T1 验收（BS/TB 图表货币圆点、Treemap/Sunburst/Icicle；Icicle 已完成，`b079d3b`）、L1（已完成，`88d90b9`） |
+| Wave 2 | T1 验收（BS/TB 图表货币圆点、Treemap/Sunburst/Icicle；三视图已完成，`b079d3b`/`b1247c8`）、L1（已完成，`88d90b9`） |
 | Wave 3 | T2（账户详情完整化）、H5 收尾、M-CONTEXT/M-EXPORT 模态、账户 Journal change 列（已完成，`ae4eedc`） |
 | Wave 4 | H4（Holdings/Events/Statistics/Documents/Commodities/Errors 专用组件已完成）、M3 |
 | Wave 5 | M1（Query 完整形态，依赖 S4） |
