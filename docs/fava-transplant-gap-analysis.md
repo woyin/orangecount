@@ -46,7 +46,7 @@
 | --- | --- | --- | --- | --- | --- |
 | T1 | R-IS/R-BS/R-TB | 图表系统为手写内联 SVG | d3 套件：坐标轴、刻度、日期标注、tooltip、图例、货币圆点选择器、图表类型切换（Stacked/Single Bars、Line/Area、Treemap/Sunburst/Icicle）、层级钻取 | 粗粒度 SVG；实测 IS/BS/TB/账户页均**无货币圆点**；TB 层级图已有 Treemap/Sunburst/Icicle 三视图切换（`b079d3b`/`b1247c8`）；条形/折线图已补坐标轴、nice 刻度、紧凑数值与日期标注（`d3e5216`）；图例已做成 Fava 式可点选货币/序列开关，点选即隐藏并自适应重算色阶、颜色稳定（`32cceb0`）；条形/折线图已加指针跟随 tooltip（条形按序列+期间、折线按最近期间列全部可见序列，`e8154b6`）；层级图 Treemap/Sunburst/Icicle 每个节点已做成指向该科目详情页的链接（`ab6ca07`）。至此 T1 列举的 Fava 行为均已具备，剩余仅为手写 SVG 与 d3 的实现层差异 | 前端组件缺失（已基本补齐） |
 | T2 | R-ACCOUNT | 账户详情页过薄 | 标题含 `(Last entry: date)` 与科目层级面包屑；Balance/Changes 切换；Account Balance/Changes(monthly)/Balances(monthly) 三区块；账户图 + 货币圆点；Account Journal 带徽章 | 面包屑与 Last entry 指示器已实现（`88d90b9`/`eefbf83`），Journal 带 change 列（`ae4eedc`）；仍无 Balance/Changes、无区间变化表、无账户图 | 前端 + 适配器（缺区间统计与 up-to-date 状态契约） |
-| T3 | G-SHELL/G-FILTERS | shell 控件缺口 | 导航含 `Go to account` 组合框、`+`（Add Entry）、`⬇`（Export）；Time/Account/FQL 为带建议下拉的 combobox，账户模糊自动补全、FQL 解析校验、`r` 重载与变更提示 | `Go to account`（侧栏）与 Time/Account/FQL 三个 AutocompleteInput combobox 已实现；`+` 为死链接（Add Entry 模态属 S5）；无 `⬇`（download-journal 端点属 S5）；变更提示已由 H7 落地，`r` 手动重载快捷键与 ⟳ 按钮已实现（`4792f73`）；仍无 FQL 校验 | 前端组件 + 适配器（FQL 解析契约已有计划未落 UI） |
+| T3 | G-SHELL/G-FILTERS | shell 控件缺口 | 导航含 `Go to account` 组合框、`+`（Add Entry）、`⬇`（Export）；Time/Account/FQL 为带建议下拉的 combobox，账户模糊自动补全、FQL 解析校验、`r` 重载与变更提示 | `Go to account`（侧栏）与 Time/Account/FQL 三个 AutocompleteInput combobox 已实现；`+` 为死链接（Add Entry 模态属 S5）；无 `⬇`（download-journal 端点属 S5）；变更提示已由 H7 落地，`r` 手动重载快捷键与 ⟳ 按钮已实现（`4792f73`）；FQL 解析校验与完整语义已落地（`785be13`：#tag/^link 精确匹配、key:"value"、并置 and/逗号 or/`-` 取反、all()/any()、金额比较；非法字符与解析错误在 API 边界 400 并于 shell 错误区展示）；余 `+`/`⬇` 入口 | 前端组件 + 适配器（余 `+`/`⬇` 属 S5） |
 | T4 | G-SHELL | 标准导航被 OC 原创项污染 | 导航严格等于 Fava 标准面 | D1/D2 已落地：OC 独有 `Accounts` 项移入标注的 OrangeCount 扩展区；顶栏原创 Language/Theme 下拉已移除，主题入口在 Options→Color scheme，locale 作为 fava option | 结构决策（见决策项 D1/D2，均已实现） |
 
 ### High
@@ -229,6 +229,14 @@
 > 该按钮不做 has_changes 门控而常驻，登记为实现性偏差。冒烟验证按钮
 > data-key=r、按 `r` 触发重载且页面保持完好、在可编辑元素内 `r` 被
 > 正确抑制、`?` 提示增至 19 条并含 `r`，`4792f73`）。
+> T3-FQL（新增 Fava 式过滤查询 `internal/report/fql.go`：#tag/^link 精确
+> 匹配、裸/引号串对 narration/payee/comment 做大小写不敏感正则、
+> key:"value" 可达元数据与行内列名、并置为 and、逗号为 or、`-` 取反、
+> all()/any() 量化 postings、比较符按金额绝对值匹配；journal 条目按完整
+> 语义匹配，表行按行粒度匹配——派生行无法表达 tags/postings，作为限制
+> 登记；非法字符与解析错误在 API 边界返回 400，shell 错误区展示原文，
+> 冒烟验证 #evidence 过滤出 2 条 document、`payee:` 报错展示、带 filter
+> 的 IS 返回 200，`785be13`）。
 > T1/H5 的 WIP 覆盖部分仍待稠密夹具复比勾销。
 
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
