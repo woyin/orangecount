@@ -83,11 +83,11 @@
 {:else if error}
   <section class="state-panel error-panel" role="alert">{error}</section>
 {:else if route === "query"}
-  <QueryReport {adapter} />
+  <QueryReport {adapter} query={query} />
 {:else if route === "account"}
   <AccountReport adapter={adapter} {query} {locale} {renderCommas} />
 {:else if route === "editor"}
-  <EditorReport {adapter} />
+  <EditorReport {adapter} query={query} />
 {:else if route === "import"}
   <ImportReport {adapter} />
 {:else if ["options", "help", "diagnostics", "source"].includes(route)}

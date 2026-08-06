@@ -4,6 +4,7 @@
   import { notify, notify_err } from "../notifications";
 
   export let adapter: AdapterClient;
+  export let query: Record<string, string> = {};
 
   let paths: string[] = [];
   let selected = "";
@@ -17,7 +18,8 @@
     const value = await adapter.load("editor") as { paths: string[]; entry: string; snapshot_id: string };
     paths = value.paths ?? [];
     snapshotID = value.snapshot_id ?? "";
-    selected = value.entry || paths[0] || "";
+    const requested = query.path && paths.includes(query.path) ? query.path : "";
+    selected = requested || value.entry || paths[0] || "";
     if (selected) await loadFile();
   }
 

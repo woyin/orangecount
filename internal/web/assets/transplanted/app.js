@@ -7570,7 +7570,8 @@ var root9 = template(`<div class="headerline"><h2>Query</h2></div> <form class="
 function QueryReport($$anchor, $$props) {
   push($$props, false);
   let adapter = prop($$props, "adapter", 8);
-  let queryText = mutable_state("SELECT account, balance FROM accounts ORDER BY account");
+  let query = prop($$props, "query", 24, () => ({}));
+  let queryText = mutable_state(query().query_string || "SELECT account, balance FROM accounts ORDER BY account");
   let result = mutable_state(null);
   let loading = mutable_state(false);
   let error = mutable_state("");
@@ -7700,6 +7701,7 @@ var root10 = template(`<div class="headerline"><h2>Editor</h2><span class="muted
 function EditorReport($$anchor, $$props) {
   push($$props, false);
   let adapter = prop($$props, "adapter", 8);
+  let query = prop($$props, "query", 24, () => ({}));
   let paths = mutable_state([]);
   let selected = mutable_state("");
   let content = mutable_state("");
@@ -7711,7 +7713,8 @@ function EditorReport($$anchor, $$props) {
     const value = await adapter().load("editor");
     set(paths, value.paths ?? []);
     snapshotID = value.snapshot_id ?? "";
-    set(selected, value.entry || get(paths)[0] || "");
+    const requested = query().path && get(paths).includes(query().path) ? query().path : "";
+    set(selected, requested || value.entry || get(paths)[0] || "");
     if (get(selected)) await loadFile();
   }
   async function loadFile() {
@@ -9516,6 +9519,9 @@ function ReportOutlet($$anchor, $$props) {
               QueryReport($$anchor4, {
                 get adapter() {
                   return adapter();
+                },
+                get query() {
+                  return query();
                 }
               });
             };
@@ -9547,6 +9553,9 @@ function ReportOutlet($$anchor, $$props) {
                       EditorReport($$anchor6, {
                         get adapter() {
                           return adapter();
+                        },
+                        get query() {
+                          return query();
                         }
                       });
                     };

@@ -5,8 +5,9 @@
   import { parseTableReport, type TableReport } from "./types";
 
   export let adapter: AdapterClient;
+  export let query: Record<string, string> = {};
 
-  let queryText = "SELECT account, balance FROM accounts ORDER BY account";
+  let queryText = query.query_string || "SELECT account, balance FROM accounts ORDER BY account";
   let result: TableReport | null = null;
   let loading = false;
   let error = "";
