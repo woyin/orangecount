@@ -36,6 +36,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     postingsPerAccount: "Postings per Account", entriesPerType: "Entries per Type",
     type: "Type", entriesCount: "# Entries", total: "Total",
     account: "Account", name: "Name", noDocuments: "No documents.",
+    price: "Price", noPrices: "No prices.",
   },
   "zh-CN": {
     subtitle: "只读本地账本视图。", language: "语言", overview: "概览", accounts: "账户", journal: "日记账",
@@ -65,5 +66,6 @@ export const translations: Record<Locale, Record<string, string>> = {
     postingsPerAccount: "每账户分录数", entriesPerType: "按类型条目数",
     type: "类型", entriesCount: "条目数", total: "合计",
     account: "账户", name: "名称", noDocuments: "没有文档。",
+    price: "价格", noPrices: "没有价格。",
   },
 };

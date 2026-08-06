@@ -359,6 +359,11 @@
       "upstream": null,
       "notes": "Postings-per-account and entries-per-type sections over the statistics envelope; layout modeled on Fava statistics page, written for the OrangeCount adapter."
     },
+    "web/src/fava/reports/CommoditiesReport.svelte": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Per-pair price tables grouped from the flat adapter rows; layout modeled on Fava commodities page minus the d3 line chart (S1 scope), written for the OrangeCount adapter."
+    },
     "web/src/fava/reports/DocumentsReport.svelte": {
       "current_kind": "original",
       "upstream": null,

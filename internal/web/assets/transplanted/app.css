@@ -296,6 +296,14 @@ textarea.svelte-1k81p2c {
   }
 }
 
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/CommoditiesReport.esbuild-svelte-fake-css */
+.prices-table.svelte-pjz8y6 {
+  max-width: 30rem;
+}
+.prices-table.svelte-pjz8y6 .num:where(.svelte-pjz8y6) {
+  text-align: right;
+}
+
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/DocumentsReport.esbuild-svelte-fake-css */
 .documents-table.svelte-1lx4yz6 {
   max-width: 60rem;

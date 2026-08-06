@@ -8,6 +8,7 @@
   import StatisticsReport from "../reports/StatisticsReport.svelte";
   import QueryReport from "../reports/QueryReport.svelte";
   import EditorReport from "../reports/EditorReport.svelte";
+  import CommoditiesReport from "../reports/CommoditiesReport.svelte";
   import DocumentsReport from "../reports/DocumentsReport.svelte";
   import EventsReport from "../reports/EventsReport.svelte";
   import TreeReport from "../reports/TreeReport.svelte";
@@ -101,6 +102,8 @@
   <EventsReport report={table} {locale} />
 {:else if table && route === "documents"}
   <DocumentsReport report={table} {locale} />
+{:else if table && route === "commodities"}
+  <CommoditiesReport report={table} {locale} {renderCommas} />
 {:else if table}
   <GenericReport report={table} title={pageLabel(route)} {route} {locale} {renderCommas} />
 {:else}
