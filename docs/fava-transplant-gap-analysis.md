@@ -44,7 +44,7 @@
 
 | # | Manifest | 差距 | Fava 行为 | 移植版现状 | 根因层 |
 | --- | --- | --- | --- | --- | --- |
-| T1 | R-IS/R-BS/R-TB | 图表系统为手写内联 SVG | d3 套件：坐标轴、刻度、日期标注、tooltip、图例、货币圆点选择器、图表类型切换（Stacked/Single Bars、Line/Area、Treemap/Sunburst/Icicle）、层级钻取 | 粗粒度 SVG；实测 IS/BS/TB/账户页均**无货币圆点**；TB 层级图已有 Treemap/Sunburst/Icicle 三视图切换（`b079d3b`/`b1247c8`）；条形/折线图已补坐标轴、nice 刻度、紧凑数值与日期标注（`d3e5216`）；图例已做成 Fava 式可点选货币/序列开关，点选即隐藏并自适应重算色阶、颜色稳定（`32cceb0`）；条形/折线图已加指针跟随 tooltip（条形按序列+期间、折线按最近期间列全部可见序列，`e8154b6`）；仍无层级钻取 | 前端组件缺失 |
+| T1 | R-IS/R-BS/R-TB | 图表系统为手写内联 SVG | d3 套件：坐标轴、刻度、日期标注、tooltip、图例、货币圆点选择器、图表类型切换（Stacked/Single Bars、Line/Area、Treemap/Sunburst/Icicle）、层级钻取 | 粗粒度 SVG；实测 IS/BS/TB/账户页均**无货币圆点**；TB 层级图已有 Treemap/Sunburst/Icicle 三视图切换（`b079d3b`/`b1247c8`）；条形/折线图已补坐标轴、nice 刻度、紧凑数值与日期标注（`d3e5216`）；图例已做成 Fava 式可点选货币/序列开关，点选即隐藏并自适应重算色阶、颜色稳定（`32cceb0`）；条形/折线图已加指针跟随 tooltip（条形按序列+期间、折线按最近期间列全部可见序列，`e8154b6`）；层级图 Treemap/Sunburst/Icicle 每个节点已做成指向该科目详情页的链接（`ab6ca07`）。至此 T1 列举的 Fava 行为均已具备，剩余仅为手写 SVG 与 d3 的实现层差异 | 前端组件缺失（已基本补齐） |
 | T2 | R-ACCOUNT | 账户详情页过薄 | 标题含 `(Last entry: date)` 与科目层级面包屑；Balance/Changes 切换；Account Balance/Changes(monthly)/Balances(monthly) 三区块；账户图 + 货币圆点；Account Journal 带徽章 | 面包屑与 Last entry 指示器已实现（`88d90b9`/`eefbf83`），Journal 带 change 列（`ae4eedc`）；仍无 Balance/Changes、无区间变化表、无账户图 | 前端 + 适配器（缺区间统计与 up-to-date 状态契约） |
 | T3 | G-SHELL/G-FILTERS | shell 控件缺口 | 导航含 `Go to account` 组合框、`+`（Add Entry）、`⬇`（Export）；Time/Account/FQL 为带建议下拉的 combobox，账户模糊自动补全、FQL 解析校验、`r` 重载与变更提示 | `Go to account`（侧栏）与 Time/Account/FQL 三个 AutocompleteInput combobox 已实现；`+` 为死链接（Add Entry 模态属 S5）；无 `⬇`（download-journal 端点属 S5）；无 FQL 校验、无 `r` 重载与变更提示 | 前端组件 + 适配器（FQL 解析契约已有计划未落 UI） |
 | T4 | G-SHELL | 标准导航被 OC 原创项污染 | 导航严格等于 Fava 标准面 | D1/D2 已落地：OC 独有 `Accounts` 项移入标注的 OrangeCount 扩展区；顶栏原创 Language/Theme 下拉已移除，主题入口在 Options→Color scheme，locale 作为 fava option | 结构决策（见决策项 D1/D2，均已实现） |
@@ -218,8 +218,12 @@
 > 期间: 金额 货币」，折线按指针 x 位置二分定位最近期间并逐行列出全部
 > 可见序列取值；移出即隐藏。层级图保留原生 `<title>`。冒烟于 Income
 > Statement 条形图与 Balance Sheet 7 序列折线图分别验证出现/内容与
-> 隐藏，`e8154b6`。上游为 d3 浮层，本实现为单一定位 div，行为等价；
-> 层级钻取仍缺，作为限制记录）。
+> 隐藏，`e8154b6`。上游为 d3 浮层，本实现为单一定位 div，行为等价）、
+> T1-drilldown（层级图「钻取」按 Fava 语义实现为逐节点账户链接：
+> Treemap/Sunburst/Icicle 每个节点包一层 `<a href=/account/…>`，点击
+> 进入该科目详情页，与 tree-table 账户链接约定一致。冒烟验证三视图
+> 均有链接（86/98/98）且点击 Treemap 磁贴成功跳至 Equity:Opening-
+> Balances 账户页，`ab6ca07`。T1 列举的 Fava 行为至此全部具备）。
 > T1/H5 的 WIP 覆盖部分仍待稠密夹具复比勾销。
 
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
