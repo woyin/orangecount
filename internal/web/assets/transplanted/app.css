@@ -112,26 +112,41 @@ form.svelte-cwf4f0 > span {
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/charts/ReportChart.esbuild-svelte-fake-css */
-.chart-card.svelte-15jud14 {
+.chart-card.svelte-1ftu6n {
   margin-bottom: 1rem;
 }
-.chart-meta.svelte-15jud14,
-.chart-availability.svelte-15jud14 {
+.hierarchy-picker.svelte-1ftu6n {
+  margin-bottom: .5rem;
+  color: var(--text-color-lightest);
+  text-align: center;
+}
+.hierarchy-picker.svelte-1ftu6n button:where(.svelte-1ftu6n) {
+  padding: 0 .5em;
+}
+.hierarchy-picker.svelte-1ftu6n button:where(.svelte-1ftu6n) + button:where(.svelte-1ftu6n) {
+  border-left: 1px solid var(--text-color-lighter);
+}
+.hierarchy-picker.svelte-1ftu6n button.selected:where(.svelte-1ftu6n),
+.hierarchy-picker.svelte-1ftu6n button:where(.svelte-1ftu6n):hover {
+  color: var(--text-color-lighter);
+}
+.chart-meta.svelte-1ftu6n,
+.chart-availability.svelte-1ftu6n {
   color: var(--text-color-lightest);
 }
-.chart-data.svelte-15jud14 {
+.chart-data.svelte-1ftu6n {
   margin-top: .5rem;
 }
-.chart-data.svelte-15jud14 summary:where(.svelte-15jud14) {
+.chart-data.svelte-1ftu6n summary:where(.svelte-1ftu6n) {
   color: var(--text-color-lightest);
   cursor: pointer;
 }
-.chart-scroll.svelte-15jud14 {
+.chart-scroll.svelte-1ftu6n {
   overflow-x: auto;
   max-height: 22rem;
   overflow-y: auto;
 }
-.report-chart.svelte-15jud14 {
+.report-chart.svelte-1ftu6n {
   display: block;
   width: min(100%, 52rem);
   height: 14rem;
@@ -139,29 +154,29 @@ form.svelte-cwf4f0 > span {
   background: var(--background-darker);
   border: 1px solid var(--border);
 }
-.report-chart.svelte-15jud14 path:where(.svelte-15jud14) {
+.report-chart.svelte-1ftu6n path:where(.svelte-1ftu6n) {
   fill: none;
   stroke-width: .8;
   vector-effect: non-scaling-stroke;
 }
-.chart-axis.svelte-15jud14 {
+.chart-axis.svelte-1ftu6n {
   stroke: var(--chart-axis);
   stroke-width: .25;
   vector-effect: non-scaling-stroke;
 }
-.legend.svelte-15jud14 {
+.legend.svelte-1ftu6n {
   display: inline-flex;
   gap: .3rem;
   align-items: center;
   margin: 0 .75rem .5rem 0;
 }
-.legend.svelte-15jud14 i:where(.svelte-15jud14) {
+.legend.svelte-1ftu6n i:where(.svelte-1ftu6n) {
   display: inline-block;
   width: .7rem;
   height: .7rem;
   border-radius: 50%;
 }
-table.svelte-15jud14 {
+table.svelte-1ftu6n {
   min-width: 32rem;
 }
 

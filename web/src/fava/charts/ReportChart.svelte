@@ -100,23 +100,80 @@
   $: roots = [...new Set(leaves.map((leaf) => leaf.root))].sort();
   $: tiles = tile(leaves, 0, 0, 100, 52);
   function tileColor(leaf: Leaf): string { return colors[roots.indexOf(leaf.root) % colors.length]; }
+
+  // --- Icicle --------------------------------------------------------------
+  // Fava offers treemap, sunburst, and icicle views of the same hierarchy.
+  // The icicle lays each level out as one row of rectangles spanning the
+  // parent above, which keeps every aggregate visible at once.
+  interface IceRect { name: string; root: string; value: number; display: string; x: number; y: number; w: number; h: number }
+
+  function icicleRects(nodes: HierarchyNode[]): IceRect[] {
+    const rects: IceRect[] = [];
+    const rowHeight = 6;
+    function walk(list: HierarchyNode[], x0: number, span: number, depth: number, root: string) {
+      const total = list.reduce((sum, node) => sum + Math.abs(numberValue(node.value)), 0);
+      if (!total || span <= 0) return;
+      let cursor = x0;
+      for (const node of list) {
+        const value = Math.abs(numberValue(node.value));
+        const width = (value / total) * span;
+        const top = root || node.name.split(":")[0];
+        if (value > 0) {
+          rects.push({ name: node.name, root: top, value, display: node.value.display, x: cursor, y: depth * rowHeight, w: width, h: rowHeight });
+        }
+        if (node.children?.length) {
+          walk(node.children, cursor, width, depth + 1, top);
+        }
+        cursor += width;
+      }
+    }
+    walk(nodes, 0, 100, 0, "");
+    return rects;
+  }
+
+  let hierarchyView: "treemap" | "icicle" = "treemap";
+  $: iceRects = icicleRects(chart.nodes ?? []);
+  $: iceDepth = iceRects.reduce((max, rect) => Math.max(max, rect.y + rect.h), 0);
+  function iceColor(rect: IceRect): string {
+    const rootsForIce = [...new Set((chart.nodes ?? []).map((node) => node.name.split(":")[0]))].sort();
+    return colors[rootsForIce.indexOf(rect.root) % colors.length];
+  }
 </script>
 
 <section class="chart-card" aria-label={chart.title}>
   <h3>{chart.title}</h3>
-  {#if chart.kind === "hierarchy" && tiles.length}
-    <svg class="report-chart report-hierarchy-chart" viewBox="0 0 100 52" preserveAspectRatio="none" role="img" aria-label={chart.title}>
-      {#each tiles as item (item.name)}
-        <rect
-          x={item.x + 0.15}
-          y={item.y + 0.15}
-          width={Math.max(0.3, item.w - 0.3)}
-          height={Math.max(0.3, item.h - 0.3)}
-          style={`fill:${tileColor(item)}`}
-          opacity=".8"
-        ><title>{item.name}: {item.display} {chart.currency}</title></rect>
-      {/each}
-    </svg>
+  {#if chart.kind === "hierarchy" && (tiles.length || iceRects.length)}
+    <div class="hierarchy-picker">
+      <button type="button" class="unset" class:selected={hierarchyView === "treemap"} on:click={() => (hierarchyView = "treemap")}>{label("treemap")}</button>
+      <button type="button" class="unset" class:selected={hierarchyView === "icicle"} on:click={() => (hierarchyView = "icicle")}>{label("icicle")}</button>
+    </div>
+    {#if hierarchyView === "icicle" && iceRects.length}
+      <svg class="report-chart report-hierarchy-chart" viewBox="0 0 100 {Math.max(6, iceDepth)}" preserveAspectRatio="none" role="img" aria-label={chart.title}>
+        {#each iceRects as item (item.name)}
+          <rect
+            x={item.x + 0.1}
+            y={item.y + 0.15}
+            width={Math.max(0.2, item.w - 0.2)}
+            height={Math.max(0.3, item.h - 0.3)}
+            style={`fill:${iceColor(item)}`}
+            opacity=".8"
+          ><title>{item.name}: {item.display} {chart.currency}</title></rect>
+        {/each}
+      </svg>
+    {:else}
+      <svg class="report-chart report-hierarchy-chart" viewBox="0 0 100 52" preserveAspectRatio="none" role="img" aria-label={chart.title}>
+        {#each tiles as item (item.name)}
+          <rect
+            x={item.x + 0.15}
+            y={item.y + 0.15}
+            width={Math.max(0.3, item.w - 0.3)}
+            height={Math.max(0.3, item.h - 0.3)}
+            style={`fill:${tileColor(item)}`}
+            opacity=".8"
+          ><title>{item.name}: {item.display} {chart.currency}</title></rect>
+        {/each}
+      </svg>
+    {/if}
   {:else if chart.kind === "stacked-bar" || chart.kind === "bar"}
     <svg class="report-chart report-bar-chart" viewBox="0 0 100 52" role="img" aria-label={chart.title}>
       <line x1="2" y1={y(0)} x2="98" y2={y(0)} class="chart-axis" />
@@ -177,6 +234,10 @@
 
 <style>
   .chart-card { margin-bottom: 1rem; }
+  .hierarchy-picker { margin-bottom: .5rem; color: var(--text-color-lightest); text-align: center; }
+  .hierarchy-picker button { padding: 0 .5em; }
+  .hierarchy-picker button + button { border-left: 1px solid var(--text-color-lighter); }
+  .hierarchy-picker button.selected, .hierarchy-picker button:hover { color: var(--text-color-lighter); }
   .chart-meta, .chart-availability { color: var(--text-color-lightest); }
   .chart-data { margin-top: .5rem; }
   .chart-data summary { color: var(--text-color-lightest); cursor: pointer; }
