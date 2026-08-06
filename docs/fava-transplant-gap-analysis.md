@@ -76,7 +76,7 @@
 
 | # | Manifest | 差距 | 说明 |
 | --- | --- | --- | --- |
-| L1 | R-ACCOUNT | ~~账户页标题无层级面包屑~~（已完成，`88d90b9`） | 标题现为祖先面包屑，每段链接到对应层级账户；Last entry 指示器仍属 T2 范围 |
+| L1 | R-ACCOUNT | ~~账户页标题无层级面包屑~~（已完成，`88d90b9`；Last entry 指示器 `eefbf83`） | 标题现为祖先面包屑 + Last entry 指示器；指示器跟随当前过滤，无条目上下文链接（限制） |
 | L2 | G-LOCALE | i18n 为静态 en/zh-CN 字典 | 上游为 gettext 目录；用户可见行为等价，建议登记为实现性偏差（D4） |
 | L3 | R-HOLDINGS | Holdings 页签集合与上游不一致（偏差登记） | 保留 OC 扩展页签 by_root_account/by_commodity，缺上游 by_cost_currency（适配器无 lot 成本货币维度，`3c9fef1`）。登记为实现性偏差：不补齐 by_cost_currency，除非后续引入成本货币分组数据 |
 | L4 | R-ERRORS | serve 拒绝加载含 error 级诊断的账本（偏差登记） | Fava 带错服务并在 /errors 展示全部诊断；OC `serve` 在 main.go:181 检测到 error 即退出，/errors 页面只能展示 warning（`b902d7d`）。登记为实现性偏差：若要对齐 Fava，需 owner 批准放宽启动门禁 |
@@ -160,7 +160,11 @@
 > 诊断——与 Fava 带错服务行为不一致，登记为实现性偏差 L4；上游消息内
 > 账户名自动链接本步未实现，作为限制记录）、
 > L1（账户页标题改为祖先面包屑：每段显示 leaf 并链接到对应层级账户，
-> title 保留全名，冒烟验证三级账户渲染与点击导航，`88d90b9`）。
+> title 保留全名，冒烟验证三级账户渲染与点击导航，`88d90b9`）、
+> T2 标题部分（面包屑后追加 "(Last entry: date)" 指示器：取已加载
+> journal 最新条目日期，上游小字号样式，冒烟验证 balance 指令日期，
+> `eefbf83`。上游取全局 account_details 且链接到条目上下文；本实现
+> 跟随当前 time/filter 过滤且无上下文链接，作为限制记录）。
 > T1/H5 的 WIP 覆盖部分仍待稠密夹具复比勾销。
 
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
