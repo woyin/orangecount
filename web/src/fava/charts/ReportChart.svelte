@@ -47,6 +47,12 @@
     return colors[(index < 0 ? 0 : index) % colors.length];
   }
 
+  // Fava's hierarchy charts make every node a link into that account's page.
+  // Reuse the tree-table convention for the target URL.
+  function accountHref(name: string): string {
+    return `/account/${encodeURIComponent(name)}`;
+  }
+
   $: pointValues = visibleSeries.flatMap((series) => series.points.map((point) => numberValue(point.value)));
   $: min = Math.min(0, ...(pointValues.length ? pointValues : [0]));
   $: max = Math.max(0, ...(pointValues.length ? pointValues : [0]));
@@ -300,37 +306,43 @@
     {#if hierarchyView === "sunburst" && sunSegments.length}
       <svg class="report-chart report-hierarchy-chart report-sunburst-chart" viewBox="0 0 100 100" role="img" aria-label={chart.title}>
         {#each sunSegments as item (item.name)}
-          <path
-            d={arcPath(item)}
-            style={`fill:${sunColor(item)}`}
-            opacity=".8"
-          ><title>{item.name}: {item.display} {chart.currency}</title></path>
+          <a href={accountHref(item.name)}>
+            <path
+              d={arcPath(item)}
+              style={`fill:${sunColor(item)}`}
+              opacity=".8"
+            ><title>{item.name}: {item.display} {chart.currency}</title></path>
+          </a>
         {/each}
       </svg>
     {:else if hierarchyView === "icicle" && iceRects.length}
       <svg class="report-chart report-hierarchy-chart" viewBox="0 0 100 {Math.max(6, iceDepth)}" preserveAspectRatio="none" role="img" aria-label={chart.title}>
         {#each iceRects as item (item.name)}
-          <rect
-            x={item.x + 0.1}
-            y={item.y + 0.15}
-            width={Math.max(0.2, item.w - 0.2)}
-            height={Math.max(0.3, item.h - 0.3)}
-            style={`fill:${iceColor(item)}`}
-            opacity=".8"
-          ><title>{item.name}: {item.display} {chart.currency}</title></rect>
+          <a href={accountHref(item.name)}>
+            <rect
+              x={item.x + 0.1}
+              y={item.y + 0.15}
+              width={Math.max(0.2, item.w - 0.2)}
+              height={Math.max(0.3, item.h - 0.3)}
+              style={`fill:${iceColor(item)}`}
+              opacity=".8"
+            ><title>{item.name}: {item.display} {chart.currency}</title></rect>
+          </a>
         {/each}
       </svg>
     {:else}
       <svg class="report-chart report-hierarchy-chart" viewBox="0 0 100 52" preserveAspectRatio="none" role="img" aria-label={chart.title}>
         {#each tiles as item (item.name)}
-          <rect
-            x={item.x + 0.15}
-            y={item.y + 0.15}
-            width={Math.max(0.3, item.w - 0.3)}
-            height={Math.max(0.3, item.h - 0.3)}
-            style={`fill:${tileColor(item)}`}
-            opacity=".8"
-          ><title>{item.name}: {item.display} {chart.currency}</title></rect>
+          <a href={accountHref(item.name)}>
+            <rect
+              x={item.x + 0.15}
+              y={item.y + 0.15}
+              width={Math.max(0.3, item.w - 0.3)}
+              height={Math.max(0.3, item.h - 0.3)}
+              style={`fill:${tileColor(item)}`}
+              opacity=".8"
+            ><title>{item.name}: {item.display} {chart.currency}</title></rect>
+          </a>
         {/each}
       </svg>
     {/if}
@@ -434,6 +446,7 @@
   .chart-scroll { overflow-x: auto; max-height: 22rem; overflow-y: auto; }
   .report-chart { display: block; width: min(100%, 52rem); height: 14rem; margin-bottom: .5rem; background: var(--background-darker); border: 1px solid var(--border); }
   .report-sunburst-chart { width: 14rem; }
+  .report-hierarchy-chart a { cursor: pointer; }
   .report-chart path { fill: none; stroke-width: .8; vector-effect: non-scaling-stroke; }
   .chart-axis { stroke: var(--chart-axis); stroke-width: .25; vector-effect: non-scaling-stroke; }
   .chart-grid { stroke: var(--border); stroke-width: .2; vector-effect: non-scaling-stroke; opacity: .5; }

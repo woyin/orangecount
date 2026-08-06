@@ -5572,29 +5572,29 @@ function parseJournalReport(value) {
 }
 
 // src/fava/charts/ReportChart.svelte
-var root_4 = ns_template(`<path opacity=".8" class="svelte-3cj8r9"><title> </title></path>`);
-var root_33 = template(`<svg class="report-chart report-hierarchy-chart report-sunburst-chart svelte-3cj8r9" viewBox="0 0 100 100" role="img"></svg>`);
-var root_7 = ns_template(`<rect opacity=".8"><title> </title></rect>`);
-var root_62 = template(`<svg class="report-chart report-hierarchy-chart svelte-3cj8r9" preserveAspectRatio="none" role="img"></svg>`);
-var root_9 = ns_template(`<rect opacity=".8"><title> </title></rect>`);
-var root_8 = template(`<svg class="report-chart report-hierarchy-chart svelte-3cj8r9" viewBox="0 0 100 52" preserveAspectRatio="none" role="img"></svg>`);
-var root_22 = template(`<div class="hierarchy-picker svelte-3cj8r9"><button type="button" class="unset svelte-3cj8r9"> </button> <button type="button" class="unset svelte-3cj8r9"> </button> <button type="button" class="unset svelte-3cj8r9"> </button></div> <!>`, 1);
-var root_122 = ns_template(`<line class="chart-grid svelte-3cj8r9"></line><text class="chart-tick svelte-3cj8r9" text-anchor="end"> </text>`, 1);
+var root_4 = ns_template(`<a class="svelte-1c31p73"><path opacity=".8" class="svelte-1c31p73"><title> </title></path></a>`);
+var root_33 = template(`<svg class="report-chart report-hierarchy-chart report-sunburst-chart svelte-1c31p73" viewBox="0 0 100 100" role="img"></svg>`);
+var root_7 = ns_template(`<a class="svelte-1c31p73"><rect opacity=".8"><title> </title></rect></a>`);
+var root_62 = template(`<svg class="report-chart report-hierarchy-chart svelte-1c31p73" preserveAspectRatio="none" role="img"></svg>`);
+var root_9 = ns_template(`<a class="svelte-1c31p73"><rect opacity=".8"><title> </title></rect></a>`);
+var root_8 = template(`<svg class="report-chart report-hierarchy-chart svelte-1c31p73" viewBox="0 0 100 52" preserveAspectRatio="none" role="img"></svg>`);
+var root_22 = template(`<div class="hierarchy-picker svelte-1c31p73"><button type="button" class="unset svelte-1c31p73"> </button> <button type="button" class="unset svelte-1c31p73"> </button> <button type="button" class="unset svelte-1c31p73"> </button></div> <!>`, 1);
+var root_122 = ns_template(`<line class="chart-grid svelte-1c31p73"></line><text class="chart-tick svelte-1c31p73" text-anchor="end"> </text>`, 1);
 var root_14 = ns_template(`<rect></rect>`);
-var root_16 = ns_template(`<text y="51" class="chart-tick svelte-3cj8r9" text-anchor="middle"> </text>`);
-var root_11 = template(`<svg class="report-chart report-bar-chart svelte-3cj8r9" viewBox="0 0 100 52" role="img"><!><line class="chart-axis svelte-3cj8r9"></line><!><!></svg>`);
-var root_18 = ns_template(`<line class="chart-grid svelte-3cj8r9"></line><text class="chart-tick svelte-3cj8r9" text-anchor="end"> </text>`, 1);
-var root_19 = ns_template(`<path class="svelte-3cj8r9"></path>`);
-var root_21 = ns_template(`<text y="51" class="chart-tick svelte-3cj8r9" text-anchor="middle"> </text>`);
-var root_17 = template(`<svg class="report-chart report-line-chart svelte-3cj8r9" viewBox="0 0 100 52" role="img"><!><line class="chart-axis svelte-3cj8r9"></line><!><!></svg>`);
-var root_222 = template(`<button type="button" class="legend svelte-3cj8r9"><i class="svelte-3cj8r9"></i><span class="svelte-3cj8r9"> </span></button>`);
-var root_23 = template(`<p class="chart-availability svelte-3cj8r9"> </p>`);
+var root_16 = ns_template(`<text y="51" class="chart-tick svelte-1c31p73" text-anchor="middle"> </text>`);
+var root_11 = template(`<svg class="report-chart report-bar-chart svelte-1c31p73" viewBox="0 0 100 52" role="img"><!><line class="chart-axis svelte-1c31p73"></line><!><!></svg>`);
+var root_18 = ns_template(`<line class="chart-grid svelte-1c31p73"></line><text class="chart-tick svelte-1c31p73" text-anchor="end"> </text>`, 1);
+var root_19 = ns_template(`<path class="svelte-1c31p73"></path>`);
+var root_21 = ns_template(`<text y="51" class="chart-tick svelte-1c31p73" text-anchor="middle"> </text>`);
+var root_17 = template(`<svg class="report-chart report-line-chart svelte-1c31p73" viewBox="0 0 100 52" role="img"><!><line class="chart-axis svelte-1c31p73"></line><!><!></svg>`);
+var root_222 = template(`<button type="button" class="legend svelte-1c31p73"><i class="svelte-1c31p73"></i><span class="svelte-1c31p73"> </span></button>`);
+var root_23 = template(`<p class="chart-availability svelte-1c31p73"> </p>`);
 var root_24 = template(`<th scope="col" class="num"> </th>`);
 var root_26 = template(`<td class="num"> </td>`);
 var root_25 = template(`<tr><th scope="row"> </th><!></tr>`);
 var root_27 = template(`<tr><td>No chart data.</td></tr>`);
-var root_28 = template(`<div class="chart-tooltip svelte-3cj8r9" role="status"> </div>`);
-var root_15 = template(`<section class="chart-card svelte-3cj8r9"><h3> </h3> <!> <p class="chart-meta svelte-3cj8r9"> </p> <!> <!> <details class="chart-data svelte-3cj8r9"><summary class="svelte-3cj8r9"> </summary> <div class="chart-scroll svelte-3cj8r9"><table class="svelte-3cj8r9"><thead><tr><th scope="col">Period</th><!></tr></thead><tbody></tbody></table></div></details> <!></section>`);
+var root_28 = template(`<div class="chart-tooltip svelte-1c31p73" role="status"> </div>`);
+var root_15 = template(`<section class="chart-card svelte-1c31p73"><h3> </h3> <!> <p class="chart-meta svelte-1c31p73"> </p> <!> <!> <details class="chart-data svelte-1c31p73"><summary class="svelte-1c31p73"> </summary> <div class="chart-scroll svelte-1c31p73"><table class="svelte-1c31p73"><thead><tr><th scope="col">Period</th><!></tr></thead><tbody></tbody></table></div></details> <!></section>`);
 function ReportChart($$anchor, $$props) {
   push($$props, false);
   const catalog = mutable_state();
@@ -5646,6 +5646,9 @@ function ReportChart($$anchor, $$props) {
   function colorFor(seriesLabel) {
     const index2 = chart2().series.findIndex((series) => series.label === seriesLabel);
     return colors[(index2 < 0 ? 0 : index2) % colors.length];
+  }
+  function accountHref(name) {
+    return `/account/${encodeURIComponent(name)}`;
   }
   const X0 = 14;
   const X1 = 98;
@@ -5961,18 +5964,21 @@ ${lines.join("\n")}`);
         var consequent = ($$anchor3) => {
           var svg_1 = root_33();
           each(svg_1, 5, () => get(sunSegments), (item) => item.name, ($$anchor4, item) => {
-            var path = root_4();
+            var a = root_4();
+            template_effect(() => set_attribute(a, "href", accountHref(get(item).name)));
+            var path = child(a);
             template_effect(() => set_attribute(path, "d", arcPath(get(item))));
             const style_derived = derived_safe_equal(() => `fill:${sunColor(get(item))}`);
             var title = child(path);
             var text_4 = child(title);
             reset(title);
             reset(path);
+            reset(a);
             template_effect(() => {
               set_attribute(path, "style", get(style_derived));
               set_text(text_4, `${get(item).name ?? ""}: ${get(item).display ?? ""} ${chart2().currency ?? ""}`);
             });
-            append($$anchor4, path);
+            append($$anchor4, a);
           });
           reset(svg_1);
           template_effect(() => set_attribute(svg_1, "aria-label", chart2().title));
@@ -5986,7 +5992,9 @@ ${lines.join("\n")}`);
               var svg_2 = root_62();
               template_effect(() => set_attribute(svg_2, "viewBox", `0 0 100 ${Math.max(6, get(iceDepth)) ?? ""}`));
               each(svg_2, 5, () => get(iceRects), (item) => item.name, ($$anchor5, item) => {
-                var rect_1 = root_7();
+                var a_1 = root_7();
+                template_effect(() => set_attribute(a_1, "href", accountHref(get(item).name)));
+                var rect_1 = child(a_1);
                 template_effect(() => set_attribute(rect_1, "width", Math.max(0.2, get(item).w - 0.2)));
                 template_effect(() => set_attribute(rect_1, "height", Math.max(0.3, get(item).h - 0.3)));
                 const style_derived_1 = derived_safe_equal(() => `fill:${iceColor(get(item))}`);
@@ -5994,13 +6002,14 @@ ${lines.join("\n")}`);
                 var text_5 = child(title_1);
                 reset(title_1);
                 reset(rect_1);
+                reset(a_1);
                 template_effect(() => {
                   set_attribute(rect_1, "x", get(item).x + 0.1);
                   set_attribute(rect_1, "y", get(item).y + 0.15);
                   set_attribute(rect_1, "style", get(style_derived_1));
                   set_text(text_5, `${get(item).name ?? ""}: ${get(item).display ?? ""} ${chart2().currency ?? ""}`);
                 });
-                append($$anchor5, rect_1);
+                append($$anchor5, a_1);
               });
               reset(svg_2);
               template_effect(() => set_attribute(svg_2, "aria-label", chart2().title));
@@ -6009,7 +6018,9 @@ ${lines.join("\n")}`);
             var alternate = ($$anchor4) => {
               var svg_3 = root_8();
               each(svg_3, 5, () => get(tiles), (item) => item.name, ($$anchor5, item) => {
-                var rect_2 = root_9();
+                var a_2 = root_9();
+                template_effect(() => set_attribute(a_2, "href", accountHref(get(item).name)));
+                var rect_2 = child(a_2);
                 template_effect(() => set_attribute(rect_2, "width", Math.max(0.3, get(item).w - 0.3)));
                 template_effect(() => set_attribute(rect_2, "height", Math.max(0.3, get(item).h - 0.3)));
                 const style_derived_2 = derived_safe_equal(() => `fill:${tileColor(get(item))}`);
@@ -6017,13 +6028,14 @@ ${lines.join("\n")}`);
                 var text_6 = child(title_2);
                 reset(title_2);
                 reset(rect_2);
+                reset(a_2);
                 template_effect(() => {
                   set_attribute(rect_2, "x", get(item).x + 0.15);
                   set_attribute(rect_2, "y", get(item).y + 0.15);
                   set_attribute(rect_2, "style", get(style_derived_2));
                   set_text(text_6, `${get(item).name ?? ""}: ${get(item).display ?? ""} ${chart2().currency ?? ""}`);
                 });
-                append($$anchor5, rect_2);
+                append($$anchor5, a_2);
               });
               reset(svg_3);
               template_effect(() => set_attribute(svg_3, "aria-label", chart2().title));
