@@ -43,6 +43,10 @@ type JournalEntry struct {
 	Span      string                   `json:"span,omitempty"`
 	Extra     map[string]string        `json:"extra,omitempty"`
 	Balance   map[string]JournalAmount `json:"balance,omitempty"`
+	// Change is the per-currency sum of the entry's postings inside the
+	// account filter, populated only when the journal is scoped to an
+	// account: it is the column Fava's account journal renders as "Change".
+	Change []JournalAmount `json:"change,omitempty"`
 }
 
 type JournalPosting struct {
@@ -121,6 +125,7 @@ func journalMeta(values []ledger.Metadata) []JournalMeta {
 // Fava journal can display, newest first. It never re-evaluates: the entries
 // already carry booked costs and interpolated amounts.
 func ProjectJournal(e ledger.Evaluation, graph *source.Graph, filters report.Filters, journalFilters report.JournalFilters) JournalReport {
+	account := strings.TrimSpace(filters.Account)
 	entries := make([]JournalEntry, 0, len(e.Entries))
 	for _, record := range e.Entries {
 		entry, ok := projectJournalEntry(record)
@@ -129,6 +134,9 @@ func ProjectJournal(e ledger.Evaluation, graph *source.Graph, filters report.Fil
 		}
 		entry.File = journalDisplayPath(record.File, graph)
 		entry.Span = record.Span.String()
+		if account != "" {
+			entry.Change = journalChange(record, account)
+		}
 		entries = append(entries, entry)
 	}
 	entries = filterJournalEntries(entries, filters, journalFilters)
@@ -221,6 +229,48 @@ func journalTransaction(transaction *ledger.Transaction) JournalEntry {
 		})
 	}
 	return entry
+}
+
+// journalChange sums the posting units that fall inside the filtered account
+// so the account journal can show the per-entry change the way Fava does.
+// Only transactions carry postings; every other directive yields no change.
+func journalChange(record ledger.EntryRecord, account string) []JournalAmount {
+	var transaction *ledger.Transaction
+	switch directive := record.Directive.(type) {
+	case *ledger.Transaction:
+		transaction = directive
+	case ledger.Transaction:
+		transaction = &directive
+	default:
+		return nil
+	}
+	totals := map[string]ledger.Decimal{}
+	for _, posting := range transaction.Postings {
+		if !accountWithinPrefix(posting.Account, account) {
+			continue
+		}
+		if posting.Units == nil || posting.Units.Currency == "" || posting.Units.Number.Raw == "" {
+			continue
+		}
+		value := ledger.DecimalFromNumber(posting.Units.Number)
+		if existing, ok := totals[posting.Units.Currency]; ok {
+			value = existing.Add(value)
+		}
+		totals[posting.Units.Currency] = value
+	}
+	if len(totals) == 0 {
+		return nil
+	}
+	currencies := make([]string, 0, len(totals))
+	for currency := range totals {
+		currencies = append(currencies, currency)
+	}
+	sort.Strings(currencies)
+	change := make([]JournalAmount, 0, len(totals))
+	for _, currency := range currencies {
+		change = append(change, JournalAmount{Number: report.FormatDecimal(totals[currency]), Currency: currency})
+	}
+	return change
 }
 
 // filterJournalEntries applies the same global and journal-specific filters the

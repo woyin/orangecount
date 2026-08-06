@@ -17,6 +17,7 @@ import (
 
 	"orangecount/internal/diagnostic"
 	"orangecount/internal/ledger"
+	"orangecount/internal/report"
 	"orangecount/internal/snapshot"
 	"orangecount/internal/source"
 )
@@ -277,4 +278,37 @@ func TestBootstrapExactValuesSurviveJSON(t *testing.T) {
 		t.Fatalf("bootstrap currencies=%v", proj.Currencies)
 	}
 	_ = data
+}
+
+func TestProjectJournalCarriesAccountChange(t *testing.T) {
+	evaluation := testEvaluation(t)
+	projection := ProjectJournal(evaluation, nil, report.Filters{Account: "Assets:Bank"}, report.JournalFilters{})
+	wantChange := map[string]string{"USD": "-2.5", "EUR": "-1.15"}
+	seen := 0
+	for _, entry := range projection.Entries {
+		if entry.Type != "transaction" {
+			if entry.Change != nil {
+				t.Fatalf("non-transaction carries change: %+v", entry)
+			}
+			continue
+		}
+		seen++
+		if len(entry.Change) != 1 {
+			t.Fatalf("change=%+v", entry.Change)
+		}
+		currency := entry.Change[0].Currency
+		expected, ok := wantChange[currency]
+		if !ok || entry.Change[0].Number.Display != expected {
+			t.Fatalf("change=%+v want %q for %s", entry.Change, expected, currency)
+		}
+	}
+	if seen != 2 {
+		t.Fatalf("transactions=%d entries=%+v", seen, projection.Entries)
+	}
+	unfiltered := ProjectJournal(evaluation, nil, report.Filters{}, report.JournalFilters{})
+	for _, entry := range unfiltered.Entries {
+		if entry.Change != nil {
+			t.Fatalf("unfiltered entry carries change: %+v", entry)
+		}
+	}
 }

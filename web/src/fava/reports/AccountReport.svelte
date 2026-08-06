@@ -47,5 +47,5 @@
     <ReportChart chart={balance.chart} {locale} />
   {/if}
   {#if balance}<GenericReport report={balance} title="Balance" {locale} {renderCommas} />{/if}
-  {#if journal}<JournalReport report={journal} {renderCommas} />{/if}
+  {#if journal}<JournalReport report={journal} {renderCommas} accountFilter={account} />{/if}
 {/if}

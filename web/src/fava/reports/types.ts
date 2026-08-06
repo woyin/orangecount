@@ -184,6 +184,8 @@ export interface JournalEntry {
   file?: string;
   span?: string;
   extra?: Record<string, string>;
+  /** Per-currency change inside the account filter; account journal only. */
+  change?: JournalAmount[];
 }
 
 export interface JournalReport {

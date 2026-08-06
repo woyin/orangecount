@@ -6,6 +6,8 @@
   export let renderCommas = false;
   /** Rendered on the account page, which adds a running-balance column. */
   export let runningBalances: Map<JournalEntry, string> | null = null;
+  /** Account filter in effect: swaps the Price column for Fava's Change. */
+  export let accountFilter = "";
 
   // Fava drives journal visibility entirely from `show-*` classes on the list,
   // so the chips only toggle class names and never re-request the report. The
@@ -63,6 +65,11 @@
     return `${formatAmount(amount.number, renderCommas)} ${amount.currency}`;
   }
 
+  function changeText(change: JournalAmount[] | undefined): string {
+    if (!change?.length) return "";
+    return change.map((amount) => amountText(amount)).join(", ");
+  }
+
   function accountHref(account: string): string {
     return `/account/${encodeURIComponent(account)}`;
   }
@@ -103,7 +110,7 @@
       <span class="description">Payee/Narration</span>
       <span class="num">Units</span>
       <span class="num">Cost</span>
-      <span class="num">{runningBalances ? "Balance" : "Price"}</span>
+      <span class="num">{runningBalances ? "Balance" : accountFilter ? "Change" : "Price"}</span>
     </p>
   </li>
   {#each report.entries as entry, index (entry.type + entry.date + index)}
@@ -139,11 +146,15 @@
         {#if entry.amount}
           <span class="num bal" title={entry.amount.currency}>{amountText(entry.amount)}</span>
           <span class="change num"></span>
-          <span class="change num"></span>
+          <span class="change num">{accountFilter ? changeText(entry.change) : ""}</span>
         {:else if runningBalances}
           <span class="num"></span>
           <span class="num"></span>
           <span class="num">{runningBalances.get(entry) ?? ""}</span>
+        {:else if accountFilter}
+          <span class="num"></span>
+          <span class="num"></span>
+          <span class="num change">{changeText(entry.change)}</span>
         {/if}
       </p>
       {#if entry.postings?.length}
