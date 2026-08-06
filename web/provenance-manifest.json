@@ -526,6 +526,31 @@
       "upstream_hash": "4d75cefe54fac9e9bb3de40517c650671cf410977b3c2b3d6d5c08fc6816eaab",
       "notice": "NOTICE",
       "notes": "Regex escaping helper transplanted verbatim at the pinned reference revision."
+    },
+    "web/src/fava/sort/index.ts": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Sorter/SortColumn table-sort contract modeled on Fava's sort module (same click semantics), rewritten without the d3-array dependency for the OrangeCount shell."
+    },
+    "web/src/fava/sort/SortHeader.svelte": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Sortable column header in the shell's legacy Svelte mode; adds the aria-sort and arrow affordance already used by GenericReport/ErrorsReport, which upstream omits."
+    },
+    "web/src/fava/reports/EventTable.svelte": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Per-group sortable events table mirroring Fava's EventTable (Date desc default), written for the OrangeCount adapter."
+    },
+    "web/src/fava/reports/PriceTable.svelte": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Per-pair sortable price table mirroring Fava's CommodityTable (Date desc default); prices keep the adapter's DecimalWire display, written for the OrangeCount adapter."
+    },
+    "web/src/fava/reports/DocumentTable.svelte": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Sortable documents table mirroring Fava's documents Table (Date desc default, leading-date name strip); keeps the OrangeCount account column, written for the OrangeCount adapter."
     }
   }
 }

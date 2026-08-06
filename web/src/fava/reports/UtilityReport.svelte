@@ -1,5 +1,7 @@
 <script lang="ts">
   import { translations, type Locale } from "../../translations";
+  import { Sorter, StringColumn, type SortColumn } from "../sort/index";
+  import SortHeader from "../sort/SortHeader.svelte";
   import type { AdapterClient } from "../adapter-client";
 
   export let adapter: AdapterClient;
@@ -58,6 +60,16 @@
     .map(([key, value]) => [key, String(value)] as [string, string])
     .sort(([a], [b]) => a.localeCompare(b));
 
+  // Upstream renders both options tables with sortable Key/Value headers.
+  $: optionColumns = [
+    new StringColumn<[string, string]>(t("optionKey"), (row) => row[0]),
+    new StringColumn<[string, string]>(t("optionValue"), (row) => row[1]),
+  ] as SortColumn<[string, string]>[];
+  $: favaSorter = new Sorter<[string, string]>(optionColumns[0], "asc");
+  $: beancountSorter = new Sorter<[string, string]>(optionColumns[0], "asc");
+  $: sortedFavaRows = favaSorter.sort(favaRows);
+  $: sortedBeancountRows = beancountSorter.sort(beancountRows);
+
   // Like upstream, help lives under /help/<page>; the bare /help route is the
   // index listing every topic.
   $: helpSections = Array.isArray(data?.sections) ? data.sections : [];
@@ -102,9 +114,14 @@
   </p>
   <h3>{t("favaOptions")} <a href="/help/options">({t("help")})</a></h3>
   <table class="options-table">
-    <thead><tr><th>{t("optionKey")}</th><th>{t("optionValue")}</th></tr></thead>
+    <thead>
+      <tr>
+        <SortHeader bind:sorter={favaSorter} column={optionColumns[0]} />
+        <SortHeader bind:sorter={favaSorter} column={optionColumns[1]} />
+      </tr>
+    </thead>
     <tbody>
-      {#each favaRows as [key, value] (key)}
+      {#each sortedFavaRows as [key, value] (key)}
         <tr>
           <td>{key}</td>
           <td>
@@ -123,9 +140,14 @@
   </table>
   <h3>{t("beancountOptions")}</h3>
   <table class="options-table">
-    <thead><tr><th>{t("optionKey")}</th><th>{t("optionValue")}</th></tr></thead>
+    <thead>
+      <tr>
+        <SortHeader bind:sorter={beancountSorter} column={optionColumns[0]} />
+        <SortHeader bind:sorter={beancountSorter} column={optionColumns[1]} />
+      </tr>
+    </thead>
     <tbody>
-      {#each beancountRows as [key, value] (key)}
+      {#each sortedBeancountRows as [key, value] (key)}
         <tr><td>{key}</td><td><pre>{value}</pre></td></tr>
       {/each}
     </tbody>

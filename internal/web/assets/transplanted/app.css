@@ -256,6 +256,19 @@ table.svelte-1qovg8j {
   border: 1px solid var(--error);
 }
 
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/sort/SortHeader.esbuild-svelte-fake-css */
+.num.svelte-21kpbq {
+  text-align: right;
+}
+.sort-toggle.svelte-21kpbq {
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+}
+
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/StatisticsReport.esbuild-svelte-fake-css */
 .entries-by-type.svelte-128xnnn .num:where(.svelte-128xnnn) {
   text-align: right;
@@ -329,7 +342,7 @@ textarea.svelte-1k81p2c {
   }
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/CommoditiesReport.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/PriceTable.esbuild-svelte-fake-css */
 .prices-table.svelte-pjz8y6 {
   max-width: 30rem;
 }
@@ -337,7 +350,7 @@ textarea.svelte-1k81p2c {
   text-align: right;
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/DocumentsReport.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/DocumentTable.esbuild-svelte-fake-css */
 .documents-table.svelte-1lx4yz6 {
   max-width: 60rem;
 }
@@ -368,7 +381,7 @@ textarea.svelte-1k81p2c {
   border: 0;
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/EventsReport.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/EventTable.esbuild-svelte-fake-css */
 .events-table.svelte-1nok83z {
   max-width: 40rem;
 }

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { translations, type Locale } from "../../translations";
-  import { formatAmount, type DecimalWire, type TableReport } from "./types";
+  import PriceTable from "./PriceTable.svelte";
+  import type { DecimalWire, TableReport } from "./types";
 
   export let report: TableReport;
   export let locale = "en";
@@ -16,9 +17,9 @@
     amount: DecimalWire | undefined;
   }
 
-  // Fava groups the commodities page by base/quote pair with one price table
-  // per pair (newest first) plus a line chart; the chart is still out of
-  // scope (S1), so only the tables are rendered here.
+  // Fava groups the commodities page by base/quote pair with one sortable
+  // price table per pair plus a line chart; the chart is still out of scope
+  // (S1), so only the tables are rendered here.
   $: pairs = (() => {
     const byPair = new Map<string, PriceRow[]>();
     for (const row of report.rows) {
@@ -32,9 +33,6 @@
       });
       byPair.set(key, list);
     }
-    for (const list of byPair.values()) {
-      list.sort((a, b) => b.date.localeCompare(a.date));
-    }
     return [...byPair.entries()];
   })();
 </script>
@@ -43,31 +41,10 @@
   {#each pairs as [pair, prices] (pair)}
     <div class="left">
       <h3>{pair}</h3>
-      <table class="prices-table">
-        <thead>
-          <tr><th>{t("date")}</th><th class="num">{t("price")}</th></tr>
-        </thead>
-        <tbody>
-          {#each prices as price (price.date)}
-            <tr>
-              <td>{price.date}</td>
-              <td class="num">{formatAmount(price.amount, renderCommas)}</td>
-            </tr>
-          {/each}
-        </tbody>
-      </table>
+      <PriceTable {prices} {locale} {renderCommas} />
     </div>
   {/each}
 {:else}
   <p>{t("noPrices")}</p>
 {/if}
 
-<style>
-  .prices-table {
-    max-width: 30rem;
-  }
-
-  .prices-table .num {
-    text-align: right;
-  }
-</style>

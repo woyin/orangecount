@@ -1,5 +1,6 @@
 <script lang="ts">
   import { translations, type Locale } from "../../translations";
+  import EventTable from "./EventTable.svelte";
   import type { TableReport } from "./types";
 
   export let report: TableReport;
@@ -10,8 +11,8 @@
     return catalog[key] || key;
   }
 
-  // Fava groups the events page by event type with one table per group,
-  // sorted by date descending; the adapter delivers a flat table.
+  // Fava groups the events page by event type with one sortable table per
+  // group; the adapter delivers a flat table.
   $: groups = (() => {
     const byType = new Map<string, { date: string; description: string }[]>();
     for (const row of report.rows) {
@@ -23,9 +24,6 @@
       });
       byType.set(type, list);
     }
-    for (const list of byType.values()) {
-      list.sort((a, b) => b.date.localeCompare(a.date));
-    }
     return [...byType.entries()];
   })();
 </script>
@@ -34,24 +32,10 @@
   {#each groups as [type, events] (type)}
     <div class="left">
       <h3>{t("eventHeading")} {type}</h3>
-      <table class="events-table">
-        <thead>
-          <tr><th>{t("date")}</th><th>{t("description")}</th></tr>
-        </thead>
-        <tbody>
-          {#each events as event (event.date + event.description)}
-            <tr><td>{event.date}</td><td>{event.description}</td></tr>
-          {/each}
-        </tbody>
-      </table>
+      <EventTable {events} {locale} />
     </div>
   {/each}
 {:else}
   <p>{t("noEvents")}</p>
 {/if}
 
-<style>
-  .events-table {
-    max-width: 40rem;
-  }
-</style>
