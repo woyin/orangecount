@@ -37,6 +37,7 @@ export const translations: Record<Locale, Record<string, string>> = {
     type: "Type", entriesCount: "# Entries", total: "Total",
     account: "Account", name: "Name", noDocuments: "No documents.",
     price: "Price", noPrices: "No prices.",
+    file: "File", line: "Line", error: "Error", noErrors: "No errors.",
   },
   "zh-CN": {
     subtitle: "只读本地账本视图。", language: "语言", overview: "概览", accounts: "账户", journal: "日记账",
@@ -67,5 +68,6 @@ export const translations: Record<Locale, Record<string, string>> = {
     type: "类型", entriesCount: "条目数", total: "合计",
     account: "账户", name: "名称", noDocuments: "没有文档。",
     price: "价格", noPrices: "没有价格。",
+    file: "文件", line: "行", error: "错误", noErrors: "没有错误。",
   },
 };

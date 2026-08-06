@@ -309,6 +309,32 @@ textarea.svelte-1k81p2c {
   max-width: 60rem;
 }
 
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/ErrorsReport.esbuild-svelte-fake-css */
+.errors-table.svelte-1tweq4j {
+  min-width: 100%;
+}
+.errors-table.svelte-1tweq4j .num:where(.svelte-1tweq4j) {
+  text-align: right;
+}
+.errors-table.svelte-1tweq4j .pre:where(.svelte-1tweq4j) {
+  white-space: pre-wrap;
+  font-family: var(--font-family-monospace, monospace);
+}
+.errors-table.svelte-1tweq4j tr.warning:where(.svelte-1tweq4j) td:where(.svelte-1tweq4j) {
+  color: var(--text-color-light);
+}
+.errors-table.svelte-1tweq4j .code:where(.svelte-1tweq4j) {
+  color: var(--text-color-lightest);
+}
+.sort-toggle.svelte-1tweq4j {
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+}
+
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/EventsReport.esbuild-svelte-fake-css */
 .events-table.svelte-1nok83z {
   max-width: 40rem;
