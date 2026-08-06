@@ -131,23 +131,82 @@
     return rects;
   }
 
-  let hierarchyView: "treemap" | "icicle" = "treemap";
+  let hierarchyView: "treemap" | "icicle" | "sunburst" = "treemap";
   $: iceRects = icicleRects(chart.nodes ?? []);
   $: iceDepth = iceRects.reduce((max, rect) => Math.max(max, rect.y + rect.h), 0);
   function iceColor(rect: IceRect): string {
     const rootsForIce = [...new Set((chart.nodes ?? []).map((node) => node.name.split(":")[0]))].sort();
     return colors[rootsForIce.indexOf(rect.root) % colors.length];
   }
+
+  // --- Sunburst ------------------------------------------------------------
+  // Polar partition: the root accounts sit in the center circle and each
+  // deeper level is a ring of annular sectors around them.
+  interface ArcSegment { name: string; root: string; value: number; display: string; a0: number; a1: number; depth: number }
+
+  function sunburstSegments(nodes: HierarchyNode[]): ArcSegment[] {
+    const segments: ArcSegment[] = [];
+    function walk(list: HierarchyNode[], a0: number, span: number, depth: number, root: string) {
+      const total = list.reduce((sum, node) => sum + Math.abs(numberValue(node.value)), 0);
+      if (!total || span <= 0) return;
+      let cursor = a0;
+      for (const node of list) {
+        const value = Math.abs(numberValue(node.value));
+        const angle = (value / total) * span;
+        const top = root || node.name.split(":")[0];
+        if (value > 0) {
+          segments.push({ name: node.name, root: top, value, display: node.value.display, a0: cursor, a1: cursor + angle, depth });
+        }
+        if (node.children?.length) {
+          walk(node.children, cursor, angle, depth + 1, top);
+        }
+        cursor += angle;
+      }
+    }
+    walk(nodes, 0, Math.PI * 2, 0, "");
+    return segments;
+  }
+
+  $: sunSegments = sunburstSegments(chart.nodes ?? []);
+  $: sunDepth = sunSegments.reduce((max, segment) => Math.max(max, segment.depth), 0) + 1;
+  function sunColor(segment: ArcSegment): string {
+    const rootsForSun = [...new Set((chart.nodes ?? []).map((node) => node.name.split(":")[0]))].sort();
+    return colors[rootsForSun.indexOf(segment.root) % colors.length];
+  }
+  // Annular sector path. Angles run clockwise from 12 o'clock.
+  function arcPath(segment: ArcSegment): string {
+    const ring = 46 / sunDepth;
+    const r0 = segment.depth * ring + 1;
+    const r1 = r0 + ring - 0.5;
+    // A full-circle arc collapses (start == end); leave a hairline gap so the
+    // renderer still has a direction to sweep.
+    const a1 = segment.a1 - segment.a0 >= Math.PI * 2 - 1e-4 ? segment.a0 + Math.PI * 2 - 1e-4 : segment.a1;
+    const large = a1 - segment.a0 > Math.PI ? 1 : 0;
+    const px = (radius: number, angle: number) => (50 + radius * Math.sin(angle)).toFixed(2);
+    const py = (radius: number, angle: number) => (50 - radius * Math.cos(angle)).toFixed(2);
+    return `M${px(r1, segment.a0)},${py(r1, segment.a0)} A${r1.toFixed(2)},${r1.toFixed(2)} 0 ${large} 1 ${px(r1, a1)},${py(r1, a1)} L${px(r0, a1)},${py(r0, a1)} A${r0.toFixed(2)},${r0.toFixed(2)} 0 ${large} 0 ${px(r0, segment.a0)},${py(r0, segment.a0)} Z`;
+  }
 </script>
 
 <section class="chart-card" aria-label={chart.title}>
   <h3>{chart.title}</h3>
-  {#if chart.kind === "hierarchy" && (tiles.length || iceRects.length)}
+  {#if chart.kind === "hierarchy" && (tiles.length || iceRects.length || sunSegments.length)}
     <div class="hierarchy-picker">
       <button type="button" class="unset" class:selected={hierarchyView === "treemap"} on:click={() => (hierarchyView = "treemap")}>{label("treemap")}</button>
+      <button type="button" class="unset" class:selected={hierarchyView === "sunburst"} on:click={() => (hierarchyView = "sunburst")}>{label("sunburst")}</button>
       <button type="button" class="unset" class:selected={hierarchyView === "icicle"} on:click={() => (hierarchyView = "icicle")}>{label("icicle")}</button>
     </div>
-    {#if hierarchyView === "icicle" && iceRects.length}
+    {#if hierarchyView === "sunburst" && sunSegments.length}
+      <svg class="report-chart report-hierarchy-chart report-sunburst-chart" viewBox="0 0 100 100" role="img" aria-label={chart.title}>
+        {#each sunSegments as item (item.name)}
+          <path
+            d={arcPath(item)}
+            style={`fill:${sunColor(item)}`}
+            opacity=".8"
+          ><title>{item.name}: {item.display} {chart.currency}</title></path>
+        {/each}
+      </svg>
+    {:else if hierarchyView === "icicle" && iceRects.length}
       <svg class="report-chart report-hierarchy-chart" viewBox="0 0 100 {Math.max(6, iceDepth)}" preserveAspectRatio="none" role="img" aria-label={chart.title}>
         {#each iceRects as item (item.name)}
           <rect
@@ -243,6 +302,7 @@
   .chart-data summary { color: var(--text-color-lightest); cursor: pointer; }
   .chart-scroll { overflow-x: auto; max-height: 22rem; overflow-y: auto; }
   .report-chart { display: block; width: min(100%, 52rem); height: 14rem; margin-bottom: .5rem; background: var(--background-darker); border: 1px solid var(--border); }
+  .report-sunburst-chart { width: 14rem; }
   .report-chart path { fill: none; stroke-width: .8; vector-effect: non-scaling-stroke; }
   .chart-axis { stroke: var(--chart-axis); stroke-width: .25; vector-effect: non-scaling-stroke; }
   .legend { display: inline-flex; gap: .3rem; align-items: center; margin: 0 .75rem .5rem 0; }
