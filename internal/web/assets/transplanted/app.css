@@ -201,6 +201,14 @@ table.svelte-15jud14 {
   flex: 1;
 }
 
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/AccountReport.esbuild-svelte-fake-css */
+.account-breadcrumb.svelte-g9xr57 a:where(.svelte-g9xr57) {
+  color: unset;
+}
+.account-breadcrumb.svelte-g9xr57 .sep:where(.svelte-g9xr57) {
+  color: var(--text-color-lightest);
+}
+
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/ImportReport.esbuild-svelte-fake-css */
 .muted.svelte-1iufbd5 {
   color: var(--text-color-lightest);
