@@ -39,7 +39,30 @@ type Filters struct {
 	Account    string
 	Text       string
 	TimePrefix string
-	Period     string
+	// TimeBegin/TimeEnd form a half-open ISO date range; they carry time
+	// filters that a plain prefix cannot express (e.g. Fava's "2025-Q2").
+	TimeBegin string
+	TimeEnd   string
+	Period    string
+}
+
+// MatchesDate reports whether an ISO date string passes the filter's time
+// constraints. Rows without a parseable date are kept, matching the
+// prefix-only behaviour these filters replaced.
+func (filters Filters) MatchesDate(date string) bool {
+	if date == "" {
+		return true
+	}
+	if prefix := strings.TrimSpace(filters.TimePrefix); prefix != "" && !strings.HasPrefix(date, prefix) {
+		return false
+	}
+	if begin := strings.TrimSpace(filters.TimeBegin); begin != "" && date < begin {
+		return false
+	}
+	if end := strings.TrimSpace(filters.TimeEnd); end != "" && date >= end {
+		return false
+	}
+	return true
 }
 
 // JournalFilters are the directive-level controls exposed by the journal
@@ -59,8 +82,10 @@ func Filter(result query.Result, filters Filters) query.Result {
 	account := strings.TrimSpace(filters.Account)
 	text := strings.ToLower(strings.TrimSpace(filters.Text))
 	prefix := strings.TrimSpace(filters.TimePrefix)
+	begin := strings.TrimSpace(filters.TimeBegin)
+	end := strings.TrimSpace(filters.TimeEnd)
 	period := strings.ToLower(strings.TrimSpace(filters.Period))
-	if account == "" && text == "" && prefix == "" && period == "" {
+	if account == "" && text == "" && prefix == "" && begin == "" && end == "" && period == "" {
 		return result
 	}
 	anchor := ""
@@ -79,8 +104,8 @@ func Filter(result query.Result, filters Filters) query.Result {
 				continue
 			}
 		}
-		if prefix != "" {
-			if date, ok := row["date"].(string); ok && !strings.HasPrefix(date, prefix) {
+		if prefix != "" || begin != "" || end != "" {
+			if date, ok := row["date"].(string); ok && !filters.MatchesDate(date) {
 				continue
 			}
 		}

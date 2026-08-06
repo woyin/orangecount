@@ -677,6 +677,24 @@ func globalReportFilters(r *http.Request) (report.Filters, error) {
 			filters.TimePrefix = rawTime
 			return filters, nil
 		}
+		// Fava's quarter syntax ("2025-Q2") selects a half-open range a
+		// prefix cannot express.
+		if len(rawTime) == 7 && rawTime[4] == '-' && (rawTime[5] == 'Q' || rawTime[5] == 'q') {
+			year, yearErr := strconv.Atoi(rawTime[:4])
+			quarter, quarterErr := strconv.Atoi(rawTime[6:])
+			if yearErr != nil || quarterErr != nil || quarter < 1 || quarter > 4 {
+				return report.Filters{}, fmt.Errorf("invalid time filter")
+			}
+			beginMonth := (quarter-1)*3 + 1
+			endYear, endMonth := year, beginMonth+3
+			if endMonth > 12 {
+				endYear++
+				endMonth = 1
+			}
+			filters.TimeBegin = fmt.Sprintf("%04d-%02d-01", year, beginMonth)
+			filters.TimeEnd = fmt.Sprintf("%04d-%02d-01", endYear, endMonth)
+			return filters, nil
+		}
 		if len(rawTime) == 7 {
 			if _, err := time.Parse("2006-01", rawTime); err != nil {
 				return report.Filters{}, fmt.Errorf("invalid time filter")

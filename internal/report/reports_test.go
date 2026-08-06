@@ -437,6 +437,19 @@ func TestGlobalReportFiltersKeepStableRows(t *testing.T) {
 	}
 }
 
+func TestTimeRangeFilterUsesHalfOpenBounds(t *testing.T) {
+	result := query.Result{Columns: []string{"date", "narration"}, Rows: []query.Row{
+		{"date": "2024-03-31", "narration": "Before Q2"},
+		{"date": "2024-04-01", "narration": "Q2 start"},
+		{"date": "2024-06-30", "narration": "Q2 end"},
+		{"date": "2024-07-01", "narration": "After Q2"},
+	}}
+	filtered := Filter(result, Filters{TimeBegin: "2024-04-01", TimeEnd: "2024-07-01"})
+	if len(filtered.Rows) != 2 || filtered.Rows[0]["narration"] != "Q2 start" || filtered.Rows[1]["narration"] != "Q2 end" {
+		t.Fatalf("range filtered=%+v", filtered.Rows)
+	}
+}
+
 func TestPeriodFilterUsesLatestReportPeriod(t *testing.T) {
 	result := query.Result{Columns: []string{"date", "value"}, Rows: []query.Row{
 		{"date": "2024-01-01", "value": ledger.Zero()},

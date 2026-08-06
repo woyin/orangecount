@@ -414,6 +414,48 @@ func TestJournalReportDateFiltersAreInclusiveAndValidated(t *testing.T) {
 	}
 }
 
+func TestFavaAdapterJournalAcceptsQuarterTimeFilter(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	text := `2000-01-01 open Assets:Cash USD
+2000-01-01 open Equity:Opening USD
+2000-01-15 * "q1 txn"
+  Assets:Cash 1 USD
+  Equity:Opening -1 USD
+2000-04-15 * "q2 txn"
+  Assets:Cash 2 USD
+  Equity:Opening -2 USD
+`
+	if err := os.WriteFile(entry, []byte(text), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	built := snapshot.Build(entry)
+	if built.Snapshot == nil {
+		t.Fatalf("build diagnostics=%+v", built.Diagnostics)
+	}
+	server, err := NewServer(Config{Store: snapshot.NewStore(built.Snapshot), Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := func(path string) *httptest.ResponseRecorder {
+		recorder := httptest.NewRecorder()
+		server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
+		return recorder
+	}
+	filtered := request("/__orangecount/fava/journal?time=2000-Q2")
+	if filtered.Code != http.StatusOK {
+		t.Fatalf("quarter status=%d body=%q", filtered.Code, filtered.Body.String())
+	}
+	body := filtered.Body.String()
+	if !strings.Contains(body, "q2 txn") || strings.Contains(body, "q1 txn") {
+		t.Fatalf("quarter body=%q", body)
+	}
+	invalid := request("/__orangecount/fava/journal?time=2000-Q5")
+	if invalid.Code != http.StatusBadRequest {
+		t.Fatalf("invalid quarter status=%d body=%q", invalid.Code, invalid.Body.String())
+	}
+}
+
 func TestEmbeddedUIProvidesSortableTablesAndJournalDateControls(t *testing.T) {
 	server, err := NewServer(Config{Store: snapshot.NewStore(nil), Addr: "127.0.0.1:0"})
 	if err != nil {

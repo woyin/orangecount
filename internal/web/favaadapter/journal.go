@@ -279,7 +279,7 @@ func journalChange(record ledger.EntryRecord, account string) []JournalAmount {
 func filterJournalEntries(entries []JournalEntry, filters report.Filters, journal report.JournalFilters) []JournalEntry {
 	account := strings.TrimSpace(filters.Account)
 	text := strings.ToLower(strings.TrimSpace(filters.Text))
-	prefix := strings.TrimSpace(filters.TimePrefix)
+	hasTime := strings.TrimSpace(filters.TimePrefix) != "" || strings.TrimSpace(filters.TimeBegin) != "" || strings.TrimSpace(filters.TimeEnd) != ""
 	flag := strings.TrimSpace(journal.Flag)
 	tag := strings.ToLower(strings.TrimSpace(journal.Tag))
 	link := strings.ToLower(strings.TrimSpace(journal.Link))
@@ -289,7 +289,7 @@ func filterJournalEntries(entries []JournalEntry, filters report.Filters, journa
 
 	out := make([]JournalEntry, 0, len(entries))
 	for _, entry := range entries {
-		if prefix != "" && !strings.HasPrefix(entry.Date, prefix) {
+		if hasTime && !filters.MatchesDate(entry.Date) {
 			continue
 		}
 		if account != "" && !entryTouchesAccount(entry, account) {
