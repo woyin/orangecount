@@ -59,7 +59,7 @@
 | H4 | R-HOLD-*/R-COMMODITIES/R-EVENTS/R-STATISTICS/R-DOCUMENTS | 六路由降级为通用平表 | Holdings 四子页签与成本分组；Commodities 商品列表 + 每商品页（元数据/精度/价格历史）；Events 按事件类型侧栏分组；Statistics 指令计数 + Postings-per-Account + 活动图；Documents 账户树 + 内嵌预览 | 统一 `GenericReport` 平表：Holdings 无子页签、列头为 snake_case 字段名；Commodities 渲染成价格明细表且实测空表；Events 无分组；Statistics 仅计数表；Documents 无预览 | 前端组件 + 适配器（专用契约未建） |
 | H5 | R-JOURNAL | Journal 交互层不完整 | 全量条目类型徽章（含 Custom/B/Metadata/Postings）、排序与列菜单、点击条目→Context、URL 同步筛选、拖拽上传文档 | 核心徽章组与展开已现（**WIP**），其余未移植；Custom/B/Metadata/Postings 徽章覆盖待复核 | 前端组件缺失 |
 | H6 | R-OPTIONS | Options 页不完整 | Color scheme（System/Dark/Light）单选组 + Fava options 表（带 help 链接）+ Beancount options 表 | 已实现：UtilityReport 含 Color scheme 单选组 + Fava options 表 + Beancount options 表；顶栏原创主题下拉已移除（D2） | 已完成（UtilityReport + `/__orangecount/fava/options` 契约） |
-| H7 | M-NOTIFY | 通知区缺失 | 文件变更/保存结果 toast，带点击重载 | 5s 轮询已对齐，但无可感通知 | 前端组件缺失 |
+| H7 | M-NOTIFY | 通知区缺失 | 文件变更/保存结果 toast，带点击重载 | 已实现：notifications 模块早已在案（bootstrap/报告错误走 notify_err），本步补齐可感通知——文件变更 warning toast（点击再刷一次，5s 自动消失，冒烟验证文案与类名）与编辑器 Save 结果 toast（成功/拒绝/失败三态），`a5251c8` | 已完成 |
 
 ### Medium
 
@@ -80,6 +80,7 @@
 | L2 | G-LOCALE | i18n 为静态 en/zh-CN 字典 | 上游为 gettext 目录；用户可见行为等价，建议登记为实现性偏差（D4） |
 | L3 | R-HOLDINGS | Holdings 页签集合与上游不一致（偏差登记） | 保留 OC 扩展页签 by_root_account/by_commodity，缺上游 by_cost_currency（适配器无 lot 成本货币维度，`3c9fef1`）。登记为实现性偏差：不补齐 by_cost_currency，除非后续引入成本货币分组数据 |
 | L4 | R-ERRORS | serve 拒绝加载含 error 级诊断的账本（偏差登记） | Fava 带错服务并在 /errors 展示全部诊断；OC `serve` 在 main.go:181 检测到 error 即退出，/errors 页面只能展示 warning（`b902d7d`）。登记为实现性偏差：若要对齐 Fava，需 owner 批准放宽启动门禁 |
+| L5 | M-NOTIFY | 文件变更提示与自动重载并存（偏差登记） | 上游 auto-reload 默认开启时静默重载、不弹 toast；本实现重载与 warning toast 并存以保证可感知（`a5251c8`）。登记为实现性偏差：若要对齐上游静默行为，移除变更 toast 即可 |
 
 ### 适配器契约缺口（数据层）
 
@@ -178,7 +179,13 @@
 > 清单复核（逐行比对在案实现：H3 快捷键（含 `?` tooltip，冒烟 18 条）、
 > H6 Options 三表、M5 三份 CSS、T3 Go-to-account 与三个筛选 combobox、
 > T4/D1/D2 导航与主题入口均已落地，相应现状列与 D1/D2 标记更新，
-> `e631330`/本次；未改任何代码）。
+> `e631330`/本次；未改任何代码）、
+> H7（轮询发现文件变更时除照旧重载外，另弹 warning toast
+> "File change detected. Click to reload."（点击再刷一次、5s 自动消失、
+> 跟随 locale），编辑器 Save 成功/拒绝/失败分别弹 info/warning/error
+> toast；冒烟以临时夹具触发 watcher 与保存双路径验证，`a5251c8`。
+> 上游 auto-reload 默认为静默重载、toast 仅在关闭 auto-reload 时出现；
+> 本实现选择重载与提示并存以保证可感知，登记为实现性偏差 L5）。
 > T1/H5 的 WIP 覆盖部分仍待稠密夹具复比勾销。
 
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
