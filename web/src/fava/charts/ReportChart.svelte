@@ -240,6 +240,53 @@
     const py = (radius: number, angle: number) => (50 - radius * Math.cos(angle)).toFixed(2);
     return `M${px(r1, segment.a0)},${py(r1, segment.a0)} A${r1.toFixed(2)},${r1.toFixed(2)} 0 ${large} 1 ${px(r1, a1)},${py(r1, a1)} L${px(r0, a1)},${py(r0, a1)} A${r0.toFixed(2)},${r0.toFixed(2)} 0 ${large} 0 ${px(r0, segment.a0)},${py(r0, segment.a0)} Z`;
   }
+
+  // --- Tooltip -------------------------------------------------------------
+  // One absolutely-positioned card follows the pointer. Bars report the hovered
+  // series + period; the line overlay bisects the pointer to the nearest period
+  // and lists every visible series there. Hierarchy shapes keep their native
+  // <title> fallback.
+  let tooltipText = "";
+  let tooltipLeft = 0;
+  let tooltipTop = 0;
+  let tooltipVisible = false;
+
+  function moveTooltip(event: MouseEvent, anchor: Element | null) {
+    const card = anchor?.closest(".chart-card");
+    if (!card) return;
+    const box = card.getBoundingClientRect();
+    tooltipLeft = event.clientX - box.left + 12;
+    tooltipTop = event.clientY - box.top + 12;
+  }
+
+  function showBarTip(event: MouseEvent, seriesLabel: string, point: { date: string; value: { display: string } }) {
+    tooltipText = `${seriesLabel} · ${point.date}: ${point.value.display}${chart.currency ? ` ${chart.currency}` : ""}`;
+    tooltipVisible = true;
+    moveTooltip(event, event.currentTarget as Element);
+  }
+
+  function hideTip() { tooltipVisible = false; }
+
+  function showLineTip(event: MouseEvent) {
+    const svg = event.currentTarget as SVGSVGElement;
+    const points = chart.series[0]?.points ?? [];
+    if (!points.length) return;
+    const box = svg.getBoundingClientRect();
+    if (!box.width) return;
+    const viewBoxX = ((event.clientX - box.left) / box.width) * 100;
+    const step = width === 1 ? 1 : (X1 - X0) / (width - 1);
+    const index = Math.max(0, Math.min(points.length - 1, Math.round((viewBoxX - X0) / step)));
+    const lines = visibleSeries
+      .map((series) => {
+        const value = series.points[index]?.value.display;
+        return value === undefined ? "" : `${series.label}: ${value}`;
+      })
+      .filter(Boolean);
+    if (!lines.length) return;
+    tooltipText = `${points[index].date}\n${lines.join("\n")}`;
+    tooltipVisible = true;
+    moveTooltip(event, svg);
+  }
 </script>
 
 <section class="chart-card" aria-label={chart.title}>
@@ -298,7 +345,7 @@
         {#each series.points as point, index (point.date)}
           {@const value = numberValue(point.value)}
           {@const barWidth = Math.max(1, (X1 - X0) / Math.max(1, width) / Math.max(1, visibleSeries.length))}
-          <rect x={x(index) - (X1 - X0) / (2 * Math.max(1, width)) + seriesIndex * barWidth} y={barY(value)} width={barWidth - .25} height={barHeight(value)} style={`fill:${colorFor(series.label)}`} />
+          <rect x={x(index) - (X1 - X0) / (2 * Math.max(1, width)) + seriesIndex * barWidth} y={barY(value)} width={barWidth - .25} height={barHeight(value)} style={`fill:${colorFor(series.label)}`} on:mousemove={(e) => showBarTip(e, series.label, point)} on:mouseleave={hideTip} />
         {/each}
       {/each}
       {#each xTickIndices as index (index)}
@@ -309,7 +356,7 @@
       {/each}
     </svg>
   {:else}
-    <svg class="report-chart report-line-chart" viewBox="0 0 100 52" role="img" aria-label={chart.title}>
+    <svg class="report-chart report-line-chart" viewBox="0 0 100 52" role="img" aria-label={chart.title} on:mousemove={showLineTip} on:mouseleave={hideTip}>
       {#each yTicks as tick (tick)}
         <line x1={X0} y1={y(tick)} x2={X1} y2={y(tick)} class="chart-grid" />
         <text x={X0 - 1} y={y(tick) + 1} class="chart-tick" text-anchor="end">{tickLabel(tick)}</text>
@@ -369,10 +416,14 @@
     </table>
     </div>
   </details>
+  {#if tooltipVisible}
+    <div class="chart-tooltip" role="status" style={`left:${tooltipLeft}px;top:${tooltipTop}px`}>{tooltipText}</div>
+  {/if}
 </section>
 
 <style>
-  .chart-card { margin-bottom: 1rem; }
+  .chart-card { position: relative; margin-bottom: 1rem; }
+  .chart-tooltip { position: absolute; z-index: 10; pointer-events: none; max-width: 20rem; padding: .3rem .5rem; background: var(--background-darker); border: 1px solid var(--border); color: var(--text-color-lighter); font-size: .8rem; line-height: 1.35; white-space: pre-line; box-shadow: 0 1px 3px rgb(0 0 0 / .25); }
   .hierarchy-picker { margin-bottom: .5rem; color: var(--text-color-lightest); text-align: center; }
   .hierarchy-picker button { padding: 0 .5em; }
   .hierarchy-picker button + button { border-left: 1px solid var(--text-color-lighter); }
