@@ -401,3 +401,52 @@ func TestProjectEntryContextResolvesSourceSlice(t *testing.T) {
 		t.Fatal("unknown hash resolved")
 	}
 }
+
+func TestSerializeNewEntries(t *testing.T) {
+	text, err := SerializeNewEntries([]NewEntry{
+		{
+			Type: "transaction", Date: "2026-08-06", Payee: `Bob's "Cafe"`, Narration: "Lunch",
+			Tags:  []string{"meal"},
+			Links: []string{"trip"},
+			Postings: []NewPosting{
+				{Account: "Assets:Bank:Cash", Amount: "-2.50", Currency: "USD"},
+				{Account: "Expenses:Food"},
+			},
+		},
+		{Type: "balance", Date: "2026-08-06", Account: "Assets:Bank:Cash", Amount: "100.00", Currency: "USD"},
+		{Type: "note", Date: "2026-08-06", Account: "Assets:Bank:Cash", Comment: "checked"},
+	})
+	if err != nil {
+		t.Fatalf("serialize failed: %v", err)
+	}
+	wantLines := []string{
+		`2026-08-06 * "Bob's \"Cafe\"" "Lunch" #meal ^trip`,
+		"  Assets:Bank:Cash -2.50 USD",
+		"  Expenses:Food",
+		"2026-08-06 balance Assets:Bank:Cash 100.00 USD",
+		`2026-08-06 note Assets:Bank:Cash "checked"`,
+	}
+	for _, line := range wantLines {
+		if !strings.Contains(text, line) {
+			t.Fatalf("missing line %q in:\n%s", line, text)
+		}
+	}
+	if strings.Count(text, "\n\n") != 2 {
+		t.Fatalf("expected three blank-line-separated blocks:\n%q", text)
+	}
+
+	rejections := []NewEntry{
+		{Type: "transaction", Date: "2026-8-6", Narration: "x", Postings: []NewPosting{{Account: "Assets:A:B", Amount: "1", Currency: "USD"}}},
+		{Type: "transaction", Date: "2026-08-06", Flag: "?", Narration: "x", Postings: []NewPosting{{Account: "Assets:A:B"}}},
+		{Type: "transaction", Date: "2026-08-06", Narration: "a\nb", Postings: []NewPosting{{Account: "Assets:A:B"}}},
+		{Type: "transaction", Date: "2026-08-06", Narration: "x"},
+		{Type: "balance", Date: "2026-08-06", Account: "assets:bad", Amount: "1", Currency: "USD"},
+		{Type: "note", Date: "2026-08-06", Comment: "x"},
+		{Type: "price", Date: "2026-08-06"},
+	}
+	for _, entry := range rejections {
+		if _, err := SerializeNewEntries([]NewEntry{entry}); err == nil {
+			t.Fatalf("entry %+v should be rejected", entry)
+		}
+	}
+}

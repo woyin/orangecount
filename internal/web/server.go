@@ -247,12 +247,13 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
+	resource := strings.Trim(strings.TrimPrefix(r.URL.Path, "/__orangecount/fava/"), "/")
+	// The adapter is read-only except for the reviewed add-entries write path.
+	if r.Method != http.MethodGet && !(r.Method == http.MethodPost && resource == "add-entries") {
 		w.Header().Set("Allow", "GET")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	resource := strings.Trim(strings.TrimPrefix(r.URL.Path, "/__orangecount/fava/"), "/")
 	current := s.store.Current()
 	if current == nil {
 		writeAPIError(w, http.StatusServiceUnavailable, "no valid snapshot")
@@ -427,6 +428,55 @@ func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		writeJSON(w, favaadapter.NewEnvelope(context, current.BuiltAt))
+	case "add-entries":
+		if !requireSameOrigin(w, r) {
+			return
+		}
+		graph := current.Graph()
+		if graph == nil {
+			writeAPIError(w, http.StatusServiceUnavailable, "no source graph")
+			return
+		}
+		var request struct {
+			Entries []favaadapter.NewEntry `json:"entries"`
+		}
+		if err := decodeJSONBody(w, r, &request, 1<<20); err != nil {
+			writeAPIError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		serialized, err := favaadapter.SerializeNewEntries(request.Entries)
+		if err != nil {
+			writeAPIError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		file, display, ok := graphFile(graph, graph.DisplayPath(graph.Entry))
+		if !ok {
+			writeAPIError(w, http.StatusServiceUnavailable, "entry file unavailable")
+			return
+		}
+		// New entries land at the end of the entry file, separated by one
+		// blank line, the way Fava appends entries it inserts.
+		content := strings.TrimRight(string(file.Data), "\n") + "\n\n" + serialized + "\n"
+		result, backup, err := s.replaceGraphFile(current, file.Path, display, []byte(content))
+		if err != nil {
+			status := http.StatusUnprocessableEntity
+			if result.Err != nil {
+				status = http.StatusInternalServerError
+			}
+			w.Header().Set("Content-Type", "application/json; charset=utf-8")
+			w.WriteHeader(status)
+			writeJSON(w, struct {
+				Published   bool                 `json:"published"`
+				Backup      string               `json:"backup,omitempty"`
+				Diagnostics []diagnosticResponse `json:"diagnostics"`
+			}{Backup: backup, Diagnostics: diagnosticsPayload(result.Diagnostics, current.Graph())})
+			return
+		}
+		writeJSON(w, struct {
+			Published  bool   `json:"published"`
+			SnapshotID string `json:"snapshot_id"`
+			Backup     string `json:"backup"`
+		}{Published: true, SnapshotID: result.Snapshot.ID, Backup: backup})
 	case "income_statement", "balance_sheet", "trial_balance":
 		filters, err := globalReportFilters(r)
 		if err != nil {

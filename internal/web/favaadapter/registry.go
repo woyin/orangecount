@@ -37,6 +37,7 @@ const (
 	RouteOptions       RouteName = "options"             // P7; declared now
 	RouteDownload      RouteName = "download-journal"    // filtered entries as Beancount source
 	RouteEntryContext  RouteName = "entry-context"       // one entry's location + source slice
+	RouteAddEntries    RouteName = "add-entries"         // append new entries to the entry file
 )
 
 // ErrorShape enumerates the standardized adapter error shapes.
@@ -99,6 +100,7 @@ var Registry = [...]Contract{
 	{Route: RouteOptions, Owner: "internal/web (handleOptions) + internal/snapshot.Evaluation.Options", Authority: AuthorityPresentation, Errors: ErrorFull, Request: RequestSpec{Body: true}},
 	{Route: RouteDownload, Owner: "internal/web/favaadapter.ExportEntries + internal/source.Graph", Authority: AuthorityLedger, Errors: ErrorStatusCode, Request: RequestSpec{Params: []string{"from", "to", "account", "filter"}}},
 	{Route: RouteEntryContext, Owner: "internal/web/favaadapter.ProjectEntryContext + internal/source.Graph", Authority: AuthorityLedger, Errors: ErrorStatusCode, Request: RequestSpec{Params: []string{"entry_hash"}}},
+	{Route: RouteAddEntries, Owner: "internal/web/favaadapter.SerializeNewEntries + internal/web (editor write path: atomic replace + backup + revalidate)", Authority: AuthorityLedger, Errors: ErrorStatusCode, Request: RequestSpec{Body: true}},
 }
 
 // Lookup returns the contract for a route, or false if the route is not

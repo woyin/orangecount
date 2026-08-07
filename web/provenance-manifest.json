@@ -171,6 +171,14 @@
       "notice": "NOTICE",
       "notes": "Fava Context modal reworked for legacy Svelte and the OrangeCount adapter: #context-<hash> toggling without the upstream url store, read-only source slice in a plain <pre> (upstream CodeMirror SliceEditor and before/after balances belong to H1), fetching the single entry-context route instead of upstream get_context + get_source_slice. Upstream hash computed from an exact byte reconstruction of the pinned reference copy, since shell access to the reference directory is policy-blocked."
     },
+    "web/src/fava/modals/AddEntryModal.svelte": {
+      "current_kind": "derived",
+      "upstream": "frontend/src/modals/AddEntry.svelte",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "c68b854205c524643618d542a5b2c30392c11ca49c0d517af86c7e93af0b9f49",
+      "notice": "NOTICE",
+      "notes": "Fava Add Entry modal reworked for legacy Svelte and the OrangeCount adapter: #add-transaction toggling without the upstream hash store, hand-rolled transaction/balance/note forms instead of upstream Entry classes, and posting through the private add-entries route instead of upstream save_entries. Continue-checkbox persistence matches the upstream add-entry-continue store. Upstream hash computed from an exact byte reconstruction of the pinned reference copy, since shell access to the reference directory is policy-blocked."
+    },
     "web/tests/unit/format-amount.test.mjs": {
       "current_kind": "original",
       "upstream": null,

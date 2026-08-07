@@ -671,6 +671,141 @@ aside.svelte-e0j49v {
   font-size: 1.2rem;
 }
 
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/modals/AddEntryModal.esbuild-svelte-fake-css */
+.add-backdrop.svelte-1iw1zty {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-index-floating-ui);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 10vh;
+  background: var(--overlay-wrapper-background);
+}
+.add-modal.svelte-1iw1zty {
+  width: min(46rem, 92vw);
+  max-height: 75vh;
+  padding: 1em 1.25em;
+  overflow-y: auto;
+  color: var(--text-color);
+  background: var(--background);
+  border: 1px solid var(--border);
+  box-shadow: var(--box-shadow-overlay);
+}
+.add-modal.svelte-1iw1zty h3:where(.svelte-1iw1zty) {
+  margin: 0 0 0.5em;
+  font-size: 1.1em;
+  font-weight: bold;
+}
+.add-modal.svelte-1iw1zty h3:where(.svelte-1iw1zty) button:where(.svelte-1iw1zty) {
+  margin-left: 0.5em;
+  padding: 0.1em 0.6em;
+  font: inherit;
+  color: var(--text-color);
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--border);
+}
+.add-modal.svelte-1iw1zty h3:where(.svelte-1iw1zty) button.selected:where(.svelte-1iw1zty) {
+  color: var(--background);
+  background: var(--link-color);
+  border-color: var(--link-color);
+}
+.row.svelte-1iw1zty {
+  display: flex;
+  gap: 0.75em;
+}
+.field.svelte-1iw1zty {
+  margin-bottom: 0.5em;
+}
+.field.grow.svelte-1iw1zty {
+  flex: 1;
+}
+.field.narrow.svelte-1iw1zty {
+  flex: 0 0 6rem;
+}
+.field.svelte-1iw1zty span:where(.svelte-1iw1zty) {
+  display: block;
+  margin-bottom: 0.15em;
+  font-size: 0.85em;
+  color: var(--text-color-lighter);
+}
+.field.svelte-1iw1zty input:where(.svelte-1iw1zty),
+.field.svelte-1iw1zty select:where(.svelte-1iw1zty),
+.postings.svelte-1iw1zty input:where(.svelte-1iw1zty) {
+  width: 100%;
+  padding: 0.25em 0.4em;
+  color: var(--text-color);
+  background: var(--background);
+  border: 1px solid var(--border);
+}
+.postings.svelte-1iw1zty {
+  width: 100%;
+  margin: 0.25em 0;
+  border-collapse: collapse;
+}
+.postings.svelte-1iw1zty th:where(.svelte-1iw1zty) {
+  padding: 0.15em 0.25em;
+  font-weight: normal;
+  font-size: 0.85em;
+  color: var(--text-color-lighter);
+  text-align: left;
+}
+.postings.svelte-1iw1zty td:where(.svelte-1iw1zty) {
+  padding: 0.1em 0.25em 0.1em 0;
+}
+.postings.svelte-1iw1zty td:where(.svelte-1iw1zty):last-child {
+  width: 1.5em;
+  padding-right: 0;
+}
+.remove.svelte-1iw1zty {
+  padding: 0 0.25em;
+  font: inherit;
+  color: var(--text-color-lighter);
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+}
+.remove.svelte-1iw1zty:disabled {
+  visibility: hidden;
+}
+.add-posting.svelte-1iw1zty {
+  padding: 0.1em 0.4em;
+  font: inherit;
+  color: var(--link-color);
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+}
+.actions.svelte-1iw1zty {
+  display: flex;
+  align-items: center;
+  margin-top: 0.75em;
+}
+.spacer.svelte-1iw1zty {
+  flex: 1;
+}
+.continue.svelte-1iw1zty {
+  display: flex;
+  gap: 0.25em;
+  align-items: center;
+  margin-right: 1em;
+}
+.actions.svelte-1iw1zty button[type=submit]:where(.svelte-1iw1zty) {
+  padding: 0.25em 0.9em;
+  font: inherit;
+  color: var(--background);
+  cursor: pointer;
+  background: var(--link-color);
+  border: 1px solid var(--link-color);
+}
+.actions.svelte-1iw1zty button[type=submit]:where(.svelte-1iw1zty):disabled {
+  opacity: 0.6;
+}
+.error.svelte-1iw1zty {
+  color: var(--error);
+}
+
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/modals/ContextModal.esbuild-svelte-fake-css */
 .context-backdrop.svelte-1eapejs {
   position: fixed;

@@ -6,6 +6,7 @@
   import LoadingBoundary from "./components/LoadingBoundary.svelte";
   import ReportOutlet from "./components/ReportOutlet.svelte";
   import Sidebar from "./components/Sidebar.svelte";
+  import AddEntryModal from "./modals/AddEntryModal.svelte";
   import ContextModal from "./modals/ContextModal.svelte";
   import ExportModal from "./modals/ExportModal.svelte";
   import { initGlobalKeyboardShortcuts } from "./keyboard-shortcuts";
@@ -176,6 +177,7 @@
 </article>
 <ExportModal locale={current.locale} />
 <ContextModal {adapter} locale={current.locale} />
+<AddEntryModal locale={current.locale} onSaved={() => void bootstrap()} />
 
 <style>
   :global(.route-placeholder) {

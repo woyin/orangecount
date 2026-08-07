@@ -3432,6 +3432,24 @@ function bind_value(input, get3, set2 = get3) {
     }
   });
 }
+function bind_checked(input, get3, set2 = get3) {
+  listen_to_event_and_reset_event(input, "change", (is_reset) => {
+    var value = is_reset ? input.defaultChecked : input.checked;
+    set2(value);
+  });
+  if (
+    // If we are hydrating and the value has since changed,
+    // then use the update value from the input instead.
+    hydrating && input.defaultChecked !== input.checked || // If defaultChecked is set, then checked == defaultChecked
+    untrack(get3) == null
+  ) {
+    set2(input.checked);
+  }
+  render_effect(() => {
+    var value = get3();
+    input.checked = Boolean(value);
+  });
+}
 function is_numberlike_input(input) {
   var type = input.type;
   return type === "number" || type === "range";
@@ -4464,6 +4482,14 @@ var translations = {
     export: "Export",
     downloadFilteredEntries: "Download currently filtered entries as a Beancount file",
     context: "Context",
+    add: "Add",
+    transaction: "Transaction",
+    balance: "Balance",
+    note: "Note",
+    amount: "Amount",
+    comment: "Comment",
+    continueAdding: "continue",
+    entryAdded: "Entry added.",
     fileChangeDetected: "File change detected. Click to reload.",
     reload: "Reload"
   },
@@ -4601,6 +4627,14 @@ var translations = {
     export: "\u5BFC\u51FA",
     downloadFilteredEntries: "\u5C06\u5F53\u524D\u8FC7\u6EE4\u540E\u7684\u6761\u76EE\u4E0B\u8F7D\u4E3A Beancount \u6587\u4EF6",
     context: "\u4E0A\u4E0B\u6587",
+    add: "\u65B0\u589E",
+    transaction: "\u4EA4\u6613",
+    balance: "\u4F59\u989D\u65AD\u8A00",
+    note: "\u5907\u6CE8",
+    amount: "\u91D1\u989D",
+    comment: "\u5907\u6CE8\u5185\u5BB9",
+    continueAdding: "\u7EE7\u7EED\u6DFB\u52A0",
+    entryAdded: "\u6761\u76EE\u5DF2\u6DFB\u52A0\u3002",
     fileChangeDetected: "\u68C0\u6D4B\u5230\u6587\u4EF6\u53D8\u66F4\u3002\u70B9\u51FB\u4EE5\u91CD\u65B0\u52A0\u8F7D\u3002",
     reload: "\u91CD\u65B0\u52A0\u8F7D"
   }
@@ -10539,13 +10573,449 @@ function Sidebar($$anchor, $$props) {
 }
 delegate(["click"]);
 
+// src/fava/modals/AddEntryModal.svelte
+var root_226 = template(`<p class="error svelte-1iw1zty" role="alert"> </p>`);
+var root_48 = template(`<tr><td class="svelte-1iw1zty"><input type="text" placeholder="Assets:Cash" autocomplete="off" class="svelte-1iw1zty"></td><td class="svelte-1iw1zty"><input type="text" placeholder="10.00" autocomplete="off" class="svelte-1iw1zty"></td><td class="svelte-1iw1zty"><input type="text" placeholder="USD" autocomplete="off" class="svelte-1iw1zty"></td><td class="svelte-1iw1zty"><button type="button" class="remove svelte-1iw1zty" aria-label="Remove posting">\xD7</button></td></tr>`);
+var root_319 = template(`<div class="row svelte-1iw1zty"><div class="field narrow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <select class="svelte-1iw1zty"><option>*</option><option>!</option></select></div> <div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" autocomplete="off" class="svelte-1iw1zty"></div> <div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" autocomplete="off" class="svelte-1iw1zty"></div></div> <div class="row svelte-1iw1zty"><div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="tag1 tag2" autocomplete="off" class="svelte-1iw1zty"></div> <div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="link1 link2" autocomplete="off" class="svelte-1iw1zty"></div></div> <table class="postings svelte-1iw1zty"><thead><tr><th class="svelte-1iw1zty"> </th><th class="svelte-1iw1zty"> </th><th class="svelte-1iw1zty"> </th><th class="svelte-1iw1zty"></th></tr></thead><tbody></tbody></table> <button type="button" class="add-posting svelte-1iw1zty"> </button>`, 1);
+var root_67 = template(`<div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="Assets:Cash" required autocomplete="off" class="svelte-1iw1zty"></div> <div class="row svelte-1iw1zty"><div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="100.00" required autocomplete="off" class="svelte-1iw1zty"></div> <div class="field narrow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="USD" required autocomplete="off" class="svelte-1iw1zty"></div></div>`, 1);
+var root_77 = template(`<div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="Assets:Cash" required autocomplete="off" class="svelte-1iw1zty"></div> <div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" required autocomplete="off" class="svelte-1iw1zty"></div>`, 1);
+var root_133 = template(`<div class="add-backdrop svelte-1iw1zty" role="presentation"><form class="add-modal svelte-1iw1zty" role="dialog" aria-modal="true"><h3 class="svelte-1iw1zty"> <button type="button" class="svelte-1iw1zty"> </button> <button type="button" class="svelte-1iw1zty"> </button> <button type="button" class="svelte-1iw1zty"> </button></h3> <!> <div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="date" required class="svelte-1iw1zty"></div> <!> <div class="actions svelte-1iw1zty"><span class="spacer svelte-1iw1zty"></span> <label class="continue svelte-1iw1zty"><input type="checkbox"> <span> </span></label> <button type="submit" class="svelte-1iw1zty"> </button></div></form></div>`);
+function AddEntryModal($$anchor, $$props) {
+  push($$props, false);
+  let locale = prop($$props, "locale", 8, "en");
+  let onSaved = prop($$props, "onSaved", 8, () => {
+  });
+  let shown = mutable_state(false);
+  let entryType = mutable_state("transaction");
+  let date = mutable_state((/* @__PURE__ */ new Date()).toISOString().slice(0, 10));
+  let flag = mutable_state("*");
+  let payee = mutable_state("");
+  let narration = mutable_state("");
+  let tags = mutable_state("");
+  let links = mutable_state("");
+  let postings = mutable_state([{ account: "", amount: "", currency: "" }]);
+  let account = mutable_state("");
+  let amount = mutable_state("");
+  let currency = mutable_state("");
+  let comment2 = mutable_state("");
+  let continueAdding = mutable_state(false);
+  let saving = mutable_state(false);
+  let error = mutable_state("");
+  let dateInput = mutable_state();
+  function t(key) {
+    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+    return catalog[key] || key;
+  }
+  function storedContinue() {
+    try {
+      return localStorage.getItem("add-entry-continue") === "true";
+    } catch {
+      return false;
+    }
+  }
+  function persistContinue() {
+    try {
+      localStorage.setItem("add-entry-continue", String(get(continueAdding)));
+    } catch {
+    }
+  }
+  function sync() {
+    set(shown, window.location.hash === "#add-transaction");
+    if (get(shown)) {
+      set(error, "");
+      set(continueAdding, storedContinue());
+      setTimeout(() => get(dateInput)?.focus(), 0);
+    }
+  }
+  function setType(next2) {
+    set(entryType, next2);
+    set(error, "");
+  }
+  function close() {
+    window.history.replaceState({}, "", window.location.pathname + window.location.search);
+    set(shown, false);
+  }
+  function onKeydown(event2) {
+    if (event2.key === "Escape" && get(shown)) {
+      close();
+    }
+  }
+  function splitTokens(value) {
+    return value.split(/[\s,]+/).map((token) => token.trim()).filter(Boolean);
+  }
+  function buildEntry() {
+    if (get(entryType) === "transaction") {
+      return {
+        type: "transaction",
+        date: get(date),
+        flag: get(flag),
+        payee: get(payee).trim(),
+        narration: get(narration).trim(),
+        tags: splitTokens(get(tags)),
+        links: splitTokens(get(links)),
+        postings: get(postings).filter((row) => row.account.trim() || row.amount.trim() || row.currency.trim()).map((row) => ({
+          account: row.account.trim(),
+          amount: row.amount.trim(),
+          currency: row.currency.trim()
+        }))
+      };
+    }
+    if (get(entryType) === "balance") {
+      return {
+        type: "balance",
+        date: get(date),
+        account: get(account).trim(),
+        amount: get(amount).trim(),
+        currency: get(currency).trim()
+      };
+    }
+    return {
+      type: "note",
+      date: get(date),
+      account: get(account).trim(),
+      comment: get(comment2).trim()
+    };
+  }
+  function resetForm() {
+    set(payee, "");
+    set(narration, "");
+    set(tags, "");
+    set(links, "");
+    set(postings, [{ account: "", amount: "", currency: "" }]);
+    set(account, "");
+    set(amount, "");
+    set(currency, "");
+    set(comment2, "");
+  }
+  async function submit(event2) {
+    event2.preventDefault();
+    if (get(saving)) return;
+    set(saving, true);
+    set(error, "");
+    try {
+      const response = await fetch(`${PRIVATE_ADAPTER_BASE}/add-entries`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ entries: [buildEntry()] })
+      });
+      const payload = await response.json();
+      if (!response.ok) {
+        throw new Error(payload.error || `Adding the entry failed (${response.status})`);
+      }
+      notify(t("entryAdded"));
+      resetForm();
+      onSaved()();
+      if (!get(continueAdding)) close();
+    } catch (value) {
+      set(error, value instanceof Error ? value.message : "Adding the entry failed.");
+    } finally {
+      set(saving, false);
+    }
+  }
+  function addPosting() {
+    set(postings, [
+      ...get(postings),
+      { account: "", amount: "", currency: "" }
+    ]);
+  }
+  function removePosting(index2) {
+    set(postings, get(postings).filter((_, i) => i !== index2));
+  }
+  onMount(() => {
+    sync();
+    window.addEventListener("hashchange", sync);
+    document.addEventListener("keydown", onKeydown);
+    return () => {
+      window.removeEventListener("hashchange", sync);
+      document.removeEventListener("keydown", onKeydown);
+    };
+  });
+  init();
+  var fragment = comment();
+  var node = first_child(fragment);
+  {
+    var consequent_3 = ($$anchor2) => {
+      var div = root_133();
+      var form = child(div);
+      template_effect(() => set_attribute(form, "aria-label", t("add")));
+      var h3 = child(form);
+      var text2 = child(h3);
+      template_effect(() => set_text(text2, `${t("add") ?? ""} `));
+      var button = sibling(text2);
+      var text_1 = child(button, true);
+      template_effect(() => set_text(text_1, t("transaction")));
+      reset(button);
+      var button_1 = sibling(button, 2);
+      var text_2 = child(button_1, true);
+      template_effect(() => set_text(text_2, t("balance")));
+      reset(button_1);
+      var button_2 = sibling(button_1, 2);
+      var text_3 = child(button_2, true);
+      template_effect(() => set_text(text_3, t("note")));
+      reset(button_2);
+      reset(h3);
+      var node_1 = sibling(h3, 2);
+      {
+        var consequent = ($$anchor3) => {
+          var p = root_226();
+          var text_4 = child(p, true);
+          reset(p);
+          template_effect(() => set_text(text_4, get(error)));
+          append($$anchor3, p);
+        };
+        if_block(node_1, ($$render) => {
+          if (get(error)) $$render(consequent);
+        });
+      }
+      var div_1 = sibling(node_1, 2);
+      var span = child(div_1);
+      var text_5 = child(span, true);
+      template_effect(() => set_text(text_5, t("date")));
+      reset(span);
+      var input = sibling(span, 2);
+      remove_input_defaults(input);
+      bind_this(input, ($$value) => set(dateInput, $$value), () => get(dateInput));
+      reset(div_1);
+      var node_2 = sibling(div_1, 2);
+      {
+        var consequent_1 = ($$anchor3) => {
+          var fragment_1 = root_319();
+          var div_2 = first_child(fragment_1);
+          var div_3 = child(div_2);
+          var span_1 = child(div_3);
+          var text_6 = child(span_1, true);
+          template_effect(() => set_text(text_6, t("flag")));
+          reset(span_1);
+          var select = sibling(span_1, 2);
+          template_effect(() => {
+            get(flag);
+            invalidate_inner_signals(() => {
+            });
+          });
+          var option = child(select);
+          option.value = null == (option.__value = "*") ? "" : "*";
+          var option_1 = sibling(option);
+          option_1.value = null == (option_1.__value = "!") ? "" : "!";
+          reset(select);
+          reset(div_3);
+          var div_4 = sibling(div_3, 2);
+          var span_2 = child(div_4);
+          var text_7 = child(span_2, true);
+          template_effect(() => set_text(text_7, t("payee")));
+          reset(span_2);
+          var input_1 = sibling(span_2, 2);
+          remove_input_defaults(input_1);
+          reset(div_4);
+          var div_5 = sibling(div_4, 2);
+          var span_3 = child(div_5);
+          var text_8 = child(span_3, true);
+          template_effect(() => set_text(text_8, t("narration")));
+          reset(span_3);
+          var input_2 = sibling(span_3, 2);
+          remove_input_defaults(input_2);
+          reset(div_5);
+          reset(div_2);
+          var div_6 = sibling(div_2, 2);
+          var div_7 = child(div_6);
+          var span_4 = child(div_7);
+          var text_9 = child(span_4, true);
+          template_effect(() => set_text(text_9, t("tag")));
+          reset(span_4);
+          var input_3 = sibling(span_4, 2);
+          remove_input_defaults(input_3);
+          reset(div_7);
+          var div_8 = sibling(div_7, 2);
+          var span_5 = child(div_8);
+          var text_10 = child(span_5, true);
+          template_effect(() => set_text(text_10, t("link")));
+          reset(span_5);
+          var input_4 = sibling(span_5, 2);
+          remove_input_defaults(input_4);
+          reset(div_8);
+          reset(div_6);
+          var table = sibling(div_6, 2);
+          var thead = child(table);
+          var tr = child(thead);
+          var th = child(tr);
+          var text_11 = child(th, true);
+          template_effect(() => set_text(text_11, t("account")));
+          reset(th);
+          var th_1 = sibling(th);
+          var text_12 = child(th_1, true);
+          template_effect(() => set_text(text_12, t("amount")));
+          reset(th_1);
+          var th_2 = sibling(th_1);
+          var text_13 = child(th_2, true);
+          template_effect(() => set_text(text_13, t("currency")));
+          reset(th_2);
+          next();
+          reset(tr);
+          reset(thead);
+          var tbody = sibling(thead);
+          each(tbody, 5, () => get(postings), index, ($$anchor4, posting, index2) => {
+            var tr_1 = root_48();
+            var td = child(tr_1);
+            var input_5 = child(td);
+            remove_input_defaults(input_5);
+            reset(td);
+            var td_1 = sibling(td);
+            var input_6 = child(td_1);
+            remove_input_defaults(input_6);
+            reset(td_1);
+            var td_2 = sibling(td_1);
+            var input_7 = child(td_2);
+            remove_input_defaults(input_7);
+            reset(td_2);
+            var td_3 = sibling(td_2);
+            var button_3 = child(td_3);
+            reset(td_3);
+            reset(tr_1);
+            template_effect(() => button_3.disabled = get(postings).length === 1);
+            bind_value(input_5, () => get(posting).account, ($$value) => (get(posting).account = $$value, invalidate_inner_signals(() => get(postings))));
+            bind_value(input_6, () => get(posting).amount, ($$value) => (get(posting).amount = $$value, invalidate_inner_signals(() => get(postings))));
+            bind_value(input_7, () => get(posting).currency, ($$value) => (get(posting).currency = $$value, invalidate_inner_signals(() => get(postings))));
+            event("click", button_3, () => removePosting(index2));
+            append($$anchor4, tr_1);
+          });
+          reset(tbody);
+          reset(table);
+          var button_4 = sibling(table, 2);
+          var text_14 = child(button_4);
+          template_effect(() => set_text(text_14, `+ ${t("add") ?? ""}`));
+          reset(button_4);
+          bind_select_value(select, () => get(flag), ($$value) => set(flag, $$value));
+          bind_value(input_1, () => get(payee), ($$value) => set(payee, $$value));
+          bind_value(input_2, () => get(narration), ($$value) => set(narration, $$value));
+          bind_value(input_3, () => get(tags), ($$value) => set(tags, $$value));
+          bind_value(input_4, () => get(links), ($$value) => set(links, $$value));
+          event("click", button_4, addPosting);
+          append($$anchor3, fragment_1);
+        };
+        var alternate_1 = ($$anchor3) => {
+          var fragment_2 = comment();
+          var node_3 = first_child(fragment_2);
+          {
+            var consequent_2 = ($$anchor4) => {
+              var fragment_3 = root_67();
+              var div_9 = first_child(fragment_3);
+              var span_6 = child(div_9);
+              var text_15 = child(span_6, true);
+              template_effect(() => set_text(text_15, t("account")));
+              reset(span_6);
+              var input_8 = sibling(span_6, 2);
+              remove_input_defaults(input_8);
+              reset(div_9);
+              var div_10 = sibling(div_9, 2);
+              var div_11 = child(div_10);
+              var span_7 = child(div_11);
+              var text_16 = child(span_7, true);
+              template_effect(() => set_text(text_16, t("amount")));
+              reset(span_7);
+              var input_9 = sibling(span_7, 2);
+              remove_input_defaults(input_9);
+              reset(div_11);
+              var div_12 = sibling(div_11, 2);
+              var span_8 = child(div_12);
+              var text_17 = child(span_8, true);
+              template_effect(() => set_text(text_17, t("currency")));
+              reset(span_8);
+              var input_10 = sibling(span_8, 2);
+              remove_input_defaults(input_10);
+              reset(div_12);
+              reset(div_10);
+              bind_value(input_8, () => get(account), ($$value) => set(account, $$value));
+              bind_value(input_9, () => get(amount), ($$value) => set(amount, $$value));
+              bind_value(input_10, () => get(currency), ($$value) => set(currency, $$value));
+              append($$anchor4, fragment_3);
+            };
+            var alternate = ($$anchor4) => {
+              var fragment_4 = root_77();
+              var div_13 = first_child(fragment_4);
+              var span_9 = child(div_13);
+              var text_18 = child(span_9, true);
+              template_effect(() => set_text(text_18, t("account")));
+              reset(span_9);
+              var input_11 = sibling(span_9, 2);
+              remove_input_defaults(input_11);
+              reset(div_13);
+              var div_14 = sibling(div_13, 2);
+              var span_10 = child(div_14);
+              var text_19 = child(span_10, true);
+              template_effect(() => set_text(text_19, t("comment")));
+              reset(span_10);
+              var input_12 = sibling(span_10, 2);
+              remove_input_defaults(input_12);
+              reset(div_14);
+              bind_value(input_11, () => get(account), ($$value) => set(account, $$value));
+              bind_value(input_12, () => get(comment2), ($$value) => set(comment2, $$value));
+              append($$anchor4, fragment_4);
+            };
+            if_block(
+              node_3,
+              ($$render) => {
+                if (get(entryType) === "balance") $$render(consequent_2);
+                else $$render(alternate, false);
+              },
+              true
+            );
+          }
+          append($$anchor3, fragment_2);
+        };
+        if_block(node_2, ($$render) => {
+          if (get(entryType) === "transaction") $$render(consequent_1);
+          else $$render(alternate_1, false);
+        });
+      }
+      var div_15 = sibling(node_2, 2);
+      var label = sibling(child(div_15), 2);
+      var input_13 = child(label);
+      remove_input_defaults(input_13);
+      var span_11 = sibling(input_13, 2);
+      var text_20 = child(span_11, true);
+      template_effect(() => set_text(text_20, t("continueAdding")));
+      reset(span_11);
+      reset(label);
+      var button_5 = sibling(label, 2);
+      var text_21 = child(button_5, true);
+      template_effect(() => set_text(text_21, t("save")));
+      reset(button_5);
+      reset(div_15);
+      reset(form);
+      reset(div);
+      template_effect(() => {
+        toggle_class(button, "selected", get(entryType) === "transaction");
+        toggle_class(button_1, "selected", get(entryType) === "balance");
+        toggle_class(button_2, "selected", get(entryType) === "note");
+        button_5.disabled = get(saving);
+      });
+      event("click", button, () => setType("transaction"));
+      event("click", button_1, () => setType("balance"));
+      event("click", button_2, () => setType("note"));
+      bind_value(input, () => get(date), ($$value) => set(date, $$value));
+      bind_checked(input_13, () => get(continueAdding), ($$value) => set(continueAdding, $$value));
+      event("change", input_13, persistContinue);
+      event("click", form, stopPropagation(function($$arg) {
+        bubble_event.call(this, $$props, $$arg);
+      }));
+      event("submit", form, submit);
+      event("click", div, close);
+      append($$anchor2, div);
+    };
+    if_block(node, ($$render) => {
+      if (get(shown)) $$render(consequent_3);
+    });
+  }
+  append($$anchor, fragment);
+  pop();
+}
+
 // src/fava/modals/ContextModal.svelte
-var root_226 = template(`<p class="error svelte-1eapejs" role="alert"> </p>`);
+var root_227 = template(`<p class="error svelte-1eapejs" role="alert"> </p>`);
 var root_59 = template(`<a class="svelte-1eapejs"> </a>`);
-var root_67 = template(`<span class="span svelte-1eapejs"> </span>`);
-var root_48 = template(`<p class="location svelte-1eapejs"><!> <!></p> <p class="summary svelte-1eapejs"> <!> <!> <!> <!></p> <pre class="source svelte-1eapejs"> </pre>`, 1);
+var root_68 = template(`<span class="span svelte-1eapejs"> </span>`);
+var root_49 = template(`<p class="location svelte-1eapejs"><!> <!></p> <p class="summary svelte-1eapejs"> <!> <!> <!> <!></p> <pre class="source svelte-1eapejs"> </pre>`, 1);
 var root_1110 = template(`<p class="loading svelte-1eapejs"> </p>`);
-var root_133 = template(`<div class="context-backdrop svelte-1eapejs" role="presentation"><div class="context-modal svelte-1eapejs" role="dialog" aria-modal="true"><h3 class="svelte-1eapejs"> </h3> <!></div></div>`);
+var root_134 = template(`<div class="context-backdrop svelte-1eapejs" role="presentation"><div class="context-modal svelte-1eapejs" role="dialog" aria-modal="true"><h3 class="svelte-1eapejs"> </h3> <!></div></div>`);
 function ContextModal($$anchor, $$props) {
   push($$props, false);
   let adapter = prop($$props, "adapter", 8);
@@ -10604,7 +11074,7 @@ function ContextModal($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent_8 = ($$anchor2) => {
-      var div = root_133();
+      var div = root_134();
       var div_1 = child(div);
       template_effect(() => set_attribute(div_1, "aria-label", t("context")));
       var h3 = child(div_1);
@@ -10614,7 +11084,7 @@ function ContextModal($$anchor, $$props) {
       var node_1 = sibling(h3, 2);
       {
         var consequent = ($$anchor3) => {
-          var p = root_226();
+          var p = root_227();
           var text_1 = child(p, true);
           reset(p);
           template_effect(() => set_text(text_1, get(error)));
@@ -10625,7 +11095,7 @@ function ContextModal($$anchor, $$props) {
           var node_2 = first_child(fragment_1);
           {
             var consequent_7 = ($$anchor4) => {
-              var fragment_2 = root_48();
+              var fragment_2 = root_49();
               var p_1 = first_child(fragment_2);
               var node_3 = child(p_1);
               {
@@ -10644,7 +11114,7 @@ function ContextModal($$anchor, $$props) {
               var node_4 = sibling(node_3, 2);
               {
                 var consequent_2 = ($$anchor5) => {
-                  var span = root_67();
+                  var span = root_68();
                   var text_3 = child(span, true);
                   reset(span);
                   template_effect(() => set_text(text_3, get(context).entry.span));
@@ -10751,7 +11221,7 @@ function ContextModal($$anchor, $$props) {
 }
 
 // src/fava/modals/ExportModal.svelte
-var root_134 = template(`<div class="export-backdrop svelte-gn9rfu" role="presentation"><div class="export-modal svelte-gn9rfu" role="dialog" aria-modal="true"><h3 class="svelte-gn9rfu"> </h3> <a download="journal.bean" class="svelte-gn9rfu"> </a></div></div>`);
+var root_135 = template(`<div class="export-backdrop svelte-gn9rfu" role="presentation"><div class="export-modal svelte-gn9rfu" role="dialog" aria-modal="true"><h3 class="svelte-gn9rfu"> </h3> <a download="journal.bean" class="svelte-gn9rfu"> </a></div></div>`);
 function ExportModal($$anchor, $$props) {
   push($$props, false);
   const href = mutable_state();
@@ -10791,7 +11261,7 @@ function ExportModal($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent = ($$anchor2) => {
-      var div = root_134();
+      var div = root_135();
       var div_1 = child(div);
       template_effect(() => set_attribute(div_1, "aria-label", t("export")));
       var h3 = child(div_1);
@@ -10957,8 +11427,8 @@ function createShellStore(initial) {
 }
 
 // src/fava/App.svelte
-var root_135 = template(`<meta name="description" content="OrangeCount local ledger interface">`);
-var root18 = template(`<!> <!> <article id="main-content" tabindex="-1"><!></article> <!> <!>`, 1);
+var root_136 = template(`<meta name="description" content="OrangeCount local ledger interface">`);
+var root18 = template(`<!> <!> <article id="main-content" tabindex="-1"><!></article> <!> <!> <!>`, 1);
 function App($$anchor, $$props) {
   push($$props, false);
   const $$stores = setup_stores();
@@ -11108,7 +11578,7 @@ function App($$anchor, $$props) {
   init();
   var fragment = root18();
   head(($$anchor2) => {
-    var meta = root_135();
+    var meta = root_136();
     template_effect(() => $document.title = `${get(current).ledgerTitle ?? ""} \u203A ${(get(current).account || get(current).route) ?? ""}`);
     append($$anchor2, meta);
   });
@@ -11260,6 +11730,13 @@ function App($$anchor, $$props) {
     get locale() {
       return get(current).locale;
     }
+  });
+  var node_6 = sibling(node_5, 2);
+  AddEntryModal(node_6, {
+    get locale() {
+      return get(current).locale;
+    },
+    onSaved: () => void bootstrap()
   });
   append($$anchor, fragment);
   pop();
