@@ -591,6 +591,14 @@
       "upstream_hash": "a1a31c8543645073c3a31a3f9a901a504ca6f55fff23b3307c4bb825337c2068",
       "notice": "NOTICE",
       "notes": "Fava DocumentPreview reworked for legacy Svelte and the OrangeCount /documents/ route: same extension dispatch (pdf object, image img, plain-text read-only, sandboxed html iframe, not-implemented message), plain-text reader is a fetched <pre> instead of upstream CodeMirror (H1), hash computed directly against the pinned reference copy."
+    },
+    "web/src/fava/reports/DocumentAccounts.svelte": {
+      "current_kind": "derived",
+      "upstream": "frontend/src/reports/documents/Accounts.svelte",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "3152e5e07283bcd2c01230adfece4f08225209a2aa66dbe2b963937ab03929d0",
+      "notice": "NOTICE",
+      "notes": "Fava documents Accounts tree reworked for legacy Svelte: same recursive shape (toggle button, leaf button, count span, selected highlight), selection/toggle lifted via events/bindings; drops the drag-to-move droptarget handlers because the move_document contract is not implemented."
     }
   }
 }
