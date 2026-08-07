@@ -91,7 +91,7 @@ fixture has not yet been implemented.
 | `source` read | `json_api.get_source`; Editor | GET `filename` | `SourceFile{file_path,sha256sum,source}` | source/editor service | containment/hash contract + editor load | adopt frontend/rewrite backend |
 | `source` write | `json_api.put_source`; Editor | PUT `file_path,source,sha256sum` | updated hash | Reviewed write workflow | validation/conflict/atomicity/rollback/snapshot tests | adopt frontend/rewrite backend |
 | `format_source` | `json_api.put_format_source`; Editor | PUT `source` | formatted source string | Go formatter boundary | deterministic formatting + keyboard flow | adapt/planned |
-| `journal` | `json_api.get_journal`; legacy consumers | GET filters | serialized entries | report transaction projection | directive coverage + ordering | adapt/planned |
+| `journal` | `json_api.get_journal`; legacy consumers | GET filters | serialized entries | report transaction projection | directive coverage + ordering | adapt/partial（全指令类型 + 条目/过账元数据投影已落地，`4bafc76`；分页与 balance diff_amount 未实现） |
 | `journal_page` | `json_api.get_journal_page`; Journal | GET `page,order,account,filter,time,conversion,interval` | `{page,total_pages,journal:html}` | report + FQL/time + strict Go HTML template | escaping/grouping/paging contract + browser/visual flow | adapt/planned (ADR-0037) |
 | `income_statement` | tree report loader | GET filters/conversion/interval | tree-report DTO | `internal/report` + charts | exact projection + route flow | adopt frontend/rewrite backend |
 | `balance_sheet` | tree report loader | GET filters/conversion/interval | tree-report DTO | `internal/report` + charts | exact projection + route flow | adopt frontend/rewrite backend |
