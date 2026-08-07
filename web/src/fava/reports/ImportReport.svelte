@@ -15,12 +15,35 @@
   let diagnostics: any[] = [];
   let rows: Record<string, unknown>[] = [];
   let status = "";
+  let fileInput: HTMLInputElement;
 
   async function loadTargets() {
     const value = await adapter.load("import") as { paths: string[]; entry: string; snapshot_id: string };
     paths = value.paths ?? [];
     target = value.entry || paths[0] || "";
     snapshotID = value.snapshot_id ?? "";
+  }
+
+  // Upstream uploads files into a server-side import directory for later
+  // extraction by Python importers; the shell has no import directory, so the
+  // selected file is read locally into the import buffer instead.
+  function uploadFiles(event: Event) {
+    event.preventDefault();
+    const files = fileInput?.files;
+    if (!files || !files.length) return;
+    const file = files[0];
+    const reader = new FileReader();
+    reader.onload = () => {
+      content = typeof reader.result === "string" ? reader.result : "";
+      importPath = file.name;
+      adapterID = file.name.toLowerCase().endsWith(".csv") ? "csv" : "beancount";
+      previewID = "";
+      valid = false;
+      status = `Loaded ${file.name} (${adapterID})`;
+    };
+    reader.onerror = () => { status = `Could not read ${file.name}.`; };
+    reader.readAsText(file);
+    fileInput.value = "";
   }
 
   async function request(path: string, body: unknown) {
@@ -62,12 +85,17 @@
 </script>
 
 <div class="headerline"><h2>Import</h2><span class="muted">Preview before commit</span></div>
+<form class="upload-form" on:submit={uploadFiles}>
+  <h2>Upload files for import</h2>
+  <input bind:this={fileInput} type="file" accept=".bean,.beancount,.csv" />
+  <button type="submit">Upload</button>
+</form>
 <div class="toolbar">
   <label>Source path <input bind:value={importPath}></label>
   <label>Adapter <select bind:value={adapterID}><option value="beancount">Beancount</option><option value="csv">CSV</option></select></label>
   <label>Target <select bind:value={target}>{#each paths as path (path)}<option value={path}>{path}</option>{/each}</select></label>
 </div>
-<textarea class="import-buffer" bind:value={content} placeholder="Paste Beancount or CSV content" spellcheck="false"></textarea>
+<textarea class="import-buffer" bind:value={content} placeholder="Paste Beancount or CSV content, or upload a file above" spellcheck="false"></textarea>
 <div class="toolbar">
   <button type="button" on:click={preview}>Preview</button>
   <button type="button" on:click={commit} disabled={!previewID || !valid}>Commit</button>
@@ -85,6 +113,8 @@
 <style>
   .muted { color: var(--text-color-lightest); }
   .toolbar { display:flex; flex-wrap:wrap; gap:.5rem; align-items:center; margin-bottom:.75rem; }
+  .upload-form { margin-bottom: 1rem; }
+  .upload-form h2 { font-size: 1rem; }
   .import-buffer { width:100%; min-height:18rem; font-family:var(--font-family-editor); }
   .diagnostics { padding:.5rem 1.5rem; color:var(--error); border:1px solid var(--error); }
 </style>

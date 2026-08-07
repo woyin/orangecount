@@ -254,6 +254,13 @@ function push_derived_source(source2) {
   }
   return source2;
 }
+function mutate(source2, value) {
+  set(
+    source2,
+    untrack(() => get(source2))
+  );
+  return value;
+}
 function set(source2, value) {
   if (active_reaction !== null && is_runes() && (active_reaction.f & (DERIVED | BLOCK_EFFECT)) !== 0 && // If the source was created locally within the current derived, then
   // we allow the mutation.
@@ -7765,10 +7772,10 @@ function HoldingsReport($$anchor, $$props) {
 // src/fava/reports/ImportReport.svelte
 var root_115 = template(`<option> </option>`);
 var root_37 = template(`<li> </li>`);
-var root_213 = template(`<ul class="diagnostics svelte-1iufbd5"></ul>`);
+var root_213 = template(`<ul class="diagnostics svelte-1anq1wq"></ul>`);
 var root_54 = template(`<tr><td> </td><td> </td><td> </td><td> </td></tr>`);
 var root_45 = template(`<table><thead><tr><th>Date</th><th>Account</th><th>Units</th><th>Currency</th></tr></thead><tbody></tbody></table>`);
-var root7 = template(`<div class="headerline"><h2>Import</h2><span class="muted svelte-1iufbd5">Preview before commit</span></div> <div class="toolbar svelte-1iufbd5"><label>Source path <input></label> <label>Adapter <select><option>Beancount</option><option>CSV</option></select></label> <label>Target <select></select></label></div> <textarea class="import-buffer svelte-1iufbd5" placeholder="Paste Beancount or CSV content" spellcheck="false"></textarea> <div class="toolbar svelte-1iufbd5"><button type="button">Preview</button> <button type="button">Commit</button> <span class="muted svelte-1iufbd5" role="status"> </span></div> <!> <!>`, 1);
+var root7 = template(`<div class="headerline"><h2>Import</h2><span class="muted svelte-1anq1wq">Preview before commit</span></div> <form class="upload-form svelte-1anq1wq"><h2 class="svelte-1anq1wq">Upload files for import</h2> <input type="file" accept=".bean,.beancount,.csv"> <button type="submit">Upload</button></form> <div class="toolbar svelte-1anq1wq"><label>Source path <input></label> <label>Adapter <select><option>Beancount</option><option>CSV</option></select></label> <label>Target <select></select></label></div> <textarea class="import-buffer svelte-1anq1wq" placeholder="Paste Beancount or CSV content, or upload a file above" spellcheck="false"></textarea> <div class="toolbar svelte-1anq1wq"><button type="button">Preview</button> <button type="button">Commit</button> <span class="muted svelte-1anq1wq" role="status"> </span></div> <!> <!>`, 1);
 function ImportReport($$anchor, $$props) {
   push($$props, false);
   let adapter = prop($$props, "adapter", 8);
@@ -7783,11 +7790,32 @@ function ImportReport($$anchor, $$props) {
   let diagnostics = mutable_state([]);
   let rows = mutable_state([]);
   let status = mutable_state("");
+  let fileInput = mutable_state();
   async function loadTargets() {
     const value = await adapter().load("import");
     set(paths, value.paths ?? []);
     set(target2, value.entry || get(paths)[0] || "");
     snapshotID = value.snapshot_id ?? "";
+  }
+  function uploadFiles(event2) {
+    event2.preventDefault();
+    const files = get(fileInput)?.files;
+    if (!files || !files.length) return;
+    const file = files[0];
+    const reader = new FileReader();
+    reader.onload = () => {
+      set(content, typeof reader.result === "string" ? reader.result : "");
+      set(importPath, file.name);
+      set(adapterID, file.name.toLowerCase().endsWith(".csv") ? "csv" : "beancount");
+      set(previewID, "");
+      set(valid, false);
+      set(status, `Loaded ${file.name} (${get(adapterID)})`);
+    };
+    reader.onerror = () => {
+      set(status, `Could not read ${file.name}.`);
+    };
+    reader.readAsText(file);
+    mutate(fileInput, get(fileInput).value = "");
   }
   async function request(path, body) {
     const response = await fetch(`/api/v1/import/${path}`, {
@@ -7839,10 +7867,15 @@ function ImportReport($$anchor, $$props) {
   });
   init();
   var fragment = root7();
-  var div = sibling(first_child(fragment), 2);
+  var form = sibling(first_child(fragment), 2);
+  var input = sibling(child(form), 2);
+  bind_this(input, ($$value) => set(fileInput, $$value), () => get(fileInput));
+  next(2);
+  reset(form);
+  var div = sibling(form, 2);
   var label = child(div);
-  var input = sibling(child(label));
-  remove_input_defaults(input);
+  var input_1 = sibling(child(label));
+  remove_input_defaults(input_1);
   reset(label);
   var label_1 = sibling(label, 2);
   var select = sibling(child(label_1));
@@ -7946,7 +7979,8 @@ function ImportReport($$anchor, $$props) {
     button_1.disabled = !get(previewID) || !get(valid);
     set_text(text_1, get(status));
   });
-  bind_value(input, () => get(importPath), ($$value) => set(importPath, $$value));
+  event("submit", form, uploadFiles);
+  bind_value(input_1, () => get(importPath), ($$value) => set(importPath, $$value));
   bind_select_value(select, () => get(adapterID), ($$value) => set(adapterID, $$value));
   bind_select_value(select_1, () => get(target2), ($$value) => set(target2, $$value));
   bind_value(textarea, () => get(content), ($$value) => set(content, $$value));

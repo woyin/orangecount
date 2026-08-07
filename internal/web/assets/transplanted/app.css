@@ -317,22 +317,28 @@ table.svelte-1c31p73 {
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/ImportReport.esbuild-svelte-fake-css */
-.muted.svelte-1iufbd5 {
+.muted.svelte-1anq1wq {
   color: var(--text-color-lightest);
 }
-.toolbar.svelte-1iufbd5 {
+.toolbar.svelte-1anq1wq {
   display: flex;
   flex-wrap: wrap;
   gap: .5rem;
   align-items: center;
   margin-bottom: .75rem;
 }
-.import-buffer.svelte-1iufbd5 {
+.upload-form.svelte-1anq1wq {
+  margin-bottom: 1rem;
+}
+.upload-form.svelte-1anq1wq h2:where(.svelte-1anq1wq) {
+  font-size: 1rem;
+}
+.import-buffer.svelte-1anq1wq {
   width: 100%;
   min-height: 18rem;
   font-family: var(--font-family-editor);
 }
-.diagnostics.svelte-1iufbd5 {
+.diagnostics.svelte-1anq1wq {
   padding: .5rem 1.5rem;
   color: var(--error);
   border: 1px solid var(--error);
