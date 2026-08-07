@@ -1,7 +1,6 @@
 <script lang="ts">
   import type { AdapterClient } from "../adapter-client";
   import { translations, type Locale } from "../../translations";
-  import ReportChart from "../charts/ReportChart.svelte";
   import GenericReport from "./GenericReport.svelte";
   import JournalReport from "./JournalReport.svelte";
   import { parseJournalReport, parseTableReport, type JournalReport as JournalReportData, type TableReport } from "./types";
@@ -17,6 +16,17 @@
   }
 
   $: account = query.account || "";
+  // Fava switches the account page between the balance tree, per-interval
+  // changes, and per-interval balances with the `r` query parameter.
+  $: reportType = query.r === "changes" || query.r === "balances" ? query.r : "journal";
+
+  function intervalLabelFor(value: string): string {
+    if (value === "quarter") return t("quarterly");
+    if (value === "year") return t("yearly");
+    return t("monthly");
+  }
+
+  $: intervalLabel = intervalLabelFor(query.interval || "month");
 
   // Fava renders the account title as a breadcrumb where every ancestor is a
   // link to that account level; only the leaf segment of each is shown.
@@ -43,9 +53,20 @@
   $: parts = ancestors(account);
 
   let balance: TableReport | null = null;
+  let intervals: TableReport | null = null;
   let journal: JournalReportData | null = null;
   let error = "";
   let requestKey = "";
+
+  function sectionHref(mode: string): string {
+    const params = new URLSearchParams();
+    for (const key of ["time", "interval"]) {
+      if (query[key]) params.set(key, query[key]);
+    }
+    if (mode) params.set("r", mode);
+    const suffix = params.size ? `?${params.toString()}` : "";
+    return `/account/${encodeURIComponent(account)}${suffix}`;
+  }
 
   // The journal arrives newest-first, so the first entry's date is the most
   // recent activity inside the current filters.
@@ -58,13 +79,18 @@
 
   async function load(key: string) {
     try {
-      const [accountValue, journalValue] = await Promise.all([
+      const requests: Promise<unknown>[] = [
         adapter.load("account", query),
         adapter.load("journal", query),
-      ]);
+      ];
+      if (reportType !== "journal") {
+        requests.push(adapter.load("account", { ...query, r: reportType }));
+      }
+      const values = await Promise.all(requests);
       if (key !== requestKey) return;
-      balance = parseTableReport(accountValue);
-      journal = parseJournalReport(journalValue);
+      balance = parseTableReport(values[0]);
+      journal = parseJournalReport(values[1]);
+      intervals = reportType !== "journal" ? parseTableReport(values[2]) : null;
       error = "";
     } catch (value) {
       if (key !== requestKey) return;
@@ -77,10 +103,16 @@
   <section class="state-panel error-panel" role="alert">{error}</section>
 {:else}
   <div class="headerline"><h2 class="account-breadcrumb">{#each parts as name, index (name)}<a href={accountHref(name)} title={name}>{leaf(name)}</a>{#if index < parts.length - 1}<span class="sep">:</span>{/if}{/each}{#if lastEntry}<span class="last-activity">({t("lastEntry")} {lastEntry})</span>{/if}</h2></div>
-  {#if balance?.chart}
-    <ReportChart chart={balance.chart} {locale} />
+  <div class="headerline sections">
+    <h3>{#if reportType !== "journal"}<a href={sectionHref("")}>{t("accountBalance")}</a>{:else}{t("accountBalance")}{/if}</h3>
+    <h3>{#if reportType !== "changes"}<a href={sectionHref("changes")}>{t("changes")} ({intervalLabel})</a>{:else}{t("changes")} ({intervalLabel}){/if}</h3>
+    <h3>{#if reportType !== "balances"}<a href={sectionHref("balances")}>{t("balances")} ({intervalLabel})</a>{:else}{t("balances")} ({intervalLabel}){/if}</h3>
+  </div>
+  {#if reportType === "changes" || reportType === "balances"}
+    {#if intervals}<GenericReport report={intervals} title={`${reportType === "changes" ? t("changes") : t("balances")} (${intervalLabel})`} {locale} {renderCommas} />{/if}
+  {:else if balance}
+    <GenericReport report={balance} title="Balance" {locale} {renderCommas} />
   {/if}
-  {#if balance}<GenericReport report={balance} title="Balance" {locale} {renderCommas} />{/if}
   {#if journal}<JournalReport report={journal} {renderCommas} accountFilter={account} />{/if}
 {/if}
 
@@ -99,5 +131,20 @@
     font-size: 12px;
     font-weight: normal;
     opacity: 0.8;
+  }
+
+  .sections {
+    display: flex;
+    gap: 1.5em;
+    align-items: baseline;
+  }
+
+  .sections h3 {
+    margin: 0;
+    font-size: 1em;
+  }
+
+  .sections a {
+    color: var(--link-color);
   }
 </style>

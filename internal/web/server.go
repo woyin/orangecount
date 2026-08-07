@@ -676,6 +676,20 @@ func (s *Server) buildReport(r *http.Request, current *snapshot.Snapshot, name s
 	var result query.Result
 	switch strings.ToLower(name) {
 	case "accounts", "account":
+		// Fava's account page switches between the journal, per-interval
+		// changes, and per-interval balances with the `r` query parameter.
+		// The aggregate interval rows carry no entry columns, so they return
+		// before the generic row filters; time filters are applied inside.
+		switch strings.ToLower(strings.TrimSpace(r.URL.Query().Get("r"))) {
+		case "changes", "balances":
+			filters, err := globalReportFilters(r)
+			if err != nil {
+				return query.Result{}, "", true, err
+			}
+			result = report.AccountIntervals(evaluation, strings.TrimSpace(r.URL.Query().Get("account")), strings.ToLower(strings.TrimSpace(r.URL.Query().Get("r"))), strings.TrimSpace(r.URL.Query().Get("interval")), filters)
+			chartRoute = "accounts"
+			return result, chartRoute, true, nil
+		}
 		result = report.Accounts(evaluation)
 		chartRoute = "accounts"
 	case "journal":
