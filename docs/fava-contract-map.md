@@ -55,7 +55,7 @@ visual baselines.
 | Query | `json_api.get_query` + `core/query_shell.py` | `get_query` (query/index.ts, Query.svelte) | `query` | `internal/query.Evaluate` (BeanQuery semantics) | adopt |
 | Holdings | `json_api.get_query` with 4 predefined queries | `get_query` (holdings/index.ts) | `query` (holding query strings) | `internal/query` + `internal/report.Holdings*`; queries re-expressed; all four upstream aggregations incl. by_cost_currency covered (`2b8d370`) | adopt |
 | Commodities | `json_api.get_commodities` | `get_commodities` (commodities/index.ts) | `commodities` | `internal/report.Prices` + price-map pairs | adopt |
-| Documents | `json_api.get_documents` | `get_documents` (documents/index.ts) | `documents` | `internal/report.Documents` + `internal/source.DocumentRoots` containment | adapt |
+| Documents | `json_api.get_documents` | `get_documents` (documents/index.ts) | `documents` | `internal/report.Documents` + `internal/source.DocumentRoots` containment; preview pane (`92ccb40`) + account-tree sidebar (`30ca6f3`); move/rename modal pending `move_document` contract | adapt |
 | Events | `json_api.get_events` | `get_events` (events/index.ts) | `events` | `internal/report.Events` | adopt |
 | Statistics | `json_api.get_statistics` | `get_statistics` (statistics/index.ts) | `statistics` | `internal/report.Statistics` + `internal/query` for postings-per-account | adopt |
 | Errors | `json_api.get_errors` | `get_errors` (app.ts, errors/index.ts) | `errors` | `internal/report.ErrorsWithGraph` + `internal/diagnostic` | adopt |
