@@ -26,7 +26,7 @@
 
 <li>
   <p>
-    <span class="account-cell" style={`--account-indent: ${depth}em`}>
+    <span class="account-cell droptarget" data-account-name={node.account} style={`--account-indent: ${depth}em`}>
       {#if hasChildren}
         <button
           type="button"

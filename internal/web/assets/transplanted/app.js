@@ -6969,6 +6969,20 @@ function JournalReport($$anchor, $$props) {
     } catch {
     }
   }
+  function onDragEnter(event2) {
+    const target2 = event2.target instanceof Element ? event2.target : null;
+    const description = target2?.closest("p > .description");
+    const li = description?.closest("li");
+    const transfer = event2.dataTransfer;
+    if (!(description instanceof Element) || !li || !transfer || !transfer.types.includes("Files")) return;
+    const link2 = li.querySelector("a[href^='/account/']");
+    if (!link2) return;
+    const account = decodeURIComponent(link2.getAttribute("href")?.slice("/account/".length) ?? "");
+    if (!account) return;
+    description.setAttribute("data-account-name", account);
+    description.classList.add("droptarget", "dragover");
+    event2.preventDefault();
+  }
   legacy_pre_effect(() => get(active), () => {
     set(listClasses, [
       "flex-table",
@@ -7005,8 +7019,8 @@ function JournalReport($$anchor, $$props) {
   next(4);
   reset(form);
   var ol = sibling(form, 2);
-  var li = child(ol);
-  var p = child(li);
+  var li_1 = child(ol);
+  var p = child(li_1);
   var button_1 = child(p);
   button_1.__click = [on_click_1, setSortColumn];
   var button_2 = sibling(button_1, 2);
@@ -7017,15 +7031,15 @@ function JournalReport($$anchor, $$props) {
   var text_1 = child(span, true);
   reset(span);
   reset(p);
-  reset(li);
-  var node_1 = sibling(li, 2);
+  reset(li_1);
+  var node_1 = sibling(li_1, 2);
   each(node_1, 3, () => get(sortedEntries), (entry, index2) => entry.type + entry.date + index2, ($$anchor2, entry) => {
-    var li_1 = root_210();
+    var li_2 = root_210();
     const class_derived = derived_safe_equal(() => `${get(entry).type ?? ""} ${flagClass(get(entry)) ?? ""} svelte-osbwps`);
     const class_directive_1 = derived_safe_equal(() => hasTag(get(entry), "linked"));
     const class_directive_2 = derived_safe_equal(() => hasTag(get(entry), "discovered"));
     const class_directive_3 = derived_safe_equal(() => get(expanded).has(get(entry)));
-    var p_1 = child(li_1);
+    var p_1 = child(li_2);
     var span_1 = child(p_1);
     var text_2 = child(span_1, true);
     reset(span_1);
@@ -7224,9 +7238,9 @@ function JournalReport($$anchor, $$props) {
       var consequent_8 = ($$anchor3) => {
         var ul = root_20();
         each(ul, 7, () => get(entry).postings, (posting, postingIndex) => posting.account + postingIndex, ($$anchor4, posting) => {
-          var li_2 = root_212();
+          var li_3 = root_212();
           const class_derived_2 = derived_safe_equal(() => `${postingFlagClass(get(posting).flag) ?? ""} svelte-osbwps`);
-          var p_2 = child(li_2);
+          var p_2 = child(li_3);
           var span_17 = sibling(child(p_2), 2);
           var text_17 = child(span_17, true);
           reset(span_17);
@@ -7274,13 +7288,13 @@ function JournalReport($$anchor, $$props) {
               if (get(posting).metadata?.length) $$render(consequent_7);
             });
           }
-          reset(li_2);
+          reset(li_3);
           template_effect(() => {
-            set_class(li_2, get(class_derived_2));
+            set_class(li_3, get(class_derived_2));
             set_text(text_17, get(posting).flag ?? "");
             set_text(text_18, get(posting).account);
           });
-          append($$anchor4, li_2);
+          append($$anchor4, li_3);
         });
         reset(ul);
         append($$anchor3, ul);
@@ -7314,16 +7328,16 @@ function JournalReport($$anchor, $$props) {
         if (get(entry).metadata?.length) $$render(consequent_9);
       });
     }
-    reset(li_1);
+    reset(li_2);
     template_effect(() => {
-      set_class(li_1, get(class_derived));
-      toggle_class(li_1, "linked", get(class_directive_1));
-      toggle_class(li_1, "discovered", get(class_directive_2));
-      toggle_class(li_1, "show-full-entry", get(class_directive_3));
+      set_class(li_2, get(class_derived));
+      toggle_class(li_2, "linked", get(class_directive_1));
+      toggle_class(li_2, "discovered", get(class_directive_2));
+      toggle_class(li_2, "show-full-entry", get(class_directive_3));
       set_text(text_2, get(entry).date);
       set_text(text_3, get(entry).flag ?? "");
     });
-    append($$anchor2, li_1);
+    append($$anchor2, li_2);
   });
   reset(ol);
   template_effect(() => {
@@ -7333,6 +7347,7 @@ function JournalReport($$anchor, $$props) {
     set_attribute(button_3, "data-order", get(sorter).column.name === "narration" ? get(sorter).order : void 0);
     set_text(text_1, runningBalances() ? "Balance" : accountFilter() ? "Change" : "Price");
   });
+  event("dragenter", ol, onDragEnter);
   append($$anchor, fragment);
   pop();
 }
@@ -10527,7 +10542,7 @@ var root_229 = template(`<span class="num svelte-xjp7mv"> </span>`);
 var root_416 = template(`<span class="other-line svelte-xjp7mv"> </span>`);
 var root_319 = template(`<span class="other num svelte-xjp7mv"></span>`);
 var root_511 = template(`<ol></ol>`);
-var root17 = template(`<li><p><span class="account-cell svelte-xjp7mv"><!> <a class="account svelte-xjp7mv"> </a></span> <!> <!></p> <!></li>`);
+var root17 = template(`<li><p><span class="account-cell droptarget svelte-xjp7mv"><!> <a class="account svelte-xjp7mv"> </a></span> <!> <!></p> <!></li>`);
 function TreeTableNode($$anchor, $$props) {
   push($$props, false);
   const isCollapsed = mutable_state();
@@ -10667,6 +10682,7 @@ function TreeTableNode($$anchor, $$props) {
   }
   reset(li);
   template_effect(() => {
+    set_attribute(span, "data-account-name", node().account);
     set_attribute(span, "style", `--account-indent: ${depth()}em`);
     set_text(text_1, get(leaf));
   });

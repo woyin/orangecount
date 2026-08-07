@@ -136,6 +136,24 @@
   }
 
   $: sortedEntries = sorter.sort(report.entries);
+
+  // Mirrors upstream JournalTable's ondragenter: mark the row's description
+  // cell as a document droptarget, deriving the account from the first
+  // account link in the row (a transaction's first posting for transactions).
+  function onDragEnter(event: DragEvent) {
+    const target = event.target instanceof Element ? event.target : null;
+    const description = target?.closest("p > .description");
+    const li = description?.closest("li");
+    const transfer = event.dataTransfer;
+    if (!(description instanceof Element) || !li || !transfer || !transfer.types.includes("Files")) return;
+    const link = li.querySelector("a[href^='/account/']");
+    if (!link) return;
+    const account = decodeURIComponent(link.getAttribute("href")?.slice("/account/".length) ?? "");
+    if (!account) return;
+    description.setAttribute("data-account-name", account);
+    description.classList.add("droptarget", "dragover");
+    event.preventDefault();
+  }
 </script>
 
 <form class="flex-row journal-chips">
@@ -153,7 +171,7 @@
   <a class="button" href="/api/v1/reports/journal?format=csv">Export CSV</a>
 </form>
 
-<ol class={listClasses}>
+<ol class={listClasses} ondragenter={onDragEnter}>
   <li class="head">
     <p>
       <button
