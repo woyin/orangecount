@@ -54,10 +54,10 @@
 | # | Manifest | 差距 | Fava 行为 | 移植版现状 | 根因层 |
 | --- | --- | --- | --- | --- | --- |
 | H1 | R-EDITOR/R-QUERY | CodeMirror 未移植（上游 19 文件 + tree-sitter wasm） | 语法高亮、行号、折叠、补全、snippets、File/Edit 菜单、文件树 | 裸 textarea + Files listbox；无菜单 | 前端组件缺失 |
-| H2 | M-ADD/M-CONTEXT/M-EXPORT/M-DOCUMENT | 模态系统整体缺失（上游 9 文件） | Add Entry 表单、条目 Context（余额/位置）、Export/Download、文档上传 | M-EXPORT 已落地（`2846847`）：modals 目录建立，Export 模态（#export hash 驱动）+ download-journal 端点（按过滤切取源码的保源导出）；仍缺 Add Entry/Context/Document 模态 | 前端 + 适配器（缺 add_entries、entry context、文档上传契约） |
+| H2 | M-ADD/M-CONTEXT/M-EXPORT/M-DOCUMENT | 模态系统整体缺失（上游 9 文件） | Add Entry 表单、条目 Context（余额/位置）、Export/Download、文档上传 | M-EXPORT 已落地（`2846847`）：modals 目录建立，Export 模态（#export hash 驱动）+ download-journal 端点（按过滤切取源码的保源导出）；M-CONTEXT 已落地（`68ddcfa`：entry-context 路由 + 只读源码切片模态）；仍缺 Add Entry/Document 模态 | 前端 + 适配器（缺 add_entries、文档上传契约） |
 | H3 | G-KEYBOARD | 全局键盘快捷键缺失 | `g-*` 路由跳转、`t/f/a/d/s`、`?` 快捷键提示 | 已实现：`g-*` 路由跳转、`f t/f a/f f` 筛选快捷键、`?` 快捷键 tooltip（冒烟验证 19 条提示，含 `r` 重载）、`r` 手动重载（`4792f73`）；上游其余单键快捷键未登记为缺口 | 已完成 |
 | H4 | R-HOLD-*/R-COMMODITIES/R-EVENTS/R-STATISTICS/R-DOCUMENTS | 六路由降级为通用平表 | Holdings 四子页签与成本分组；Commodities 商品列表 + 每商品页（元数据/精度/价格历史）；Events 按事件类型侧栏分组；Statistics 指令计数 + Postings-per-Account + 活动图；Documents 账户树 + 内嵌预览 | 统一 `GenericReport` 平表：Holdings 无子页签、列头为 snake_case 字段名；Commodities 渲染成价格明细表且实测空表；Events 无分组；Statistics 仅计数表；Documents 无预览 | 前端组件 + 适配器（专用契约未建） |
-| H5 | R-JOURNAL | Journal 交互层不完整 | 全量条目类型徽章（含 Custom/B/Metadata/Postings）、排序与列菜单、点击条目→Context、URL 同步筛选、拖拽上传文档 | 核心徽章组与展开已现（**WIP**），其余未移植；Custom/B/Metadata/Postings 徽章覆盖待复核 | 前端组件缺失 |
+| H5 | R-JOURNAL | Journal 交互层不完整 | 全量条目类型徽章（含 Custom/B/Metadata/Postings）、排序与列菜单、点击条目→Context、URL 同步筛选、拖拽上传文档 | 核心徽章组与展开已现；点击条目→Context 已落地（`68ddcfa`：行尾 ⋮ 链接 + `#context-<hash>` 模态 + entry-context 私有路由，位置派生 entry_hash，只读源码切片；限制：before/after 余额与 CodeMirror 可编辑切片属 H1）。余：排序与列菜单、拖拽上传文档；Custom/B/Metadata/Postings 徽章覆盖待复核 | 前端组件 + 适配器（余列菜单与文档上传契约） |
 | H6 | R-OPTIONS | Options 页不完整 | Color scheme（System/Dark/Light）单选组 + Fava options 表（带 help 链接）+ Beancount options 表 | 已实现：UtilityReport 含 Color scheme 单选组 + Fava options 表 + Beancount options 表；顶栏原创主题下拉已移除（D2） | 已完成（UtilityReport + `/__orangecount/fava/options` 契约） |
 | H7 | M-NOTIFY | 通知区缺失 | 文件变更/保存结果 toast，带点击重载 | 已实现：notifications 模块早已在案（bootstrap/报告错误走 notify_err），本步补齐可感通知——文件变更 warning toast（点击再刷一次，5s 自动消失，冒烟验证文案与类名）与编辑器 Save 结果 toast（成功/拒绝/失败三态），`a5251c8` | 已完成 |
 
@@ -87,14 +87,15 @@
 已接线：`changed`、`ledger_data`、`metadata`、`options`、`help`、
 `diagnostics`、`editor`(读)、`import`(adapters/files/content)、`journal`、
 三大树报表、泛型 `reports/*`、BeanQuery、`download-journal`
-（过滤后条目按源码 span 切取的 Beancount 导出，`2846847`）。
+（过滤后条目按源码 span 切取的 Beancount 导出，`2846847`）、
+`entry-context`（位置派生 entry_hash → 条目投影 + 只读源码切片，`68ddcfa`）。
 
 尚未支撑的 Fava 数据契约：
 
 - `add_entries`（模态新增条目 POST）
 - document upload（multipart）
-- entry context（单条目余额/位置）
-- query shell 元数据（补全、保存查询）
+- entry context 的 before/after 余额（只读切片已接线）
+- query shell 补全元数据（保存查询已经 user_queries 落地）
 - editor 保存与 import commit 目前走 `/api/v1/*` 非 fava 适配器契约，
   形态是否并入 fava-shaped 适配器需在 Wave 6 前评估。
 
@@ -250,6 +251,14 @@
 > QueryReport 新增路由 query_string 反应式同步。冒烟验证子菜单渲染
 > saved-overview、点选后 URL/编辑器/188 行结果齐备、GenericReport 列
 > 排序含数值列方向切换；原 M1"无结果排序"判断经冒烟证伪，`1abfaf0`）。
+> H5-context（journal 条目投影新增位置派生 entry_hash（file+span 的
+> sha256）；行尾 ⋮ 链接打开 `#context-<hash>` 模态，模态经新私有路由
+> entry-context 解析条目投影与只读源码切片（entrySourceBlock 复用），
+> 未知 hash 在模态内展示适配器错误。改写自上游 modals/Context.svelte
+> （provenance 登记，上游 hash 按重建计算已注明）；before/after 余额与
+> CodeMirror 可编辑切片属 H1，作为限制记录。冒烟验证 400 条 ⋮ 链接、
+> close 指令切片逐字回显、交易切片含 postings、Escape/背景关闭清除
+> hash 页面完好、未知 hash 报错，`68ddcfa`）。
 > T1/H5 的 WIP 覆盖部分仍待稠密夹具复比勾销。
 
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
