@@ -53,7 +53,7 @@
 
 | # | Manifest | 差距 | Fava 行为 | 移植版现状 | 根因层 |
 | --- | --- | --- | --- | --- | --- |
-| H1 | R-EDITOR/R-QUERY | CodeMirror 未移植（上游 19 文件 + tree-sitter wasm） | 语法高亮、行号、折叠、补全、snippets、File/Edit 菜单、文件树 | CodeMirror 编辑器已落地（`de56b38`，见 H1-editor）：上游 `frontend/src/codemirror` 单元近原样移植到 `web/src/fava/codemirror/`（tree-sitter+Lezer 高亮/折叠/缩进/补全/snippets），EditorReport 以 CodeMirror 取代只读 textarea——实际为可编辑损益（上游编辑器可编辑 + 保存，非纯展示），初始 `loadFile` 载入、切换文件 `replace_contents`、`updateListener` 同步内容，eadapter bootstrap 喂 completion data；冒烟验证 `.cm-editor` 渲染、gutter 行号、27 个高亮 span、输入字符生效、Save 流程（界面 "File saved."、磁盘写入 + `.orangecount.bak` 备份、refresh 后 loadFile 恢复）。wasm 以 base64 data URL 内联，前端解码后直传 `TSParser.init`/`Language.load` 字节绕过其 fetch 路径（streaming 无法加载 data: URL）；CSP `script-src` 放宽加 `'wasm-unsafe-eval'`（only wasm 编译，不引入任意 eval）。三项 deviation：① 无 beancount-format 键绑定（OC 无 format 端点）；② indent 固定 2（bootstrap 无 indent 选项）；③ ruler 未启用（bootstrap 无 currency_column 选项）。File/Edit 菜单与文件树仍属 H1 余项；BQL 编辑器（M1 尾）待移植（上游 bql-* 六文件未读） | 前端组件缺失（转发部分后收尾中） |
+| H1 | R-EDITOR/R-QUERY | CodeMirror 未移植（上游 19 文件 + tree-sitter wasm） | 语法高亮、行号、折叠、补全、snippets、File/Edit 菜单、文件树 | CodeMirror 编辑器已落地（`de56b38`，见 H1-editor）：上游 `frontend/src/codemirror` 单元近原样移植到 `web/src/fava/codemirror/`（tree-sitter+Lezer 高亮/折叠/缩进/补全/snippets），EditorReport 以 CodeMirror 取代只读 textarea——实际为可编辑损益（上游编辑器可编辑 + 保存，非纯展示），初始 `loadFile` 载入、切换文件 `replace_contents`、`updateListener` 同步内容，eadapter bootstrap 喂 completion data；冒烟验证 `.cm-editor` 渲染、gutter 行号、27 个高亮 span、输入字符生效、Save 流程（界面 "File saved."、磁盘写入 + `.orangecount.bak` 备份、refresh 后 loadFile 恢复）。wasm 以 base64 data URL 内联，前端解码后直传 `TSParser.init`/`Language.load` 字节绕过其 fetch 路径（streaming 无法加载 data: URL）；CSP `script-src` 放宽加 `'wasm-unsafe-eval'`（only wasm 编译，不引入任意 eval）。三项 deviation：① 无 beancount-format 键绑定（OC 无 format 端点）；② indent 固定 2（bootstrap 无 indent 选项）；③ ruler 未启用（bootstrap 无 currency_column 选项）。File/Edit 菜单与文件树已落地（`3b48ebe`，见 H1-menu）：上游 `reports/editor` 的 AppMenu 族 + Sources 递归文件树 + lib/sources+tree+paths 移植为 legacy Svelte，EditorMenu 挂在 EditorReport 上——File 菜单从适配器 paths 本地建树（editor_sources store，替代上游 sources API）、点叶节点切换文件；Edit 菜单 Toggle Comment / Open/Close all folds（复用 beancount.ts 的 toggleComment/foldAll/unfoldAll）。deviation：Align Amounts（beancount_format，无 format 端点）与 insert-entry 选项菜单（无 insert_entry store）省略。BQL 编辑器已随 M1 落地（`53bd5d3`，见 M1-bql-editor） | 前端组件缺失（H1 编辑器/菜单/文件树已落地，收尾中） |
 | H2 | M-ADD/M-CONTEXT/M-EXPORT/M-DOCUMENT | 模态系统整体缺失（上游 9 文件） | Add Entry 表单、条目 Context（余额/位置）、Export/Download、文档上传 | M-EXPORT 已落地（`2846847`）：modals 目录建立，Export 模态（#export hash 驱动）+ download-journal 端点（按过滤切取源码的保源导出）；M-CONTEXT 已落地（`68ddcfa`：entry-context 路由 + 只读源码切片模态）；M-ADD 已落地（`8e28d53`：`#add-transaction` 模态，Transaction/Balance/Note 三型切换保留日期、postings 行增删、continue 复选框持久化；私有 `add-entries` POST 路由严格序列化校验 + 原子写入/备份/重新验证，失败回滚并保留诊断）；M-DOCUMENT 已落地（`339b63e`：上游式拖放上传模态——账户页标题 droptarget 触发，多文件 + 日期前缀改名输入、文档目录选择（来自 serve --document-root 配置根）、账户 datalist；私有 POST `document` 路由同源校验 + 账户/目录校验 + basename 净化 + 拒绝覆盖，上传落入 `<根>/<账户分层>/<文件名>` 并由 `/documents/` 路由回供）（限制：上游 uri-list 链接拖放 attach 流程与 entry hash 元数据插入未实现；droptarget 已补齐 journal 行与账户树单元格（`44e6476`，见 H2-droptarget-extend），与上游账户页标题/documents 账户表同构） | 前端 + 适配器 |
 | H3 | G-KEYBOARD | 全局键盘快捷键缺失 | `g-*` 路由跳转、`t/f/a/d/s`、`?` 快捷键提示 | 已实现：`g-*` 路由跳转、`f t/f a/f f` 筛选快捷键、`?` 快捷键 tooltip（冒烟验证 19 条提示，含 `r` 重载）、`r` 手动重载（`4792f73`）；上游其余单键快捷键未登记为缺口 | 已完成 |
 | H4 | R-HOLD-*/R-COMMODITIES/R-EVENTS/R-STATISTICS/R-DOCUMENTS | 六路由降级为通用平表 | Holdings 四子页签与成本分组；Commodities 价格折线图（ChartSwitcher+LineChart）+ base/quote 分组表；Events 按事件类型侧栏分组；Statistics 指令计数 + Postings-per-Account + 活动图；Documents 账户树 + 内嵌预览 | 复核修正（2026-08-07 冒烟）：六路由专用组件均已在案并按上游形态渲染——Holdings 六页签（上游四页签齐备，by_cost_currency 补于 `2b8d370`）+ 列名可读化（`HoldingsReport`）；Commodities 按 base/quote 分组价格表（`CommoditiesReport`+`PriceTable`）；Events 按类型分组 + `Event: <type>` 标题 + 可排序 Date/Description 表（冒烟双类型验证，默认 date desc）；Statistics 双区块（Postings-per-Account + Entries-per-Type 可排序）；Documents 表格 + 内嵌预览（`92ccb40`）+ 账户树侧栏（分层/计数/折叠/点击筛选，`30ca6f3`）+ 移动/改名模态（F2 或拖拽触发，`38f2618`）+ Update Activity 表（每账户最近条目/余额/上下文模态入口，`a66cf9d`）+ Events 散点图（无 d3 依赖 SVG，语义同上游，`4e88925`）+ Commodities 价格折线图（无 d3 依赖 SVG + 每商品对切换/显示开关，`d9b77d3`）。H4 全部落地，无契约级余项（上游 1.30.12 无每商品详情页，此前"每商品详情页"描述为复核失误，已更正） | 已完成 |
@@ -447,7 +447,21 @@ POST，`38f2618`）。
 > web-tree-sitter@^0.26，与 pinned fava 1.30.12 frontend package.json
 > 同 semver 区间；全链路验证通过（依赖暂未被代码引用）。此为 S4 波次
 > 前置步。随后 CodeMirror 编辑器集成已落地，`de56b38`（见 H1-editor）；
-> 查询编辑器 BQL 集成仍待 M1 尾）。
+> 查询编辑器 BQL 集成已落地，`53bd5d3`（见 M1-bql-editor）。
+> H1-menu（编辑器 File/Edit 菜单与文件树落地：上游
+> frontend/src/reports/editor 的 AppMenu/AppMenuItem/AppMenuSubItem/Key/
+> Sources/EditorMenu 移植为 OC legacy Svelte，配套 lib/sources.ts+
+> lib/tree.ts+lib/paths.ts 移植（tree.ts 剪掉 stratifyAccounts 及
+> account.ts 依赖）；EditorReport 挂 EditorMenu，File 菜单以
+> editor_sources store 承接适配器扁平 paths 本地建树（替代上游
+> sources API），点叶节点走 openFile 切换文件；Edit 菜单在编辑器就绪后
+> 显示 Toggle Comment / Open/Close all folds（beancount.ts 补 re-export
+> toggleComment/foldAll/unfoldAll）。冒烟验证：File 菜单渲染
+> main/accounts/activity/directives 四叶、点 accounts.bean 切换编辑器
+> 内容、Edit 菜单 Toggle Comment 生效（`;` 注释 toggle）。限制/偏差：
+> Align Amounts（beancount_format，需 format 端点）与 insert-entry 选项
+> 菜单（无 insert_entry store）省略；树数据源为本地派生而非上游
+> sources API，`3b48ebe`）。
 > T1/H5 的 WIP 覆盖部分仍待稠密夹具复比勾销。
 
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
