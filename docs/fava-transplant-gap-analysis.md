@@ -56,7 +56,7 @@
 | H1 | R-EDITOR/R-QUERY | CodeMirror 未移植（上游 19 文件 + tree-sitter wasm） | 语法高亮、行号、折叠、补全、snippets、File/Edit 菜单、文件树 | 裸 textarea + Files listbox；无菜单 | 前端组件缺失 |
 | H2 | M-ADD/M-CONTEXT/M-EXPORT/M-DOCUMENT | 模态系统整体缺失（上游 9 文件） | Add Entry 表单、条目 Context（余额/位置）、Export/Download、文档上传 | M-EXPORT 已落地（`2846847`）：modals 目录建立，Export 模态（#export hash 驱动）+ download-journal 端点（按过滤切取源码的保源导出）；M-CONTEXT 已落地（`68ddcfa`：entry-context 路由 + 只读源码切片模态）；M-ADD 已落地（`8e28d53`：`#add-transaction` 模态，Transaction/Balance/Note 三型切换保留日期、postings 行增删、continue 复选框持久化；私有 `add-entries` POST 路由严格序列化校验 + 原子写入/备份/重新验证，失败回滚并保留诊断）；M-DOCUMENT 已落地（`339b63e`：上游式拖放上传模态——账户页标题 droptarget 触发，多文件 + 日期前缀改名输入、文档目录选择（来自 serve --document-root 配置根）、账户 datalist；私有 POST `document` 路由同源校验 + 账户/目录校验 + basename 净化 + 拒绝覆盖，上传落入 `<根>/<账户分层>/<文件名>` 并由 `/documents/` 路由回供）（限制：上游 uri-list 链接拖放 attach 流程与 entry hash 元数据插入未实现；droptarget 仅账户页标题，journal 行/账户树单元格未加） | 前端 + 适配器 |
 | H3 | G-KEYBOARD | 全局键盘快捷键缺失 | `g-*` 路由跳转、`t/f/a/d/s`、`?` 快捷键提示 | 已实现：`g-*` 路由跳转、`f t/f a/f f` 筛选快捷键、`?` 快捷键 tooltip（冒烟验证 19 条提示，含 `r` 重载）、`r` 手动重载（`4792f73`）；上游其余单键快捷键未登记为缺口 | 已完成 |
-| H4 | R-HOLD-*/R-COMMODITIES/R-EVENTS/R-STATISTICS/R-DOCUMENTS | 六路由降级为通用平表 | Holdings 四子页签与成本分组；Commodities 商品列表 + 每商品页（元数据/精度/价格历史）；Events 按事件类型侧栏分组；Statistics 指令计数 + Postings-per-Account + 活动图；Documents 账户树 + 内嵌预览 | 复核修正（2026-08-07 冒烟）：六路由专用组件均已在案并按上游形态渲染——Holdings 五页签 + 列名可读化（`HoldingsReport`）；Commodities 按 base/quote 分组价格表（`CommoditiesReport`+`PriceTable`）；Events 按类型分组 + `Event: <type>` 标题 + 可排序 Date/Description 表（冒烟双类型验证，默认 date desc）；Statistics 双区块（Postings-per-Account + Entries-per-Type 可排序）；Documents 表格（`DocumentTable`）。余：Events 散点图（ChartSwitcher+ScatterPlot）、Commodities 每商品详情页（元数据/精度/价格历史路由）与折线图、Documents 账户树 + 内嵌预览（DocumentPreview）、Statistics 活动图（UpdateActivity）、Holdings 成本分组筛选 | 前端组件 + 适配器（专用契约部分未建） |
+| H4 | R-HOLD-*/R-COMMODITIES/R-EVENTS/R-STATISTICS/R-DOCUMENTS | 六路由降级为通用平表 | Holdings 四子页签与成本分组；Commodities 商品列表 + 每商品页（元数据/精度/价格历史）；Events 按事件类型侧栏分组；Statistics 指令计数 + Postings-per-Account + 活动图；Documents 账户树 + 内嵌预览 | 复核修正（2026-08-07 冒烟）：六路由专用组件均已在案并按上游形态渲染——Holdings 五页签 + 列名可读化（`HoldingsReport`）；Commodities 按 base/quote 分组价格表（`CommoditiesReport`+`PriceTable`）；Events 按类型分组 + `Event: <type>` 标题 + 可排序 Date/Description 表（冒烟双类型验证，默认 date desc）；Statistics 双区块（Postings-per-Account + Entries-per-Type 可排序）；Documents 表格（`DocumentTable`）。余：Events 散点图（ChartSwitcher+ScatterPlot）、Commodities 每商品详情页（元数据/精度/价格历史路由）与折线图、Documents 账户树侧栏 + 移动/改名模态（预览已落地，`92ccb40`）、Statistics 活动图（UpdateActivity，实为账户最近条目/余额表，依赖 account_details 契约）、Holdings 成本分组筛选 | 前端组件 + 适配器（专用契约部分未建） |
 | H5 | R-JOURNAL | Journal 交互层不完整 | 全量条目类型徽章（含 Custom/B/Metadata/Postings）、排序与列菜单、点击条目→Context、URL 同步筛选、拖拽上传文档 | 核心徽章组与展开已现；点击条目→Context 已落地（`68ddcfa`：行尾 ⋮ 链接 + `#context-<hash>` 模态 + entry-context 私有路由，位置派生 entry_hash，只读源码切片；限制：before/after 余额与 CodeMirror 可编辑切片属 H1）；表头排序已落地（`f7d57ab`：Date/F/Payee-Narration 三列，同上游 `[列,向]` localStorage 持久化、默认 date desc、data-order 箭头与切换语义，复用已移植 Sorter）。拖拽上传文档已随 H2 M-DOCUMENT 落地（`339b63e`：账户页标题 droptarget；journal 行/账户描述单元格的 droptarget 未加，登记为限制）。徽章覆盖复核已落地（`4bafc76`：适配器为全部指令类型投影条目元数据——此前仅 transaction——journal 行渲染条目与过账级 metadata-indicator 徽章（key[:2]，title `key: value`）、过账 flag 类（flag_to_type）、过账元数据 dl、linked/discovered 行类与 D/L 芯片（`d d`/`d l`，show-document 的子级，默认激活集与上游 default_journal_show 同构）；冒烟验证 au/re/cl 徽章、linked/discovered 行类、过账 dl 展开与 Metadata 芯片切换）。限制：B(budget) 芯片未加——OC 无上游 budget custom 指令形态、适配器不产生 budget 标记；custom 值按 dtype 渲染、balance diff_amount pending 展示、document→statement 元数据附件未实现 | 前端组件 |
 | H6 | R-OPTIONS | Options 页不完整 | Color scheme（System/Dark/Light）单选组 + Fava options 表（带 help 链接）+ Beancount options 表 | 已实现：UtilityReport 含 Color scheme 单选组 + Fava options 表 + Beancount options 表；顶栏原创主题下拉已移除（D2） | 已完成（UtilityReport + `/__orangecount/fava/options` 契约） |
 | H7 | M-NOTIFY | 通知区缺失 | 文件变更/保存结果 toast，带点击重载 | 已实现：notifications 模块早已在案（bootstrap/报告错误走 notify_err），本步补齐可感通知——文件变更 warning toast（点击再刷一次，5s 自动消失，冒烟验证文案与类名）与编辑器 Save 结果 toast（成功/拒绝/失败三态），`a5251c8` | 已完成 |
@@ -309,6 +309,15 @@
 > 均在案；H4 行现状列改写为已验证形态并列出契约级余项——散点图/
 > 商品详情页/文档预览/活动图/成本分组筛选。Events 冒烟以双类型夹具
 > 验证分组标题、date desc 默认序与排序表头）。
+> H4-documents-preview（Documents 行点击选中（selected/hover 高亮）+
+> 预览窗格落地：pdf `<object>`、图片 `<img>`、纯文本（csv/json/qfx/
+> txt/xml）fetch 后 `<pre>` 只读、html/htm 沙箱 iframe、其余按上游文案
+> 提示未实现；URL 走既有 `/documents/<分段编码名>`。改写自上游
+> DocumentPreview.svelte（provenance 登记，哈希直接对 pinned 参照计算）；
+> 上游纯文本用 CodeMirror 只读编辑器，属 H1，登记为限制。账户树侧栏
+> （stratifyAccounts）与移动/改名模态（move_document 写路径）未实现，
+> 登记为限制。冒烟验证 txt 文本回显、svg 图片加载、zip 未实现提示与
+> 选中行高亮，`92ccb40`）。
 > T1/H5 的 WIP 覆盖部分仍待稠密夹具复比勾销。
 
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
