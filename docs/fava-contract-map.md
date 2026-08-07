@@ -97,7 +97,7 @@ fixture has not yet been implemented.
 | `balance_sheet` | tree report loader | GET filters/conversion/interval | tree-report DTO | `internal/report` + charts | exact projection + route flow | adopt frontend/rewrite backend |
 | `trial_balance` | tree report loader | GET filters/conversion/interval | tree-report DTO | `internal/report` + charts | exact projection + route flow | adopt frontend/rewrite backend |
 | `account_report` | account loader | GET `a,r,filters,conversion,interval` | Journal HTML or tree/chart/budget DTO | report/account/budget + strict HTML template | running balance/details/budget contract + route flow | adapt/partial（`r=changes|balances` 区间表已以 OC table-report（AccountIntervals）落地，`24ef4ca`；上游 interval_balances 子树/budget DTO 未实现） |
-| `events` | `json_api.get_events`; Events | GET filters | serialized Events | `internal/report` | ordering/filter/source contract + route flow | adopt/planned |
+| `events` | `json_api.get_events`; Events | GET filters | serialized Events | `internal/report` | ordering/filter/source contract + route flow | adopt/partial（`report.Events` + 按类型分组表格已接线并冒烟验证；上游 ScatterPlot 未实现） |
 | `statistics` | `json_api.get_statistics`; Statistics | GET filters | balances/directives/entry counts | report/query | deterministic metric contract + route flow | adopt/planned |
 | `commodities` | `json_api.get_commodities`; Commodities | GET filters | base/quote price series | report price projection | precision/history/unavailable contract + route flow | adopt/planned |
 | `options` | `json_api.get_options`; Options | GET, none | Fava and Beancount option maps | ledger options + adapter | every applicable option and precedence + route flow | adapt/planned |
