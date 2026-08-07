@@ -4261,6 +4261,7 @@ function bootstrapPayload(wire, mtime = "") {
     operating_currencies: (wire.options?.operating_currency || "").split(/\s+/).filter(Boolean),
     render_commas: (wire.options?.render_commas || "").toUpperCase() === "TRUE",
     errors: wire.errors || [],
+    user_queries: wire.user_queries || [],
     mtime
   };
 }
@@ -7812,6 +7813,7 @@ function QueryReport($$anchor, $$props) {
   let adapter = prop($$props, "adapter", 8);
   let query = prop($$props, "query", 24, () => ({}));
   let queryText = mutable_state(query().query_string || "SELECT account, balance FROM accounts ORDER BY account");
+  let appliedRouteQuery = mutable_state(query().query_string ?? "");
   let result = mutable_state(null);
   let loading = mutable_state(false);
   let error = mutable_state("");
@@ -7829,6 +7831,18 @@ function QueryReport($$anchor, $$props) {
   onMount(() => {
     void run2();
   });
+  legacy_pre_effect(
+    () => (deep_read_state(query()), get(appliedRouteQuery)),
+    () => {
+      const routed = query().query_string ?? "";
+      if (routed && routed !== get(appliedRouteQuery)) {
+        set(appliedRouteQuery, routed);
+        set(queryText, routed);
+        void run2();
+      }
+    }
+  );
+  legacy_pre_effect_reset();
   init();
   var fragment = root9();
   var form = sibling(first_child(fragment), 2);
@@ -10184,22 +10198,28 @@ function ReportOutlet($$anchor, $$props) {
 }
 
 // src/fava/components/Sidebar.svelte
-var root_130 = template(`<div class="overlay svelte-1czu6lw" aria-hidden="true"></div>`);
-var root_318 = template(`<li class="navigation-heading svelte-1czu6lw" aria-hidden="true"> </li>`);
+var root_130 = template(`<div class="overlay svelte-e0j49v" aria-hidden="true"></div>`);
+var root_318 = template(`<li class="navigation-heading svelte-e0j49v" aria-hidden="true"> </li>`);
 var on_click5 = (event2, onNavigate, item) => {
   event2.preventDefault();
   onNavigate()(routeHref(get(item)));
 };
-var root_66 = template(`<a href="#export" class="secondary svelte-1czu6lw">&#11015;</a>`);
-var root_58 = template(`<li class="svelte-1czu6lw"><a class="svelte-1czu6lw"> </a> <!></li>`);
-var root_76 = template(`<li class="account-selector svelte-1czu6lw"><!></li>`);
-var on_click_13 = (event2, onNavigate) => {
+var root_66 = template(`<a href="#export" class="secondary svelte-e0j49v">&#11015;</a>`);
+var on_click_13 = (event2, onNavigate, saved) => {
+  event2.preventDefault();
+  onNavigate()(`/query?query_string=${encodeURIComponent(get(saved).query_string)}`);
+};
+var root_86 = template(`<li class="svelte-e0j49v"><a class="svelte-e0j49v"> </a></li>`);
+var root_76 = template(`<ul class="submenu svelte-e0j49v"></ul>`);
+var root_58 = template(`<li class="svelte-e0j49v"><a class="svelte-e0j49v"> </a> <!> <!></li>`);
+var root_94 = template(`<li class="account-selector svelte-e0j49v"><!></li>`);
+var on_click_22 = (event2, onNavigate) => {
   event2.preventDefault();
   onNavigate()(routeHref("errors"));
 };
-var root_86 = template(`<ul class="navigation svelte-1czu6lw"><li class="svelte-1czu6lw"><a class="svelte-1czu6lw"> </a></li></ul>`);
-var root_225 = template(`<ul class="navigation svelte-1czu6lw"><!> <!> <!></ul> <!>`, 1);
-var root17 = template(`<!> <div class="aside-buttons svelte-1czu6lw"><button id="menu-toggle" type="button" aria-controls="sidebar" aria-label="Menu" class="svelte-1czu6lw">\u2630</button> <a class="button svelte-1czu6lw" href="#add-transaction" aria-label="Add transaction">+</a></div> <aside id="sidebar" aria-label="Primary navigation" class="svelte-1czu6lw"></aside>`, 1);
+var root_104 = template(`<ul class="navigation svelte-e0j49v"><li class="svelte-e0j49v"><a class="svelte-e0j49v"> </a></li></ul>`);
+var root_225 = template(`<ul class="navigation svelte-e0j49v"><!> <!> <!></ul> <!>`, 1);
+var root17 = template(`<!> <div class="aside-buttons svelte-e0j49v"><button id="menu-toggle" type="button" aria-controls="sidebar" aria-label="Menu" class="svelte-e0j49v">\u2630</button> <a class="button svelte-e0j49v" href="#add-transaction" aria-label="Add transaction">+</a></div> <aside id="sidebar" aria-label="Primary navigation" class="svelte-e0j49v"></aside>`, 1);
 function Sidebar($$anchor, $$props) {
   push($$props, false);
   let route = prop($$props, "route", 8);
@@ -10207,8 +10227,12 @@ function Sidebar($$anchor, $$props) {
   let errors = prop($$props, "errors", 24, () => []);
   let locale = prop($$props, "locale", 8, "en");
   let accounts = prop($$props, "accounts", 24, () => []);
+  let userQueries = prop($$props, "userQueries", 24, () => []);
   let onMenu = prop($$props, "onMenu", 8);
   let onNavigate = prop($$props, "onNavigate", 8);
+  function truncateQueryName(name) {
+    return name.length < 25 ? name : `${name.slice(25)}\u2026`;
+  }
   let gotoAccount = mutable_state("");
   function selectAccount(el) {
     if (get(gotoAccount)) {
@@ -10332,7 +10356,7 @@ function Sidebar($$anchor, $$props) {
       var fragment_2 = comment();
       var node_3 = first_child(fragment_2);
       {
-        var consequent_3 = ($$anchor4) => {
+        var consequent_4 = ($$anchor4) => {
           var li_1 = root_58();
           var a = child(li_1);
           template_effect(() => set_attribute(a, "href", routeHref(get(item))));
@@ -10353,6 +10377,28 @@ function Sidebar($$anchor, $$props) {
               if (get(item) === "import") $$render(consequent_2);
             });
           }
+          var node_5 = sibling(node_4, 2);
+          {
+            var consequent_3 = ($$anchor5) => {
+              var ul_1 = root_76();
+              each(ul_1, 5, userQueries, (saved) => saved.query_string, ($$anchor6, saved) => {
+                var li_2 = root_86();
+                var a_2 = child(li_2);
+                template_effect(() => set_attribute(a_2, "href", `/query?query_string=${encodeURIComponent(get(saved).query_string)}`));
+                a_2.__click = [on_click_13, onNavigate, saved];
+                var text_2 = child(a_2, true);
+                template_effect(() => set_text(text_2, truncateQueryName(get(saved).name)));
+                reset(a_2);
+                reset(li_2);
+                append($$anchor6, li_2);
+              });
+              reset(ul_1);
+              append($$anchor5, ul_1);
+            };
+            if_block(node_5, ($$render) => {
+              if (get(item) === "query" && userQueries().length) $$render(consequent_3);
+            });
+          }
           reset(li_1);
           template_effect(() => {
             set_attribute(a, "aria-current", route() === get(item) ? "page" : void 0);
@@ -10362,18 +10408,18 @@ function Sidebar($$anchor, $$props) {
           append($$anchor4, li_1);
         };
         if_block(node_3, ($$render) => {
-          if (known.has(get(item))) $$render(consequent_3);
+          if (known.has(get(item))) $$render(consequent_4);
         });
       }
       append($$anchor3, fragment_2);
     });
-    var node_5 = sibling(node_2, 2);
+    var node_6 = sibling(node_2, 2);
     {
-      var consequent_4 = ($$anchor3) => {
-        var li_2 = root_76();
-        var node_6 = child(li_2);
+      var consequent_5 = ($$anchor3) => {
+        var li_3 = root_94();
+        var node_7 = child(li_3);
         var placeholder = derived_safe_equal(() => t("goToAccount"));
-        AutocompleteInput(node_6, {
+        AutocompleteInput(node_7, {
           get placeholder() {
             return get(placeholder);
           },
@@ -10391,35 +10437,35 @@ function Sidebar($$anchor, $$props) {
           },
           $$legacy: true
         });
-        reset(li_2);
-        append($$anchor3, li_2);
+        reset(li_3);
+        append($$anchor3, li_3);
       };
-      if_block(node_5, ($$render) => {
-        if (sectionIndex === 0) $$render(consequent_4);
+      if_block(node_6, ($$render) => {
+        if (sectionIndex === 0) $$render(consequent_5);
       });
     }
     reset(ul);
-    var node_7 = sibling(ul, 2);
+    var node_8 = sibling(ul, 2);
     {
-      var consequent_5 = ($$anchor3) => {
-        var ul_1 = root_86();
-        var li_3 = child(ul_1);
-        var a_2 = child(li_3);
-        template_effect(() => set_attribute(a_2, "href", routeHref("errors")));
-        a_2.__click = [on_click_13, onNavigate];
-        var text_2 = child(a_2);
-        reset(a_2);
-        reset(li_3);
-        reset(ul_1);
+      var consequent_6 = ($$anchor3) => {
+        var ul_2 = root_104();
+        var li_4 = child(ul_2);
+        var a_3 = child(li_4);
+        template_effect(() => set_attribute(a_3, "href", routeHref("errors")));
+        a_3.__click = [on_click_22, onNavigate];
+        var text_3 = child(a_3);
+        reset(a_3);
+        reset(li_4);
+        reset(ul_2);
         template_effect(() => {
-          set_attribute(a_2, "aria-current", route() === "errors" ? "page" : void 0);
-          toggle_class(a_2, "selected", route() === "errors");
-          set_text(text_2, `Errors (${errors().length ?? ""})`);
+          set_attribute(a_3, "aria-current", route() === "errors" ? "page" : void 0);
+          toggle_class(a_3, "selected", route() === "errors");
+          set_text(text_3, `Errors (${errors().length ?? ""})`);
         });
-        append($$anchor3, ul_1);
+        append($$anchor3, ul_2);
       };
-      if_block(node_7, ($$render) => {
-        if (sectionIndex === sections.length - 1 && errors().length) $$render(consequent_5);
+      if_block(node_8, ($$render) => {
+        if (sectionIndex === sections.length - 1 && errors().length) $$render(consequent_6);
       });
     }
     template_effect(() => set_attribute(ul, "aria-label", heading() || "Reports"));
@@ -10581,6 +10627,7 @@ function initialShellState(route) {
     links: [],
     payees: [],
     years: [],
+    userQueries: [],
     operatingCurrencies: [],
     renderCommas: false,
     query: {},
@@ -10617,6 +10664,7 @@ function reduceShellState(state2, action2) {
         links: Array.isArray(action2.links) ? action2.links : state2.links,
         payees: Array.isArray(action2.payees) ? action2.payees : state2.payees,
         years: Array.isArray(action2.years) ? action2.years : state2.years,
+        userQueries: Array.isArray(action2.userQueries) ? action2.userQueries : state2.userQueries,
         operatingCurrencies: Array.isArray(action2.operatingCurrencies) ? action2.operatingCurrencies : state2.operatingCurrencies,
         renderCommas: typeof action2.renderCommas === "boolean" ? action2.renderCommas : state2.renderCommas,
         locale: action2.locale === "zh-CN" ? "zh-CN" : state2.locale,
@@ -10726,6 +10774,7 @@ function App($$anchor, $$props) {
         links: payload.links,
         payees: payload.payees,
         years: payload.years,
+        userQueries: payload.user_queries,
         errors: payload.errors,
         operatingCurrencies: payload.operating_currencies,
         renderCommas: payload.render_commas
@@ -10868,6 +10917,9 @@ function App($$anchor, $$props) {
     },
     get accounts() {
       return get(current).accounts;
+    },
+    get userQueries() {
+      return get(current).userQueries;
     },
     onMenu: () => shell.dispatch({ type: "menu" }),
     onNavigate: navigate

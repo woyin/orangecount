@@ -8,6 +8,7 @@
   export let query: Record<string, string> = {};
 
   let queryText = query.query_string || "SELECT account, balance FROM accounts ORDER BY account";
+  let appliedRouteQuery = query.query_string ?? "";
   let result: TableReport | null = null;
   let loading = false;
   let error = "";
@@ -21,6 +22,15 @@
       error = value instanceof Error ? value.message : "The query could not be evaluated.";
     } finally {
       loading = false;
+    }
+  }
+
+  $: {
+    const routed = query.query_string ?? "";
+    if (routed && routed !== appliedRouteQuery) {
+      appliedRouteQuery = routed;
+      queryText = routed;
+      void run();
     }
   }
 

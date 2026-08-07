@@ -20,11 +20,12 @@ test("theme and locale stores accept only supported values", () => {
 
 test("bootstrap adopts adapter locale and theme while retaining route state", () => {
   const initial = initialShellState("income_statement");
-  const next = reduceShellState(initial, { type: "bootstrap", ledgerTitle: "Fixture", locale: "zh-CN", theme: "dark" });
+  const next = reduceShellState(initial, { type: "bootstrap", ledgerTitle: "Fixture", locale: "zh-CN", theme: "dark", userQueries: [{ name: "saved-overview", query_string: "SELECT account, balance FROM accounts ORDER BY account" }] });
   assert.equal(next.ledgerTitle, "Fixture");
   assert.equal(next.locale, "zh-CN");
   assert.equal(next.theme, "dark");
   assert.equal(next.route, "income_statement");
+  assert.deepEqual(next.userQueries, [{ name: "saved-overview", query_string: "SELECT account, balance FROM accounts ORDER BY account" }]);
 });
 
 test("adapter errors clear loading without discarding the route", () => {

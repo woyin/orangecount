@@ -23,6 +23,8 @@ export interface BootstrapPayload {
   operating_currencies: string[];
   /** Ledger `render_commas` option: group thousands in displayed amounts. */
   render_commas: boolean;
+  /** User-defined `query` directives, sorted by name; shown in the sidebar. */
+  user_queries: { name: string; query_string: string }[];
   errors: unknown[];
   mtime?: string;
 }
@@ -50,6 +52,7 @@ interface BootstrapWire {
   errors: unknown[];
   options?: Record<string, string>;
   fava_options?: Record<string, string>;
+  user_queries?: { name: string; query_string: string }[];
 }
 
 function bootstrapPayload(wire: BootstrapWire, mtime = ""): BootstrapPayload {
@@ -72,6 +75,7 @@ function bootstrapPayload(wire: BootstrapWire, mtime = ""): BootstrapPayload {
     operating_currencies: (wire.options?.operating_currency || "").split(/\s+/).filter(Boolean),
     render_commas: (wire.options?.render_commas || "").toUpperCase() === "TRUE",
     errors: wire.errors || [],
+    user_queries: wire.user_queries || [],
     mtime,
   };
 }
@@ -131,6 +135,7 @@ export function createSyntheticAdapter(): AdapterClient {
     years: [],
     operating_currencies: ["USD"],
     render_commas: false,
+    user_queries: [],
     errors: [],
   };
   return {

@@ -84,7 +84,7 @@
     shell.dispatch({ type: "loading", value: true });
     try {
       const payload = await adapter.bootstrap();
-      shell.dispatch({ type: "bootstrap", ledgerTitle: payload.ledger_title, locale: payload.locale, theme: payload.theme, accounts: payload.accounts, tags: payload.tags, links: payload.links, payees: payload.payees, years: payload.years, errors: payload.errors, operatingCurrencies: payload.operating_currencies, renderCommas: payload.render_commas });
+      shell.dispatch({ type: "bootstrap", ledgerTitle: payload.ledger_title, locale: payload.locale, theme: payload.theme, accounts: payload.accounts, tags: payload.tags, links: payload.links, payees: payload.payees, years: payload.years, userQueries: payload.user_queries, errors: payload.errors, operatingCurrencies: payload.operating_currencies, renderCommas: payload.render_commas });
     } catch (error) {
       notify_err(error);
       shell.dispatch({ type: "error", message: error instanceof Error ? error.message : "The local adapter could not load this view." });
@@ -152,7 +152,7 @@
   onInterval={setInterval}
   onQuery={setQuery}
 />
-<Sidebar route={current.route} open={current.sidebarOpen} errors={current.errors} locale={current.locale} accounts={current.accounts} onMenu={() => shell.dispatch({ type: "menu" })} onNavigate={navigate} />
+<Sidebar route={current.route} open={current.sidebarOpen} errors={current.errors} locale={current.locale} accounts={current.accounts} userQueries={current.userQueries} onMenu={() => shell.dispatch({ type: "menu" })} onNavigate={navigate} />
 <article id="main-content" tabindex="-1">
   <LoadingBoundary active={current.loading}>
     <ErrorBoundary message={current.error} onRetry={retry}>

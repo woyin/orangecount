@@ -9,8 +9,15 @@
   export let errors: unknown[] = [];
   export let locale = "en";
   export let accounts: string[] = [];
+  export let userQueries: { name: string; query_string: string }[] = [];
   export let onMenu: () => void;
   export let onNavigate: (href: string) => void;
+
+  // Long saved-query names are shortened in the submenu; the slice offset
+  // mirrors the pinned AsideContents behaviour.
+  function truncateQueryName(name: string): string {
+    return name.length < 25 ? name : `${name.slice(25)}…`;
+  }
 
   let gotoAccount = "";
   function selectAccount(el: HTMLInputElement) {
@@ -75,6 +82,18 @@
             >{label(item)}</a>
             {#if item === "import"}
               <a href="#export" class="secondary" title={t("export")} aria-label={t("export")}>&#11015;</a>
+            {/if}
+            {#if item === "query" && userQueries.length}
+              <ul class="submenu">
+                {#each userQueries as saved (saved.query_string)}
+                  <li>
+                    <a
+                      href={`/query?query_string=${encodeURIComponent(saved.query_string)}`}
+                      onclick={(event) => { event.preventDefault(); onNavigate(`/query?query_string=${encodeURIComponent(saved.query_string)}`); }}
+                    >{truncateQueryName(saved.name)}</a>
+                  </li>
+                {/each}
+              </ul>
             {/if}
           </li>
         {/if}
@@ -223,6 +242,23 @@
     line-height: 22px;
     color: inherit;
     background-color: var(--sidebar-background);
+  }
+
+  .submenu {
+    width: 100%;
+    padding: 0;
+    margin: 0 0 0.5em;
+    list-style: none;
+  }
+
+  .submenu a {
+    width: 100%;
+    padding-left: 35px;
+  }
+
+  .submenu li {
+    display: block;
+    font-size: 0.9em;
   }
 
   .account-selector {
