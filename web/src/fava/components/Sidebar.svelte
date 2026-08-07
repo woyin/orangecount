@@ -73,6 +73,9 @@
               use:keyboardShortcut={shortcuts[item]}
               onclick={(event) => { event.preventDefault(); onNavigate(routeHref(item)); }}
             >{label(item)}</a>
+            {#if item === "import"}
+              <a href="#export" class="secondary" title={t("export")} aria-label={t("export")}>&#11015;</a>
+            {/if}
           </li>
         {/if}
       {/each}
@@ -211,6 +214,15 @@
     flex: 1;
     padding: 0.25em 0.5em 0.25em 1em;
     color: inherit;
+  }
+
+  .navigation a.secondary {
+    flex: none;
+    width: 30px;
+    padding: 3px 9px;
+    line-height: 22px;
+    color: inherit;
+    background-color: var(--sidebar-background);
   }
 
   .account-selector {

@@ -3557,6 +3557,16 @@ function bind_this(element_or_component = {}, update2, get_value, get_parts) {
 }
 
 // node_modules/svelte/src/internal/client/dom/legacy/event-modifiers.js
+function stopPropagation(fn) {
+  return function(...args) {
+    var event2 = (
+      /** @type {Event} */
+      args[0]
+    );
+    event2.stopPropagation();
+    return fn?.apply(this, args);
+  };
+}
 function preventDefault(fn) {
   return function(...args) {
     var event2 = (
@@ -4450,6 +4460,8 @@ var translations = {
     treemap: "Treemap",
     icicle: "Icicle",
     sunburst: "Sunburst",
+    export: "Export",
+    downloadFilteredEntries: "Download currently filtered entries as a Beancount file",
     fileChangeDetected: "File change detected. Click to reload.",
     reload: "Reload"
   },
@@ -4584,6 +4596,8 @@ var translations = {
     treemap: "\u77E9\u5F62\u6811\u56FE",
     icicle: "\u51B0\u67F1\u56FE",
     sunburst: "\u65ED\u65E5\u56FE",
+    export: "\u5BFC\u51FA",
+    downloadFilteredEntries: "\u5C06\u5F53\u524D\u8FC7\u6EE4\u540E\u7684\u6761\u76EE\u4E0B\u8F7D\u4E3A Beancount \u6587\u4EF6",
     fileChangeDetected: "\u68C0\u6D4B\u5230\u6587\u4EF6\u53D8\u66F4\u3002\u70B9\u51FB\u4EE5\u91CD\u65B0\u52A0\u8F7D\u3002",
     reload: "\u91CD\u65B0\u52A0\u8F7D"
   }
@@ -10170,21 +10184,22 @@ function ReportOutlet($$anchor, $$props) {
 }
 
 // src/fava/components/Sidebar.svelte
-var root_130 = template(`<div class="overlay svelte-611do5" aria-hidden="true"></div>`);
-var root_318 = template(`<li class="navigation-heading svelte-611do5" aria-hidden="true"> </li>`);
+var root_130 = template(`<div class="overlay svelte-1czu6lw" aria-hidden="true"></div>`);
+var root_318 = template(`<li class="navigation-heading svelte-1czu6lw" aria-hidden="true"> </li>`);
 var on_click5 = (event2, onNavigate, item) => {
   event2.preventDefault();
   onNavigate()(routeHref(get(item)));
 };
-var root_58 = template(`<li class="svelte-611do5"><a class="svelte-611do5"> </a></li>`);
-var root_66 = template(`<li class="account-selector svelte-611do5"><!></li>`);
+var root_66 = template(`<a href="#export" class="secondary svelte-1czu6lw">&#11015;</a>`);
+var root_58 = template(`<li class="svelte-1czu6lw"><a class="svelte-1czu6lw"> </a> <!></li>`);
+var root_76 = template(`<li class="account-selector svelte-1czu6lw"><!></li>`);
 var on_click_13 = (event2, onNavigate) => {
   event2.preventDefault();
   onNavigate()(routeHref("errors"));
 };
-var root_76 = template(`<ul class="navigation svelte-611do5"><li class="svelte-611do5"><a class="svelte-611do5"> </a></li></ul>`);
-var root_225 = template(`<ul class="navigation svelte-611do5"><!> <!> <!></ul> <!>`, 1);
-var root17 = template(`<!> <div class="aside-buttons svelte-611do5"><button id="menu-toggle" type="button" aria-controls="sidebar" aria-label="Menu" class="svelte-611do5">\u2630</button> <a class="button svelte-611do5" href="#add-transaction" aria-label="Add transaction">+</a></div> <aside id="sidebar" aria-label="Primary navigation" class="svelte-611do5"></aside>`, 1);
+var root_86 = template(`<ul class="navigation svelte-1czu6lw"><li class="svelte-1czu6lw"><a class="svelte-1czu6lw"> </a></li></ul>`);
+var root_225 = template(`<ul class="navigation svelte-1czu6lw"><!> <!> <!></ul> <!>`, 1);
+var root17 = template(`<!> <div class="aside-buttons svelte-1czu6lw"><button id="menu-toggle" type="button" aria-controls="sidebar" aria-label="Menu" class="svelte-1czu6lw">\u2630</button> <a class="button svelte-1czu6lw" href="#add-transaction" aria-label="Add transaction">+</a></div> <aside id="sidebar" aria-label="Primary navigation" class="svelte-1czu6lw"></aside>`, 1);
 function Sidebar($$anchor, $$props) {
   push($$props, false);
   let route = prop($$props, "route", 8);
@@ -10317,7 +10332,7 @@ function Sidebar($$anchor, $$props) {
       var fragment_2 = comment();
       var node_3 = first_child(fragment_2);
       {
-        var consequent_2 = ($$anchor4) => {
+        var consequent_3 = ($$anchor4) => {
           var li_1 = root_58();
           var a = child(li_1);
           template_effect(() => set_attribute(a, "href", routeHref(get(item))));
@@ -10326,6 +10341,18 @@ function Sidebar($$anchor, $$props) {
           template_effect(() => set_text(text_1, label(get(item))));
           reset(a);
           action(a, ($$node, $$action_arg) => keyboardShortcut?.($$node, $$action_arg), () => shortcuts[get(item)]);
+          var node_4 = sibling(a, 2);
+          {
+            var consequent_2 = ($$anchor5) => {
+              var a_1 = root_66();
+              template_effect(() => set_attribute(a_1, "title", t("export")));
+              template_effect(() => set_attribute(a_1, "aria-label", t("export")));
+              append($$anchor5, a_1);
+            };
+            if_block(node_4, ($$render) => {
+              if (get(item) === "import") $$render(consequent_2);
+            });
+          }
           reset(li_1);
           template_effect(() => {
             set_attribute(a, "aria-current", route() === get(item) ? "page" : void 0);
@@ -10335,18 +10362,18 @@ function Sidebar($$anchor, $$props) {
           append($$anchor4, li_1);
         };
         if_block(node_3, ($$render) => {
-          if (known.has(get(item))) $$render(consequent_2);
+          if (known.has(get(item))) $$render(consequent_3);
         });
       }
       append($$anchor3, fragment_2);
     });
-    var node_4 = sibling(node_2, 2);
+    var node_5 = sibling(node_2, 2);
     {
-      var consequent_3 = ($$anchor3) => {
-        var li_2 = root_66();
-        var node_5 = child(li_2);
+      var consequent_4 = ($$anchor3) => {
+        var li_2 = root_76();
+        var node_6 = child(li_2);
         var placeholder = derived_safe_equal(() => t("goToAccount"));
-        AutocompleteInput(node_5, {
+        AutocompleteInput(node_6, {
           get placeholder() {
             return get(placeholder);
           },
@@ -10367,32 +10394,32 @@ function Sidebar($$anchor, $$props) {
         reset(li_2);
         append($$anchor3, li_2);
       };
-      if_block(node_4, ($$render) => {
-        if (sectionIndex === 0) $$render(consequent_3);
+      if_block(node_5, ($$render) => {
+        if (sectionIndex === 0) $$render(consequent_4);
       });
     }
     reset(ul);
-    var node_6 = sibling(ul, 2);
+    var node_7 = sibling(ul, 2);
     {
-      var consequent_4 = ($$anchor3) => {
-        var ul_1 = root_76();
+      var consequent_5 = ($$anchor3) => {
+        var ul_1 = root_86();
         var li_3 = child(ul_1);
-        var a_1 = child(li_3);
-        template_effect(() => set_attribute(a_1, "href", routeHref("errors")));
-        a_1.__click = [on_click_13, onNavigate];
-        var text_2 = child(a_1);
-        reset(a_1);
+        var a_2 = child(li_3);
+        template_effect(() => set_attribute(a_2, "href", routeHref("errors")));
+        a_2.__click = [on_click_13, onNavigate];
+        var text_2 = child(a_2);
+        reset(a_2);
         reset(li_3);
         reset(ul_1);
         template_effect(() => {
-          set_attribute(a_1, "aria-current", route() === "errors" ? "page" : void 0);
-          toggle_class(a_1, "selected", route() === "errors");
+          set_attribute(a_2, "aria-current", route() === "errors" ? "page" : void 0);
+          toggle_class(a_2, "selected", route() === "errors");
           set_text(text_2, `Errors (${errors().length ?? ""})`);
         });
         append($$anchor3, ul_1);
       };
-      if_block(node_6, ($$render) => {
-        if (sectionIndex === sections.length - 1 && errors().length) $$render(consequent_4);
+      if_block(node_7, ($$render) => {
+        if (sectionIndex === sections.length - 1 && errors().length) $$render(consequent_5);
       });
     }
     template_effect(() => set_attribute(ul, "aria-label", heading() || "Reports"));
@@ -10408,6 +10435,75 @@ function Sidebar($$anchor, $$props) {
   pop();
 }
 delegate(["click"]);
+
+// src/fava/modals/ExportModal.svelte
+var root_131 = template(`<div class="export-backdrop svelte-gn9rfu" role="presentation"><div class="export-modal svelte-gn9rfu" role="dialog" aria-modal="true"><h3 class="svelte-gn9rfu"> </h3> <a download="journal.bean" class="svelte-gn9rfu"> </a></div></div>`);
+function ExportModal($$anchor, $$props) {
+  push($$props, false);
+  const href = mutable_state();
+  let locale = prop($$props, "locale", 8);
+  let shown = mutable_state(false);
+  function t(key) {
+    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+    return catalog[key] || key;
+  }
+  function sync() {
+    set(shown, window.location.hash === "#export");
+  }
+  function close() {
+    window.history.replaceState({}, "", window.location.pathname + window.location.search);
+    set(shown, false);
+  }
+  function onKeydown(event2) {
+    if (event2.key === "Escape") {
+      close();
+    }
+  }
+  onMount(() => {
+    sync();
+    window.addEventListener("hashchange", sync);
+    document.addEventListener("keydown", onKeydown);
+    return () => {
+      window.removeEventListener("hashchange", sync);
+      document.removeEventListener("keydown", onKeydown);
+    };
+  });
+  legacy_pre_effect(() => get(shown), () => {
+    set(href, get(shown) ? `/__orangecount/fava/download-journal${window.location.search}` : "");
+  });
+  legacy_pre_effect_reset();
+  init();
+  var fragment = comment();
+  var node = first_child(fragment);
+  {
+    var consequent = ($$anchor2) => {
+      var div = root_131();
+      var div_1 = child(div);
+      template_effect(() => set_attribute(div_1, "aria-label", t("export")));
+      var h3 = child(div_1);
+      var text2 = child(h3);
+      template_effect(() => set_text(text2, `${t("export") ?? ""}:`));
+      reset(h3);
+      var a = sibling(h3, 2);
+      var text_1 = child(a, true);
+      template_effect(() => set_text(text_1, t("downloadFilteredEntries")));
+      reset(a);
+      reset(div_1);
+      reset(div);
+      template_effect(() => set_attribute(a, "href", get(href)));
+      event("click", div_1, stopPropagation(function($$arg) {
+        bubble_event.call(this, $$props, $$arg);
+      }));
+      event("click", div, close);
+      append($$anchor2, div);
+    };
+    if_block(node, ($$render) => {
+      if (get(shown)) $$render(consequent);
+    });
+  }
+  append($$anchor, fragment);
+  pop();
+}
 
 // node_modules/svelte/src/store/shared/index.js
 var subscriber_queue = [];
@@ -10545,8 +10641,8 @@ function createShellStore(initial) {
 }
 
 // src/fava/App.svelte
-var root_131 = template(`<meta name="description" content="OrangeCount local ledger interface">`);
-var root18 = template(`<!> <!> <article id="main-content" tabindex="-1"><!></article>`, 1);
+var root_134 = template(`<meta name="description" content="OrangeCount local ledger interface">`);
+var root18 = template(`<!> <!> <article id="main-content" tabindex="-1"><!></article> <!>`, 1);
 function App($$anchor, $$props) {
   push($$props, false);
   const $$stores = setup_stores();
@@ -10695,7 +10791,7 @@ function App($$anchor, $$props) {
   init();
   var fragment = root18();
   head(($$anchor2) => {
-    var meta = root_131();
+    var meta = root_134();
     template_effect(() => $document.title = `${get(current).ledgerTitle ?? ""} \u203A ${(get(current).account || get(current).route) ?? ""}`);
     append($$anchor2, meta);
   });
@@ -10832,6 +10928,12 @@ function App($$anchor, $$props) {
     $$slots: { default: true }
   });
   reset(article);
+  var node_4 = sibling(article, 2);
+  ExportModal(node_4, {
+    get locale() {
+      return get(current).locale;
+    }
+  });
   append($$anchor, fragment);
   pop();
 }

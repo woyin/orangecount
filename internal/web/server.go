@@ -384,6 +384,32 @@ func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 			Kind:      r.URL.Query().Get("kind"),
 		})
 		writeJSON(w, favaadapter.NewEnvelope(projection, current.BuiltAt))
+	case "download-journal":
+		graph := current.Graph()
+		if graph == nil {
+			writeAPIError(w, http.StatusServiceUnavailable, "no source graph")
+			return
+		}
+		filters, err := globalReportFilters(r)
+		if err != nil {
+			writeAPIError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		// The download is a file, not an adapter envelope: the browser saves
+		// the filtered entries as Beancount source the way Fava does.
+		text := favaadapter.ExportEntries(current.Evaluation(), graph, filters, report.JournalFilters{
+			Flag:      r.URL.Query().Get("flag"),
+			Tag:       r.URL.Query().Get("tag"),
+			Link:      r.URL.Query().Get("link"),
+			Payee:     r.URL.Query().Get("payee"),
+			Narration: r.URL.Query().Get("narration"),
+			Kind:      r.URL.Query().Get("kind"),
+		})
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Header().Set("Content-Disposition", `attachment; filename="journal.bean"`)
+		if _, err := w.Write([]byte(text)); err != nil {
+			return
+		}
 	case "income_statement", "balance_sheet", "trial_balance":
 		filters, err := globalReportFilters(r)
 		if err != nil {

@@ -6,6 +6,7 @@
   import LoadingBoundary from "./components/LoadingBoundary.svelte";
   import ReportOutlet from "./components/ReportOutlet.svelte";
   import Sidebar from "./components/Sidebar.svelte";
+  import ExportModal from "./modals/ExportModal.svelte";
   import { initGlobalKeyboardShortcuts } from "./keyboard-shortcuts";
   import { notify, notify_err } from "./notifications";
   import { parseRoute, updateQuery } from "./router.mjs";
@@ -172,6 +173,7 @@
     </ErrorBoundary>
   </LoadingBoundary>
 </article>
+<ExportModal locale={current.locale} />
 
 <style>
   :global(.route-placeholder) {

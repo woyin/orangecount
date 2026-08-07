@@ -521,7 +521,7 @@ pre.svelte-1hd97ci {
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/components/Sidebar.esbuild-svelte-fake-css */
-aside.svelte-611do5 {
+aside.svelte-1czu6lw {
   grid-area: aside;
   padding-top: 0.5rem;
   margin: 0;
@@ -530,14 +530,14 @@ aside.svelte-611do5 {
   background-color: var(--sidebar-background);
   border-right: 1px solid var(--sidebar-border);
 }
-.aside-buttons.svelte-611do5 {
+.aside-buttons.svelte-1czu6lw {
   display: none;
 }
 @media (width <= 767px) {
   :root {
     --aside-width: 200px;
   }
-  aside.svelte-611do5 {
+  aside.svelte-1czu6lw {
     position: fixed;
     top: 0;
     bottom: 0;
@@ -547,7 +547,7 @@ aside.svelte-611do5 {
     margin-left: -200px;
     transition: var(--transitions);
   }
-  .overlay.svelte-611do5 {
+  .overlay.svelte-1czu6lw {
     position: fixed;
     inset: 0;
     z-index: var(--z-index-floating-ui);
@@ -555,11 +555,11 @@ aside.svelte-611do5 {
     background: var(--overlay-wrapper-background);
     transition: var(--transitions);
   }
-  aside.active.svelte-611do5 {
+  aside.active.svelte-1czu6lw {
     margin-left: 0;
     visibility: visible;
   }
-  .aside-buttons.svelte-611do5 {
+  .aside-buttons.svelte-1czu6lw {
     position: fixed;
     top: 0;
     left: 0;
@@ -568,10 +568,10 @@ aside.svelte-611do5 {
     flex-direction: column;
     transition: var(--transitions);
   }
-  .active.aside-buttons.svelte-611do5 {
+  .active.aside-buttons.svelte-1czu6lw {
     left: 200px;
   }
-  .aside-buttons.svelte-611do5 > :where(.svelte-611do5) {
+  .aside-buttons.svelte-1czu6lw > :where(.svelte-1czu6lw) {
     width: 42px;
     height: 42px;
     color: var(--mobile-button-text);
@@ -579,56 +579,93 @@ aside.svelte-611do5 {
     background-color: var(--sidebar-background);
     border: 1px solid var(--sidebar-border);
   }
-  .aside-buttons.svelte-611do5 a:where(.svelte-611do5) {
+  .aside-buttons.svelte-1czu6lw a:where(.svelte-1czu6lw) {
     font-size: 28px;
   }
 }
 @media print {
-  aside.svelte-611do5,
-  .aside-buttons.svelte-611do5 {
+  aside.svelte-1czu6lw,
+  .aside-buttons.svelte-1czu6lw {
     display: none;
   }
 }
-.navigation.svelte-611do5 {
+.navigation.svelte-1czu6lw {
   padding-bottom: 0.5rem;
   margin: 0;
 }
-.navigation.svelte-611do5 + .navigation:where(.svelte-611do5) {
+.navigation.svelte-1czu6lw + .navigation:where(.svelte-1czu6lw) {
   padding-top: 0.5rem;
   border-top: 1px solid var(--sidebar-border);
 }
-.navigation.svelte-611do5 a.selected:where(.svelte-611do5),
-.navigation.svelte-611do5 a:where(.svelte-611do5):hover {
+.navigation.svelte-1czu6lw a.selected:where(.svelte-1czu6lw),
+.navigation.svelte-1czu6lw a:where(.svelte-1czu6lw):hover {
   color: var(--sidebar-hover-color);
   background-color: var(--sidebar-border);
 }
-.navigation.svelte-611do5 li:where(.svelte-611do5) {
+.navigation.svelte-1czu6lw li:where(.svelte-1czu6lw) {
   display: flex;
   flex-wrap: wrap;
 }
-.navigation-heading.svelte-611do5 {
+.navigation-heading.svelte-1czu6lw {
   padding: 0.25em 0.5em 0 1em;
   font-size: 0.75em;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   opacity: 0.7;
 }
-.navigation.svelte-611do5 a:where(.svelte-611do5) {
+.navigation.svelte-1czu6lw a:where(.svelte-1czu6lw) {
   display: block;
   flex: 1;
   padding: 0.25em 0.5em 0.25em 1em;
   color: inherit;
 }
-.account-selector.svelte-611do5 {
+.navigation.svelte-1czu6lw a.secondary:where(.svelte-1czu6lw) {
+  flex: none;
+  width: 30px;
+  padding: 3px 9px;
+  line-height: 22px;
+  color: inherit;
+  background-color: var(--sidebar-background);
+}
+.account-selector.svelte-1czu6lw {
   --input-border: none;
   --input-padding: 0.25em 0.5em 0.25em 1em;
   --autocomplete-list-position: fixed;
 }
-.account-selector.svelte-611do5 span {
+.account-selector.svelte-1czu6lw span {
   flex: 1;
 }
-.aside-buttons.svelte-611do5 button:where(.svelte-611do5) {
+.aside-buttons.svelte-1czu6lw button:where(.svelte-1czu6lw) {
   font-size: 1.2rem;
+}
+
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/modals/ExportModal.esbuild-svelte-fake-css */
+.export-backdrop.svelte-gn9rfu {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-index-floating-ui);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 15vh;
+  background: var(--overlay-wrapper-background);
+}
+.export-modal.svelte-gn9rfu {
+  min-width: 18em;
+  max-width: 32em;
+  padding: 1em 1.25em;
+  color: var(--text-color);
+  background: var(--background);
+  border: 1px solid var(--border);
+  box-shadow: var(--box-shadow-overlay);
+}
+.export-modal.svelte-gn9rfu h3:where(.svelte-gn9rfu) {
+  margin: 0 0 0.5em;
+  font-size: 1.1em;
+  font-weight: bold;
+}
+.export-modal.svelte-gn9rfu a:where(.svelte-gn9rfu) {
+  color: var(--link-color);
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/App.esbuild-svelte-fake-css */

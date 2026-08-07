@@ -155,6 +155,14 @@
       "notice": "NOTICE",
       "notes": "Adapted Fava mobile aside/button shell and AsideContents navigation; extensions and multi-ledger links are excluded."
     },
+    "web/src/fava/modals/ExportModal.svelte": {
+      "current_kind": "derived",
+      "upstream": "frontend/src/modals/Export.svelte",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "28f58b9c9aba5ebd33ebbfd1b73c90688c3b2b1ea4f0105143bb8b76eef6349e",
+      "notice": "NOTICE",
+      "notes": "Fava Export modal structure reworked for legacy Svelte: hash #export toggling without the upstream store/router, and the download targets the OrangeCount adapter download-journal route. Upstream hash computed from an exact byte reconstruction of the pinned reference copy, since shell access to the reference directory is policy-blocked."
+    },
     "web/tests/unit/format-amount.test.mjs": {
       "current_kind": "original",
       "upstream": null,

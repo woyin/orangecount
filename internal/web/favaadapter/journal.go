@@ -281,56 +281,85 @@ func journalChange(record ledger.EntryRecord, account string) []JournalAmount {
 // legacy substring match so a caller that skipped validation never loses
 // entries silently.
 func filterJournalEntries(entries []JournalEntry, filters report.Filters, journal report.JournalFilters) []JournalEntry {
-	account := strings.TrimSpace(filters.Account)
-	rawText := strings.TrimSpace(filters.Text)
-	text := strings.ToLower(rawText)
-	textFilter, textErr := report.ParseFQL(rawText)
-	hasTime := strings.TrimSpace(filters.TimePrefix) != "" || strings.TrimSpace(filters.TimeBegin) != "" || strings.TrimSpace(filters.TimeEnd) != ""
-	flag := strings.TrimSpace(journal.Flag)
-	tag := strings.ToLower(strings.TrimSpace(journal.Tag))
-	link := strings.ToLower(strings.TrimSpace(journal.Link))
-	payee := strings.ToLower(strings.TrimSpace(journal.Payee))
-	narration := strings.ToLower(strings.TrimSpace(journal.Narration))
-	kind := strings.TrimSpace(journal.Kind)
-
+	state := newJournalFilterState(filters, journal)
 	out := make([]JournalEntry, 0, len(entries))
 	for _, entry := range entries {
-		if hasTime && !filters.MatchesDate(entry.Date) {
+		if state.excluded(entry) {
 			continue
-		}
-		if account != "" && !entryTouchesAccount(entry, account) {
-			continue
-		}
-		if flag != "" && entry.Flag != flag {
-			continue
-		}
-		if kind != "" && !strings.EqualFold(entry.Type, kind) {
-			continue
-		}
-		if tag != "" && !containsFold(entry.Tags, tag) {
-			continue
-		}
-		if link != "" && !containsFold(entry.Links, link) {
-			continue
-		}
-		if payee != "" && !strings.Contains(strings.ToLower(entry.Payee), payee) {
-			continue
-		}
-		if narration != "" && !strings.Contains(strings.ToLower(entry.Narration), narration) {
-			continue
-		}
-		if text != "" {
-			if textFilter != nil && textErr == nil {
-				if !textFilter.Match(journalFQLTarget(entry)) {
-					continue
-				}
-			} else if !entryMatchesText(entry, text) {
-				continue
-			}
 		}
 		out = append(out, entry)
 	}
 	return out
+}
+
+// journalFilterState precomputes the per-request filter inputs so entry
+// projections (journal, export) can apply identical predicates per entry.
+type journalFilterState struct {
+	filters    report.Filters
+	account    string
+	text       string
+	textFilter *report.FQL
+	textErr    error
+	hasTime    bool
+	flag       string
+	tag        string
+	link       string
+	payee      string
+	narration  string
+	kind       string
+}
+
+func newJournalFilterState(filters report.Filters, journal report.JournalFilters) journalFilterState {
+	rawText := strings.TrimSpace(filters.Text)
+	textFilter, textErr := report.ParseFQL(rawText)
+	return journalFilterState{
+		filters:    filters,
+		account:    strings.TrimSpace(filters.Account),
+		text:       strings.ToLower(rawText),
+		textFilter: textFilter,
+		textErr:    textErr,
+		hasTime:    strings.TrimSpace(filters.TimePrefix) != "" || strings.TrimSpace(filters.TimeBegin) != "" || strings.TrimSpace(filters.TimeEnd) != "",
+		flag:       strings.TrimSpace(journal.Flag),
+		tag:        strings.ToLower(strings.TrimSpace(journal.Tag)),
+		link:       strings.ToLower(strings.TrimSpace(journal.Link)),
+		payee:      strings.ToLower(strings.TrimSpace(journal.Payee)),
+		narration:  strings.ToLower(strings.TrimSpace(journal.Narration)),
+		kind:       strings.TrimSpace(journal.Kind),
+	}
+}
+
+func (state journalFilterState) excluded(entry JournalEntry) bool {
+	if state.hasTime && !state.filters.MatchesDate(entry.Date) {
+		return true
+	}
+	if state.account != "" && !entryTouchesAccount(entry, state.account) {
+		return true
+	}
+	if state.flag != "" && entry.Flag != state.flag {
+		return true
+	}
+	if state.kind != "" && !strings.EqualFold(entry.Type, state.kind) {
+		return true
+	}
+	if state.tag != "" && !containsFold(entry.Tags, state.tag) {
+		return true
+	}
+	if state.link != "" && !containsFold(entry.Links, state.link) {
+		return true
+	}
+	if state.payee != "" && !strings.Contains(strings.ToLower(entry.Payee), state.payee) {
+		return true
+	}
+	if state.narration != "" && !strings.Contains(strings.ToLower(entry.Narration), state.narration) {
+		return true
+	}
+	if state.text != "" {
+		if state.textFilter != nil && state.textErr == nil {
+			return !state.textFilter.Match(journalFQLTarget(entry))
+		}
+		return !entryMatchesText(entry, state.text)
+	}
+	return false
 }
 
 // journalFQLTarget maps a projected entry onto the shape Fava's filter query

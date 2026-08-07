@@ -345,3 +345,29 @@ func TestProjectJournalHonorsFQLFilters(t *testing.T) {
 		t.Fatalf("negated entries=%+v", negated.Entries)
 	}
 }
+
+func TestExportEntriesSlicesFilteredSource(t *testing.T) {
+	snap := buildSnapshot(t, `2000-01-01 open Assets:Bank:Cash USD
+2000-01-01 open Equity:Opening USD
+2002-02-03 * "Cafe" "Lunch" #meal
+  Assets:Bank:Cash -2.50 USD
+  Equity:Opening 2.50 USD
+2002-02-04 * "Cafe" "Dinner"
+  Assets:Bank:Cash -1.15 USD
+  Equity:Opening 1.15 USD
+`)
+	exported := ExportEntries(snap.Evaluation(), snap.Graph(), report.Filters{Text: "#meal"}, report.JournalFilters{})
+	if !strings.Contains(exported, `2002-02-03 * "Cafe" "Lunch" #meal`) || !strings.Contains(exported, "Assets:Bank:Cash -2.50 USD") {
+		t.Fatalf("export missing the tagged transaction:\n%s", exported)
+	}
+	if strings.Contains(exported, "Dinner") || strings.Contains(exported, "open") {
+		t.Fatalf("export leaks unfiltered entries:\n%s", exported)
+	}
+	if !strings.HasSuffix(exported, "\n") || strings.Contains(exported, "\n\n\n") {
+		t.Fatalf("export separators unexpected:\n%q", exported)
+	}
+	everything := ExportEntries(snap.Evaluation(), snap.Graph(), report.Filters{}, report.JournalFilters{})
+	if !strings.Contains(everything, "Dinner") || !strings.Contains(everything, "open Assets:Bank:Cash") {
+		t.Fatalf("unfiltered export incomplete:\n%s", everything)
+	}
+}
