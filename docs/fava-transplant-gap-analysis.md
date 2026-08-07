@@ -65,7 +65,7 @@
 
 | # | Manifest | 差距 | 说明 |
 | --- | --- | --- | --- |
-| M1 | R-QUERY | Query 页不完整 | 保存查询已落地（`1abfaf0`）：账本 `query` 指令投影为侧栏 Query 项子菜单（同名截断规则同上游），页内点选即回显并重跑；结果排序冒烟确认 GenericReport 列排序可用（含数值列方向切换）——原"无结果排序"判断有误；查询图表已落地（`78d4233`，见 M1-query-chart）；余项仅 BQL 编辑器为裸 textarea（依赖 H1） |
+| M1 | R-QUERY | Query 页不完整 | 保存查询已落地（`1abfaf0`）：账本 `query` 指令投影为侧栏 Query 项子菜单（同名截断规则同上游），页内点选即回显并重跑；结果排序冒烟确认 GenericReport 列排序可用（含数值列方向切换）——原"无结果排序"判断有误；查询图表已落地（`78d4233`，见 M1-query-chart）；BQL 编辑器已落地（`53bd5d3`，见 M1-bql-editor） |
 | M2 | R-IMPORT | Import 为 OC 原创表单 | 上传块已对齐（`ea13c07`，见 M2-import-upload）：上游 ImportFileUpload 形态的文件选择器落地（本地读入导入缓冲区、按扩展名推断 adapter）；余项：服务端 import 目录文件列表与逐条目 extract/review 弹窗（上游依赖 Python importer 生态，OC 无 import 目录，待方案决策）；Source path/Adapter/Target + 粘贴缓冲区保留为 OC 扩展 |
 | M3 | R-HELP | ~~Help 无页面索引~~（已完成，`f1a01f0`） | `/help` 现渲染子页索引，`/help/<id>` 渲染单节页面 + 返回链接；Options 页标题链接 `/help/options`（限制：子页集合为 OC 自有 8 节，非上游 Index/Syntax/Budgets 全集） |
 | M4 | 跨路由 | ~~排序基建缺失~~（已完成，`62de047`） | `sort/index.ts`（Sorter/SortColumn 契约，同上游点击语义，无 d3 依赖）+ `SortHeader.svelte`（legacy 模式，含 aria-sort 与箭头提示）已落地；events/commodities/documents/statistics/options 表头可排序，冒烟验证方向切换与列切换重排（限制：holdings 与上游一致不可排序；Query 结果排序经 GenericReport 实际可用，`1abfaf0` 冒烟确认） |
@@ -406,6 +406,21 @@ POST，`38f2618`）。
 > query 页未逐项冒烟（agent-browser daemon 会话中期挂起，同构代码
 > 已在 events/commodities 页验证）；无 ChartSwitcher 图表名标签、
 > 无 charts=false URL 参数，`78d4233`）。
+> M1-bql-editor（Query 页 BQL 编辑器落地，M1 收尾：上游
+> frontend/src/codemirror 下 bql-* 六文件移植到 web/src/fava/codemirror，
+> QueryReport 以 init_query_editor 取代只读 textarea。与 beancount
+> 编辑器不同，BQL 无 wasm 依赖——语言是纯 JS StreamLanguage
+> （bql-stream-parser 走 bql-grammar 的 keywords/columns/functions 词法
+> 表，token 流驱动 highlight/completion），故 bundle 保持自包含。编辑器改
+> 动经 updateListener 回写 queryText 进 run()；外部 URL query_string 变化经
+> $: 块 replace_contents 同步进编辑器；Control-Enter/Meta-Enter 提交。
+> 冒烟验证：.cm-editor/gutter/高亮渲染、初始 account/balance 查询自动跑
+> 且 188 行、编辑器追加 WHERE 后点 Run 驱动后端执行、URL query_string
+> 驱动内容同步、后端语义错误（query requires FROM）正确反馈。限制：
+> OC 保持单查询单结果形态，非上游多查询 shell 历史（query_shell_history
+> 与 per-query result box 未移植，登记为实现性偏差）；编辑器内光标的
+> Control+End/Ctrl+A 全选经 agent-browser 键组合不可靠（工具限制，内容
+> 编辑/提交链路已充分验证），`53bd5d3`）。
 > M2-import-upload（Import 页上传块对齐上游 ImportFileUpload：新增
 > "Upload files for import" 表单——文件选择器 + Upload 按钮，选中文件
 > 经 FileReader 本地读入导入缓冲区，source path 取文件名、adapter 按
