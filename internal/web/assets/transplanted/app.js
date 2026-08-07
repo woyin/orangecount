@@ -4464,6 +4464,7 @@ var translations = {
     optionValue: "Value",
     holdingsByAccount: "Holdings by Account",
     holdingsByCurrency: "Holdings by Currency",
+    holdingsByCostCurrency: "Holdings by Cost Currency",
     holdingsByRootAccount: "Holdings by Root Account",
     holdingsByCommodity: "Holdings by Commodity",
     eventHeading: "Event:",
@@ -4620,6 +4621,7 @@ var translations = {
     optionValue: "\u503C",
     holdingsByAccount: "\u6309\u8D26\u6237\u6301\u4ED3",
     holdingsByCurrency: "\u6309\u8D27\u5E01\u6301\u4ED3",
+    holdingsByCostCurrency: "\u6309\u6210\u672C\u8D27\u5E01\u6301\u4ED3",
     holdingsByRootAccount: "\u6309\u6839\u8D26\u6237\u6301\u4ED3",
     holdingsByCommodity: "\u6309\u5546\u54C1\u6301\u4ED3",
     eventHeading: "\u4E8B\u4EF6\uFF1A",
@@ -5107,6 +5109,7 @@ var ROUTES = Object.freeze([
   "holdings",
   "holdings_by_account",
   "holdings_by_currency",
+  "holdings_by_cost_currency",
   "holdings_by_root_account",
   "holdings_by_commodity",
   "commodities",
@@ -5130,6 +5133,7 @@ var PATHS = Object.freeze({
   holdings: "/holdings",
   holdings_by_account: "/holdings/by_account",
   holdings_by_currency: "/holdings/by_currency",
+  holdings_by_cost_currency: "/holdings/by_cost_currency",
   holdings_by_root_account: "/holdings/by_root_account",
   holdings_by_commodity: "/holdings/by_commodity",
   commodities: "/commodities",
@@ -5212,6 +5216,7 @@ function pageLabel(route) {
     holdings: "Holdings",
     holdings_by_account: "Holdings by account",
     holdings_by_currency: "Holdings by currency",
+    holdings_by_cost_currency: "Holdings by cost currency",
     holdings_by_root_account: "Holdings by root account",
     holdings_by_commodity: "Holdings by commodity",
     commodities: "Commodities",
@@ -7663,6 +7668,10 @@ function HoldingsReport($$anchor, $$props) {
     {
       route: "holdings_by_currency",
       key: "holdingsByCurrency"
+    },
+    {
+      route: "holdings_by_cost_currency",
+      key: "holdingsByCostCurrency"
     },
     {
       route: "holdings_by_root_account",
@@ -10269,6 +10278,7 @@ function ReportOutlet($$anchor, $$props) {
       "holdings",
       "holdings_by_account",
       "holdings_by_currency",
+      "holdings_by_cost_currency",
       "holdings_by_root_account",
       "holdings_by_commodity",
       "commodities",

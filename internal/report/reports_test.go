@@ -528,7 +528,10 @@ func TestPostingsPerAccountSortsByCountThenAccount(t *testing.T) {
 	if len(result.Columns) != 2 || result.Columns[0] != "account" || result.Columns[1] != "postings" {
 		t.Fatalf("columns=%+v", result.Columns)
 	}
-	want := []struct{ account string; count int }{
+	want := []struct {
+		account string
+		count   int
+	}{
 		{"Assets:Cash", 2},
 		{"Assets:Bank", 1},
 		{"Equity:Opening", 1},
@@ -869,6 +872,27 @@ func TestHoldingsAggregateGroupsAndSumsWithinCostCurrency(t *testing.T) {
 				t.Fatalf("by_commodity FUND units = %s, want 6", got)
 			}
 		}
+	}
+
+	byCostCurrency := HoldingsAggregate(flat, "by_cost_currency")
+	if len(byCostCurrency.Rows) != 3 {
+		t.Fatalf("by_cost_currency produced %d rows, want 3 groups", len(byCostCurrency.Rows))
+	}
+	byCost := map[string]query.Row{}
+	for _, row := range byCostCurrency.Rows {
+		byCost[row["cost_currency"].(string)] = row
+	}
+	if got := byCost["USD"]["units"].(ledger.Decimal).String(); got != decimal("5").String() {
+		t.Fatalf("by_cost_currency USD units = %s, want 5", got)
+	}
+	if got := byCost["USD"]["book_value"].(ledger.Decimal).String(); got != decimal("56").String() {
+		t.Fatalf("by_cost_currency USD book_value = %s, want 56", got)
+	}
+	if got := byCost["EUR"]["book_value"].(ledger.Decimal).String(); got != decimal("7").String() {
+		t.Fatalf("by_cost_currency EUR book_value = %s, want 7", got)
+	}
+	if _, hasBook := byCost[""]["book_value"]; hasBook {
+		t.Fatal("by_cost_currency group without costs must omit book_value")
 	}
 
 	if passthrough := HoldingsAggregate(flat, ""); len(passthrough.Rows) != len(flat.Rows) {

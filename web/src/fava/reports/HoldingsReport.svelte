@@ -21,6 +21,7 @@
     { route: "holdings", key: "holdings" },
     { route: "holdings_by_account", key: "holdingsByAccount" },
     { route: "holdings_by_currency", key: "holdingsByCurrency" },
+    { route: "holdings_by_cost_currency", key: "holdingsByCostCurrency" },
     { route: "holdings_by_root_account", key: "holdingsByRootAccount" },
     { route: "holdings_by_commodity", key: "holdingsByCommodity" },
   ];

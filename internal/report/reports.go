@@ -507,6 +507,9 @@ func HoldingsAggregate(result query.Result, aggregation string) query.Result {
 			}
 			return []string{account, asString(row["currency"]), asString(row["cost_currency"])}
 		}
+	case "by_cost_currency":
+		columns = []string{"cost_currency", "units", "book_value"}
+		keyOf = func(row query.Row) []string { return []string{asString(row["cost_currency"])} }
 	case "by_commodity":
 		columns = []string{"currency", "units", "book_value"}
 		keyOf = func(row query.Row) []string { return []string{asString(row["currency"])} }
