@@ -65,12 +65,12 @@
 
 | # | Manifest | 差距 | 说明 |
 | --- | --- | --- | --- |
-| M1 | R-QUERY | Query 页不完整 | 无保存查询、无结果排序、无查询图表；BQL 编辑器为裸 textarea（依赖 H1） |
+| M1 | R-QUERY | Query 页不完整 | 保存查询已落地（`1abfaf0`）：账本 `query` 指令投影为侧栏 Query 项子菜单（同名截断规则同上游），页内点选即回显并重跑；结果排序冒烟确认 GenericReport 列排序可用（含数值列方向切换）——原"无结果排序"判断有误；仍无查询图表；BQL 编辑器为裸 textarea（依赖 H1） |
 | M2 | R-IMPORT | Import 为 OC 原创表单 | Source path/Adapter/Target 表单 vs Fava 的文件列表 + 上传 + extract/review 流程（Python importer 排除已是批准偏差，但 UI 流程应对齐） |
 | M3 | R-HELP | ~~Help 无页面索引~~（已完成，`f1a01f0`） | `/help` 现渲染子页索引，`/help/<id>` 渲染单节页面 + 返回链接；Options 页标题链接 `/help/options`（限制：子页集合为 OC 自有 8 节，非上游 Index/Syntax/Budgets 全集） |
-| M4 | 跨路由 | ~~排序基建缺失~~（已完成，`62de047`） | `sort/index.ts`（Sorter/SortColumn 契约，同上游点击语义，无 d3 依赖）+ `SortHeader.svelte`（legacy 模式，含 aria-sort 与箭头提示）已落地；events/commodities/documents/statistics/options 表头可排序，冒烟验证方向切换与列切换重排（限制：Query 结果排序仍属 M1；holdings 与上游一致不可排序） |
+| M4 | 跨路由 | ~~排序基建缺失~~（已完成，`62de047`） | `sort/index.ts`（Sorter/SortColumn 契约，同上游点击语义，无 d3 依赖）+ `SortHeader.svelte`（legacy 模式，含 aria-sort 与箭头提示）已落地；events/commodities/documents/statistics/options 表头可排序，冒烟验证方向切换与列切换重排（限制：holdings 与上游一致不可排序；Query 结果排序经 GenericReport 实际可用，`1abfaf0` 冒烟确认） |
 | M5 | 跨路由 | ~~三份 CSS 未移植~~（已完成） | `editor.css`、`help.css`、`notifications.css` 均已移植，main.ts 引入 11/11 |
-| M6 | G-FILTERS | ~~URL 状态对齐未逐项验证~~（已核对，`d68e5e9`/`36fb31b`） | 全路由深链、筛选回显、history back/forward、reload 逐项冒烟通过；核对发现并修复三处：`time=2025-Q2` 季度语法被拒（新增 Filters.TimeBegin/End 半开区间）、`/editor?path=` 与 `/query?query_string=` 未回显（限制：diagnostics 仍为 JSON 兜底视图；Query 页保存/排序/图表仍属 M1） |
+| M6 | G-FILTERS | ~~URL 状态对齐未逐项验证~~（已核对，`d68e5e9`/`36fb31b`） | 全路由深链、筛选回显、history back/forward、reload 逐项冒烟通过；核对发现并修复三处：`time=2025-Q2` 季度语法被拒（新增 Filters.TimeBegin/End 半开区间）、`/editor?path=` 与 `/query?query_string=` 未回显（限制：diagnostics 仍为 JSON 兜底视图；Query 页图表仍属 M1，保存查询与排序已落地） |
 
 ### Low
 
@@ -244,6 +244,12 @@
 > modals/Export.svelte（provenance 登记，上游 hash 按重建计算已注明）。
 > 冒烟验证 ⬇ 打开模态且下载链接携带当前 filter、背景关闭清除 hash 页面
 > 完好、curl 验证 #evidence 导出恰为两条 document 源码行，`2846847`）。
+> M1-saved（账本 `query` 指令经 ledger_data 的 user_queries 投影至前端：
+> adapter-client 边界补齐字段、shell state 接纳、侧栏 Query 项下渲染子
+> 菜单（上游同名截断规则），点选在页内即回显编辑器并重跑——
+> QueryReport 新增路由 query_string 反应式同步。冒烟验证子菜单渲染
+> saved-overview、点选后 URL/编辑器/188 行结果齐备、GenericReport 列
+> 排序含数值列方向切换；原 M1"无结果排序"判断经冒烟证伪，`1abfaf0`）。
 > T1/H5 的 WIP 覆盖部分仍待稠密夹具复比勾销。
 
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
