@@ -66,7 +66,7 @@
 | # | Manifest | 差距 | 说明 |
 | --- | --- | --- | --- |
 | M1 | R-QUERY | Query 页不完整 | 保存查询已落地（`1abfaf0`）：账本 `query` 指令投影为侧栏 Query 项子菜单（同名截断规则同上游），页内点选即回显并重跑；结果排序冒烟确认 GenericReport 列排序可用（含数值列方向切换）——原"无结果排序"判断有误；查询图表已落地（`78d4233`，见 M1-query-chart）；余项仅 BQL 编辑器为裸 textarea（依赖 H1） |
-| M2 | R-IMPORT | Import 为 OC 原创表单 | Source path/Adapter/Target 表单 vs Fava 的文件列表 + 上传 + extract/review 流程（Python importer 排除已是批准偏差，但 UI 流程应对齐） |
+| M2 | R-IMPORT | Import 为 OC 原创表单 | 上传块已对齐（`ea13c07`，见 M2-import-upload）：上游 ImportFileUpload 形态的文件选择器落地（本地读入导入缓冲区、按扩展名推断 adapter）；余项：服务端 import 目录文件列表与逐条目 extract/review 弹窗（上游依赖 Python importer 生态，OC 无 import 目录，待方案决策）；Source path/Adapter/Target + 粘贴缓冲区保留为 OC 扩展 |
 | M3 | R-HELP | ~~Help 无页面索引~~（已完成，`f1a01f0`） | `/help` 现渲染子页索引，`/help/<id>` 渲染单节页面 + 返回链接；Options 页标题链接 `/help/options`（限制：子页集合为 OC 自有 8 节，非上游 Index/Syntax/Budgets 全集） |
 | M4 | 跨路由 | ~~排序基建缺失~~（已完成，`62de047`） | `sort/index.ts`（Sorter/SortColumn 契约，同上游点击语义，无 d3 依赖）+ `SortHeader.svelte`（legacy 模式，含 aria-sort 与箭头提示）已落地；events/commodities/documents/statistics/options 表头可排序，冒烟验证方向切换与列切换重排（限制：holdings 与上游一致不可排序；Query 结果排序经 GenericReport 实际可用，`1abfaf0` 冒烟确认） |
 | M5 | 跨路由 | ~~三份 CSS 未移植~~（已完成） | `editor.css`、`help.css`、`notifications.css` 均已移植，main.ts 引入 11/11 |
@@ -406,6 +406,17 @@ POST，`38f2618`）。
 > query 页未逐项冒烟（agent-browser daemon 会话中期挂起，同构代码
 > 已在 events/commodities 页验证）；无 ChartSwitcher 图表名标签、
 > 无 charts=false URL 参数，`78d4233`）。
+> M2-import-upload（Import 页上传块对齐上游 ImportFileUpload：新增
+> "Upload files for import" 表单——文件选择器 + Upload 按钮，选中文件
+> 经 FileReader 本地读入导入缓冲区，source path 取文件名、adapter 按
+> 扩展名推断（.csv→csv，其余 beancount），状态行回执加载结果；
+> 预览/提交既有流程不动。冒烟以 DataTransfer 注入 upload-test.bean
+> 验证缓冲区装载、路径/adapter 回填与状态文案，随后 Preview 正常返回
+> 诊断且 Commit 保持禁用。限制：上游为服务端 import 目录暂存 +
+> importer 识别 + 文件列表 + 逐条目 Extract 弹窗，OC 无 import 目录
+> 与 Python importer 生态，文件列表/extract 弹窗登记为待方案决策
+> 余项；单文件读取（上游支持多文件并发上传）；Import 页文案仍为
+> 硬编码英文（既有状态），`ea13c07`）。
 > T1/H5 的 WIP 覆盖部分仍待稠密夹具复比勾销。
 
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
