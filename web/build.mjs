@@ -37,7 +37,10 @@ await build({
   sourcemap: false,
   minify: false,
   legalComments: "eof",
-  loader: { ".woff": "dataurl", ".woff2": "dataurl" },
+  loader: { ".woff": "dataurl", ".woff2": "dataurl", ".wasm": "dataurl" },
+  // web-tree-sitter contains Node-only fallbacks guarded by environment
+  // checks; they never run in the browser, so keep them unbundled.
+  external: ["fs/promises", "module", "fs", "path", "url"],
   plugins: [svelte({ compilerOptions: { dev: false } })],
 });
 await writeFile(path.join(staging, "index.html"), indexHTML);

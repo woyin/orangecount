@@ -1,0 +1,140 @@
+import type {
+  Completion,
+  CompletionResult,
+  CompletionSource,
+} from "@codemirror/autocomplete";
+import { syntaxTree } from "@codemirror/language";
+
+import { beancount_snippets } from "./beancount-snippets";
+import {
+  get_accounts,
+  get_currencies,
+  get_links,
+  get_payees,
+  get_tags,
+} from "./completion-data";
+
+const undated_directives = ["option", "plugin", "include"];
+const dated_directives = [
+  "*",
+  "open",
+  "close",
+  "custom",
+  "commodity",
+  "balance",
+  "pad",
+  "note",
+  "document",
+  "price",
+  "event",
+  "query",
+];
+
+/** Get Completion objects from strings. */
+const opts = (s: readonly string[]): Completion[] =>
+  s.map((label) => ({ label }));
+
+/** Generate completion result list for codemirror from strings. */
+const res = (s: readonly string[], from: number): CompletionResult => ({
+  options: opts(s),
+  from,
+});
+
+export const beancount_completion: CompletionSource = (context) => {
+  const tag = context.matchBefore(/#[A-Za-z0-9\-_/.]*/);
+  if (tag) {
+    return {
+      options: opts(get_tags()),
+      from: tag.from + 1,
+      validFor: /\S+/,
+    };
+  }
+
+  const link = context.matchBefore(/\^[A-Za-z0-9\-_/.]*/);
+  if (link) {
+    return {
+      options: opts(get_links()),
+      from: link.from + 1,
+      validFor: /\S+/,
+    };
+  }
+
+  const indented = context.matchBefore(/^\s+\S+/);
+  if (indented) {
+    const indentation = indented.text.length - indented.text.trimStart().length;
+    return {
+      options: opts(get_accounts()),
+      from: indented.from + indentation,
+      validFor: /\S+/,
+    };
+  }
+
+  const line = context.state.doc.lineAt(context.pos);
+  if (context.matchBefore(/\d+/)) {
+    return { options: beancount_snippets(), from: line.from };
+  }
+
+  const currentWord = context.matchBefore(/\S*/);
+  if (currentWord?.from === line.from && line.length > 0) {
+    return {
+      options: opts(undated_directives),
+      from: line.from,
+      validFor: /\S+/,
+    };
+  }
+
+  const tree = syntaxTree(context.state);
+  const before = tree.resolve(context.pos, -1);
+  // Node types of the last 4 nodes.
+  const nodeTypesBefore = [
+    before.name,
+    before.prevSibling?.name,
+    before.prevSibling?.prevSibling?.name,
+    before.prevSibling?.prevSibling?.prevSibling?.name,
+  ];
+  type T = string | string[];
+  // Check whether the previous nodes (up to 4) match the given types.
+  const match = (...types: [T] | [T, T] | [T, T, T] | [T, T, T, T]): boolean =>
+    types.every((t, i) => {
+      const nodeType = nodeTypesBefore[i];
+      return typeof t === "string"
+        ? nodeType === t
+        : t.some((n) => nodeType === n);
+    });
+
+  // complete payee after transaction flag.
+  if (match("string", "flag")) {
+    return res(get_payees(), before.from + 1);
+  }
+
+  // complete directive names after a date.
+  if (match("keyword", "date")) {
+    return res(dated_directives, before.from);
+  }
+
+  if (
+    // account directly after one of these directives:
+    match(
+      ["ERROR", "account"],
+      ["BALANCE", "CLOSE", "OPEN", "PAD", "NOTE", "DOCUMENT"],
+      "date",
+    ) ||
+    // padding account
+    match(["ERROR", "account"], "account", "PAD", "date")
+  ) {
+    return res(get_accounts(), before.from);
+  }
+
+  if (
+    // complete currencies after a number.
+    match("ERROR", "number") ||
+    // account currency
+    match(["ERROR", "currency"], "account", "OPEN", "date") ||
+    // price or commodity currency
+    match(["ERROR", "currency"], ["COMMODITY", "PRICE"], "date")
+  ) {
+    return res(get_currencies(), before.from);
+  }
+
+  return null;
+};

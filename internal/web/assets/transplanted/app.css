@@ -443,48 +443,49 @@ textarea.svelte-1popykn {
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/EditorReport.esbuild-svelte-fake-css */
-.muted.svelte-1c22f1y {
+.muted.svelte-7u8krg {
   color: var(--text-color-lightest);
 }
-.editor-layout.svelte-1c22f1y {
+.editor-layout.svelte-7u8krg {
   display: grid;
   grid-template-columns: minmax(10rem, 16rem) minmax(0, 1fr);
   gap: 1rem;
 }
-.editor-files.svelte-1c22f1y {
+.editor-files.svelte-7u8krg {
   display: grid;
   gap: 0.5rem;
   align-content: start;
 }
-.editor-files.svelte-1c22f1y select:where(.svelte-1c22f1y) {
+.editor-files.svelte-7u8krg select:where(.svelte-7u8krg) {
   min-height: 16rem;
 }
-.editor-pane.svelte-1c22f1y {
+.editor-pane.svelte-7u8krg {
   min-width: 0;
 }
-.toolbar.svelte-1c22f1y {
+.toolbar.svelte-7u8krg {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
   margin-bottom: 0.5rem;
 }
-#editor-buffer.svelte-1c22f1y {
-  width: 100%;
+#editor-buffer.svelte-7u8krg .cm-editor {
   min-height: 28rem;
-  font-family: var(--font-family-editor);
-  white-space: pre;
+  border: 1px solid var(--border);
 }
-.diagnostics.svelte-1c22f1y {
+#editor-buffer.svelte-7u8krg .cm-scroller {
+  font-family: var(--font-family-editor);
+}
+.diagnostics.svelte-7u8krg {
   padding: 0.5rem 1.5rem;
   color: var(--error);
   border: 1px solid var(--error);
 }
 @media (width <= 767px) {
-  .editor-layout.svelte-1c22f1y {
+  .editor-layout.svelte-7u8krg {
     grid-template-columns: 1fr;
   }
-  .editor-files.svelte-1c22f1y select:where(.svelte-1c22f1y) {
+  .editor-files.svelte-7u8krg select:where(.svelte-7u8krg) {
     min-height: 6rem;
   }
 }

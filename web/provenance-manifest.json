@@ -617,6 +617,71 @@
       "upstream_hash": "96cb98740d3bdd52cab0366e117c3f6407bfc1a2ca330a3e72e7244a090ef6e6",
       "notice": "NOTICE",
       "notes": "Fava move/rename dialog (the ModalBase form inside Documents.svelte) extracted into a standalone legacy-Svelte modal styled after the OrangeCount upload modal; posts JSON to the private move-document route instead of upstream's move_document API call, AccountInput replaced by a datalist-backed input."
+    },
+    "web/src/fava/ambient.d.ts": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "OrangeCount ambient declaration for the inlined tree-sitter .wasm asset so the transplanted editor bundle resolves its import."
+    },
+    "web/src/fava/codemirror/base-extensions.ts": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/codemirror/base-extensions.ts (pinned revision aa7538e8); behavior preserved, written against the transplanted CodeMirror dependency set. Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/codemirror/beancount.ts": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/codemirror/beancount.ts (pinned revision aa7538e8); keeps init_beancount_editor only. The init_textarea and beancount_format exports are dropped because OrangeCount has no format endpoint. Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/codemirror/beancount-autocomplete.ts": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/codemirror/beancount-autocomplete.ts (pinned revision aa7538e8); completion data now reads the local completion-data.ts module instead of upstream svelte stores. Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/codemirror/beancount-fold.ts": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/codemirror/beancount-fold.ts (pinned revision aa7538e8); behavior preserved against the transplanted dependency set. Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/codemirror/beancount-highlight.ts": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/codemirror/beancount-highlight.ts (pinned revision aa7538e8); behavior preserved against the transplanted dependency set. Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/codemirror/beancount-indent.ts": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/codemirror/beancount-indent.ts (pinned revision aa7538e8); behavior preserved against the transplanted dependency set. Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/codemirror/beancount-language.ts": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/codemirror/beancount-language.ts (pinned revision aa7538e8); removes import.meta.resolve and imports the inlined tree-sitter wasm directly, and drops the Ctrl-d/Meta-d format bindings because OrangeCount has no format endpoint (deviation). Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/codemirror/beancount-snippets.ts": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/codemirror/beancount-snippets.ts (pinned revision aa7538e8); uses a local todayAsString helper. Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/codemirror/completion-data.ts": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "OrangeCount-owned completion data store (accounts/currencies/payees/tags/links getters and setters) replacing upstream svelte stores for the transplanted editor autocomplete."
+    },
+    "web/src/fava/codemirror/editor-transactions.ts": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/codemirror/editor-transactions.ts (pinned revision aa7538e8); uses a local BeancountError type in place of the upstream ../api/validators module. Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/codemirror/ruler.ts": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/codemirror/ruler.ts (pinned revision aa7538e8); kept for completeness but not enabled by the EditorReport bootstrap (currency_column passed as 0, deviation). Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/codemirror/tree-sitter-parser.ts": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/codemirror/tree-sitter-parser.ts (pinned revision aa7538e8); inlines the upstream ../lib/array and ../log helpers. Registered as original because the upstream hash is not computable in this environment."
     }
   }
 }

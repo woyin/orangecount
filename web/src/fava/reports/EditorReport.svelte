@@ -1,6 +1,10 @@
 <script lang="ts">
-  import { onMount } from "svelte";
+  import { onDestroy, onMount } from "svelte";
+  import type { EditorState } from "@codemirror/state";
+  import type { EditorView } from "@codemirror/view";
   import type { AdapterClient } from "../adapter-client";
+  import { init_beancount_editor, replace_contents } from "../codemirror/beancount";
+  import { set_completion_data } from "../codemirror/completion-data";
   import { notify, notify_err } from "../notifications";
 
   export let adapter: AdapterClient;
@@ -13,6 +17,21 @@
   let status = "";
   let diagnostics: any[] = [];
   let loading = true;
+  let editorHost: HTMLDivElement;
+  let editor: EditorView | null = null;
+
+  function onDocChanges(state: EditorState) {
+    content = state.sliceDoc();
+  }
+
+  function showInEditor(value: string) {
+    if (editor) {
+      editor.dispatch(replace_contents(editor.state, value));
+      return;
+    }
+    editor = init_beancount_editor(value, onDocChanges, [], 2, 0);
+    editorHost.appendChild(editor.dom);
+  }
 
   async function loadIndex() {
     const value = await adapter.load("editor") as { paths: string[]; entry: string; snapshot_id: string };
@@ -32,6 +51,7 @@
       snapshotID = value.snapshot_id;
       diagnostics = [];
       status = "";
+      showInEditor(value.content);
     } catch (value) {
       status = value instanceof Error ? value.message : "Unable to load source file.";
     } finally {
@@ -76,7 +96,19 @@
     }
   }
 
-  onMount(() => { void loadIndex(); });
+  onMount(() => {
+    void loadIndex();
+    void adapter.bootstrap().then((bootstrap) => {
+      set_completion_data({
+        accounts: bootstrap.accounts,
+        currencies: bootstrap.currencies,
+        payees: bootstrap.payees,
+        tags: bootstrap.tags,
+        links: bootstrap.links,
+      });
+    }).catch(() => {});
+    return () => editor?.destroy();
+  });
 </script>
 
 <div class="headerline"><h2>Editor</h2><span class="muted">Reviewed writes only</span></div>
@@ -93,7 +125,7 @@
       <button id="editor-save" type="button" on:click={save} disabled={loading}>Save</button>
       <span class="muted" role="status">{status}</span>
     </div>
-    <textarea id="editor-buffer" bind:value={content} spellcheck="false" aria-label="Ledger source"></textarea>
+    <div id="editor-buffer" bind:this={editorHost} aria-label="Ledger source"></div>
     {#if diagnostics.length}
       <ul class="diagnostics">
         {#each diagnostics as diagnostic (diagnostic.code + diagnostic.line + diagnostic.message)}
@@ -111,7 +143,8 @@
   .editor-files select { min-height: 16rem; }
   .editor-pane { min-width: 0; }
   .toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
-  #editor-buffer { width: 100%; min-height: 28rem; font-family: var(--font-family-editor); white-space: pre; }
+  #editor-buffer :global(.cm-editor) { min-height: 28rem; border: 1px solid var(--border); }
+  #editor-buffer :global(.cm-scroller) { font-family: var(--font-family-editor); }
   .diagnostics { padding: 0.5rem 1.5rem; color: var(--error); border: 1px solid var(--error); }
   @media (width <= 767px) { .editor-layout { grid-template-columns: 1fr; } .editor-files select { min-height: 6rem; } }
 </style>
