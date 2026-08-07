@@ -183,6 +183,8 @@ export interface JournalEntry {
   filenames?: string[];
   file?: string;
   span?: string;
+  /** Position-derived identity addressing the entry context modal. */
+  entry_hash?: string;
   extra?: Record<string, string>;
   /** Per-currency change inside the account filter; account journal only. */
   change?: JournalAmount[];

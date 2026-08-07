@@ -129,6 +129,9 @@
           {#each entry.tags ?? [] as tag (tag)}<span class="tag">#{tag}</span>{/each}
           {#each entry.links ?? [] as link (link)}<span class="link">^{link}</span>{/each}
           {#each entry.filenames ?? [] as filename (filename)}<span class="filename">{filename}</span>{/each}
+          {#if entry.entry_hash}
+            <a class="context-link" href="#context-{entry.entry_hash}" title="Context" aria-label="Context">⋮</a>
+          {/if}
         </span>
         {#if entry.postings?.length}
           <!-- Fava shows one dot per posting; clicking expands the entry. -->
@@ -196,5 +199,16 @@
 
   .journal-chips .spacer {
     flex: 1;
+  }
+
+  .context-link {
+    padding: 0 0.35em;
+    font-weight: bold;
+    color: var(--text-color-lightest);
+    text-decoration: none;
+  }
+
+  .context-link:hover {
+    color: var(--link-color);
   }
 </style>

@@ -256,15 +256,24 @@ table.svelte-1c31p73 {
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/JournalReport.esbuild-svelte-fake-css */
-.journal-chips.svelte-3l7lkh {
+.journal-chips.svelte-cnc4w4 {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem;
   align-items: center;
   margin-bottom: 0.5rem;
 }
-.journal-chips.svelte-3l7lkh .spacer:where(.svelte-3l7lkh) {
+.journal-chips.svelte-cnc4w4 .spacer:where(.svelte-cnc4w4) {
   flex: 1;
+}
+.context-link.svelte-cnc4w4 {
+  padding: 0 0.35em;
+  font-weight: bold;
+  color: var(--text-color-lightest);
+  text-decoration: none;
+}
+.context-link.svelte-cnc4w4:hover {
+  color: var(--link-color);
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/AccountReport.esbuild-svelte-fake-css */
@@ -651,6 +660,57 @@ aside.svelte-e0j49v {
 }
 .aside-buttons.svelte-e0j49v button:where(.svelte-e0j49v) {
   font-size: 1.2rem;
+}
+
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/modals/ContextModal.esbuild-svelte-fake-css */
+.context-backdrop.svelte-1eapejs {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-index-floating-ui);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 10vh;
+  background: var(--overlay-wrapper-background);
+}
+.context-modal.svelte-1eapejs {
+  width: min(46rem, 92vw);
+  max-height: 75vh;
+  padding: 1em 1.25em;
+  overflow-y: auto;
+  color: var(--text-color);
+  background: var(--background);
+  border: 1px solid var(--border);
+  box-shadow: var(--box-shadow-overlay);
+}
+.context-modal.svelte-1eapejs h3:where(.svelte-1eapejs) {
+  margin: 0 0 0.5em;
+  font-size: 1.1em;
+  font-weight: bold;
+}
+.context-modal.svelte-1eapejs a:where(.svelte-1eapejs) {
+  color: var(--link-color);
+}
+.location.svelte-1eapejs .span:where(.svelte-1eapejs) {
+  margin-left: 0.5em;
+  color: var(--text-color-lightest);
+}
+.summary.svelte-1eapejs {
+  margin-bottom: 0.5em;
+}
+.source.svelte-1eapejs {
+  padding: 0.5em;
+  overflow-x: auto;
+  font-family: var(--font-family-editor);
+  white-space: pre;
+  background: var(--sidebar-background);
+  border: 1px solid var(--border);
+}
+.error.svelte-1eapejs {
+  color: var(--error);
+}
+.loading.svelte-1eapejs {
+  color: var(--text-color-lightest);
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/modals/ExportModal.esbuild-svelte-fake-css */

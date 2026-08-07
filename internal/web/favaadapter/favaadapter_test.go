@@ -371,3 +371,33 @@ func TestExportEntriesSlicesFilteredSource(t *testing.T) {
 		t.Fatalf("unfiltered export incomplete:\n%s", everything)
 	}
 }
+
+func TestProjectEntryContextResolvesSourceSlice(t *testing.T) {
+	snap := buildSnapshot(t, `2000-01-01 open Assets:Bank:Cash USD
+2000-01-01 open Equity:Opening USD
+2002-02-03 * "Cafe" "Lunch" #meal
+  Assets:Bank:Cash -2.50 USD
+  Equity:Opening 2.50 USD
+`)
+	journal := ProjectJournal(snap.Evaluation(), snap.Graph(), report.Filters{Text: "#meal"}, report.JournalFilters{})
+	if len(journal.Entries) != 1 || journal.Entries[0].EntryHash == "" {
+		t.Fatalf("journal entry hash missing: %+v", journal.Entries)
+	}
+	hash := journal.Entries[0].EntryHash
+	context, ok := ProjectEntryContext(snap.Evaluation(), snap.Graph(), hash)
+	if !ok {
+		t.Fatal("entry hash did not resolve")
+	}
+	if !strings.Contains(context.SourceSlice, `2002-02-03 * "Cafe" "Lunch" #meal`) || !strings.Contains(context.SourceSlice, "Assets:Bank:Cash -2.50 USD") {
+		t.Fatalf("source slice does not reproduce the entry:\n%s", context.SourceSlice)
+	}
+	if context.SHA256Sum == "" || len(context.SHA256Sum) != 64 {
+		t.Fatalf("sha256sum malformed: %q", context.SHA256Sum)
+	}
+	if context.Entry.Type != "transaction" || context.Entry.Span == "" {
+		t.Fatalf("context entry incomplete: %+v", context.Entry)
+	}
+	if _, ok := ProjectEntryContext(snap.Evaluation(), snap.Graph(), "deadbeef"); ok {
+		t.Fatal("unknown hash resolved")
+	}
+}

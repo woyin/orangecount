@@ -28,20 +28,23 @@ type JournalReport struct {
 // entry-type filter; the remaining fields are populated per type and omitted
 // when they do not apply.
 type JournalEntry struct {
-	Type      string                   `json:"type"`
-	Date      string                   `json:"date"`
-	Flag      string                   `json:"flag,omitempty"`
-	Payee     string                   `json:"payee,omitempty"`
-	Narration string                   `json:"narration,omitempty"`
-	Account   string                   `json:"account,omitempty"`
-	Amount    *JournalAmount           `json:"amount,omitempty"`
-	Tags      []string                 `json:"tags,omitempty"`
-	Links     []string                 `json:"links,omitempty"`
-	Metadata  []JournalMeta            `json:"metadata,omitempty"`
-	Postings  []JournalPosting         `json:"postings,omitempty"`
-	Filenames []string                 `json:"filenames,omitempty"`
-	File      string                   `json:"file,omitempty"`
-	Span      string                   `json:"span,omitempty"`
+	Type      string           `json:"type"`
+	Date      string           `json:"date"`
+	Flag      string           `json:"flag,omitempty"`
+	Payee     string           `json:"payee,omitempty"`
+	Narration string           `json:"narration,omitempty"`
+	Account   string           `json:"account,omitempty"`
+	Amount    *JournalAmount   `json:"amount,omitempty"`
+	Tags      []string         `json:"tags,omitempty"`
+	Links     []string         `json:"links,omitempty"`
+	Metadata  []JournalMeta    `json:"metadata,omitempty"`
+	Postings  []JournalPosting `json:"postings,omitempty"`
+	Filenames []string         `json:"filenames,omitempty"`
+	File      string           `json:"file,omitempty"`
+	Span      string           `json:"span,omitempty"`
+	// EntryHash is the position-derived identity used by the context modal
+	// (#context-<hash>), stable within a snapshot.
+	EntryHash string                   `json:"entry_hash,omitempty"`
 	Extra     map[string]string        `json:"extra,omitempty"`
 	Balance   map[string]JournalAmount `json:"balance,omitempty"`
 	// Change is the per-currency sum of the entry's postings inside the
@@ -135,6 +138,7 @@ func ProjectJournal(e ledger.Evaluation, graph *source.Graph, filters report.Fil
 		}
 		entry.File = journalDisplayPath(record.File, graph)
 		entry.Span = record.Span.String()
+		entry.EntryHash = entryHash(record)
 		if account != "" {
 			entry.Change = journalChange(record, account)
 		}

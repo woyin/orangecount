@@ -410,6 +410,23 @@ func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 		if _, err := w.Write([]byte(text)); err != nil {
 			return
 		}
+	case "entry-context":
+		graph := current.Graph()
+		if graph == nil {
+			writeAPIError(w, http.StatusServiceUnavailable, "no source graph")
+			return
+		}
+		entryHash := strings.TrimSpace(r.URL.Query().Get("entry_hash"))
+		if entryHash == "" {
+			writeAPIError(w, http.StatusBadRequest, "missing entry_hash")
+			return
+		}
+		context, ok := favaadapter.ProjectEntryContext(current.Evaluation(), graph, entryHash)
+		if !ok {
+			writeAPIError(w, http.StatusNotFound, "entry not found")
+			return
+		}
+		writeJSON(w, favaadapter.NewEnvelope(context, current.BuiltAt))
 	case "income_statement", "balance_sheet", "trial_balance":
 		filters, err := globalReportFilters(r)
 		if err != nil {
@@ -470,8 +487,8 @@ func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 					entriesByType[row["directive"].(string)] = row["count"].(int)
 				}
 				payload := struct {
-					EntriesByType        map[string]int `json:"entries_by_type"`
-					PostingsPerAccount   query.Result   `json:"postings_per_account"`
+					EntriesByType      map[string]int `json:"entries_by_type"`
+					PostingsPerAccount query.Result   `json:"postings_per_account"`
 				}{EntriesByType: entriesByType, PostingsPerAccount: report.Present(report.PostingsPerAccount(evaluation))}
 				writeJSON(w, favaadapter.NewEnvelope(payload, current.BuiltAt))
 				return

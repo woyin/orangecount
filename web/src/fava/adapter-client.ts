@@ -105,7 +105,7 @@ export function createAdapterClient(
     changed: async () => get<boolean>("changed", lastMtime ? { mtime: lastMtime } : {}),
     load: (route, query = {}) => {
       const treeRoutes = new Set(["income_statement", "balance_sheet", "trial_balance"]);
-      const directRoutes = new Set(["options", "help", "diagnostics", "source", "editor", "import", "journal"]);
+      const directRoutes = new Set(["options", "help", "diagnostics", "source", "editor", "import", "journal", "entry-context"]);
       const resource = treeRoutes.has(route) || directRoutes.has(route)
         ? route
         : route.startsWith("holdings_by_")

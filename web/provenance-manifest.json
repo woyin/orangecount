@@ -163,6 +163,14 @@
       "notice": "NOTICE",
       "notes": "Fava Export modal structure reworked for legacy Svelte: hash #export toggling without the upstream store/router, and the download targets the OrangeCount adapter download-journal route. Upstream hash computed from an exact byte reconstruction of the pinned reference copy, since shell access to the reference directory is policy-blocked."
     },
+    "web/src/fava/modals/ContextModal.svelte": {
+      "current_kind": "derived",
+      "upstream": "frontend/src/modals/Context.svelte",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "ed00c11b664f7a628c7e603e463b5e87148a51c1700bd91f04dead2d46869052",
+      "notice": "NOTICE",
+      "notes": "Fava Context modal reworked for legacy Svelte and the OrangeCount adapter: #context-<hash> toggling without the upstream url store, read-only source slice in a plain <pre> (upstream CodeMirror SliceEditor and before/after balances belong to H1), fetching the single entry-context route instead of upstream get_context + get_source_slice. Upstream hash computed from an exact byte reconstruction of the pinned reference copy, since shell access to the reference directory is policy-blocked."
+    },
     "web/tests/unit/format-amount.test.mjs": {
       "current_kind": "original",
       "upstream": null,
