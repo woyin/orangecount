@@ -11,6 +11,8 @@
 
   export let documents: DocumentRow[];
   export let locale = "en";
+  export let selected: DocumentRow | null = null;
+  export let onSelect: (doc: DocumentRow) => void = () => {};
 
   function t(key: string): string {
     const catalog = translations[(locale === "zh-CN" ? "zh-CN" : "en") as Locale];
@@ -43,7 +45,11 @@
   </thead>
   <tbody>
     {#each sorted as doc (doc.filename)}
-      <tr title={doc.filename}>
+      <tr
+        title={doc.filename}
+        class:selected={selected === doc || (selected != null && selected.filename === doc.filename)}
+        on:click={() => onSelect(doc)}
+      >
         <td>{doc.date}</td>
         <td>{doc.account}</td>
         <td>{displayName(doc)}</td>
@@ -55,5 +61,14 @@
 <style>
   .documents-table {
     max-width: 60rem;
+  }
+
+  .documents-table tbody tr {
+    cursor: pointer;
+  }
+
+  .documents-table tbody tr.selected,
+  .documents-table tbody tr:hover {
+    background-color: var(--table-header-background);
   }
 </style>

@@ -582,7 +582,15 @@
     "web/src/fava/reports/DocumentTable.svelte": {
       "current_kind": "original",
       "upstream": null,
-      "notes": "Sortable documents table mirroring Fava's documents Table (Date desc default, leading-date name strip); keeps the OrangeCount account column, written for the OrangeCount adapter."
+      "notes": "Sortable documents table mirroring Fava's documents Table (Date desc default, leading-date name strip, row click selects for preview with selected/hover highlight); keeps the OrangeCount account column, written for the OrangeCount adapter."
+    },
+    "web/src/fava/reports/DocumentPreview.svelte": {
+      "current_kind": "derived",
+      "upstream": "frontend/src/reports/documents/DocumentPreview.svelte",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "a1a31c8543645073c3a31a3f9a901a504ca6f55fff23b3307c4bb825337c2068",
+      "notice": "NOTICE",
+      "notes": "Fava DocumentPreview reworked for legacy Svelte and the OrangeCount /documents/ route: same extension dispatch (pdf object, image img, plain-text read-only, sandboxed html iframe, not-implemented message), plain-text reader is a fetched <pre> instead of upstream CodeMirror (H1), hash computed directly against the pinned reference copy."
     }
   }
 }

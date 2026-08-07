@@ -432,9 +432,45 @@ textarea.svelte-1k81p2c {
   text-align: right;
 }
 
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/DocumentPreview.esbuild-svelte-fake-css */
+object.svelte-1jfq29f,
+img.svelte-1jfq29f,
+iframe.svelte-1jfq29f,
+.text-preview.svelte-1jfq29f {
+  width: 100%;
+  height: 100%;
+}
+img.svelte-1jfq29f {
+  object-fit: contain;
+}
+.text-preview.svelte-1jfq29f {
+  overflow: auto;
+}
+
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/DocumentTable.esbuild-svelte-fake-css */
-.documents-table.svelte-1lx4yz6 {
+.documents-table.svelte-16svwjo {
   max-width: 60rem;
+}
+.documents-table.svelte-16svwjo tbody:where(.svelte-16svwjo) tr:where(.svelte-16svwjo) {
+  cursor: pointer;
+}
+.documents-table.svelte-16svwjo tbody:where(.svelte-16svwjo) tr.selected:where(.svelte-16svwjo),
+.documents-table.svelte-16svwjo tbody:where(.svelte-16svwjo) tr:where(.svelte-16svwjo):hover {
+  background-color: var(--table-header-background);
+}
+
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/DocumentsReport.esbuild-svelte-fake-css */
+.documents-layout.with-preview.svelte-qx7hri {
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  height: 70vh;
+}
+.documents-layout.with-preview.svelte-qx7hri > * {
+  overflow: auto;
+}
+.documents-layout.with-preview.svelte-qx7hri .preview:where(.svelte-qx7hri) {
+  border-left: thin solid var(--sidebar-border);
+  padding-left: 0.75rem;
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/ErrorsReport.esbuild-svelte-fake-css */
