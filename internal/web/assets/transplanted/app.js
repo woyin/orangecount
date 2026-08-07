@@ -6582,16 +6582,82 @@ function GenericReport($$anchor, $$props) {
 }
 delegate(["click"]);
 
+// src/fava/sort/index.ts
+function get_direction(order) {
+  return order === "asc" ? 1 : -1;
+}
+var collator = Intl.Collator();
+var compare_strings = collator.compare.bind(collator);
+var Sorter = class _Sorter {
+  column;
+  order;
+  constructor(column, order) {
+    this.column = column;
+    this.order = order;
+  }
+  switchColumn(column) {
+    if (column === this.column) {
+      return new _Sorter(column, this.order === "asc" ? "desc" : "asc");
+    }
+    return new _Sorter(column, "asc");
+  }
+  sort(data) {
+    return this.column.sort(data, get_direction(this.order));
+  }
+};
+function sort_internal(data, value, compare, direction) {
+  return [...data].sort((a, b) => direction * compare(value(a), value(b)));
+}
+var UnsortedColumn = class {
+  name;
+  constructor(name) {
+    this.name = name;
+  }
+  sort(data) {
+    return data;
+  }
+};
+var NumberColumn = class {
+  name;
+  value;
+  constructor(name, value) {
+    this.name = name;
+    this.value = value;
+  }
+  sort(data, direction) {
+    return sort_internal(data, this.value, (a, b) => a - b, direction);
+  }
+};
+var DateColumn = class extends NumberColumn {
+  constructor(name) {
+    super(name, (row) => new Date(row.date).valueOf());
+  }
+};
+var StringColumn = class {
+  name;
+  value;
+  constructor(name, value) {
+    this.name = name;
+    this.value = value;
+  }
+  sort(data, direction) {
+    return sort_internal(data, this.value, compare_strings, direction);
+  }
+};
+
 // src/fava/reports/JournalReport.svelte
 var on_click2 = (_, toggleChip, chip) => toggleChip(get(chip));
 var root_111 = template(`<button type="button"> </button>`);
+var on_click_1 = (__1, setSortColumn) => setSortColumn("date");
+var on_click_2 = (__2, setSortColumn) => setSortColumn("flag");
+var on_click_3 = (__3, setSortColumn) => setSortColumn("narration");
 var root_34 = template(`<a> </a>`);
 var root_43 = template(`<strong class="payee"> </strong><span class="separator"></span>`, 1);
 var root_52 = template(`<span class="tag"> </span>`);
 var root_64 = template(`<span class="link"> </span>`);
 var root_73 = template(`<span class="filename"> </span>`);
-var root_83 = template(`<a class="context-link svelte-cnc4w4" title="Context" aria-label="Context">\u22EE</a>`);
-var on_click_1 = (__1, toggleEntry, entry) => toggleEntry(get(entry));
+var root_83 = template(`<a class="context-link svelte-osbwps" title="Context" aria-label="Context">\u22EE</a>`);
+var on_click_4 = (__4, toggleEntry, entry) => toggleEntry(get(entry));
 var on_keydown = (event2, toggleEntry, entry) => {
   if (event2.key === "Enter" || event2.key === " ") {
     event2.preventDefault();
@@ -6609,10 +6675,11 @@ var root_172 = template(`<ul class="postings"></ul>`);
 var root_20 = template(`<dt> </dt> <dd> </dd>`, 1);
 var root_192 = template(`<dl class="metadata"></dl>`);
 var root_210 = template(`<li><p><span class="datecell"> </span> <span class="flag"> </span> <span class="description"><!> <!> <!> <!> <!> <!></span> <!> <!></p> <!> <!></li>`);
-var root5 = template(`<form class="flex-row journal-chips svelte-cnc4w4"><!> <span class="spacer svelte-cnc4w4"></span> <a class="button" href="/api/v1/reports/journal?format=csv">Export CSV</a></form> <ol><li class="head"><p><span class="datecell">Date</span> <span class="flag">F</span> <span class="description">Payee/Narration</span> <span class="num">Units</span> <span class="num">Cost</span> <span class="num"> </span></p></li> <!></ol>`, 1);
+var root5 = template(`<form class="flex-row journal-chips svelte-osbwps"><!> <span class="spacer svelte-osbwps"></span> <a class="button" href="/api/v1/reports/journal?format=csv">Export CSV</a></form> <ol><li class="head svelte-osbwps"><p><button type="button" class="datecell unset svelte-osbwps">Date</button> <button type="button" class="flag unset svelte-osbwps">F</button> <button type="button" class="description unset svelte-osbwps">Payee/Narration</button> <span class="num">Units</span> <span class="num">Cost</span> <span class="num"> </span></p></li> <!></ol>`, 1);
 function JournalReport($$anchor, $$props) {
   push($$props, false);
   const listClasses = mutable_state();
+  const sortedEntries = mutable_state();
   let report = prop($$props, "report", 8);
   let renderCommas = prop($$props, "renderCommas", 8, false);
   let runningBalances = prop($$props, "runningBalances", 8, null);
@@ -6764,6 +6831,30 @@ function JournalReport($$anchor, $$props) {
         return entry.narration ?? "";
     }
   }
+  const sortColumns = {
+    date: new DateColumn("date"),
+    flag: new StringColumn("flag", (entry) => entry.flag ?? ""),
+    narration: new StringColumn("narration", (entry) => `${entry.payee ?? ""} ${describe(entry)}`.trim())
+  };
+  function storedSort() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem("journal-sort-order") || "");
+      if (Array.isArray(parsed) && parsed[0] in sortColumns && (parsed[1] === "asc" || parsed[1] === "desc")) {
+        return [parsed[0], parsed[1]];
+      }
+    } catch {
+    }
+    return ["date", "desc"];
+  }
+  const [initialSortColumn, initialSortOrder] = storedSort();
+  let sorter = mutable_state(new Sorter(sortColumns[initialSortColumn], initialSortOrder));
+  function setSortColumn(column) {
+    set(sorter, get(sorter).switchColumn(sortColumns[column]));
+    try {
+      localStorage.setItem("journal-sort-order", JSON.stringify([column, get(sorter).order]));
+    } catch {
+    }
+  }
   legacy_pre_effect(() => get(active), () => {
     set(listClasses, [
       "flex-table",
@@ -6771,6 +6862,12 @@ function JournalReport($$anchor, $$props) {
       ...get(active)
     ].join(" "));
   });
+  legacy_pre_effect(
+    () => (get(sorter), deep_read_state(report())),
+    () => {
+      set(sortedEntries, get(sorter).sort(report().entries));
+    }
+  );
   legacy_pre_effect_reset();
   init();
   var fragment = root5();
@@ -6796,15 +6893,21 @@ function JournalReport($$anchor, $$props) {
   var ol = sibling(form, 2);
   var li = child(ol);
   var p = child(li);
-  var span = sibling(child(p), 10);
+  var button_1 = child(p);
+  button_1.__click = [on_click_1, setSortColumn];
+  var button_2 = sibling(button_1, 2);
+  button_2.__click = [on_click_2, setSortColumn];
+  var button_3 = sibling(button_2, 2);
+  button_3.__click = [on_click_3, setSortColumn];
+  var span = sibling(button_3, 6);
   var text_1 = child(span, true);
   reset(span);
   reset(p);
   reset(li);
   var node_1 = sibling(li, 2);
-  each(node_1, 3, () => report().entries, (entry, index2) => entry.type + entry.date + index2, ($$anchor2, entry) => {
+  each(node_1, 3, () => get(sortedEntries), (entry, index2) => entry.type + entry.date + index2, ($$anchor2, entry) => {
     var li_1 = root_210();
-    const class_derived = derived_safe_equal(() => `${get(entry).type ?? ""} ${flagClass(get(entry)) ?? ""} svelte-cnc4w4`);
+    const class_derived = derived_safe_equal(() => `${get(entry).type ?? ""} ${flagClass(get(entry)) ?? ""} svelte-osbwps`);
     const class_directive_1 = derived_safe_equal(() => get(expanded).has(get(entry)));
     var p_1 = child(li_1);
     var span_1 = child(p_1);
@@ -6885,7 +6988,7 @@ function JournalReport($$anchor, $$props) {
     {
       var consequent_3 = ($$anchor3) => {
         var span_7 = root_92();
-        span_7.__click = [on_click_1, toggleEntry, entry];
+        span_7.__click = [on_click_4, toggleEntry, entry];
         span_7.__keydown = [on_keydown, toggleEntry, entry];
         each(span_7, 5, () => get(entry).postings, index, ($$anchor4, posting) => {
           var span_8 = root_102();
@@ -7049,7 +7152,10 @@ function JournalReport($$anchor, $$props) {
   });
   reset(ol);
   template_effect(() => {
-    set_class(ol, `${get(listClasses) ?? ""} svelte-cnc4w4`);
+    set_class(ol, `${get(listClasses) ?? ""} svelte-osbwps`);
+    set_attribute(button_1, "data-order", get(sorter).column.name === "date" ? get(sorter).order : void 0);
+    set_attribute(button_2, "data-order", get(sorter).column.name === "flag" ? get(sorter).order : void 0);
+    set_attribute(button_3, "data-order", get(sorter).column.name === "narration" ? get(sorter).order : void 0);
     set_text(text_1, runningBalances() ? "Balance" : accountFilter() ? "Change" : "Price");
   });
   append($$anchor, fragment);
@@ -7549,69 +7655,6 @@ function ImportReport($$anchor, $$props) {
   append($$anchor, fragment);
   pop();
 }
-
-// src/fava/sort/index.ts
-function get_direction(order) {
-  return order === "asc" ? 1 : -1;
-}
-var collator = Intl.Collator();
-var compare_strings = collator.compare.bind(collator);
-var Sorter = class _Sorter {
-  column;
-  order;
-  constructor(column, order) {
-    this.column = column;
-    this.order = order;
-  }
-  switchColumn(column) {
-    if (column === this.column) {
-      return new _Sorter(column, this.order === "asc" ? "desc" : "asc");
-    }
-    return new _Sorter(column, "asc");
-  }
-  sort(data) {
-    return this.column.sort(data, get_direction(this.order));
-  }
-};
-function sort_internal(data, value, compare, direction) {
-  return [...data].sort((a, b) => direction * compare(value(a), value(b)));
-}
-var UnsortedColumn = class {
-  name;
-  constructor(name) {
-    this.name = name;
-  }
-  sort(data) {
-    return data;
-  }
-};
-var NumberColumn = class {
-  name;
-  value;
-  constructor(name, value) {
-    this.name = name;
-    this.value = value;
-  }
-  sort(data, direction) {
-    return sort_internal(data, this.value, (a, b) => a - b, direction);
-  }
-};
-var DateColumn = class extends NumberColumn {
-  constructor(name) {
-    super(name, (row) => new Date(row.date).valueOf());
-  }
-};
-var StringColumn = class {
-  name;
-  value;
-  constructor(name, value) {
-    this.name = name;
-    this.value = value;
-  }
-  sort(data, direction) {
-    return sort_internal(data, this.value, compare_strings, direction);
-  }
-};
 
 // src/fava/sort/SortHeader.svelte
 var root_213 = template(`<span aria-hidden="true"> </span>`);
@@ -8426,7 +8469,7 @@ var on_click3 = (_, toggleSort) => toggleSort("path");
 var root_218 = template(`<span aria-hidden="true"> </span>`);
 var on_click_12 = (__1, toggleSort) => toggleSort("line");
 var root_312 = template(`<span aria-hidden="true"> </span>`);
-var on_click_2 = (__2, toggleSort) => toggleSort("message");
+var on_click_22 = (__2, toggleSort) => toggleSort("message");
 var root_46 = template(`<span aria-hidden="true"> </span>`);
 var root_65 = template(`<td class="svelte-1tweq4j"><a> </a></td> <td class="num svelte-1tweq4j"><a> </a></td>`, 1);
 var root_74 = template(`<td class="svelte-1tweq4j"></td> <td class="num svelte-1tweq4j"></td>`, 1);
@@ -8534,7 +8577,7 @@ function ErrorsReport($$anchor, $$props) {
       reset(th_1);
       var th_2 = sibling(th_1);
       var button_2 = child(th_2);
-      button_2.__click = [on_click_2, toggleSort];
+      button_2.__click = [on_click_22, toggleSort];
       var text_4 = child(button_2, true);
       template_effect(() => set_text(text_4, t("error")));
       var node_3 = sibling(text_4);
@@ -10227,7 +10270,7 @@ var root_86 = template(`<li class="svelte-e0j49v"><a class="svelte-e0j49v"> </a>
 var root_76 = template(`<ul class="submenu svelte-e0j49v"></ul>`);
 var root_58 = template(`<li class="svelte-e0j49v"><a class="svelte-e0j49v"> </a> <!> <!></li>`);
 var root_94 = template(`<li class="account-selector svelte-e0j49v"><!></li>`);
-var on_click_22 = (event2, onNavigate) => {
+var on_click_23 = (event2, onNavigate) => {
   event2.preventDefault();
   onNavigate()(routeHref("errors"));
 };
@@ -10466,7 +10509,7 @@ function Sidebar($$anchor, $$props) {
         var li_4 = child(ul_2);
         var a_3 = child(li_4);
         template_effect(() => set_attribute(a_3, "href", routeHref("errors")));
-        a_3.__click = [on_click_22, onNavigate];
+        a_3.__click = [on_click_23, onNavigate];
         var text_3 = child(a_3);
         reset(a_3);
         reset(li_4);

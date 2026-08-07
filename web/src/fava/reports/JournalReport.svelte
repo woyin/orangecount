@@ -1,5 +1,6 @@
 <script lang="ts">
   import { keyboardShortcut, type KeySpec } from "../keyboard-shortcuts";
+  import { DateColumn, Sorter, StringColumn, type SortColumn, type SortOrder } from "../sort/index";
   import { formatAmount, type JournalAmount, type JournalEntry, type JournalReport } from "./types";
 
   export let report: JournalReport;
@@ -85,6 +86,41 @@
       default: return entry.narration ?? "";
     }
   }
+
+  // Fava persists the journal sort as a [column, order] tuple in
+  // localStorage ("journal-sort-order") and defaults to newest first.
+  type JournalSortColumn = "date" | "flag" | "narration";
+  const sortColumns: Record<JournalSortColumn, SortColumn<JournalEntry>> = {
+    date: new DateColumn<JournalEntry>("date"),
+    flag: new StringColumn<JournalEntry>("flag", (entry) => entry.flag ?? ""),
+    narration: new StringColumn<JournalEntry>("narration", (entry) => `${entry.payee ?? ""} ${describe(entry)}`.trim()),
+  };
+
+  function storedSort(): [JournalSortColumn, SortOrder] {
+    try {
+      const parsed = JSON.parse(localStorage.getItem("journal-sort-order") || "") as unknown;
+      if (Array.isArray(parsed) && parsed[0] in sortColumns && (parsed[1] === "asc" || parsed[1] === "desc")) {
+        return [parsed[0] as JournalSortColumn, parsed[1]];
+      }
+    } catch {
+      // storage is optional; fall through to the default
+    }
+    return ["date", "desc"];
+  }
+
+  const [initialSortColumn, initialSortOrder] = storedSort();
+  let sorter = new Sorter(sortColumns[initialSortColumn], initialSortOrder);
+
+  function setSortColumn(column: JournalSortColumn) {
+    sorter = sorter.switchColumn(sortColumns[column]);
+    try {
+      localStorage.setItem("journal-sort-order", JSON.stringify([column, sorter.order]));
+    } catch {
+      // storage is optional; sorting still works in-memory
+    }
+  }
+
+  $: sortedEntries = sorter.sort(report.entries);
 </script>
 
 <form class="flex-row journal-chips">
@@ -105,15 +141,30 @@
 <ol class={listClasses}>
   <li class="head">
     <p>
-      <span class="datecell">Date</span>
-      <span class="flag">F</span>
-      <span class="description">Payee/Narration</span>
+      <button
+        type="button"
+        class="datecell unset"
+        data-order={sorter.column.name === "date" ? sorter.order : undefined}
+        onclick={() => setSortColumn("date")}
+      >Date</button>
+      <button
+        type="button"
+        class="flag unset"
+        data-order={sorter.column.name === "flag" ? sorter.order : undefined}
+        onclick={() => setSortColumn("flag")}
+      >F</button>
+      <button
+        type="button"
+        class="description unset"
+        data-order={sorter.column.name === "narration" ? sorter.order : undefined}
+        onclick={() => setSortColumn("narration")}
+      >Payee/Narration</button>
       <span class="num">Units</span>
       <span class="num">Cost</span>
       <span class="num">{runningBalances ? "Balance" : accountFilter ? "Change" : "Price"}</span>
     </p>
   </li>
-  {#each report.entries as entry, index (entry.type + entry.date + index)}
+  {#each sortedEntries as entry, index (entry.type + entry.date + index)}
     <li class="{entry.type} {flagClass(entry)}" class:show-full-entry={expanded.has(entry)}>
       <p>
         <span class="datecell">{entry.date}</span>
@@ -210,5 +261,15 @@
 
   .context-link:hover {
     color: var(--link-color);
+  }
+
+  .head button {
+    position: relative;
+    padding: 0;
+    font: inherit;
+    color: inherit;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
   }
 </style>
