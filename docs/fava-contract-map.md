@@ -53,7 +53,7 @@ visual baselines.
 | Journal | `json_api.get_journal_page` + `_journal_table.html` | `get_journal_page` (journal/index.ts) | `journal_page` | `internal/report` transaction projection + complete FQL/time filtering + strictly escaped Go Fava-compatible HTML renderer (ADR-0037) | adapt |
 | Account report | `json_api.get_account_report` | `get_account_report` (accounts/index.ts) | `account_report` | `internal/report.JournalBetween` scoped to account + `internal/report/charts.go` accountChart | adapt |
 | Query | `json_api.get_query` + `core/query_shell.py` | `get_query` (query/index.ts, Query.svelte) | `query` | `internal/query.Evaluate` (BeanQuery semantics) | adopt |
-| Holdings | `json_api.get_query` with 4 predefined queries | `get_query` (holdings/index.ts) | `query` (holding query strings) | `internal/query` + `internal/report.Holdings*`; queries re-expressed | adopt |
+| Holdings | `json_api.get_query` with 4 predefined queries | `get_query` (holdings/index.ts) | `query` (holding query strings) | `internal/query` + `internal/report.Holdings*`; queries re-expressed; all four upstream aggregations incl. by_cost_currency covered (`2b8d370`) | adopt |
 | Commodities | `json_api.get_commodities` | `get_commodities` (commodities/index.ts) | `commodities` | `internal/report.Prices` + price-map pairs | adopt |
 | Documents | `json_api.get_documents` | `get_documents` (documents/index.ts) | `documents` | `internal/report.Documents` + `internal/source.DocumentRoots` containment | adapt |
 | Events | `json_api.get_events` | `get_events` (events/index.ts) | `events` | `internal/report.Events` | adopt |
