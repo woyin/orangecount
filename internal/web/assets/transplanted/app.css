@@ -428,12 +428,84 @@ textarea.svelte-1k81p2c {
   }
 }
 
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/charts/LineChart.esbuild-svelte-fake-css */
+.line-card.svelte-izodmx {
+  position: relative;
+  margin-bottom: 1rem;
+}
+.line-chart.svelte-izodmx {
+  display: block;
+  width: min(100%, 52rem);
+  height: 14rem;
+  margin-bottom: .5rem;
+  background: var(--background-darker);
+  border: 1px solid var(--border);
+}
+.line-path.svelte-izodmx {
+  fill: none;
+  stroke: var(--series-0, #2563eb);
+  stroke-width: .8;
+  vector-effect: non-scaling-stroke;
+}
+.chart-grid.svelte-izodmx {
+  stroke: var(--border);
+  stroke-width: .2;
+  vector-effect: non-scaling-stroke;
+  opacity: .5;
+}
+.chart-tick.svelte-izodmx {
+  font-size: 2.6px;
+  fill: var(--text-color-lighter);
+}
+.chart-empty.svelte-izodmx {
+  color: var(--text-color-lightest);
+}
+.chart-tooltip.svelte-izodmx {
+  position: absolute;
+  z-index: 10;
+  pointer-events: none;
+  max-width: 24rem;
+  padding: .3rem .5rem;
+  background: var(--background-darker);
+  border: 1px solid var(--border);
+  color: var(--text-color-lighter);
+  font-size: .8rem;
+  line-height: 1.35;
+  white-space: pre-line;
+  box-shadow: 0 1px 3px rgb(0 0 0 / .25);
+}
+
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/PriceTable.esbuild-svelte-fake-css */
 .prices-table.svelte-pjz8y6 {
   max-width: 30rem;
 }
 .prices-table.svelte-pjz8y6 .num:where(.svelte-pjz8y6) {
   text-align: right;
+}
+
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/CommoditiesReport.esbuild-svelte-fake-css */
+.flex-row.svelte-1vsdq8j {
+  display: flex;
+  gap: var(--flex-gap, 0.5rem);
+  margin-bottom: var(--flex-gap, 0.5rem);
+}
+.spacer.svelte-1vsdq8j {
+  flex: 1;
+}
+.chart-switcher.svelte-1vsdq8j {
+  margin-bottom: 1em;
+  color: var(--text-color-lightest);
+  text-align: center;
+}
+.chart-switcher.svelte-1vsdq8j button:where(.svelte-1vsdq8j) {
+  padding: 0 0.5em;
+}
+.chart-switcher.svelte-1vsdq8j button:where(.svelte-1vsdq8j) + button:where(.svelte-1vsdq8j) {
+  border-left: 1px solid var(--text-color-lighter);
+}
+.chart-switcher.svelte-1vsdq8j button.selected:where(.svelte-1vsdq8j),
+.chart-switcher.svelte-1vsdq8j button:where(.svelte-1vsdq8j):hover {
+  color: var(--text-color-lighter);
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/DocumentAccounts.esbuild-svelte-fake-css */

@@ -339,6 +339,11 @@
       "upstream": null,
       "notes": "Events scatterplot mirroring Fava's ScatterPlot semantics (time x event-type point scale, per-type colors, pointer tooltip, future dates desaturated), written in the shell's dependency-free SVG chart style instead of upstream's d3 implementation."
     },
+    "web/src/fava/charts/LineChart.svelte": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Commodities price line chart mirroring Fava's LineChart semantics (time-scaled single series, padded value extent, pointer tooltip with 1 base = x quote), written in the shell's dependency-free SVG chart style instead of upstream's d3 implementation."
+    },
     "web/src/fava/styles/fava/charts.css": {
       "current_kind": "derived",
       "upstream": "frontend/css/charts.css",
