@@ -56,7 +56,7 @@
 | H1 | R-EDITOR/R-QUERY | CodeMirror 未移植（上游 19 文件 + tree-sitter wasm） | 语法高亮、行号、折叠、补全、snippets、File/Edit 菜单、文件树 | 裸 textarea + Files listbox；无菜单 | 前端组件缺失 |
 | H2 | M-ADD/M-CONTEXT/M-EXPORT/M-DOCUMENT | 模态系统整体缺失（上游 9 文件） | Add Entry 表单、条目 Context（余额/位置）、Export/Download、文档上传 | M-EXPORT 已落地（`2846847`）：modals 目录建立，Export 模态（#export hash 驱动）+ download-journal 端点（按过滤切取源码的保源导出）；M-CONTEXT 已落地（`68ddcfa`：entry-context 路由 + 只读源码切片模态）；M-ADD 已落地（`8e28d53`：`#add-transaction` 模态，Transaction/Balance/Note 三型切换保留日期、postings 行增删、continue 复选框持久化；私有 `add-entries` POST 路由严格序列化校验 + 原子写入/备份/重新验证，失败回滚并保留诊断）；M-DOCUMENT 已落地（`339b63e`：上游式拖放上传模态——账户页标题 droptarget 触发，多文件 + 日期前缀改名输入、文档目录选择（来自 serve --document-root 配置根）、账户 datalist；私有 POST `document` 路由同源校验 + 账户/目录校验 + basename 净化 + 拒绝覆盖，上传落入 `<根>/<账户分层>/<文件名>` 并由 `/documents/` 路由回供）（限制：上游 uri-list 链接拖放 attach 流程与 entry hash 元数据插入未实现；droptarget 仅账户页标题，journal 行/账户树单元格未加） | 前端 + 适配器 |
 | H3 | G-KEYBOARD | 全局键盘快捷键缺失 | `g-*` 路由跳转、`t/f/a/d/s`、`?` 快捷键提示 | 已实现：`g-*` 路由跳转、`f t/f a/f f` 筛选快捷键、`?` 快捷键 tooltip（冒烟验证 19 条提示，含 `r` 重载）、`r` 手动重载（`4792f73`）；上游其余单键快捷键未登记为缺口 | 已完成 |
-| H4 | R-HOLD-*/R-COMMODITIES/R-EVENTS/R-STATISTICS/R-DOCUMENTS | 六路由降级为通用平表 | Holdings 四子页签与成本分组；Commodities 价格折线图（ChartSwitcher+LineChart）+ base/quote 分组表；Events 按事件类型侧栏分组；Statistics 指令计数 + Postings-per-Account + 活动图；Documents 账户树 + 内嵌预览 | 复核修正（2026-08-07 冒烟）：六路由专用组件均已在案并按上游形态渲染——Holdings 六页签（上游四页签齐备，by_cost_currency 补于 `2b8d370`）+ 列名可读化（`HoldingsReport`）；Commodities 按 base/quote 分组价格表（`CommoditiesReport`+`PriceTable`）；Events 按类型分组 + `Event: <type>` 标题 + 可排序 Date/Description 表（冒烟双类型验证，默认 date desc）；Statistics 双区块（Postings-per-Account + Entries-per-Type 可排序）；Documents 表格 + 内嵌预览（`92ccb40`）+ 账户树侧栏（分层/计数/折叠/点击筛选，`30ca6f3`）+ 移动/改名模态（F2 或拖拽触发，`38f2618`）+ Update Activity 表（每账户最近条目/余额/上下文模态入口，`a66cf9d`）。余：Events 散点图（ChartSwitcher+ScatterPlot）、Commodities 价格折线图（上游 1.30.12 无每商品详情页，此前"每商品详情页"描述为复核失误，已更正） | 前端组件 + 适配器（专用契约部分未建） |
+| H4 | R-HOLD-*/R-COMMODITIES/R-EVENTS/R-STATISTICS/R-DOCUMENTS | 六路由降级为通用平表 | Holdings 四子页签与成本分组；Commodities 价格折线图（ChartSwitcher+LineChart）+ base/quote 分组表；Events 按事件类型侧栏分组；Statistics 指令计数 + Postings-per-Account + 活动图；Documents 账户树 + 内嵌预览 | 复核修正（2026-08-07 冒烟）：六路由专用组件均已在案并按上游形态渲染——Holdings 六页签（上游四页签齐备，by_cost_currency 补于 `2b8d370`）+ 列名可读化（`HoldingsReport`）；Commodities 按 base/quote 分组价格表（`CommoditiesReport`+`PriceTable`）；Events 按类型分组 + `Event: <type>` 标题 + 可排序 Date/Description 表（冒烟双类型验证，默认 date desc）；Statistics 双区块（Postings-per-Account + Entries-per-Type 可排序）；Documents 表格 + 内嵌预览（`92ccb40`）+ 账户树侧栏（分层/计数/折叠/点击筛选，`30ca6f3`）+ 移动/改名模态（F2 或拖拽触发，`38f2618`）+ Update Activity 表（每账户最近条目/余额/上下文模态入口，`a66cf9d`）+ Events 散点图（无 d3 依赖 SVG，语义同上游，`4e88925`）。余：Commodities 价格折线图（上游 1.30.12 无每商品详情页，此前"每商品详情页"描述为复核失误，已更正） | 前端组件 + 适配器（专用契约部分未建） |
 | H5 | R-JOURNAL | Journal 交互层不完整 | 全量条目类型徽章（含 Custom/B/Metadata/Postings）、排序与列菜单、点击条目→Context、URL 同步筛选、拖拽上传文档 | 核心徽章组与展开已现；点击条目→Context 已落地（`68ddcfa`：行尾 ⋮ 链接 + `#context-<hash>` 模态 + entry-context 私有路由，位置派生 entry_hash，只读源码切片；限制：before/after 余额与 CodeMirror 可编辑切片属 H1）；表头排序已落地（`f7d57ab`：Date/F/Payee-Narration 三列，同上游 `[列,向]` localStorage 持久化、默认 date desc、data-order 箭头与切换语义，复用已移植 Sorter）。拖拽上传文档已随 H2 M-DOCUMENT 落地（`339b63e`：账户页标题 droptarget；journal 行/账户描述单元格的 droptarget 未加，登记为限制）。徽章覆盖复核已落地（`4bafc76`：适配器为全部指令类型投影条目元数据——此前仅 transaction——journal 行渲染条目与过账级 metadata-indicator 徽章（key[:2]，title `key: value`）、过账 flag 类（flag_to_type）、过账元数据 dl、linked/discovered 行类与 D/L 芯片（`d d`/`d l`，show-document 的子级，默认激活集与上游 default_journal_show 同构）；冒烟验证 au/re/cl 徽章、linked/discovered 行类、过账 dl 展开与 Metadata 芯片切换）。限制：B(budget) 芯片未加——OC 无上游 budget custom 指令形态、适配器不产生 budget 标记；custom 值按 dtype 渲染、balance diff_amount pending 展示、document→statement 元数据附件未实现 | 前端组件 |
 | H6 | R-OPTIONS | Options 页不完整 | Color scheme（System/Dark/Light）单选组 + Fava options 表（带 help 链接）+ Beancount options 表 | 已实现：UtilityReport 含 Color scheme 单选组 + Fava options 表 + Beancount options 表；顶栏原创主题下拉已移除（D2） | 已完成（UtilityReport + `/__orangecount/fava/options` 契约） |
 | H7 | M-NOTIFY | 通知区缺失 | 文件变更/保存结果 toast，带点击重载 | 已实现：notifications 模块早已在案（bootstrap/报告错误走 notify_err），本步补齐可感通知——文件变更 warning toast（点击再刷一次，5s 自动消失，冒烟验证文案与类名）与编辑器 Save 结果 toast（成功/拒绝/失败三态），`a5251c8` | 已完成 |
@@ -365,7 +365,22 @@ POST，`38f2618`）。
 > line/bar 另需 d3-shape/time-format 系）；OC web/ 目前刻意保持最小依赖
 > （字体 + esbuild + svelte，无任何图表库）。移植该基建需先批准引入 d3
 > 依赖，再做 Svelte 5→legacy 改写与适配器图表数据契约（commodities
-> charts/scatterplot/query chart），登记为 H4/M1 唯一剩余图表工作项）。
+> charts/scatterplot/query chart），登记为 H4/M1 唯一剩余图表工作项。
+> 注：H4-events-scatter 落地后确认壳内无依赖 SVG 惯例可等价承载图表
+> 语义，剩余图表项不必引入 d3）。
+> H4-events-scatter（Events 散点图落地：采用壳内既有无依赖 SVG 图表
+> 惯例（ReportChart 同风格），不引入 d3——新增 charts/ScatterPlot.svelte
+> 复刻上游语义：时间×事件类型 point scale（padding 1、首类型居底）、
+> 每事件一点、按类型着色（HSL 等亮度环近似上游 HCL 轮）、指针最近点
+> tooltip（描述 + 日期）、未来日期降饱和、稀疏日期/类型轴刻度；
+> EventsReport 顶部加上游 Chart.svelte/ChartSwitcher 形态的 ▼/◀ 显示
+> 开关与图表标签行（数据直接取表格载荷的 date/type/value，无需后端
+> 改动）。provenance 登记 original（语义镜像、非代码派生）。冒烟以
+> 双类型六事件夹具验证六点、两类型轴标、tooltip 文案（Berlin
+> 2023-02-10）、开关隐藏/还原与 ◀ 字符形变。限制：无 quadtree——最近
+> 点为线性扫描（事件量级无碍）；ChartSwitcher 简化为单图标签 + 本地
+> 开关态，未接 URL charts=false 参数、c/C 快捷键与 lastActiveChartName
+> 持久化；色板为 HSL 近似而非 d3-color HCL，`4e88925`）。
 > T1/H5 的 WIP 覆盖部分仍待稠密夹具复比勾销。
 
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
