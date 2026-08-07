@@ -174,28 +174,37 @@ func projectJournalEntry(record ledger.EntryRecord) (JournalEntry, bool) {
 	case ledger.Balance:
 		entry := JournalEntry{Type: "balance", Date: directive.Date.Raw, Flag: "Bal", Account: directive.Account}
 		entry.Amount = journalAmount(&directive.Amount)
+		entry.Metadata = journalMeta(directive.Meta)
 		return entry, true
 	case ledger.Open:
 		entry := JournalEntry{Type: "open", Date: directive.Date.Raw, Flag: "Open", Account: directive.Account}
 		if len(directive.Currencies) > 0 {
 			entry.Extra = map[string]string{"currencies": strings.Join(directive.Currencies, ", ")}
 		}
+		entry.Metadata = journalMeta(directive.Meta)
 		return entry, true
 	case ledger.Close:
-		return JournalEntry{Type: "close", Date: directive.Date.Raw, Flag: "Close", Account: directive.Account}, true
+		entry := JournalEntry{Type: "close", Date: directive.Date.Raw, Flag: "Close", Account: directive.Account}
+		entry.Metadata = journalMeta(directive.Meta)
+		return entry, true
 	case ledger.Note:
-		return JournalEntry{Type: "note", Date: directive.Date.Raw, Flag: "Note", Account: directive.Account, Narration: directive.Comment}, true
+		entry := JournalEntry{Type: "note", Date: directive.Date.Raw, Flag: "Note", Account: directive.Account, Narration: directive.Comment}
+		entry.Metadata = journalMeta(directive.Meta)
+		return entry, true
 	case ledger.Document:
 		entry := JournalEntry{Type: "document", Date: directive.Date.Raw, Flag: "Doc", Account: directive.Account, Tags: directive.Tags, Links: directive.Links}
 		entry.Filenames = directive.Filenames
+		entry.Metadata = journalMeta(directive.Meta)
 		return entry, true
 	case ledger.Pad:
 		entry := JournalEntry{Type: "pad", Date: directive.Date.Raw, Flag: "Pad", Account: directive.Account}
 		entry.Extra = map[string]string{"source_account": directive.SourceAccount}
+		entry.Metadata = journalMeta(directive.Meta)
 		return entry, true
 	case ledger.Query:
 		entry := JournalEntry{Type: "query", Date: directive.Date.Raw, Flag: "Query", Narration: directive.Name}
 		entry.Extra = map[string]string{"query": directive.Query}
+		entry.Metadata = journalMeta(directive.Meta)
 		return entry, true
 	case ledger.Custom:
 		entry := JournalEntry{Type: "custom", Date: directive.Date.Raw, Flag: "Custom", Narration: directive.Type}
@@ -204,6 +213,7 @@ func projectJournalEntry(record ledger.EntryRecord) (JournalEntry, bool) {
 			values = append(values, strings.TrimSpace(value.Raw))
 		}
 		entry.Extra = map[string]string{"values": strings.Join(values, " ")}
+		entry.Metadata = journalMeta(directive.Meta)
 		return entry, true
 	default:
 		// Price and event directives are deliberately absent: Fava's journal

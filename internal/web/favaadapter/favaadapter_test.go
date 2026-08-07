@@ -346,6 +346,40 @@ func TestProjectJournalHonorsFQLFilters(t *testing.T) {
 	}
 }
 
+func TestProjectJournalProjectsDirectiveMetadata(t *testing.T) {
+	snap := buildSnapshot(t, `2000-01-01 open Assets:Bank:Cash USD
+2000-01-01 open Equity:Opening USD
+2002-02-05 note Assets:Bank "Review statement"
+  auditor: kim
+2002-02-03 * "Cafe" "Lunch"
+  reference: INV-7
+  Assets:Bank:Cash -2.50 USD
+    cleared-by: bank
+  Equity:Opening 2.50 USD
+`)
+	projection := ProjectJournal(snap.Evaluation(), snap.Graph(), report.Filters{}, report.JournalFilters{})
+	var note *JournalEntry
+	var transaction *JournalEntry
+	for i := range projection.Entries {
+		switch projection.Entries[i].Type {
+		case "note":
+			note = &projection.Entries[i]
+		case "transaction":
+			transaction = &projection.Entries[i]
+		}
+	}
+	if note == nil || len(note.Metadata) != 1 || note.Metadata[0].Key != "auditor" || note.Metadata[0].Value != "kim" {
+		t.Fatalf("note metadata=%+v", note)
+	}
+	if transaction == nil || len(transaction.Metadata) != 1 || transaction.Metadata[0].Key != "reference" || transaction.Metadata[0].Value != "INV-7" {
+		t.Fatalf("transaction metadata=%+v", transaction)
+	}
+	posting := transaction.Postings[0]
+	if len(posting.Metadata) != 1 || posting.Metadata[0].Key != "cleared-by" || posting.Metadata[0].Value != "bank" {
+		t.Fatalf("posting metadata=%+v", posting)
+	}
+}
+
 func TestExportEntriesSlicesFilteredSource(t *testing.T) {
 	snap := buildSnapshot(t, `2000-01-01 open Assets:Bank:Cash USD
 2000-01-01 open Equity:Opening USD

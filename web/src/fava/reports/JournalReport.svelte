@@ -22,7 +22,9 @@
     { label: "x", cls: "show-other", title: "Other transactions", shortcut: "t o" },
     { label: "Balance", cls: "show-balance", title: "Toggle Balance entries", shortcut: "s b" },
     { label: "Note", cls: "show-note", title: "Toggle Note entries", shortcut: "s n" },
-    { label: "Document", cls: "show-document", title: "Toggle Document entries", shortcut: "s d" },
+    { label: "Document", cls: "show-document", title: "Toggle Document entries", shortcut: "s d", children: ["show-discovered", "show-linked"] },
+    { label: "D", cls: "show-discovered", title: "Documents with a #discovered tag", shortcut: "d d" },
+    { label: "L", cls: "show-linked", title: "Documents with a #linked tag", shortcut: "d l" },
     { label: "Pad", cls: "show-pad", title: "Toggle Pad entries", shortcut: "s p" },
     { label: "Query", cls: "show-query", title: "Toggle Query entries", shortcut: "s q" },
     { label: "Custom", cls: "show-custom", title: "Toggle Custom entries", shortcut: "s C" },
@@ -32,6 +34,7 @@
   let active = new Set([
     "show-transaction", "show-cleared", "show-pending",
     "show-balance", "show-note", "show-document",
+    "show-discovered", "show-linked",
     "show-query", "show-custom",
   ]);
   function toggleChip(chip: (typeof chips)[number]) {
@@ -58,6 +61,18 @@
     if (entry.type !== "transaction") return "";
     if (entry.flag === "*") return "cleared";
     if (entry.flag === "!") return "pending";
+    return "other";
+  }
+
+  function hasTag(entry: JournalEntry, tag: string): boolean {
+    return (entry.tags ?? []).includes(tag);
+  }
+
+  // Upstream flag_to_type: the class is only rendered when a flag exists.
+  function postingFlagClass(flag: string | undefined): string {
+    if (!flag) return "";
+    if (flag === "*") return "cleared";
+    if (flag === "!") return "pending";
     return "other";
   }
 
@@ -165,7 +180,12 @@
     </p>
   </li>
   {#each sortedEntries as entry, index (entry.type + entry.date + index)}
-    <li class="{entry.type} {flagClass(entry)}" class:show-full-entry={expanded.has(entry)}>
+    <li
+      class="{entry.type} {flagClass(entry)}"
+      class:linked={hasTag(entry, "linked")}
+      class:discovered={hasTag(entry, "discovered")}
+      class:show-full-entry={expanded.has(entry)}
+    >
       <p>
         <span class="datecell">{entry.date}</span>
         <span class="flag">{entry.flag ?? ""}</span>
@@ -193,9 +213,17 @@
             title="Toggle postings"
             onclick={() => toggleEntry(entry)}
             onkeydown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); toggleEntry(entry); } }}
-          >{#each entry.postings as posting, dot (dot)}<span class={posting.flag === "!" ? "pending" : ""}></span>{/each}</span>
+          >
+            {#each entry.metadata ?? [] as meta (meta.key)}<span class="metadata-indicator" title="{meta.key}: {meta.value}">{meta.key.slice(0, 2)}</span>{/each}
+            {#each entry.postings as posting, dot (dot)}
+              <span class={postingFlagClass(posting.flag)}></span>
+              {#each posting.metadata ?? [] as meta (meta.key)}<span class="metadata-indicator" title="{meta.key}: {meta.value}">{meta.key.slice(0, 2)}</span>{/each}
+            {/each}
+          </span>
         {:else}
-          <span class="indicators"></span>
+          <span class="indicators">
+            {#each entry.metadata ?? [] as meta (meta.key)}<span class="metadata-indicator" title="{meta.key}: {meta.value}">{meta.key.slice(0, 2)}</span>{/each}
+          </span>
         {/if}
         {#if entry.amount}
           <span class="num bal" title={entry.amount.currency}>{amountText(entry.amount)}</span>
@@ -214,7 +242,7 @@
       {#if entry.postings?.length}
         <ul class="postings">
           {#each entry.postings as posting, postingIndex (posting.account + postingIndex)}
-            <li>
+            <li class={postingFlagClass(posting.flag)}>
               <p>
                 <span class="datecell"></span>
                 <span class="flag">{posting.flag ?? ""}</span>
@@ -223,6 +251,14 @@
                 <span class="num">{amountText(posting.cost)}</span>
                 <span class="num">{amountText(posting.price)}</span>
               </p>
+              {#if posting.metadata?.length}
+                <dl class="metadata">
+                  {#each posting.metadata as meta (meta.key)}
+                    <dt>{meta.key}:</dt>
+                    <dd>{meta.value}</dd>
+                  {/each}
+                </dl>
+              {/if}
             </li>
           {/each}
         </ul>
