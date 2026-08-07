@@ -447,50 +447,138 @@ table.svelte-1c31p73 {
   border: 1px solid var(--error);
 }
 
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/editor/AppMenu.esbuild-svelte-fake-css */
+div.svelte-5ozbeh {
+  display: flex;
+  gap: 0.5em;
+  align-items: stretch;
+  margin-right: 0.5em;
+}
+
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/editor/AppMenuItem.esbuild-svelte-fake-css */
+span.svelte-1dn9mcy {
+  padding: 0.7em 0.5em;
+  cursor: pointer;
+}
+span.open.svelte-1dn9mcy,
+span.svelte-1dn9mcy:hover {
+  background-color: var(--background-darkest);
+}
+span.svelte-1dn9mcy::after {
+  content: "\25be";
+}
+ul.svelte-1dn9mcy {
+  position: absolute;
+  z-index: var(--z-index-floating-ui);
+  display: none;
+  width: 500px;
+  max-height: 400px;
+  margin: 0.7em 0 0 -0.5em;
+  overflow-y: auto;
+  background-color: var(--background);
+  border: 1px solid var(--border);
+  box-shadow: var(--box-shadow-dropdown);
+}
+span.open.svelte-1dn9mcy > ul:where(.svelte-1dn9mcy),
+span.svelte-1dn9mcy:hover > ul:where(.svelte-1dn9mcy) {
+  display: block;
+}
+
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/editor/AppMenuSubItem.esbuild-svelte-fake-css */
+.selected.svelte-rln02u::before {
+  content: "\203a";
+}
+li.svelte-rln02u {
+  padding: 0.25em 0.5em;
+}
+span.svelte-rln02u {
+  float: right;
+}
+li.svelte-rln02u:hover,
+li.svelte-rln02u:focus-visible {
+  background-color: var(--background-darkest);
+}
+
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/editor/Sources.esbuild-svelte-fake-css */
+ul.svelte-1f4d3ah {
+  padding: 0 0 0 0.5em;
+  margin: 0;
+  list-style: none;
+}
+p.svelte-1f4d3ah {
+  position: relative;
+  display: flex;
+  padding-right: 0.5em;
+  margin: 0;
+  overflow: hidden;
+  border-bottom: 1px solid var(--table-border);
+  border-left: 1px solid var(--table-border);
+}
+p.svelte-1f4d3ah > :where(.svelte-1f4d3ah) {
+  padding: 1px;
+}
+.selected.svelte-1f4d3ah {
+  background-color: var(--table-header-background);
+}
+.leaf.svelte-1f4d3ah {
+  flex-grow: 1;
+  margin-left: 1em;
+}
+.toggle.svelte-1f4d3ah {
+  position: absolute;
+  margin: 0 0.25rem;
+  color: var(--treetable-expander);
+}
+.root.svelte-1f4d3ah {
+  margin: 0 0.25rem;
+}
+
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/editor/EditorMenu.esbuild-svelte-fake-css */
+div.svelte-1b7r65z {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  background: var(--sidebar-background);
+  border-bottom: 1px solid var(--sidebar-border);
+}
+
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/EditorReport.esbuild-svelte-fake-css */
-.muted.svelte-7u8krg {
+.muted.svelte-17jasfg {
   color: var(--text-color-lightest);
 }
-.editor-layout.svelte-7u8krg {
+.editor-layout.svelte-17jasfg {
   display: grid;
   grid-template-columns: minmax(10rem, 16rem) minmax(0, 1fr);
   gap: 1rem;
 }
-.editor-files.svelte-7u8krg {
+.editor-files.svelte-17jasfg {
   display: grid;
   gap: 0.5rem;
   align-content: start;
 }
-.editor-files.svelte-7u8krg select:where(.svelte-7u8krg) {
+.editor-files.svelte-17jasfg select:where(.svelte-17jasfg) {
   min-height: 16rem;
 }
-.editor-pane.svelte-7u8krg {
+.editor-pane.svelte-17jasfg {
   min-width: 0;
 }
-.toolbar.svelte-7u8krg {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  align-items: center;
-  margin-bottom: 0.5rem;
-}
-#editor-buffer.svelte-7u8krg .cm-editor {
+#editor-buffer.svelte-17jasfg .cm-editor {
   min-height: 28rem;
   border: 1px solid var(--border);
 }
-#editor-buffer.svelte-7u8krg .cm-scroller {
+#editor-buffer.svelte-17jasfg .cm-scroller {
   font-family: var(--font-family-editor);
 }
-.diagnostics.svelte-7u8krg {
+.diagnostics.svelte-17jasfg {
   padding: 0.5rem 1.5rem;
   color: var(--error);
   border: 1px solid var(--error);
 }
 @media (width <= 767px) {
-  .editor-layout.svelte-7u8krg {
+  .editor-layout.svelte-17jasfg {
     grid-template-columns: 1fr;
   }
-  .editor-files.svelte-7u8krg select:where(.svelte-7u8krg) {
+  .editor-files.svelte-17jasfg select:where(.svelte-17jasfg) {
     min-height: 6rem;
   }
 }

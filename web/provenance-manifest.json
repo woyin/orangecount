@@ -712,6 +712,56 @@
       "current_kind": "original",
       "upstream": null,
       "notes": "Adapted from upstream frontend/src/codemirror/bql.ts (pinned revision aa7538e8); provides init_query_editor (used by QueryReport), init_readonly_query_editor, and init_document_preview_editor; import specifiers stripped of their .ts extension. Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/lib/paths.ts": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/lib/paths.ts (pinned revision aa7538e8); path basename/dirname/extension helpers. Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/lib/sources.ts": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/lib/sources.ts (pinned revision aa7538e8); build_compressed_sources_tree over a set of source paths, consumed by the editor File-menu tree. Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/lib/tree.ts": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/lib/tree.ts (pinned revision aa7538e8); TreeNode/stratify/all_matching tree helpers (the stratifyAccounts wrapper and its account.ts dependency are dropped, unused here). Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/reports/editor/AppMenu.svelte": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/reports/editor/AppMenu.svelte (pinned revision aa7538e8) to OrangeCount legacy Svelte (default slot instead of snippet); marks up the application menubar. Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/reports/editor/AppMenuItem.svelte": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/reports/editor/AppMenuItem.svelte (pinned revision aa7538e8) to OrangeCount legacy Svelte; a top-level File/Edit menu item with hover/blur/arrow-dropdown. Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/reports/editor/AppMenuSubItem.svelte": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/reports/editor/AppMenuSubItem.svelte (pinned revision aa7538e8) to OrangeCount legacy Svelte (default + named-right slot instead of snippets); a menu action row. Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/reports/editor/EditorMenu.svelte": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/reports/editor/EditorMenu.svelte (pinned revision aa7538e8) to OrangeCount legacy Svelte for the transplanted editor. File menu hosts the sources tree; Edit menu exposes Toggle Comment, Open/Close all folds (toggleComment/foldAll/unfoldAll re-exported from the beancount CodeMirror module). The upstream Align Amounts action (beancount_format, needs the format endpoint) and insert-entry options menu are omitted (no OrangeCount format endpoint / insert_entry store; deviations)."
+    },
+    "web/src/fava/reports/editor/Key.svelte": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/reports/editor/Key.svelte (pinned revision aa7538e8) to OrangeCount legacy Svelte; renders a keyboard-shortcut kbd sequence. Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/reports/editor/Sources.svelte": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/reports/editor/Sources.svelte (pinned revision aa7538e8) to OrangeCount legacy Svelte (export-let props, svelte:self recursion, on: event syntax); a recursive file-tree renderer. Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/reports/editor/stores.ts": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/reports/editor/stores.ts (pinned revision aa7538e8); sources_tree derived from a local editor_sources set store (populated by EditorReport from the adapter paths, replacing the upstream sources API/options store), plus expanded_directories and toggle_directory. Registered as original because the upstream hash is not computable in this environment."
     }
   }
 }

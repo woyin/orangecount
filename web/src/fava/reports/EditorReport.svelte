@@ -1,12 +1,13 @@
 <script lang="ts">
-  import { onDestroy, onMount } from "svelte";
+  import { onMount } from "svelte";
   import type { EditorState } from "@codemirror/state";
   import type { EditorView } from "@codemirror/view";
   import type { AdapterClient } from "../adapter-client";
   import { init_beancount_editor, replace_contents } from "../codemirror/beancount";
   import { set_completion_data } from "../codemirror/completion-data";
   import { notify, notify_err } from "../notifications";
-
+  import EditorMenu from "./editor/EditorMenu.svelte";
+  import { editor_sources, sources_tree } from "./editor/stores";
   export let adapter: AdapterClient;
   export let query: Record<string, string> = {};
 
@@ -36,6 +37,7 @@
   async function loadIndex() {
     const value = await adapter.load("editor") as { paths: string[]; entry: string; snapshot_id: string };
     paths = value.paths ?? [];
+    editor_sources.set(new Set(paths));
     snapshotID = value.snapshot_id ?? "";
     const requested = query.path && paths.includes(query.path) ? query.path : "";
     selected = requested || value.entry || paths[0] || "";
@@ -96,6 +98,12 @@
     }
   }
 
+  async function openFile(path: string) {
+    if (path === selected) return;
+    selected = path;
+    await loadFile();
+  }
+
   onMount(() => {
     void loadIndex();
     void adapter.bootstrap().then((bootstrap) => {
@@ -112,6 +120,11 @@
 </script>
 
 <div class="headerline"><h2>Editor</h2><span class="muted">Reviewed writes only</span></div>
+<EditorMenu sources_tree={$sources_tree} file_path={selected} {editor} on_open_file={openFile}>
+  <button id="editor-validate" type="button" on:click={validate} disabled={loading}>Validate</button>
+  <button id="editor-save" type="button" on:click={save} disabled={loading}>Save</button>
+  <span class="muted" role="status">{status}</span>
+</EditorMenu>
 <div class="editor-layout">
   <aside class="editor-files">
     <label for="editor-file">Files</label>
@@ -120,11 +133,6 @@
     </select>
   </aside>
   <section class="editor-pane">
-    <div class="toolbar">
-      <button id="editor-validate" type="button" on:click={validate} disabled={loading}>Validate</button>
-      <button id="editor-save" type="button" on:click={save} disabled={loading}>Save</button>
-      <span class="muted" role="status">{status}</span>
-    </div>
     <div id="editor-buffer" bind:this={editorHost} aria-label="Ledger source"></div>
     {#if diagnostics.length}
       <ul class="diagnostics">
@@ -142,7 +150,6 @@
   .editor-files { display: grid; gap: 0.5rem; align-content: start; }
   .editor-files select { min-height: 16rem; }
   .editor-pane { min-width: 0; }
-  .toolbar { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; margin-bottom: 0.5rem; }
   #editor-buffer :global(.cm-editor) { min-height: 28rem; border: 1px solid var(--border); }
   #editor-buffer :global(.cm-scroller) { font-family: var(--font-family-editor); }
   .diagnostics { padding: 0.5rem 1.5rem; color: var(--error); border: 1px solid var(--error); }

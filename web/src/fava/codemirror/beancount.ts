@@ -13,6 +13,8 @@ export {
   scroll_to_line,
   set_errors,
 } from "./editor-transactions";
+export { toggleComment } from "@codemirror/commands";
+export { foldAll, unfoldAll } from "@codemirror/language";
 
 /**
  * A Beancount editor.
