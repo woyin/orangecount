@@ -334,6 +334,11 @@
       "notice": "NOTICE",
       "notes": "Temporary Wave 1 chart presentation preserving the Fava chart contract; full chart transplant remains a later wave."
     },
+    "web/src/fava/charts/ScatterPlot.svelte": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Events scatterplot mirroring Fava's ScatterPlot semantics (time x event-type point scale, per-type colors, pointer tooltip, future dates desaturated), written in the shell's dependency-free SVG chart style instead of upstream's d3 implementation."
+    },
     "web/src/fava/styles/fava/charts.css": {
       "current_kind": "derived",
       "upstream": "frontend/css/charts.css",

@@ -602,9 +602,75 @@ img.svelte-1jfq29f {
   border: 0;
 }
 
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/charts/ScatterPlot.esbuild-svelte-fake-css */
+.scatter-card.svelte-8kp6hz {
+  position: relative;
+  margin-bottom: 1rem;
+}
+.scatter-chart.svelte-8kp6hz {
+  display: block;
+  width: min(100%, 52rem);
+  height: 14rem;
+  margin-bottom: .5rem;
+  background: var(--background-darker);
+  border: 1px solid var(--border);
+}
+.chart-grid.svelte-8kp6hz {
+  stroke: var(--border);
+  stroke-width: .2;
+  vector-effect: non-scaling-stroke;
+  opacity: .5;
+}
+.chart-tick.svelte-8kp6hz {
+  font-size: 2.6px;
+  fill: var(--text-color-lighter);
+}
+.desaturate.svelte-8kp6hz {
+  filter: saturate(50%);
+}
+.chart-empty.svelte-8kp6hz {
+  color: var(--text-color-lightest);
+}
+.chart-tooltip.svelte-8kp6hz {
+  position: absolute;
+  z-index: 10;
+  pointer-events: none;
+  max-width: 20rem;
+  padding: .3rem .5rem;
+  background: var(--background-darker);
+  border: 1px solid var(--border);
+  color: var(--text-color-lighter);
+  font-size: .8rem;
+  line-height: 1.35;
+  white-space: pre-line;
+  box-shadow: 0 1px 3px rgb(0 0 0 / .25);
+}
+
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/EventTable.esbuild-svelte-fake-css */
 .events-table.svelte-1nok83z {
   max-width: 40rem;
+}
+
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/EventsReport.esbuild-svelte-fake-css */
+.flex-row.svelte-1cxn66i {
+  display: flex;
+  gap: var(--flex-gap, 0.5rem);
+  margin-bottom: var(--flex-gap, 0.5rem);
+}
+.spacer.svelte-1cxn66i {
+  flex: 1;
+}
+.chart-switcher.svelte-1cxn66i {
+  margin-bottom: 1em;
+  color: var(--text-color-lightest);
+  text-align: center;
+}
+.chart-switcher.svelte-1cxn66i button:where(.svelte-1cxn66i) {
+  padding: 0 0.5em;
+}
+.chart-switcher.svelte-1cxn66i button.selected:where(.svelte-1cxn66i),
+.chart-switcher.svelte-1cxn66i button:where(.svelte-1cxn66i):hover {
+  color: var(--text-color-lighter);
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/tree-table/TreeTableNode.esbuild-svelte-fake-css */
