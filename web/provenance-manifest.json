@@ -682,6 +682,36 @@
       "current_kind": "original",
       "upstream": null,
       "notes": "Adapted from upstream frontend/src/codemirror/tree-sitter-parser.ts (pinned revision aa7538e8); inlines the upstream ../lib/array and ../log helpers. Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/codemirror/bql-autocomplete.ts": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/codemirror/bql-autocomplete.ts (pinned revision aa7538e8); import specifiers stripped of their .ts extension for the esbuild bundle. Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/codemirror/bql-grammar.ts": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/codemirror/bql-grammar.ts (pinned revision aa7538e8); generated BQL keyword/column/function lists used verbatim. Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/codemirror/bql-highlight.ts": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/codemirror/bql-highlight.ts (pinned revision aa7538e8); import specifiers stripped of their .ts extension for the esbuild bundle. Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/codemirror/bql-language.ts": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/codemirror/bql-language.ts (pinned revision aa7538e8); StreamLanguage-composed BQL language support, import specifiers stripped of their .ts extension. Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/codemirror/bql-stream-parser.ts": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/codemirror/bql-stream-parser.ts (pinned revision aa7538e8); import specifiers stripped of their .ts extension for the esbuild bundle. Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/codemirror/bql.ts": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Adapted from upstream frontend/src/codemirror/bql.ts (pinned revision aa7538e8); provides init_query_editor (used by QueryReport), init_readonly_query_editor, and init_document_preview_editor; import specifiers stripped of their .ts extension. Registered as original because the upstream hash is not computable in this environment."
     }
   }
 }

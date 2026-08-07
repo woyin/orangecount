@@ -417,26 +417,31 @@ table.svelte-1c31p73 {
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/QueryReport.esbuild-svelte-fake-css */
-.query-form.svelte-1popykn {
+.query-form.svelte-1qlrjvy {
   display: grid;
   gap: 0.5rem;
   max-width: 70rem;
   margin-bottom: 1rem;
 }
-.flex-row.svelte-1popykn {
+.flex-row.svelte-1qlrjvy {
   display: flex;
   gap: var(--flex-gap, 0.5rem);
   margin-bottom: var(--flex-gap, 0.5rem);
 }
-.spacer.svelte-1popykn {
+.spacer.svelte-1qlrjvy {
   flex: 1;
 }
-textarea.svelte-1popykn {
-  width: 100%;
-  font-family: var(--font-family-editor);
-  resize: vertical;
+#query-editor.svelte-1qlrjvy {
+  min-height: 6rem;
+  border: 1px solid var(--border);
 }
-.error-panel.svelte-1popykn {
+#query-editor.svelte-1qlrjvy .cm-scroller {
+  font-family: var(--font-family-editor);
+}
+#query-editor.svelte-1qlrjvy .cm-editor {
+  width: 100%;
+}
+.error-panel.svelte-1qlrjvy {
   padding: 0.5rem;
   color: var(--error);
   border: 1px solid var(--error);

@@ -1,6 +1,9 @@
 <script lang="ts">
   import { onMount } from "svelte";
+  import type { EditorState } from "@codemirror/state";
+  import type { EditorView } from "@codemirror/view";
   import type { AdapterClient } from "../adapter-client";
+  import { init_query_editor, replace_contents } from "../codemirror/bql";
   import LineChart from "../charts/LineChart.svelte";
   import GenericReport from "./GenericReport.svelte";
   import { parseTableReport, type DecimalWire, type TableReport } from "./types";
@@ -14,6 +17,18 @@
   let loading = false;
   let error = "";
   let showCharts = true;
+  let editorHost: HTMLDivElement;
+  let editor: EditorView | null = null;
+
+  function onDocChanges(state: EditorState) {
+    queryText = state.sliceDoc();
+  }
+
+  function syncEditorFromRoute(text: string) {
+    if (editor) {
+      editor.dispatch(replace_contents(editor.state, text));
+    }
+  }
 
   async function run() {
     loading = true;
@@ -32,9 +47,21 @@
     if (routed && routed !== appliedRouteQuery) {
       appliedRouteQuery = routed;
       queryText = routed;
+      syncEditorFromRoute(routed);
       void run();
     }
   }
+
+  onMount(() => {
+    editor = init_query_editor(
+      queryText,
+      onDocChanges,
+      "...enter a BQL query. 'help' to list available commands.",
+      () => run,
+    );
+    editorHost.appendChild(editor.dom);
+    return () => editor?.destroy();
+  });
 
   // Mirrors upstream getQueryChart's date+Inventory branch: chart a result
   // with exactly two columns where the first is a date and the second an
@@ -98,7 +125,7 @@
 </div>
 <form class="query-form" on:submit|preventDefault={run}>
   <label for="query-editor">BeanQuery</label>
-  <textarea id="query-editor" bind:value={queryText} spellcheck="false" rows="4"></textarea>
+  <div id="query-editor" bind:this={editorHost} aria-label="BeanQuery"></div>
   <button type="submit" disabled={loading}>{loading ? "Running…" : "Run query"}</button>
 </form>
 {#if error}
@@ -135,11 +162,12 @@
     flex: 1;
   }
 
-  textarea {
-    width: 100%;
-    font-family: var(--font-family-editor);
-    resize: vertical;
+  #query-editor {
+    min-height: 6rem;
+    border: 1px solid var(--border);
   }
+  #query-editor :global(.cm-scroller) { font-family: var(--font-family-editor); }
+  #query-editor :global(.cm-editor) { width: 100%; }
 
   .error-panel {
     padding: 0.5rem;

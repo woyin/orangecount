@@ -4919,7 +4919,7 @@ function AutocompleteInput($$anchor, $$props) {
   const filteredSuggestions = mutable_state();
   const expanded = mutable_state();
   let value = prop($$props, "value", 12);
-  let placeholder = prop($$props, "placeholder", 8);
+  let placeholder2 = prop($$props, "placeholder", 8);
   let suggestions = prop($$props, "suggestions", 8);
   let valueExtractor = prop($$props, "valueExtractor", 8, void 0);
   let valueSelector = prop($$props, "valueSelector", 8, void 0);
@@ -4979,9 +4979,9 @@ function AutocompleteInput($$anchor, $$props) {
     }
   }
   legacy_pre_effect(
-    () => (deep_read_state(setSize()), deep_read_state(value()), deep_read_state(placeholder())),
+    () => (deep_read_state(setSize()), deep_read_state(value()), deep_read_state(placeholder2())),
     () => {
-      set(size, setSize() ? Math.max(value().length, placeholder().length) + 1 : void 0);
+      set(size, setSize() ? Math.max(value().length, placeholder2().length) + 1 : void 0);
     }
   );
   legacy_pre_effect(
@@ -5107,7 +5107,7 @@ function AutocompleteInput($$anchor, $$props) {
   template_effect(() => {
     set_attribute(input_1, "aria-expanded", get(expanded));
     set_value(input_1, value());
-    set_attribute(input_1, "placeholder", placeholder());
+    set_attribute(input_1, "placeholder", placeholder2());
     set_attribute(input_1, "size", get(size));
   });
   append($$anchor, span);
@@ -5661,8 +5661,8 @@ function formatAmount(value, group = false) {
   if (!group || display === "" || display.includes("/")) return display;
   const match = /^(-?)(\d+)(\.\d+)?$/.exec(display);
   if (!match) return display;
-  const [, sign, integer, fraction = ""] = match;
-  return `${sign}${integer.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}${fraction}`;
+  const [, sign, integer2, fraction = ""] = match;
+  return `${sign}${integer2.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}${fraction}`;
 }
 function currenciesInTree(tree) {
   const values = /* @__PURE__ */ new Set();
@@ -5792,10 +5792,10 @@ function ReportChart($$anchor, $$props) {
   function tickLabel(value) {
     return get(tickFormat).format(Math.abs(value) < 1e-9 ? 0 : value);
   }
-  function xTickLabel(date) {
-    if (chart2().interval === "year") return date.slice(0, 4);
-    if (chart2().interval === "day") return date;
-    return date.slice(0, 7);
+  function xTickLabel(date2) {
+    if (chart2().interval === "year") return date2.slice(0, 4);
+    if (chart2().interval === "day") return date2;
+    return date2.slice(0, 7);
   }
   function collectLeaves(nodes, root22 = "") {
     const out2 = [];
@@ -8329,388 +8329,6 @@ function StatisticsReport($$anchor, $$props) {
   pop();
 }
 
-// src/fava/charts/LineChart.svelte
-var root_216 = ns_template(`<line class="chart-grid svelte-izodmx"></line><text class="chart-tick svelte-izodmx" text-anchor="end"> </text>`, 1);
-var root_310 = ns_template(`<text y="51" class="chart-tick svelte-izodmx" text-anchor="middle"> </text>`);
-var root_118 = template(`<svg class="line-chart svelte-izodmx" viewBox="0 0 100 52" role="img" aria-label="Price line chart"><!><path class="line-path svelte-izodmx"></path><!></svg>`);
-var root_47 = template(`<p class="chart-empty svelte-izodmx">No prices.</p>`);
-var root_55 = template(`<div class="chart-tooltip svelte-izodmx" role="status"> </div>`);
-var root9 = template(`<section class="line-card svelte-izodmx"><!> <!></section>`);
-function LineChart($$anchor, $$props) {
-  push($$props, false);
-  const data = mutable_state();
-  const timeExtent = mutable_state();
-  const valueExtent = mutable_state();
-  const path = mutable_state();
-  const yTicks = mutable_state();
-  const tickFormat = mutable_state();
-  const xTicks = mutable_state();
-  let points = prop($$props, "points", 24, () => []);
-  let formatTip = prop($$props, "formatTip", 8, (point) => `${point.date}: ${point.display}`);
-  const X0 = 14;
-  const X1 = 98;
-  const Y0 = 4;
-  const Y1 = 44;
-  function x(timestamp) {
-    const span = get(timeExtent)[1] - get(timeExtent)[0];
-    if (!span) return (X0 + X1) / 2;
-    return X0 + (timestamp - get(timeExtent)[0]) / span * (X1 - X0);
-  }
-  function y(value) {
-    const span = get(valueExtent)[1] - get(valueExtent)[0];
-    if (!span) return (Y0 + Y1) / 2;
-    return Y1 - (value - get(valueExtent)[0]) / span * (Y1 - Y0);
-  }
-  function niceTicks(lo, hi, count = 4) {
-    if (!(hi > lo)) return [lo];
-    const step0 = (hi - lo) / count;
-    const magnitude = Math.pow(10, Math.floor(Math.log10(step0)));
-    const residual = step0 / magnitude;
-    const step = (residual >= 5 ? 5 : residual >= 2 ? 2 : 1) * magnitude;
-    const ticks = [];
-    for (let value = Math.ceil(lo / step) * step; value <= hi + step / 1e-6; value += step) {
-      ticks.push(value);
-    }
-    return ticks;
-  }
-  function tickLabel(value) {
-    return get(tickFormat).format(Math.abs(value) < 1e-9 ? 0 : value);
-  }
-  function xTickLabel(date) {
-    const spanDays = (get(timeExtent)[1] - get(timeExtent)[0]) / 864e5;
-    return spanDays > 366 ? date.slice(0, 4) : date.slice(0, 7);
-  }
-  let tooltipText = mutable_state("");
-  let tooltipLeft = mutable_state(0);
-  let tooltipTop = mutable_state(0);
-  let tooltipVisible = mutable_state(false);
-  function showTip(event2) {
-    const svg2 = event2.currentTarget;
-    const box = svg2.getBoundingClientRect();
-    if (!box.width || !get(data).length) return;
-    const vx = (event2.clientX - box.left) / box.width * 100;
-    let best = get(data)[0];
-    for (const point of get(data)) {
-      if (Math.abs(x(point.timestamp) - vx) < Math.abs(x(best.timestamp) - vx)) best = point;
-    }
-    set(tooltipText, formatTip()(best));
-    set(tooltipVisible, true);
-    const card = svg2.closest(".line-card");
-    const cardBox = card?.getBoundingClientRect();
-    if (cardBox) {
-      set(tooltipLeft, event2.clientX - cardBox.left + 12);
-      set(tooltipTop, event2.clientY - cardBox.top + 12);
-    }
-  }
-  function hideTip() {
-    set(tooltipVisible, false);
-  }
-  legacy_pre_effect(() => deep_read_state(points()), () => {
-    set(data, points().filter((point) => Number.isFinite(point.value) && point.date).map((point) => ({
-      ...point,
-      timestamp: Date.parse(point.date)
-    })).filter((point) => Number.isFinite(point.timestamp)).sort((left, right) => left.timestamp - right.timestamp));
-  });
-  legacy_pre_effect(() => get(data), () => {
-    set(timeExtent, get(data).length ? [
-      get(data)[0].timestamp,
-      get(data)[get(data).length - 1].timestamp
-    ] : [0, 1]);
-  });
-  legacy_pre_effect(() => get(data), () => {
-    set(valueExtent, (() => {
-      if (!get(data).length) return [0, 1];
-      let lo = Math.min(...get(data).map((point) => point.value));
-      let hi = Math.max(...get(data).map((point) => point.value));
-      if (lo === hi) {
-        lo -= 1;
-        hi += 1;
-      }
-      const pad = (hi - lo) * 0.03;
-      return [lo - pad, hi + pad];
-    })());
-  });
-  legacy_pre_effect(() => get(data), () => {
-    set(path, get(data).map((point, index2) => `${index2 ? "L" : "M"}${x(point.timestamp).toFixed(2)},${y(point.value).toFixed(2)}`).join(" "));
-  });
-  legacy_pre_effect(() => get(valueExtent), () => {
-    set(yTicks, niceTicks(get(valueExtent)[0], get(valueExtent)[1]));
-  });
-  legacy_pre_effect(() => {
-  }, () => {
-    set(tickFormat, new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 2 }));
-  });
-  legacy_pre_effect(() => (get(data), get(timeExtent)), () => {
-    set(xTicks, (() => {
-      if (!get(data).length) return [];
-      const count = Math.min(5, get(data).length);
-      const ticks = [];
-      for (let stop2 = 0; stop2 < count; stop2 += 1) {
-        const timestamp = get(timeExtent)[0] + (get(timeExtent)[1] - get(timeExtent)[0]) * stop2 / Math.max(1, count - 1);
-        let nearest = get(data)[0];
-        for (const point of get(data)) {
-          if (Math.abs(point.timestamp - timestamp) < Math.abs(nearest.timestamp - timestamp)) nearest = point;
-        }
-        if (!ticks.some((tick2) => tick2.date === nearest.date)) ticks.push(nearest);
-      }
-      return ticks;
-    })());
-  });
-  legacy_pre_effect_reset();
-  init2();
-  var section = root9();
-  var node = child(section);
-  {
-    var consequent = ($$anchor2) => {
-      var svg_1 = root_118();
-      var node_1 = child(svg_1);
-      each(node_1, 1, () => get(yTicks), (tick2) => tick2, ($$anchor3, tick2) => {
-        var fragment = root_216();
-        var line = first_child(fragment);
-        set_attribute(line, "x1", X0);
-        template_effect(() => set_attribute(line, "y1", y(get(tick2))));
-        set_attribute(line, "x2", X1);
-        template_effect(() => set_attribute(line, "y2", y(get(tick2))));
-        var text2 = sibling(line);
-        set_attribute(text2, "x", X0 - 1);
-        template_effect(() => set_attribute(text2, "y", y(get(tick2)) + 1));
-        var text_1 = child(text2, true);
-        template_effect(() => set_text(text_1, tickLabel(get(tick2))));
-        reset(text2);
-        append($$anchor3, fragment);
-      });
-      var path_1 = sibling(node_1);
-      var node_2 = sibling(path_1);
-      each(node_2, 1, () => get(xTicks), (tick2) => tick2.date, ($$anchor3, tick2) => {
-        var text_2 = root_310();
-        template_effect(() => set_attribute(text_2, "x", x(get(tick2).timestamp)));
-        var text_3 = child(text_2, true);
-        template_effect(() => set_text(text_3, xTickLabel(get(tick2).date)));
-        reset(text_2);
-        append($$anchor3, text_2);
-      });
-      reset(svg_1);
-      template_effect(() => set_attribute(path_1, "d", get(path)));
-      event("mousemove", svg_1, showTip);
-      event("mouseleave", svg_1, hideTip);
-      append($$anchor2, svg_1);
-    };
-    var alternate = ($$anchor2) => {
-      var p = root_47();
-      append($$anchor2, p);
-    };
-    if_block(node, ($$render) => {
-      if (get(data).length) $$render(consequent);
-      else $$render(alternate, false);
-    });
-  }
-  var node_3 = sibling(node, 2);
-  {
-    var consequent_1 = ($$anchor2) => {
-      var div = root_55();
-      var text_4 = child(div, true);
-      reset(div);
-      template_effect(() => {
-        set_attribute(div, "style", `left:${get(tooltipLeft)}px;top:${get(tooltipTop)}px`);
-        set_text(text_4, get(tooltipText));
-      });
-      append($$anchor2, div);
-    };
-    if_block(node_3, ($$render) => {
-      if (get(tooltipVisible)) $$render(consequent_1);
-    });
-  }
-  reset(section);
-  append($$anchor, section);
-  pop();
-}
-
-// src/fava/reports/QueryReport.svelte
-var root_119 = template(`<p class="error-panel svelte-1popykn" role="alert"> </p>`);
-var root_48 = template(`<div class="flex-row svelte-1popykn"><span class="spacer svelte-1popykn"></span> <button type="button" class="show-charts"> </button></div> <!>`, 1);
-var root_311 = template(`<p><a class="button">Export CSV</a></p> <!> <!>`, 1);
-var root10 = template(`<div class="headerline"><h2>Query</h2></div> <form class="query-form svelte-1popykn"><label for="query-editor">BeanQuery</label> <textarea id="query-editor" spellcheck="false" rows="4" class="svelte-1popykn"></textarea> <button type="submit"> </button></form> <!>`, 1);
-function QueryReport($$anchor, $$props) {
-  push($$props, false);
-  const chartPoints = mutable_state();
-  let adapter = prop($$props, "adapter", 8);
-  let query = prop($$props, "query", 24, () => ({}));
-  let queryText = mutable_state(query().query_string || "SELECT account, balance FROM accounts ORDER BY account");
-  let appliedRouteQuery = mutable_state(query().query_string ?? "");
-  let result = mutable_state(null);
-  let loading = mutable_state(false);
-  let error2 = mutable_state("");
-  let showCharts = mutable_state(true);
-  async function run3() {
-    set(loading, true);
-    set(error2, "");
-    try {
-      set(result, parseTableReport(await adapter().load("query", { query_string: get(queryText) })));
-    } catch (value) {
-      set(error2, value instanceof Error ? value.message : "The query could not be evaluated.");
-    } finally {
-      set(loading, false);
-    }
-  }
-  const isoDate = /^\d{4}-\d{2}-\d{2}$/;
-  function numberValue(value) {
-    if (typeof value === "number") return Number.isFinite(value) ? value : NaN;
-    if (typeof value === "string") {
-      if (value.includes("/")) {
-        const [numerator, denominator] = value.split("/").map(Number);
-        return denominator ? numerator / denominator : NaN;
-      }
-      return Number(value);
-    }
-    if (Array.isArray(value)) {
-      let total = 0;
-      for (const item of value) {
-        const parsed = numberValue(item);
-        if (!Number.isFinite(parsed)) return NaN;
-        total += parsed;
-      }
-      return total;
-    }
-    if (value && typeof value === "object") {
-      const wire = value;
-      if (typeof wire.display === "string") return numberValue(wire.display);
-    }
-    return NaN;
-  }
-  function displayValue(value) {
-    if (value && typeof value === "object" && !Array.isArray(value)) {
-      const wire = value;
-      if (typeof wire.display === "string") return wire.display;
-    }
-    if (Array.isArray(value)) return value.map(displayValue).join(" + ");
-    return String(value);
-  }
-  onMount(() => {
-    void run3();
-  });
-  legacy_pre_effect(
-    () => (deep_read_state(query()), get(appliedRouteQuery)),
-    () => {
-      const routed = query().query_string ?? "";
-      if (routed && routed !== get(appliedRouteQuery)) {
-        set(appliedRouteQuery, routed);
-        set(queryText, routed);
-        void run3();
-      }
-    }
-  );
-  legacy_pre_effect(() => get(result), () => {
-    set(chartPoints, (() => {
-      if (!get(result) || get(result).columns.length !== 2 || !get(result).rows.length) return [];
-      const [dateColumn, valueColumn] = get(result).columns;
-      const points = [];
-      for (const row of get(result).rows) {
-        const rawDate = row[dateColumn];
-        if (typeof rawDate !== "string" || !isoDate.test(rawDate)) return [];
-        const value = numberValue(row[valueColumn]);
-        if (!Number.isFinite(value)) return [];
-        points.push({
-          date: rawDate,
-          display: displayValue(row[valueColumn]),
-          value
-        });
-      }
-      return points;
-    })());
-  });
-  legacy_pre_effect_reset();
-  init2();
-  var fragment = root10();
-  var form = sibling(first_child(fragment), 2);
-  var textarea = sibling(child(form), 2);
-  remove_textarea_child(textarea);
-  var button = sibling(textarea, 2);
-  var text2 = child(button, true);
-  reset(button);
-  reset(form);
-  var node = sibling(form, 2);
-  {
-    var consequent = ($$anchor2) => {
-      var p = root_119();
-      var text_1 = child(p, true);
-      reset(p);
-      template_effect(() => set_text(text_1, get(error2)));
-      append($$anchor2, p);
-    };
-    var alternate = ($$anchor2) => {
-      var fragment_1 = comment();
-      var node_1 = first_child(fragment_1);
-      {
-        var consequent_3 = ($$anchor3) => {
-          var fragment_2 = root_311();
-          var p_1 = first_child(fragment_2);
-          var a = child(p_1);
-          template_effect(() => set_attribute(a, "href", `/api/v1/query?q=${encodeURIComponent(get(queryText))}&format=csv`));
-          reset(p_1);
-          var node_2 = sibling(p_1, 2);
-          {
-            var consequent_2 = ($$anchor4) => {
-              var fragment_3 = root_48();
-              var div = first_child(fragment_3);
-              var button_1 = sibling(child(div), 2);
-              var text_2 = child(button_1, true);
-              reset(button_1);
-              reset(div);
-              var node_3 = sibling(div, 2);
-              {
-                var consequent_1 = ($$anchor5) => {
-                  LineChart($$anchor5, {
-                    get points() {
-                      return get(chartPoints);
-                    }
-                  });
-                };
-                if_block(node_3, ($$render) => {
-                  if (get(showCharts)) $$render(consequent_1);
-                });
-              }
-              template_effect(() => set_text(text_2, get(showCharts) ? "\u25BC" : "\u25C0"));
-              event("click", button_1, () => set(showCharts, !get(showCharts)));
-              append($$anchor4, fragment_3);
-            };
-            if_block(node_2, ($$render) => {
-              if (get(chartPoints).length) $$render(consequent_2);
-            });
-          }
-          var node_4 = sibling(node_2, 2);
-          GenericReport(node_4, {
-            get report() {
-              return get(result);
-            },
-            title: "Query result"
-          });
-          append($$anchor3, fragment_2);
-        };
-        if_block(
-          node_1,
-          ($$render) => {
-            if (get(result)) $$render(consequent_3);
-          },
-          true
-        );
-      }
-      append($$anchor2, fragment_1);
-    };
-    if_block(node, ($$render) => {
-      if (get(error2)) $$render(consequent);
-      else $$render(alternate, false);
-    });
-  }
-  template_effect(() => {
-    button.disabled = get(loading);
-    set_text(text2, get(loading) ? "Running\u2026" : "Run query");
-  });
-  bind_value(textarea, () => get(queryText), ($$value) => set(queryText, $$value));
-  event("submit", form, preventDefault(run3));
-  append($$anchor, fragment);
-  pop();
-}
-
 // node_modules/@lezer/common/dist/index.js
 var DefaultBufferLength = 1024;
 var nextPropID = 0;
@@ -8881,6 +8499,42 @@ NodeType.none = new NodeType(
   8
   /* NodeFlag.Anonymous */
 );
+var NodeSet = class _NodeSet {
+  /**
+  Create a set with the given types. The `id` property of each
+  type should correspond to its position within the array.
+  */
+  constructor(types2) {
+    this.types = types2;
+    for (let i2 = 0; i2 < types2.length; i2++)
+      if (types2[i2].id != i2)
+        throw new RangeError("Node type ids should correspond to array positions when creating a node set");
+  }
+  /**
+  Create a copy of this set with some node properties added. The
+  arguments to this method can be created with
+  [`NodeProp.add`](#common.NodeProp.add).
+  */
+  extend(...props2) {
+    let newTypes = [];
+    for (let type of this.types) {
+      let newProps = null;
+      for (let source2 of props2) {
+        let add2 = source2(type);
+        if (add2) {
+          if (!newProps)
+            newProps = Object.assign({}, type.props);
+          let value = add2[1], prop2 = add2[0];
+          if (prop2.combine && prop2.id in newProps)
+            value = prop2.combine(newProps[prop2.id], value);
+          newProps[prop2.id] = value;
+        }
+      }
+      newTypes.push(newProps ? new NodeType(type.name, newProps, type.id, type.flags) : type);
+    }
+    return new _NodeSet(newTypes);
+  }
+};
 var CachedNode = /* @__PURE__ */ new WeakMap();
 var CachedInnerNode = /* @__PURE__ */ new WeakMap();
 var IterMode;
@@ -9919,9 +9573,9 @@ function hasChild(tree) {
 }
 function buildTree(data) {
   var _a2;
-  let { buffer, nodeSet, maxBufferLength = DefaultBufferLength, reused = [], minRepeatType = nodeSet.types.length } = data;
+  let { buffer, nodeSet: nodeSet2, maxBufferLength = DefaultBufferLength, reused = [], minRepeatType = nodeSet2.types.length } = data;
   let cursor = Array.isArray(buffer) ? new FlatBufferCursor(buffer, buffer.length) : buffer;
-  let types2 = nodeSet.types;
+  let types2 = nodeSet2.types;
   let contextHash = 0, lookAhead = 0;
   function takeNode(parentStart, minPos, children2, positions2, inRepeat, depth) {
     let { id, start: start2, end, size } = cursor;
@@ -9950,7 +9604,7 @@ function buildTree(data) {
       let endPos = cursor.pos - buffer2.size, index2 = data2.length;
       while (cursor.pos > endPos)
         index2 = copyToBuffer(buffer2.start, data2, index2);
-      node = new TreeBuffer(data2, end - buffer2.start, nodeSet);
+      node = new TreeBuffer(data2, end - buffer2.start, nodeSet2);
       startPos = buffer2.start - parentStart;
     } else {
       let endPos = cursor.pos - size;
@@ -10012,7 +9666,7 @@ function buildTree(data) {
         buffer2[j++] = nodes[i2 + 2] - start2;
         buffer2[j++] = j;
       }
-      children2.push(new TreeBuffer(buffer2, nodes[2] - start2, nodeSet));
+      children2.push(new TreeBuffer(buffer2, nodes[2] - start2, nodeSet2));
       positions2.push(start2 - parentStart);
     }
   }
@@ -10034,7 +9688,7 @@ function buildTree(data) {
       localChildren.push(children2.pop());
       localPositions.push(positions2.pop() + base2 - from);
     }
-    children2.push(makeTree(nodeSet.types[type], localChildren, localPositions, to - from, lookAhead2 - to, contextHash2));
+    children2.push(makeTree(nodeSet2.types[type], localChildren, localPositions, to - from, lookAhead2 - to, contextHash2));
     positions2.push(from - base2);
   }
   function makeTree(type, children2, positions2, length2, lookAhead2, contextHash2, props2) {
@@ -10281,8 +9935,8 @@ var Parser = class {
   }
 };
 var StringInput = class {
-  constructor(string2) {
-    this.string = string2;
+  constructor(string3) {
+    this.string = string3;
   }
   get length() {
     return this.string.length;
@@ -10537,9 +10191,9 @@ var TextLeaf = class _TextLeaf extends Text2 {
   }
   lineInner(target2, isLine, line, offset) {
     for (let i2 = 0; ; i2++) {
-      let string2 = this.text[i2], end = offset + string2.length;
+      let string3 = this.text[i2], end = offset + string3.length;
       if ((isLine ? line : end) >= target2)
-        return new Line(offset, end, line, string2);
+        return new Line(offset, end, line, string3);
       offset = end + 1;
       line++;
     }
@@ -12726,8 +12380,8 @@ var EditorState = class _EditorState {
   separator](https://codemirror.net/6/docs/ref/#state.EditorState^lineSeparator), create a
   [`Text`](https://codemirror.net/6/docs/ref/#state.Text) instance from the given string.
   */
-  toText(string2) {
-    return Text2.of(string2.split(this.facet(_EditorState.lineSeparator) || DefaultSplit));
+  toText(string3) {
+    return Text2.of(string3.split(this.facet(_EditorState.lineSeparator) || DefaultSplit));
   }
   /**
   Return the given range of the document as a string.
@@ -12839,11 +12493,11 @@ var EditorState = class _EditorState {
         break;
       }
     if (insert2.length)
-      phrase2 = phrase2.replace(/\$(\$|\d*)/g, (m, i2) => {
+      phrase2 = phrase2.replace(/\$(\$|\d*)/g, (m2, i2) => {
         if (i2 == "$")
           return "$";
         let n = +(i2 || 1);
-        return !n || n > insert2.length ? m : insert2[n - 1];
+        return !n || n > insert2.length ? m2 : insert2[n - 1];
       });
     return phrase2;
   }
@@ -13722,29 +13376,29 @@ function findMinIndex(value, array) {
     }
   return found;
 }
-function countColumn(string2, tabSize, to = string2.length) {
+function countColumn(string3, tabSize, to = string3.length) {
   let n = 0;
-  for (let i2 = 0; i2 < to && i2 < string2.length; ) {
-    if (string2.charCodeAt(i2) == 9) {
+  for (let i2 = 0; i2 < to && i2 < string3.length; ) {
+    if (string3.charCodeAt(i2) == 9) {
       n += tabSize - n % tabSize;
       i2++;
     } else {
       n++;
-      i2 = findClusterBreak2(string2, i2);
+      i2 = findClusterBreak2(string3, i2);
     }
   }
   return n;
 }
-function findColumn(string2, col, tabSize, strict) {
+function findColumn(string3, col, tabSize, strict) {
   for (let i2 = 0, n = 0; ; ) {
     if (n >= col)
       return i2;
-    if (i2 == string2.length)
+    if (i2 == string3.length)
       break;
-    n += string2.charCodeAt(i2) == 9 ? tabSize - n % tabSize : 1;
-    i2 = findClusterBreak2(string2, i2);
+    n += string3.charCodeAt(i2) == 9 ? tabSize - n % tabSize : 1;
+    i2 = findClusterBreak2(string3, i2);
   }
-  return strict === true ? -1 : string2.length;
+  return strict === true ? -1 : string3.length;
 }
 
 // node_modules/style-mod/src/style-mod.js
@@ -15312,16 +14966,16 @@ var scrollMargins = /* @__PURE__ */ Facet.define();
 function getScrollMargins(view) {
   let left = 0, right = 0, top2 = 0, bottom = 0;
   for (let source2 of view.state.facet(scrollMargins)) {
-    let m = source2(view);
-    if (m) {
-      if (m.left != null)
-        left = Math.max(left, m.left);
-      if (m.right != null)
-        right = Math.max(right, m.right);
-      if (m.top != null)
-        top2 = Math.max(top2, m.top);
-      if (m.bottom != null)
-        bottom = Math.max(bottom, m.bottom);
+    let m2 = source2(view);
+    if (m2) {
+      if (m2.left != null)
+        left = Math.max(left, m2.left);
+      if (m2.right != null)
+        right = Math.max(right, m2.right);
+      if (m2.top != null)
+        top2 = Math.max(top2, m2.top);
+      if (m2.bottom != null)
+        bottom = Math.max(bottom, m2.bottom);
     }
   }
   return { left, right, top: top2, bottom };
@@ -16173,7 +15827,7 @@ var TileBuilder = class {
         parent = last;
         openStart--;
       } else {
-        let tile = MarkTile.of(mark, (_a2 = this.cache.find(MarkTile, (m) => m.mark.eq(mark))) === null || _a2 === void 0 ? void 0 : _a2.dom);
+        let tile = MarkTile.of(mark, (_a2 = this.cache.find(MarkTile, (m2) => m2.mark.eq(mark))) === null || _a2 === void 0 ? void 0 : _a2.dom);
         parent.append(tile);
         parent = tile;
         openStart = 0;
@@ -17756,13 +17410,13 @@ var DOMReader = class {
       if (point.node == node)
         point.pos = this.text.length + Math.min(point.offset, text2.length);
     for (let off = 0, re = this.lineSeparator ? null : /\r\n?|\n/g; ; ) {
-      let nextBreak = -1, breakSize = 1, m;
+      let nextBreak = -1, breakSize = 1, m2;
       if (this.lineSeparator) {
         nextBreak = text2.indexOf(this.lineSeparator, off);
         breakSize = this.lineSeparator.length;
-      } else if (m = re.exec(text2)) {
-        nextBreak = m.index;
-        breakSize = m[0].length;
+      } else if (m2 = re.exec(text2)) {
+        nextBreak = m2.index;
+        breakSize = m2[0].length;
       }
       this.append(text2.slice(off, nextBreak < 0 ? text2.length : nextBreak));
       if (nextBreak < 0)
@@ -20245,12 +19899,12 @@ var lightDarkIDs = { "&light": "." + baseLightID, "&dark": "." + baseDarkID };
 function buildTheme(main, spec, scopes) {
   return new StyleModule(spec, {
     finish(sel) {
-      return /&/.test(sel) ? sel.replace(/&\w*/, (m) => {
-        if (m == "&")
+      return /&/.test(sel) ? sel.replace(/&\w*/, (m2) => {
+        if (m2 == "&")
           return main;
-        if (!scopes || !scopes[m])
-          throw new RangeError(`Unsupported selector: ${m}`);
-        return scopes[m];
+        if (!scopes || !scopes[m2])
+          throw new RangeError(`Unsupported selector: ${m2}`);
+        return scopes[m2];
       }) : main + " " + sel;
     }
   });
@@ -20576,7 +20230,7 @@ var DOMObserver = class {
     this.observer = new MutationObserver((mutations) => {
       for (let mut of mutations)
         this.queue.push(mut);
-      if ((browser.ie && browser.ie_version <= 11 || browser.ios && view.composing) && mutations.some((m) => m.type == "childList" && m.removedNodes.length || m.type == "characterData" && m.oldValue.length > m.target.nodeValue.length))
+      if ((browser.ie && browser.ie_version <= 11 || browser.ios && view.composing) && mutations.some((m2) => m2.type == "childList" && m2.removedNodes.length || m2.type == "characterData" && m2.oldValue.length > m2.target.nodeValue.length))
         this.flushSoon();
       else
         this.flush();
@@ -21529,9 +21183,9 @@ var EditorView = class _EditorView {
         let measuring = [];
         if (!(changed & 4))
           [this.measureRequests, measuring] = [measuring, this.measureRequests];
-        let measured = measuring.map((m) => {
+        let measured = measuring.map((m2) => {
           try {
-            return m.read(this);
+            return m2.read(this);
           } catch (e) {
             logException(this.state, e);
             return BadMeasure;
@@ -21555,9 +21209,9 @@ var EditorView = class _EditorView {
         for (let i3 = 0; i3 < measuring.length; i3++)
           if (measured[i3] != BadMeasure) {
             try {
-              let m = measuring[i3];
-              if (m.write)
-                m.write(measured[i3], this);
+              let m2 = measuring[i3];
+              if (m2.write)
+                m2.write(measured[i3], this);
             } catch (e) {
               logException(this.state, e);
             }
@@ -22702,10 +22356,10 @@ var hideNativeSelection = /* @__PURE__ */ Prec.highest(/* @__PURE__ */ EditorVie
 }));
 function iterMatches(doc2, re, from, to, f) {
   re.lastIndex = 0;
-  for (let cursor = doc2.iterRange(from, to), pos = from, m; !cursor.next().done; pos += cursor.value.length) {
+  for (let cursor = doc2.iterRange(from, to), pos = from, m2; !cursor.next().done; pos += cursor.value.length) {
     if (!cursor.lineBreak)
-      while (m = re.exec(cursor.value))
-        f(pos + m.index, m);
+      while (m2 = re.exec(cursor.value))
+        f(pos + m2.index, m2);
   }
 }
 function matchRanges(view, maxLength) {
@@ -22756,7 +22410,7 @@ var MatchDecorator = class {
   createDeco(view) {
     let build = new RangeSetBuilder(), add2 = build.add.bind(build);
     for (let { from, to } of matchRanges(view, this.maxLength))
-      iterMatches(view.state.doc, this.regexp, from, to, (from2, m) => this.addMatch(m, view, from2, add2));
+      iterMatches(view.state.doc, this.regexp, from, to, (from2, m2) => this.addMatch(m2, view, from2, add2));
     return build.finish();
   }
   /**
@@ -22797,14 +22451,14 @@ var MatchDecorator = class {
               break;
             }
         }
-        let ranges = [], m;
+        let ranges = [], m2;
         let add2 = (from2, to2, deco2) => ranges.push(deco2.range(from2, to2));
         if (fromLine == toLine) {
           this.regexp.lastIndex = start2 - fromLine.from;
-          while ((m = this.regexp.exec(fromLine.text)) && m.index < end - fromLine.from)
-            this.addMatch(m, view, m.index + fromLine.from, add2);
+          while ((m2 = this.regexp.exec(fromLine.text)) && m2.index < end - fromLine.from)
+            this.addMatch(m2, view, m2.index + fromLine.from, add2);
         } else {
-          iterMatches(view.state.doc, this.regexp, start2, end, (from2, m2) => this.addMatch(m2, view, from2, add2));
+          iterMatches(view.state.doc, this.regexp, start2, end, (from2, m3) => this.addMatch(m3, view, from2, add2));
         }
         deco = deco.update({ filterFrom: start2, filterTo: end, filter: (from2, to2) => from2 < start2 || to2 > end, add: ranges });
       }
@@ -22876,9 +22530,9 @@ function specialCharPlugin() {
     makeDecorator(conf) {
       return new MatchDecorator({
         regexp: conf.specialChars,
-        decoration: (m, view, pos) => {
+        decoration: (m2, view, pos) => {
           let { doc: doc2 } = view.state;
-          let code = codePointAt2(m[0], 0);
+          let code = codePointAt2(m2[0], 0);
           if (code == 9) {
             let line = doc2.lineAt(pos);
             let size = view.state.tabSize, col = countColumn(line.text, size, pos - line.from);
@@ -22983,6 +22637,49 @@ var activeLineHighlighter = /* @__PURE__ */ ViewPlugin.fromClass(class {
 }, {
   decorations: (v) => v.decorations
 });
+var Placeholder = class extends WidgetType {
+  constructor(content2) {
+    super();
+    this.content = content2;
+  }
+  toDOM(view) {
+    let wrap = document.createElement("span");
+    wrap.className = "cm-placeholder";
+    wrap.style.pointerEvents = "none";
+    wrap.appendChild(typeof this.content == "string" ? document.createTextNode(this.content) : typeof this.content == "function" ? this.content(view) : this.content.cloneNode(true));
+    wrap.setAttribute("aria-hidden", "true");
+    return wrap;
+  }
+  coordsAt(dom) {
+    let rects = dom.firstChild ? clientRectsFor(dom.firstChild) : [];
+    if (!rects.length)
+      return null;
+    let style = window.getComputedStyle(dom.parentNode);
+    let rect = flattenRect(rects[0], style.direction != "rtl");
+    let lineHeight = parseInt(style.lineHeight);
+    if (rect.bottom - rect.top > lineHeight * 1.5)
+      return { left: rect.left, right: rect.right, top: rect.top, bottom: rect.top + lineHeight };
+    return rect;
+  }
+  ignoreEvent() {
+    return false;
+  }
+};
+function placeholder(content2) {
+  let plugin = ViewPlugin.fromClass(class {
+    constructor(view) {
+      this.view = view;
+      this.placeholder = content2 ? Decoration.set([Decoration.widget({ widget: new Placeholder(content2), side: 1 }).range(0)]) : Decoration.none;
+    }
+    get decorations() {
+      return this.view.state.doc.length ? Decoration.none : this.placeholder;
+    }
+  }, { decorations: (v) => v.decorations });
+  return typeof content2 == "string" ? [
+    plugin,
+    EditorView.contentAttributes.of({ "aria-placeholder": content2 })
+  ] : plugin;
+}
 var MaxOff = 2e3;
 function rectangleFor(state2, a, b) {
   let startLine = Math.min(a.line, b.line), endLine = Math.max(a.line, b.line);
@@ -24417,13 +24114,13 @@ var lineNumberGutter = /* @__PURE__ */ activeGutters.compute([lineNumberConfig],
     return view.state.facet(lineNumberMarkers);
   },
   lineMarker(view, line, others) {
-    if (others.some((m) => m.toDOM))
+    if (others.some((m2) => m2.toDOM))
       return null;
     return new NumberMarker(formatNumber(view, view.state.doc.lineAt(line.from).number));
   },
   widgetMarker: (view, widget, block2) => {
-    for (let m of view.state.facet(lineNumberWidgetMarker)) {
-      let result = m(view, widget, block2);
+    for (let m2 of view.state.facet(lineNumberWidgetMarker)) {
+      let result = m2(view, widget, block2);
       if (result)
         return result;
     }
@@ -24539,8 +24236,8 @@ var Modifier = class _Modifier {
     if (exists)
       return exists;
     let set2 = [], tag = new Tag(base2.name, set2, base2, mods);
-    for (let m of mods)
-      m.instances.push(tag);
+    for (let m2 of mods)
+      m2.instances.push(tag);
     let configs = powerSet(mods);
     for (let parent of base2.set)
       if (!parent.modified.length)
@@ -24575,11 +24272,11 @@ function styleTags(spec) {
             mode = 1;
             break;
           }
-          let m = /^"(?:[^"\\]|\\.)*?"|[^\/!]+/.exec(rest);
-          if (!m)
+          let m2 = /^"(?:[^"\\]|\\.)*?"|[^\/!]+/.exec(rest);
+          if (!m2)
             throw new RangeError("Invalid path: " + part);
-          pieces.push(m[0] == "*" ? "" : m[0][0] == '"' ? JSON.parse(m[0]) : m[0]);
-          pos += m[0].length;
+          pieces.push(m2[0] == "*" ? "" : m2[0][0] == '"' ? JSON.parse(m2[0]) : m2[0]);
+          pos += m2[0].length;
           if (pos == part.length)
             break;
           let next2 = part[pos++];
@@ -26657,8 +26354,466 @@ function matchPlainBrackets(state2, pos, dir, tree, tokenType, maxScanDistance, 
   }
   return iter.done ? { start: startToken, matched: false } : null;
 }
+function countCol(string3, end, tabSize, startIndex = 0, startValue = 0) {
+  if (end == null) {
+    end = string3.search(/[^\s\u00a0]/);
+    if (end == -1)
+      end = string3.length;
+  }
+  let n = startValue;
+  for (let i2 = startIndex; i2 < end; i2++) {
+    if (string3.charCodeAt(i2) == 9)
+      n += tabSize - n % tabSize;
+    else
+      n++;
+  }
+  return n;
+}
+var StringStream = class {
+  /**
+  Create a stream.
+  */
+  constructor(string3, tabSize, indentUnit2, overrideIndent) {
+    this.string = string3;
+    this.tabSize = tabSize;
+    this.indentUnit = indentUnit2;
+    this.overrideIndent = overrideIndent;
+    this.pos = 0;
+    this.start = 0;
+    this.lastColumnPos = 0;
+    this.lastColumnValue = 0;
+  }
+  /**
+  True if we are at the end of the line.
+  */
+  eol() {
+    return this.pos >= this.string.length;
+  }
+  /**
+  True if we are at the start of the line.
+  */
+  sol() {
+    return this.pos == 0;
+  }
+  /**
+  Get the next code unit after the current position, or undefined
+  if we're at the end of the line.
+  */
+  peek() {
+    return this.string.charAt(this.pos) || void 0;
+  }
+  /**
+  Read the next code unit and advance `this.pos`.
+  */
+  next() {
+    if (this.pos < this.string.length)
+      return this.string.charAt(this.pos++);
+  }
+  /**
+  Match the next character against the given string, regular
+  expression, or predicate. Consume and return it if it matches.
+  */
+  eat(match) {
+    let ch = this.string.charAt(this.pos);
+    let ok;
+    if (typeof match == "string")
+      ok = ch == match;
+    else
+      ok = ch && (match instanceof RegExp ? match.test(ch) : match(ch));
+    if (ok) {
+      ++this.pos;
+      return ch;
+    }
+  }
+  /**
+  Continue matching characters that match the given string,
+  regular expression, or predicate function. Return true if any
+  characters were consumed.
+  */
+  eatWhile(match) {
+    let start2 = this.pos;
+    while (this.eat(match)) {
+    }
+    return this.pos > start2;
+  }
+  /**
+  Consume whitespace ahead of `this.pos`. Return true if any was
+  found.
+  */
+  eatSpace() {
+    let start2 = this.pos;
+    while (/[\s\u00a0]/.test(this.string.charAt(this.pos)))
+      ++this.pos;
+    return this.pos > start2;
+  }
+  /**
+  Move to the end of the line.
+  */
+  skipToEnd() {
+    this.pos = this.string.length;
+  }
+  /**
+  Move to directly before the given character, if found on the
+  current line.
+  */
+  skipTo(ch) {
+    let found = this.string.indexOf(ch, this.pos);
+    if (found > -1) {
+      this.pos = found;
+      return true;
+    }
+  }
+  /**
+  Move back `n` characters.
+  */
+  backUp(n) {
+    this.pos -= n;
+  }
+  /**
+  Get the column position at `this.pos`.
+  */
+  column() {
+    if (this.lastColumnPos < this.start) {
+      this.lastColumnValue = countCol(this.string, this.start, this.tabSize, this.lastColumnPos, this.lastColumnValue);
+      this.lastColumnPos = this.start;
+    }
+    return this.lastColumnValue;
+  }
+  /**
+  Get the indentation column of the current line.
+  */
+  indentation() {
+    var _a2;
+    return (_a2 = this.overrideIndent) !== null && _a2 !== void 0 ? _a2 : countCol(this.string, null, this.tabSize);
+  }
+  /**
+  Match the input against the given string or regular expression
+  (which should start with a `^`). Return true or the regexp match
+  if it matches.
+  
+  Unless `consume` is set to `false`, this will move `this.pos`
+  past the matched text.
+  
+  When matching a string `caseInsensitive` can be set to true to
+  make the match case-insensitive.
+  */
+  match(pattern, consume, caseInsensitive) {
+    if (typeof pattern == "string") {
+      let cased = (str) => caseInsensitive ? str.toLowerCase() : str;
+      let substr = this.string.substr(this.pos, pattern.length);
+      if (cased(substr) == cased(pattern)) {
+        if (consume !== false)
+          this.pos += pattern.length;
+        return true;
+      } else
+        return null;
+    } else {
+      let match = this.string.slice(this.pos).match(pattern);
+      if (match && match.index > 0)
+        return null;
+      if (match && consume !== false)
+        this.pos += match[0].length;
+      return match;
+    }
+  }
+  /**
+  Get the current token.
+  */
+  current() {
+    return this.string.slice(this.start, this.pos);
+  }
+};
+function fullParser(spec) {
+  return {
+    name: spec.name || "",
+    token: spec.token,
+    blankLine: spec.blankLine || (() => {
+    }),
+    startState: spec.startState || (() => true),
+    copyState: spec.copyState || defaultCopyState,
+    indent: spec.indent || (() => null),
+    languageData: spec.languageData || {},
+    tokenTable: spec.tokenTable || noTokens,
+    mergeTokens: spec.mergeTokens !== false
+  };
+}
+function defaultCopyState(state2) {
+  if (typeof state2 != "object")
+    return state2;
+  let newState = {};
+  for (let prop2 in state2) {
+    let val = state2[prop2];
+    newState[prop2] = val instanceof Array ? val.slice() : val;
+  }
+  return newState;
+}
+var IndentedFrom = /* @__PURE__ */ new WeakMap();
+var StreamLanguage = class _StreamLanguage extends Language {
+  constructor(parser) {
+    let data = defineLanguageFacet(parser.languageData);
+    let p = fullParser(parser), self2;
+    let impl = new class extends Parser {
+      createParse(input, fragments, ranges) {
+        return new Parse(self2, input, fragments, ranges);
+      }
+    }();
+    super(data, impl, [], parser.name);
+    this.topNode = docID(data, this);
+    self2 = this;
+    this.streamParser = p;
+    this.stateAfter = new NodeProp({ perNode: true });
+    this.tokenTable = parser.tokenTable ? new TokenTable(p.tokenTable) : defaultTokenTable;
+  }
+  /**
+  Define a stream language.
+  */
+  static define(spec) {
+    return new _StreamLanguage(spec);
+  }
+  /**
+  @internal
+  */
+  getIndent(cx) {
+    let from = void 0;
+    let { overrideIndentation } = cx.options;
+    if (overrideIndentation) {
+      from = IndentedFrom.get(cx.state);
+      if (from != null && from < cx.pos - 1e4)
+        from = void 0;
+    }
+    let start2 = findState(this, cx.node.tree, cx.node.from, cx.node.from, from !== null && from !== void 0 ? from : cx.pos), statePos, state2;
+    if (start2) {
+      state2 = start2.state;
+      statePos = start2.pos + 1;
+    } else {
+      state2 = this.streamParser.startState(cx.unit);
+      statePos = cx.node.from;
+    }
+    if (cx.pos - statePos > 1e4)
+      return null;
+    while (statePos < cx.pos) {
+      let line2 = cx.state.doc.lineAt(statePos), end = Math.min(cx.pos, line2.to);
+      if (line2.length) {
+        let indentation = overrideIndentation ? overrideIndentation(line2.from) : -1;
+        let stream = new StringStream(line2.text, cx.state.tabSize, cx.unit, indentation < 0 ? void 0 : indentation);
+        while (stream.pos < end - line2.from)
+          readToken(this.streamParser.token, stream, state2);
+      } else {
+        this.streamParser.blankLine(state2, cx.unit);
+      }
+      if (end == cx.pos)
+        break;
+      statePos = line2.to + 1;
+    }
+    let line = cx.lineAt(cx.pos);
+    if (overrideIndentation && from == null)
+      IndentedFrom.set(cx.state, line.from);
+    return this.streamParser.indent(state2, /^\s*(.*)/.exec(line.text)[1], cx);
+  }
+  get allowsNesting() {
+    return false;
+  }
+};
+function findState(lang, tree, off, startPos, before) {
+  let state2 = off >= startPos && off + tree.length <= before && tree.prop(lang.stateAfter);
+  if (state2)
+    return { state: lang.streamParser.copyState(state2), pos: off + tree.length };
+  for (let i2 = tree.children.length - 1; i2 >= 0; i2--) {
+    let child2 = tree.children[i2], pos = off + tree.positions[i2];
+    let found = child2 instanceof Tree && pos < before && findState(lang, child2, pos, startPos, before);
+    if (found)
+      return found;
+  }
+  return null;
+}
+function cutTree(lang, tree, from, to, inside) {
+  if (inside && from <= 0 && to >= tree.length)
+    return tree;
+  if (!inside && from == 0 && tree.type == lang.topNode)
+    inside = true;
+  for (let i2 = tree.children.length - 1; i2 >= 0; i2--) {
+    let pos = tree.positions[i2], child2 = tree.children[i2], inner;
+    if (pos < to && child2 instanceof Tree) {
+      if (!(inner = cutTree(lang, child2, from - pos, to - pos, inside)))
+        break;
+      return !inside ? inner : new Tree(tree.type, tree.children.slice(0, i2).concat(inner), tree.positions.slice(0, i2 + 1), pos + inner.length);
+    }
+  }
+  return null;
+}
+function findStartInFragments(lang, fragments, startPos, endPos, editorState) {
+  for (let f of fragments) {
+    let from = f.from + (f.openStart ? 25 : 0), to = f.to - (f.openEnd ? 25 : 0);
+    let found = from <= startPos && to > startPos && findState(lang, f.tree, 0 - f.offset, startPos, to), tree;
+    if (found && found.pos <= endPos && (tree = cutTree(lang, f.tree, startPos + f.offset, found.pos + f.offset, false)))
+      return { state: found.state, tree };
+  }
+  return { state: lang.streamParser.startState(editorState ? getIndentUnit(editorState) : 4), tree: Tree.empty };
+}
+var Parse = class {
+  constructor(lang, input, fragments, ranges) {
+    this.lang = lang;
+    this.input = input;
+    this.fragments = fragments;
+    this.ranges = ranges;
+    this.stoppedAt = null;
+    this.chunks = [];
+    this.chunkPos = [];
+    this.chunk = [];
+    this.chunkReused = void 0;
+    this.rangeIndex = 0;
+    this.to = ranges[ranges.length - 1].to;
+    let context = ParseContext.get(), from = ranges[0].from;
+    let { state: state2, tree } = findStartInFragments(lang, fragments, from, this.to, context === null || context === void 0 ? void 0 : context.state);
+    this.state = state2;
+    this.parsedPos = this.chunkStart = from + tree.length;
+    for (let i2 = 0; i2 < tree.children.length; i2++) {
+      this.chunks.push(tree.children[i2]);
+      this.chunkPos.push(tree.positions[i2]);
+    }
+    if (context && this.parsedPos < context.viewport.from - 1e5 && ranges.some((r) => r.from <= context.viewport.from && r.to >= context.viewport.from)) {
+      this.state = this.lang.streamParser.startState(getIndentUnit(context.state));
+      context.skipUntilInView(this.parsedPos, context.viewport.from);
+      this.parsedPos = context.viewport.from;
+    }
+    this.moveRangeIndex();
+  }
+  advance() {
+    let context = ParseContext.get();
+    let parseEnd = this.stoppedAt == null ? this.to : Math.min(this.to, this.stoppedAt);
+    let end = Math.min(
+      parseEnd,
+      this.chunkStart + 512
+      /* C.ChunkSize */
+    );
+    if (context)
+      end = Math.min(end, context.viewport.to);
+    while (this.parsedPos < end)
+      this.parseLine(context);
+    if (this.chunkStart < this.parsedPos)
+      this.finishChunk();
+    if (this.parsedPos >= parseEnd)
+      return this.finish();
+    if (context && this.parsedPos >= context.viewport.to) {
+      context.skipUntilInView(this.parsedPos, parseEnd);
+      return this.finish();
+    }
+    return null;
+  }
+  stopAt(pos) {
+    this.stoppedAt = pos;
+  }
+  lineAfter(pos) {
+    let chunk = this.input.chunk(pos);
+    if (!this.input.lineChunks) {
+      let eol = chunk.indexOf("\n");
+      if (eol > -1)
+        chunk = chunk.slice(0, eol);
+    } else if (chunk == "\n") {
+      chunk = "";
+    }
+    return pos + chunk.length <= this.to ? chunk : chunk.slice(0, this.to - pos);
+  }
+  nextLine() {
+    let from = this.parsedPos, line = this.lineAfter(from), end = from + line.length;
+    for (let index2 = this.rangeIndex; ; ) {
+      let rangeEnd2 = this.ranges[index2].to;
+      if (rangeEnd2 >= end)
+        break;
+      line = line.slice(0, rangeEnd2 - (end - line.length));
+      index2++;
+      if (index2 == this.ranges.length)
+        break;
+      let rangeStart = this.ranges[index2].from;
+      let after = this.lineAfter(rangeStart);
+      line += after;
+      end = rangeStart + after.length;
+    }
+    return { line, end };
+  }
+  skipGapsTo(pos, offset, side) {
+    for (; ; ) {
+      let end = this.ranges[this.rangeIndex].to, offPos = pos + offset;
+      if (side > 0 ? end > offPos : end >= offPos)
+        break;
+      let start2 = this.ranges[++this.rangeIndex].from;
+      offset += start2 - end;
+    }
+    return offset;
+  }
+  moveRangeIndex() {
+    while (this.ranges[this.rangeIndex].to < this.parsedPos)
+      this.rangeIndex++;
+  }
+  emitToken(id, from, to, offset) {
+    let size = 4;
+    if (this.ranges.length > 1) {
+      offset = this.skipGapsTo(from, offset, 1);
+      from += offset;
+      let len0 = this.chunk.length;
+      offset = this.skipGapsTo(to, offset, -1);
+      to += offset;
+      size += this.chunk.length - len0;
+    }
+    let last = this.chunk.length - 4;
+    if (this.lang.streamParser.mergeTokens && size == 4 && last >= 0 && this.chunk[last] == id && this.chunk[last + 2] == from)
+      this.chunk[last + 2] = to;
+    else
+      this.chunk.push(id, from, to, size);
+    return offset;
+  }
+  parseLine(context) {
+    let { line, end } = this.nextLine(), offset = 0, { streamParser } = this.lang;
+    let stream = new StringStream(line, context ? context.state.tabSize : 4, context ? getIndentUnit(context.state) : 2);
+    if (stream.eol()) {
+      streamParser.blankLine(this.state, stream.indentUnit);
+    } else {
+      while (!stream.eol()) {
+        let token = readToken(streamParser.token, stream, this.state);
+        if (token)
+          offset = this.emitToken(this.lang.tokenTable.resolve(token), this.parsedPos + stream.start, this.parsedPos + stream.pos, offset);
+        if (stream.start > 1e4)
+          break;
+      }
+    }
+    this.parsedPos = end;
+    this.moveRangeIndex();
+    if (this.parsedPos < this.to)
+      this.parsedPos++;
+  }
+  finishChunk() {
+    let tree = Tree.build({
+      buffer: this.chunk,
+      start: this.chunkStart,
+      length: this.parsedPos - this.chunkStart,
+      nodeSet,
+      topID: 0,
+      maxBufferLength: 512,
+      reused: this.chunkReused
+    });
+    tree = new Tree(tree.type, tree.children, tree.positions, tree.length, [[this.lang.stateAfter, this.lang.streamParser.copyState(this.state)]]);
+    this.chunks.push(tree);
+    this.chunkPos.push(this.chunkStart - this.ranges[0].from);
+    this.chunk = [];
+    this.chunkReused = void 0;
+    this.chunkStart = this.parsedPos;
+  }
+  finish() {
+    return new Tree(this.lang.topNode, this.chunks, this.chunkPos, this.parsedPos - this.ranges[0].from).balance();
+  }
+};
+function readToken(token, stream, state2) {
+  stream.start = stream.pos;
+  for (let i2 = 0; i2 < 10; i2++) {
+    let result = token(stream, state2);
+    if (stream.pos > stream.start)
+      return result;
+  }
+  throw new Error("Stream parser failed to advance stream.");
+}
 var noTokens = /* @__PURE__ */ Object.create(null);
 var typeArray = [NodeType.none];
+var nodeSet = /* @__PURE__ */ new NodeSet(typeArray);
 var warned = [];
 var byTag = /* @__PURE__ */ Object.create(null);
 var defaultTable = /* @__PURE__ */ Object.create(null);
@@ -26677,6 +26832,16 @@ for (let [legacyName, name3] of [
   ["property", "propertyName"]
 ])
   defaultTable[legacyName] = /* @__PURE__ */ createTokenType(noTokens, name3);
+var TokenTable = class {
+  constructor(extra) {
+    this.extra = extra;
+    this.table = Object.assign(/* @__PURE__ */ Object.create(null), defaultTable);
+  }
+  resolve(tag) {
+    return !tag ? 0 : this.table[tag] || (this.table[tag] = createTokenType(this.extra, tag));
+  }
+};
+var defaultTokenTable = /* @__PURE__ */ new TokenTable(noTokens);
 function warnForPart(part, msg) {
   if (warned.indexOf(part) > -1)
     return;
@@ -26719,6 +26884,14 @@ function createTokenType(extra, tagStr) {
   });
   typeArray.push(type);
   return type.id;
+}
+function docID(data, lang) {
+  let type = NodeType.define({ id: typeArray.length, name: "Document", props: [
+    languageDataProp.add(() => data),
+    indentNodeProp.add(() => (cx) => lang.getIndent(cx))
+  ], top: true });
+  typeArray.push(type);
+  return type;
 }
 var marks = {
   rtl: /* @__PURE__ */ Decoration.mark({ class: "cm-iso", inclusive: true, attributes: { dir: "rtl" }, bidiIsolate: Direction.RTL }),
@@ -28105,13 +28278,13 @@ var Snippet = class _Snippet {
   }
   static parse(template2) {
     let fields = [];
-    let lines = [], positions = [], m;
+    let lines = [], positions = [], m2;
     for (let line of template2.split(/\r\n?|\n/)) {
-      while (m = /[#$]\{(?:(\d+)(?::([^{}]*))?|((?:\\[{}]|[^{}])*))\}/.exec(line)) {
-        let seq = m[1] ? +m[1] : null, rawName = m[2] || m[3] || "", found = -1;
+      while (m2 = /[#$]\{(?:(\d+)(?::([^{}]*))?|((?:\\[{}]|[^{}])*))\}/.exec(line)) {
+        let seq = m2[1] ? +m2[1] : null, rawName = m2[2] || m2[3] || "", found = -1;
         if (seq === 0)
           seq = 1e9;
-        let name3 = rawName.replace(/\\[{}]/g, (m2) => m2[1]);
+        let name3 = rawName.replace(/\\[{}]/g, (m3) => m3[1]);
         for (let i2 = 0; i2 < fields.length; i2++) {
           if (seq != null ? fields[i2].seq == seq : name3 ? fields[i2].name == name3 : false)
             found = i2;
@@ -28127,13 +28300,13 @@ var Snippet = class _Snippet {
               pos.field++;
         }
         for (let pos of positions)
-          if (pos.line == lines.length && pos.from > m.index) {
-            let snip = m[2] ? 3 + (m[1] || "").length : 2;
+          if (pos.line == lines.length && pos.from > m2.index) {
+            let snip = m2[2] ? 3 + (m2[1] || "").length : 2;
             pos.from -= snip;
             pos.to -= snip;
           }
-        positions.push(new FieldPos(found, lines.length, m.index, m.index + name3.length));
-        line = line.slice(0, m.index) + rawName + line.slice(m.index + m[0].length);
+        positions.push(new FieldPos(found, lines.length, m2.index, m2.index + name3.length));
+        line = line.slice(0, m2.index) + rawName + line.slice(m2.index + m2[0].length);
       }
       line = line.replace(/\\([{}])/g, (_, brace, index2) => {
         for (let pos of positions)
@@ -28478,7 +28651,7 @@ function nodeStart(state2, pos) {
 }
 function probablyInString(state2, pos, quoteToken, prefixes) {
   let node = syntaxTree(state2).resolveInner(pos, -1);
-  let maxPrefix = prefixes.reduce((m, p) => Math.max(m, p.length), 0);
+  let maxPrefix = prefixes.reduce((m2, p) => Math.max(m2, p.length), 0);
   for (let i2 = 0; i2 < 5; i2++) {
     let start2 = state2.sliceDoc(node.from, Math.min(node.to, node.from + quoteToken.length + maxPrefix));
     let quotePos = start2.indexOf(quoteToken);
@@ -31020,7 +31193,7 @@ var RegExpQuery = class extends QueryType2 {
     return this.prevMatchInRange(state2, 0, curFrom) || this.prevMatchInRange(state2, curTo, state2.doc.length);
   }
   getReplacement(result) {
-    return this.spec.unquote(this.spec.replace).replace(/\$([$&]|\d+)/g, (m, i2) => {
+    return this.spec.unquote(this.spec.replace).replace(/\$([$&]|\d+)/g, (m2, i2) => {
       if (i2 == "&")
         return result.match[0];
       if (i2 == "$")
@@ -31030,7 +31203,7 @@ var RegExpQuery = class extends QueryType2 {
         if (n > 0 && n < result.match.length)
           return result.match[n] + i2.slice(l);
       }
-      return m;
+      return m2;
     });
   }
   matchAll(state2, limit) {
@@ -31497,6 +31670,704 @@ var base_extensions = [
   ])
 ];
 
+// src/fava/codemirror/bql-highlight.ts
+var bql_highlight = HighlightStyle.define([
+  {
+    // Keywords: Select, Where, And
+    tag: tags.keyword,
+    color: "var(--bql-keywords)"
+  },
+  {
+    // Values
+    tag: [
+      tags.typeName,
+      tags.className,
+      tags.number,
+      tags.changed,
+      tags.annotation,
+      tags.modifier,
+      tags.self,
+      tags.namespace
+    ],
+    color: "var(--bql-values)"
+  },
+  {
+    // Strings
+    tag: [tags.processingInstruction, tags.string, tags.inserted],
+    color: "var(--bql-string)"
+  },
+  {
+    // Errors
+    tag: [
+      tags.name,
+      tags.deleted,
+      tags.character,
+      tags.propertyName,
+      tags.macroName
+    ],
+    color: "var(--bql-errors)"
+  }
+]);
+
+// src/fava/codemirror/bql-grammar.ts
+var bql_grammar_default = {
+  columns: [
+    "account",
+    "accounts",
+    "amount",
+    "balance",
+    "close",
+    "comment",
+    "cost_currency",
+    "cost_date",
+    "cost_label",
+    "cost_number",
+    "currency",
+    "date",
+    "day",
+    "description",
+    "discrepancy",
+    "entry",
+    "filename",
+    "flag",
+    "id",
+    "lineno",
+    "links",
+    "location",
+    "meta",
+    "month",
+    "name",
+    "narration",
+    "number",
+    "open",
+    "other_accounts",
+    "payee",
+    "position",
+    "posting_flag",
+    "price",
+    "tags",
+    "tolerance",
+    "type",
+    "weight",
+    "year"
+  ],
+  functions: [
+    "abs",
+    "account_sortkey",
+    "any_meta",
+    "bool",
+    "close_date",
+    "commodity",
+    "commodity_meta",
+    "convert",
+    "cost",
+    "count",
+    "currency",
+    "currency_meta",
+    "date",
+    "date_add",
+    "date_bin",
+    "date_diff",
+    "date_part",
+    "date_trunc",
+    "day",
+    "decimal",
+    "empty",
+    "entry_meta",
+    "filter_currency",
+    "findfirst",
+    "first",
+    "getitem",
+    "getprice",
+    "grep",
+    "grepn",
+    "has_account",
+    "int",
+    "interval",
+    "joinstr",
+    "last",
+    "leaf",
+    "length",
+    "lower",
+    "max",
+    "maxwidth",
+    "meta",
+    "min",
+    "month",
+    "neg",
+    "number",
+    "only",
+    "open_date",
+    "open_meta",
+    "parent",
+    "parse_date",
+    "possign",
+    "quarter",
+    "repr",
+    "root",
+    "round",
+    "safediv",
+    "splitcomp",
+    "str",
+    "subst",
+    "substr",
+    "sum",
+    "today",
+    "units",
+    "upper",
+    "value",
+    "weekday",
+    "year",
+    "yearmonth"
+  ],
+  keywords: [
+    "and",
+    "as",
+    "asc",
+    "balances",
+    "by",
+    "create",
+    "desc",
+    "distinct",
+    "false",
+    "from",
+    "group",
+    "having",
+    "in",
+    "insert",
+    "into",
+    "is",
+    "journal",
+    "limit",
+    "not",
+    "or",
+    "order",
+    "pivot",
+    "print",
+    "select",
+    "table",
+    "true",
+    "using",
+    "where"
+  ]
+};
+
+// src/fava/codemirror/bql-autocomplete.ts
+var { columns, functions, keywords } = bql_grammar_default;
+var columns_functions_keywords = [
+  ...columns,
+  ...functions.map((f) => `${f}(`),
+  ...keywords
+].map((label) => ({ label }));
+var command_completions = [
+  "balances",
+  "errors",
+  "explain",
+  "help",
+  "lex",
+  "parse",
+  "print",
+  "runcustom",
+  "select",
+  "tokenize"
+].map((label) => ({ label }));
+var bql_completion = (context) => {
+  const token = context.matchBefore(/\w+/);
+  if (!token) {
+    return null;
+  }
+  if (token.from === 0) {
+    return { from: token.from, options: command_completions };
+  }
+  return { from: token.from, options: columns_functions_keywords };
+};
+
+// src/fava/codemirror/bql-stream-parser.ts
+var keywords2 = new Set(bql_grammar_default.keywords);
+var columns2 = new Set(bql_grammar_default.columns);
+var functions2 = new Set(bql_grammar_default.functions);
+var string2 = /^("[^"]*"|'[^']*')/;
+var date = /^(?:#(?:"[^"]*"|'[^']*')|\d\d\d\d-\d\d-\d\d)/;
+var decimal2 = /^[-+]?([0-9]+\.[0-9]*|[0-9]*\.[0-9]+)/;
+var integer = /^[-+]?[0-9]+/;
+var m = (s, p) => {
+  const match = s.match(p);
+  return match != null && match !== false;
+};
+var bql_stream_parser = {
+  token(stream) {
+    if (stream.eatSpace() || stream.eol()) {
+      return null;
+    }
+    if (m(stream, string2)) {
+      return "string";
+    }
+    if (m(stream, date) || m(stream, decimal2) || m(stream, integer)) {
+      return "number";
+    }
+    if (m(stream, /\w+/)) {
+      const word = stream.current().toLowerCase();
+      if (keywords2.has(word)) {
+        return "keyword";
+      }
+      if (columns2.has(word)) {
+        return "typeName";
+      }
+      if (functions2.has(word) && stream.peek() === "(") {
+        return "macroName";
+      }
+      return "name";
+    }
+    const char = stream.next();
+    if (char === "*") {
+      return "typeName";
+    }
+    return null;
+  }
+};
+
+// src/fava/codemirror/bql-language.ts
+var bql_language = StreamLanguage.define(bql_stream_parser);
+var bql_language_support = new LanguageSupport(
+  bql_language,
+  bql_language.data.of({
+    autocomplete: bql_completion
+  })
+);
+
+// src/fava/codemirror/editor-transactions.ts
+function replace_contents(state2, value) {
+  return {
+    changes: { from: 0, to: state2.doc.length, insert: value }
+  };
+}
+
+// src/fava/codemirror/bql.ts
+function init_query_editor(value, onDocChanges, placeholder_value, get_submit) {
+  return new EditorView({
+    doc: value,
+    extensions: [
+      bql_language_support,
+      EditorView.updateListener.of((update2) => {
+        if (update2.docChanged) {
+          onDocChanges(update2.state);
+        }
+      }),
+      keymap.of([
+        {
+          key: "Control-Enter",
+          mac: "Meta-Enter",
+          run: () => {
+            const submit = get_submit();
+            submit();
+            return true;
+          }
+        }
+      ]),
+      placeholder(placeholder_value),
+      base_extensions,
+      syntaxHighlighting(bql_highlight)
+    ]
+  });
+}
+
+// src/fava/charts/LineChart.svelte
+var root_216 = ns_template(`<line class="chart-grid svelte-izodmx"></line><text class="chart-tick svelte-izodmx" text-anchor="end"> </text>`, 1);
+var root_310 = ns_template(`<text y="51" class="chart-tick svelte-izodmx" text-anchor="middle"> </text>`);
+var root_118 = template(`<svg class="line-chart svelte-izodmx" viewBox="0 0 100 52" role="img" aria-label="Price line chart"><!><path class="line-path svelte-izodmx"></path><!></svg>`);
+var root_47 = template(`<p class="chart-empty svelte-izodmx">No prices.</p>`);
+var root_55 = template(`<div class="chart-tooltip svelte-izodmx" role="status"> </div>`);
+var root9 = template(`<section class="line-card svelte-izodmx"><!> <!></section>`);
+function LineChart($$anchor, $$props) {
+  push($$props, false);
+  const data = mutable_state();
+  const timeExtent = mutable_state();
+  const valueExtent = mutable_state();
+  const path = mutable_state();
+  const yTicks = mutable_state();
+  const tickFormat = mutable_state();
+  const xTicks = mutable_state();
+  let points = prop($$props, "points", 24, () => []);
+  let formatTip = prop($$props, "formatTip", 8, (point) => `${point.date}: ${point.display}`);
+  const X0 = 14;
+  const X1 = 98;
+  const Y0 = 4;
+  const Y1 = 44;
+  function x(timestamp) {
+    const span = get(timeExtent)[1] - get(timeExtent)[0];
+    if (!span) return (X0 + X1) / 2;
+    return X0 + (timestamp - get(timeExtent)[0]) / span * (X1 - X0);
+  }
+  function y(value) {
+    const span = get(valueExtent)[1] - get(valueExtent)[0];
+    if (!span) return (Y0 + Y1) / 2;
+    return Y1 - (value - get(valueExtent)[0]) / span * (Y1 - Y0);
+  }
+  function niceTicks(lo, hi, count = 4) {
+    if (!(hi > lo)) return [lo];
+    const step0 = (hi - lo) / count;
+    const magnitude = Math.pow(10, Math.floor(Math.log10(step0)));
+    const residual = step0 / magnitude;
+    const step = (residual >= 5 ? 5 : residual >= 2 ? 2 : 1) * magnitude;
+    const ticks = [];
+    for (let value = Math.ceil(lo / step) * step; value <= hi + step / 1e-6; value += step) {
+      ticks.push(value);
+    }
+    return ticks;
+  }
+  function tickLabel(value) {
+    return get(tickFormat).format(Math.abs(value) < 1e-9 ? 0 : value);
+  }
+  function xTickLabel(date2) {
+    const spanDays = (get(timeExtent)[1] - get(timeExtent)[0]) / 864e5;
+    return spanDays > 366 ? date2.slice(0, 4) : date2.slice(0, 7);
+  }
+  let tooltipText = mutable_state("");
+  let tooltipLeft = mutable_state(0);
+  let tooltipTop = mutable_state(0);
+  let tooltipVisible = mutable_state(false);
+  function showTip(event2) {
+    const svg2 = event2.currentTarget;
+    const box = svg2.getBoundingClientRect();
+    if (!box.width || !get(data).length) return;
+    const vx = (event2.clientX - box.left) / box.width * 100;
+    let best = get(data)[0];
+    for (const point of get(data)) {
+      if (Math.abs(x(point.timestamp) - vx) < Math.abs(x(best.timestamp) - vx)) best = point;
+    }
+    set(tooltipText, formatTip()(best));
+    set(tooltipVisible, true);
+    const card = svg2.closest(".line-card");
+    const cardBox = card?.getBoundingClientRect();
+    if (cardBox) {
+      set(tooltipLeft, event2.clientX - cardBox.left + 12);
+      set(tooltipTop, event2.clientY - cardBox.top + 12);
+    }
+  }
+  function hideTip() {
+    set(tooltipVisible, false);
+  }
+  legacy_pre_effect(() => deep_read_state(points()), () => {
+    set(data, points().filter((point) => Number.isFinite(point.value) && point.date).map((point) => ({
+      ...point,
+      timestamp: Date.parse(point.date)
+    })).filter((point) => Number.isFinite(point.timestamp)).sort((left, right) => left.timestamp - right.timestamp));
+  });
+  legacy_pre_effect(() => get(data), () => {
+    set(timeExtent, get(data).length ? [
+      get(data)[0].timestamp,
+      get(data)[get(data).length - 1].timestamp
+    ] : [0, 1]);
+  });
+  legacy_pre_effect(() => get(data), () => {
+    set(valueExtent, (() => {
+      if (!get(data).length) return [0, 1];
+      let lo = Math.min(...get(data).map((point) => point.value));
+      let hi = Math.max(...get(data).map((point) => point.value));
+      if (lo === hi) {
+        lo -= 1;
+        hi += 1;
+      }
+      const pad = (hi - lo) * 0.03;
+      return [lo - pad, hi + pad];
+    })());
+  });
+  legacy_pre_effect(() => get(data), () => {
+    set(path, get(data).map((point, index2) => `${index2 ? "L" : "M"}${x(point.timestamp).toFixed(2)},${y(point.value).toFixed(2)}`).join(" "));
+  });
+  legacy_pre_effect(() => get(valueExtent), () => {
+    set(yTicks, niceTicks(get(valueExtent)[0], get(valueExtent)[1]));
+  });
+  legacy_pre_effect(() => {
+  }, () => {
+    set(tickFormat, new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 2 }));
+  });
+  legacy_pre_effect(() => (get(data), get(timeExtent)), () => {
+    set(xTicks, (() => {
+      if (!get(data).length) return [];
+      const count = Math.min(5, get(data).length);
+      const ticks = [];
+      for (let stop2 = 0; stop2 < count; stop2 += 1) {
+        const timestamp = get(timeExtent)[0] + (get(timeExtent)[1] - get(timeExtent)[0]) * stop2 / Math.max(1, count - 1);
+        let nearest = get(data)[0];
+        for (const point of get(data)) {
+          if (Math.abs(point.timestamp - timestamp) < Math.abs(nearest.timestamp - timestamp)) nearest = point;
+        }
+        if (!ticks.some((tick2) => tick2.date === nearest.date)) ticks.push(nearest);
+      }
+      return ticks;
+    })());
+  });
+  legacy_pre_effect_reset();
+  init2();
+  var section = root9();
+  var node = child(section);
+  {
+    var consequent = ($$anchor2) => {
+      var svg_1 = root_118();
+      var node_1 = child(svg_1);
+      each(node_1, 1, () => get(yTicks), (tick2) => tick2, ($$anchor3, tick2) => {
+        var fragment = root_216();
+        var line = first_child(fragment);
+        set_attribute(line, "x1", X0);
+        template_effect(() => set_attribute(line, "y1", y(get(tick2))));
+        set_attribute(line, "x2", X1);
+        template_effect(() => set_attribute(line, "y2", y(get(tick2))));
+        var text2 = sibling(line);
+        set_attribute(text2, "x", X0 - 1);
+        template_effect(() => set_attribute(text2, "y", y(get(tick2)) + 1));
+        var text_1 = child(text2, true);
+        template_effect(() => set_text(text_1, tickLabel(get(tick2))));
+        reset(text2);
+        append($$anchor3, fragment);
+      });
+      var path_1 = sibling(node_1);
+      var node_2 = sibling(path_1);
+      each(node_2, 1, () => get(xTicks), (tick2) => tick2.date, ($$anchor3, tick2) => {
+        var text_2 = root_310();
+        template_effect(() => set_attribute(text_2, "x", x(get(tick2).timestamp)));
+        var text_3 = child(text_2, true);
+        template_effect(() => set_text(text_3, xTickLabel(get(tick2).date)));
+        reset(text_2);
+        append($$anchor3, text_2);
+      });
+      reset(svg_1);
+      template_effect(() => set_attribute(path_1, "d", get(path)));
+      event("mousemove", svg_1, showTip);
+      event("mouseleave", svg_1, hideTip);
+      append($$anchor2, svg_1);
+    };
+    var alternate = ($$anchor2) => {
+      var p = root_47();
+      append($$anchor2, p);
+    };
+    if_block(node, ($$render) => {
+      if (get(data).length) $$render(consequent);
+      else $$render(alternate, false);
+    });
+  }
+  var node_3 = sibling(node, 2);
+  {
+    var consequent_1 = ($$anchor2) => {
+      var div = root_55();
+      var text_4 = child(div, true);
+      reset(div);
+      template_effect(() => {
+        set_attribute(div, "style", `left:${get(tooltipLeft)}px;top:${get(tooltipTop)}px`);
+        set_text(text_4, get(tooltipText));
+      });
+      append($$anchor2, div);
+    };
+    if_block(node_3, ($$render) => {
+      if (get(tooltipVisible)) $$render(consequent_1);
+    });
+  }
+  reset(section);
+  append($$anchor, section);
+  pop();
+}
+
+// src/fava/reports/QueryReport.svelte
+var root_119 = template(`<p class="error-panel svelte-1qlrjvy" role="alert"> </p>`);
+var root_48 = template(`<div class="flex-row svelte-1qlrjvy"><span class="spacer svelte-1qlrjvy"></span> <button type="button" class="show-charts"> </button></div> <!>`, 1);
+var root_311 = template(`<p><a class="button">Export CSV</a></p> <!> <!>`, 1);
+var root10 = template(`<div class="headerline"><h2>Query</h2></div> <form class="query-form svelte-1qlrjvy"><label for="query-editor">BeanQuery</label> <div id="query-editor" aria-label="BeanQuery" class="svelte-1qlrjvy"></div> <button type="submit"> </button></form> <!>`, 1);
+function QueryReport($$anchor, $$props) {
+  push($$props, false);
+  const chartPoints = mutable_state();
+  let adapter = prop($$props, "adapter", 8);
+  let query = prop($$props, "query", 24, () => ({}));
+  let queryText = mutable_state(query().query_string || "SELECT account, balance FROM accounts ORDER BY account");
+  let appliedRouteQuery = mutable_state(query().query_string ?? "");
+  let result = mutable_state(null);
+  let loading = mutable_state(false);
+  let error2 = mutable_state("");
+  let showCharts = mutable_state(true);
+  let editorHost = mutable_state();
+  let editor = null;
+  function onDocChanges(state2) {
+    set(queryText, state2.sliceDoc());
+  }
+  function syncEditorFromRoute(text2) {
+    if (editor) {
+      editor.dispatch(replace_contents(editor.state, text2));
+    }
+  }
+  async function run3() {
+    set(loading, true);
+    set(error2, "");
+    try {
+      set(result, parseTableReport(await adapter().load("query", { query_string: get(queryText) })));
+    } catch (value) {
+      set(error2, value instanceof Error ? value.message : "The query could not be evaluated.");
+    } finally {
+      set(loading, false);
+    }
+  }
+  onMount(() => {
+    editor = init_query_editor(get(queryText), onDocChanges, "...enter a BQL query. 'help' to list available commands.", () => run3);
+    get(editorHost).appendChild(editor.dom);
+    return () => editor?.destroy();
+  });
+  const isoDate = /^\d{4}-\d{2}-\d{2}$/;
+  function numberValue(value) {
+    if (typeof value === "number") return Number.isFinite(value) ? value : NaN;
+    if (typeof value === "string") {
+      if (value.includes("/")) {
+        const [numerator, denominator] = value.split("/").map(Number);
+        return denominator ? numerator / denominator : NaN;
+      }
+      return Number(value);
+    }
+    if (Array.isArray(value)) {
+      let total = 0;
+      for (const item of value) {
+        const parsed = numberValue(item);
+        if (!Number.isFinite(parsed)) return NaN;
+        total += parsed;
+      }
+      return total;
+    }
+    if (value && typeof value === "object") {
+      const wire = value;
+      if (typeof wire.display === "string") return numberValue(wire.display);
+    }
+    return NaN;
+  }
+  function displayValue(value) {
+    if (value && typeof value === "object" && !Array.isArray(value)) {
+      const wire = value;
+      if (typeof wire.display === "string") return wire.display;
+    }
+    if (Array.isArray(value)) return value.map(displayValue).join(" + ");
+    return String(value);
+  }
+  onMount(() => {
+    void run3();
+  });
+  legacy_pre_effect(
+    () => (deep_read_state(query()), get(appliedRouteQuery)),
+    () => {
+      const routed = query().query_string ?? "";
+      if (routed && routed !== get(appliedRouteQuery)) {
+        set(appliedRouteQuery, routed);
+        set(queryText, routed);
+        syncEditorFromRoute(routed);
+        void run3();
+      }
+    }
+  );
+  legacy_pre_effect(() => get(result), () => {
+    set(chartPoints, (() => {
+      if (!get(result) || get(result).columns.length !== 2 || !get(result).rows.length) return [];
+      const [dateColumn, valueColumn] = get(result).columns;
+      const points = [];
+      for (const row of get(result).rows) {
+        const rawDate = row[dateColumn];
+        if (typeof rawDate !== "string" || !isoDate.test(rawDate)) return [];
+        const value = numberValue(row[valueColumn]);
+        if (!Number.isFinite(value)) return [];
+        points.push({
+          date: rawDate,
+          display: displayValue(row[valueColumn]),
+          value
+        });
+      }
+      return points;
+    })());
+  });
+  legacy_pre_effect_reset();
+  init2();
+  var fragment = root10();
+  var form = sibling(first_child(fragment), 2);
+  var div = sibling(child(form), 2);
+  bind_this(div, ($$value) => set(editorHost, $$value), () => get(editorHost));
+  var button = sibling(div, 2);
+  var text_1 = child(button, true);
+  reset(button);
+  reset(form);
+  var node = sibling(form, 2);
+  {
+    var consequent = ($$anchor2) => {
+      var p = root_119();
+      var text_2 = child(p, true);
+      reset(p);
+      template_effect(() => set_text(text_2, get(error2)));
+      append($$anchor2, p);
+    };
+    var alternate = ($$anchor2) => {
+      var fragment_1 = comment();
+      var node_1 = first_child(fragment_1);
+      {
+        var consequent_3 = ($$anchor3) => {
+          var fragment_2 = root_311();
+          var p_1 = first_child(fragment_2);
+          var a = child(p_1);
+          template_effect(() => set_attribute(a, "href", `/api/v1/query?q=${encodeURIComponent(get(queryText))}&format=csv`));
+          reset(p_1);
+          var node_2 = sibling(p_1, 2);
+          {
+            var consequent_2 = ($$anchor4) => {
+              var fragment_3 = root_48();
+              var div_1 = first_child(fragment_3);
+              var button_1 = sibling(child(div_1), 2);
+              var text_3 = child(button_1, true);
+              reset(button_1);
+              reset(div_1);
+              var node_3 = sibling(div_1, 2);
+              {
+                var consequent_1 = ($$anchor5) => {
+                  LineChart($$anchor5, {
+                    get points() {
+                      return get(chartPoints);
+                    }
+                  });
+                };
+                if_block(node_3, ($$render) => {
+                  if (get(showCharts)) $$render(consequent_1);
+                });
+              }
+              template_effect(() => set_text(text_3, get(showCharts) ? "\u25BC" : "\u25C0"));
+              event("click", button_1, () => set(showCharts, !get(showCharts)));
+              append($$anchor4, fragment_3);
+            };
+            if_block(node_2, ($$render) => {
+              if (get(chartPoints).length) $$render(consequent_2);
+            });
+          }
+          var node_4 = sibling(node_2, 2);
+          GenericReport(node_4, {
+            get report() {
+              return get(result);
+            },
+            title: "Query result"
+          });
+          append($$anchor3, fragment_2);
+        };
+        if_block(
+          node_1,
+          ($$render) => {
+            if (get(result)) $$render(consequent_3);
+          },
+          true
+        );
+      }
+      append($$anchor2, fragment_1);
+    };
+    if_block(node, ($$render) => {
+      if (get(error2)) $$render(consequent);
+      else $$render(alternate, false);
+    });
+  }
+  template_effect(() => {
+    button.disabled = get(loading);
+    set_text(text_1, get(loading) ? "Running\u2026" : "Run query");
+  });
+  event("submit", form, preventDefault(run3));
+  append($$anchor, fragment);
+  pop();
+}
+
 // src/fava/codemirror/beancount-highlight.ts
 var beancount_highlight = HighlightStyle.define([
   {
@@ -31759,10 +32630,10 @@ function getText(tree, startIndex, endIndex, startPosition) {
   if (result) {
     startIndex += result.length;
     while (startIndex < endIndex) {
-      const string2 = tree.textCallback(startIndex, startPosition);
-      if (string2 && string2.length > 0) {
-        startIndex += string2.length;
-        result += string2;
+      const string3 = tree.textCallback(startIndex, startPosition);
+      if (string3 && string3.length > 0) {
+        startIndex += string3.length;
+        result += string3;
       } else {
         break;
       }
@@ -34243,13 +35114,13 @@ async function Module2(moduleArg = {}) {
   __name(_tree_sitter_log_callback, "_tree_sitter_log_callback");
   function _tree_sitter_parse_callback(inputBufferAddress, index2, row, column, lengthAddress) {
     const INPUT_BUFFER_SIZE = 10 * 1024;
-    const string2 = Module.currentParseCallback(index2, {
+    const string3 = Module.currentParseCallback(index2, {
       row,
       column
     });
-    if (typeof string2 === "string") {
-      setValue(lengthAddress, string2.length, "i32");
-      stringToUTF16(string2, inputBufferAddress, INPUT_BUFFER_SIZE);
+    if (typeof string3 === "string") {
+      setValue(lengthAddress, string3.length, "i32");
+      stringToUTF16(string3, inputBufferAddress, INPUT_BUFFER_SIZE);
     } else {
       setValue(lengthAddress, 0, "i32");
     }
@@ -35772,7 +36643,7 @@ function input_edit_for_fragments(fragments, input_length) {
   return ts_edit(from - 1, oldEndIndex + 1, newEndIndex + 1);
 }
 var PARSE_CACHE = /* @__PURE__ */ new WeakMap();
-var Parse = class _Parse {
+var Parse2 = class _Parse {
   ts_parser;
   node_types;
   input;
@@ -35974,7 +36845,7 @@ var LezerTSParser = class extends Parser {
     );
   }
   createParse(input, fragments, ranges) {
-    return new Parse(this.ts_parser, this.node_types, input, fragments, ranges);
+    return new Parse2(this.ts_parser, this.node_types, input, fragments, ranges);
   }
 };
 
@@ -36071,13 +36942,6 @@ var ruler_plugin = (column) => ViewPlugin.define((view) => {
     }
   };
 });
-
-// src/fava/codemirror/editor-transactions.ts
-function replace_contents(state2, value) {
-  return {
-    changes: { from: 0, to: state2.doc.length, insert: value }
-  };
-}
 
 // src/fava/codemirror/beancount.ts
 function init_beancount_editor(value, onDocChanges, commands, indent, currency_column) {
@@ -36331,7 +37195,7 @@ var root_121 = template(`<tr><td> </td><td class="num svelte-pjz8y6"> </td></tr>
 var root12 = template(`<table class="prices-table svelte-pjz8y6"><thead><tr><!><!></tr></thead><tbody></tbody></table>`);
 function PriceTable($$anchor, $$props) {
   push($$props, false);
-  const columns = mutable_state();
+  const columns3 = mutable_state();
   const sorter = mutable_state();
   const sorted = mutable_state();
   let prices = prop($$props, "prices", 8);
@@ -36347,13 +37211,13 @@ function PriceTable($$anchor, $$props) {
     return Number.isFinite(parsed) ? parsed : 0;
   }
   legacy_pre_effect(() => (DateColumn, NumberColumn), () => {
-    set(columns, [
+    set(columns3, [
       new DateColumn(t2("date")),
       new NumberColumn(t2("price"), priceValue)
     ]);
   });
-  legacy_pre_effect(() => (Sorter, get(columns)), () => {
-    set(sorter, new Sorter(get(columns)[0], "desc"));
+  legacy_pre_effect(() => (Sorter, get(columns3)), () => {
+    set(sorter, new Sorter(get(columns3)[0], "desc"));
   });
   legacy_pre_effect(
     () => (get(sorter), deep_read_state(prices())),
@@ -36369,7 +37233,7 @@ function PriceTable($$anchor, $$props) {
   var node = child(tr);
   SortHeader(node, {
     get column() {
-      return get(columns)[0];
+      return get(columns3)[0];
     },
     get sorter() {
       return get(sorter);
@@ -36382,7 +37246,7 @@ function PriceTable($$anchor, $$props) {
   var node_1 = sibling(node);
   SortHeader(node_1, {
     get column() {
-      return get(columns)[1];
+      return get(columns3)[1];
     },
     numeric: true,
     get sorter() {
@@ -37063,7 +37927,7 @@ var root_221 = template(`<tr class="svelte-16svwjo"><td> </td><td> </td><td drag
 var root14 = template(`<table class="documents-table svelte-16svwjo"><thead><tr></tr></thead><tbody class="svelte-16svwjo"></tbody></table>`);
 function DocumentTable($$anchor, $$props) {
   push($$props, false);
-  const columns = mutable_state();
+  const columns3 = mutable_state();
   const sorter = mutable_state();
   const sorted = mutable_state();
   let documents = prop($$props, "documents", 8);
@@ -37080,14 +37944,14 @@ function DocumentTable($$anchor, $$props) {
     return base2.startsWith(doc2.date) ? base2.slice(doc2.date.length + 1) : base2;
   }
   legacy_pre_effect(() => (DateColumn, StringColumn), () => {
-    set(columns, [
+    set(columns3, [
       new DateColumn(t2("date")),
       new StringColumn(t2("account"), (doc2) => doc2.account),
       new StringColumn(t2("name"), displayName)
     ]);
   });
-  legacy_pre_effect(() => (Sorter, get(columns)), () => {
-    set(sorter, new Sorter(get(columns)[0], "desc"));
+  legacy_pre_effect(() => (Sorter, get(columns3)), () => {
+    set(sorter, new Sorter(get(columns3)[0], "desc"));
   });
   legacy_pre_effect(
     () => (get(sorter), deep_read_state(documents())),
@@ -37100,7 +37964,7 @@ function DocumentTable($$anchor, $$props) {
   var table = root14();
   var thead = child(table);
   var tr = child(thead);
-  each(tr, 5, () => get(columns), (column) => column.name, ($$anchor2, column) => {
+  each(tr, 5, () => get(columns3), (column) => column.name, ($$anchor2, column) => {
     SortHeader($$anchor2, {
       get column() {
         return get(column);
@@ -37601,9 +38465,9 @@ function ScatterPlot($$anchor, $$props) {
     const step = (Y0 - Y1) / (count - 1 + 2 * padding);
     return Y1 + step * (padding + index2);
   }
-  function tickLabel(date) {
+  function tickLabel(date2) {
     const spanDays = (get(extent)[1] - get(extent)[0]) / 864e5;
-    return spanDays > 366 ? date.slice(0, 4) : date.slice(0, 7);
+    return spanDays > 366 ? date2.slice(0, 4) : date2.slice(0, 7);
   }
   function typeLabel(type) {
     return type.length > 12 ? `${type.slice(0, 11)}\u2026` : type;
@@ -37767,7 +38631,7 @@ var root_227 = template(`<tr><td> </td><td> </td></tr>`);
 var root16 = template(`<table class="events-table svelte-1nok83z"><thead><tr></tr></thead><tbody></tbody></table>`);
 function EventTable($$anchor, $$props) {
   push($$props, false);
-  const columns = mutable_state();
+  const columns3 = mutable_state();
   const sorter = mutable_state();
   const sorted = mutable_state();
   let events = prop($$props, "events", 8);
@@ -37777,13 +38641,13 @@ function EventTable($$anchor, $$props) {
     return catalog[key] || key;
   }
   legacy_pre_effect(() => (DateColumn, StringColumn), () => {
-    set(columns, [
+    set(columns3, [
       new DateColumn(t2("date")),
       new StringColumn(t2("description"), (event2) => event2.description)
     ]);
   });
-  legacy_pre_effect(() => (Sorter, get(columns)), () => {
-    set(sorter, new Sorter(get(columns)[0], "desc"));
+  legacy_pre_effect(() => (Sorter, get(columns3)), () => {
+    set(sorter, new Sorter(get(columns3)[0], "desc"));
   });
   legacy_pre_effect(
     () => (get(sorter), deep_read_state(events())),
@@ -37796,7 +38660,7 @@ function EventTable($$anchor, $$props) {
   var table = root16();
   var thead = child(table);
   var tr = child(thead);
-  each(tr, 5, () => get(columns), (column) => column.name, ($$anchor2, column) => {
+  each(tr, 5, () => get(columns3), (column) => column.name, ($$anchor2, column) => {
     SortHeader($$anchor2, {
       get column() {
         return get(column);
@@ -38110,7 +38974,7 @@ var root18 = template(`<ol class="flex-table tree-table-new" data-tree-table="">
 function TreeTable($$anchor, $$props) {
   push($$props, false);
   const present = mutable_state();
-  const columns = mutable_state();
+  const columns3 = mutable_state();
   const other = mutable_state();
   const roots = mutable_state();
   let tree = prop($$props, "tree", 8);
@@ -38133,11 +38997,11 @@ function TreeTable($$anchor, $$props) {
   legacy_pre_effect(
     () => (deep_read_state(operatingCurrencies()), get(present)),
     () => {
-      set(columns, operatingCurrencies().filter((currency) => get(present).includes(currency)));
+      set(columns3, operatingCurrencies().filter((currency) => get(present).includes(currency)));
     }
   );
-  legacy_pre_effect(() => (get(present), get(columns)), () => {
-    set(other, get(present).filter((currency) => !get(columns).includes(currency)));
+  legacy_pre_effect(() => (get(present), get(columns3)), () => {
+    set(other, get(present).filter((currency) => !get(columns3).includes(currency)));
   });
   legacy_pre_effect(() => deep_read_state(tree()), () => {
     set(roots, tree().account === "" ? tree().children : [tree()]);
@@ -38151,7 +39015,7 @@ function TreeTable($$anchor, $$props) {
   var text2 = child(span, true);
   reset(span);
   var node_1 = sibling(span, 2);
-  each(node_1, 1, () => get(columns), (currency) => currency, ($$anchor2, currency) => {
+  each(node_1, 1, () => get(columns3), (currency) => currency, ($$anchor2, currency) => {
     var span_1 = root_136();
     var text_1 = child(span_1, true);
     reset(span_1);
@@ -38180,7 +39044,7 @@ function TreeTable($$anchor, $$props) {
         return get(node);
       },
       get currencies() {
-        return get(columns);
+        return get(columns3);
       },
       get otherCurrencies() {
         return get(other);
@@ -39612,10 +40476,10 @@ function Sidebar($$anchor, $$props) {
       var consequent_5 = ($$anchor3) => {
         var li_3 = root_95();
         var node_7 = child(li_3);
-        var placeholder = derived_safe_equal(() => t2("goToAccount"));
+        var placeholder2 = derived_safe_equal(() => t2("goToAccount"));
         AutocompleteInput(node_7, {
           get placeholder() {
-            return get(placeholder);
+            return get(placeholder2);
           },
           get suggestions() {
             return accounts();
@@ -39690,7 +40554,7 @@ function AddEntryModal($$anchor, $$props) {
   });
   let shown = mutable_state(false);
   let entryType = mutable_state("transaction");
-  let date = mutable_state((/* @__PURE__ */ new Date()).toISOString().slice(0, 10));
+  let date2 = mutable_state((/* @__PURE__ */ new Date()).toISOString().slice(0, 10));
   let flag = mutable_state("*");
   let payee = mutable_state("");
   let narration = mutable_state("");
@@ -39750,7 +40614,7 @@ function AddEntryModal($$anchor, $$props) {
     if (get(entryType) === "transaction") {
       return {
         type: "transaction",
-        date: get(date),
+        date: get(date2),
         flag: get(flag),
         payee: get(payee).trim(),
         narration: get(narration).trim(),
@@ -39766,7 +40630,7 @@ function AddEntryModal($$anchor, $$props) {
     if (get(entryType) === "balance") {
       return {
         type: "balance",
-        date: get(date),
+        date: get(date2),
         account: get(account).trim(),
         amount: get(amount).trim(),
         currency: get(currency).trim()
@@ -39774,7 +40638,7 @@ function AddEntryModal($$anchor, $$props) {
     }
     return {
       type: "note",
-      date: get(date),
+      date: get(date2),
       account: get(account).trim(),
       comment: get(comment3).trim()
     };
@@ -40094,7 +40958,7 @@ function AddEntryModal($$anchor, $$props) {
       event("click", button, () => setType("transaction"));
       event("click", button_1, () => setType("balance"));
       event("click", button_2, () => setType("note"));
-      bind_value(input, () => get(date), ($$value) => set(date, $$value));
+      bind_value(input, () => get(date2), ($$value) => set(date2, $$value));
       bind_checked(input_13, () => get(continueAdding), ($$value) => set(continueAdding, $$value));
       event("change", input_13, persistContinue);
       event("click", form, stopPropagation(function($$arg) {
