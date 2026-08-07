@@ -104,7 +104,7 @@ fixture has not yet been implemented.
 | `imports` | `json_api.get_imports`; Import | GET, none | native file/importer candidates | native import service | candidate/status contract + route flow | adapt/planned |
 | `extract` | `json_api.get_extract`; Import | GET `filename,importer` | serialized candidate entries | native import adapters | valid/invalid/unsupported-importer contract | adapt/planned |
 | `upload_import_file` | `json_api.put_upload_import_file`; Import | PUT multipart | local candidate identifier/status | native import service | containment/type/size/error + browser flow | adapt/planned |
-| `add_entries` | `json_api.put_add_entries`; AddEntry/Import | PUT serialized entries | status/new hash | Reviewed write workflow | validation/atomicity/rollback/snapshot + modal flow | adapt/planned |
+| `add_entries` | `json_api.put_add_entries`; AddEntry/Import | PUT serialized entries | status/new hash | Reviewed write workflow | validation/atomicity/rollback/snapshot + modal flow | adapt/partial（OC 私有路由 `add-entries` 已接线：严格序列化校验 + 原子写入/备份/重新验证，AddEntryModal 走该路由；Import 流程的 put_add_entries 仍未实现） |
 | `documents` | `json_api.get_documents`; Documents | GET filters | serialized Documents | report + Document Roots | grouping/filter/unsafe-state contract + route flow | adapt/planned |
 | `document` download | `application.document`; preview/table | GET normalized filename | contained file/download response | web/source roots | containment/missing/content headers + browser flow | rewrite/planned |
 | `document` delete | `json_api.delete_document`; Documents | DELETE `filename` | status | Reviewed document workflow | containment/confirm/partial failure + flow | adapt/planned |

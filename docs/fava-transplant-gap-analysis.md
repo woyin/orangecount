@@ -46,7 +46,7 @@
 | --- | --- | --- | --- | --- | --- |
 | T1 | R-IS/R-BS/R-TB | 图表系统为手写内联 SVG | d3 套件：坐标轴、刻度、日期标注、tooltip、图例、货币圆点选择器、图表类型切换（Stacked/Single Bars、Line/Area、Treemap/Sunburst/Icicle）、层级钻取 | 粗粒度 SVG；实测 IS/BS/TB/账户页均**无货币圆点**；TB 层级图已有 Treemap/Sunburst/Icicle 三视图切换（`b079d3b`/`b1247c8`）；条形/折线图已补坐标轴、nice 刻度、紧凑数值与日期标注（`d3e5216`）；图例已做成 Fava 式可点选货币/序列开关，点选即隐藏并自适应重算色阶、颜色稳定（`32cceb0`）；条形/折线图已加指针跟随 tooltip（条形按序列+期间、折线按最近期间列全部可见序列，`e8154b6`）；层级图 Treemap/Sunburst/Icicle 每个节点已做成指向该科目详情页的链接（`ab6ca07`）。至此 T1 列举的 Fava 行为均已具备，剩余仅为手写 SVG 与 d3 的实现层差异 | 前端组件缺失（已基本补齐） |
 | T2 | R-ACCOUNT | 账户详情页过薄 | 标题含 `(Last entry: date)` 与科目层级面包屑；Balance/Changes 切换；Account Balance/Changes(monthly)/Balances(monthly) 三区块；账户图 + 货币圆点；Account Journal 带徽章 | 面包屑与 Last entry 指示器已实现（`88d90b9`/`eefbf83`），Journal 带 change 列（`ae4eedc`）；仍无 Balance/Changes、无区间变化表、无账户图 | 前端 + 适配器（缺区间统计与 up-to-date 状态契约） |
-| T3 | G-SHELL/G-FILTERS | shell 控件缺口 | 导航含 `Go to account` 组合框、`+`（Add Entry）、`⬇`（Export）；Time/Account/FQL 为带建议下拉的 combobox，账户模糊自动补全、FQL 解析校验、`r` 重载与变更提示 | `Go to account`（侧栏）与 Time/Account/FQL 三个 AutocompleteInput combobox 已实现；`+` 为死链接（Add Entry 模态属 S5）；变更提示已由 H7 落地，`r` 手动重载快捷键与 ⟳ 按钮已实现（`4792f73`）；FQL 解析校验与完整语义已落地（`785be13`：#tag/^link 精确匹配、key:"value"、并置 and/逗号 or/`-` 取反、all()/any()、金额比较；非法字符与解析错误在 API 边界 400 并于 shell 错误区展示）；⬇ 导出已落地（`2846847`）；余 `+`（Add Entry 模态属 S5） | 前端组件 + 适配器（余 `+` 属 S5） |
+| T3 | G-SHELL/G-FILTERS | shell 控件缺口 | 导航含 `Go to account` 组合框、`+`（Add Entry）、`⬇`（Export）；Time/Account/FQL 为带建议下拉的 combobox，账户模糊自动补全、FQL 解析校验、`r` 重载与变更提示 | `Go to account`（侧栏）与 Time/Account/FQL 三个 AutocompleteInput combobox 已实现；`+` Add Entry 模态已落地（`8e28d53`）；变更提示已由 H7 落地，`r` 手动重载快捷键与 ⟳ 按钮已实现（`4792f73`）；FQL 解析校验与完整语义已落地（`785be13`：#tag/^link 精确匹配、key:"value"、并置 and/逗号 or/`-` 取反、all()/any()、金额比较；非法字符与解析错误在 API 边界 400 并于 shell 错误区展示）；⬇ 导出已落地（`2846847`） | 前端组件 + 适配器 |
 | T4 | G-SHELL | 标准导航被 OC 原创项污染 | 导航严格等于 Fava 标准面 | D1/D2 已落地：OC 独有 `Accounts` 项移入标注的 OrangeCount 扩展区；顶栏原创 Language/Theme 下拉已移除，主题入口在 Options→Color scheme，locale 作为 fava option | 结构决策（见决策项 D1/D2，均已实现） |
 
 ### High
@@ -54,7 +54,7 @@
 | # | Manifest | 差距 | Fava 行为 | 移植版现状 | 根因层 |
 | --- | --- | --- | --- | --- | --- |
 | H1 | R-EDITOR/R-QUERY | CodeMirror 未移植（上游 19 文件 + tree-sitter wasm） | 语法高亮、行号、折叠、补全、snippets、File/Edit 菜单、文件树 | 裸 textarea + Files listbox；无菜单 | 前端组件缺失 |
-| H2 | M-ADD/M-CONTEXT/M-EXPORT/M-DOCUMENT | 模态系统整体缺失（上游 9 文件） | Add Entry 表单、条目 Context（余额/位置）、Export/Download、文档上传 | M-EXPORT 已落地（`2846847`）：modals 目录建立，Export 模态（#export hash 驱动）+ download-journal 端点（按过滤切取源码的保源导出）；M-CONTEXT 已落地（`68ddcfa`：entry-context 路由 + 只读源码切片模态）；仍缺 Add Entry/Document 模态 | 前端 + 适配器（缺 add_entries、文档上传契约） |
+| H2 | M-ADD/M-CONTEXT/M-EXPORT/M-DOCUMENT | 模态系统整体缺失（上游 9 文件） | Add Entry 表单、条目 Context（余额/位置）、Export/Download、文档上传 | M-EXPORT 已落地（`2846847`）：modals 目录建立，Export 模态（#export hash 驱动）+ download-journal 端点（按过滤切取源码的保源导出）；M-CONTEXT 已落地（`68ddcfa`：entry-context 路由 + 只读源码切片模态）；M-ADD 已落地（`8e28d53`：`#add-transaction` 模态，Transaction/Balance/Note 三型切换保留日期、postings 行增删、continue 复选框持久化；私有 `add-entries` POST 路由严格序列化校验 + 原子写入/备份/重新验证，失败回滚并保留诊断）；仍缺 Document 上传模态 | 前端 + 适配器（缺文档上传契约） |
 | H3 | G-KEYBOARD | 全局键盘快捷键缺失 | `g-*` 路由跳转、`t/f/a/d/s`、`?` 快捷键提示 | 已实现：`g-*` 路由跳转、`f t/f a/f f` 筛选快捷键、`?` 快捷键 tooltip（冒烟验证 19 条提示，含 `r` 重载）、`r` 手动重载（`4792f73`）；上游其余单键快捷键未登记为缺口 | 已完成 |
 | H4 | R-HOLD-*/R-COMMODITIES/R-EVENTS/R-STATISTICS/R-DOCUMENTS | 六路由降级为通用平表 | Holdings 四子页签与成本分组；Commodities 商品列表 + 每商品页（元数据/精度/价格历史）；Events 按事件类型侧栏分组；Statistics 指令计数 + Postings-per-Account + 活动图；Documents 账户树 + 内嵌预览 | 统一 `GenericReport` 平表：Holdings 无子页签、列头为 snake_case 字段名；Commodities 渲染成价格明细表且实测空表；Events 无分组；Statistics 仅计数表；Documents 无预览 | 前端组件 + 适配器（专用契约未建） |
 | H5 | R-JOURNAL | Journal 交互层不完整 | 全量条目类型徽章（含 Custom/B/Metadata/Postings）、排序与列菜单、点击条目→Context、URL 同步筛选、拖拽上传文档 | 核心徽章组与展开已现；点击条目→Context 已落地（`68ddcfa`：行尾 ⋮ 链接 + `#context-<hash>` 模态 + entry-context 私有路由，位置派生 entry_hash，只读源码切片；限制：before/after 余额与 CodeMirror 可编辑切片属 H1）；表头排序已落地（`f7d57ab`：Date/F/Payee-Narration 三列，同上游 `[列,向]` localStorage 持久化、默认 date desc、data-order 箭头与切换语义，复用已移植 Sorter）。余：拖拽上传文档；Custom/B/Metadata/Postings 徽章覆盖待复核 | 前端组件 + 适配器（余文档上传契约） |
@@ -88,11 +88,11 @@
 `diagnostics`、`editor`(读)、`import`(adapters/files/content)、`journal`、
 三大树报表、泛型 `reports/*`、BeanQuery、`download-journal`
 （过滤后条目按源码 span 切取的 Beancount 导出，`2846847`）、
-`entry-context`（位置派生 entry_hash → 条目投影 + 只读源码切片，`68ddcfa`）。
+`entry-context`（位置派生 entry_hash → 条目投影 + 只读源码切片，`68ddcfa`）、
+`add-entries`（新增条目 POST：严格序列化校验 + 原子写入/备份/重新验证，`8e28d53`）。
 
 尚未支撑的 Fava 数据契约：
 
-- `add_entries`（模态新增条目 POST）
 - document upload（multipart）
 - entry context 的 before/after 余额（只读切片已接线）
 - query shell 补全元数据（保存查询已经 user_queries 落地）
@@ -265,6 +265,15 @@
 > data-order 箭头沿用已移植 base.css，切列回 asc、同列翻向的点击循环
 > 与上游一致；账户页 journal 同享排序。冒烟验证默认序、narration 升/
 > 降、flag 列、reload 后持久化保持、账户页无回归，`f7d57ab`）。
+> H2-add（侧栏 `+` 打开 `#add-transaction` 模态：Transaction/Balance/
+> Note 三型切换保留日期，交易表单含 flag/payee/narration/tags/links 与
+> postings 行增删，balance/note 表单按型收敛；提交走新私有 POST 路由
+> `add-entries`：SerializeNewEntries 严格校验日期/账户/货币/金额/标签
+> 后序列化，复用 replaceGraphFile 原子写入 + .bak 备份 + 全图重新验证，
+> 失败回滚并返回诊断（422）；continue 复选框持久化同上游
+> add-entry-continue，保存后保留日期重置表单。冒烟在临时夹具副本验证
+> 交易/备注追加、journal 即时刷新、非法账户 400 内联报错、重新验证
+> 失败回滚还原，`8e28d53`）。
 > T1/H5 的 WIP 覆盖部分仍待稠密夹具复比勾销。
 
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
