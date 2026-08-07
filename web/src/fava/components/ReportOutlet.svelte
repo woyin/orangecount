@@ -26,6 +26,7 @@
   export let theme = "system";
   export let operatingCurrencies: string[] = [];
   export let renderCommas = false;
+  export let accounts: string[] = [];
   export let onLocale: (value: string) => void = () => {};
   export let onTheme: (value: string) => void = () => {};
 
@@ -103,7 +104,7 @@
 {:else if table && route === "events"}
   <EventsReport report={table} {locale} />
 {:else if table && route === "documents"}
-  <DocumentsReport report={table} {locale} />
+  <DocumentsReport report={table} {locale} adapter={adapter} {query} {accounts} />
 {:else if table && route === "commodities"}
   <CommoditiesReport report={table} {locale} {renderCommas} />
 {:else if table && route === "errors"}

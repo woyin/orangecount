@@ -433,12 +433,12 @@ textarea.svelte-1k81p2c {
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/DocumentAccounts.esbuild-svelte-fake-css */
-ul.svelte-1fx3gl4 {
+ul.svelte-1se7z4w {
   padding: 0 0 0 0.5em;
   margin: 0;
   list-style: none;
 }
-p.svelte-1fx3gl4 {
+p.svelte-1se7z4w {
   position: relative;
   display: flex;
   padding-right: 0.5em;
@@ -447,23 +447,85 @@ p.svelte-1fx3gl4 {
   border-bottom: 1px solid var(--table-border);
   border-left: 1px solid var(--table-border);
 }
-p.svelte-1fx3gl4 > :where(.svelte-1fx3gl4) {
+p.svelte-1se7z4w > :where(.svelte-1se7z4w) {
   padding: 1px;
 }
-.count.svelte-1fx3gl4 {
+.count.svelte-1se7z4w {
   opacity: 0.6;
 }
-.selected.svelte-1fx3gl4 {
+.selected.svelte-1se7z4w,
+.drag.svelte-1se7z4w {
   background-color: var(--table-header-background);
 }
-.leaf.svelte-1fx3gl4 {
+.leaf.svelte-1se7z4w {
   flex-grow: 1;
   margin-left: 1em;
 }
-.toggle.svelte-1fx3gl4 {
+.toggle.svelte-1se7z4w {
   position: absolute;
   margin: 0 0.25rem;
   color: var(--treetable-expander);
+}
+
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/modals/DocumentMoveModal.esbuild-svelte-fake-css */
+.move-backdrop.svelte-iwkm6x {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-index-floating-ui);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 10vh;
+  background: var(--overlay-wrapper-background);
+}
+.move-modal.svelte-iwkm6x {
+  width: min(34rem, 92vw);
+  padding: 1em 1.25em;
+  color: var(--text-color);
+  background: var(--background);
+  border: 1px solid var(--border);
+  box-shadow: var(--box-shadow-overlay);
+}
+.move-modal.svelte-iwkm6x h3:where(.svelte-iwkm6x) {
+  margin: 0 0 0.5em;
+  font-size: 1.1em;
+  font-weight: bold;
+}
+.move-modal.svelte-iwkm6x code:where(.svelte-iwkm6x) {
+  word-break: break-all;
+}
+.fields.svelte-iwkm6x {
+  display: flex;
+  gap: 0.4em;
+  flex-wrap: wrap;
+}
+.fields.svelte-iwkm6x input[type=text]:where(.svelte-iwkm6x) {
+  flex: 1;
+  min-width: 12rem;
+  padding: 0.25em 0.4em;
+  color: var(--text-color);
+  background: var(--background);
+  border: 1px solid var(--border);
+}
+.fields.svelte-iwkm6x input[size]:where(.svelte-iwkm6x) {
+  padding: 0.25em 0.4em;
+  color: var(--text-color);
+  background: var(--background);
+  border: 1px solid var(--border);
+}
+.fields.svelte-iwkm6x button[type=submit]:where(.svelte-iwkm6x) {
+  padding: 0.25em 0.9em;
+  font: inherit;
+  color: var(--background);
+  cursor: pointer;
+  background: var(--link-color);
+  border: 1px solid var(--link-color);
+}
+.fields.svelte-iwkm6x button[type=submit]:where(.svelte-iwkm6x):disabled {
+  opacity: 0.6;
+}
+.error.svelte-iwkm6x {
+  color: var(--error);
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/DocumentPreview.esbuild-svelte-fake-css */

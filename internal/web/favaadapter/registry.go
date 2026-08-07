@@ -24,20 +24,22 @@ type RouteName string
 // Constants are the adapter routes needed by the transplanted frontend in
 // dependency order (bootstrap first). Names are internal identifiers only.
 const (
-	RouteLedgerData    RouteName = "ledger-data"         // P3 bootstrap (contract row: ledger_data)
-	RouteStatus        RouteName = "status"              // minimal health/snapshot state
-	RouteErrors        RouteName = "errors"              // serialised diagnostics (contract row: errors)
-	RouteMetadata1     RouteName = "metadata-projection" // P3 report/metadata projection (commodities/accounts preview)
-	RouteJournal       RouteName = "journal"             // P4; declared now for registry completeness
-	RouteTreeReport    RouteName = "tree-report"         // P4/P5; declared now
-	RouteQueryShell    RouteName = "query"               // P7; declared now
-	RouteEditorSource  RouteName = "source"              // P7; declared now
-	RouteEditorSave    RouteName = "source-write"        // P7; declared now
-	RouteImportPreview RouteName = "import-preview"      // P7; declared now
-	RouteOptions       RouteName = "options"             // P7; declared now
-	RouteDownload      RouteName = "download-journal"    // filtered entries as Beancount source
-	RouteEntryContext  RouteName = "entry-context"       // one entry's location + source slice
-	RouteAddEntries    RouteName = "add-entries"         // append new entries to the entry file
+	RouteLedgerData     RouteName = "ledger-data"         // P3 bootstrap (contract row: ledger_data)
+	RouteStatus         RouteName = "status"              // minimal health/snapshot state
+	RouteErrors         RouteName = "errors"              // serialised diagnostics (contract row: errors)
+	RouteMetadata1      RouteName = "metadata-projection" // P3 report/metadata projection (commodities/accounts preview)
+	RouteJournal        RouteName = "journal"             // P4; declared now for registry completeness
+	RouteTreeReport     RouteName = "tree-report"         // P4/P5; declared now
+	RouteQueryShell     RouteName = "query"               // P7; declared now
+	RouteEditorSource   RouteName = "source"              // P7; declared now
+	RouteEditorSave     RouteName = "source-write"        // P7; declared now
+	RouteImportPreview  RouteName = "import-preview"      // P7; declared now
+	RouteOptions        RouteName = "options"             // P7; declared now
+	RouteDownload       RouteName = "download-journal"    // filtered entries as Beancount source
+	RouteEntryContext   RouteName = "entry-context"       // one entry's location + source slice
+	RouteAddEntries     RouteName = "add-entries"         // append new entries to the entry file
+	RouteDocumentUpload RouteName = "document"            // store an upload beneath a document root
+	RouteDocumentMove   RouteName = "move-document"       // move/rename an attachment within a document root
 )
 
 // ErrorShape enumerates the standardized adapter error shapes.
@@ -101,6 +103,8 @@ var Registry = [...]Contract{
 	{Route: RouteDownload, Owner: "internal/web/favaadapter.ExportEntries + internal/source.Graph", Authority: AuthorityLedger, Errors: ErrorStatusCode, Request: RequestSpec{Params: []string{"from", "to", "account", "filter"}}},
 	{Route: RouteEntryContext, Owner: "internal/web/favaadapter.ProjectEntryContext + internal/source.Graph", Authority: AuthorityLedger, Errors: ErrorStatusCode, Request: RequestSpec{Params: []string{"entry_hash"}}},
 	{Route: RouteAddEntries, Owner: "internal/web/favaadapter.SerializeNewEntries + internal/web (editor write path: atomic replace + backup + revalidate)", Authority: AuthorityLedger, Errors: ErrorStatusCode, Request: RequestSpec{Body: true}},
+	{Route: RouteDocumentUpload, Owner: "internal/web (handleDocumentUpload: same-origin, account/filename validation, no overwrite)", Authority: AuthorityLedger, Errors: ErrorStatusCode, Request: RequestSpec{Body: true}},
+	{Route: RouteDocumentMove, Owner: "internal/web (handleDocumentMove: same-origin, account/filename validation, rename within the source's document root, no overwrite)", Authority: AuthorityLedger, Errors: ErrorStatusCode, Request: RequestSpec{Body: true}},
 }
 
 // Lookup returns the contract for a route, or false if the route is not

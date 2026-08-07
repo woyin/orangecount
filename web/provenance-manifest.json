@@ -598,7 +598,15 @@
       "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
       "upstream_hash": "3152e5e07283bcd2c01230adfece4f08225209a2aa66dbe2b963937ab03929d0",
       "notice": "NOTICE",
-      "notes": "Fava documents Accounts tree reworked for legacy Svelte: same recursive shape (toggle button, leaf button, count span, selected highlight), selection/toggle lifted via events/bindings; drops the drag-to-move droptarget handlers because the move_document contract is not implemented."
+      "notes": "Fava documents Accounts tree reworked for legacy Svelte: same recursive shape (toggle button, leaf button, count span, selected highlight, droptarget handlers for fava/filename drags), selection/toggle/move lifted via events/bindings; drops initiate the OrangeCount move dialog instead of upstream's inline modal."
+    },
+    "web/src/fava/modals/DocumentMoveModal.svelte": {
+      "current_kind": "derived",
+      "upstream": "frontend/src/reports/documents/Documents.svelte",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "96cb98740d3bdd52cab0366e117c3f6407bfc1a2ca330a3e72e7244a090ef6e6",
+      "notice": "NOTICE",
+      "notes": "Fava move/rename dialog (the ModalBase form inside Documents.svelte) extracted into a standalone legacy-Svelte modal styled after the OrangeCount upload modal; posts JSON to the private move-document route instead of upstream's move_document API call, AccountInput replaced by a datalist-backed input."
     }
   }
 }

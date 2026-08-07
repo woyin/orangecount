@@ -249,8 +249,9 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 	resource := strings.Trim(strings.TrimPrefix(r.URL.Path, "/__orangecount/fava/"), "/")
 	// The adapter is read-only except for the reviewed write paths:
-	// add-entries (ledger append) and document (attachment upload).
-	if r.Method != http.MethodGet && !(r.Method == http.MethodPost && (resource == "add-entries" || resource == "document")) {
+	// add-entries (ledger append), document (attachment upload), and
+	// move-document (attachment relocation).
+	if r.Method != http.MethodGet && !(r.Method == http.MethodPost && (resource == "add-entries" || resource == "document" || resource == "move-document")) {
 		w.Header().Set("Allow", "GET")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -480,6 +481,8 @@ func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 		}{Published: true, SnapshotID: result.Snapshot.ID, Backup: backup})
 	case "document":
 		s.handleDocumentUpload(w, r, current)
+	case "move-document":
+		s.handleDocumentMove(w, r, current)
 	case "income_statement", "balance_sheet", "trial_balance":
 		filters, err := globalReportFilters(r)
 		if err != nil {
@@ -1229,6 +1232,103 @@ func (s *Server) handleDocumentUpload(w http.ResponseWriter, r *http.Request, cu
 		Filename string `json:"filename"`
 		Message  string `json:"message"`
 	}{Filename: relative, Message: "Uploaded to " + relative}, current.BuiltAt))
+}
+
+// handleDocumentMove moves an existing attachment into the subfolder chain of
+// another account, optionally renaming it, the way Fava's move_document
+// endpoint works. The file must already live beneath a configured document
+// root; the target stays inside that same root and never overwrites.
+func (s *Server) handleDocumentMove(w http.ResponseWriter, r *http.Request, current *snapshot.Snapshot) {
+	if !requireSameOrigin(w, r) {
+		return
+	}
+	if r.Method != http.MethodPost {
+		w.Header().Set("Allow", "POST")
+		writeAPIError(w, http.StatusMethodNotAllowed, "Only POST is supported.")
+		return
+	}
+	if s.roots.Empty() {
+		writeAPIError(w, http.StatusBadRequest, "No document root is configured (serve --document-root).")
+		return
+	}
+	var request struct {
+		Filename string `json:"filename"`
+		Account  string `json:"account"`
+		NewName  string `json:"new_name"`
+	}
+	if err := decodeJSONBody(w, r, &request, 1<<16); err != nil {
+		writeAPIError(w, http.StatusBadRequest, "The request body must be a JSON object.")
+		return
+	}
+	account := strings.TrimSpace(request.Account)
+	if _, ok := current.Evaluation().Accounts[account]; !ok {
+		writeAPIError(w, http.StatusBadRequest, fmt.Sprintf("Not a valid account: %q", account))
+		return
+	}
+	sourcePath, err := s.roots.Resolve(strings.TrimSpace(request.Filename))
+	if err != nil {
+		writeAPIError(w, http.StatusBadRequest, "The document could not be found beneath a configured document root.")
+		return
+	}
+	name := filepath.Base(strings.TrimSpace(request.NewName))
+	if name == "" || name == "." || name == ".." || strings.HasPrefix(name, "-") {
+		name = filepath.Base(sourcePath)
+	}
+	root := ""
+	for _, candidate := range s.roots.Paths() {
+		if relative, relErr := filepath.Rel(candidate, sourcePath); relErr == nil && pathWithin(candidate, sourcePath) && relative != "." {
+			root = candidate
+			break
+		}
+	}
+	if root == "" {
+		writeAPIError(w, http.StatusInternalServerError, "The document root for this attachment could not be determined.")
+		return
+	}
+	target := filepath.Join(root, filepath.Join(strings.Split(account, ":")...), name)
+	// Defense in depth: account and name are validated above, but the resolved
+	// target must provably stay inside the source's document root.
+	if !pathWithin(root, filepath.Clean(target)) {
+		writeAPIError(w, http.StatusBadRequest, "The new filename is not valid.")
+		return
+	}
+	if filepath.Clean(target) == sourcePath {
+		relative, _ := filepath.Rel(root, target)
+		writeJSON(w, favaadapter.NewEnvelope(struct {
+			Filename string `json:"filename"`
+			Message  string `json:"message"`
+		}{Filename: filepath.ToSlash(relative), Message: "Document unchanged."}, current.BuiltAt))
+		return
+	}
+	if _, err := os.Stat(target); err == nil {
+		writeAPIError(w, http.StatusConflict, "Target path already exists: "+name)
+		return
+	}
+	if err := os.MkdirAll(filepath.Dir(target), 0o700); err != nil {
+		writeAPIError(w, http.StatusInternalServerError, "The account folder could not be created.")
+		return
+	}
+	if err := os.Rename(sourcePath, target); err != nil {
+		writeAPIError(w, http.StatusInternalServerError, "The document could not be moved.")
+		return
+	}
+	relative, err := filepath.Rel(root, target)
+	if err != nil {
+		relative = name
+	}
+	relative = filepath.ToSlash(relative)
+	writeJSON(w, favaadapter.NewEnvelope(struct {
+		Filename string `json:"filename"`
+		Message  string `json:"message"`
+	}{Filename: relative, Message: "Moved to " + relative}, current.BuiltAt))
+}
+
+func pathWithin(root, path string) bool {
+	relative, err := filepath.Rel(root, path)
+	if err != nil {
+		return false
+	}
+	return relative == "." || (relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator)) && !filepath.IsAbs(relative))
 }
 
 func graphFile(graph *source.Graph, displayPath string) (*source.SourceFile, string, bool) {

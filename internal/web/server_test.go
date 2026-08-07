@@ -861,6 +861,83 @@ func TestFavaAdapterDocumentUploadRequiresRoot(t *testing.T) {
 	}
 }
 
+// TestFavaAdapterDocumentMove mirrors Fava's move_document endpoint: an
+// attachment is relocated into another account's subfolder chain (optionally
+// renamed) within the same document root, without overwriting targets.
+func TestFavaAdapterDocumentMove(t *testing.T) {
+	ledgerDir := t.TempDir()
+	entry := filepath.Join(ledgerDir, "main.bean")
+	if err := os.WriteFile(entry, []byte("2000-01-01 open Assets:Cash USD\n2000-01-01 open Assets:Bank USD\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	built := snapshot.Build(entry)
+	if built.Snapshot == nil {
+		t.Fatalf("build diagnostics=%+v", built.Diagnostics)
+	}
+	root := t.TempDir()
+	roots, err := source.NewDocumentRoots([]string{root})
+	if err != nil {
+		t.Fatal(err)
+	}
+	server, err := NewServer(Config{Store: snapshot.NewStore(built.Snapshot), DocumentRoots: roots, Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(filepath.Join(root, "Assets", "Cash"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "Assets", "Cash", "doc.pdf"), []byte("doc-bytes"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	move := func(filename, account, newName string) *httptest.ResponseRecorder {
+		body := fmt.Sprintf(`{"filename":%q,"account":%q,"new_name":%q}`, filename, account, newName)
+		req := httptest.NewRequest(http.MethodPost, "/__orangecount/fava/move-document", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		recorder := httptest.NewRecorder()
+		server.Handler().ServeHTTP(recorder, req)
+		return recorder
+	}
+	success := move("Assets/Cash/doc.pdf", "Assets:Bank", "moved.pdf")
+	if success.Code != http.StatusOK || !strings.Contains(success.Body.String(), `"filename":"Assets/Bank/moved.pdf"`) {
+		t.Fatalf("move status=%d body=%q", success.Code, success.Body.String())
+	}
+	if _, err := os.Stat(filepath.Join(root, "Assets", "Cash", "doc.pdf")); !os.IsNotExist(err) {
+		t.Fatalf("source still present after move, err=%v", err)
+	}
+	saved, err := os.ReadFile(filepath.Join(root, "Assets", "Bank", "moved.pdf"))
+	if err != nil || string(saved) != "doc-bytes" {
+		t.Fatalf("moved file err=%v content=%q", err, saved)
+	}
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/documents/Assets%2FBank%2Fmoved.pdf", nil))
+	if recorder.Code != http.StatusOK || recorder.Body.String() != "doc-bytes" {
+		t.Fatalf("served moved document status=%d body=%q", recorder.Code, recorder.Body.String())
+	}
+	missing := move("Assets/Cash/nope.pdf", "Assets:Bank", "")
+	if missing.Code != http.StatusBadRequest || !strings.Contains(missing.Body.String(), "could not be found") {
+		t.Fatalf("missing source status=%d body=%q", missing.Code, missing.Body.String())
+	}
+	badAccount := move("Assets/Bank/moved.pdf", "Assets:Missing", "")
+	if badAccount.Code != http.StatusBadRequest || !strings.Contains(badAccount.Body.String(), "Not a valid account") {
+		t.Fatalf("bad account status=%d body=%q", badAccount.Code, badAccount.Body.String())
+	}
+	if err := os.WriteFile(filepath.Join(root, "Assets", "Cash", "clash.pdf"), []byte("clash"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	overwrite := move("Assets/Bank/moved.pdf", "Assets:Cash", "clash.pdf")
+	if overwrite.Code != http.StatusConflict {
+		t.Fatalf("overwrite status=%d body=%q", overwrite.Code, overwrite.Body.String())
+	}
+	cross := httptest.NewRequest(http.MethodPost, "/__orangecount/fava/move-document", strings.NewReader(`{"filename":"x","account":"y"}`))
+	cross.Header.Set("Origin", "http://evil.example")
+	cross.Host = "127.0.0.1:9"
+	crossRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(crossRecorder, cross)
+	if crossRecorder.Code != http.StatusForbidden {
+		t.Fatalf("cross-origin move status=%d", crossRecorder.Code)
+	}
+}
+
 func min(left, right int) int {
 	if left < right {
 		return left

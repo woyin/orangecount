@@ -52,7 +52,13 @@
       >
         <td>{doc.date}</td>
         <td>{doc.account}</td>
-        <td>{displayName(doc)}</td>
+        <td
+          draggable="true"
+          on:dragstart={(event) => {
+            event.dataTransfer?.setData("fava/filename", doc.filename);
+            if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
+          }}
+        >{displayName(doc)}</td>
       </tr>
     {/each}
   </tbody>

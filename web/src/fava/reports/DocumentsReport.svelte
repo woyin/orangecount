@@ -1,12 +1,18 @@
 <script lang="ts">
   import { translations, type Locale } from "../../translations";
+  import type { AdapterClient } from "../adapter-client";
+  import { notify } from "../notifications";
   import DocumentAccounts from "./DocumentAccounts.svelte";
+  import DocumentMoveModal from "../modals/DocumentMoveModal.svelte";
   import DocumentPreview from "./DocumentPreview.svelte";
   import DocumentTable from "./DocumentTable.svelte";
-  import type { TableReport } from "./types";
+  import { parseTableReport, type TableReport } from "./types";
 
   export let report: TableReport;
   export let locale = "en";
+  export let adapter: AdapterClient | null = null;
+  export let query: Record<string, string> = {};
+  export let accounts: string[] = [];
 
   function t(key: string): string {
     const catalog = translations[(locale === "zh-CN" ? "zh-CN" : "en") as Locale];
@@ -23,6 +29,12 @@
     name: string;
     count: number;
     children: AccountNode[];
+  }
+
+  interface MoveDetails {
+    account: string;
+    filename: string;
+    newName: string;
   }
 
   $: documents = report.rows.map((row) => ({
@@ -58,10 +70,42 @@
   let selected: DocumentRow | null = null;
   let accountFilter = "";
   let toggled = new Set<string>();
+  let moving: MoveDetails | null = null;
+
+  function basename(path: string): string {
+    return path.split("/").pop() ?? path;
+  }
 
   function onSelectAccount(account: string) {
     accountFilter = account;
     selected = null;
+  }
+
+  // Upstream opens the move/rename dialog with <F2> while a row is selected.
+  function onKeyup(event: KeyboardEvent) {
+    if (event.key === "F2" && selected && !moving) {
+      moving = { account: selected.account, filename: selected.filename, newName: basename(selected.filename) };
+    }
+  }
+
+  function onStartMove(detail: { account: string; filename: string }) {
+    moving = { ...detail, newName: basename(detail.filename) };
+  }
+
+  async function refresh() {
+    if (!adapter) return;
+    try {
+      const payload = await adapter.load("documents", query);
+      report = parseTableReport(payload);
+    } catch {
+      notify("The documents list could not be reloaded.");
+    }
+  }
+
+  function onMoved(message: string) {
+    notify(message);
+    selected = null;
+    void refresh();
   }
 
   $: visible = accountFilter
@@ -69,11 +113,14 @@
     : documents;
 </script>
 
+<svelte:window on:keyup={onKeyup} />
+<DocumentMoveModal {locale} {accounts} {moving} onMoved={onMoved} onClose={() => (moving = null)} />
+
 {#if documents.length}
   <div class="documents-layout" class:with-preview={selected != null}>
     <div class="accounts">
       {#each tree.children as child (child.name)}
-        <DocumentAccounts node={child} bind:toggled selectedAccount={accountFilter} on:select={(event) => onSelectAccount(event.detail)} />
+        <DocumentAccounts node={child} bind:toggled selectedAccount={accountFilter} on:select={(event) => onSelectAccount(event.detail)} on:move={(event) => onStartMove(event.detail)} />
       {/each}
     </div>
     <div>

@@ -168,6 +168,7 @@
           theme={current.theme}
           operatingCurrencies={current.operatingCurrencies}
           renderCommas={current.renderCommas}
+          accounts={current.accounts}
           onLocale={setLocale}
           onTheme={setTheme}
           query={{ ...current.query, ...(current.account ? { account: current.account } : {}) }}
