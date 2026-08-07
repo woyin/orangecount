@@ -65,12 +65,12 @@
 
 | # | Manifest | 差距 | 说明 |
 | --- | --- | --- | --- |
-| M1 | R-QUERY | Query 页不完整 | 保存查询已落地（`1abfaf0`）：账本 `query` 指令投影为侧栏 Query 项子菜单（同名截断规则同上游），页内点选即回显并重跑；结果排序冒烟确认 GenericReport 列排序可用（含数值列方向切换）——原"无结果排序"判断有误；仍无查询图表；BQL 编辑器为裸 textarea（依赖 H1） |
+| M1 | R-QUERY | Query 页不完整 | 保存查询已落地（`1abfaf0`）：账本 `query` 指令投影为侧栏 Query 项子菜单（同名截断规则同上游），页内点选即回显并重跑；结果排序冒烟确认 GenericReport 列排序可用（含数值列方向切换）——原"无结果排序"判断有误；查询图表已落地（`78d4233`，见 M1-query-chart）；余项仅 BQL 编辑器为裸 textarea（依赖 H1） |
 | M2 | R-IMPORT | Import 为 OC 原创表单 | Source path/Adapter/Target 表单 vs Fava 的文件列表 + 上传 + extract/review 流程（Python importer 排除已是批准偏差，但 UI 流程应对齐） |
 | M3 | R-HELP | ~~Help 无页面索引~~（已完成，`f1a01f0`） | `/help` 现渲染子页索引，`/help/<id>` 渲染单节页面 + 返回链接；Options 页标题链接 `/help/options`（限制：子页集合为 OC 自有 8 节，非上游 Index/Syntax/Budgets 全集） |
 | M4 | 跨路由 | ~~排序基建缺失~~（已完成，`62de047`） | `sort/index.ts`（Sorter/SortColumn 契约，同上游点击语义，无 d3 依赖）+ `SortHeader.svelte`（legacy 模式，含 aria-sort 与箭头提示）已落地；events/commodities/documents/statistics/options 表头可排序，冒烟验证方向切换与列切换重排（限制：holdings 与上游一致不可排序；Query 结果排序经 GenericReport 实际可用，`1abfaf0` 冒烟确认） |
 | M5 | 跨路由 | ~~三份 CSS 未移植~~（已完成） | `editor.css`、`help.css`、`notifications.css` 均已移植，main.ts 引入 11/11 |
-| M6 | G-FILTERS | ~~URL 状态对齐未逐项验证~~（已核对，`d68e5e9`/`36fb31b`） | 全路由深链、筛选回显、history back/forward、reload 逐项冒烟通过；核对发现并修复三处：`time=2025-Q2` 季度语法被拒（新增 Filters.TimeBegin/End 半开区间）、`/editor?path=` 与 `/query?query_string=` 未回显（限制：diagnostics 仍为 JSON 兜底视图；Query 页图表仍属 M1，保存查询与排序已落地） |
+| M6 | G-FILTERS | ~~URL 状态对齐未逐项验证~~（已核对，`d68e5e9`/`36fb31b`） | 全路由深链、筛选回显、history back/forward、reload 逐项冒烟通过；核对发现并修复三处：`time=2025-Q2` 季度语法被拒（新增 Filters.TimeBegin/End 半开区间）、`/editor?path=` 与 `/query?query_string=` 未回显（限制：diagnostics 仍为 JSON 兜底视图；Query 页图表彼时仍属 M1，后经 M1-query-chart 落地，保存查询与排序已落地） |
 
 ### Low
 
@@ -393,6 +393,19 @@ POST，`38f2618`）。
 > 2025-06-28）；限制：显示开关在 commodities 页未单独冒烟（与 events
 > 页同构代码，后者已验证）；line/area 模式切换（lineChartMode）与
 > lastActiveChartName 跨导航持久化未实现，`d9b77d3`）。
+> M1-query-chart（Query 页查询图表落地，M1 图表项收尾：上游
+> getQueryChart 仅对"恰两列"结果出图——str+Inventory→层级图、
+> date+Inventory→折线图；OC 查询结果无 dtype/Inventory 元数据，
+> QueryReport 改为值嗅探：第一列全为 ISO 日期字符串且第二列可解析为
+> 数值（PresentedDecimal/number/数值字符串/同形数组求和）时，复用
+> H4 的 charts/LineChart.svelte 于结果表上方出图，配同款 ▼/◀ 显示
+> 开关，tooltip 取默认 `日期: display`。冒烟验证默认 account/balance
+> 查询无图（188 行表）、`SELECT date, amount FROM prices ORDER BY
+> date` 出 9 点折线（两次独立会话）；限制：str+金额层级分支不可行
+> （无 Inventory dtype，登记为实现性偏差）；图表开关与 tooltip 在
+> query 页未逐项冒烟（agent-browser daemon 会话中期挂起，同构代码
+> 已在 events/commodities 页验证）；无 ChartSwitcher 图表名标签、
+> 无 charts=false URL 参数，`78d4233`）。
 > T1/H5 的 WIP 覆盖部分仍待稠密夹具复比勾销。
 
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
