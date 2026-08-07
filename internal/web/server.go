@@ -248,8 +248,9 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 	resource := strings.Trim(strings.TrimPrefix(r.URL.Path, "/__orangecount/fava/"), "/")
-	// The adapter is read-only except for the reviewed add-entries write path.
-	if r.Method != http.MethodGet && !(r.Method == http.MethodPost && resource == "add-entries") {
+	// The adapter is read-only except for the reviewed write paths:
+	// add-entries (ledger append) and document (attachment upload).
+	if r.Method != http.MethodGet && !(r.Method == http.MethodPost && (resource == "add-entries" || resource == "document")) {
 		w.Header().Set("Allow", "GET")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -265,7 +266,7 @@ func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 		currentMtime := favaadapter.NewEnvelope(nil, current.BuiltAt).Mtime
 		writeJSON(w, favaadapter.NewEnvelope(previous != "" && previous != currentMtime, current.BuiltAt))
 	case "ledger_data":
-		projection := favaadapter.BootstrapProjection(favaadapter.BootstrapOptions{Snapshot: current, BaseURL: "/"})
+		projection := favaadapter.BootstrapProjection(favaadapter.BootstrapOptions{Snapshot: current, BaseURL: "/", DocumentRoots: s.roots.Paths()})
 		writeJSON(w, favaadapter.NewEnvelope(projection, current.BuiltAt))
 	case "metadata":
 		root := strings.TrimSpace(r.URL.Query().Get("root"))
@@ -477,6 +478,8 @@ func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 			SnapshotID string `json:"snapshot_id"`
 			Backup     string `json:"backup"`
 		}{Published: true, SnapshotID: result.Snapshot.ID, Backup: backup})
+	case "document":
+		s.handleDocumentUpload(w, r, current)
 	case "income_statement", "balance_sheet", "trial_balance":
 		filters, err := globalReportFilters(r)
 		if err != nil {
@@ -1134,6 +1137,98 @@ func atomicWrite(path string, content []byte, mode os.FileMode) error {
 		return err
 	}
 	return os.Rename(temporaryName, path)
+}
+
+// handleDocumentUpload stores an uploaded attachment beneath a configured
+// document root, in the subfolder chain of the target account, the way
+// Fava's put_document endpoint lays out uploads. It is a reviewed write path:
+// same-origin only, account validated against the evaluation, filename
+// reduced to its basename, and no overwrite of existing files.
+func (s *Server) handleDocumentUpload(w http.ResponseWriter, r *http.Request, current *snapshot.Snapshot) {
+	if !requireSameOrigin(w, r) {
+		return
+	}
+	roots := s.roots.Paths()
+	if len(roots) == 0 {
+		writeAPIError(w, http.StatusBadRequest, "No document root is configured (serve --document-root).")
+		return
+	}
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		writeAPIError(w, http.StatusBadRequest, "The upload could not be parsed.")
+		return
+	}
+	account := strings.TrimSpace(r.FormValue("account"))
+	if _, ok := current.Evaluation().Accounts[account]; !ok {
+		writeAPIError(w, http.StatusBadRequest, fmt.Sprintf("Not a valid account: %q", account))
+		return
+	}
+	folder := roots[0]
+	if requested := strings.TrimSpace(r.FormValue("folder")); requested != "" {
+		folder = ""
+		for _, candidate := range roots {
+			if requested == candidate {
+				folder = candidate
+				break
+			}
+		}
+		if folder == "" {
+			writeAPIError(w, http.StatusBadRequest, fmt.Sprintf("Not a documents folder: %s.", requested))
+			return
+		}
+	}
+	file, header, err := r.FormFile("file")
+	if err != nil || header == nil {
+		writeAPIError(w, http.StatusBadRequest, "No file uploaded.")
+		return
+	}
+	defer file.Close()
+	// The basename reduction is Fava's separator-to-space sanitization made
+	// strict: directory components can never survive the upload.
+	name := filepath.Base(strings.TrimSpace(header.Filename))
+	if name == "" || name == "." || name == ".." || strings.HasPrefix(name, "-") {
+		writeAPIError(w, http.StatusBadRequest, "Uploaded file is missing a filename.")
+		return
+	}
+	target := filepath.Join(folder, filepath.Join(strings.Split(account, ":")...), name)
+	// Defense in depth: the components are validated above, but the resolved
+	// target must provably stay inside the chosen document root.
+	if relative, err := filepath.Rel(folder, filepath.Clean(target)); err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) || filepath.IsAbs(relative) {
+		writeAPIError(w, http.StatusBadRequest, "Uploaded file is missing a filename.")
+		return
+	}
+	if _, err := os.Stat(target); err == nil {
+		writeAPIError(w, http.StatusConflict, "Target path already exists: "+name)
+		return
+	}
+	if err := os.MkdirAll(filepath.Dir(target), 0o700); err != nil {
+		writeAPIError(w, http.StatusInternalServerError, "The account folder could not be created.")
+		return
+	}
+	created, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
+	if err != nil {
+		writeAPIError(w, http.StatusConflict, "Target path already exists: "+name)
+		return
+	}
+	if _, err := io.Copy(created, file); err != nil {
+		_ = created.Close()
+		_ = os.Remove(target)
+		writeAPIError(w, http.StatusInternalServerError, "The document could not be written.")
+		return
+	}
+	if err := created.Close(); err != nil {
+		_ = os.Remove(target)
+		writeAPIError(w, http.StatusInternalServerError, "The document could not be written.")
+		return
+	}
+	relative, err := filepath.Rel(folder, target)
+	if err != nil {
+		relative = name
+	}
+	relative = filepath.ToSlash(relative)
+	writeJSON(w, favaadapter.NewEnvelope(struct {
+		Filename string `json:"filename"`
+		Message  string `json:"message"`
+	}{Filename: relative, Message: "Uploaded to " + relative}, current.BuiltAt))
 }
 
 func graphFile(graph *source.Graph, displayPath string) (*source.SourceFile, string, bool) {

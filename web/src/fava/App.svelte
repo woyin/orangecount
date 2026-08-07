@@ -8,6 +8,7 @@
   import Sidebar from "./components/Sidebar.svelte";
   import AddEntryModal from "./modals/AddEntryModal.svelte";
   import ContextModal from "./modals/ContextModal.svelte";
+  import DocumentUploadModal from "./modals/DocumentUploadModal.svelte";
   import ExportModal from "./modals/ExportModal.svelte";
   import { initGlobalKeyboardShortcuts } from "./keyboard-shortcuts";
   import { notify, notify_err } from "./notifications";
@@ -86,7 +87,7 @@
     shell.dispatch({ type: "loading", value: true });
     try {
       const payload = await adapter.bootstrap();
-      shell.dispatch({ type: "bootstrap", ledgerTitle: payload.ledger_title, locale: payload.locale, theme: payload.theme, accounts: payload.accounts, tags: payload.tags, links: payload.links, payees: payload.payees, years: payload.years, userQueries: payload.user_queries, errors: payload.errors, operatingCurrencies: payload.operating_currencies, renderCommas: payload.render_commas });
+      shell.dispatch({ type: "bootstrap", ledgerTitle: payload.ledger_title, locale: payload.locale, theme: payload.theme, accounts: payload.accounts, tags: payload.tags, links: payload.links, payees: payload.payees, years: payload.years, userQueries: payload.user_queries, documentRoots: payload.document_roots, errors: payload.errors, operatingCurrencies: payload.operating_currencies, renderCommas: payload.render_commas });
     } catch (error) {
       notify_err(error);
       shell.dispatch({ type: "error", message: error instanceof Error ? error.message : "The local adapter could not load this view." });
@@ -178,6 +179,7 @@
 <ExportModal locale={current.locale} />
 <ContextModal {adapter} locale={current.locale} />
 <AddEntryModal locale={current.locale} onSaved={() => void bootstrap()} />
+<DocumentUploadModal locale={current.locale} documentRoots={current.documentRoots} accounts={current.accounts} onUploaded={() => void bootstrap()} />
 
 <style>
   :global(.route-placeholder) {

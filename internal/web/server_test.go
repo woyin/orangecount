@@ -9,6 +9,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"mime/multipart"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -735,6 +736,129 @@ func TestImportPreviewMapIsBounded(t *testing.T) {
 func jsonString(value string) string {
 	encoded, _ := json.Marshal(value)
 	return string(encoded)
+}
+
+// TestFavaAdapterDocumentUpload mirrors Fava's put_document layout: uploads
+// land in <root>/<account parts>/<filename>, the target is served back by the
+// /documents/ route, and invalid accounts or existing targets are rejected.
+func TestFavaAdapterDocumentUpload(t *testing.T) {
+	ledgerDir := t.TempDir()
+	entry := filepath.Join(ledgerDir, "main.bean")
+	if err := os.WriteFile(entry, []byte("2000-01-01 open Assets:Cash USD\n2000-01-01 open Equity:Opening USD\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	built := snapshot.Build(entry)
+	if built.Snapshot == nil {
+		t.Fatalf("build diagnostics=%+v", built.Diagnostics)
+	}
+	root := t.TempDir()
+	roots, err := source.NewDocumentRoots([]string{root})
+	if err != nil {
+		t.Fatal(err)
+	}
+	server, err := NewServer(Config{Store: snapshot.NewStore(built.Snapshot), DocumentRoots: roots, Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	upload := func(account, folder, filename, content string) *httptest.ResponseRecorder {
+		var body strings.Builder
+		writer := multipart.NewWriter(&body)
+		_ = writer.WriteField("account", account)
+		if folder != "" {
+			_ = writer.WriteField("folder", folder)
+		}
+		part, err := writer.CreateFormFile("file", filename)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := part.Write([]byte(content)); err != nil {
+			t.Fatal(err)
+		}
+		if err := writer.Close(); err != nil {
+			t.Fatal(err)
+		}
+		req := httptest.NewRequest(http.MethodPost, "/__orangecount/fava/document", strings.NewReader(body.String()))
+		req.Header.Set("Content-Type", writer.FormDataContentType())
+		recorder := httptest.NewRecorder()
+		server.Handler().ServeHTTP(recorder, req)
+		return recorder
+	}
+	// A traversal-styled filename is reduced to its basename.
+	success := upload("Assets:Cash", "", "../receipt.pdf", "pdf-bytes")
+	if success.Code != http.StatusOK || !strings.Contains(success.Body.String(), `"filename":"Assets/Cash/receipt.pdf"`) {
+		t.Fatalf("upload status=%d body=%q", success.Code, success.Body.String())
+	}
+	saved, err := os.ReadFile(filepath.Join(root, "Assets", "Cash", "receipt.pdf"))
+	if err != nil || string(saved) != "pdf-bytes" {
+		t.Fatalf("saved file err=%v content=%q", err, saved)
+	}
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/documents/Assets%2FCash%2Freceipt.pdf", nil))
+	if recorder.Code != http.StatusOK || recorder.Body.String() != "pdf-bytes" {
+		t.Fatalf("served document status=%d body=%q", recorder.Code, recorder.Body.String())
+	}
+	duplicate := upload("Assets:Cash", "", "receipt.pdf", "other")
+	if duplicate.Code != http.StatusConflict {
+		t.Fatalf("duplicate status=%d body=%q", duplicate.Code, duplicate.Body.String())
+	}
+	badAccount := upload("Assets:Missing", "", "other.pdf", "x")
+	if badAccount.Code != http.StatusBadRequest || !strings.Contains(badAccount.Body.String(), "Not a valid account") {
+		t.Fatalf("bad account status=%d body=%q", badAccount.Code, badAccount.Body.String())
+	}
+	badFolder := upload("Assets:Cash", "/tmp/not-a-root", "other.pdf", "x")
+	if badFolder.Code != http.StatusBadRequest || !strings.Contains(badFolder.Body.String(), "Not a documents folder") {
+		t.Fatalf("bad folder status=%d body=%q", badFolder.Code, badFolder.Body.String())
+	}
+	// An explicit configured folder is accepted. Roots are symlink-resolved
+	// (e.g. macOS /var -> /private/var), so send the resolved path.
+	resolved, err := filepath.EvalSymlinks(root)
+	if err != nil {
+		t.Fatal(err)
+	}
+	explicit := upload("Assets:Cash", resolved, "second.pdf", "second")
+	if explicit.Code != http.StatusOK || !strings.Contains(explicit.Body.String(), `"filename":"Assets/Cash/second.pdf"`) {
+		t.Fatalf("explicit folder status=%d body=%q", explicit.Code, explicit.Body.String())
+	}
+	// Uploads are same-origin write paths.
+	cross := httptest.NewRequest(http.MethodPost, "/__orangecount/fava/document", strings.NewReader(""))
+	cross.Header.Set("Origin", "http://evil.example")
+	cross.Host = "127.0.0.1:9"
+	crossRecorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(crossRecorder, cross)
+	if crossRecorder.Code != http.StatusForbidden {
+		t.Fatalf("cross-origin upload status=%d", crossRecorder.Code)
+	}
+}
+
+// TestFavaAdapterDocumentUploadRequiresRoot ensures uploads are rejected with
+// a clear message when no document root was configured.
+func TestFavaAdapterDocumentUploadRequiresRoot(t *testing.T) {
+	ledgerDir := t.TempDir()
+	entry := filepath.Join(ledgerDir, "main.bean")
+	if err := os.WriteFile(entry, []byte("2000-01-01 open Assets:Cash USD\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	built := snapshot.Build(entry)
+	if built.Snapshot == nil {
+		t.Fatalf("build diagnostics=%+v", built.Diagnostics)
+	}
+	server, err := NewServer(Config{Store: snapshot.NewStore(built.Snapshot), Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var body strings.Builder
+	writer := multipart.NewWriter(&body)
+	_ = writer.WriteField("account", "Assets:Cash")
+	part, _ := writer.CreateFormFile("file", "x.pdf")
+	_, _ = part.Write([]byte("x"))
+	_ = writer.Close()
+	req := httptest.NewRequest(http.MethodPost, "/__orangecount/fava/document", strings.NewReader(body.String()))
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, req)
+	if recorder.Code != http.StatusBadRequest || !strings.Contains(recorder.Body.String(), "No document root") {
+		t.Fatalf("no-root status=%d body=%q", recorder.Code, recorder.Body.String())
+	}
 }
 
 func min(left, right int) int {

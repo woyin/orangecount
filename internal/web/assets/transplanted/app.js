@@ -3457,6 +3457,14 @@ function is_numberlike_input(input) {
 function to_number(value) {
   return value === "" ? null : +value;
 }
+function bind_files(input, get3, set2 = get3) {
+  listen_to_event_and_reset_event(input, "change", () => {
+    set2(input.files);
+  });
+  render_effect(() => {
+    input.files = get3();
+  });
+}
 
 // node_modules/svelte/src/internal/client/dom/elements/bindings/select.js
 function select_option(select, value, mounting) {
@@ -4280,6 +4288,7 @@ function bootstrapPayload(wire, mtime = "") {
     render_commas: (wire.options?.render_commas || "").toUpperCase() === "TRUE",
     errors: wire.errors || [],
     user_queries: wire.user_queries || [],
+    document_roots: wire.document_roots || [],
     mtime
   };
 }
@@ -4496,6 +4505,10 @@ var translations = {
     monthly: "monthly",
     quarterly: "quarterly",
     yearly: "yearly",
+    uploadFiles: "Upload file(s)",
+    documentsFolder: "Documents folder",
+    upload: "Upload",
+    noDocumentRoot: "No document root is configured; start the server with serve --document-root.",
     fileChangeDetected: "File change detected. Click to reload.",
     reload: "Reload"
   },
@@ -4647,6 +4660,10 @@ var translations = {
     monthly: "\u6BCF\u6708",
     quarterly: "\u6BCF\u5B63\u5EA6",
     yearly: "\u6BCF\u5E74",
+    uploadFiles: "\u4E0A\u4F20\u6587\u4EF6",
+    documentsFolder: "\u6587\u6863\u76EE\u5F55",
+    upload: "\u4E0A\u4F20",
+    noDocumentRoot: "\u672A\u914D\u7F6E\u6587\u6863\u6839\u76EE\u5F55\uFF1B\u8BF7\u4EE5 serve --document-root \u542F\u52A8\u670D\u52A1\u3002",
     fileChangeDetected: "\u68C0\u6D4B\u5230\u6587\u4EF6\u53D8\u66F4\u3002\u70B9\u51FB\u4EE5\u91CD\u65B0\u52A0\u8F7D\u3002",
     reload: "\u91CD\u65B0\u52A0\u8F7D"
   }
@@ -7211,13 +7228,13 @@ delegate(["click", "keydown"]);
 
 // src/fava/reports/AccountReport.svelte
 var root_113 = template(`<section class="state-panel error-panel" role="alert"> </section>`);
-var root_44 = template(`<span class="sep svelte-qjv170">:</span>`);
-var root_35 = template(`<a class="svelte-qjv170"> </a><!>`, 1);
-var root_53 = template(`<span class="last-activity svelte-qjv170"> </span>`);
-var root_65 = template(`<a class="svelte-qjv170"> </a>`);
-var root_84 = template(`<a class="svelte-qjv170"> </a>`);
-var root_103 = template(`<a class="svelte-qjv170"> </a>`);
-var root_211 = template(`<div class="headerline"><h2 class="account-breadcrumb svelte-qjv170"><!><!></h2></div> <div class="headerline sections svelte-qjv170"><h3 class="svelte-qjv170"><!></h3> <h3 class="svelte-qjv170"><!></h3> <h3 class="svelte-qjv170"><!></h3></div> <!> <!>`, 1);
+var root_44 = template(`<span class="sep svelte-5y3t8e">:</span>`);
+var root_35 = template(`<a class="svelte-5y3t8e"> </a><!>`, 1);
+var root_53 = template(`<span class="last-activity svelte-5y3t8e"> </span>`);
+var root_65 = template(`<a class="svelte-5y3t8e"> </a>`);
+var root_84 = template(`<a class="svelte-5y3t8e"> </a>`);
+var root_103 = template(`<a class="svelte-5y3t8e"> </a>`);
+var root_211 = template(`<div class="headerline"><h2 class="account-breadcrumb svelte-5y3t8e"><span class="droptarget svelte-5y3t8e"><!><!></span></h2></div> <div class="headerline sections svelte-5y3t8e"><h3 class="svelte-5y3t8e"><!></h3> <h3 class="svelte-5y3t8e"><!></h3> <h3 class="svelte-5y3t8e"><!></h3></div> <!> <!>`, 1);
 function AccountReport($$anchor, $$props) {
   push($$props, false);
   const account = mutable_state();
@@ -7329,7 +7346,8 @@ function AccountReport($$anchor, $$props) {
       var fragment_1 = root_211();
       var div = first_child(fragment_1);
       var h2 = child(div);
-      var node_1 = child(h2);
+      var span = child(h2);
+      var node_1 = child(span);
       each(node_1, 3, () => get(parts), (name) => name, ($$anchor3, name, index2) => {
         var fragment_2 = root_35();
         var a = first_child(fragment_2);
@@ -7340,8 +7358,8 @@ function AccountReport($$anchor, $$props) {
         var node_2 = sibling(a);
         {
           var consequent_1 = ($$anchor4) => {
-            var span = root_44();
-            append($$anchor4, span);
+            var span_1 = root_44();
+            append($$anchor4, span_1);
           };
           if_block(node_2, ($$render) => {
             if (get(index2) < get(parts).length - 1) $$render(consequent_1);
@@ -7353,16 +7371,17 @@ function AccountReport($$anchor, $$props) {
       var node_3 = sibling(node_1);
       {
         var consequent_2 = ($$anchor3) => {
-          var span_1 = root_53();
-          var text_2 = child(span_1);
+          var span_2 = root_53();
+          var text_2 = child(span_2);
           template_effect(() => set_text(text_2, `(${t("lastEntry") ?? ""} ${get(lastEntry) ?? ""})`));
-          reset(span_1);
-          append($$anchor3, span_1);
+          reset(span_2);
+          append($$anchor3, span_2);
         };
         if_block(node_3, ($$render) => {
           if (get(lastEntry)) $$render(consequent_2);
         });
       }
+      reset(span);
       reset(h2);
       reset(div);
       var div_1 = sibling(div, 2);
@@ -7514,6 +7533,7 @@ function AccountReport($$anchor, $$props) {
           if (get(journal)) $$render(consequent_9);
         });
       }
+      template_effect(() => set_attribute(span, "data-account-name", get(account)));
       append($$anchor2, fragment_1);
     };
     if_block(node, ($$render) => {
@@ -11357,6 +11377,276 @@ function ContextModal($$anchor, $$props) {
   pop();
 }
 
+// src/fava/modals/DocumentUploadModal.svelte
+var root_320 = template(`<p class="error svelte-bpl3hy" role="alert"> </p>`);
+var root_510 = template(`<input class="file svelte-bpl3hy" type="text">`);
+var root_78 = template(`<option> </option>`);
+var root_610 = template(`<div class="field svelte-bpl3hy"><span class="svelte-bpl3hy"> </span> <select class="svelte-bpl3hy"></select></div>`);
+var root_88 = template(`<p class="hint svelte-bpl3hy"> </p>`);
+var root_95 = template(`<option></option>`);
+var root_228 = template(`<div class="upload-backdrop svelte-bpl3hy" role="presentation"><form class="upload-modal svelte-bpl3hy" role="dialog" aria-modal="true"><h3 class="svelte-bpl3hy"> </h3> <!> <div class="field svelte-bpl3hy"><span class="svelte-bpl3hy"> </span> <input type="file" multiple></div> <!> <!> <div class="field svelte-bpl3hy"><span class="svelte-bpl3hy"> </span> <input type="text" list="upload-accounts" placeholder="Assets:Cash" required autocomplete="off" class="svelte-bpl3hy"> <datalist id="upload-accounts"></datalist></div> <div class="actions svelte-bpl3hy"><span class="spacer svelte-bpl3hy"></span> <button type="submit" class="svelte-bpl3hy"> </button></div></form></div>`);
+function DocumentUploadModal($$anchor, $$props) {
+  push($$props, false);
+  const shown = mutable_state();
+  let locale = prop($$props, "locale", 8, "en");
+  let documentRoots = prop($$props, "documentRoots", 24, () => []);
+  let accounts = prop($$props, "accounts", 24, () => []);
+  let onUploaded = prop($$props, "onUploaded", 8, () => {
+  });
+  let account = mutable_state("");
+  let files = mutable_state(null);
+  let overrides = {};
+  let folder = mutable_state("");
+  let saving = mutable_state(false);
+  let error = mutable_state("");
+  function t(key) {
+    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+    return catalog[key] || key;
+  }
+  function today() {
+    const now = /* @__PURE__ */ new Date();
+    const month = `${now.getMonth() + 1}`.padStart(2, "0");
+    const day = `${now.getDate()}`.padStart(2, "0");
+    return `${now.getFullYear()}-${month}-${day}`;
+  }
+  function getName(file, index2) {
+    const override = overrides[index2];
+    if (override !== void 0 && override.trim() !== "") return override.trim();
+    return /^\d{4}-\d{2}-\d{2}/.test(file.name) ? file.name : `${today()} ${file.name}`;
+  }
+  function setOverride(index2, value) {
+    overrides = { ...overrides, [index2]: value };
+  }
+  function supported(transfer) {
+    return transfer != null && transfer.types.includes("Files");
+  }
+  function closestDragTarget(event2, selector) {
+    return event2.target instanceof Element ? event2.target.closest(selector) : null;
+  }
+  function onDragEnter(event2) {
+    if (!supported(event2.dataTransfer)) return;
+    const droptarget = closestDragTarget(event2, ".droptarget");
+    if (droptarget) {
+      droptarget.classList.add("dragover");
+      event2.preventDefault();
+    }
+  }
+  function onDragOver(event2) {
+    if (closestDragTarget(event2, ".dragover")) event2.preventDefault();
+  }
+  function onDragLeave(event2) {
+    closestDragTarget(event2, ".dragover")?.classList.remove("dragover");
+  }
+  function onDrop(event2) {
+    const droptarget = closestDragTarget(event2, ".dragover");
+    const transfer = event2.dataTransfer;
+    if (!droptarget || !transfer) return;
+    droptarget.classList.remove("dragover");
+    event2.preventDefault();
+    if (!transfer.types.includes("Files")) return;
+    set(account, droptarget.getAttribute("data-account-name") || "");
+    overrides = {};
+    set(error, "");
+    set(files, transfer.files);
+  }
+  function close() {
+    set(account, "");
+    set(files, null);
+    overrides = {};
+    set(error, "");
+  }
+  function onKeydown(event2) {
+    if (event2.key === "Escape" && get(shown)) close();
+  }
+  async function submit(event2) {
+    event2.preventDefault();
+    if (!get(files) || get(saving)) return;
+    set(saving, true);
+    set(error, "");
+    const failures = [];
+    for (const [index2, file] of Array.from(get(files)).entries()) {
+      const name = getName(file, index2);
+      const body = new FormData();
+      body.set("account", get(account));
+      if (get(folder)) body.set("folder", get(folder));
+      body.set("file", file, name);
+      try {
+        const response = await fetch(`${PRIVATE_ADAPTER_BASE}/document`, { method: "POST", body });
+        const payload = await response.json();
+        if (!response.ok) {
+          throw new Error(payload.error || `Uploading ${name} failed (${response.status})`);
+        }
+        notify(payload.data?.message || `Uploaded ${name}.`);
+      } catch (value) {
+        failures.push(value instanceof Error ? value.message : `Uploading ${name} failed.`);
+      }
+    }
+    set(saving, false);
+    if (failures.length) {
+      set(error, failures.join(" "));
+      return;
+    }
+    close();
+    onUploaded()();
+  }
+  legacy_pre_effect(
+    () => (deep_read_state(documentRoots()), get(folder)),
+    () => {
+      if (documentRoots().length && (get(folder) === "" || !documentRoots().includes(get(folder)))) {
+        set(folder, documentRoots()[0]);
+      }
+    }
+  );
+  legacy_pre_effect(() => get(files), () => {
+    set(shown, get(files) != null);
+  });
+  legacy_pre_effect_reset();
+  init();
+  var fragment = comment();
+  event("dragenter", $document, onDragEnter);
+  event("dragover", $document, onDragOver);
+  event("dragleave", $document, onDragLeave);
+  event("drop", $document, onDrop);
+  event("keydown", $document, onKeydown);
+  var node = first_child(fragment);
+  {
+    var consequent_3 = ($$anchor2) => {
+      var div = root_228();
+      var form = child(div);
+      template_effect(() => set_attribute(form, "aria-label", t("uploadFiles")));
+      var h3 = child(form);
+      var text2 = child(h3, true);
+      template_effect(() => set_text(text2, t("uploadFiles")));
+      reset(h3);
+      var node_1 = sibling(h3, 2);
+      {
+        var consequent = ($$anchor3) => {
+          var p = root_320();
+          var text_1 = child(p, true);
+          reset(p);
+          template_effect(() => set_text(text_1, get(error)));
+          append($$anchor3, p);
+        };
+        if_block(node_1, ($$render) => {
+          if (get(error)) $$render(consequent);
+        });
+      }
+      var div_1 = sibling(node_1, 2);
+      var span = child(div_1);
+      var text_2 = child(span, true);
+      template_effect(() => set_text(text_2, t("files")));
+      reset(span);
+      var input = sibling(span, 2);
+      reset(div_1);
+      var node_2 = sibling(div_1, 2);
+      {
+        var consequent_1 = ($$anchor3) => {
+          var fragment_1 = comment();
+          var node_3 = first_child(fragment_1);
+          each(node_3, 1, () => Array.from(get(files)), index, ($$anchor4, file, index2) => {
+            var input_1 = root_510();
+            remove_input_defaults(input_1);
+            template_effect(() => set_value(input_1, getName(get(file), index2)));
+            event("input", input_1, (event2) => setOverride(index2, event2.currentTarget.value));
+            append($$anchor4, input_1);
+          });
+          append($$anchor3, fragment_1);
+        };
+        if_block(node_2, ($$render) => {
+          if (get(files)) $$render(consequent_1);
+        });
+      }
+      var node_4 = sibling(node_2, 2);
+      {
+        var consequent_2 = ($$anchor3) => {
+          var div_2 = root_610();
+          var span_1 = child(div_2);
+          var text_3 = child(span_1, true);
+          template_effect(() => set_text(text_3, t("documentsFolder")));
+          reset(span_1);
+          var select = sibling(span_1, 2);
+          template_effect(() => {
+            get(folder);
+            invalidate_inner_signals(() => {
+              documentRoots();
+            });
+          });
+          each(select, 5, documentRoots, (root19) => root19, ($$anchor4, root19) => {
+            var option = root_78();
+            var option_value = {};
+            var text_4 = child(option, true);
+            reset(option);
+            template_effect(() => {
+              if (option_value !== (option_value = get(root19))) {
+                option.value = null == (option.__value = get(root19)) ? "" : get(root19);
+              }
+              set_text(text_4, get(root19));
+            });
+            append($$anchor4, option);
+          });
+          reset(select);
+          reset(div_2);
+          bind_select_value(select, () => get(folder), ($$value) => set(folder, $$value));
+          append($$anchor3, div_2);
+        };
+        var alternate = ($$anchor3) => {
+          var p_1 = root_88();
+          var text_5 = child(p_1, true);
+          template_effect(() => set_text(text_5, t("noDocumentRoot")));
+          reset(p_1);
+          append($$anchor3, p_1);
+        };
+        if_block(node_4, ($$render) => {
+          if (documentRoots().length) $$render(consequent_2);
+          else $$render(alternate, false);
+        });
+      }
+      var div_3 = sibling(node_4, 2);
+      var span_2 = child(div_3);
+      var text_6 = child(span_2, true);
+      template_effect(() => set_text(text_6, t("account")));
+      reset(span_2);
+      var input_2 = sibling(span_2, 2);
+      remove_input_defaults(input_2);
+      var datalist = sibling(input_2, 2);
+      each(datalist, 5, accounts, (name) => name, ($$anchor3, name) => {
+        var option_1 = root_95();
+        var option_1_value = {};
+        template_effect(() => {
+          if (option_1_value !== (option_1_value = get(name))) {
+            option_1.value = null == (option_1.__value = get(name)) ? "" : get(name);
+          }
+        });
+        append($$anchor3, option_1);
+      });
+      reset(datalist);
+      reset(div_3);
+      var div_4 = sibling(div_3, 2);
+      var button = sibling(child(div_4), 2);
+      var text_7 = child(button, true);
+      template_effect(() => set_text(text_7, t("upload")));
+      reset(button);
+      reset(div_4);
+      reset(form);
+      reset(div);
+      template_effect(() => button.disabled = get(saving) || !get(files) || !get(files).length);
+      bind_files(input, () => get(files), ($$value) => set(files, $$value));
+      bind_value(input_2, () => get(account), ($$value) => set(account, $$value));
+      event("click", form, stopPropagation(function($$arg) {
+        bubble_event.call(this, $$props, $$arg);
+      }));
+      event("submit", form, submit);
+      event("click", div, close);
+      append($$anchor2, div);
+    };
+    if_block(node, ($$render) => {
+      if (get(shown)) $$render(consequent_3);
+    });
+  }
+  append($$anchor, fragment);
+  pop();
+}
+
 // src/fava/modals/ExportModal.svelte
 var root_135 = template(`<div class="export-backdrop svelte-gn9rfu" role="presentation"><div class="export-modal svelte-gn9rfu" role="dialog" aria-modal="true"><h3 class="svelte-gn9rfu"> </h3> <a download="journal.bean" class="svelte-gn9rfu"> </a></div></div>`);
 function ExportModal($$anchor, $$props) {
@@ -11503,6 +11793,7 @@ function initialShellState(route) {
     payees: [],
     years: [],
     userQueries: [],
+    documentRoots: [],
     operatingCurrencies: [],
     renderCommas: false,
     query: {},
@@ -11540,6 +11831,7 @@ function reduceShellState(state2, action2) {
         payees: Array.isArray(action2.payees) ? action2.payees : state2.payees,
         years: Array.isArray(action2.years) ? action2.years : state2.years,
         userQueries: Array.isArray(action2.userQueries) ? action2.userQueries : state2.userQueries,
+        documentRoots: Array.isArray(action2.documentRoots) ? action2.documentRoots : state2.documentRoots,
         operatingCurrencies: Array.isArray(action2.operatingCurrencies) ? action2.operatingCurrencies : state2.operatingCurrencies,
         renderCommas: typeof action2.renderCommas === "boolean" ? action2.renderCommas : state2.renderCommas,
         locale: action2.locale === "zh-CN" ? "zh-CN" : state2.locale,
@@ -11565,7 +11857,7 @@ function createShellStore(initial) {
 
 // src/fava/App.svelte
 var root_136 = template(`<meta name="description" content="OrangeCount local ledger interface">`);
-var root18 = template(`<!> <!> <article id="main-content" tabindex="-1"><!></article> <!> <!> <!>`, 1);
+var root18 = template(`<!> <!> <article id="main-content" tabindex="-1"><!></article> <!> <!> <!> <!>`, 1);
 function App($$anchor, $$props) {
   push($$props, false);
   const $$stores = setup_stores();
@@ -11650,6 +11942,7 @@ function App($$anchor, $$props) {
         payees: payload.payees,
         years: payload.years,
         userQueries: payload.user_queries,
+        documentRoots: payload.document_roots,
         errors: payload.errors,
         operatingCurrencies: payload.operating_currencies,
         renderCommas: payload.render_commas
@@ -11874,6 +12167,19 @@ function App($$anchor, $$props) {
       return get(current).locale;
     },
     onSaved: () => void bootstrap()
+  });
+  var node_7 = sibling(node_6, 2);
+  DocumentUploadModal(node_7, {
+    get locale() {
+      return get(current).locale;
+    },
+    get documentRoots() {
+      return get(current).documentRoots;
+    },
+    get accounts() {
+      return get(current).accounts;
+    },
+    onUploaded: () => void bootstrap()
   });
   append($$anchor, fragment);
   pop();

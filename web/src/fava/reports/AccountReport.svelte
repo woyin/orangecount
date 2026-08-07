@@ -102,7 +102,7 @@
 {#if error}
   <section class="state-panel error-panel" role="alert">{error}</section>
 {:else}
-  <div class="headerline"><h2 class="account-breadcrumb">{#each parts as name, index (name)}<a href={accountHref(name)} title={name}>{leaf(name)}</a>{#if index < parts.length - 1}<span class="sep">:</span>{/if}{/each}{#if lastEntry}<span class="last-activity">({t("lastEntry")} {lastEntry})</span>{/if}</h2></div>
+  <div class="headerline"><h2 class="account-breadcrumb"><span class="droptarget" data-account-name={account}>{#each parts as name, index (name)}<a href={accountHref(name)} title={name}>{leaf(name)}</a>{#if index < parts.length - 1}<span class="sep">:</span>{/if}{/each}{#if lastEntry}<span class="last-activity">({t("lastEntry")} {lastEntry})</span>{/if}</span></h2></div>
   <div class="headerline sections">
     <h3>{#if reportType !== "journal"}<a href={sectionHref("")}>{t("accountBalance")}</a>{:else}{t("accountBalance")}{/if}</h3>
     <h3>{#if reportType !== "changes"}<a href={sectionHref("changes")}>{t("changes")} ({intervalLabel})</a>{:else}{t("changes")} ({intervalLabel}){/if}</h3>
@@ -117,6 +117,11 @@
 {/if}
 
 <style>
+  .account-breadcrumb .droptarget {
+    padding: 0.35em 0.5em;
+    margin: -0.35em -0.5em;
+  }
+
   .account-breadcrumb a {
     color: unset;
   }

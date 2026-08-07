@@ -25,6 +25,9 @@ export interface BootstrapPayload {
   render_commas: boolean;
   /** User-defined `query` directives, sorted by name; shown in the sidebar. */
   user_queries: { name: string; query_string: string }[];
+  /** Configured attachment roots (serve --document-root); empty disables
+   * document uploads. */
+  document_roots: string[];
   errors: unknown[];
   mtime?: string;
 }
@@ -53,6 +56,7 @@ interface BootstrapWire {
   options?: Record<string, string>;
   fava_options?: Record<string, string>;
   user_queries?: { name: string; query_string: string }[];
+  document_roots?: string[];
 }
 
 function bootstrapPayload(wire: BootstrapWire, mtime = ""): BootstrapPayload {
@@ -76,6 +80,7 @@ function bootstrapPayload(wire: BootstrapWire, mtime = ""): BootstrapPayload {
     render_commas: (wire.options?.render_commas || "").toUpperCase() === "TRUE",
     errors: wire.errors || [],
     user_queries: wire.user_queries || [],
+    document_roots: wire.document_roots || [],
     mtime,
   };
 }
@@ -136,6 +141,7 @@ export function createSyntheticAdapter(): AdapterClient {
     operating_currencies: ["USD"],
     render_commas: false,
     user_queries: [],
+    document_roots: [],
     errors: [],
   };
   return {

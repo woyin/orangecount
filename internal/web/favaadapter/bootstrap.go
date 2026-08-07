@@ -73,6 +73,11 @@ type Bootstrap struct {
 	// SnapshotID is the immutable snapshot identifier (redaction-safe, not a
 	// path). Exposed for the shell header only.
 	SnapshotID string `json:"snapshot_id"`
+	// DocumentRoots lists the configured attachment roots so the upload modal
+	// can offer a folder choice; empty when uploads are disabled. These are
+	// loopback server paths supplied via serve --document-root, not ledger
+	// source content.
+	DocumentRoots []string `json:"document_roots"`
 	// Valid reports whether the current snapshot is valid.
 	Valid bool `json:"valid"`
 }
@@ -114,10 +119,12 @@ type AdapterSource struct {
 }
 
 // BootstrapOptions are the projection inputs. The adapter handler supplies
-// the current snapshot (may be nil) and the base URL.
+// the current snapshot (may be nil), the base URL, and the configured
+// document attachment roots (may be empty).
 type BootstrapOptions struct {
-	Snapshot *snapshot.Snapshot
-	BaseURL  string
+	Snapshot      *snapshot.Snapshot
+	BaseURL       string
+	DocumentRoots []string
 }
 
 // BootstrapProjection builds a Bootstrap from the current snapshot. It is
@@ -137,6 +144,10 @@ func BootstrapProjection(opts BootstrapOptions) Bootstrap {
 		UserQueries:    []UserQuery{},
 		FavaOptions:    map[string]string{},
 		Options:        map[string]string{},
+		DocumentRoots:  []string{},
+	}
+	if opts.DocumentRoots != nil {
+		proj.DocumentRoots = append([]string(nil), opts.DocumentRoots...)
 	}
 	if opts.Snapshot == nil {
 		return proj

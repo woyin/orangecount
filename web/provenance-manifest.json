@@ -179,6 +179,14 @@
       "notice": "NOTICE",
       "notes": "Fava Add Entry modal reworked for legacy Svelte and the OrangeCount adapter: #add-transaction toggling without the upstream hash store, hand-rolled transaction/balance/note forms instead of upstream Entry classes, and posting through the private add-entries route instead of upstream save_entries. Continue-checkbox persistence matches the upstream add-entry-continue store. Upstream hash computed from an exact byte reconstruction of the pinned reference copy, since shell access to the reference directory is policy-blocked."
     },
+    "web/src/fava/modals/DocumentUploadModal.svelte": {
+      "current_kind": "derived",
+      "upstream": "frontend/src/modals/DocumentUpload.svelte",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "036d1e52ed8f769569d433a73a1b67c5364085fea1dddee081f3f51bbe8aa926",
+      "notice": "NOTICE",
+      "notes": "Fava document-upload modal reworked for legacy Svelte and the OrangeCount adapter: same .droptarget/.dragover document-level drag flow and date-prefixed rename inputs as upstream (helper logic from frontend/src/modals/document-upload.ts, hash 75c4e2134e2b805ce0da6b00a3c8e222db5b33a37319e9c7b693932504b5fbe2), but the folder choice comes from the adapter's configured document roots instead of the ledger documents option, the account input is a datalist instead of AccountInput, and uploads post through the private document route; the upstream uri-list link-drop attach flow (put_attach_document metadata insertion) is not implemented. Upstream hash verified against an exact byte reconstruction of the pinned reference copy."
+    },
     "web/tests/unit/format-amount.test.mjs": {
       "current_kind": "original",
       "upstream": null,
