@@ -98,7 +98,7 @@ fixture has not yet been implemented.
 | `trial_balance` | tree report loader | GET filters/conversion/interval | tree-report DTO | `internal/report` + charts | exact projection + route flow | adopt frontend/rewrite backend |
 | `account_report` | account loader | GET `a,r,filters,conversion,interval` | Journal HTML or tree/chart/budget DTO | report/account/budget + strict HTML template | running balance/details/budget contract + route flow | adapt/partial（`r=changes|balances` 区间表已以 OC table-report（AccountIntervals）落地，`24ef4ca`；上游 interval_balances 子树/budget DTO 未实现） |
 | `events` | `json_api.get_events`; Events | GET filters | serialized Events | `internal/report` | ordering/filter/source contract + route flow | adopt/partial（`report.Events` + 按类型分组表格已接线并冒烟验证；上游 ScatterPlot 未实现） |
-| `statistics` | `json_api.get_statistics`; Statistics | GET filters | balances/directives/entry counts | report/query | deterministic metric contract + route flow | adopt/planned |
+| `statistics` | `json_api.get_statistics`; Statistics | GET filters | balances/directives/entry counts | report/query + favaadapter.UpdateActivity | deterministic metric contract + route flow | adopt/partial（复合载荷 entries_by_type + postings_per_account + update_activity 三区块已落地并冒烟，`a66cf9d`；上游 all_balance_directives/balances 库存与 uptodate_status 指示未实现） |
 | `commodities` | `json_api.get_commodities`; Commodities | GET filters | base/quote price series | report price projection | precision/history/unavailable contract + route flow | adopt/planned |
 | `options` | `json_api.get_options`; Options | GET, none | Fava and Beancount option maps | ledger options + adapter | every applicable option and precedence + route flow | adapt/planned |
 | `imports` | `json_api.get_imports`; Import | GET, none | native file/importer candidates | native import service | candidate/status contract + route flow | adapt/planned |
@@ -239,10 +239,10 @@ fixture has not yet been implemented.
 | Fava source | `json_api.get_statistics`; `core/accounts.all_balance_directives` |
 | Route/state | statistics; filters |
 | Request shape | GET with filters |
-| Go owner | `internal/report.Statistics` + `internal/query` postings-per-account |
-| Semantic rule | deterministic counts/totals; exact values |
-| Response adaptation | `{all_balance_directives, balances:{account:Inventory}, entries_by_type}` |
-| Tests | statistics deterministic test; browser accessible table fallback |
+| Go owner | `internal/report.Statistics` + `internal/query` postings-per-account + `favaadapter.UpdateActivity` |
+| Semantic rule | deterministic counts/totals; exact values; update activity in journal order (last entry per Assets/Liabilities account wins) |
+| Response adaptation | composite `{entries_by_type, postings_per_account, update_activity:[{account, last_entry_date, entry_hash, balances}]}`; upstream `all_balance_directives`/`balances` inventory omitted (balances are ledger balances) |
+| Tests | statistics deterministic test; UpdateActivity unit test; browser accessible table fallback |
 | Provenance | adopt (frontend) + rewrite (Go) |
 
 ## Provenance guard mapping
