@@ -36,7 +36,7 @@
   let report: TreeReportData | null = null;
   let table: TableReport | null = null;
   let journal: JournalReportData | null = null;
-  let statistics: { entriesByType: [string, number][]; postings: TableReport } | null = null;
+  let statistics: { entriesByType: [string, number][]; postings: TableReport; updateActivity: { account: string; last_entry_date: string; entry_hash: string; balances: Record<string, string> }[] } | null = null;
 
   $: requestKey = `${route}?${new URLSearchParams(query).toString()}`;
   $: if (requestKey !== loadedKey) {
@@ -63,9 +63,9 @@
       } else if (route === "journal") {
         journal = parseJournalReport(payload);
       } else if (route === "statistics") {
-        const composite = payload as { entries_by_type?: Record<string, number>; postings_per_account?: unknown };
+        const composite = payload as { entries_by_type?: Record<string, number>; postings_per_account?: unknown; update_activity?: { account: string; last_entry_date: string; entry_hash: string; balances: Record<string, string> }[] };
         const entriesByType = Object.entries(composite.entries_by_type ?? {}).sort(([left], [right]) => left.localeCompare(right));
-        statistics = { entriesByType, postings: parseTableReport(composite.postings_per_account) };
+        statistics = { entriesByType, postings: parseTableReport(composite.postings_per_account), updateActivity: composite.update_activity ?? [] };
       } else {
         table = parseTableReport(payload);
       }
@@ -98,7 +98,7 @@
 {:else if journal}
   <JournalReport report={journal} {renderCommas} />
 {:else if statistics}
-  <StatisticsReport entriesByType={statistics.entriesByType} postings={statistics.postings} {locale} {renderCommas} />
+  <StatisticsReport entriesByType={statistics.entriesByType} postings={statistics.postings} updateActivity={statistics.updateActivity} {locale} {renderCommas} />
 {:else if table && (route === "holdings" || route.startsWith("holdings_by_"))}
   <HoldingsReport report={table} {route} {locale} {renderCommas} />
 {:else if table && route === "events"}

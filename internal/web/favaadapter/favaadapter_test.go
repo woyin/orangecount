@@ -484,3 +484,56 @@ func TestSerializeNewEntries(t *testing.T) {
 		}
 	}
 }
+
+func TestUpdateActivityTracksLastEntryPerAccount(t *testing.T) {
+	text := `2000-01-01 open Assets:Bank:Cash USD
+2000-01-01 open Liabilities:Card USD
+2000-01-01 open Income:Salary USD
+2000-01-01 open Expenses:Food USD
+2000-02-01 * "Pay"
+  Assets:Bank:Cash 100 USD
+  Income:Salary -100 USD
+2000-03-01 * "Card"
+  Liabilities:Card -20 USD
+  Expenses:Food 20 USD
+2000-04-01 * "Refund"
+  Assets:Bank:Cash 5 USD
+  Liabilities:Card -5 USD
+`
+	file, diagnostics := ledger.ParseText("activity.bean", []byte(text))
+	if diagnostics.HasErrors() {
+		t.Fatalf("parse=%+v", diagnostics.All())
+	}
+	evaluation := ledger.EvaluateFiles(map[source.FileID]*ledger.File{1: file}, []source.FileID{1}, ledger.EvalOptions{})
+	if !evaluation.Valid {
+		t.Fatalf("evaluation=%+v", evaluation.Diagnostics)
+	}
+
+	rows := UpdateActivity(*evaluation)
+	if len(rows) != 2 {
+		t.Fatalf("expected 2 Assets/Liabilities rows, got %+v", rows)
+	}
+	if rows[0].Account != "Assets:Bank:Cash" || rows[1].Account != "Liabilities:Card" {
+		t.Fatalf("rows must be sorted by account: %+v", rows)
+	}
+	if rows[0].LastEntryDate != "2000-04-01" || rows[1].LastEntryDate != "2000-04-01" {
+		t.Fatalf("last entry must win: %+v", rows)
+	}
+	if rows[0].EntryHash == "" || rows[1].EntryHash == "" {
+		t.Fatalf("entry hash must be populated: %+v", rows)
+	}
+	if rows[0].EntryHash != rows[1].EntryHash {
+		t.Fatalf("both accounts share the same last entry: %+v", rows)
+	}
+	if got := rows[0].Balances["USD"]; got != "105" {
+		t.Fatalf("Assets balance = %q, want 105", got)
+	}
+	if got := rows[1].Balances["USD"]; got != "-25" {
+		t.Fatalf("Liabilities balance = %q, want -25", got)
+	}
+	for _, row := range rows {
+		if strings.HasPrefix(row.Account, "Income") || strings.HasPrefix(row.Account, "Expenses") {
+			t.Fatalf("non balance-sheet account leaked into update activity: %+v", row)
+		}
+	}
+}

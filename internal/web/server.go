@@ -543,9 +543,10 @@ func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 					entriesByType[row["directive"].(string)] = row["count"].(int)
 				}
 				payload := struct {
-					EntriesByType      map[string]int `json:"entries_by_type"`
-					PostingsPerAccount query.Result   `json:"postings_per_account"`
-				}{EntriesByType: entriesByType, PostingsPerAccount: report.Present(report.PostingsPerAccount(evaluation))}
+					EntriesByType      map[string]int                  `json:"entries_by_type"`
+					PostingsPerAccount query.Result                    `json:"postings_per_account"`
+					UpdateActivity     []favaadapter.UpdateActivityRow `json:"update_activity"`
+				}{EntriesByType: entriesByType, PostingsPerAccount: report.Present(report.PostingsPerAccount(evaluation)), UpdateActivity: favaadapter.UpdateActivity(evaluation)}
 				writeJSON(w, favaadapter.NewEnvelope(payload, current.BuiltAt))
 				return
 			}
