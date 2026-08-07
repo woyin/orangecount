@@ -66,7 +66,7 @@
 | # | Manifest | 差距 | 说明 |
 | --- | --- | --- | --- |
 | M1 | R-QUERY | Query 页不完整 | 保存查询已落地（`1abfaf0`）：账本 `query` 指令投影为侧栏 Query 项子菜单（同名截断规则同上游），页内点选即回显并重跑；结果排序冒烟确认 GenericReport 列排序可用（含数值列方向切换）——原"无结果排序"判断有误；查询图表已落地（`78d4233`，见 M1-query-chart）；BQL 编辑器已落地（`53bd5d3`，见 M1-bql-editor） |
-| M2 | R-IMPORT | Import 为 OC 原创表单 | 上传块已对齐（`ea13c07`，见 M2-import-upload）：上游 ImportFileUpload 形态的文件选择器落地（本地读入导入缓冲区、按扩展名推断 adapter）；余项：服务端 import 目录文件列表与逐条目 extract/review 弹窗（上游依赖 Python importer 生态，OC 无 import 目录，待方案决策）；Source path/Adapter/Target + 粘贴缓冲区保留为 OC 扩展 |
+| M2 | R-IMPORT | Import 为 OC 原创表单 | 上传块已对齐（`ea13c07`，见 M2-import-upload）：上游 ImportFileUpload 形态的文件选择器落地（本地读入导入缓冲区、按扩展名推断 adapter）；文件列表 + 逐条目 extract/review 弹窗已登记为 deviation（FD-0001，见 M2-extract；上游依赖 Python importer 智能，OC 已批准排除 Python importer，Go 原生无法等价复刻 importer 的文件识别/逐条提取/账号推断）；Source path/Adapter/Target + 粘贴缓冲区保留为 OC 扩展 |
 | M3 | R-HELP | ~~Help 无页面索引~~（已完成，`f1a01f0`） | `/help` 现渲染子页索引，`/help/<id>` 渲染单节页面 + 返回链接；Options 页标题链接 `/help/options`（限制：子页集合为 OC 自有 8 节，非上游 Index/Syntax/Budgets 全集） |
 | M4 | 跨路由 | ~~排序基建缺失~~（已完成，`62de047`） | `sort/index.ts`（Sorter/SortColumn 契约，同上游点击语义，无 d3 依赖）+ `SortHeader.svelte`（legacy 模式，含 aria-sort 与箭头提示）已落地；events/commodities/documents/statistics/options 表头可排序，冒烟验证方向切换与列切换重排（限制：holdings 与上游一致不可排序；Query 结果排序经 GenericReport 实际可用，`1abfaf0` 冒烟确认） |
 | M5 | 跨路由 | ~~三份 CSS 未移植~~（已完成） | `editor.css`、`help.css`、`notifications.css` 均已移植，main.ts 引入 11/11 |
@@ -432,6 +432,19 @@ POST，`38f2618`）。
 > 与 Python importer 生态，文件列表/extract 弹窗登记为待方案决策
 > 余项；单文件读取（上游支持多文件并发上传）；Import 页文案仍为
 > 硬编码英文（既有状态），`ea13c07`）。
+> M2-extract（import 余项文件列表 + 逐条目 extract/review 决策，
+> 2026-08-08）：调查确认上游文件列表靠 importer 的 identify()/
+> file_account()/file_date() 识别文件属性，逐条目 extract 靠 importer
+> 的 extract() 把 CSV/对账单变成结构化 directive（date/payee/
+> narration/postings），save_entries 走 put_add_entries 条目级写入
+> （见 fava/core/ingest.py、json_api.py get_imports/get_extract/
+> put_add_entries）。OC 已批准排除 Python importer（D3），且 commit 是
+> 文本追加而非条目级 add_entries；Go 原生仅能做通用 CSV 解析
+> （csvToBeancount，Equity:Imported 抵销）与 beancount parse，无法
+> 等价复刻 importer 的文件识别/逐条提取/账号推断。决策：文件列表 +
+> 逐条目 extract/review 整体登记 FD-0001 deviation（实现性/语义性
+> 边界）；OC 保留本地缓冲单文件 + 通用 adapter 的 preview→commit
+> 工作流。不试图用 Go 重写通用对账单识别（过宽、识别正确性无边界）。
 > H2-droptarget-extend（文档拖放目标补齐至上游全集：journal 行复刻
 > 上游 JournalTable ondragenter——dragenter 时将行内 description 单元
 > 标记为 droptarget，账户取行内首个 account 链接（交易即首个过账
@@ -508,7 +521,7 @@ POST，`38f2618`）。
 | --- | --- | --- |
 | D1 | OC 独有 `Accounts` 导航项混在标准导航 | **已落地**：移入标注的 OrangeCount 扩展区，无需登记偏差 |
 | D2 | 顶栏 Language/Theme 下拉 | **已落地**：顶栏原创下拉已移除，主题进 Options→Color scheme，locale 作为 fava option |
-| D3 | Import 页 OC 原创表单 | 对齐 Fava 流程（文件列表 + 上传 + extract/review）；Python importer 排除维持既有批准偏差 |
+| D3 | Import 页 OC 原创表单 | **已决策（2026-08-08）**：上传块对齐上游 ImportFileUpload 形态（本地缓冲）；文件列表 + 逐条目 extract/review 因依赖 Python importer 生态（已排除）登记为 FD-0001 deviation；OC 保留 Source path/Adapter/Target + 粘贴缓冲区的本地 preview→commit 工作流 |
 | D4 | i18n 静态字典 vs gettext | 无用户可见差异，不构成偏差、无需登记（实现自由度）；仅需在 zh-CN 结构检查中持续验证覆盖完整性 |
 
 ## 与 QA 流程的口径

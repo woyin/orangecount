@@ -13,7 +13,25 @@ A deviation is valid only when required by OrangeCount's accounting semantic aut
 
 ## Registry
 
-No deviations are currently approved. Existing differences in the prototype and legacy UI are migration gaps, not approved deviations.
+### FD-0001 — Import file list and per-entry extract/review rely on Python importers
+
+| Field | Value |
+| --- | --- |
+| Status | proposed |
+| Route and state | R-IMPORT (`import`) |
+| Fava baseline | Import page "Importable Files" list (`FileList.svelte`) + per-entry "Extract" modal (`Extract.svelte`) driven by Python importers |
+| OrangeCount behavior | Import is a single-file local-buffer workflow (upload/paste one file, pick Source path/Adapter/Target, Preview, Commit); no server-side import directory, no file list, no per-entry extract/review modal |
+| Category | semantics |
+| Reason | OrangeCount is a Go-native EagerLedger that approved excluding the Python importer ecosystem (decision D3). Upstream file attribution (identify/file_account/file_date) and per-entry extraction (extract into structured directives) live in user-supplied Python importer classes (beangulp, fava/core/ingest.py); the Go runtime cannot equivalently reproduce importer file recognition, entry extraction, or account inference, and commit writes appended text rather than per-entry add_entries. Reproducing importer intelligence in Go has no bounded recognition correctness. |
+| Scope | import route: file list, per-entry extract/review modal, importer-driven auto-attribution; the local upload + generic beancount/csv adapter preview→commit flow is retained |
+| Tests | M2-import-upload smoke (DataTransfer upload → local buffer load, path/adapter backfill, Preview diagnostics, Commit stays disabled until valid) |
+| Owner | implementing agent (Francis Chen / OrangeCount maintainer) |
+| Approver | user (product owner) only |
+| Approved evidence | none yet |
+| Expiry condition | a Fava upgrade that changes the Import contract, or an OrangeCount decision to embed a supported importer runtime |
+| Baseline impact | alternate expectation for the Import page |
+
+No other deviations are currently approved. Existing differences in the prototype and legacy UI are migration gaps, not approved deviations.
 
 ## Entry template
 
