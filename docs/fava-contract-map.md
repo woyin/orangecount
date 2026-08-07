@@ -108,7 +108,7 @@ fixture has not yet been implemented.
 | `documents` | `json_api.get_documents`; Documents | GET filters | serialized Documents | report + Document Roots | grouping/filter/unsafe-state contract + route flow | adapt/planned |
 | `document` download | `application.document`; preview/table | GET normalized filename | contained file/download response | web/source roots | containment/missing/content headers + browser flow | rewrite/planned |
 | `document` delete | `json_api.delete_document`; Documents | DELETE `filename` | status | Reviewed document workflow | containment/confirm/partial failure + flow | adapt/planned |
-| `add_document` | `json_api.put_add_document`; DocumentUpload | PUT multipart | status/path identifier | Reviewed document workflow | containment/type/partial failure + flow | adapt/planned |
+| `add_document` | `json_api.put_add_document`; DocumentUpload | PUT multipart | status/path identifier | Reviewed document workflow | containment/type/partial failure + flow | adapt/partial（OC 私有 POST `document` 路由已接线：同源校验 + 账户/目录校验 + basename 净化 + 拒绝覆盖，DocumentUploadModal 走该路由，`339b63e`；entry hash 附件元数据与 uri-list 链接拖放未实现） |
 | `attach_document` | `json_api.put_attach_document`; Context | PUT `filename,entry_hash` | status/new hash | document + Reviewed write workflow | cross-file rollback/snapshot + flow | adapt/planned |
 | `move` | `json_api.put_move`; Documents | PUT `account,new_name,filename` | status | document + Reviewed write workflow | containment/collision/rollback + flow | adapt/planned |
 | `statement` | `application.statement`; Journal metadata | GET `entry_hash,key` | contained file/download or safe error | context metadata + source roots | hash/key/containment/no-path-leak + flow | rewrite/planned |
