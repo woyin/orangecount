@@ -315,9 +315,12 @@ POST，`38f2618`）。
 > fixture 无 #linked/#discovered 数据无法复现，按 P0-1 原则以固定输入
 > 扩展 fixturegen（`6a3233b` 加两条 linked/discovered document 交易，
 > 无手工改 .bean），重新生成后复现行类（document … linked/discovered）
-> 与 D/L 芯片各自隐藏对应行。剩余：T1 图表（IS/BS/TB）的稠密复比仍
-> 待；H5 的 B(budget) 芯片与 balance diff_amount/document→statement
-> 附件维持既有限制）。
+> 与 D/L 芯片各自隐藏对应行。T1 亦在稠密夹具下复比勾销：IS 条形图
+> （11 rect + 坐标轴 + 图例）、TB treemap（86 节点 rect + 86 科目详
+> 情页链接）、Treemap/Sunburst/Icicle 三视图切换（切换后 shapes 更新）、
+> 指针 tooltip（hover rect 显示 `USD · 2024-01: 0`）均复现。剩余：H5
+> 的 B(budget) 芯片与 balance diff_amount/document→statement 附件维
+> 持既有限制）。
 > H4-review（冒烟复核六路由专用组件：Holdings 五页签、Commodities
 > base/quote 分组、Events 类型分组、Statistics 双区块、Documents 表格
 > 均在案；H4 行现状列改写为已验证形态并列出契约级余项——散点图/
@@ -488,8 +491,8 @@ POST，`38f2618`）。
 > Align Amounts（beancount_format，需 format 端点）与 insert-entry 选项
 > 菜单（无 insert_entry store）省略；树数据源为本地派生而非上游
 > sources API，`3b48ebe`）。
-> H5 的 WIP 覆盖部分已在稠密夹具下复比勾销（`6a3233b`，见 H5 行与
-> T1/H5 勾销 note）；T1 图表的稠密夹具复比仍待。
+> H5 与 T1 的 WIP 覆盖部分已在稠密夹具下复比勾销（`6a3233b`/本步，
+> 见 T1/H5-recheck note）。
 
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
 
