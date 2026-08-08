@@ -83,6 +83,7 @@
   // The journal arrives newest-first, so the first entry's date is the most
   // recent activity inside the current filters.
   $: lastEntry = journal && journal.entries.length ? journal.entries[0].date : "";
+  $: lastEntryHash = journal && journal.entries.length && journal.entries[0].entry_hash ? journal.entries[0].entry_hash : "";
 
   $: if (requestKey !== JSON.stringify(query)) {
     requestKey = JSON.stringify(query);
@@ -114,7 +115,7 @@
 {#if error}
   <section class="state-panel error-panel" role="alert">{error}</section>
 {:else}
-  <div class="headerline"><h2 class="account-breadcrumb"><span class="droptarget" data-account-name={account}>{#each parts as name, index (name)}<a href={accountHref(name)} title={name}>{leaf(name)}</a>{#if index < parts.length - 1}<span class="sep">:</span>{/if}{/each}{#if uptodate}<span class="status-indicator status-{uptodate}" title={statusTitle}></span>{/if}{#if lastEntry}<span class="last-activity">({t("lastEntry")} {lastEntry})</span>{/if}</span></h2></div>
+  <div class="headerline"><h2 class="account-breadcrumb"><span class="droptarget" data-account-name={account}>{#each parts as name, index (name)}<a href={accountHref(name)} title={name}>{leaf(name)}</a>{#if index < parts.length - 1}<span class="sep">:</span>{/if}{/each}{#if uptodate}<span class="status-indicator status-{uptodate}" title={statusTitle}></span>{/if}{#if lastEntry}<span class="last-activity">({t("lastEntry")} {#if lastEntryHash}<a href="#context-{lastEntryHash}">{lastEntry}</a>{:else}{lastEntry}{/if})</span>{/if}</span></h2></div>
   <div class="headerline sections">
     <h3>{#if reportType !== "journal"}<a href={sectionHref("")}>{t("accountBalance")}</a>{:else}{t("accountBalance")}{/if}</h3>
     <h3>{#if reportType !== "changes"}<a href={sectionHref("changes")}>{t("changes")} ({intervalLabel})</a>{:else}{t("changes")} ({intervalLabel}){/if}</h3>
