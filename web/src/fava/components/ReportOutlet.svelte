@@ -27,6 +27,7 @@
   export let operatingCurrencies: string[] = [];
   export let renderCommas = false;
   export let accounts: string[] = [];
+  export let accountDetails: Record<string, { balance_string: string; close_date?: string; uptodate_status?: string; last_entry?: string }> = {};
   export let onLocale: (value: string) => void = () => {};
   export let onTheme: (value: string) => void = () => {};
 
@@ -86,7 +87,7 @@
 {:else if route === "query"}
   <QueryReport {adapter} query={query} />
 {:else if route === "account"}
-  <AccountReport adapter={adapter} {query} {locale} {renderCommas} />
+  <AccountReport adapter={adapter} {query} {locale} {renderCommas} {accountDetails} />
 {:else if route === "editor"}
   <EditorReport {adapter} query={query} />
 {:else if route === "import"}

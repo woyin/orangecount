@@ -89,6 +89,9 @@ type AccountDetail struct {
 	BalanceString  string `json:"balance_string,omitempty"`
 	CloseDate      string `json:"close_date,omitempty"`
 	UptodateStatus string `json:"uptodate_status,omitempty"`
+	// LastEntry is the date of the account's latest entry (raw), used by the
+	// sidebar indicator to grey stale accounts.
+	LastEntry string `json:"last_entry,omitempty"`
 }
 
 type Extension struct {
@@ -211,13 +214,75 @@ func projectAccountDetails(evaluation ledger.Evaluation) map[string]AccountDetai
 		for _, currency := range currencies {
 			parts = append(parts, fmt.Sprintf("%s %s", state.Balances[currency].String(), currency))
 		}
-		detail := AccountDetail{BalanceString: strings.Join(parts, ", "), UptodateStatus: "green"}
+		detail := AccountDetail{BalanceString: strings.Join(parts, ", "), UptodateStatus: uptodateStatus(evaluation.Entries, account), LastEntry: lastEntryDate(evaluation.Entries, account)}
 		if state.Closed != nil {
 			detail.CloseDate = state.Closed.Raw
 		}
 		result[account] = detail
 	}
 	return result
+}
+
+// uptodateStatus mirrors Fava's uptodate_status for an account's latest entry:
+// green when the latest entry is a passing balance assertion, yellow when it is
+// a transaction. Red (failed assertion) never occurs because OrangeCount serves
+// only valid ledgers (see FD-0002). Accounts with no entries yield "".
+func uptodateStatus(entries []ledger.EntryRecord, account string) string {
+	for index := len(entries) - 1; index >= 0; index-- {
+		if !recordTouchesAccount(entries[index], account) {
+			continue
+		}
+		switch entries[index].Directive.(type) {
+		case ledger.Balance, *ledger.Balance:
+			return "green"
+		case ledger.Transaction, *ledger.Transaction:
+			return "yellow"
+		}
+	}
+	return ""
+}
+
+func recordTouchesAccount(record ledger.EntryRecord, account string) bool {
+	switch directive := record.Directive.(type) {
+	case ledger.Balance:
+		return directive.Account == account
+	case *ledger.Balance:
+		return directive.Account == account
+	case ledger.Transaction:
+		for _, posting := range directive.Postings {
+			if posting.Account == account {
+				return true
+			}
+		}
+	case *ledger.Transaction:
+		for _, posting := range directive.Postings {
+			if posting.Account == account {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// lastEntryDate returns the raw date of an account's latest entry, newest
+// first, or "" if the account has no entries.
+func lastEntryDate(entries []ledger.EntryRecord, account string) string {
+	for index := len(entries) - 1; index >= 0; index-- {
+		if !recordTouchesAccount(entries[index], account) {
+			continue
+		}
+		switch directive := entries[index].Directive.(type) {
+		case ledger.Balance:
+			return directive.Date.Raw
+		case *ledger.Balance:
+			return directive.Date.Raw
+		case ledger.Transaction:
+			return directive.Date.Raw
+		case *ledger.Transaction:
+			return directive.Date.Raw
+		}
+	}
+	return ""
 }
 
 func projectUserQueries(evaluation ledger.Evaluation) []UserQuery {

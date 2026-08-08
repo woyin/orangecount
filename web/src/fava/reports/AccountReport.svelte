@@ -10,6 +10,7 @@
   export let query: Record<string, string>;
   export let locale = "en";
   export let renderCommas = false;
+  export let accountDetails: Record<string, { balance_string: string; close_date?: string; uptodate_status?: string; last_entry?: string }> = {};
 
   function t(key: string): string {
     const catalog = translations[(locale === "zh-CN" ? "zh-CN" : "en") as Locale];
@@ -52,6 +53,12 @@
   }
 
   $: parts = ancestors(account);
+
+  // Per-account up-to-date status (green = latest is a passing balance check,
+  // yellow = latest is a transaction; red is unreachable under valid-only
+  // serving). Displayed as a small dot beside the breadcrumb, like Fava.
+  $: uptodate = accountDetails[account]?.uptodate_status ?? "";
+  $: statusTitle = uptodate === "green" ? "The last entry is a passing balance check." : uptodate === "yellow" ? "The last entry is not a balance check." : "";
 
   let balance: TableReport | null = null;
   let intervals: TableReport | null = null;
@@ -107,7 +114,7 @@
 {#if error}
   <section class="state-panel error-panel" role="alert">{error}</section>
 {:else}
-  <div class="headerline"><h2 class="account-breadcrumb"><span class="droptarget" data-account-name={account}>{#each parts as name, index (name)}<a href={accountHref(name)} title={name}>{leaf(name)}</a>{#if index < parts.length - 1}<span class="sep">:</span>{/if}{/each}{#if lastEntry}<span class="last-activity">({t("lastEntry")} {lastEntry})</span>{/if}</span></h2></div>
+  <div class="headerline"><h2 class="account-breadcrumb"><span class="droptarget" data-account-name={account}>{#each parts as name, index (name)}<a href={accountHref(name)} title={name}>{leaf(name)}</a>{#if index < parts.length - 1}<span class="sep">:</span>{/if}{/each}{#if uptodate}<span class="status-indicator status-{uptodate}" title={statusTitle}></span>{/if}{#if lastEntry}<span class="last-activity">({t("lastEntry")} {lastEntry})</span>{/if}</span></h2></div>
   <div class="headerline sections">
     <h3>{#if reportType !== "journal"}<a href={sectionHref("")}>{t("accountBalance")}</a>{:else}{t("accountBalance")}{/if}</h3>
     <h3>{#if reportType !== "changes"}<a href={sectionHref("changes")}>{t("changes")} ({intervalLabel})</a>{:else}{t("changes")} ({intervalLabel}){/if}</h3>
@@ -157,5 +164,21 @@
 
   .sections a {
     color: var(--link-color);
+  }
+
+  .status-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin-left: 10px;
+    border-radius: 10px;
+  }
+
+  .status-green {
+    background: var(--status-green, #2e7d32);
+  }
+
+  .status-yellow {
+    background: var(--status-yellow, #fbc02d);
   }
 </style>

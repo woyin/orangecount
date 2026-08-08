@@ -29,6 +29,8 @@ export interface BootstrapPayload {
    * document uploads. */
   document_roots: string[];
   errors: unknown[];
+  /** Per-account display lifecycle data (balance, up-to-date status, last entry). */
+  account_details: Record<string, { balance_string: string; close_date?: string; uptodate_status?: string; last_entry?: string }>;
   mtime?: string;
 }
 
@@ -57,6 +59,7 @@ interface BootstrapWire {
   fava_options?: Record<string, string>;
   user_queries?: { name: string; query_string: string }[];
   document_roots?: string[];
+  account_details?: Record<string, { balance_string: string; close_date?: string; uptodate_status?: string; last_entry?: string }>;
 }
 
 function bootstrapPayload(wire: BootstrapWire, mtime = ""): BootstrapPayload {
@@ -81,6 +84,7 @@ function bootstrapPayload(wire: BootstrapWire, mtime = ""): BootstrapPayload {
     errors: wire.errors || [],
     user_queries: wire.user_queries || [],
     document_roots: wire.document_roots || [],
+    account_details: wire.account_details || {},
     mtime,
   };
 }

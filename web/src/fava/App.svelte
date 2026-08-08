@@ -87,7 +87,7 @@
     shell.dispatch({ type: "loading", value: true });
     try {
       const payload = await adapter.bootstrap();
-      shell.dispatch({ type: "bootstrap", ledgerTitle: payload.ledger_title, locale: payload.locale, theme: payload.theme, accounts: payload.accounts, tags: payload.tags, links: payload.links, payees: payload.payees, years: payload.years, userQueries: payload.user_queries, documentRoots: payload.document_roots, errors: payload.errors, operatingCurrencies: payload.operating_currencies, renderCommas: payload.render_commas });
+      shell.dispatch({ type: "bootstrap", ledgerTitle: payload.ledger_title, locale: payload.locale, theme: payload.theme, accounts: payload.accounts, tags: payload.tags, links: payload.links, payees: payload.payees, years: payload.years, userQueries: payload.user_queries, documentRoots: payload.document_roots, errors: payload.errors, operatingCurrencies: payload.operating_currencies, renderCommas: payload.render_commas, accountDetails: payload.account_details });
     } catch (error) {
       notify_err(error);
       shell.dispatch({ type: "error", message: error instanceof Error ? error.message : "The local adapter could not load this view." });
@@ -169,6 +169,7 @@
           operatingCurrencies={current.operatingCurrencies}
           renderCommas={current.renderCommas}
           accounts={current.accounts}
+          accountDetails={current.accountDetails}
           onLocale={setLocale}
           onTheme={setTheme}
           query={{ ...current.query, ...(current.account ? { account: current.account } : {}) }}
