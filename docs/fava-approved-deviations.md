@@ -17,7 +17,7 @@ A deviation is valid only when required by OrangeCount's accounting semantic aut
 
 | Field | Value |
 | --- | --- |
-| Status | proposed |
+| Status | approved |
 | Route and state | R-IMPORT (`import`) |
 | Fava baseline | Import page "Importable Files" list (`FileList.svelte`) + per-entry "Extract" modal (`Extract.svelte`) driven by Python importers |
 | OrangeCount behavior | Import is a single-file local-buffer workflow (upload/paste one file, pick Source path/Adapter/Target, Preview, Commit); no server-side import directory, no file list, no per-entry extract/review modal |
@@ -27,7 +27,7 @@ A deviation is valid only when required by OrangeCount's accounting semantic aut
 | Tests | M2-import-upload smoke (DataTransfer upload → local buffer load, path/adapter backfill, Preview diagnostics, Commit stays disabled until valid) |
 | Owner | implementing agent (Francis Chen / OrangeCount maintainer) |
 | Approver | user (product owner) only |
-| Approved evidence | none yet |
+| Approved evidence | review reference and date: approved by product owner 2026-08-08 |
 | Expiry condition | a Fava upgrade that changes the Import contract, or an OrangeCount decision to embed a supported importer runtime |
 | Baseline impact | alternate expectation for the Import page |
 
@@ -35,7 +35,7 @@ A deviation is valid only when required by OrangeCount's accounting semantic aut
 
 | Field | Value |
 | --- | --- |
-| Status | proposed |
+| Status | approved |
 | Route and state | R-JOURNAL (`journal`) |
 | Fava baseline | balance rows where the assertion fails render the expected amount with a `pending` class and an extra change column showing `diff_amount` (beancount's actual-minus-expected difference) |
 | OrangeCount behavior | balance rows always render the amount and no difference column; a failed assertion never reaches the runtime |
@@ -45,7 +45,7 @@ A deviation is valid only when required by OrangeCount's accounting semantic aut
 | Tests | the evaluator emits E-EVAL-BALANCE on a failed assertion (evaluator_test coverage); the runtime never serves such a ledger |
 | Owner | implementing agent (Francis Chen / OrangeCount maintainer) |
 | Approver | user (product owner) only |
-| Approved evidence | none yet |
+| Approved evidence | review reference and date: approved by product owner 2026-08-08 |
 | Expiry condition | if OrangeCount ever serves invalid ledgers (e.g. a diagnostics mode), diff_amount rendering becomes reachable and should be re-reviewed |
 | Baseline impact | alternate expectation for the journal balance row |
 
@@ -53,7 +53,7 @@ A deviation is valid only when required by OrangeCount's accounting semantic aut
 
 | Field | Value |
 | --- | --- |
-| Status | proposed |
+| Status | approved |
 | Route and state | R-JOURNAL (`journal`) |
 | Fava baseline | the "B" journal filter chip shows/hides `custom "budget"` entries (beancount budget directives) |
 | OrangeCount behavior | the B chip is absent from the journal filter set |
@@ -63,7 +63,7 @@ A deviation is valid only when required by OrangeCount's accounting semantic aut
 | Tests | none (chip absent) |
 | Owner | implementing agent (Francis Chen / OrangeCount maintainer) |
 | Approver | user (product owner) only |
-| Approved evidence | none yet |
+| Approved evidence | review reference and date: approved by product owner 2026-08-08 |
 | Expiry condition | a future budget model decision (ADR-0017 revisit) |
 | Baseline impact | alternate expectation for the journal filter set |
 
