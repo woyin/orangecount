@@ -74,15 +74,30 @@
   // Upstream hides charts behind the `charts=false` URL parameter; the shell
   // router has no URL-parameter plumbing for it, so the toggle is local.
   let showCharts = true;
+
+  // Upstream's lineChartMode store: "line" or "area", persisted across
+  // navigation.
+  let chartMode: "line" | "area" = "line";
+  try {
+    const stored = localStorage.getItem("commodities-chart-mode");
+    if (stored === "line" || stored === "area") chartMode = stored;
+  } catch {
+    // storage is optional; default to line
+  }
+  function toggleMode() {
+    chartMode = chartMode === "line" ? "area" : "line";
+    try { localStorage.setItem("commodities-chart-mode", chartMode); } catch { /* storage optional */ }
+  }
 </script>
 
 {#if pairs.length}
   <div class="flex-row">
     <span class="spacer"></span>
+    <button type="button" class="chart-mode" on:click={toggleMode} title="Toggle line/area">{chartMode === "line" ? "Line" : "Area"}</button>
     <button type="button" class="show-charts" on:click={() => (showCharts = !showCharts)}>{showCharts ? "▼" : "◀"}</button>
   </div>
   {#if showCharts && active}
-    <LineChart points={chartPoints(active[1].prices)} formatTip={tipFor(active[1].base, active[1].quote)} />
+    <LineChart points={chartPoints(active[1].prices)} formatTip={tipFor(active[1].base, active[1].quote)} mode={chartMode} />
     <div class="chart-switcher">
       {#each pairs as [pair] (pair)}
         <button

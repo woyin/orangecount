@@ -396,11 +396,11 @@ table.svelte-1c31p73 {
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/charts/LineChart.esbuild-svelte-fake-css */
-.line-card.svelte-izodmx {
+.line-card.svelte-14tawjm {
   position: relative;
   margin-bottom: 1rem;
 }
-.line-chart.svelte-izodmx {
+.line-chart.svelte-14tawjm {
   display: block;
   width: min(100%, 52rem);
   height: 14rem;
@@ -408,26 +408,31 @@ table.svelte-1c31p73 {
   background: var(--background-darker);
   border: 1px solid var(--border);
 }
-.line-path.svelte-izodmx {
+.line-path.svelte-14tawjm {
   fill: none;
   stroke: var(--series-0, #2563eb);
   stroke-width: .8;
   vector-effect: non-scaling-stroke;
 }
-.chart-grid.svelte-izodmx {
+.area-path.svelte-14tawjm {
+  fill: var(--series-0, #2563eb);
+  fill-opacity: .18;
+  stroke: none;
+}
+.chart-grid.svelte-14tawjm {
   stroke: var(--border);
   stroke-width: .2;
   vector-effect: non-scaling-stroke;
   opacity: .5;
 }
-.chart-tick.svelte-izodmx {
+.chart-tick.svelte-14tawjm {
   font-size: 2.6px;
   fill: var(--text-color-lighter);
 }
-.chart-empty.svelte-izodmx {
+.chart-empty.svelte-14tawjm {
   color: var(--text-color-lightest);
 }
-.chart-tooltip.svelte-izodmx {
+.chart-tooltip.svelte-14tawjm {
   position: absolute;
   z-index: 10;
   pointer-events: none;

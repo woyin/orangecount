@@ -4,6 +4,8 @@
   // dependency-free SVG chart style used by ReportChart/ScatterPlot.
   export let points: { date: string; display: string; value: number }[] = [];
   export let formatTip: (point: { date: string; display: string; value: number }) => string = (point) => `${point.date}: ${point.display}`;
+  /** "line" draws a stroked line; "area" fills beneath it to the zero baseline. */
+  export let mode: "line" | "area" = "line";
 
   const X0 = 14;
   const X1 = 98;
@@ -24,6 +26,10 @@
     if (!data.length) return [0, 1];
     let lo = Math.min(...data.map((point) => point.value));
     let hi = Math.max(...data.map((point) => point.value));
+    if (mode === "area") {
+      lo = Math.min(lo, 0);
+      hi = Math.max(hi, 0);
+    }
     if (lo === hi) {
       lo -= 1;
       hi += 1;
@@ -47,6 +53,12 @@
   $: path = data
     .map((point, index) => `${index ? "L" : "M"}${x(point.timestamp).toFixed(2)},${y(point.value).toFixed(2)}`)
     .join(" ");
+
+  // Area mode closes the stroke back to the zero baseline so the region under
+  // the line is filled.
+  $: areaPath = mode === "area" && data.length
+    ? `${path} L${x(data[data.length - 1].timestamp).toFixed(2)},${y(0).toFixed(2)} L${x(data[0].timestamp).toFixed(2)},${y(0).toFixed(2)} Z`
+    : "";
 
   // "Nice" value ticks: step rounds to 1/2/5 times a power of ten, like the
   // d3 axis the upstream charts use.
@@ -120,6 +132,9 @@
         <line x1={X0} y1={y(tick)} x2={X1} y2={y(tick)} class="chart-grid" />
         <text x={X0 - 1} y={y(tick) + 1} class="chart-tick" text-anchor="end">{tickLabel(tick)}</text>
       {/each}
+      {#if areaPath}
+        <path d={areaPath} class="area-path" />
+      {/if}
       <path d={path} class="line-path" />
       {#each xTicks as tick (tick.date)}
         <text x={x(tick.timestamp)} y="51" class="chart-tick" text-anchor="middle">{xTickLabel(tick.date)}</text>
@@ -137,6 +152,7 @@
   .line-card { position: relative; margin-bottom: 1rem; }
   .line-chart { display: block; width: min(100%, 52rem); height: 14rem; margin-bottom: .5rem; background: var(--background-darker); border: 1px solid var(--border); }
   .line-path { fill: none; stroke: var(--series-0, #2563eb); stroke-width: .8; vector-effect: non-scaling-stroke; }
+  .area-path { fill: var(--series-0, #2563eb); fill-opacity: .18; stroke: none; }
   .chart-grid { stroke: var(--border); stroke-width: .2; vector-effect: non-scaling-stroke; opacity: .5; }
   .chart-tick { font-size: 2.6px; fill: var(--text-color-lighter); }
   .chart-empty { color: var(--text-color-lightest); }
