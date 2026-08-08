@@ -1208,7 +1208,7 @@ aside.svelte-e0j49v {
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/modals/ContextModal.esbuild-svelte-fake-css */
-.context-backdrop.svelte-1eapejs {
+.context-backdrop.svelte-kroni5 {
   position: fixed;
   inset: 0;
   z-index: var(--z-index-floating-ui);
@@ -1218,7 +1218,7 @@ aside.svelte-e0j49v {
   padding-top: 10vh;
   background: var(--overlay-wrapper-background);
 }
-.context-modal.svelte-1eapejs {
+.context-modal.svelte-kroni5 {
   width: min(46rem, 92vw);
   max-height: 75vh;
   padding: 1em 1.25em;
@@ -1228,22 +1228,39 @@ aside.svelte-e0j49v {
   border: 1px solid var(--border);
   box-shadow: var(--box-shadow-overlay);
 }
-.context-modal.svelte-1eapejs h3:where(.svelte-1eapejs) {
+.context-modal.svelte-kroni5 h3:where(.svelte-kroni5) {
   margin: 0 0 0.5em;
   font-size: 1.1em;
   font-weight: bold;
 }
-.context-modal.svelte-1eapejs a:where(.svelte-1eapejs) {
+.context-modal.svelte-kroni5 a:where(.svelte-kroni5) {
   color: var(--link-color);
 }
-.location.svelte-1eapejs .span:where(.svelte-1eapejs) {
+.location.svelte-kroni5 .span:where(.svelte-kroni5) {
   margin-left: 0.5em;
   color: var(--text-color-lightest);
 }
-.summary.svelte-1eapejs {
+.summary.svelte-kroni5 {
   margin-bottom: 0.5em;
 }
-.source.svelte-1eapejs {
+.balances.svelte-kroni5 {
+  margin: 0 0 0.5em;
+  padding: 0.5em;
+  font-family: var(--font-family-editor);
+  background: var(--sidebar-background);
+  border: 1px solid var(--border);
+}
+.balances.svelte-kroni5 dt:where(.svelte-kroni5) {
+  font-weight: bold;
+  margin-top: 0.25em;
+}
+.balances.svelte-kroni5 dt:where(.svelte-kroni5):first-child {
+  margin-top: 0;
+}
+.balances.svelte-kroni5 dd:where(.svelte-kroni5) {
+  margin: 0 0 0 1em;
+}
+.source.svelte-kroni5 {
   padding: 0.5em;
   overflow-x: auto;
   font-family: var(--font-family-editor);
@@ -1251,10 +1268,10 @@ aside.svelte-e0j49v {
   background: var(--sidebar-background);
   border: 1px solid var(--border);
 }
-.error.svelte-1eapejs {
+.error.svelte-kroni5 {
   color: var(--error);
 }
-.loading.svelte-1eapejs {
+.loading.svelte-kroni5 {
   color: var(--text-color-lightest);
 }
 

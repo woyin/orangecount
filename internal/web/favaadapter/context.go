@@ -10,17 +10,25 @@ import (
 	"encoding/hex"
 
 	"orangecount/internal/ledger"
+	"orangecount/internal/report"
 	"orangecount/internal/source"
 )
 
 // EntryContext is what Fava's context modal shows for one entry: where it
-// lives and its source exactly as written. Balances before/after and the
-// editable CodeMirror slice belong to later phases (H1); this is the
+// lives, its source exactly as written, and (for Transaction/Balance) the
+// balances of the affected accounts immediately before and after the entry.
+// The editable CodeMirror slice belongs to a later phase (H1); this is the
 // read-only projection.
 type EntryContext struct {
-	Entry       JournalEntry `json:"entry"`
-	SourceSlice string       `json:"source_slice"`
-	SHA256Sum   string       `json:"sha256sum"`
+	Entry       JournalEntry                 `json:"entry"`
+	SourceSlice string                       `json:"source_slice"`
+	SHA256Sum   string                       `json:"sha256sum"`
+	// BalancesBefore/After are the per-account balances (grouped by currency)
+	// of the accounts the entry touches, immediately before and after the
+	// entry. Only Transaction and Balance entries carry them; other kinds are
+	// nil (mirrors Fava's context modal).
+	BalancesBefore map[string][]JournalAmount `json:"balances_before,omitempty"`
+	BalancesAfter  map[string][]JournalAmount `json:"balances_after,omitempty"`
 }
 
 // entryHash identifies one ledger entry by its source position. The position
@@ -34,14 +42,15 @@ func entryHash(record ledger.EntryRecord) string {
 	return hex.EncodeToString(digest.Sum(nil))
 }
 
-// ProjectEntryContext resolves an entry hash to its projection and source
-// slice. It scans the published entry stream; hashes are position-derived,
-// so the same snapshot always answers the same way.
+// ProjectEntryContext resolves an entry hash to its projection, source slice,
+// and (for Transaction/Balance) the affected accounts' balances immediately
+// before and after the entry. It scans the published entry stream; hashes are
+// position-derived, so the same snapshot always answers the same way.
 func ProjectEntryContext(e ledger.Evaluation, graph *source.Graph, hash string) (EntryContext, bool) {
 	if hash == "" {
 		return EntryContext{}, false
 	}
-	for _, record := range e.Entries {
+	for index, record := range e.Entries {
 		if entryHash(record) != hash {
 			continue
 		}
@@ -53,9 +62,114 @@ func ProjectEntryContext(e ledger.Evaluation, graph *source.Graph, hash string) 
 		entry.File = journalDisplayPath(record.File, graph)
 		entry.Span = record.Span.String()
 		slice := entrySourceBlock(record, graph)
-		return EntryContext{Entry: entry, SourceSlice: slice, SHA256Sum: sha256Hex(slice)}, true
+		ctx := EntryContext{Entry: entry, SourceSlice: slice, SHA256Sum: sha256Hex(slice)}
+		if before, after, ok := journalContextBalances(e.Entries, index); ok {
+			ctx.BalancesBefore = before
+			ctx.BalancesAfter = after
+		}
+		return ctx, true
 	}
 	return EntryContext{}, false
+}
+
+// journalContextBalances computes the balances of the accounts an entry
+// touches, immediately before and after it, mirroring Fava's context modal.
+// It returns (before, after, true) only for Transaction and Balance entries;
+// other kinds yield (nil, nil, false). The running balance accumulates every
+// transaction posting up to (but not including) the target entry for
+// "before", then adds the target's own postings for "after" (a Balance has no
+// after). Accounts are grouped by currency, one JournalAmount per currency.
+func journalContextBalances(entries []ledger.EntryRecord, target int) (map[string][]JournalAmount, map[string][]JournalAmount, bool) {
+	// Determine the accounts the target entry touches.
+	accounts := map[string]bool{}
+	var isTransaction bool
+	var isBalance bool
+	var targetTransaction *ledger.Transaction
+	switch directive := entries[target].Directive.(type) {
+	case *ledger.Transaction:
+		isTransaction = true
+		targetTransaction = directive
+	case ledger.Transaction:
+		isTransaction = true
+		targetTransaction = &directive
+	case *ledger.Balance:
+		isBalance = true
+		accounts[directive.Account] = true
+	case ledger.Balance:
+		isBalance = true
+		accounts[directive.Account] = true
+	default:
+		return nil, nil, false
+	}
+	if isTransaction {
+		for _, posting := range targetTransaction.Postings {
+			accounts[posting.Account] = true
+		}
+	}
+
+	// Accumulate transaction postings into the touched accounts.
+	running := map[string]map[string]ledger.Decimal{}
+	addPosting := func(account string, units *ledger.Amount) {
+		if units == nil || units.Currency == "" || units.Number.Raw == "" || !accounts[account] {
+			return
+		}
+		byCurrency := running[account]
+		if byCurrency == nil {
+			byCurrency = map[string]ledger.Decimal{}
+			running[account] = byCurrency
+		}
+		value := ledger.DecimalFromNumber(units.Number)
+		if existing, ok := byCurrency[units.Currency]; ok {
+			value = existing.Add(value)
+		}
+		byCurrency[units.Currency] = value
+	}
+	for i := 0; i < target; i++ {
+		switch directive := entries[i].Directive.(type) {
+		case *ledger.Transaction:
+			for _, posting := range directive.Postings {
+				addPosting(posting.Account, posting.Units)
+			}
+		case ledger.Transaction:
+			for _, posting := range directive.Postings {
+				addPosting(posting.Account, posting.Units)
+			}
+		}
+	}
+
+	before := presentContextBalances(running)
+	if isBalance {
+		return before, nil, true
+	}
+	for _, posting := range targetTransaction.Postings {
+		addPosting(posting.Account, posting.Units)
+	}
+	return before, presentContextBalances(running), true
+}
+
+// presentContextBalances turns the running per-account/per-currency decimal
+// map into the wire form Fava shows (one JournalAmount per currency).
+func presentContextBalances(running map[string]map[string]ledger.Decimal) map[string][]JournalAmount {
+	if len(running) == 0 {
+		return nil
+	}
+	out := make(map[string][]JournalAmount, len(running))
+	for account, byCurrency := range running {
+		amounts := make([]JournalAmount, 0, len(byCurrency))
+		for currency, value := range byCurrency {
+			if value.IsZero() {
+				continue
+			}
+			amounts = append(amounts, JournalAmount{Number: report.FormatDecimal(value), Currency: currency})
+		}
+		if len(amounts) > 0 {
+			out[account] = amounts
+		}
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
 }
 
 func sha256Hex(text string) string {

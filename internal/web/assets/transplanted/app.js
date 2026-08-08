@@ -41586,12 +41586,17 @@ function AddEntryModal($$anchor, $$props) {
 }
 
 // src/fava/modals/ContextModal.svelte
-var root_236 = template(`<p class="error svelte-1eapejs" role="alert"> </p>`);
-var root_514 = template(`<a class="svelte-1eapejs"> </a>`);
-var root_612 = template(`<span class="span svelte-1eapejs"> </span>`);
-var root_421 = template(`<p class="location svelte-1eapejs"><!> <!></p> <p class="summary svelte-1eapejs"> <!> <!> <!> <!></p> <pre class="source svelte-1eapejs"> </pre>`, 1);
-var root_1111 = template(`<p class="loading svelte-1eapejs"> </p>`);
-var root_145 = template(`<div class="context-backdrop svelte-1eapejs" role="presentation"><div class="context-modal svelte-1eapejs" role="dialog" aria-modal="true"><h3 class="svelte-1eapejs"> </h3> <!></div></div>`);
+var root_236 = template(`<p class="error svelte-kroni5" role="alert"> </p>`);
+var root_514 = template(`<a class="svelte-kroni5"> </a>`);
+var root_612 = template(`<span class="span svelte-kroni5"> </span>`);
+var root_1311 = template(`<dd class="svelte-kroni5"> </dd>`);
+var root_1212 = template(`<dt class="svelte-kroni5">Balances before</dt> <!>`, 1);
+var root_154 = template(`<dd class="svelte-kroni5"> </dd>`);
+var root_145 = template(`<dt class="svelte-kroni5">Balances after</dt> <!>`, 1);
+var root_1111 = template(`<dl class="balances svelte-kroni5"><!> <!></dl>`);
+var root_421 = template(`<p class="location svelte-kroni5"><!> <!></p> <p class="summary svelte-kroni5"> <!> <!> <!> <!></p> <!> <pre class="source svelte-kroni5"> </pre>`, 1);
+var root_163 = template(`<p class="loading svelte-kroni5"> </p>`);
+var root_146 = template(`<div class="context-backdrop svelte-kroni5" role="presentation"><div class="context-modal svelte-kroni5" role="dialog" aria-modal="true"><h3 class="svelte-kroni5"> </h3> <!></div></div>`);
 function ContextModal($$anchor, $$props) {
   push($$props, false);
   let adapter = prop($$props, "adapter", 8);
@@ -41636,6 +41641,18 @@ function ContextModal($$anchor, $$props) {
   function sourceHref(path) {
     return `/source?path=${encodeURIComponent(path)}`;
   }
+  function amountText(amount) {
+    return `${formatAmount(amount.number)} ${amount.currency}`;
+  }
+  function balanceLines(balances) {
+    if (!balances) return [];
+    const lines = [];
+    for (const account of Object.keys(balances).sort()) {
+      const amounts = (balances[account] ?? []).map(amountText).join(", ");
+      if (amounts) lines.push(`${account}: ${amounts}`);
+    }
+    return lines;
+  }
   onMount(() => {
     sync();
     window.addEventListener("hashchange", sync);
@@ -41649,8 +41666,8 @@ function ContextModal($$anchor, $$props) {
   var fragment = comment();
   var node = first_child(fragment);
   {
-    var consequent_8 = ($$anchor2) => {
-      var div = root_145();
+    var consequent_11 = ($$anchor2) => {
+      var div = root_146();
       var div_1 = child(div);
       template_effect(() => set_attribute(div_1, "aria-label", t2("context")));
       var h3 = child(div_1);
@@ -41670,7 +41687,7 @@ function ContextModal($$anchor, $$props) {
           var fragment_1 = comment();
           var node_2 = first_child(fragment_1);
           {
-            var consequent_7 = ($$anchor4) => {
+            var consequent_10 = ($$anchor4) => {
               var fragment_2 = root_421();
               var p_1 = first_child(fragment_2);
               var node_3 = child(p_1);
@@ -41748,26 +41765,73 @@ function ContextModal($$anchor, $$props) {
                 });
               }
               reset(p_2);
-              var pre = sibling(p_2, 2);
-              var text_9 = child(pre, true);
+              var node_9 = sibling(p_2, 2);
+              {
+                var consequent_9 = ($$anchor5) => {
+                  var dl = root_1111();
+                  var node_10 = child(dl);
+                  {
+                    var consequent_7 = ($$anchor6) => {
+                      var fragment_7 = root_1212();
+                      var node_11 = sibling(first_child(fragment_7), 2);
+                      each(node_11, 1, () => balanceLines(get(context).balances_before), (line) => line, ($$anchor7, line) => {
+                        var dd = root_1311();
+                        var text_9 = child(dd, true);
+                        reset(dd);
+                        template_effect(() => set_text(text_9, get(line)));
+                        append($$anchor7, dd);
+                      });
+                      append($$anchor6, fragment_7);
+                    };
+                    if_block(node_10, ($$render) => {
+                      if (balanceLines(get(context).balances_before).length) $$render(consequent_7);
+                    });
+                  }
+                  var node_12 = sibling(node_10, 2);
+                  {
+                    var consequent_8 = ($$anchor6) => {
+                      var fragment_8 = root_145();
+                      var node_13 = sibling(first_child(fragment_8), 2);
+                      each(node_13, 1, () => balanceLines(get(context).balances_after), (line) => line, ($$anchor7, line) => {
+                        var dd_1 = root_154();
+                        var text_10 = child(dd_1, true);
+                        reset(dd_1);
+                        template_effect(() => set_text(text_10, get(line)));
+                        append($$anchor7, dd_1);
+                      });
+                      append($$anchor6, fragment_8);
+                    };
+                    if_block(node_12, ($$render) => {
+                      if (balanceLines(get(context).balances_after).length) $$render(consequent_8);
+                    });
+                  }
+                  reset(dl);
+                  append($$anchor5, dl);
+                };
+                if_block(node_9, ($$render) => {
+                  if (balanceLines(get(context).balances_before).length || balanceLines(get(context).balances_after).length) $$render(consequent_9);
+                });
+              }
+              var pre = sibling(node_9, 2);
+              var text_11 = child(pre, true);
               reset(pre);
               template_effect(() => {
                 set_text(text_4, `${get(context).entry.date ?? ""} `);
-                set_text(text_9, get(context).source_slice);
+                set_text(text_11, get(context).source_slice);
               });
               append($$anchor4, fragment_2);
             };
             var alternate = ($$anchor4) => {
-              var p_3 = root_1111();
-              var text_10 = child(p_3, true);
-              template_effect(() => set_text(text_10, t2("loading")));
+              var p_3 = root_163();
+              var text_12 = child(p_3, true);
+              template_effect(() => set_text(text_12, t2("loading")));
               reset(p_3);
               append($$anchor4, p_3);
             };
             if_block(
               node_2,
               ($$render) => {
-                if (get(context)) $$render(consequent_7);
+                if (get(context)) $$render(consequent_10);
                 else $$render(alternate, false);
               },
               true
@@ -41789,7 +41853,7 @@ function ContextModal($$anchor, $$props) {
       append($$anchor2, div);
     };
     if_block(node, ($$render) => {
-      if (get(shown)) $$render(consequent_8);
+      if (get(shown)) $$render(consequent_11);
     });
   }
   append($$anchor, fragment);
@@ -42067,7 +42131,7 @@ function DocumentUploadModal($$anchor, $$props) {
 }
 
 // src/fava/modals/ExportModal.svelte
-var root_146 = template(`<div class="export-backdrop svelte-gn9rfu" role="presentation"><div class="export-modal svelte-gn9rfu" role="dialog" aria-modal="true"><h3 class="svelte-gn9rfu"> </h3> <a download="journal.bean" class="svelte-gn9rfu"> </a></div></div>`);
+var root_147 = template(`<div class="export-backdrop svelte-gn9rfu" role="presentation"><div class="export-modal svelte-gn9rfu" role="dialog" aria-modal="true"><h3 class="svelte-gn9rfu"> </h3> <a download="journal.bean" class="svelte-gn9rfu"> </a></div></div>`);
 function ExportModal($$anchor, $$props) {
   push($$props, false);
   const href = mutable_state();
@@ -42107,7 +42171,7 @@ function ExportModal($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent = ($$anchor2) => {
-      var div = root_146();
+      var div = root_147();
       var div_1 = child(div);
       template_effect(() => set_attribute(div_1, "aria-label", t2("export")));
       var h3 = child(div_1);
@@ -42225,7 +42289,7 @@ function createShellStore(initial) {
 }
 
 // src/fava/App.svelte
-var root_147 = template(`<meta name="description" content="OrangeCount local ledger interface">`);
+var root_148 = template(`<meta name="description" content="OrangeCount local ledger interface">`);
 var root26 = template(`<!> <!> <article id="main-content" tabindex="-1"><!></article> <!> <!> <!> <!>`, 1);
 function App($$anchor, $$props) {
   push($$props, false);
@@ -42377,7 +42441,7 @@ function App($$anchor, $$props) {
   init2();
   var fragment = root26();
   head(($$anchor2) => {
-    var meta2 = root_147();
+    var meta2 = root_148();
     template_effect(() => $document.title = `${get(current).ledgerTitle ?? ""} \u203A ${(get(current).account || get(current).route) ?? ""}`);
     append($$anchor2, meta2);
   });
