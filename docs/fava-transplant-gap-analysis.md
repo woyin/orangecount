@@ -57,7 +57,7 @@
 | H2 | M-ADD/M-CONTEXT/M-EXPORT/M-DOCUMENT | 模态系统整体缺失（上游 9 文件） | Add Entry 表单、条目 Context（余额/位置）、Export/Download、文档上传 | M-EXPORT 已落地（`2846847`）：modals 目录建立，Export 模态（#export hash 驱动）+ download-journal 端点（按过滤切取源码的保源导出）；M-CONTEXT 已落地（`68ddcfa`：entry-context 路由 + 只读源码切片模态）；M-ADD 已落地（`8e28d53`：`#add-transaction` 模态，Transaction/Balance/Note 三型切换保留日期、postings 行增删、continue 复选框持久化；私有 `add-entries` POST 路由严格序列化校验 + 原子写入/备份/重新验证，失败回滚并保留诊断）；M-DOCUMENT 已落地（`339b63e`：上游式拖放上传模态——账户页标题 droptarget 触发，多文件 + 日期前缀改名输入、文档目录选择（来自 serve --document-root 配置根）、账户 datalist；私有 POST `document` 路由同源校验 + 账户/目录校验 + basename 净化 + 拒绝覆盖，上传落入 `<根>/<账户分层>/<文件名>` 并由 `/documents/` 路由回供）（限制：上游 uri-list 链接拖放 attach 流程与 entry hash 元数据插入未实现；droptarget 已补齐 journal 行与账户树单元格（`44e6476`，见 H2-droptarget-extend），与上游账户页标题/documents 账户表同构） | 前端 + 适配器 |
 | H3 | G-KEYBOARD | 全局键盘快捷键缺失 | `g-*` 路由跳转、`t/f/a/d/s`、`?` 快捷键提示 | 已实现：`g-*` 路由跳转、`f t/f a/f f` 筛选快捷键、`?` 快捷键 tooltip（冒烟验证 19 条提示，含 `r` 重载）、`r` 手动重载（`4792f73`）；上游其余单键快捷键未登记为缺口 | 已完成 |
 | H4 | R-HOLD-*/R-COMMODITIES/R-EVENTS/R-STATISTICS/R-DOCUMENTS | 六路由降级为通用平表 | Holdings 四子页签与成本分组；Commodities 价格折线图（ChartSwitcher+LineChart）+ base/quote 分组表；Events 按事件类型侧栏分组；Statistics 指令计数 + Postings-per-Account + 活动图；Documents 账户树 + 内嵌预览 | 复核修正（2026-08-07 冒烟）：六路由专用组件均已在案并按上游形态渲染——Holdings 六页签（上游四页签齐备，by_cost_currency 补于 `2b8d370`）+ 列名可读化（`HoldingsReport`）；Commodities 按 base/quote 分组价格表（`CommoditiesReport`+`PriceTable`）；Events 按类型分组 + `Event: <type>` 标题 + 可排序 Date/Description 表（冒烟双类型验证，默认 date desc）；Statistics 双区块（Postings-per-Account + Entries-per-Type 可排序）；Documents 表格 + 内嵌预览（`92ccb40`）+ 账户树侧栏（分层/计数/折叠/点击筛选，`30ca6f3`）+ 移动/改名模态（F2 或拖拽触发，`38f2618`）+ Update Activity 表（每账户最近条目/余额/上下文模态入口，`a66cf9d`）+ Events 散点图（无 d3 依赖 SVG，语义同上游，`4e88925`）+ Commodities 价格折线图（无 d3 依赖 SVG + 每商品对切换/显示开关，`d9b77d3`）。H4 全部落地，无契约级余项（上游 1.30.12 无每商品详情页，此前"每商品详情页"描述为复核失误，已更正） | 已完成 |
-| H5 | R-JOURNAL | Journal 交互层不完整 | 全量条目类型徽章（含 Custom/B/Metadata/Postings）、排序与列菜单、点击条目→Context、URL 同步筛选、拖拽上传文档 | 核心徽章组与展开已现；点击条目→Context 已落地（`68ddcfa`：行尾 ⋮ 链接 + `#context-<hash>` 模态 + entry-context 私有路由，位置派生 entry_hash，只读源码切片；限制：before/after 余额与 CodeMirror 可编辑切片属 H1）；表头排序已落地（`f7d57ab`：Date/F/Payee-Narration 三列，同上游 `[列,向]` localStorage 持久化、默认 date desc、data-order 箭头与切换语义，复用已移植 Sorter）。拖拽上传文档已随 H2 M-DOCUMENT 落地（`339b63e`：账户页标题 droptarget；journal 行与账户树单元格的 droptarget 后经 H2-droptarget-extend 补齐，`44e6476`）。徽章覆盖复核已落地（`4bafc76`：适配器为全部指令类型投影条目元数据——此前仅 transaction——journal 行渲染条目与过账级 metadata-indicator 徽章（key[:2]，title `key: value`）、过账 flag 类（flag_to_type）、过账元数据 dl、linked/discovered 行类与 D/L 芯片（`d d`/`d l`，show-document 的子级，默认激活集与上游 default_journal_show 同构）；冒烟验证 au/re/cl 徽章、linked/discovered 行类、过账 dl 展开与 Metadata 芯片切换）。限制：B(budget) 芯片未加——OC 无上游 budget custom 指令形态、适配器不产生 budget 标记；custom 值按 dtype 渲染、balance diff_amount pending 展示、document→statement 元数据附件未实现 | 前端组件 |
+| H5 | R-JOURNAL | Journal 交互层不完整 | 全量条目类型徽章（含 Custom/B/Metadata/Postings）、排序与列菜单、点击条目→Context、URL 同步筛选、拖拽上传文档 | 核心徽章组与展开已现；点击条目→Context 已落地（`68ddcfa`：行尾 ⋮ 链接 + `#context-<hash>` 模态 + entry-context 私有路由，位置派生 entry_hash，只读源码切片；限制：before/after 余额与 CodeMirror 可编辑切片属 H1）；表头排序已落地（`f7d57ab`：Date/F/Payee-Narration 三列，同上游 `[列,向]` localStorage 持久化、默认 date desc、data-order 箭头与切换语义，复用已移植 Sorter）。拖拽上传文档已随 H2 M-DOCUMENT 落地（`339b63e`：账户页标题 droptarget；journal 行与账户树单元格的 droptarget 后经 H2-droptarget-extend 补齐，`44e6476`）。徽章覆盖复核已落地（`4bafc76`：适配器为全部指令类型投影条目元数据——此前仅 transaction——journal 行渲染条目与过账级 metadata-indicator 徽章（key[:2]，title `key: value`）、过账 flag 类（flag_to_type）、过账元数据 dl、linked/discovered 行类与 D/L 芯片（`d d`/`d l`，show-document 的子级，默认激活集与上游 default_journal_show 同构）；冒烟验证 au/re/cl 徽章、linked/discovered 行类、过账 dl 展开与 Metadata 芯片切换）。稠密夹具复比勾销已落地（`6a3233b`：fixturegen 补 `#linked`/`#discovered` 文档交易，/journal 冒烟确认 linked/discovered 行类（`document … linked/discovered`）与 D/L 芯片 aria-pressed toggle 各自隐藏对应行、全指令族 entry-type 行类与 flag_to_type 分类、metadata-indicator 徽章与 Metadata 芯片 toggle 均在稠密夹具下复现）。限制：B(budget) 芯片未加——OC 无上游 budget custom 指令形态、适配器不产生 budget 标记；custom 值按 dtype 渲染、balance diff_amount pending 展示、document→statement 元数据附件未实现 | 前端组件 |
 | H6 | R-OPTIONS | Options 页不完整 | Color scheme（System/Dark/Light）单选组 + Fava options 表（带 help 链接）+ Beancount options 表 | 已实现：UtilityReport 含 Color scheme 单选组 + Fava options 表 + Beancount options 表；顶栏原创主题下拉已移除（D2） | 已完成（UtilityReport + `/__orangecount/fava/options` 契约） |
 | H7 | M-NOTIFY | 通知区缺失 | 文件变更/保存结果 toast，带点击重载 | 已实现：notifications 模块早已在案（bootstrap/报告错误走 notify_err），本步补齐可感通知——文件变更 warning toast（点击再刷一次，5s 自动消失，冒烟验证文案与类名）与编辑器 Save 结果 toast（成功/拒绝/失败三态），`a5251c8` | 已完成 |
 
@@ -305,6 +305,19 @@ POST，`38f2618`）。
 > B(budget) 芯片未加（OC 无上游 budget custom 形态、适配器不产生该
 > 标记）；custom 值 dtype 渲染、balance diff_amount pending、document
 > →statement 元数据附件未实现）。
+> T1/H5-recheck（H5 WIP 覆盖稠密夹具复比勾销，2026-08-08：起
+> fava-reference 稠密夹具（304 交易/87 科目）冒烟 /journal，逐项勾销
+> H5-badges 登记的覆盖——① 全指令族 entry-type 行类（transaction
+> cleared/other/pending 按 flag_to_type + open/close/balance/document/
+> note/custom/query，400 行全部正确）；② metadata-indicator 徽章
+> （key[:2]=lo/ca + title 完整）与 Metadata 芯片 aria-pressed toggle
+> （可见徽章 304→208）；③ linked/discovered 行类 + D/L 芯片——初查
+> fixture 无 #linked/#discovered 数据无法复现，按 P0-1 原则以固定输入
+> 扩展 fixturegen（`6a3233b` 加两条 linked/discovered document 交易，
+> 无手工改 .bean），重新生成后复现行类（document … linked/discovered）
+> 与 D/L 芯片各自隐藏对应行。剩余：T1 图表（IS/BS/TB）的稠密复比仍
+> 待；H5 的 B(budget) 芯片与 balance diff_amount/document→statement
+> 附件维持既有限制）。
 > H4-review（冒烟复核六路由专用组件：Holdings 五页签、Commodities
 > base/quote 分组、Events 类型分组、Statistics 双区块、Documents 表格
 > 均在案；H4 行现状列改写为已验证形态并列出契约级余项——散点图/
@@ -475,7 +488,8 @@ POST，`38f2618`）。
 > Align Amounts（beancount_format，需 format 端点）与 insert-entry 选项
 > 菜单（无 insert_entry store）省略；树数据源为本地派生而非上游
 > sources API，`3b48ebe`）。
-> T1/H5 的 WIP 覆盖部分仍待稠密夹具复比勾销。
+> H5 的 WIP 覆盖部分已在稠密夹具下复比勾销（`6a3233b`，见 H5 行与
+> T1/H5 勾销 note）；T1 图表的稠密夹具复比仍待。
 
 ### 优先级 1 — Phase 0 补做（共享基础，先于一切路由工作）
 
