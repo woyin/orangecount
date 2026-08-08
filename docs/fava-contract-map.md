@@ -80,7 +80,7 @@ fixture has not yet been implemented.
 | `changed` | `json_api.changed`; `app.ts` poll | GET, none | wrapped `bool` plus `mtime` | `internal/snapshot` via adapter | mtime/change contract + reload browser flow | rewrite/planned |
 | `errors` | `json_api.get_errors`; app/errors store | GET, none | `[{type,message,source|null}]` | `internal/diagnostic`, `internal/report` | diagnostic/source contract + conditional-nav flow | adapt/planned |
 | `ledger_data` | `internal_api.get_ledger_data`; bootstrap | GET, none | validator-complete `LedgerData` | adapter over snapshot/report/ledger | full fixture validator + bootstrap flow | rewrite/partial shell slice |
-| `payee_accounts` | `json_api.get_payee_accounts`; transaction form | GET `payee` | `string[]` | report attribute ranking | exact ordering + autocomplete flow | adapt/planned |
+| `payee_accounts` | `json_api.get_payee_accounts`; transaction form | GET `payee` | `string[]` | report attribute ranking | exact ordering + autocomplete flow | adapt/partial（AddEntry payee 字段已用 bootstrap payees 做 AutocompleteInput 补全，`b308867`；payee→历史账号建议仍未实现） |
 | `payee_transaction` | `json_api.get_payee_transaction`; transaction form | GET `payee` | serialized Transaction or `null` | report transaction projection | fixture match + form-fill flow | adapt/planned |
 | `narration_transaction` | `json_api.get_narration_transaction`; transaction form | GET `narration` | serialized Transaction or `null` | report transaction projection | fixture match + form-fill flow | adapt/planned |
 | `narrations` | `json_api.get_narrations`; transaction form | GET, none | ranked `string[]` | report attributes | ordering + autocomplete flow | adapt/planned |
