@@ -274,7 +274,7 @@ func transactionPostings(e ledger.Evaluation) []chartPosting {
 			if posting.Units == nil || posting.Units.Currency == "" || posting.Units.Number.Raw == "" {
 				continue
 			}
-			result = append(result, chartPosting{date: transaction.Date.Raw, account: posting.Account, currency: posting.Units.Currency, amount: ledger.DecimalFromNumber(posting.Units.Number), cost: posting.Cost})
+			result = append(result, chartPosting{date: transaction.Date.Raw, account: posting.Account, currency: posting.Units.Currency, amount: ledger.DecimalFromNumber(posting.Units.Number), cost: posting.Cost, payee: transaction.Payee, narration: transaction.Narration, tags: transaction.Tags, links: transaction.Links, flag: transaction.Flag})
 		}
 	}
 	sort.SliceStable(result, func(i, j int) bool { return result[i].date < result[j].date })
@@ -285,6 +285,10 @@ type chartPosting struct {
 	date, account, currency string
 	amount                  ledger.Decimal
 	cost                    *ledger.CostSpec
+	// FQL-matchable transaction attributes, populated so interval aggregation
+	// can apply the advanced text filter the way Fava does.
+	payee, narration, flag string
+	tags, links            []string
 }
 
 func balanceSheetChart(e ledger.Evaluation, keys []string, ends map[string]string, interval, currency, valuation string) ChartSpec {

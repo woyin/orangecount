@@ -27,6 +27,8 @@ func AccountIntervals(e ledger.Evaluation, account, mode, interval string, filte
 		return query.Result{Columns: columns}
 	}
 	interval = normalizeChartPeriod(interval)
+	textFilter, textErr := ParseFQL(strings.TrimSpace(filters.Text))
+	text := strings.ToLower(strings.TrimSpace(filters.Text))
 	totals := map[string]map[string]ledger.Decimal{}
 	currencySet := map[string]bool{}
 	for _, posting := range transactionPostings(e) {
@@ -34,6 +36,15 @@ func AccountIntervals(e ledger.Evaluation, account, mode, interval string, filte
 			continue
 		}
 		if posting.account != account && !strings.HasPrefix(posting.account, account+":") {
+			continue
+		}
+		// Apply the advanced text filter to each transaction posting, matching
+		// Fava's filtered ledger view that interval tables aggregate over.
+		if textErr == nil {
+			if text != "" && !textFilter.Match(fqlTargetFromChartPosting(posting)) {
+				continue
+			}
+		} else if text != "" && !strings.Contains(strings.ToLower(posting.narration+" "+posting.payee+" "+posting.account), text) {
 			continue
 		}
 		key := chartPeriodKey(posting.date, interval)
@@ -119,5 +130,21 @@ func nextPeriodKey(key, interval string) string {
 			return strconv.Itoa(year+1) + "-01"
 		}
 		return fmt.Sprintf("%s-%02d", parts[0], month+1)
+	}
+}
+
+// fqlTargetFromChartPosting builds an FQL target from a chart posting so the
+// advanced text filter can match its transaction attributes (payee, narration,
+// tags, links, account, flag, date).
+func fqlTargetFromChartPosting(posting chartPosting) FQLTarget {
+	return FQLTarget{
+		Tags:      posting.tags,
+		Links:     posting.links,
+		Payee:     posting.payee,
+		Narration: posting.narration,
+		Account:   posting.account,
+		Flag:      posting.flag,
+		Date:      posting.date,
+		Metadata:  map[string]string{},
 	}
 }
