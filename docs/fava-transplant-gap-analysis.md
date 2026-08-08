@@ -76,7 +76,7 @@
 
 | # | Manifest | 差距 | 说明 |
 | --- | --- | --- | --- |
-| L1 | R-ACCOUNT | ~~账户页标题无层级面包屑~~（已完成，`88d90b9`；Last entry 指示器 `eefbf83`） | 标题现为祖先面包屑 + Last entry 指示器；指示器跟随当前过滤，无条目上下文链接（限制） |
+| L1 | R-ACCOUNT | ~~账户页标题无层级面包屑~~（已完成，`88d90b9`；Last entry 指示器 `eefbf83`；上下文链接 `43f5e57`） | 标题现为祖先面包屑 + Last entry 指示器；指示器跟随当前过滤，日期已链接到条目上下文模态（`43f5e57`，用 journal 首条 entry_hash） |
 | L2 | G-LOCALE | i18n 为静态 en/zh-CN 字典 | 上游为 gettext 目录；用户可见行为等价，建议登记为实现性偏差（D4） |
 | L3 | R-HOLDINGS | ~~Holdings 页签集合与上游不一致~~（已完成，`2b8d370`） | 上游 by_cost_currency 已补齐（后端 HoldingsAggregate 新增 cost_currency 分组，前端页签/路由/文案/CSV 全链路），OC 扩展页签 by_root_account/by_commodity 保留为实现性偏差。限制：by_cost_currency 组内 units 跨不同持仓货币直接相加为单一数值（上游按货币逐行展示库存），book_value 仍按成本货币单一性规则输出 |
 | L4 | R-ERRORS | serve 拒绝加载含 error 级诊断的账本（偏差登记） | Fava 带错服务并在 /errors 展示全部诊断；OC `serve` 在 main.go:181 检测到 error 即退出，/errors 页面只能展示 warning（`b902d7d`）。已登记并批准为 FD-0004 approved（2026-08-08，与 FD-0002 同源：OC 会计语义权威只服务 valid ledger） |
