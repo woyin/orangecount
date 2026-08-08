@@ -413,8 +413,9 @@ POST，`38f2618`）。
 > 无需后端改动。provenance 登记 original。冒烟验证 9 商品对按钮与
 > 折线渲染、EUR/USD 切换选中态、tooltip 文案（1 EUR = 1.1 USD
 > 2025-06-28）；限制：显示开关在 commodities 页未单独冒烟（与 events
-> 页同构代码，后者已验证）；line/area 模式切换（lineChartMode）与
-> lastActiveChartName 跨导航持久化未实现，`d9b77d3`）。
+> 页同构代码，后者已验证）；line/area 模式切换（lineChartMode）未实现，
+> lastActiveChartName 跨导航持久化已落地（`28d4abf`：commodities 选中
+> pair 名经 localStorage 读写，导航离开再回保持选中，冒烟 EUR/USD），`d9b77d3`）。
 > M1-query-chart（Query 页查询图表落地，M1 图表项收尾：上游
 > getQueryChart 仅对"恰两列"结果出图——str+Inventory→层级图、
 > date+Inventory→折线图；OC 查询结果无 dtype/Inventory 元数据，
