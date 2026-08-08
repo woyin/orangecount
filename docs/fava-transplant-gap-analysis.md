@@ -575,11 +575,11 @@ approved）。剩余仅为已登记的实现层差异 / 划界限制 / 计划项
 | H2 限制 | uri-list 链接拖放 attach（需后端写契约） | 已登记（H2）；statement 完整视图以 `/documents/` 链接替代，owner 已接受 |
 | 计划项 | journal 分页（per_page=1000，ADR-0037 planned，稠密夹具 400 条单页不触发） | 不阻塞 |
 
-移植工作视为完成，收尾交接见 `.ocbin/handoff.md`。
+移植工作视为完成；过程交接记录已归档到 `.ocbin/archive/handoff-2026-08-08.md`。
 
 **真实账本验收证据（2026-08-08）**：用私有真实账本 `~/Documents/FinanceBook/main.bean`
 （多货币含股票基金共 16 种、房贷/投资/储蓄、2349 条 journal、8 年份）端到端冒烟，
 全部通过——账本 `valid: true, errors: 0`；账户图 + 月度区间聚合、账户 up-to-date
 状态点、entry context `balances_before/after`、CodeMirror 编辑器、BQL 查询、
 统计 UpdateActivity 状态点、holdings 261 行、events 100 行均正确复现。
-详细记录见 `.ocbin/handoff.md` 的"真实账本验收"节。
+（证据细节与工具过程见归档的 `.ocbin/archive/handoff-2026-08-08.md`。）
