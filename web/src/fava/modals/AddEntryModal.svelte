@@ -2,10 +2,13 @@
   import { onMount } from "svelte";
   import { PRIVATE_ADAPTER_BASE } from "../adapter-client";
   import { notify } from "../notifications";
+  import AutocompleteInput from "../components/AutocompleteInput.svelte";
   import { translations, type Locale } from "../../translations";
 
   export let locale = "en";
   export let onSaved: () => void = () => {};
+  /** Known payees, used to autocomplete the payee field of a transaction. */
+  export let payees: string[] = [];
 
   type EntryType = "transaction" | "balance" | "note";
 
@@ -214,7 +217,7 @@
           </div>
           <div class="field grow">
             <span>{t("payee")}</span>
-            <input type="text" bind:value={payee} autocomplete="off" />
+            <AutocompleteInput bind:value={payee} suggestions={payees} onEnter={() => {}} />
           </div>
           <div class="field grow">
             <span>{t("narration")}</span>

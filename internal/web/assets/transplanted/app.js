@@ -41256,7 +41256,7 @@ delegate(["click"]);
 // src/fava/modals/AddEntryModal.svelte
 var root_233 = template(`<p class="error svelte-1iw1zty" role="alert"> </p>`);
 var root_420 = template(`<tr><td class="svelte-1iw1zty"><input type="text" placeholder="Assets:Cash" autocomplete="off" class="svelte-1iw1zty"></td><td class="svelte-1iw1zty"><input type="text" placeholder="10.00" autocomplete="off" class="svelte-1iw1zty"></td><td class="svelte-1iw1zty"><input type="text" placeholder="USD" autocomplete="off" class="svelte-1iw1zty"></td><td class="svelte-1iw1zty"><button type="button" class="remove svelte-1iw1zty" aria-label="Remove posting">\xD7</button></td></tr>`);
-var root_326 = template(`<div class="row svelte-1iw1zty"><div class="field narrow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <select class="svelte-1iw1zty"><option>*</option><option>!</option></select></div> <div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" autocomplete="off" class="svelte-1iw1zty"></div> <div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" autocomplete="off" class="svelte-1iw1zty"></div></div> <div class="row svelte-1iw1zty"><div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="tag1 tag2" autocomplete="off" class="svelte-1iw1zty"></div> <div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="link1 link2" autocomplete="off" class="svelte-1iw1zty"></div></div> <table class="postings svelte-1iw1zty"><thead><tr><th class="svelte-1iw1zty"> </th><th class="svelte-1iw1zty"> </th><th class="svelte-1iw1zty"> </th><th class="svelte-1iw1zty"></th></tr></thead><tbody></tbody></table> <button type="button" class="add-posting svelte-1iw1zty"> </button>`, 1);
+var root_326 = template(`<div class="row svelte-1iw1zty"><div class="field narrow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <select class="svelte-1iw1zty"><option>*</option><option>!</option></select></div> <div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <!></div> <div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" autocomplete="off" class="svelte-1iw1zty"></div></div> <div class="row svelte-1iw1zty"><div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="tag1 tag2" autocomplete="off" class="svelte-1iw1zty"></div> <div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="link1 link2" autocomplete="off" class="svelte-1iw1zty"></div></div> <table class="postings svelte-1iw1zty"><thead><tr><th class="svelte-1iw1zty"> </th><th class="svelte-1iw1zty"> </th><th class="svelte-1iw1zty"> </th><th class="svelte-1iw1zty"></th></tr></thead><tbody></tbody></table> <button type="button" class="add-posting svelte-1iw1zty"> </button>`, 1);
 var root_610 = template(`<div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="Assets:Cash" required autocomplete="off" class="svelte-1iw1zty"></div> <div class="row svelte-1iw1zty"><div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="100.00" required autocomplete="off" class="svelte-1iw1zty"></div> <div class="field narrow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="USD" required autocomplete="off" class="svelte-1iw1zty"></div></div>`, 1);
 var root_79 = template(`<div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="Assets:Cash" required autocomplete="off" class="svelte-1iw1zty"></div> <div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" required autocomplete="off" class="svelte-1iw1zty"></div>`, 1);
 var root_145 = template(`<div class="add-backdrop svelte-1iw1zty" role="presentation"><form class="add-modal svelte-1iw1zty" role="dialog" aria-modal="true"><h3 class="svelte-1iw1zty"> <button type="button" class="svelte-1iw1zty"> </button> <button type="button" class="svelte-1iw1zty"> </button> <button type="button" class="svelte-1iw1zty"> </button></h3> <!> <div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="date" required class="svelte-1iw1zty"></div> <!> <div class="actions svelte-1iw1zty"><span class="spacer svelte-1iw1zty"></span> <label class="continue svelte-1iw1zty"><input type="checkbox"> <span> </span></label> <button type="submit" class="svelte-1iw1zty"> </button></div></form></div>`);
@@ -41265,6 +41265,7 @@ function AddEntryModal($$anchor, $$props) {
   let locale = prop($$props, "locale", 8, "en");
   let onSaved = prop($$props, "onSaved", 8, () => {
   });
+  let payees = prop($$props, "payees", 24, () => []);
   let shown = mutable_state(false);
   let entryType = mutable_state("transaction");
   let date2 = mutable_state((/* @__PURE__ */ new Date()).toISOString().slice(0, 10));
@@ -41483,16 +41484,29 @@ function AddEntryModal($$anchor, $$props) {
           var text_7 = child(span_2, true);
           template_effect(() => set_text(text_7, t2("payee")));
           reset(span_2);
-          var input_1 = sibling(span_2, 2);
-          remove_input_defaults(input_1);
+          var node_3 = sibling(span_2, 2);
+          AutocompleteInput(node_3, {
+            get suggestions() {
+              return payees();
+            },
+            onEnter: () => {
+            },
+            get value() {
+              return get(payee);
+            },
+            set value($$value) {
+              set(payee, $$value);
+            },
+            $$legacy: true
+          });
           reset(div_4);
           var div_5 = sibling(div_4, 2);
           var span_3 = child(div_5);
           var text_8 = child(span_3, true);
           template_effect(() => set_text(text_8, t2("narration")));
           reset(span_3);
-          var input_2 = sibling(span_3, 2);
-          remove_input_defaults(input_2);
+          var input_1 = sibling(span_3, 2);
+          remove_input_defaults(input_1);
           reset(div_5);
           reset(div_2);
           var div_6 = sibling(div_2, 2);
@@ -41501,16 +41515,16 @@ function AddEntryModal($$anchor, $$props) {
           var text_9 = child(span_4, true);
           template_effect(() => set_text(text_9, t2("tag")));
           reset(span_4);
-          var input_3 = sibling(span_4, 2);
-          remove_input_defaults(input_3);
+          var input_2 = sibling(span_4, 2);
+          remove_input_defaults(input_2);
           reset(div_7);
           var div_8 = sibling(div_7, 2);
           var span_5 = child(div_8);
           var text_10 = child(span_5, true);
           template_effect(() => set_text(text_10, t2("link")));
           reset(span_5);
-          var input_4 = sibling(span_5, 2);
-          remove_input_defaults(input_4);
+          var input_3 = sibling(span_5, 2);
+          remove_input_defaults(input_3);
           reset(div_8);
           reset(div_6);
           var table = sibling(div_6, 2);
@@ -41535,25 +41549,25 @@ function AddEntryModal($$anchor, $$props) {
           each(tbody, 5, () => get(postings), index, ($$anchor4, posting, index2) => {
             var tr_1 = root_420();
             var td = child(tr_1);
-            var input_5 = child(td);
-            remove_input_defaults(input_5);
+            var input_4 = child(td);
+            remove_input_defaults(input_4);
             reset(td);
             var td_1 = sibling(td);
-            var input_6 = child(td_1);
-            remove_input_defaults(input_6);
+            var input_5 = child(td_1);
+            remove_input_defaults(input_5);
             reset(td_1);
             var td_2 = sibling(td_1);
-            var input_7 = child(td_2);
-            remove_input_defaults(input_7);
+            var input_6 = child(td_2);
+            remove_input_defaults(input_6);
             reset(td_2);
             var td_3 = sibling(td_2);
             var button_3 = child(td_3);
             reset(td_3);
             reset(tr_1);
             template_effect(() => button_3.disabled = get(postings).length === 1);
-            bind_value(input_5, () => get(posting).account, ($$value) => (get(posting).account = $$value, invalidate_inner_signals(() => get(postings))));
-            bind_value(input_6, () => get(posting).amount, ($$value) => (get(posting).amount = $$value, invalidate_inner_signals(() => get(postings))));
-            bind_value(input_7, () => get(posting).currency, ($$value) => (get(posting).currency = $$value, invalidate_inner_signals(() => get(postings))));
+            bind_value(input_4, () => get(posting).account, ($$value) => (get(posting).account = $$value, invalidate_inner_signals(() => get(postings))));
+            bind_value(input_5, () => get(posting).amount, ($$value) => (get(posting).amount = $$value, invalidate_inner_signals(() => get(postings))));
+            bind_value(input_6, () => get(posting).currency, ($$value) => (get(posting).currency = $$value, invalidate_inner_signals(() => get(postings))));
             event("click", button_3, () => removePosting(index2));
             append($$anchor4, tr_1);
           });
@@ -41564,16 +41578,15 @@ function AddEntryModal($$anchor, $$props) {
           template_effect(() => set_text(text_14, `+ ${t2("add") ?? ""}`));
           reset(button_4);
           bind_select_value(select, () => get(flag), ($$value) => set(flag, $$value));
-          bind_value(input_1, () => get(payee), ($$value) => set(payee, $$value));
-          bind_value(input_2, () => get(narration), ($$value) => set(narration, $$value));
-          bind_value(input_3, () => get(tags2), ($$value) => set(tags2, $$value));
-          bind_value(input_4, () => get(links), ($$value) => set(links, $$value));
+          bind_value(input_1, () => get(narration), ($$value) => set(narration, $$value));
+          bind_value(input_2, () => get(tags2), ($$value) => set(tags2, $$value));
+          bind_value(input_3, () => get(links), ($$value) => set(links, $$value));
           event("click", button_4, addPosting);
           append($$anchor3, fragment_1);
         };
         var alternate_1 = ($$anchor3) => {
           var fragment_2 = comment();
-          var node_3 = first_child(fragment_2);
+          var node_4 = first_child(fragment_2);
           {
             var consequent_2 = ($$anchor4) => {
               var fragment_3 = root_610();
@@ -41582,8 +41595,8 @@ function AddEntryModal($$anchor, $$props) {
               var text_15 = child(span_6, true);
               template_effect(() => set_text(text_15, t2("account")));
               reset(span_6);
-              var input_8 = sibling(span_6, 2);
-              remove_input_defaults(input_8);
+              var input_7 = sibling(span_6, 2);
+              remove_input_defaults(input_7);
               reset(div_9);
               var div_10 = sibling(div_9, 2);
               var div_11 = child(div_10);
@@ -41591,21 +41604,21 @@ function AddEntryModal($$anchor, $$props) {
               var text_16 = child(span_7, true);
               template_effect(() => set_text(text_16, t2("amount")));
               reset(span_7);
-              var input_9 = sibling(span_7, 2);
-              remove_input_defaults(input_9);
+              var input_8 = sibling(span_7, 2);
+              remove_input_defaults(input_8);
               reset(div_11);
               var div_12 = sibling(div_11, 2);
               var span_8 = child(div_12);
               var text_17 = child(span_8, true);
               template_effect(() => set_text(text_17, t2("currency")));
               reset(span_8);
-              var input_10 = sibling(span_8, 2);
-              remove_input_defaults(input_10);
+              var input_9 = sibling(span_8, 2);
+              remove_input_defaults(input_9);
               reset(div_12);
               reset(div_10);
-              bind_value(input_8, () => get(account), ($$value) => set(account, $$value));
-              bind_value(input_9, () => get(amount), ($$value) => set(amount, $$value));
-              bind_value(input_10, () => get(currency), ($$value) => set(currency, $$value));
+              bind_value(input_7, () => get(account), ($$value) => set(account, $$value));
+              bind_value(input_8, () => get(amount), ($$value) => set(amount, $$value));
+              bind_value(input_9, () => get(currency), ($$value) => set(currency, $$value));
               append($$anchor4, fragment_3);
             };
             var alternate = ($$anchor4) => {
@@ -41615,23 +41628,23 @@ function AddEntryModal($$anchor, $$props) {
               var text_18 = child(span_9, true);
               template_effect(() => set_text(text_18, t2("account")));
               reset(span_9);
-              var input_11 = sibling(span_9, 2);
-              remove_input_defaults(input_11);
+              var input_10 = sibling(span_9, 2);
+              remove_input_defaults(input_10);
               reset(div_13);
               var div_14 = sibling(div_13, 2);
               var span_10 = child(div_14);
               var text_19 = child(span_10, true);
               template_effect(() => set_text(text_19, t2("comment")));
               reset(span_10);
-              var input_12 = sibling(span_10, 2);
-              remove_input_defaults(input_12);
+              var input_11 = sibling(span_10, 2);
+              remove_input_defaults(input_11);
               reset(div_14);
-              bind_value(input_11, () => get(account), ($$value) => set(account, $$value));
-              bind_value(input_12, () => get(comment3), ($$value) => set(comment3, $$value));
+              bind_value(input_10, () => get(account), ($$value) => set(account, $$value));
+              bind_value(input_11, () => get(comment3), ($$value) => set(comment3, $$value));
               append($$anchor4, fragment_4);
             };
             if_block(
-              node_3,
+              node_4,
               ($$render) => {
                 if (get(entryType) === "balance") $$render(consequent_2);
                 else $$render(alternate, false);
@@ -41648,9 +41661,9 @@ function AddEntryModal($$anchor, $$props) {
       }
       var div_15 = sibling(node_2, 2);
       var label = sibling(child(div_15), 2);
-      var input_13 = child(label);
-      remove_input_defaults(input_13);
-      var span_11 = sibling(input_13, 2);
+      var input_12 = child(label);
+      remove_input_defaults(input_12);
+      var span_11 = sibling(input_12, 2);
       var text_20 = child(span_11, true);
       template_effect(() => set_text(text_20, t2("continueAdding")));
       reset(span_11);
@@ -41672,8 +41685,8 @@ function AddEntryModal($$anchor, $$props) {
       event("click", button_1, () => setType("balance"));
       event("click", button_2, () => setType("note"));
       bind_value(input, () => get(date2), ($$value) => set(date2, $$value));
-      bind_checked(input_13, () => get(continueAdding), ($$value) => set(continueAdding, $$value));
-      event("change", input_13, persistContinue);
+      bind_checked(input_12, () => get(continueAdding), ($$value) => set(continueAdding, $$value));
+      event("change", input_12, persistContinue);
       event("click", form, stopPropagation(function($$arg) {
         bubble_event.call(this, $$props, $$arg);
       }));
@@ -42711,6 +42724,9 @@ function App($$anchor, $$props) {
   AddEntryModal(node_6, {
     get locale() {
       return get(current).locale;
+    },
+    get payees() {
+      return get(current).payees;
     },
     onSaved: () => void bootstrap()
   });

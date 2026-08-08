@@ -180,7 +180,7 @@
 </article>
 <ExportModal locale={current.locale} />
 <ContextModal {adapter} locale={current.locale} />
-<AddEntryModal locale={current.locale} onSaved={() => void bootstrap()} />
+<AddEntryModal locale={current.locale} payees={current.payees} onSaved={() => void bootstrap()} />
 <DocumentUploadModal locale={current.locale} documentRoots={current.documentRoots} accounts={current.accounts} onUploaded={() => void bootstrap()} />
 
 <style>
