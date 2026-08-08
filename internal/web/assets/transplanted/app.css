@@ -371,15 +371,28 @@ table.svelte-1c31p73 {
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/StatisticsReport.esbuild-svelte-fake-css */
-.entries-by-type.svelte-wqxbcw .num:where(.svelte-wqxbcw),
-.update-activity.svelte-wqxbcw .num:where(.svelte-wqxbcw) {
+.entries-by-type.svelte-1hzrq4y .num:where(.svelte-1hzrq4y),
+.update-activity.svelte-1hzrq4y .num:where(.svelte-1hzrq4y) {
   text-align: right;
 }
-.entries-by-type.svelte-wqxbcw tfoot:where(.svelte-wqxbcw) td:where(.svelte-wqxbcw) {
+.entries-by-type.svelte-1hzrq4y tfoot:where(.svelte-1hzrq4y) td:where(.svelte-1hzrq4y) {
   font-weight: 500;
 }
-.update-activity.svelte-wqxbcw td.account:where(.svelte-wqxbcw) {
+.update-activity.svelte-1hzrq4y td.account:where(.svelte-1hzrq4y) {
   white-space: nowrap;
+}
+.status-indicator.svelte-1hzrq4y {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-left: 6px;
+  border-radius: 8px;
+}
+.status-green.svelte-1hzrq4y {
+  background: var(--status-green, #2e7d32);
+}
+.status-yellow.svelte-1hzrq4y {
+  background: var(--status-yellow, #fbc02d);
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/charts/LineChart.esbuild-svelte-fake-css */

@@ -11,6 +11,7 @@
     last_entry_date: string;
     entry_hash: string;
     balances: Record<string, string>;
+    uptodate_status?: string;
   }
 
   export let entriesByType: [string, number][];
@@ -83,7 +84,7 @@
       <tbody>
         {#each sortedActivity as row (row.account)}
           <tr>
-            <td class="account"><a href={routeHref("account", { account: row.account })}>{row.account}</a></td>
+            <td class="account"><a href={routeHref("account", { account: row.account })}>{row.account}</a>{#if row.uptodate_status}<span class="status-indicator status-{row.uptodate_status}" title={row.uptodate_status === "green" ? "The last entry is a passing balance check." : "The last entry is not a balance check."}></span>{/if}</td>
             <td><a href={`#context-${row.entry_hash}`}>{row.last_entry_date}</a></td>
             <td class="num">
               {#each Object.entries(row.balances) as [currency, amount] (currency)}
@@ -109,5 +110,21 @@
 
   .update-activity td.account {
     white-space: nowrap;
+  }
+
+  .status-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-left: 6px;
+    border-radius: 8px;
+  }
+
+  .status-green {
+    background: var(--status-green, #2e7d32);
+  }
+
+  .status-yellow {
+    background: var(--status-yellow, #fbc02d);
   }
 </style>

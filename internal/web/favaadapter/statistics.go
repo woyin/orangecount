@@ -15,6 +15,9 @@ type UpdateActivityRow struct {
 	LastEntryDate string            `json:"last_entry_date"`
 	EntryHash     string            `json:"entry_hash"`
 	Balances      map[string]string `json:"balances"`
+	// UptodateStatus is the account's up-to-date indicator (green/yellow),
+	// mirroring Fava's UpdateActivity status column.
+	UptodateStatus string `json:"uptodate_status,omitempty"`
 }
 
 // UpdateActivity lists Assets/Liabilities accounts with their most recent
@@ -51,10 +54,11 @@ func UpdateActivity(e ledger.Evaluation) []UpdateActivityRow {
 	rows := make([]UpdateActivityRow, 0, len(names))
 	for _, account := range names {
 		row := UpdateActivityRow{
-			Account:       account,
-			LastEntryDate: last[account].date,
-			EntryHash:     last[account].hash,
-			Balances:      map[string]string{},
+			Account:        account,
+			LastEntryDate:  last[account].date,
+			EntryHash:      last[account].hash,
+			Balances:       map[string]string{},
+			UptodateStatus: uptodateStatus(e.Entries, account),
 		}
 		if state, ok := e.Account(account); ok {
 			currencies := make([]string, 0, len(state.Balances))
