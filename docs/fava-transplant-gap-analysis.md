@@ -576,3 +576,10 @@ approved）。剩余仅为已登记的实现层差异 / 划界限制 / 计划项
 | 计划项 | journal 分页（per_page=1000，ADR-0037 planned，稠密夹具 400 条单页不触发） | 不阻塞 |
 
 移植工作视为完成，收尾交接见 `.ocbin/handoff.md`。
+
+**真实账本验收证据（2026-08-08）**：用私有真实账本 `~/Documents/FinanceBook/main.bean`
+（多货币含股票基金共 16 种、房贷/投资/储蓄、2349 条 journal、8 年份）端到端冒烟，
+全部通过——账本 `valid: true, errors: 0`；账户图 + 月度区间聚合、账户 up-to-date
+状态点、entry context `balances_before/after`、CodeMirror 编辑器、BQL 查询、
+统计 UpdateActivity 状态点、holdings 261 行、events 100 行均正确复现。
+详细记录见 `.ocbin/handoff.md` 的"真实账本验收"节。
