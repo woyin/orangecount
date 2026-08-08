@@ -79,8 +79,8 @@
 | L1 | R-ACCOUNT | ~~账户页标题无层级面包屑~~（已完成，`88d90b9`；Last entry 指示器 `eefbf83`） | 标题现为祖先面包屑 + Last entry 指示器；指示器跟随当前过滤，无条目上下文链接（限制） |
 | L2 | G-LOCALE | i18n 为静态 en/zh-CN 字典 | 上游为 gettext 目录；用户可见行为等价，建议登记为实现性偏差（D4） |
 | L3 | R-HOLDINGS | ~~Holdings 页签集合与上游不一致~~（已完成，`2b8d370`） | 上游 by_cost_currency 已补齐（后端 HoldingsAggregate 新增 cost_currency 分组，前端页签/路由/文案/CSV 全链路），OC 扩展页签 by_root_account/by_commodity 保留为实现性偏差。限制：by_cost_currency 组内 units 跨不同持仓货币直接相加为单一数值（上游按货币逐行展示库存），book_value 仍按成本货币单一性规则输出 |
-| L4 | R-ERRORS | serve 拒绝加载含 error 级诊断的账本（偏差登记） | Fava 带错服务并在 /errors 展示全部诊断；OC `serve` 在 main.go:181 检测到 error 即退出，/errors 页面只能展示 warning（`b902d7d`）。登记为实现性偏差：若要对齐 Fava，需 owner 批准放宽启动门禁 |
-| L5 | M-NOTIFY | 文件变更提示与自动重载并存（偏差登记） | 上游 auto-reload 默认开启时静默重载、不弹 toast；本实现重载与 warning toast 并存以保证可感知（`a5251c8`）。登记为实现性偏差：若要对齐上游静默行为，移除变更 toast 即可 |
+| L4 | R-ERRORS | serve 拒绝加载含 error 级诊断的账本（偏差登记） | Fava 带错服务并在 /errors 展示全部诊断；OC `serve` 在 main.go:181 检测到 error 即退出，/errors 页面只能展示 warning（`b902d7d`）。已登记并批准为 FD-0004 approved（2026-08-08，与 FD-0002 同源：OC 会计语义权威只服务 valid ledger） |
+| L5 | M-NOTIFY | 文件变更提示与自动重载并存（偏差登记） | 上游 auto-reload 默认开启时静默重载、不弹 toast；本实现重载与 warning toast 并存以保证可感知（`a5251c8`）。已登记并批准为 FD-0005 approved（2026-08-08） |
 
 ### 适配器契约缺口（数据层）
 
@@ -447,8 +447,9 @@ POST，`38f2618`）。
 > 验证缓冲区装载、路径/adapter 回填与状态文案，随后 Preview 正常返回
 > 诊断且 Commit 保持禁用。限制：上游为服务端 import 目录暂存 +
 > importer 识别 + 文件列表 + 逐条目 Extract 弹窗，OC 无 import 目录
-> 与 Python importer 生态，文件列表/extract 弹窗登记为待方案决策
-> 余项；单文件读取（上游支持多文件并发上传）；Import 页文案仍为
+> 与 Python importer 生态，文件列表/extract 弹窗后经 M2-extract 决策
+> 登记为 FD-0001 并已批准（approved，2026-08-08，见下）；
+> 单文件读取（上游支持多文件并发上传）；Import 页文案仍为
 > 硬编码英文（既有状态），`ea13c07`）。
 > M2-extract（import 余项文件列表 + 逐条目 extract/review 决策，
 > 2026-08-08）：调查确认上游文件列表靠 importer 的 identify()/

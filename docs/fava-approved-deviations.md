@@ -67,6 +67,42 @@ A deviation is valid only when required by OrangeCount's accounting semantic aut
 | Expiry condition | a future budget model decision (ADR-0017 revisit) |
 | Baseline impact | alternate expectation for the journal filter set |
 
+### FD-0004 — serve refuses ledgers with error diagnostics
+
+| Field | Value |
+| --- | --- |
+| Status | approved |
+| Route and state | G-SHELL / R-ERRORS (`errors`) |
+| Fava baseline | Fava serves a ledger even with error diagnostics and shows the full set on /errors |
+| OrangeCount behavior | `serve` (cmd/orangecount/main.go:181) and the editor/commit write paths reject a snapshot carrying error diagnostics; /errors can only show warnings |
+| Category | semantics |
+| Reason | OrangeCount's accounting semantic authority serves only valid ledgers so reports are computed over a consistent, balanced state; a ledger with error diagnostics is not served. This is the same valid-only constraint that makes FD-0002's diff_amount unreachable. |
+| Scope | serve startup, editor/commit write paths, /errors page |
+| Tests | serve exits on error diagnostics; /errors renders warnings only |
+| Owner | implementing agent (Francis Chen / OrangeCount maintainer) |
+| Approver | user (product owner) only |
+| Approved evidence | review reference and date: approved by product owner 2026-08-08 |
+| Expiry condition | if OrangeCount ever introduces a diagnostics/error-serving mode, re-review |
+| Baseline impact | alternate expectation for the /errors page |
+
+### FD-0005 — File-change reload keeps a warning toast
+
+| Field | Value |
+| --- | --- |
+| Status | approved |
+| Route and state | G-SHELL (notifications) |
+| Fava baseline | auto-reload defaults to silently reloading without a toast |
+| OrangeCount behavior | a file change reloads and also shows a warning toast (click to reload again, auto-dismiss after 5s) so the change is perceptible |
+| Category | semantics |
+| Reason | A perceptible reload notice guards against surprise data changes; the toast is the user-visible signal that the served snapshot changed. |
+| Scope | file-change notification on any served route |
+| Tests | H7 smoke (warning toast text + class, click-to-reload, auto-dismiss) |
+| Owner | implementing agent (Francis Chen / OrangeCount maintainer) |
+| Approver | user (product owner) only |
+| Approved evidence | review reference and date: approved by product owner 2026-08-08 |
+| Expiry condition | if upstream auto-reload behavior changes or a silent-reload preference is requested |
+| Baseline impact | alternate expectation for the reload notification |
+
 No other deviations are currently approved. Existing differences in the prototype and legacy UI are migration gaps, not approved deviations.
 
 ## Entry template
