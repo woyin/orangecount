@@ -319,9 +319,10 @@ POST，`38f2618`）。
 > （11 rect + 坐标轴 + 图例）、TB treemap（86 节点 rect + 86 科目详
 > 情页链接）、Treemap/Sunburst/Icicle 三视图切换（切换后 shapes 更新）、
 > 指针 tooltip（hover rect 显示 `USD · 2024-01: 0`）均复现。限制处置：
-> H5 的 B(budget) 芯片维持 ADR-0017 限制；balance diff_amount 呈现因
-> OC 只服务 valid ledger 不可达（见 H5 行）；document→statement 链接
-> 已落地 `7cc48ca`（statement 完整视图属 H1 边界）。
+> H5 的 B(budget) 芯片维持 ADR-0017 限制（FD-0003 approved）；balance
+> diff_amount 呈现因 OC 只服务 valid ledger 不可达（见 H5 行，FD-0002
+> approved）；document→statement 链接已落地 `7cc48ca`（statement 完整
+> 视图属 H1 边界，`/documents/` 链接替代已获产品 owner 接受）。
 > H4-review（冒烟复核六路由专用组件：Holdings 五页签、Commodities
 > base/quote 分组、Events 类型分组、Statistics 双区块、Documents 表格
 > 均在案；H4 行现状列改写为已验证形态并列出契约级余项——散点图/
