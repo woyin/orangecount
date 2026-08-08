@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { AdapterClient } from "../adapter-client";
   import { translations, type Locale } from "../../translations";
+  import ReportChart from "../charts/ReportChart.svelte";
   import GenericReport from "./GenericReport.svelte";
   import JournalReport from "./JournalReport.svelte";
   import { parseJournalReport, parseTableReport, type JournalReport as JournalReportData, type TableReport } from "./types";
@@ -58,6 +59,10 @@
   let error = "";
   let requestKey = "";
 
+  // The account route returns a chart alongside the balance table; render it
+  // above the balance tree the way Fava shows the account chart.
+  $: chart = balance?.chart ?? null;
+
   function sectionHref(mode: string): string {
     const params = new URLSearchParams();
     for (const key of ["time", "interval"]) {
@@ -111,6 +116,7 @@
   {#if reportType === "changes" || reportType === "balances"}
     {#if intervals}<GenericReport report={intervals} title={`${reportType === "changes" ? t("changes") : t("balances")} (${intervalLabel})`} {locale} {renderCommas} />{/if}
   {:else if balance}
+    {#if chart}<ReportChart {chart} {locale} />{/if}
     <GenericReport report={balance} title="Balance" {locale} {renderCommas} />
   {/if}
   {#if journal}<JournalReport report={journal} {renderCommas} accountFilter={account} />{/if}

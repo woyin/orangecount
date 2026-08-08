@@ -7427,6 +7427,7 @@ var root_53 = template(`<span class="last-activity svelte-5y3t8e"> </span>`);
 var root_64 = template(`<a class="svelte-5y3t8e"> </a>`);
 var root_84 = template(`<a class="svelte-5y3t8e"> </a>`);
 var root_103 = template(`<a class="svelte-5y3t8e"> </a>`);
+var root_153 = template(`<!> <!>`, 1);
 var root_211 = template(`<div class="headerline"><h2 class="account-breadcrumb svelte-5y3t8e"><span class="droptarget svelte-5y3t8e"><!><!></span></h2></div> <div class="headerline sections svelte-5y3t8e"><h3 class="svelte-5y3t8e"><!></h3> <h3 class="svelte-5y3t8e"><!></h3> <h3 class="svelte-5y3t8e"><!></h3></div> <!> <!>`, 1);
 function AccountReport($$anchor, $$props) {
   push($$props, false);
@@ -7434,6 +7435,7 @@ function AccountReport($$anchor, $$props) {
   const reportType = mutable_state();
   const intervalLabel = mutable_state();
   const parts2 = mutable_state();
+  const chart2 = mutable_state();
   const lastEntry = mutable_state();
   let adapter = prop($$props, "adapter", 8);
   let query = prop($$props, "query", 8);
@@ -7510,6 +7512,9 @@ function AccountReport($$anchor, $$props) {
   });
   legacy_pre_effect(() => get(account), () => {
     set(parts2, ancestors(get(account)));
+  });
+  legacy_pre_effect(() => get(balance), () => {
+    set(chart2, get(balance)?.chart ?? null);
   });
   legacy_pre_effect(() => get(journal), () => {
     set(lastEntry, get(journal) && get(journal).entries.length ? get(journal).entries[0].date : "");
@@ -7678,8 +7683,26 @@ function AccountReport($$anchor, $$props) {
           var fragment_8 = comment();
           var node_9 = first_child(fragment_8);
           {
-            var consequent_8 = ($$anchor4) => {
-              GenericReport($$anchor4, {
+            var consequent_9 = ($$anchor4) => {
+              var fragment_9 = root_153();
+              var node_10 = first_child(fragment_9);
+              {
+                var consequent_8 = ($$anchor5) => {
+                  ReportChart($$anchor5, {
+                    get chart() {
+                      return get(chart2);
+                    },
+                    get locale() {
+                      return locale();
+                    }
+                  });
+                };
+                if_block(node_10, ($$render) => {
+                  if (get(chart2)) $$render(consequent_8);
+                });
+              }
+              var node_11 = sibling(node_10, 2);
+              GenericReport(node_11, {
                 get report() {
                   return get(balance);
                 },
@@ -7691,11 +7714,12 @@ function AccountReport($$anchor, $$props) {
                   return renderCommas();
                 }
               });
+              append($$anchor4, fragment_9);
             };
             if_block(
               node_9,
               ($$render) => {
-                if (get(balance)) $$render(consequent_8);
+                if (get(balance)) $$render(consequent_9);
               },
               true
             );
@@ -7707,9 +7731,9 @@ function AccountReport($$anchor, $$props) {
           else $$render(alternate_3, false);
         });
       }
-      var node_10 = sibling(node_7, 2);
+      var node_12 = sibling(node_7, 2);
       {
-        var consequent_9 = ($$anchor3) => {
+        var consequent_10 = ($$anchor3) => {
           JournalReport($$anchor3, {
             get report() {
               return get(journal);
@@ -7722,8 +7746,8 @@ function AccountReport($$anchor, $$props) {
             }
           });
         };
-        if_block(node_10, ($$render) => {
-          if (get(journal)) $$render(consequent_9);
+        if_block(node_12, ($$render) => {
+          if (get(journal)) $$render(consequent_10);
         });
       }
       template_effect(() => set_attribute(span, "data-account-name", get(account)));
@@ -39865,7 +39889,7 @@ var root_183 = template(`<select id="fava-option-locale"><option>English</option
 var root_193 = template(`<pre class="svelte-1hd97ci"> </pre>`);
 var root_173 = template(`<tr><td class="svelte-1hd97ci"> </td><td class="svelte-1hd97ci"><!></td></tr>`);
 var root_202 = template(`<tr><td class="svelte-1hd97ci"> </td><td class="svelte-1hd97ci"><pre class="svelte-1hd97ci"> </pre></td></tr>`);
-var root_153 = template(`<div class="headerline"><h2> </h2></div> <h3> </h3> <p><span class="mode-switch svelte-1hd97ci" role="radiogroup"></span></p> <h3> <a href="/help/options"> </a></h3> <table class="options-table svelte-1hd97ci"><thead><tr><!><!></tr></thead><tbody></tbody></table> <h3> </h3> <table class="options-table svelte-1hd97ci"><thead><tr><!><!></tr></thead><tbody></tbody></table>`, 1);
+var root_154 = template(`<div class="headerline"><h2> </h2></div> <h3> </h3> <p><span class="mode-switch svelte-1hd97ci" role="radiogroup"></span></p> <h3> <a href="/help/options"> </a></h3> <table class="options-table svelte-1hd97ci"><thead><tr><!><!></tr></thead><tbody></tbody></table> <h3> </h3> <table class="options-table svelte-1hd97ci"><thead><tr><!><!></tr></thead><tbody></tbody></table>`, 1);
 var root_2110 = template(`<div class="headerline"><h2> </h2></div> <pre class="svelte-1hd97ci"> </pre>`, 1);
 function UtilityReport($$anchor, $$props) {
   push($$props, false);
@@ -40076,7 +40100,7 @@ function UtilityReport($$anchor, $$props) {
                           var node_6 = first_child(fragment_10);
                           {
                             var consequent_7 = ($$anchor8) => {
-                              var fragment_11 = root_153();
+                              var fragment_11 = root_154();
                               var div_3 = first_child(fragment_11);
                               var h2_2 = child(div_3);
                               var text_8 = child(h2_2, true);
@@ -41639,7 +41663,7 @@ var root_514 = template(`<a class="svelte-kroni5"> </a>`);
 var root_611 = template(`<span class="span svelte-kroni5"> </span>`);
 var root_1311 = template(`<dd class="svelte-kroni5"> </dd>`);
 var root_1212 = template(`<dt class="svelte-kroni5">Balances before</dt> <!>`, 1);
-var root_154 = template(`<dd class="svelte-kroni5"> </dd>`);
+var root_155 = template(`<dd class="svelte-kroni5"> </dd>`);
 var root_145 = template(`<dt class="svelte-kroni5">Balances after</dt> <!>`, 1);
 var root_1111 = template(`<dl class="balances svelte-kroni5"><!> <!></dl>`);
 var root_421 = template(`<p class="location svelte-kroni5"><!> <!></p> <p class="summary svelte-kroni5"> <!> <!> <!> <!></p> <!> <pre class="source svelte-kroni5"> </pre>`, 1);
@@ -41841,7 +41865,7 @@ function ContextModal($$anchor, $$props) {
                       var fragment_8 = root_145();
                       var node_13 = sibling(first_child(fragment_8), 2);
                       each(node_13, 1, () => balanceLines(get(context).balances_after), (line) => line, ($$anchor7, line) => {
-                        var dd_1 = root_154();
+                        var dd_1 = root_155();
                         var text_10 = child(dd_1, true);
                         reset(dd_1);
                         template_effect(() => set_text(text_10, get(line)));
