@@ -6763,7 +6763,8 @@ var root_232 = template(`<dt> </dt> <dd> </dd>`, 1);
 var root_223 = template(`<dl class="metadata"></dl>`);
 var root_212 = template(`<li><p><span class="datecell"></span> <span class="flag"> </span> <span class="description"><a> </a></span> <span class="num"> </span> <span class="num"> </span> <span class="num"> </span></p> <!></li>`);
 var root_20 = template(`<ul class="postings"></ul>`);
-var root_252 = template(`<dt> </dt> <dd> </dd>`, 1);
+var root_262 = template(`<a class="filename" data-remote="" target="_blank" rel="noopener noreferrer"> </a>`);
+var root_252 = template(`<dt> </dt> <dd><!></dd>`, 1);
 var root_242 = template(`<dl class="metadata"></dl>`);
 var root_210 = template(`<li><p><span class="datecell"> </span> <span class="flag"> </span> <span class="description"><!> <!> <!> <!> <!> <!></span> <!> <!></p> <!> <!></li>`);
 var root5 = template(`<form class="flex-row journal-chips svelte-osbwps"><!> <span class="spacer svelte-osbwps"></span> <a class="button" href="/api/v1/reports/journal?format=csv">Export CSV</a></form> <ol><li class="head svelte-osbwps"><p><button type="button" class="datecell unset svelte-osbwps">Date</button> <button type="button" class="flag unset svelte-osbwps">F</button> <button type="button" class="description unset svelte-osbwps">Payee/Narration</button> <span class="num">Units</span> <span class="num">Cost</span> <span class="num"> </span></p></li> <!></ol>`, 1);
@@ -7306,7 +7307,7 @@ function JournalReport($$anchor, $$props) {
     }
     var node_17 = sibling(node_15, 2);
     {
-      var consequent_9 = ($$anchor3) => {
+      var consequent_10 = ($$anchor3) => {
         var dl_1 = root_242();
         each(dl_1, 5, () => get(entry).metadata, (meta2) => meta2.key, ($$anchor4, meta2) => {
           var fragment_9 = root_252();
@@ -7314,19 +7315,35 @@ function JournalReport($$anchor, $$props) {
           var text_24 = child(dt_1);
           reset(dt_1);
           var dd_1 = sibling(dt_1, 2);
-          var text_25 = child(dd_1, true);
+          var node_18 = child(dd_1);
+          {
+            var consequent_9 = ($$anchor5) => {
+              var a_3 = root_262();
+              template_effect(() => set_attribute(a_3, "href", `/documents/${encodeURIComponent(get(meta2).value.replace(/^"|"$/g, ""))}`));
+              var text_25 = child(a_3, true);
+              template_effect(() => set_text(text_25, get(meta2).value.replace(/^"|"$/g, "")));
+              reset(a_3);
+              append($$anchor5, a_3);
+            };
+            var alternate_3 = ($$anchor5) => {
+              var text_26 = text();
+              template_effect(() => set_text(text_26, get(meta2).value));
+              append($$anchor5, text_26);
+            };
+            if_block(node_18, ($$render) => {
+              if (get(meta2).key.startsWith("document")) $$render(consequent_9);
+              else $$render(alternate_3, false);
+            });
+          }
           reset(dd_1);
-          template_effect(() => {
-            set_text(text_24, `${get(meta2).key ?? ""}:`);
-            set_text(text_25, get(meta2).value);
-          });
+          template_effect(() => set_text(text_24, `${get(meta2).key ?? ""}:`));
           append($$anchor4, fragment_9);
         });
         reset(dl_1);
         append($$anchor3, dl_1);
       };
       if_block(node_17, ($$render) => {
-        if (get(entry).metadata?.length) $$render(consequent_9);
+        if (get(entry).metadata?.length) $$render(consequent_10);
       });
     }
     reset(li_2);

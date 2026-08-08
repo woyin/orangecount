@@ -285,7 +285,10 @@
         <dl class="metadata">
           {#each entry.metadata as meta (meta.key)}
             <dt>{meta.key}:</dt>
-            <dd>{meta.value}</dd>
+            <!-- Fava links document metadata to its statement view; the shell
+                 has no statement route, so a document key links to the
+                 document file served by /documents/ instead. -->
+            <dd>{#if meta.key.startsWith("document")}<a class="filename" data-remote target="_blank" rel="noopener noreferrer" href={`/documents/${encodeURIComponent(meta.value.replace(/^"|"$/g, ""))}`}>{meta.value.replace(/^"|"$/g, "")}</a>{:else}{meta.value}{/if}</dd>
           {/each}
         </dl>
       {/if}
