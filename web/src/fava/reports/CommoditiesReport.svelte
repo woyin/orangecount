@@ -60,10 +60,16 @@
       `1 ${base} = ${point.display} ${quote}\n${point.date}`;
   }
 
-  // Upstream remembers the last active chart name across navigation; the
-  // shell keeps the selection local to this report.
+  // Upstream remembers the last active chart name across navigation; the shell
+  // persists the selection to localStorage so it survives.
   let activePair = "";
+  try {
+    activePair = localStorage.getItem("commodities-active-pair") || "";
+  } catch {
+    // storage is optional; default to the first pair
+  }
   $: active = pairs.find(([pair]) => pair === activePair) ?? pairs[0];
+  $: try { localStorage.setItem("commodities-active-pair", active[0]); } catch { /* storage optional */ }
 
   // Upstream hides charts behind the `charts=false` URL parameter; the shell
   // router has no URL-parameter plumbing for it, so the toggle is local.

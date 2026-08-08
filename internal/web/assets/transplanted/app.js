@@ -38025,6 +38025,10 @@ function CommoditiesReport($$anchor, $$props) {
 ${point.date}`;
   }
   let activePair = mutable_state("");
+  try {
+    set(activePair, localStorage.getItem("commodities-active-pair") || "");
+  } catch {
+  }
   let showCharts = mutable_state(true);
   legacy_pre_effect(() => deep_read_state(report()), () => {
     set(pairs, (() => {
@@ -38045,6 +38049,12 @@ ${point.date}`;
   });
   legacy_pre_effect(() => (get(pairs), get(activePair)), () => {
     set(active, get(pairs).find(([pair]) => pair === get(activePair)) ?? get(pairs)[0]);
+  });
+  legacy_pre_effect(() => get(active), () => {
+    try {
+      localStorage.setItem("commodities-active-pair", get(active)[0]);
+    } catch {
+    }
   });
   legacy_pre_effect_reset();
   init2();
