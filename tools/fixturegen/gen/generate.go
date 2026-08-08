@@ -302,6 +302,11 @@ func renderDirectives(accounts []accountSpec, balances balanceBook, transactionC
 	b.WriteString("2025-06-25 document Assets:Cash:Wallet01 \"documents/doc-001.txt\" #evidence ^doc-001\n")
 	b.WriteString("2025-06-26 document Assets:Cash:Reserve01 \"documents/doc-002.txt\" #evidence ^doc-002\n")
 	b.WriteString("2025-06-27 document Assets:Receivables:Client01 \"documents/nested/doc-003.txt\" #nested ^doc-003\n")
+	// Linked/discovered document transactions exercise the journal D/L chips
+	// and linked/discovered row classes (Fava: #linked / #discovered tags on a
+	// document entry, shown as show-document children).
+	b.WriteString("2025-06-27 document Assets:Cash:Wallet01 \"documents/doc-001.txt\" #linked ^doc-linked\n")
+	b.WriteString("2025-06-27 document Assets:Cash:Reserve01 \"documents/doc-002.txt\" #discovered ^doc-discovered\n")
 	b.WriteString("2025-06-28 price EUR 1.10 USD\n")
 	b.WriteString("2025-06-28 price JPY 0.0075 USD\n")
 	b.WriteString("2025-06-28 price GBP 1.27 USD\n")
