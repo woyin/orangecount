@@ -51,6 +51,16 @@ type JournalEntry struct {
 	// account filter, populated only when the journal is scoped to an
 	// account: it is the column Fava's account journal renders as "Change".
 	Change []JournalAmount `json:"change,omitempty"`
+	// CustomValues is the typed value list of a custom directive, projected so
+	// the journal can render each value by its data type the way Fava does
+	// (accounts as links, amounts as formatted amounts, strings quoted, etc.).
+	CustomValues []JournalCustomValue `json:"custom_values,omitempty"`
+}
+
+// JournalCustomValue is one typed value of a custom directive.
+type JournalCustomValue struct {
+	Dtype string `json:"dtype"`
+	Value string `json:"value"`
 }
 
 type JournalPosting struct {
@@ -213,6 +223,7 @@ func projectJournalEntry(record ledger.EntryRecord) (JournalEntry, bool) {
 			values = append(values, strings.TrimSpace(value.Raw))
 		}
 		entry.Extra = map[string]string{"values": strings.Join(values, " ")}
+		entry.CustomValues = journalCustomValues(directive.Values)
 		entry.Metadata = journalMeta(directive.Meta)
 		return entry, true
 	default:
@@ -246,7 +257,49 @@ func journalTransaction(transaction *ledger.Transaction) JournalEntry {
 	return entry
 }
 
-// journalChange sums the posting units that fall inside the filtered account
+// journalCustomValues projects a custom directive's typed values the way
+// Fava renders them: accounts verbatim (the frontend links them), amounts
+// as formatted amounts, strings quoted, booleans and dates literally,
+// numbers as-is, and everything else by its raw text.
+func journalCustomValues(values []ledger.Value) []JournalCustomValue {
+	if len(values) == 0 {
+		return nil
+	}
+	out := make([]JournalCustomValue, 0, len(values))
+	for _, value := range values {
+		var dtype, display string
+		switch value.Kind {
+		case ledger.ValueAccount, ledger.ValueCurrency:
+			dtype, display = "account", strings.TrimSpace(value.Raw)
+		case ledger.ValueAmount:
+			dtype = "amount"
+			display = report.FormatDecimal(ledger.DecimalFromNumber(value.Amount.Number)).Display + " " + value.Amount.Currency
+		case ledger.ValueString:
+			dtype, display = "string", "\""+value.String+"\""
+		case ledger.ValueBool:
+			dtype, display = "bool", fmtBool(value.Bool)
+		case ledger.ValueDate:
+			dtype, display = "date", value.Date.Raw
+		case ledger.ValueNumber:
+			dtype, display = "number", strings.TrimSpace(value.Raw)
+		case ledger.ValueTag:
+			dtype, display = "tag", "#"+strings.TrimSpace(value.Raw)
+		case ledger.ValueLink:
+			dtype, display = "link", "^"+strings.TrimSpace(value.Raw)
+		default:
+			dtype, display = "text", strings.TrimSpace(value.Raw)
+		}
+		out = append(out, JournalCustomValue{Dtype: dtype, Value: display})
+	}
+	return out
+}
+
+func fmtBool(value bool) string {
+	if value {
+		return "True"
+	}
+	return "False"
+}
 // so the account journal can show the per-entry change the way Fava does.
 // Only transactions carry postings; every other directive yields no change.
 func journalChange(record ledger.EntryRecord, account string) []JournalAmount {

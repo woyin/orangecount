@@ -188,6 +188,13 @@ export interface JournalEntry {
   extra?: Record<string, string>;
   /** Per-currency change inside the account filter; account journal only. */
   change?: JournalAmount[];
+  /** Typed values of a custom directive, rendered by data type. */
+  custom_values?: JournalCustomValue[];
+}
+
+export interface JournalCustomValue {
+  dtype: string;
+  value: string;
 }
 
 export interface JournalReport {

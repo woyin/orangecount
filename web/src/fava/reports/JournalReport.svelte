@@ -214,7 +214,14 @@
           {#if entry.payee}
             <strong class="payee">{entry.payee}</strong><span class="separator"></span>
           {/if}
-          {describe(entry)}
+          {#if entry.type === "custom" && entry.custom_values?.length}
+            <strong class="custom-type">{entry.narration}</strong>
+            {#each entry.custom_values as cv (cv.dtype + cv.value)}
+              {#if cv.dtype === "account"}<a href={accountHref(cv.value)}>{cv.value}</a>{:else}<span class="custom-value">{cv.value}</span>{/if}
+            {/each}
+          {:else}
+            {describe(entry)}
+          {/if}
           {#each entry.tags ?? [] as tag (tag)}<span class="tag">#{tag}</span>{/each}
           {#each entry.links ?? [] as link (link)}<span class="link">^{link}</span>{/each}
           {#each entry.filenames ?? [] as filename (filename)}<span class="filename">{filename}</span>{/each}
