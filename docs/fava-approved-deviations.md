@@ -31,6 +31,42 @@ A deviation is valid only when required by OrangeCount's accounting semantic aut
 | Expiry condition | a Fava upgrade that changes the Import contract, or an OrangeCount decision to embed a supported importer runtime |
 | Baseline impact | alternate expectation for the Import page |
 
+### FD-0002 — Failed-balance diff_amount is not rendered
+
+| Field | Value |
+| --- | --- |
+| Status | proposed |
+| Route and state | R-JOURNAL (`journal`) |
+| Fava baseline | balance rows where the assertion fails render the expected amount with a `pending` class and an extra change column showing `diff_amount` (beancount's actual-minus-expected difference) |
+| OrangeCount behavior | balance rows always render the amount and no difference column; a failed assertion never reaches the runtime |
+| Category | semantics |
+| Reason | OrangeCount's accounting semantic authority serves only valid ledgers: `serve` (cmd/orangecount/main.go:181) and the editor/commit write paths reject any snapshot carrying error diagnostics. `diff_amount` exists only on a failed balance assertion, so it can never appear in a served ledger; implementing its rendering would be an unreachable code path. |
+| Scope | journal balance rows; the adapter projects no diff field and the journal renders no pending/difference column |
+| Tests | the evaluator emits E-EVAL-BALANCE on a failed assertion (evaluator_test coverage); the runtime never serves such a ledger |
+| Owner | implementing agent (Francis Chen / OrangeCount maintainer) |
+| Approver | user (product owner) only |
+| Approved evidence | none yet |
+| Expiry condition | if OrangeCount ever serves invalid ledgers (e.g. a diagnostics mode), diff_amount rendering becomes reachable and should be re-reviewed |
+| Baseline impact | alternate expectation for the journal balance row |
+
+### FD-0003 — Journal budget (B) chip
+
+| Field | Value |
+| --- | --- |
+| Status | proposed |
+| Route and state | R-JOURNAL (`journal`) |
+| Fava baseline | the "B" journal filter chip shows/hides `custom "budget"` entries (beancount budget directives) |
+| OrangeCount behavior | the B chip is absent from the journal filter set |
+| Category | semantics |
+| Reason | Beancount parser/interpolation of `custom "budget"` directives plus a budget model underlies the chip; ADR-0017 defers budgeting until it has an explicit model, deliberately not introducing a private budget syntax in the first release. |
+| Scope | journal filters; the budget module and account-page budget charts also stay deferred |
+| Tests | none (chip absent) |
+| Owner | implementing agent (Francis Chen / OrangeCount maintainer) |
+| Approver | user (product owner) only |
+| Approved evidence | none yet |
+| Expiry condition | a future budget model decision (ADR-0017 revisit) |
+| Baseline impact | alternate expectation for the journal filter set |
+
 No other deviations are currently approved. Existing differences in the prototype and legacy UI are migration gaps, not approved deviations.
 
 ## Entry template
