@@ -103,11 +103,12 @@ A deviation is valid when required by OrangeCount's accounting semantic authorit
 | Expiry condition | if upstream auto-reload behavior changes or a silent-reload preference is requested |
 | Baseline impact | alternate expectation for the reload notification |
 
-### FD-0006 — Modern chart layer (switchable owner presentation preference)
+### FD-0006 — Modern chart layer (switchable owner presentation preference) [removed]
 
 | Field | Value |
 | --- | --- |
 | Status | approved |
+| Removal | Removed 2026-08-09: ADR-0041 promoted the modern time-series presentation to the standard-route default and removed the parity fallback, so it is no longer a deviation. Hierarchy charts still render through the parity ReportChart (out of scope for the modern layer). |
 | Route and state | R-IS / R-BS / R-ACCOUNT (chart regions of income_statement, balance_sheet, account) |
 | Fava baseline | `ReportChart.svelte` hand-written SVG bar/line time-series charts, the parity default |
 | OrangeCount behavior | an alternative chart presentation enabled by `?chart_layer=modern` (default off, parity remains the standard-route default). It renders the same income-statement, balance-sheet, and account time-series with d3-backed scales/axes/stack-offsets/tick-formatting, per-pixel responsive redrawing, a crosshair with linked series highlighting, and an HCL ordinal palette so >4 currencies do not collide. |

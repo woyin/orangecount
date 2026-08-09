@@ -81,8 +81,8 @@ An explicit, reviewed departure from the Fava visual baseline or behavior, made 
 _Avoid_: silent drift, unreviewed redesign, a presentation change that cannot be switched back to parity
 
 **Modern chart layer**:
-A switchable, owner-presentation-preference chart presentation for the income-statement, balance-sheet, and account time-series charts, enabled by `?chart_layer=modern` and defaulting off. It uses d3 for scales, axes, stack offsets, and tick formatting while consuming the same adapter data contract as the parity layer; it never changes valuation, currency aggregation, or any accounting semantics.
-_Avoid_: new chart system, default skin, dashboard mode
+The standard time-series chart presentation for the income-statement, balance-sheet, and account routes (bar and line charts). It is d3-backed (scales, stack offsets, tick computation, HCL color interpolation) and consumes the same adapter data contract as the ledger's other views; it never changes valuation, currency aggregation, or any accounting semantics. Hierarchy charts (treemap/sunburst/icicle) are out of scope and still use the parity renderer. See ADR-0040/0041.
+_Avoid_: switchable skin, parity fallback for time-series, dashboard mode
 
 **Fava frontend transplant**:
 The primary OrangeCount web-client migration that starts from Fava 1.30.12's frontend composition, components, styles, and interactions, then replaces Fava data access with Go-backed adapters. The legacy OrangeCount interface is a temporary per-page fallback and is deleted as each page family is accepted.
