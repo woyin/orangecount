@@ -583,3 +583,15 @@ approved）。剩余仅为已登记的实现层差异 / 划界限制 / 计划项
 状态点、entry context `balances_before/after`、CodeMirror 编辑器、BQL 查询、
 统计 UpdateActivity 状态点、holdings 261 行、events 100 行均正确复现。
 （证据细节与工具过程见归档的 `.ocbin/archive/handoff-2026-08-08.md`。）
+
+## 下一步工作（2026-08-08 后）
+
+用真实账本 `~/Documents/FinanceBook` 双端浏览器冒烟（OC vs Fava 1.30.12
+参考实例）发现以下待办缺口，尚未实现，登记为下一步工作：
+
+| 缺口 | 双端实测 | 状态 |
+| --- | --- | --- |
+| IS/BS 图表类型切换（stacked/single radio） | Fava 有 `stacked \| single` 切换；OC income_statement 缺失（仅 Conversion/Interval 下拉 + Currency 按钮），图表本身渲染正常 | 待实现 |
+
+其余验证项（账户页三区块 + 账户图、journal 全量筛选芯片 + 表头 + 真实交易、
+侧栏导航、Add Entry、Export）双端均一致。
