@@ -7,8 +7,6 @@
  export let locale = "en";
  export let operatingCurrencies: string[] = [];
  export let renderCommas = false;
- export let chartLayer: "parity" | "modern" = "parity";
- export let onChartLayer: (value: string) => void = () => {};
 
   // The adapter returns one chart per measure. Fava shows a single chart with
   // a row of links to switch measures rather than stacking them all, so the
@@ -24,7 +22,7 @@
 
 {#if chart}
  <div class="report-charts">
-   <ChartView {chart} {locale} {chartLayer} {onChartLayer} />
+   <ChartView {chart} {locale} />
    {#if report.charts.length > 1}
       <nav class="chart-picker" aria-label={chart.title}>
         {#each report.charts as option, index (option.title)}

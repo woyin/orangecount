@@ -11,8 +11,6 @@
   export let locale = "en";
   export let renderCommas = false;
  export let accountDetails: Record<string, { balance_string: string; close_date?: string; uptodate_status?: string; last_entry?: string }> = {};
- export let chartLayer: "parity" | "modern" = "parity";
- export let onChartLayer: (value: string) => void = () => {};
 
   function t(key: string): string {
     const catalog = translations[(locale === "zh-CN" ? "zh-CN" : "en") as Locale];
@@ -126,7 +124,7 @@
   {#if reportType === "changes" || reportType === "balances"}
     {#if intervals}<GenericReport report={intervals} title={`${reportType === "changes" ? t("changes") : t("balances")} (${intervalLabel})`} {locale} {renderCommas} />{/if}
   {:else if balance}
-   {#if chart}<ChartView {chart} {locale} {chartLayer} {onChartLayer} />{/if}
+   {#if chart}<ChartView {chart} {locale} />{/if}
     <GenericReport report={balance} title="Balance" {locale} {renderCommas} />
   {/if}
   {#if journal}<JournalReport report={journal} {renderCommas} accountFilter={account} />{/if}
