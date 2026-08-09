@@ -120,11 +120,11 @@ form.svelte-1m9wvh0 > span {
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/charts/ReportChart.esbuild-svelte-fake-css */
-.chart-card.svelte-1c31p73 {
+.chart-card.svelte-1act09h {
   position: relative;
   margin-bottom: 1rem;
 }
-.chart-tooltip.svelte-1c31p73 {
+.chart-tooltip.svelte-1act09h {
   position: absolute;
   z-index: 10;
   pointer-events: none;
@@ -138,38 +138,38 @@ form.svelte-1m9wvh0 > span {
   white-space: pre-line;
   box-shadow: 0 1px 3px rgb(0 0 0 / .25);
 }
-.hierarchy-picker.svelte-1c31p73 {
+.hierarchy-picker.svelte-1act09h {
   margin-bottom: .5rem;
   color: var(--text-color-lightest);
   text-align: center;
 }
-.hierarchy-picker.svelte-1c31p73 button:where(.svelte-1c31p73) {
+.hierarchy-picker.svelte-1act09h button:where(.svelte-1act09h) {
   padding: 0 .5em;
 }
-.hierarchy-picker.svelte-1c31p73 button:where(.svelte-1c31p73) + button:where(.svelte-1c31p73) {
+.hierarchy-picker.svelte-1act09h button:where(.svelte-1act09h) + button:where(.svelte-1act09h) {
   border-left: 1px solid var(--text-color-lighter);
 }
-.hierarchy-picker.svelte-1c31p73 button.selected:where(.svelte-1c31p73),
-.hierarchy-picker.svelte-1c31p73 button:where(.svelte-1c31p73):hover {
+.hierarchy-picker.svelte-1act09h button.selected:where(.svelte-1act09h),
+.hierarchy-picker.svelte-1act09h button:where(.svelte-1act09h):hover {
   color: var(--text-color-lighter);
 }
-.chart-meta.svelte-1c31p73,
-.chart-availability.svelte-1c31p73 {
+.chart-meta.svelte-1act09h,
+.chart-availability.svelte-1act09h {
   color: var(--text-color-lightest);
 }
-.chart-data.svelte-1c31p73 {
+.chart-data.svelte-1act09h {
   margin-top: .5rem;
 }
-.chart-data.svelte-1c31p73 summary:where(.svelte-1c31p73) {
+.chart-data.svelte-1act09h summary:where(.svelte-1act09h) {
   color: var(--text-color-lightest);
   cursor: pointer;
 }
-.chart-scroll.svelte-1c31p73 {
+.chart-scroll.svelte-1act09h {
   overflow-x: auto;
   max-height: 22rem;
   overflow-y: auto;
 }
-.report-chart.svelte-1c31p73 {
+.report-chart.svelte-1act09h {
   display: block;
   width: min(100%, 52rem);
   height: 14rem;
@@ -177,33 +177,33 @@ form.svelte-1m9wvh0 > span {
   background: var(--background-darker);
   border: 1px solid var(--border);
 }
-.report-sunburst-chart.svelte-1c31p73 {
+.report-sunburst-chart.svelte-1act09h {
   width: 14rem;
 }
-.report-hierarchy-chart.svelte-1c31p73 a:where(.svelte-1c31p73) {
+.report-hierarchy-chart.svelte-1act09h a:where(.svelte-1act09h) {
   cursor: pointer;
 }
-.report-chart.svelte-1c31p73 path:where(.svelte-1c31p73) {
+.report-chart.svelte-1act09h path:where(.svelte-1act09h) {
   fill: none;
   stroke-width: .8;
   vector-effect: non-scaling-stroke;
 }
-.chart-axis.svelte-1c31p73 {
+.chart-axis.svelte-1act09h {
   stroke: var(--chart-axis);
   stroke-width: .25;
   vector-effect: non-scaling-stroke;
 }
-.chart-grid.svelte-1c31p73 {
+.chart-grid.svelte-1act09h {
   stroke: var(--border);
   stroke-width: .2;
   vector-effect: non-scaling-stroke;
   opacity: .5;
 }
-.chart-tick.svelte-1c31p73 {
+.chart-tick.svelte-1act09h {
   font-size: 2.6px;
   fill: var(--text-color-lighter);
 }
-.legend.svelte-1c31p73 {
+.legend.svelte-1act09h {
   display: inline-flex;
   gap: .3rem;
   align-items: center;
@@ -215,19 +215,44 @@ form.svelte-1m9wvh0 > span {
   color: inherit;
   cursor: pointer;
 }
-.legend.svelte-1c31p73 i:where(.svelte-1c31p73) {
+.legend.svelte-1act09h i:where(.svelte-1act09h) {
   display: inline-block;
   width: .7rem;
   height: .7rem;
   border-radius: 50%;
 }
-.legend.inactive.svelte-1c31p73 span:where(.svelte-1c31p73) {
+.legend.inactive.svelte-1act09h span:where(.svelte-1act09h) {
   text-decoration: line-through;
 }
-.legend.inactive.svelte-1c31p73 i:where(.svelte-1c31p73) {
+.legend.inactive.svelte-1act09h i:where(.svelte-1act09h) {
   filter: grayscale();
 }
-table.svelte-1c31p73 {
+.mode-switch.svelte-1act09h {
+  display: inline-flex;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+.mode-switch.svelte-1act09h label.button:where(.svelte-1act09h) {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.5rem;
+  font-size: 0.85em;
+  color: var(--text-color);
+  cursor: pointer;
+}
+.mode-switch.svelte-1act09h label.button:where(.svelte-1act09h) + label.button:where(.svelte-1act09h) {
+  margin-left: 0.125rem;
+}
+.mode-switch.svelte-1act09h label.button.muted:where(.svelte-1act09h) {
+  color: var(--text-color-lightest);
+}
+.mode-switch.svelte-1act09h input:where(.svelte-1act09h) {
+  display: none;
+}
+.area-fill.svelte-1act09h {
+  opacity: 0.25;
+}
+table.svelte-1act09h {
   min-width: 32rem;
 }
 
