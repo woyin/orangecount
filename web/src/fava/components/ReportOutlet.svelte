@@ -26,10 +26,15 @@
   export let theme = "system";
   export let operatingCurrencies: string[] = [];
   export let renderCommas = false;
-  export let accounts: string[] = [];
-  export let accountDetails: Record<string, { balance_string: string; close_date?: string; uptodate_status?: string; last_entry?: string }> = {};
-  export let onLocale: (value: string) => void = () => {};
-  export let onTheme: (value: string) => void = () => {};
+ export let accounts: string[] = [];
+ export let accountDetails: Record<string, { balance_string: string; close_date?: string; uptodate_status?: string; last_entry?: string }> = {};
+ // chart_layer is a presentation-only switch (Approved Fava deviation); it must
+ // not trigger an adapter reload, so it is stripped from the request key and the
+ // adapter query and forwarded only to the chart-rendering reports.
+ export let chartLayer: "parity" | "modern" = "parity";
+ export let onChartLayer: (value: string) => void = () => {};
+ export let onLocale: (value: string) => void = () => {};
+ export let onTheme: (value: string) => void = () => {};
 
   let loadedKey = "";
   let loading = false;
@@ -39,7 +44,12 @@
   let journal: JournalReportData | null = null;
   let statistics: { entriesByType: [string, number][]; postings: TableReport; updateActivity: { account: string; last_entry_date: string; entry_hash: string; balances: Record<string, string> }[] } | null = null;
 
-  $: requestKey = `${route}?${new URLSearchParams(query).toString()}`;
+ $: adapterQuery = (() => {
+   const copy: Record<string, string> = {};
+   for (const [key, value] of Object.entries(query)) if (key !== "chart_layer") copy[key] = value;
+   return copy;
+ })();
+ $: requestKey = `${route}?${new URLSearchParams(adapterQuery).toString()}`;
   $: if (requestKey !== loadedKey) {
     loadedKey = requestKey;
     void load(requestKey);
@@ -57,7 +67,7 @@
       return;
     }
     try {
-      const payload = await adapter.load(route, query);
+      const payload = await adapter.load(route, adapterQuery);
       if (key !== requestKey) return;
       if (["income_statement", "balance_sheet", "trial_balance"].includes(route)) {
         report = parseTreeReport(payload);
@@ -87,7 +97,7 @@
 {:else if route === "query"}
   <QueryReport {adapter} query={query} />
 {:else if route === "account"}
-  <AccountReport adapter={adapter} {query} {locale} {renderCommas} {accountDetails} />
+ <AccountReport adapter={adapter} {query} {locale} {renderCommas} {accountDetails} {chartLayer} {onChartLayer} />
 {:else if route === "editor"}
   <EditorReport {adapter} query={query} />
 {:else if route === "import"}
@@ -95,7 +105,7 @@
 {:else if ["options", "help", "diagnostics", "source"].includes(route)}
   <UtilityReport {adapter} {route} query={query} helpPage={helpPage} {locale} {theme} {onLocale} {onTheme} />
 {:else if report}
-  <TreeReport {report} {locale} {operatingCurrencies} {renderCommas} />
+ <TreeReport {report} {locale} {operatingCurrencies} {renderCommas} {chartLayer} {onChartLayer} />
 {:else if journal}
   <JournalReport report={journal} {renderCommas} />
 {:else if statistics}

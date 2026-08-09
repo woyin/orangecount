@@ -48,7 +48,7 @@ const PATHS = Object.freeze({
   errors: "/errors",
 });
 
-const QUERY_KEYS = Object.freeze(["time", "account", "filter", "conversion", "interval", "path", "query_string", "r"]);
+const QUERY_KEYS = Object.freeze(["time", "account", "filter", "conversion", "interval", "path", "query_string", "r", "chart_layer"]);
 
 function pathWithoutTrailingSlash(pathname) {
   if (pathname.length > 1 && pathname.endsWith("/")) return pathname.slice(0, -1);

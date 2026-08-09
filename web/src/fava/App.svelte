@@ -66,11 +66,20 @@
     shell.dispatch({ type: "query", query: { conversion: value } });
   }
 
-  function setInterval(value: string) {
-    const href = updateQuery(window.location.href, { interval: value });
+ function setInterval(value: string) {
+   const href = updateQuery(window.location.href, { interval: value });
+   const target = new URL(href, window.location.href);
+   window.history.replaceState({}, "", target.href);
+   shell.dispatch({ type: "query", query: { interval: value } });
+ }
+ 
+  // The chart_layer switch is a presentation-only toggle (Approved Fava
+  // deviation, owner presentation preference); it never reaches the adapter.
+  function setChartLayer(value: string) {
+    const href = updateQuery(window.location.href, { chart_layer: value });
     const target = new URL(href, window.location.href);
     window.history.replaceState({}, "", target.href);
-    shell.dispatch({ type: "query", query: { interval: value } });
+    shell.dispatch({ type: "query", query: { chart_layer: value } });
   }
 
   function setLocale(locale: string) {
@@ -169,8 +178,10 @@
           operatingCurrencies={current.operatingCurrencies}
           renderCommas={current.renderCommas}
           accounts={current.accounts}
-          accountDetails={current.accountDetails}
-          onLocale={setLocale}
+         accountDetails={current.accountDetails}
+         chartLayer={current.query.chart_layer === "modern" ? "modern" : "parity"}
+         onChartLayer={setChartLayer}
+         onLocale={setLocale}
           onTheme={setTheme}
           query={{ ...current.query, ...(current.account ? { account: current.account } : {}) }}
         />

@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { AdapterClient } from "../adapter-client";
   import { translations, type Locale } from "../../translations";
-  import ReportChart from "../charts/ReportChart.svelte";
+ import ChartView from "../charts/ChartView.svelte";
   import GenericReport from "./GenericReport.svelte";
   import JournalReport from "./JournalReport.svelte";
   import { parseJournalReport, parseTableReport, type JournalReport as JournalReportData, type TableReport } from "./types";
@@ -10,7 +10,9 @@
   export let query: Record<string, string>;
   export let locale = "en";
   export let renderCommas = false;
-  export let accountDetails: Record<string, { balance_string: string; close_date?: string; uptodate_status?: string; last_entry?: string }> = {};
+ export let accountDetails: Record<string, { balance_string: string; close_date?: string; uptodate_status?: string; last_entry?: string }> = {};
+ export let chartLayer: "parity" | "modern" = "parity";
+ export let onChartLayer: (value: string) => void = () => {};
 
   function t(key: string): string {
     const catalog = translations[(locale === "zh-CN" ? "zh-CN" : "en") as Locale];
@@ -124,7 +126,7 @@
   {#if reportType === "changes" || reportType === "balances"}
     {#if intervals}<GenericReport report={intervals} title={`${reportType === "changes" ? t("changes") : t("balances")} (${intervalLabel})`} {locale} {renderCommas} />{/if}
   {:else if balance}
-    {#if chart}<ReportChart {chart} {locale} />{/if}
+   {#if chart}<ChartView {chart} {locale} {chartLayer} {onChartLayer} />{/if}
     <GenericReport report={balance} title="Balance" {locale} {renderCommas} />
   {/if}
   {#if journal}<JournalReport report={journal} {renderCommas} accountFilter={account} />{/if}

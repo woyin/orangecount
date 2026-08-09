@@ -256,6 +256,178 @@ table.svelte-1act09h {
   min-width: 32rem;
 }
 
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/charts/ModernChart.esbuild-svelte-fake-css */
+.modern-chart-card.svelte-1l6ui0a {
+  position: relative;
+  margin-bottom: 1rem;
+}
+.modern-chart-header.svelte-1l6ui0a {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.25rem;
+}
+.modern-chart-header.svelte-1l6ui0a h3:where(.svelte-1l6ui0a) {
+  margin: 0;
+}
+.modern-chart-wrap.svelte-1l6ui0a {
+  width: 100%;
+  min-height: 280px;
+}
+.modern-chart.svelte-1l6ui0a {
+  display: block;
+  width: 100%;
+  height: 280px;
+  background: var(--background-darker);
+  border: 1px solid var(--border);
+}
+.y-tick.svelte-1l6ui0a,
+.x-tick.svelte-1l6ui0a {
+  font-size: 11px;
+  fill: var(--text-color-lighter);
+  font-variant-numeric: tabular-nums;
+}
+.grid-line.svelte-1l6ui0a {
+  stroke: var(--border);
+  stroke-width: 1px;
+  opacity: 0.15;
+}
+.zero-baseline.svelte-1l6ui0a {
+  stroke: var(--chart-axis, var(--text-color-lightest));
+  stroke-width: 1px;
+  opacity: 0.4;
+}
+.series-line.svelte-1l6ui0a {
+  fill: none;
+  stroke-width: 2;
+}
+.area-fill.svelte-1l6ui0a {
+  opacity: 0.22;
+}
+.dimmed.svelte-1l6ui0a {
+  opacity: 0.25;
+  transition: opacity 120ms;
+}
+.crosshair.svelte-1l6ui0a {
+  stroke: var(--text-color-lighter);
+  stroke-width: 1px;
+  stroke-dasharray: 3 3;
+  opacity: 0.6;
+  pointer-events: none;
+}
+.hover-dot.svelte-1l6ui0a {
+  stroke: var(--background-darker);
+  stroke-width: 1.5;
+  pointer-events: none;
+}
+.hover-card.svelte-1l6ui0a {
+  position: absolute;
+  z-index: 10;
+  pointer-events: none;
+  left: 50%;
+  transform: translateX(-50%);
+  top: 0.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.35rem 0.6rem;
+  background: var(--background-darker);
+  border: 1px solid var(--border);
+  color: var(--text-color-lighter);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  box-shadow: 0 1px 3px rgb(0 0 0 / .25);
+}
+.hover-date.svelte-1l6ui0a {
+  font-weight: 600;
+}
+.hover-row.svelte-1l6ui0a {
+  display: inline-flex;
+  gap: 0.3rem;
+  align-items: center;
+}
+.hover-row.svelte-1l6ui0a i:where(.svelte-1l6ui0a) {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 50%;
+}
+.chart-meta.svelte-1l6ui0a {
+  color: var(--text-color-lightest);
+}
+.mode-switch.svelte-1l6ui0a {
+  display: inline-flex;
+  margin-left: auto;
+}
+.mode-switch.svelte-1l6ui0a label.button:where(.svelte-1l6ui0a) {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 0.5rem;
+  font-size: 0.85em;
+  color: var(--text-color);
+  cursor: pointer;
+}
+.mode-switch.svelte-1l6ui0a label.button:where(.svelte-1l6ui0a) + label.button:where(.svelte-1l6ui0a) {
+  margin-left: 0.125rem;
+}
+.mode-switch.svelte-1l6ui0a label.button.muted:where(.svelte-1l6ui0a) {
+  color: var(--text-color-lightest);
+}
+.mode-switch.svelte-1l6ui0a input:where(.svelte-1l6ui0a) {
+  display: none;
+}
+.legend.svelte-1l6ui0a {
+  display: inline-flex;
+  gap: 0.3rem;
+  align-items: center;
+  margin: 0 0.75rem 0.5rem 0;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+.legend.svelte-1l6ui0a i:where(.svelte-1l6ui0a) {
+  display: inline-block;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 50%;
+}
+.legend.inactive.svelte-1l6ui0a span:where(.svelte-1l6ui0a) {
+  text-decoration: line-through;
+}
+.legend.inactive.svelte-1l6ui0a i:where(.svelte-1l6ui0a) {
+  filter: grayscale();
+}
+
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/charts/ChartView.esbuild-svelte-fake-css */
+.chart-layer-bar.svelte-11v9x40 {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.25rem;
+}
+.chart-layer-toggle.svelte-11v9x40 {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--text-color-lighter);
+  padding: 0.1rem 0.5rem;
+  font-size: 0.75rem;
+  cursor: pointer;
+  border-radius: 3px;
+  font-variant-numeric: tabular-nums;
+}
+.chart-layer-toggle.svelte-11v9x40:hover {
+  color: var(--text-color);
+  border-color: var(--text-color-lightest);
+}
+.chart-layer-toggle.active.svelte-11v9x40 {
+  color: var(--series-0, #2563eb);
+  border-color: var(--series-0, #2563eb);
+}
+
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/GenericReport.esbuild-svelte-fake-css */
 .muted.svelte-8vbrz2 {
   color: var(--text-color-lightest);

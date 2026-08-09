@@ -1,12 +1,14 @@
 <script lang="ts">
-  import ReportChart from "../charts/ReportChart.svelte";
-  import TreeTable from "../tree-table/TreeTable.svelte";
+ import ChartView from "../charts/ChartView.svelte";
+ import TreeTable from "../tree-table/TreeTable.svelte";
   import type { TreeReport } from "./types";
 
-  export let report: TreeReport;
-  export let locale = "en";
-  export let operatingCurrencies: string[] = [];
-  export let renderCommas = false;
+ export let report: TreeReport;
+ export let locale = "en";
+ export let operatingCurrencies: string[] = [];
+ export let renderCommas = false;
+ export let chartLayer: "parity" | "modern" = "parity";
+ export let onChartLayer: (value: string) => void = () => {};
 
   // The adapter returns one chart per measure. Fava shows a single chart with
   // a row of links to switch measures rather than stacking them all, so the
@@ -21,9 +23,9 @@
 </script>
 
 {#if chart}
-  <div class="report-charts">
-    <ReportChart {chart} {locale} />
-    {#if report.charts.length > 1}
+ <div class="report-charts">
+   <ChartView {chart} {locale} {chartLayer} {onChartLayer} />
+   {#if report.charts.length > 1}
       <nav class="chart-picker" aria-label={chart.title}>
         {#each report.charts as option, index (option.title)}
           <button

@@ -2278,21 +2278,21 @@ function handle_event_propagation(event2) {
     handler_element.ownerDocument
   );
   var event_name = event2.type;
-  var path = event2.composedPath?.() || [];
+  var path2 = event2.composedPath?.() || [];
   var current_target = (
     /** @type {null | Element} */
-    path[0] || event2.target
+    path2[0] || event2.target
   );
   var path_idx = 0;
   var handled_at = event2.__root;
   if (handled_at) {
-    var at_idx = path.indexOf(handled_at);
+    var at_idx = path2.indexOf(handled_at);
     if (at_idx !== -1 && (handler_element === document || handler_element === /** @type {any} */
     window)) {
       event2.__root = handler_element;
       return;
     }
-    var handler_idx = path.indexOf(handler_element);
+    var handler_idx = path2.indexOf(handler_element);
     if (handler_idx === -1) {
       return;
     }
@@ -2301,7 +2301,7 @@ function handle_event_propagation(event2) {
     }
   }
   current_target = /** @type {Element} */
-  path[path_idx] || event2.target;
+  path2[path_idx] || event2.target;
   if (current_target === handler_element) return;
   define_property(event2, "currentTarget", {
     configurable: true,
@@ -2474,21 +2474,21 @@ function ns_template(content2, flags2, ns = "svg") {
         /** @type {DocumentFragment} */
         create_fragment_from_html(wrapped)
       );
-      var root27 = (
+      var root29 = (
         /** @type {Element} */
         get_first_child(fragment)
       );
       if (is_fragment) {
         node = document.createDocumentFragment();
-        while (get_first_child(root27)) {
+        while (get_first_child(root29)) {
           node.appendChild(
             /** @type {Node} */
-            get_first_child(root27)
+            get_first_child(root29)
           );
         }
       } else {
         node = /** @type {Element} */
-        get_first_child(root27);
+        get_first_child(root29);
       }
     }
     var clone = (
@@ -2513,9 +2513,9 @@ function ns_template(content2, flags2, ns = "svg") {
 }
 function text(value = "") {
   if (!hydrating) {
-    var t2 = create_text(value + "");
-    assign_nodes(t2, t2);
-    return t2;
+    var t4 = create_text(value + "");
+    assign_nodes(t4, t4);
+    return t4;
   }
   var node = hydrate_node;
   if (node.nodeType !== 3) {
@@ -4222,6 +4222,12 @@ function onMount(fn) {
     });
   }
 }
+function onDestroy(fn) {
+  if (component_context === null) {
+    lifecycle_outside_component("onDestroy");
+  }
+  onMount(() => () => untrack(fn));
+}
 function create_custom_event(type, detail, { bubbles = false, cancelable = false } = {}) {
   return new CustomEvent(type, { detail, bubbles, cancelable });
 }
@@ -4276,10 +4282,10 @@ enable_legacy_mode_flag();
 var PRIVATE_ADAPTER_BASE = "/__orangecount/fava";
 function bootstrapPayload(wire, mtime = "") {
   const title = wire.options?.title?.trim() || "OrangeCount";
-  const locale = wire.fava_options?.locale === "zh-CN" ? "zh-CN" : "en";
+  const locale2 = wire.fava_options?.locale === "zh-CN" ? "zh-CN" : "en";
   return {
     ledger_title: title,
-    locale,
+    locale: locale2,
     locales: ["en", "zh-CN"],
     theme: "system",
     routes: ["income_statement", "balance_sheet", "trial_balance", "journal", "query", "holdings", "commodities", "documents", "events", "statistics", "editor", "import", "options", "help", "account"],
@@ -4506,6 +4512,10 @@ var translations = {
     singleBars: "Single Bars",
     lineChart: "Line chart",
     areaChart: "Area chart",
+    modernChartLayer: "Modern chart layer",
+    parityChartLayer: "Fava parity chart layer",
+    useModernChart: "Modern",
+    useParityChart: "Fava",
     export: "Export",
     downloadFilteredEntries: "Download currently filtered entries as a Beancount file",
     context: "Context",
@@ -4671,6 +4681,10 @@ var translations = {
     singleBars: "\u5355\u67F1\u72B6\u56FE",
     lineChart: "\u6298\u7EBF\u56FE",
     areaChart: "\u9762\u79EF\u56FE",
+    modernChartLayer: "\u73B0\u4EE3\u56FE\u8868\u5C42",
+    parityChartLayer: "Fava \u4E00\u81F4\u6027\u56FE\u8868\u5C42",
+    useModernChart: "\u73B0\u4EE3",
+    useParityChart: "Fava",
     export: "\u5BFC\u51FA",
     downloadFilteredEntries: "\u5C06\u5F53\u524D\u8FC7\u6EE4\u540E\u7684\u6761\u76EE\u4E0B\u8F7D\u4E3A Beancount \u6587\u4EF6",
     context: "\u4E0A\u4E0B\u6587",
@@ -5173,7 +5187,7 @@ var PATHS = Object.freeze({
   diagnostics: "/diagnostics",
   errors: "/errors"
 });
-var QUERY_KEYS = Object.freeze(["time", "account", "filter", "conversion", "interval", "path", "query_string", "r"]);
+var QUERY_KEYS = Object.freeze(["time", "account", "filter", "conversion", "interval", "path", "query_string", "r", "chart_layer"]);
 function pathWithoutTrailingSlash(pathname) {
   if (pathname.length > 1 && pathname.endsWith("/")) return pathname.slice(0, -1);
   return pathname || "/";
@@ -5191,7 +5205,7 @@ function parseRoute(input, basePath = "") {
   if (basePath && pathname.startsWith(basePath)) {
     pathname = pathWithoutTrailingSlash(pathname.slice(basePath.length));
   }
-  let route = pathname === "/" ? "income_statement" : Object.entries(PATHS).find(([, path]) => path === pathname)?.[0] || "journal";
+  let route = pathname === "/" ? "income_statement" : Object.entries(PATHS).find(([, path2]) => path2 === pathname)?.[0] || "journal";
   let helpPage = "";
   if (pathname.startsWith("/help/")) {
     route = "help";
@@ -5270,7 +5284,7 @@ function PageTitle($$anchor, $$props) {
   const segments = mutable_state();
   let route = prop($$props, "route", 8);
   let account = prop($$props, "account", 8, "");
-  let locale = prop($$props, "locale", 8, "en");
+  let locale2 = prop($$props, "locale", 8, "en");
   let onNavigate = prop($$props, "onNavigate", 8, () => {
   });
   const translationKeys = {
@@ -5293,9 +5307,9 @@ function PageTitle($$anchor, $$props) {
     errors: "diagnostics"
   };
   legacy_pre_effect(
-    () => (translations, deep_read_state(locale())),
+    () => (translations, deep_read_state(locale2())),
     () => {
-      set(catalog, translations[locale() === "zh-CN" ? "zh-CN" : "en"]);
+      set(catalog, translations[locale2() === "zh-CN" ? "zh-CN" : "en"]);
     }
   );
   legacy_pre_effect(
@@ -5379,7 +5393,7 @@ function Header($$anchor, $$props) {
   let links = prop($$props, "links", 24, () => []);
   let payees = prop($$props, "payees", 24, () => []);
   let years = prop($$props, "years", 24, () => []);
-  let locale = prop($$props, "locale", 8);
+  let locale2 = prop($$props, "locale", 8);
   let time = prop($$props, "time", 8, "");
   let accountFilter = prop($$props, "accountFilter", 8, "");
   let filter = prop($$props, "filter", 8, "");
@@ -5392,8 +5406,8 @@ function Header($$anchor, $$props) {
   let onQuery = prop($$props, "onQuery", 8);
   let onConversion = prop($$props, "onConversion", 8);
   let onInterval = prop($$props, "onInterval", 8);
-  function t2(key) {
-    return translations[locale() === "zh-CN" ? "zh-CN" : "en"][key] || translations.en[key] || key;
+  function t4(key) {
+    return translations[locale2() === "zh-CN" ? "zh-CN" : "en"][key] || translations.en[key] || key;
   }
   function valueExtractor(value, input) {
     const match = /\S*$/.exec(value.slice(0, input.selectionStart ?? void 0));
@@ -5443,7 +5457,7 @@ function Header($$anchor, $$props) {
       return account();
     },
     get locale() {
-      return locale();
+      return locale2();
     },
     get onNavigate() {
       return onNavigate();
@@ -5451,8 +5465,8 @@ function Header($$anchor, $$props) {
   });
   reset(h1);
   var button = sibling(h1, 2);
-  template_effect(() => set_attribute(button, "title", `${t2("reload")} (r)`));
-  template_effect(() => set_attribute(button, "aria-label", t2("reload")));
+  template_effect(() => set_attribute(button, "title", `${t4("reload")} (r)`));
+  template_effect(() => set_attribute(button, "aria-label", t4("reload")));
   action(button, ($$node, $$action_arg) => keyboardShortcut?.($$node, $$action_arg), () => "r");
   effect(() => event("click", button, () => onReload()()));
   var form = sibling(button, 4);
@@ -5525,7 +5539,7 @@ function Header($$anchor, $$props) {
   var label = sibling(form, 2);
   var span = child(label);
   var text_1 = child(span, true);
-  template_effect(() => set_text(text_1, t2("conversion")));
+  template_effect(() => set_text(text_1, t4("conversion")));
   reset(span);
   var select = sibling(span, 2);
   init_select(select, conversion);
@@ -5533,26 +5547,26 @@ function Header($$anchor, $$props) {
   var option = child(select);
   option.value = null == (option.__value = "at_cost") ? "" : "at_cost";
   var text_2 = child(option, true);
-  template_effect(() => set_text(text_2, t2("atCost")));
+  template_effect(() => set_text(text_2, t4("atCost")));
   reset(option);
   var option_1 = sibling(option);
   option_1.value = null == (option_1.__value = "market_value") ? "" : "market_value";
   var text_3 = child(option_1, true);
-  template_effect(() => set_text(text_3, t2("marketValue")));
+  template_effect(() => set_text(text_3, t4("marketValue")));
   reset(option_1);
   var option_2 = sibling(option_1);
   option_2.value = null == (option_2.__value = "units") ? "" : "units";
   var option_3 = sibling(option_2);
   option_3.value = null == (option_3.__value = "currency") ? "" : "currency";
   var text_4 = child(option_3, true);
-  template_effect(() => set_text(text_4, t2("currency")));
+  template_effect(() => set_text(text_4, t4("currency")));
   reset(option_3);
   reset(select);
   reset(label);
   var label_1 = sibling(label, 2);
   var span_1 = child(label_1);
   var text_5 = child(span_1, true);
-  template_effect(() => set_text(text_5, t2("interval")));
+  template_effect(() => set_text(text_5, t4("interval")));
   reset(span_1);
   var select_1 = sibling(span_1, 2);
   init_select(select_1, interval);
@@ -5560,17 +5574,17 @@ function Header($$anchor, $$props) {
   var option_4 = child(select_1);
   option_4.value = null == (option_4.__value = "month") ? "" : "month";
   var text_6 = child(option_4, true);
-  template_effect(() => set_text(text_6, t2("monthly")));
+  template_effect(() => set_text(text_6, t4("monthly")));
   reset(option_4);
   var option_5 = sibling(option_4);
   option_5.value = null == (option_5.__value = "quarter") ? "" : "quarter";
   var text_7 = child(option_5, true);
-  template_effect(() => set_text(text_7, t2("quarterly")));
+  template_effect(() => set_text(text_7, t4("quarterly")));
   reset(option_5);
   var option_6 = sibling(option_5);
   option_6.value = null == (option_6.__value = "year") ? "" : "year";
   var text_8 = child(option_6, true);
-  template_effect(() => set_text(text_8, t2("yearly")));
+  template_effect(() => set_text(text_8, t4("yearly")));
   reset(option_6);
   reset(select_1);
   reset(label_1);
@@ -5636,7 +5650,7 @@ function chart(value) {
   if (!isRecord(value) || typeof value.kind !== "string" || typeof value.title !== "string" || typeof value.unit !== "string" || typeof value.currency !== "string" || typeof value.valuation !== "string" || typeof value.period !== "string" || typeof value.interval !== "string" || typeof value.measure !== "string" || !Array.isArray(value.series)) return false;
   return value.series.every((series) => {
     if (!isRecord(series) || typeof series.label !== "string" || !Array.isArray(series.points)) return false;
-    return series.points.every((point) => isRecord(point) && typeof point.date === "string" && decimal(point.value));
+    return series.points.every((point3) => isRecord(point3) && typeof point3.date === "string" && decimal(point3.value));
   });
 }
 function parseTableReport(value) {
@@ -5671,8 +5685,8 @@ function formatAmount(value, group = false) {
   if (!group || display === "" || display.includes("/")) return display;
   const match = /^(-?)(\d+)(\.\d+)?$/.exec(display);
   if (!match) return display;
-  const [, sign, integer2, fraction = ""] = match;
-  return `${sign}${integer2.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}${fraction}`;
+  const [, sign2, integer2, fraction = ""] = match;
+  return `${sign2}${integer2.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}${fraction}`;
 }
 function currenciesInTree(tree) {
   const values = /* @__PURE__ */ new Set();
@@ -5732,13 +5746,13 @@ function ReportChart($$anchor, $$props) {
   const pointValues = mutable_state();
   const stackedTotals = mutable_state();
   const extentValues = mutable_state();
-  const min = mutable_state();
-  const max = mutable_state();
-  const range = mutable_state();
+  const min2 = mutable_state();
+  const max2 = mutable_state();
+  const range2 = mutable_state();
   const width = mutable_state();
   const stackedBarRects = mutable_state();
   const yTicks = mutable_state();
-  const tickFormat = mutable_state();
+  const tickFormat2 = mutable_state();
   const xTickIndices = mutable_state();
   const leaves = mutable_state();
   const roots = mutable_state();
@@ -5748,7 +5762,7 @@ function ReportChart($$anchor, $$props) {
   const sunSegments = mutable_state();
   const sunDepth = mutable_state();
   let chart2 = prop($$props, "chart", 8);
-  let locale = prop($$props, "locale", 8, "en");
+  let locale2 = prop($$props, "locale", 8, "en");
   function label(key) {
     return get(catalog)[key] ?? translations.en[key] ?? key;
   }
@@ -5806,26 +5820,26 @@ function ReportChart($$anchor, $$props) {
   }
   const X0 = 14;
   const X1 = 98;
-  function x(index2) {
+  function x2(index2) {
     return get(width) === 1 ? (X0 + X1) / 2 : X0 + index2 / (get(width) - 1) * (X1 - X0);
   }
-  function y(value) {
-    return 44 - (value - get(min)) / get(range) * 42;
+  function y2(value) {
+    return 44 - (value - get(min2)) / get(range2) * 42;
   }
   function linePath(points) {
-    return points.map((point, index2) => `${index2 ? "L" : "M"}${x(index2).toFixed(2)},${y(numberValue(point.value)).toFixed(2)}`).join(" ");
+    return points.map((point3, index2) => `${index2 ? "L" : "M"}${x2(index2).toFixed(2)},${y2(numberValue(point3.value)).toFixed(2)}`).join(" ");
   }
   function barHeight(value) {
-    return Math.max(0.5, Math.abs(y(value) - y(0)));
+    return Math.max(0.5, Math.abs(y2(value) - y2(0)));
   }
   function barY(value) {
-    return value >= 0 ? y(value) : y(0);
+    return value >= 0 ? y2(value) : y2(0);
   }
   const baselineY = 52;
   function areaPath(points) {
     if (!points.length) return "";
-    const line = points.map((point, index2) => `${index2 ? "L" : "M"}${x(index2).toFixed(2)},${y(numberValue(point.value)).toFixed(2)}`).join(" ");
-    return `${line} L${x(points.length - 1).toFixed(2)},${Math.min(baselineY, y(0)).toFixed(2)} L${x(0).toFixed(2)},${Math.min(baselineY, y(0)).toFixed(2)} Z`;
+    const line = points.map((point3, index2) => `${index2 ? "L" : "M"}${x2(index2).toFixed(2)},${y2(numberValue(point3.value)).toFixed(2)}`).join(" ");
+    return `${line} L${x2(points.length - 1).toFixed(2)},${Math.min(baselineY, y2(0)).toFixed(2)} L${x2(0).toFixed(2)},${Math.min(baselineY, y2(0)).toFixed(2)} Z`;
   }
   function niceTicks(lo, hi, count = 4) {
     if (!(hi > lo)) return [lo];
@@ -5833,24 +5847,24 @@ function ReportChart($$anchor, $$props) {
     const magnitude = Math.pow(10, Math.floor(Math.log10(step0)));
     const residual = step0 / magnitude;
     const step = (residual >= 5 ? 5 : residual >= 2 ? 2 : 1) * magnitude;
-    const ticks = [];
+    const ticks2 = [];
     for (let value = Math.ceil(lo / step) * step; value <= hi + step / 1e6; value += step) {
-      ticks.push(value);
+      ticks2.push(value);
     }
-    return ticks;
+    return ticks2;
   }
   function tickLabel(value) {
-    return get(tickFormat).format(Math.abs(value) < 1e-9 ? 0 : value);
+    return get(tickFormat2).format(Math.abs(value) < 1e-9 ? 0 : value);
   }
   function xTickLabel(date2) {
     if (chart2().interval === "year") return date2.slice(0, 4);
     if (chart2().interval === "day") return date2;
     return date2.slice(0, 7);
   }
-  function collectLeaves(nodes, root27 = "") {
+  function collectLeaves(nodes, root29 = "") {
     const out2 = [];
     for (const node of nodes) {
-      const top2 = root27 || node.name.split(":")[0];
+      const top2 = root29 || node.name.split(":")[0];
       if (node.children?.length) {
         out2.push(...collectLeaves(node.children, top2));
       } else {
@@ -5901,14 +5915,14 @@ function ReportChart($$anchor, $$props) {
   function icicleRects(nodes) {
     const rects = [];
     const rowHeight = 6;
-    function walk(list, x0, span, depth, root27) {
+    function walk(list, x0, span, depth, root29) {
       const total = list.reduce((sum, node) => sum + Math.abs(numberValue(node.value)), 0);
       if (!total || span <= 0) return;
       let cursor = x0;
       for (const node of list) {
         const value = Math.abs(numberValue(node.value));
         const width2 = value / total * span;
-        const top2 = root27 || node.name.split(":")[0];
+        const top2 = root29 || node.name.split(":")[0];
         if (value > 0) {
           rects.push({
             name: node.name,
@@ -5939,14 +5953,14 @@ function ReportChart($$anchor, $$props) {
   }
   function sunburstSegments(nodes) {
     const segments = [];
-    function walk(list, a0, span, depth, root27) {
+    function walk(list, a0, span, depth, root29) {
       const total = list.reduce((sum, node) => sum + Math.abs(numberValue(node.value)), 0);
       if (!total || span <= 0) return;
       let cursor = a0;
       for (const node of list) {
         const value = Math.abs(numberValue(node.value));
         const angle = value / total * span;
-        const top2 = root27 || node.name.split(":")[0];
+        const top2 = root29 || node.name.split(":")[0];
         if (value > 0) {
           segments.push({
             name: node.name,
@@ -5994,8 +6008,8 @@ function ReportChart($$anchor, $$props) {
     set(tooltipLeft, event2.clientX - box.left + 12);
     set(tooltipTop, event2.clientY - box.top + 12);
   }
-  function showBarTip(event2, seriesLabel, point) {
-    set(tooltipText, `${seriesLabel} \xB7 ${point.date}: ${point.value.display}${chart2().currency ? ` ${chart2().currency}` : ""}`);
+  function showBarTip(event2, seriesLabel, point3) {
+    set(tooltipText, `${seriesLabel} \xB7 ${point3.date}: ${point3.value.display}${chart2().currency ? ` ${chart2().currency}` : ""}`);
     set(tooltipVisible, true);
     moveTooltip(event2, event2.currentTarget);
   }
@@ -6022,9 +6036,9 @@ ${lines.join("\n")}`);
     moveTooltip(event2, svg2);
   }
   legacy_pre_effect(
-    () => (translations, deep_read_state(locale())),
+    () => (translations, deep_read_state(locale2())),
     () => {
-      set(catalog, translations[locale() === "zh-CN" ? "zh-CN" : "en"]);
+      set(catalog, translations[locale2() === "zh-CN" ? "zh-CN" : "en"]);
     }
   );
   legacy_pre_effect(() => deep_read_state(chart2()), () => {
@@ -6058,7 +6072,7 @@ ${lines.join("\n")}`);
     }
   );
   legacy_pre_effect(() => get(visibleSeries), () => {
-    set(pointValues, get(visibleSeries).flatMap((series) => series.points.map((point) => numberValue(point.value))));
+    set(pointValues, get(visibleSeries).flatMap((series) => series.points.map((point3) => numberValue(point3.value))));
   });
   legacy_pre_effect(
     () => (deep_read_state(chart2()), get(visibleSeries)),
@@ -6068,9 +6082,9 @@ ${lines.join("\n")}`);
         const positiveTotals = new Array(counts).fill(0);
         const negativeTotals = new Array(counts).fill(0);
         for (const series of get(visibleSeries)) {
-          series.points.forEach((point, index2) => {
+          series.points.forEach((point3, index2) => {
             if (index2 >= counts) return;
-            const value = numberValue(point.value);
+            const value = numberValue(point3.value);
             if (value >= 0) positiveTotals[index2] += value;
             else negativeTotals[index2] += value;
           });
@@ -6089,13 +6103,13 @@ ${lines.join("\n")}`);
     }
   );
   legacy_pre_effect(() => get(extentValues), () => {
-    set(min, Math.min(0, ...get(extentValues).length ? get(extentValues) : [0]));
+    set(min2, Math.min(0, ...get(extentValues).length ? get(extentValues) : [0]));
   });
   legacy_pre_effect(() => get(extentValues), () => {
-    set(max, Math.max(0, ...get(extentValues).length ? get(extentValues) : [0]));
+    set(max2, Math.max(0, ...get(extentValues).length ? get(extentValues) : [0]));
   });
-  legacy_pre_effect(() => (get(max), get(min)), () => {
-    set(range, get(max) - get(min) || 1);
+  legacy_pre_effect(() => (get(max2), get(min2)), () => {
+    set(range2, get(max2) - get(min2) || 1);
   });
   legacy_pre_effect(() => deep_read_state(chart2()), () => {
     set(width, Math.max(1, chart2().series[0]?.points.length ?? 1));
@@ -6111,19 +6125,19 @@ ${lines.join("\n")}`);
         for (let index2 = 0; index2 < counts; index2 += 1) {
           let positiveBase = 0;
           let negativeBase = 0;
-          const centerX = x(index2);
+          const centerX = x2(index2);
           for (const series of get(visibleSeries)) {
-            const point = series.points[index2];
-            if (!point) continue;
-            const value = numberValue(point.value);
+            const point3 = series.points[index2];
+            if (!point3) continue;
+            const value = numberValue(point3.value);
             const xRect = centerX - barW / 2;
             if (value >= 0) {
-              const yTop = y(positiveBase + value);
-              const yBottom = y(positiveBase);
+              const yTop = y2(positiveBase + value);
+              const yBottom = y2(positiveBase);
               rects.push({
                 seriesLabel: series.label,
-                date: point.date,
-                display: point.value.display,
+                date: point3.date,
+                display: point3.value.display,
                 x: xRect,
                 y: yTop,
                 w: barW,
@@ -6132,12 +6146,12 @@ ${lines.join("\n")}`);
               });
               positiveBase += value;
             } else {
-              const yTop = y(negativeBase);
-              const yBottom = y(negativeBase + value);
+              const yTop = y2(negativeBase);
+              const yBottom = y2(negativeBase + value);
               rects.push({
                 seriesLabel: series.label,
-                date: point.date,
-                display: point.value.display,
+                date: point3.date,
+                display: point3.value.display,
                 x: xRect,
                 y: yTop,
                 w: barW,
@@ -6152,11 +6166,11 @@ ${lines.join("\n")}`);
       })());
     }
   );
-  legacy_pre_effect(() => (get(min), get(max)), () => {
-    set(yTicks, niceTicks(get(min), get(max)));
+  legacy_pre_effect(() => (get(min2), get(max2)), () => {
+    set(yTicks, niceTicks(get(min2), get(max2)));
   });
-  legacy_pre_effect(() => deep_read_state(locale()), () => {
-    set(tickFormat, new Intl.NumberFormat(locale() === "zh-CN" ? "zh-CN" : "en", { notation: "compact", maximumFractionDigits: 1 }));
+  legacy_pre_effect(() => deep_read_state(locale2()), () => {
+    set(tickFormat2, new Intl.NumberFormat(locale2() === "zh-CN" ? "zh-CN" : "en", { notation: "compact", maximumFractionDigits: 1 }));
   });
   legacy_pre_effect(() => deep_read_state(chart2()), () => {
     set(xTickIndices, (() => {
@@ -6185,13 +6199,13 @@ ${lines.join("\n")}`);
     set(iceRects, icicleRects(chart2().nodes ?? []));
   });
   legacy_pre_effect(() => get(iceRects), () => {
-    set(iceDepth, get(iceRects).reduce((max2, rect) => Math.max(max2, rect.y + rect.h), 0));
+    set(iceDepth, get(iceRects).reduce((max3, rect) => Math.max(max3, rect.y + rect.h), 0));
   });
   legacy_pre_effect(() => deep_read_state(chart2()), () => {
     set(sunSegments, sunburstSegments(chart2().nodes ?? []));
   });
   legacy_pre_effect(() => get(sunSegments), () => {
-    set(sunDepth, get(sunSegments).reduce((max2, segment) => Math.max(max2, segment.depth), 0) + 1);
+    set(sunDepth, get(sunSegments).reduce((max3, segment) => Math.max(max3, segment.depth), 0) + 1);
   });
   legacy_pre_effect_reset();
   init2();
@@ -6299,16 +6313,16 @@ ${lines.join("\n")}`);
           each(svg_1, 5, () => get(sunSegments), (item) => item.name, ($$anchor4, item) => {
             var a = root_7();
             template_effect(() => set_attribute(a, "href", accountHref(get(item).name)));
-            var path = child(a);
-            template_effect(() => set_attribute(path, "d", arcPath(get(item))));
+            var path2 = child(a);
+            template_effect(() => set_attribute(path2, "d", arcPath(get(item))));
             const style_derived = derived_safe_equal(() => `fill:${sunColor(get(item))}`);
-            var title = child(path);
+            var title = child(path2);
             var text_8 = child(title);
             reset(title);
-            reset(path);
+            reset(path2);
             reset(a);
             template_effect(() => {
-              set_attribute(path, "style", get(style_derived));
+              set_attribute(path2, "style", get(style_derived));
               set_text(text_8, `${get(item).name ?? ""}: ${get(item).display ?? ""} ${chart2().currency ?? ""}`);
             });
             append($$anchor4, a);
@@ -6411,12 +6425,12 @@ ${lines.join("\n")}`);
             var fragment_4 = root_15();
             var line_1 = first_child(fragment_4);
             set_attribute(line_1, "x1", X0);
-            template_effect(() => set_attribute(line_1, "y1", y(get(tick2))));
+            template_effect(() => set_attribute(line_1, "y1", y2(get(tick2))));
             set_attribute(line_1, "x2", X1);
-            template_effect(() => set_attribute(line_1, "y2", y(get(tick2))));
+            template_effect(() => set_attribute(line_1, "y2", y2(get(tick2))));
             var text_11 = sibling(line_1);
             set_attribute(text_11, "x", X0 - 1);
-            template_effect(() => set_attribute(text_11, "y", y(get(tick2)) + 1));
+            template_effect(() => set_attribute(text_11, "y", y2(get(tick2)) + 1));
             var text_12 = child(text_11, true);
             template_effect(() => set_text(text_12, tickLabel(get(tick2))));
             reset(text_11);
@@ -6424,9 +6438,9 @@ ${lines.join("\n")}`);
           });
           var line_2 = sibling(node_7);
           set_attribute(line_2, "x1", X0);
-          template_effect(() => set_attribute(line_2, "y1", y(0)));
+          template_effect(() => set_attribute(line_2, "y1", y2(0)));
           set_attribute(line_2, "x2", X1);
-          template_effect(() => set_attribute(line_2, "y2", y(0)));
+          template_effect(() => set_attribute(line_2, "y2", y2(0)));
           var node_8 = sibling(line_2);
           {
             var consequent_5 = ($$anchor4) => {
@@ -6456,11 +6470,11 @@ ${lines.join("\n")}`);
               each(node_10, 3, () => get(visibleSeries), (series) => series.label, ($$anchor5, series, seriesIndex) => {
                 var fragment_7 = comment();
                 var node_11 = first_child(fragment_7);
-                each(node_11, 3, () => get(series).points, (point) => point.date, ($$anchor6, point, index2) => {
+                each(node_11, 3, () => get(series).points, (point3) => point3.date, ($$anchor6, point3, index2) => {
                   var rect_4 = root_20();
-                  const value = derived_safe_equal(() => numberValue(get(point).value));
+                  const value = derived_safe_equal(() => numberValue(get(point3).value));
                   const barWidth = derived_safe_equal(() => Math.max(1, (X1 - X0) / Math.max(1, get(width)) / Math.max(1, get(visibleSeries).length)));
-                  template_effect(() => set_attribute(rect_4, "x", x(get(index2)) - (X1 - X0) / (2 * Math.max(1, get(width))) + get(seriesIndex) * get(barWidth)));
+                  template_effect(() => set_attribute(rect_4, "x", x2(get(index2)) - (X1 - X0) / (2 * Math.max(1, get(width))) + get(seriesIndex) * get(barWidth)));
                   template_effect(() => set_attribute(rect_4, "y", barY(get(value))));
                   template_effect(() => set_attribute(rect_4, "height", barHeight(get(value))));
                   const style_derived_3 = derived_safe_equal(() => `fill:${colorFor(get(series).label)}`);
@@ -6468,7 +6482,7 @@ ${lines.join("\n")}`);
                     set_attribute(rect_4, "width", get(barWidth) - 0.25);
                     set_attribute(rect_4, "style", get(style_derived_3));
                   });
-                  event("mousemove", rect_4, (e) => showBarTip(e, get(series).label, get(point)));
+                  event("mousemove", rect_4, (e) => showBarTip(e, get(series).label, get(point3)));
                   event("mouseleave", rect_4, hideTip);
                   append($$anchor6, rect_4);
                 });
@@ -6484,19 +6498,19 @@ ${lines.join("\n")}`);
           var node_12 = sibling(node_8);
           each(node_12, 1, () => get(xTickIndices), (index2) => index2, ($$anchor4, index2) => {
             var fragment_8 = comment();
-            const point = derived_safe_equal(() => chart2().series[0]?.points[get(index2)]);
+            const point3 = derived_safe_equal(() => chart2().series[0]?.points[get(index2)]);
             var node_13 = first_child(fragment_8);
             {
               var consequent_6 = ($$anchor5) => {
                 var text_13 = root_222();
-                template_effect(() => set_attribute(text_13, "x", x(get(index2))));
+                template_effect(() => set_attribute(text_13, "x", x2(get(index2))));
                 var text_14 = child(text_13, true);
-                template_effect(() => set_text(text_14, xTickLabel(get(point).date)));
+                template_effect(() => set_text(text_14, xTickLabel(get(point3).date)));
                 reset(text_13);
                 append($$anchor5, text_13);
               };
               if_block(node_13, ($$render) => {
-                if (get(point)) $$render(consequent_6);
+                if (get(point3)) $$render(consequent_6);
               });
             }
             append($$anchor4, fragment_8);
@@ -6512,12 +6526,12 @@ ${lines.join("\n")}`);
             var fragment_9 = root_24();
             var line_3 = first_child(fragment_9);
             set_attribute(line_3, "x1", X0);
-            template_effect(() => set_attribute(line_3, "y1", y(get(tick2))));
+            template_effect(() => set_attribute(line_3, "y1", y2(get(tick2))));
             set_attribute(line_3, "x2", X1);
-            template_effect(() => set_attribute(line_3, "y2", y(get(tick2))));
+            template_effect(() => set_attribute(line_3, "y2", y2(get(tick2))));
             var text_15 = sibling(line_3);
             set_attribute(text_15, "x", X0 - 1);
-            template_effect(() => set_attribute(text_15, "y", y(get(tick2)) + 1));
+            template_effect(() => set_attribute(text_15, "y", y2(get(tick2)) + 1));
             var text_16 = child(text_15, true);
             template_effect(() => set_text(text_16, tickLabel(get(tick2))));
             reset(text_15);
@@ -6525,9 +6539,9 @@ ${lines.join("\n")}`);
           });
           var line_4 = sibling(node_14);
           set_attribute(line_4, "x1", X0);
-          template_effect(() => set_attribute(line_4, "y1", y(0)));
+          template_effect(() => set_attribute(line_4, "y1", y2(0)));
           set_attribute(line_4, "x2", X1);
-          template_effect(() => set_attribute(line_4, "y2", y(0)));
+          template_effect(() => set_attribute(line_4, "y2", y2(0)));
           var node_15 = sibling(line_4);
           each(node_15, 1, () => get(visibleSeries), (series) => series.label, ($$anchor4, series) => {
             var fragment_10 = root_25();
@@ -6553,19 +6567,19 @@ ${lines.join("\n")}`);
           var node_17 = sibling(node_15);
           each(node_17, 1, () => get(xTickIndices), (index2) => index2, ($$anchor4, index2) => {
             var fragment_11 = comment();
-            const point = derived_safe_equal(() => chart2().series[0]?.points[get(index2)]);
+            const point3 = derived_safe_equal(() => chart2().series[0]?.points[get(index2)]);
             var node_18 = first_child(fragment_11);
             {
               var consequent_9 = ($$anchor5) => {
                 var text_17 = root_28();
-                template_effect(() => set_attribute(text_17, "x", x(get(index2))));
+                template_effect(() => set_attribute(text_17, "x", x2(get(index2))));
                 var text_18 = child(text_17, true);
-                template_effect(() => set_text(text_18, xTickLabel(get(point).date)));
+                template_effect(() => set_text(text_18, xTickLabel(get(point3).date)));
                 reset(text_17);
                 append($$anchor5, text_17);
               };
               if_block(node_18, ($$render) => {
-                if (get(point)) $$render(consequent_9);
+                if (get(point3)) $$render(consequent_9);
               });
             }
             append($$anchor4, fragment_11);
@@ -6651,8 +6665,8 @@ ${lines.join("\n")}`);
     tbody,
     7,
     () => chart2().series[0]?.points ?? [],
-    (point) => point.date,
-    ($$anchor2, point, index2) => {
+    (point3) => point3.date,
+    ($$anchor2, point3, index2) => {
       var tr_1 = root_322();
       var th_1 = child(tr_1);
       var text_24 = child(th_1, true);
@@ -6666,7 +6680,7 @@ ${lines.join("\n")}`);
         append($$anchor3, td);
       });
       reset(tr_1);
-      template_effect(() => set_text(text_24, get(point).date));
+      template_effect(() => set_text(text_24, get(point3).date));
       append($$anchor2, tr_1);
     },
     ($$anchor2) => {
@@ -6707,25 +6721,2509 @@ ${lines.join("\n")}`);
   pop();
 }
 
+// node_modules/d3-array/src/ascending.js
+function ascending(a, b) {
+  return a == null || b == null ? NaN : a < b ? -1 : a > b ? 1 : a >= b ? 0 : NaN;
+}
+
+// node_modules/d3-array/src/descending.js
+function descending(a, b) {
+  return a == null || b == null ? NaN : b < a ? -1 : b > a ? 1 : b >= a ? 0 : NaN;
+}
+
+// node_modules/d3-array/src/bisector.js
+function bisector(f) {
+  let compare1, compare2, delta;
+  if (f.length !== 2) {
+    compare1 = ascending;
+    compare2 = (d, x2) => ascending(f(d), x2);
+    delta = (d, x2) => f(d) - x2;
+  } else {
+    compare1 = f === ascending || f === descending ? f : zero;
+    compare2 = f;
+    delta = f;
+  }
+  function left(a, x2, lo = 0, hi = a.length) {
+    if (lo < hi) {
+      if (compare1(x2, x2) !== 0) return hi;
+      do {
+        const mid = lo + hi >>> 1;
+        if (compare2(a[mid], x2) < 0) lo = mid + 1;
+        else hi = mid;
+      } while (lo < hi);
+    }
+    return lo;
+  }
+  function right(a, x2, lo = 0, hi = a.length) {
+    if (lo < hi) {
+      if (compare1(x2, x2) !== 0) return hi;
+      do {
+        const mid = lo + hi >>> 1;
+        if (compare2(a[mid], x2) <= 0) lo = mid + 1;
+        else hi = mid;
+      } while (lo < hi);
+    }
+    return lo;
+  }
+  function center(a, x2, lo = 0, hi = a.length) {
+    const i2 = left(a, x2, lo, hi - 1);
+    return i2 > lo && delta(a[i2 - 1], x2) > -delta(a[i2], x2) ? i2 - 1 : i2;
+  }
+  return { left, center, right };
+}
+function zero() {
+  return 0;
+}
+
+// node_modules/d3-array/src/number.js
+function number(x2) {
+  return x2 === null ? NaN : +x2;
+}
+
+// node_modules/d3-array/src/bisect.js
+var ascendingBisect = bisector(ascending);
+var bisectRight = ascendingBisect.right;
+var bisectLeft = ascendingBisect.left;
+var bisectCenter = bisector(number).center;
+var bisect_default = bisectRight;
+
+// node_modules/internmap/src/index.js
+var InternMap = class extends Map {
+  constructor(entries, key = keyof) {
+    super();
+    Object.defineProperties(this, { _intern: { value: /* @__PURE__ */ new Map() }, _key: { value: key } });
+    if (entries != null) for (const [key2, value] of entries) this.set(key2, value);
+  }
+  get(key) {
+    return super.get(intern_get(this, key));
+  }
+  has(key) {
+    return super.has(intern_get(this, key));
+  }
+  set(key, value) {
+    return super.set(intern_set(this, key), value);
+  }
+  delete(key) {
+    return super.delete(intern_delete(this, key));
+  }
+};
+function intern_get({ _intern, _key }, value) {
+  const key = _key(value);
+  return _intern.has(key) ? _intern.get(key) : value;
+}
+function intern_set({ _intern, _key }, value) {
+  const key = _key(value);
+  if (_intern.has(key)) return _intern.get(key);
+  _intern.set(key, value);
+  return value;
+}
+function intern_delete({ _intern, _key }, value) {
+  const key = _key(value);
+  if (_intern.has(key)) {
+    value = _intern.get(key);
+    _intern.delete(key);
+  }
+  return value;
+}
+function keyof(value) {
+  return value !== null && typeof value === "object" ? value.valueOf() : value;
+}
+
+// node_modules/d3-array/src/ticks.js
+var e10 = Math.sqrt(50);
+var e5 = Math.sqrt(10);
+var e2 = Math.sqrt(2);
+function tickSpec(start2, stop2, count) {
+  const step = (stop2 - start2) / Math.max(0, count), power = Math.floor(Math.log10(step)), error2 = step / Math.pow(10, power), factor = error2 >= e10 ? 10 : error2 >= e5 ? 5 : error2 >= e2 ? 2 : 1;
+  let i1, i2, inc;
+  if (power < 0) {
+    inc = Math.pow(10, -power) / factor;
+    i1 = Math.round(start2 * inc);
+    i2 = Math.round(stop2 * inc);
+    if (i1 / inc < start2) ++i1;
+    if (i2 / inc > stop2) --i2;
+    inc = -inc;
+  } else {
+    inc = Math.pow(10, power) * factor;
+    i1 = Math.round(start2 / inc);
+    i2 = Math.round(stop2 / inc);
+    if (i1 * inc < start2) ++i1;
+    if (i2 * inc > stop2) --i2;
+  }
+  if (i2 < i1 && 0.5 <= count && count < 2) return tickSpec(start2, stop2, count * 2);
+  return [i1, i2, inc];
+}
+function ticks(start2, stop2, count) {
+  stop2 = +stop2, start2 = +start2, count = +count;
+  if (!(count > 0)) return [];
+  if (start2 === stop2) return [start2];
+  const reverse = stop2 < start2, [i1, i2, inc] = reverse ? tickSpec(stop2, start2, count) : tickSpec(start2, stop2, count);
+  if (!(i2 >= i1)) return [];
+  const n = i2 - i1 + 1, ticks2 = new Array(n);
+  if (reverse) {
+    if (inc < 0) for (let i3 = 0; i3 < n; ++i3) ticks2[i3] = (i2 - i3) / -inc;
+    else for (let i3 = 0; i3 < n; ++i3) ticks2[i3] = (i2 - i3) * inc;
+  } else {
+    if (inc < 0) for (let i3 = 0; i3 < n; ++i3) ticks2[i3] = (i1 + i3) / -inc;
+    else for (let i3 = 0; i3 < n; ++i3) ticks2[i3] = (i1 + i3) * inc;
+  }
+  return ticks2;
+}
+function tickIncrement(start2, stop2, count) {
+  stop2 = +stop2, start2 = +start2, count = +count;
+  return tickSpec(start2, stop2, count)[2];
+}
+function tickStep(start2, stop2, count) {
+  stop2 = +stop2, start2 = +start2, count = +count;
+  const reverse = stop2 < start2, inc = reverse ? tickIncrement(stop2, start2, count) : tickIncrement(start2, stop2, count);
+  return (reverse ? -1 : 1) * (inc < 0 ? 1 / -inc : inc);
+}
+
+// node_modules/d3-array/src/max.js
+function max(values, valueof) {
+  let max2;
+  if (valueof === void 0) {
+    for (const value of values) {
+      if (value != null && (max2 < value || max2 === void 0 && value >= value)) {
+        max2 = value;
+      }
+    }
+  } else {
+    let index2 = -1;
+    for (let value of values) {
+      if ((value = valueof(value, ++index2, values)) != null && (max2 < value || max2 === void 0 && value >= value)) {
+        max2 = value;
+      }
+    }
+  }
+  return max2;
+}
+
+// node_modules/d3-array/src/min.js
+function min(values, valueof) {
+  let min2;
+  if (valueof === void 0) {
+    for (const value of values) {
+      if (value != null && (min2 > value || min2 === void 0 && value >= value)) {
+        min2 = value;
+      }
+    }
+  } else {
+    let index2 = -1;
+    for (let value of values) {
+      if ((value = valueof(value, ++index2, values)) != null && (min2 > value || min2 === void 0 && value >= value)) {
+        min2 = value;
+      }
+    }
+  }
+  return min2;
+}
+
+// node_modules/d3-array/src/range.js
+function range(start2, stop2, step) {
+  start2 = +start2, stop2 = +stop2, step = (n = arguments.length) < 2 ? (stop2 = start2, start2 = 0, 1) : n < 3 ? 1 : +step;
+  var i2 = -1, n = Math.max(0, Math.ceil((stop2 - start2) / step)) | 0, range2 = new Array(n);
+  while (++i2 < n) {
+    range2[i2] = start2 + i2 * step;
+  }
+  return range2;
+}
+
+// node_modules/d3-scale/src/init.js
+function initRange(domain, range2) {
+  switch (arguments.length) {
+    case 0:
+      break;
+    case 1:
+      this.range(domain);
+      break;
+    default:
+      this.range(range2).domain(domain);
+      break;
+  }
+  return this;
+}
+
+// node_modules/d3-scale/src/ordinal.js
+var implicit = Symbol("implicit");
+function ordinal() {
+  var index2 = new InternMap(), domain = [], range2 = [], unknown = implicit;
+  function scale(d) {
+    let i2 = index2.get(d);
+    if (i2 === void 0) {
+      if (unknown !== implicit) return unknown;
+      index2.set(d, i2 = domain.push(d) - 1);
+    }
+    return range2[i2 % range2.length];
+  }
+  scale.domain = function(_) {
+    if (!arguments.length) return domain.slice();
+    domain = [], index2 = new InternMap();
+    for (const value of _) {
+      if (index2.has(value)) continue;
+      index2.set(value, domain.push(value) - 1);
+    }
+    return scale;
+  };
+  scale.range = function(_) {
+    return arguments.length ? (range2 = Array.from(_), scale) : range2.slice();
+  };
+  scale.unknown = function(_) {
+    return arguments.length ? (unknown = _, scale) : unknown;
+  };
+  scale.copy = function() {
+    return ordinal(domain, range2).unknown(unknown);
+  };
+  initRange.apply(scale, arguments);
+  return scale;
+}
+
+// node_modules/d3-scale/src/band.js
+function band() {
+  var scale = ordinal().unknown(void 0), domain = scale.domain, ordinalRange = scale.range, r0 = 0, r1 = 1, step, bandwidth, round = false, paddingInner = 0, paddingOuter = 0, align = 0.5;
+  delete scale.unknown;
+  function rescale() {
+    var n = domain().length, reverse = r1 < r0, start2 = reverse ? r1 : r0, stop2 = reverse ? r0 : r1;
+    step = (stop2 - start2) / Math.max(1, n - paddingInner + paddingOuter * 2);
+    if (round) step = Math.floor(step);
+    start2 += (stop2 - start2 - step * (n - paddingInner)) * align;
+    bandwidth = step * (1 - paddingInner);
+    if (round) start2 = Math.round(start2), bandwidth = Math.round(bandwidth);
+    var values = range(n).map(function(i2) {
+      return start2 + step * i2;
+    });
+    return ordinalRange(reverse ? values.reverse() : values);
+  }
+  scale.domain = function(_) {
+    return arguments.length ? (domain(_), rescale()) : domain();
+  };
+  scale.range = function(_) {
+    return arguments.length ? ([r0, r1] = _, r0 = +r0, r1 = +r1, rescale()) : [r0, r1];
+  };
+  scale.rangeRound = function(_) {
+    return [r0, r1] = _, r0 = +r0, r1 = +r1, round = true, rescale();
+  };
+  scale.bandwidth = function() {
+    return bandwidth;
+  };
+  scale.step = function() {
+    return step;
+  };
+  scale.round = function(_) {
+    return arguments.length ? (round = !!_, rescale()) : round;
+  };
+  scale.padding = function(_) {
+    return arguments.length ? (paddingInner = Math.min(1, paddingOuter = +_), rescale()) : paddingInner;
+  };
+  scale.paddingInner = function(_) {
+    return arguments.length ? (paddingInner = Math.min(1, _), rescale()) : paddingInner;
+  };
+  scale.paddingOuter = function(_) {
+    return arguments.length ? (paddingOuter = +_, rescale()) : paddingOuter;
+  };
+  scale.align = function(_) {
+    return arguments.length ? (align = Math.max(0, Math.min(1, _)), rescale()) : align;
+  };
+  scale.copy = function() {
+    return band(domain(), [r0, r1]).round(round).paddingInner(paddingInner).paddingOuter(paddingOuter).align(align);
+  };
+  return initRange.apply(rescale(), arguments);
+}
+
+// node_modules/d3-color/src/define.js
+function define_default(constructor, factory, prototype) {
+  constructor.prototype = factory.prototype = prototype;
+  prototype.constructor = constructor;
+}
+function extend(parent2, definition) {
+  var prototype = Object.create(parent2.prototype);
+  for (var key in definition) prototype[key] = definition[key];
+  return prototype;
+}
+
+// node_modules/d3-color/src/color.js
+function Color() {
+}
+var darker = 0.7;
+var brighter = 1 / darker;
+var reI = "\\s*([+-]?\\d+)\\s*";
+var reN = "\\s*([+-]?(?:\\d*\\.)?\\d+(?:[eE][+-]?\\d+)?)\\s*";
+var reP = "\\s*([+-]?(?:\\d*\\.)?\\d+(?:[eE][+-]?\\d+)?)%\\s*";
+var reHex = /^#([0-9a-f]{3,8})$/;
+var reRgbInteger = new RegExp(`^rgb\\(${reI},${reI},${reI}\\)$`);
+var reRgbPercent = new RegExp(`^rgb\\(${reP},${reP},${reP}\\)$`);
+var reRgbaInteger = new RegExp(`^rgba\\(${reI},${reI},${reI},${reN}\\)$`);
+var reRgbaPercent = new RegExp(`^rgba\\(${reP},${reP},${reP},${reN}\\)$`);
+var reHslPercent = new RegExp(`^hsl\\(${reN},${reP},${reP}\\)$`);
+var reHslaPercent = new RegExp(`^hsla\\(${reN},${reP},${reP},${reN}\\)$`);
+var named = {
+  aliceblue: 15792383,
+  antiquewhite: 16444375,
+  aqua: 65535,
+  aquamarine: 8388564,
+  azure: 15794175,
+  beige: 16119260,
+  bisque: 16770244,
+  black: 0,
+  blanchedalmond: 16772045,
+  blue: 255,
+  blueviolet: 9055202,
+  brown: 10824234,
+  burlywood: 14596231,
+  cadetblue: 6266528,
+  chartreuse: 8388352,
+  chocolate: 13789470,
+  coral: 16744272,
+  cornflowerblue: 6591981,
+  cornsilk: 16775388,
+  crimson: 14423100,
+  cyan: 65535,
+  darkblue: 139,
+  darkcyan: 35723,
+  darkgoldenrod: 12092939,
+  darkgray: 11119017,
+  darkgreen: 25600,
+  darkgrey: 11119017,
+  darkkhaki: 12433259,
+  darkmagenta: 9109643,
+  darkolivegreen: 5597999,
+  darkorange: 16747520,
+  darkorchid: 10040012,
+  darkred: 9109504,
+  darksalmon: 15308410,
+  darkseagreen: 9419919,
+  darkslateblue: 4734347,
+  darkslategray: 3100495,
+  darkslategrey: 3100495,
+  darkturquoise: 52945,
+  darkviolet: 9699539,
+  deeppink: 16716947,
+  deepskyblue: 49151,
+  dimgray: 6908265,
+  dimgrey: 6908265,
+  dodgerblue: 2003199,
+  firebrick: 11674146,
+  floralwhite: 16775920,
+  forestgreen: 2263842,
+  fuchsia: 16711935,
+  gainsboro: 14474460,
+  ghostwhite: 16316671,
+  gold: 16766720,
+  goldenrod: 14329120,
+  gray: 8421504,
+  green: 32768,
+  greenyellow: 11403055,
+  grey: 8421504,
+  honeydew: 15794160,
+  hotpink: 16738740,
+  indianred: 13458524,
+  indigo: 4915330,
+  ivory: 16777200,
+  khaki: 15787660,
+  lavender: 15132410,
+  lavenderblush: 16773365,
+  lawngreen: 8190976,
+  lemonchiffon: 16775885,
+  lightblue: 11393254,
+  lightcoral: 15761536,
+  lightcyan: 14745599,
+  lightgoldenrodyellow: 16448210,
+  lightgray: 13882323,
+  lightgreen: 9498256,
+  lightgrey: 13882323,
+  lightpink: 16758465,
+  lightsalmon: 16752762,
+  lightseagreen: 2142890,
+  lightskyblue: 8900346,
+  lightslategray: 7833753,
+  lightslategrey: 7833753,
+  lightsteelblue: 11584734,
+  lightyellow: 16777184,
+  lime: 65280,
+  limegreen: 3329330,
+  linen: 16445670,
+  magenta: 16711935,
+  maroon: 8388608,
+  mediumaquamarine: 6737322,
+  mediumblue: 205,
+  mediumorchid: 12211667,
+  mediumpurple: 9662683,
+  mediumseagreen: 3978097,
+  mediumslateblue: 8087790,
+  mediumspringgreen: 64154,
+  mediumturquoise: 4772300,
+  mediumvioletred: 13047173,
+  midnightblue: 1644912,
+  mintcream: 16121850,
+  mistyrose: 16770273,
+  moccasin: 16770229,
+  navajowhite: 16768685,
+  navy: 128,
+  oldlace: 16643558,
+  olive: 8421376,
+  olivedrab: 7048739,
+  orange: 16753920,
+  orangered: 16729344,
+  orchid: 14315734,
+  palegoldenrod: 15657130,
+  palegreen: 10025880,
+  paleturquoise: 11529966,
+  palevioletred: 14381203,
+  papayawhip: 16773077,
+  peachpuff: 16767673,
+  peru: 13468991,
+  pink: 16761035,
+  plum: 14524637,
+  powderblue: 11591910,
+  purple: 8388736,
+  rebeccapurple: 6697881,
+  red: 16711680,
+  rosybrown: 12357519,
+  royalblue: 4286945,
+  saddlebrown: 9127187,
+  salmon: 16416882,
+  sandybrown: 16032864,
+  seagreen: 3050327,
+  seashell: 16774638,
+  sienna: 10506797,
+  silver: 12632256,
+  skyblue: 8900331,
+  slateblue: 6970061,
+  slategray: 7372944,
+  slategrey: 7372944,
+  snow: 16775930,
+  springgreen: 65407,
+  steelblue: 4620980,
+  tan: 13808780,
+  teal: 32896,
+  thistle: 14204888,
+  tomato: 16737095,
+  turquoise: 4251856,
+  violet: 15631086,
+  wheat: 16113331,
+  white: 16777215,
+  whitesmoke: 16119285,
+  yellow: 16776960,
+  yellowgreen: 10145074
+};
+define_default(Color, color, {
+  copy(channels) {
+    return Object.assign(new this.constructor(), this, channels);
+  },
+  displayable() {
+    return this.rgb().displayable();
+  },
+  hex: color_formatHex,
+  // Deprecated! Use color.formatHex.
+  formatHex: color_formatHex,
+  formatHex8: color_formatHex8,
+  formatHsl: color_formatHsl,
+  formatRgb: color_formatRgb,
+  toString: color_formatRgb
+});
+function color_formatHex() {
+  return this.rgb().formatHex();
+}
+function color_formatHex8() {
+  return this.rgb().formatHex8();
+}
+function color_formatHsl() {
+  return hslConvert(this).formatHsl();
+}
+function color_formatRgb() {
+  return this.rgb().formatRgb();
+}
+function color(format2) {
+  var m2, l;
+  format2 = (format2 + "").trim().toLowerCase();
+  return (m2 = reHex.exec(format2)) ? (l = m2[1].length, m2 = parseInt(m2[1], 16), l === 6 ? rgbn(m2) : l === 3 ? new Rgb(m2 >> 8 & 15 | m2 >> 4 & 240, m2 >> 4 & 15 | m2 & 240, (m2 & 15) << 4 | m2 & 15, 1) : l === 8 ? rgba(m2 >> 24 & 255, m2 >> 16 & 255, m2 >> 8 & 255, (m2 & 255) / 255) : l === 4 ? rgba(m2 >> 12 & 15 | m2 >> 8 & 240, m2 >> 8 & 15 | m2 >> 4 & 240, m2 >> 4 & 15 | m2 & 240, ((m2 & 15) << 4 | m2 & 15) / 255) : null) : (m2 = reRgbInteger.exec(format2)) ? new Rgb(m2[1], m2[2], m2[3], 1) : (m2 = reRgbPercent.exec(format2)) ? new Rgb(m2[1] * 255 / 100, m2[2] * 255 / 100, m2[3] * 255 / 100, 1) : (m2 = reRgbaInteger.exec(format2)) ? rgba(m2[1], m2[2], m2[3], m2[4]) : (m2 = reRgbaPercent.exec(format2)) ? rgba(m2[1] * 255 / 100, m2[2] * 255 / 100, m2[3] * 255 / 100, m2[4]) : (m2 = reHslPercent.exec(format2)) ? hsla(m2[1], m2[2] / 100, m2[3] / 100, 1) : (m2 = reHslaPercent.exec(format2)) ? hsla(m2[1], m2[2] / 100, m2[3] / 100, m2[4]) : named.hasOwnProperty(format2) ? rgbn(named[format2]) : format2 === "transparent" ? new Rgb(NaN, NaN, NaN, 0) : null;
+}
+function rgbn(n) {
+  return new Rgb(n >> 16 & 255, n >> 8 & 255, n & 255, 1);
+}
+function rgba(r, g, b, a) {
+  if (a <= 0) r = g = b = NaN;
+  return new Rgb(r, g, b, a);
+}
+function rgbConvert(o) {
+  if (!(o instanceof Color)) o = color(o);
+  if (!o) return new Rgb();
+  o = o.rgb();
+  return new Rgb(o.r, o.g, o.b, o.opacity);
+}
+function rgb(r, g, b, opacity) {
+  return arguments.length === 1 ? rgbConvert(r) : new Rgb(r, g, b, opacity == null ? 1 : opacity);
+}
+function Rgb(r, g, b, opacity) {
+  this.r = +r;
+  this.g = +g;
+  this.b = +b;
+  this.opacity = +opacity;
+}
+define_default(Rgb, rgb, extend(Color, {
+  brighter(k) {
+    k = k == null ? brighter : Math.pow(brighter, k);
+    return new Rgb(this.r * k, this.g * k, this.b * k, this.opacity);
+  },
+  darker(k) {
+    k = k == null ? darker : Math.pow(darker, k);
+    return new Rgb(this.r * k, this.g * k, this.b * k, this.opacity);
+  },
+  rgb() {
+    return this;
+  },
+  clamp() {
+    return new Rgb(clampi(this.r), clampi(this.g), clampi(this.b), clampa(this.opacity));
+  },
+  displayable() {
+    return -0.5 <= this.r && this.r < 255.5 && (-0.5 <= this.g && this.g < 255.5) && (-0.5 <= this.b && this.b < 255.5) && (0 <= this.opacity && this.opacity <= 1);
+  },
+  hex: rgb_formatHex,
+  // Deprecated! Use color.formatHex.
+  formatHex: rgb_formatHex,
+  formatHex8: rgb_formatHex8,
+  formatRgb: rgb_formatRgb,
+  toString: rgb_formatRgb
+}));
+function rgb_formatHex() {
+  return `#${hex(this.r)}${hex(this.g)}${hex(this.b)}`;
+}
+function rgb_formatHex8() {
+  return `#${hex(this.r)}${hex(this.g)}${hex(this.b)}${hex((isNaN(this.opacity) ? 1 : this.opacity) * 255)}`;
+}
+function rgb_formatRgb() {
+  const a = clampa(this.opacity);
+  return `${a === 1 ? "rgb(" : "rgba("}${clampi(this.r)}, ${clampi(this.g)}, ${clampi(this.b)}${a === 1 ? ")" : `, ${a})`}`;
+}
+function clampa(opacity) {
+  return isNaN(opacity) ? 1 : Math.max(0, Math.min(1, opacity));
+}
+function clampi(value) {
+  return Math.max(0, Math.min(255, Math.round(value) || 0));
+}
+function hex(value) {
+  value = clampi(value);
+  return (value < 16 ? "0" : "") + value.toString(16);
+}
+function hsla(h, s, l, a) {
+  if (a <= 0) h = s = l = NaN;
+  else if (l <= 0 || l >= 1) h = s = NaN;
+  else if (s <= 0) h = NaN;
+  return new Hsl(h, s, l, a);
+}
+function hslConvert(o) {
+  if (o instanceof Hsl) return new Hsl(o.h, o.s, o.l, o.opacity);
+  if (!(o instanceof Color)) o = color(o);
+  if (!o) return new Hsl();
+  if (o instanceof Hsl) return o;
+  o = o.rgb();
+  var r = o.r / 255, g = o.g / 255, b = o.b / 255, min2 = Math.min(r, g, b), max2 = Math.max(r, g, b), h = NaN, s = max2 - min2, l = (max2 + min2) / 2;
+  if (s) {
+    if (r === max2) h = (g - b) / s + (g < b) * 6;
+    else if (g === max2) h = (b - r) / s + 2;
+    else h = (r - g) / s + 4;
+    s /= l < 0.5 ? max2 + min2 : 2 - max2 - min2;
+    h *= 60;
+  } else {
+    s = l > 0 && l < 1 ? 0 : h;
+  }
+  return new Hsl(h, s, l, o.opacity);
+}
+function hsl(h, s, l, opacity) {
+  return arguments.length === 1 ? hslConvert(h) : new Hsl(h, s, l, opacity == null ? 1 : opacity);
+}
+function Hsl(h, s, l, opacity) {
+  this.h = +h;
+  this.s = +s;
+  this.l = +l;
+  this.opacity = +opacity;
+}
+define_default(Hsl, hsl, extend(Color, {
+  brighter(k) {
+    k = k == null ? brighter : Math.pow(brighter, k);
+    return new Hsl(this.h, this.s, this.l * k, this.opacity);
+  },
+  darker(k) {
+    k = k == null ? darker : Math.pow(darker, k);
+    return new Hsl(this.h, this.s, this.l * k, this.opacity);
+  },
+  rgb() {
+    var h = this.h % 360 + (this.h < 0) * 360, s = isNaN(h) || isNaN(this.s) ? 0 : this.s, l = this.l, m2 = l + (l < 0.5 ? l : 1 - l) * s, m1 = 2 * l - m2;
+    return new Rgb(
+      hsl2rgb(h >= 240 ? h - 240 : h + 120, m1, m2),
+      hsl2rgb(h, m1, m2),
+      hsl2rgb(h < 120 ? h + 240 : h - 120, m1, m2),
+      this.opacity
+    );
+  },
+  clamp() {
+    return new Hsl(clamph(this.h), clampt(this.s), clampt(this.l), clampa(this.opacity));
+  },
+  displayable() {
+    return (0 <= this.s && this.s <= 1 || isNaN(this.s)) && (0 <= this.l && this.l <= 1) && (0 <= this.opacity && this.opacity <= 1);
+  },
+  formatHsl() {
+    const a = clampa(this.opacity);
+    return `${a === 1 ? "hsl(" : "hsla("}${clamph(this.h)}, ${clampt(this.s) * 100}%, ${clampt(this.l) * 100}%${a === 1 ? ")" : `, ${a})`}`;
+  }
+}));
+function clamph(value) {
+  value = (value || 0) % 360;
+  return value < 0 ? value + 360 : value;
+}
+function clampt(value) {
+  return Math.max(0, Math.min(1, value || 0));
+}
+function hsl2rgb(h, m1, m2) {
+  return (h < 60 ? m1 + (m2 - m1) * h / 60 : h < 180 ? m2 : h < 240 ? m1 + (m2 - m1) * (240 - h) / 60 : m1) * 255;
+}
+
+// node_modules/d3-color/src/math.js
+var radians = Math.PI / 180;
+var degrees = 180 / Math.PI;
+
+// node_modules/d3-color/src/lab.js
+var K = 18;
+var Xn = 0.96422;
+var Yn = 1;
+var Zn = 0.82521;
+var t0 = 4 / 29;
+var t1 = 6 / 29;
+var t2 = 3 * t1 * t1;
+var t3 = t1 * t1 * t1;
+function labConvert(o) {
+  if (o instanceof Lab) return new Lab(o.l, o.a, o.b, o.opacity);
+  if (o instanceof Hcl) return hcl2lab(o);
+  if (!(o instanceof Rgb)) o = rgbConvert(o);
+  var r = rgb2lrgb(o.r), g = rgb2lrgb(o.g), b = rgb2lrgb(o.b), y2 = xyz2lab((0.2225045 * r + 0.7168786 * g + 0.0606169 * b) / Yn), x2, z;
+  if (r === g && g === b) x2 = z = y2;
+  else {
+    x2 = xyz2lab((0.4360747 * r + 0.3850649 * g + 0.1430804 * b) / Xn);
+    z = xyz2lab((0.0139322 * r + 0.0971045 * g + 0.7141733 * b) / Zn);
+  }
+  return new Lab(116 * y2 - 16, 500 * (x2 - y2), 200 * (y2 - z), o.opacity);
+}
+function lab(l, a, b, opacity) {
+  return arguments.length === 1 ? labConvert(l) : new Lab(l, a, b, opacity == null ? 1 : opacity);
+}
+function Lab(l, a, b, opacity) {
+  this.l = +l;
+  this.a = +a;
+  this.b = +b;
+  this.opacity = +opacity;
+}
+define_default(Lab, lab, extend(Color, {
+  brighter(k) {
+    return new Lab(this.l + K * (k == null ? 1 : k), this.a, this.b, this.opacity);
+  },
+  darker(k) {
+    return new Lab(this.l - K * (k == null ? 1 : k), this.a, this.b, this.opacity);
+  },
+  rgb() {
+    var y2 = (this.l + 16) / 116, x2 = isNaN(this.a) ? y2 : y2 + this.a / 500, z = isNaN(this.b) ? y2 : y2 - this.b / 200;
+    x2 = Xn * lab2xyz(x2);
+    y2 = Yn * lab2xyz(y2);
+    z = Zn * lab2xyz(z);
+    return new Rgb(
+      lrgb2rgb(3.1338561 * x2 - 1.6168667 * y2 - 0.4906146 * z),
+      lrgb2rgb(-0.9787684 * x2 + 1.9161415 * y2 + 0.033454 * z),
+      lrgb2rgb(0.0719453 * x2 - 0.2289914 * y2 + 1.4052427 * z),
+      this.opacity
+    );
+  }
+}));
+function xyz2lab(t4) {
+  return t4 > t3 ? Math.pow(t4, 1 / 3) : t4 / t2 + t0;
+}
+function lab2xyz(t4) {
+  return t4 > t1 ? t4 * t4 * t4 : t2 * (t4 - t0);
+}
+function lrgb2rgb(x2) {
+  return 255 * (x2 <= 31308e-7 ? 12.92 * x2 : 1.055 * Math.pow(x2, 1 / 2.4) - 0.055);
+}
+function rgb2lrgb(x2) {
+  return (x2 /= 255) <= 0.04045 ? x2 / 12.92 : Math.pow((x2 + 0.055) / 1.055, 2.4);
+}
+function hclConvert(o) {
+  if (o instanceof Hcl) return new Hcl(o.h, o.c, o.l, o.opacity);
+  if (!(o instanceof Lab)) o = labConvert(o);
+  if (o.a === 0 && o.b === 0) return new Hcl(NaN, 0 < o.l && o.l < 100 ? 0 : NaN, o.l, o.opacity);
+  var h = Math.atan2(o.b, o.a) * degrees;
+  return new Hcl(h < 0 ? h + 360 : h, Math.sqrt(o.a * o.a + o.b * o.b), o.l, o.opacity);
+}
+function hcl(h, c, l, opacity) {
+  return arguments.length === 1 ? hclConvert(h) : new Hcl(h, c, l, opacity == null ? 1 : opacity);
+}
+function Hcl(h, c, l, opacity) {
+  this.h = +h;
+  this.c = +c;
+  this.l = +l;
+  this.opacity = +opacity;
+}
+function hcl2lab(o) {
+  if (isNaN(o.h)) return new Lab(o.l, 0, 0, o.opacity);
+  var h = o.h * radians;
+  return new Lab(o.l, Math.cos(h) * o.c, Math.sin(h) * o.c, o.opacity);
+}
+define_default(Hcl, hcl, extend(Color, {
+  brighter(k) {
+    return new Hcl(this.h, this.c, this.l + K * (k == null ? 1 : k), this.opacity);
+  },
+  darker(k) {
+    return new Hcl(this.h, this.c, this.l - K * (k == null ? 1 : k), this.opacity);
+  },
+  rgb() {
+    return hcl2lab(this).rgb();
+  }
+}));
+
+// node_modules/d3-interpolate/src/basis.js
+function basis(t12, v0, v1, v2, v3) {
+  var t22 = t12 * t12, t32 = t22 * t12;
+  return ((1 - 3 * t12 + 3 * t22 - t32) * v0 + (4 - 6 * t22 + 3 * t32) * v1 + (1 + 3 * t12 + 3 * t22 - 3 * t32) * v2 + t32 * v3) / 6;
+}
+function basis_default(values) {
+  var n = values.length - 1;
+  return function(t4) {
+    var i2 = t4 <= 0 ? t4 = 0 : t4 >= 1 ? (t4 = 1, n - 1) : Math.floor(t4 * n), v1 = values[i2], v2 = values[i2 + 1], v0 = i2 > 0 ? values[i2 - 1] : 2 * v1 - v2, v3 = i2 < n - 1 ? values[i2 + 2] : 2 * v2 - v1;
+    return basis((t4 - i2 / n) * n, v0, v1, v2, v3);
+  };
+}
+
+// node_modules/d3-interpolate/src/basisClosed.js
+function basisClosed_default(values) {
+  var n = values.length;
+  return function(t4) {
+    var i2 = Math.floor(((t4 %= 1) < 0 ? ++t4 : t4) * n), v0 = values[(i2 + n - 1) % n], v1 = values[i2 % n], v2 = values[(i2 + 1) % n], v3 = values[(i2 + 2) % n];
+    return basis((t4 - i2 / n) * n, v0, v1, v2, v3);
+  };
+}
+
+// node_modules/d3-interpolate/src/constant.js
+var constant_default = (x2) => () => x2;
+
+// node_modules/d3-interpolate/src/color.js
+function linear(a, d) {
+  return function(t4) {
+    return a + t4 * d;
+  };
+}
+function exponential(a, b, y2) {
+  return a = Math.pow(a, y2), b = Math.pow(b, y2) - a, y2 = 1 / y2, function(t4) {
+    return Math.pow(a + t4 * b, y2);
+  };
+}
+function hue(a, b) {
+  var d = b - a;
+  return d ? linear(a, d > 180 || d < -180 ? d - 360 * Math.round(d / 360) : d) : constant_default(isNaN(a) ? b : a);
+}
+function gamma(y2) {
+  return (y2 = +y2) === 1 ? nogamma : function(a, b) {
+    return b - a ? exponential(a, b, y2) : constant_default(isNaN(a) ? b : a);
+  };
+}
+function nogamma(a, b) {
+  var d = b - a;
+  return d ? linear(a, d) : constant_default(isNaN(a) ? b : a);
+}
+
+// node_modules/d3-interpolate/src/rgb.js
+var rgb_default = (function rgbGamma(y2) {
+  var color2 = gamma(y2);
+  function rgb2(start2, end) {
+    var r = color2((start2 = rgb(start2)).r, (end = rgb(end)).r), g = color2(start2.g, end.g), b = color2(start2.b, end.b), opacity = nogamma(start2.opacity, end.opacity);
+    return function(t4) {
+      start2.r = r(t4);
+      start2.g = g(t4);
+      start2.b = b(t4);
+      start2.opacity = opacity(t4);
+      return start2 + "";
+    };
+  }
+  rgb2.gamma = rgbGamma;
+  return rgb2;
+})(1);
+function rgbSpline(spline) {
+  return function(colors) {
+    var n = colors.length, r = new Array(n), g = new Array(n), b = new Array(n), i2, color2;
+    for (i2 = 0; i2 < n; ++i2) {
+      color2 = rgb(colors[i2]);
+      r[i2] = color2.r || 0;
+      g[i2] = color2.g || 0;
+      b[i2] = color2.b || 0;
+    }
+    r = spline(r);
+    g = spline(g);
+    b = spline(b);
+    color2.opacity = 1;
+    return function(t4) {
+      color2.r = r(t4);
+      color2.g = g(t4);
+      color2.b = b(t4);
+      return color2 + "";
+    };
+  };
+}
+var rgbBasis = rgbSpline(basis_default);
+var rgbBasisClosed = rgbSpline(basisClosed_default);
+
+// node_modules/d3-interpolate/src/numberArray.js
+function numberArray_default(a, b) {
+  if (!b) b = [];
+  var n = a ? Math.min(b.length, a.length) : 0, c = b.slice(), i2;
+  return function(t4) {
+    for (i2 = 0; i2 < n; ++i2) c[i2] = a[i2] * (1 - t4) + b[i2] * t4;
+    return c;
+  };
+}
+function isNumberArray(x2) {
+  return ArrayBuffer.isView(x2) && !(x2 instanceof DataView);
+}
+
+// node_modules/d3-interpolate/src/array.js
+function genericArray(a, b) {
+  var nb = b ? b.length : 0, na = a ? Math.min(nb, a.length) : 0, x2 = new Array(na), c = new Array(nb), i2;
+  for (i2 = 0; i2 < na; ++i2) x2[i2] = value_default(a[i2], b[i2]);
+  for (; i2 < nb; ++i2) c[i2] = b[i2];
+  return function(t4) {
+    for (i2 = 0; i2 < na; ++i2) c[i2] = x2[i2](t4);
+    return c;
+  };
+}
+
+// node_modules/d3-interpolate/src/date.js
+function date_default(a, b) {
+  var d = /* @__PURE__ */ new Date();
+  return a = +a, b = +b, function(t4) {
+    return d.setTime(a * (1 - t4) + b * t4), d;
+  };
+}
+
+// node_modules/d3-interpolate/src/number.js
+function number_default(a, b) {
+  return a = +a, b = +b, function(t4) {
+    return a * (1 - t4) + b * t4;
+  };
+}
+
+// node_modules/d3-interpolate/src/object.js
+function object_default(a, b) {
+  var i2 = {}, c = {}, k;
+  if (a === null || typeof a !== "object") a = {};
+  if (b === null || typeof b !== "object") b = {};
+  for (k in b) {
+    if (k in a) {
+      i2[k] = value_default(a[k], b[k]);
+    } else {
+      c[k] = b[k];
+    }
+  }
+  return function(t4) {
+    for (k in i2) c[k] = i2[k](t4);
+    return c;
+  };
+}
+
+// node_modules/d3-interpolate/src/string.js
+var reA = /[-+]?(?:\d+\.?\d*|\.?\d+)(?:[eE][-+]?\d+)?/g;
+var reB = new RegExp(reA.source, "g");
+function zero2(b) {
+  return function() {
+    return b;
+  };
+}
+function one(b) {
+  return function(t4) {
+    return b(t4) + "";
+  };
+}
+function string_default(a, b) {
+  var bi = reA.lastIndex = reB.lastIndex = 0, am, bm, bs, i2 = -1, s = [], q = [];
+  a = a + "", b = b + "";
+  while ((am = reA.exec(a)) && (bm = reB.exec(b))) {
+    if ((bs = bm.index) > bi) {
+      bs = b.slice(bi, bs);
+      if (s[i2]) s[i2] += bs;
+      else s[++i2] = bs;
+    }
+    if ((am = am[0]) === (bm = bm[0])) {
+      if (s[i2]) s[i2] += bm;
+      else s[++i2] = bm;
+    } else {
+      s[++i2] = null;
+      q.push({ i: i2, x: number_default(am, bm) });
+    }
+    bi = reB.lastIndex;
+  }
+  if (bi < b.length) {
+    bs = b.slice(bi);
+    if (s[i2]) s[i2] += bs;
+    else s[++i2] = bs;
+  }
+  return s.length < 2 ? q[0] ? one(q[0].x) : zero2(b) : (b = q.length, function(t4) {
+    for (var i3 = 0, o; i3 < b; ++i3) s[(o = q[i3]).i] = o.x(t4);
+    return s.join("");
+  });
+}
+
+// node_modules/d3-interpolate/src/value.js
+function value_default(a, b) {
+  var t4 = typeof b, c;
+  return b == null || t4 === "boolean" ? constant_default(b) : (t4 === "number" ? number_default : t4 === "string" ? (c = color(b)) ? (b = c, rgb_default) : string_default : b instanceof color ? rgb_default : b instanceof Date ? date_default : isNumberArray(b) ? numberArray_default : Array.isArray(b) ? genericArray : typeof b.valueOf !== "function" && typeof b.toString !== "function" || isNaN(b) ? object_default : number_default)(a, b);
+}
+
+// node_modules/d3-interpolate/src/round.js
+function round_default(a, b) {
+  return a = +a, b = +b, function(t4) {
+    return Math.round(a * (1 - t4) + b * t4);
+  };
+}
+
+// node_modules/d3-interpolate/src/hcl.js
+function hcl2(hue2) {
+  return function(start2, end) {
+    var h = hue2((start2 = hcl(start2)).h, (end = hcl(end)).h), c = nogamma(start2.c, end.c), l = nogamma(start2.l, end.l), opacity = nogamma(start2.opacity, end.opacity);
+    return function(t4) {
+      start2.h = h(t4);
+      start2.c = c(t4);
+      start2.l = l(t4);
+      start2.opacity = opacity(t4);
+      return start2 + "";
+    };
+  };
+}
+var hcl_default = hcl2(hue);
+var hclLong = hcl2(nogamma);
+
+// node_modules/d3-scale/src/constant.js
+function constants(x2) {
+  return function() {
+    return x2;
+  };
+}
+
+// node_modules/d3-scale/src/number.js
+function number2(x2) {
+  return +x2;
+}
+
+// node_modules/d3-scale/src/continuous.js
+var unit = [0, 1];
+function identity(x2) {
+  return x2;
+}
+function normalize(a, b) {
+  return (b -= a = +a) ? function(x2) {
+    return (x2 - a) / b;
+  } : constants(isNaN(b) ? NaN : 0.5);
+}
+function clamper(a, b) {
+  var t4;
+  if (a > b) t4 = a, a = b, b = t4;
+  return function(x2) {
+    return Math.max(a, Math.min(b, x2));
+  };
+}
+function bimap(domain, range2, interpolate) {
+  var d0 = domain[0], d1 = domain[1], r0 = range2[0], r1 = range2[1];
+  if (d1 < d0) d0 = normalize(d1, d0), r0 = interpolate(r1, r0);
+  else d0 = normalize(d0, d1), r0 = interpolate(r0, r1);
+  return function(x2) {
+    return r0(d0(x2));
+  };
+}
+function polymap(domain, range2, interpolate) {
+  var j = Math.min(domain.length, range2.length) - 1, d = new Array(j), r = new Array(j), i2 = -1;
+  if (domain[j] < domain[0]) {
+    domain = domain.slice().reverse();
+    range2 = range2.slice().reverse();
+  }
+  while (++i2 < j) {
+    d[i2] = normalize(domain[i2], domain[i2 + 1]);
+    r[i2] = interpolate(range2[i2], range2[i2 + 1]);
+  }
+  return function(x2) {
+    var i3 = bisect_default(domain, x2, 1, j) - 1;
+    return r[i3](d[i3](x2));
+  };
+}
+function copy(source2, target2) {
+  return target2.domain(source2.domain()).range(source2.range()).interpolate(source2.interpolate()).clamp(source2.clamp()).unknown(source2.unknown());
+}
+function transformer() {
+  var domain = unit, range2 = unit, interpolate = value_default, transform, untransform, unknown, clamp = identity, piecewise, output, input;
+  function rescale() {
+    var n = Math.min(domain.length, range2.length);
+    if (clamp !== identity) clamp = clamper(domain[0], domain[n - 1]);
+    piecewise = n > 2 ? polymap : bimap;
+    output = input = null;
+    return scale;
+  }
+  function scale(x2) {
+    return x2 == null || isNaN(x2 = +x2) ? unknown : (output || (output = piecewise(domain.map(transform), range2, interpolate)))(transform(clamp(x2)));
+  }
+  scale.invert = function(y2) {
+    return clamp(untransform((input || (input = piecewise(range2, domain.map(transform), number_default)))(y2)));
+  };
+  scale.domain = function(_) {
+    return arguments.length ? (domain = Array.from(_, number2), rescale()) : domain.slice();
+  };
+  scale.range = function(_) {
+    return arguments.length ? (range2 = Array.from(_), rescale()) : range2.slice();
+  };
+  scale.rangeRound = function(_) {
+    return range2 = Array.from(_), interpolate = round_default, rescale();
+  };
+  scale.clamp = function(_) {
+    return arguments.length ? (clamp = _ ? true : identity, rescale()) : clamp !== identity;
+  };
+  scale.interpolate = function(_) {
+    return arguments.length ? (interpolate = _, rescale()) : interpolate;
+  };
+  scale.unknown = function(_) {
+    return arguments.length ? (unknown = _, scale) : unknown;
+  };
+  return function(t4, u) {
+    transform = t4, untransform = u;
+    return rescale();
+  };
+}
+function continuous() {
+  return transformer()(identity, identity);
+}
+
+// node_modules/d3-format/src/formatDecimal.js
+function formatDecimal_default(x2) {
+  return Math.abs(x2 = Math.round(x2)) >= 1e21 ? x2.toLocaleString("en").replace(/,/g, "") : x2.toString(10);
+}
+function formatDecimalParts(x2, p) {
+  if (!isFinite(x2) || x2 === 0) return null;
+  var i2 = (x2 = p ? x2.toExponential(p - 1) : x2.toExponential()).indexOf("e"), coefficient = x2.slice(0, i2);
+  return [
+    coefficient.length > 1 ? coefficient[0] + coefficient.slice(2) : coefficient,
+    +x2.slice(i2 + 1)
+  ];
+}
+
+// node_modules/d3-format/src/exponent.js
+function exponent_default(x2) {
+  return x2 = formatDecimalParts(Math.abs(x2)), x2 ? x2[1] : NaN;
+}
+
+// node_modules/d3-format/src/formatGroup.js
+function formatGroup_default(grouping, thousands) {
+  return function(value, width) {
+    var i2 = value.length, t4 = [], j = 0, g = grouping[0], length = 0;
+    while (i2 > 0 && g > 0) {
+      if (length + g + 1 > width) g = Math.max(1, width - length);
+      t4.push(value.substring(i2 -= g, i2 + g));
+      if ((length += g + 1) > width) break;
+      g = grouping[j = (j + 1) % grouping.length];
+    }
+    return t4.reverse().join(thousands);
+  };
+}
+
+// node_modules/d3-format/src/formatNumerals.js
+function formatNumerals_default(numerals) {
+  return function(value) {
+    return value.replace(/[0-9]/g, function(i2) {
+      return numerals[+i2];
+    });
+  };
+}
+
+// node_modules/d3-format/src/formatSpecifier.js
+var re = /^(?:(.)?([<>=^]))?([+\-( ])?([$#])?(0)?(\d+)?(,)?(\.\d+)?(~)?([a-z%])?$/i;
+function formatSpecifier(specifier) {
+  if (!(match = re.exec(specifier))) throw new Error("invalid format: " + specifier);
+  var match;
+  return new FormatSpecifier({
+    fill: match[1],
+    align: match[2],
+    sign: match[3],
+    symbol: match[4],
+    zero: match[5],
+    width: match[6],
+    comma: match[7],
+    precision: match[8] && match[8].slice(1),
+    trim: match[9],
+    type: match[10]
+  });
+}
+formatSpecifier.prototype = FormatSpecifier.prototype;
+function FormatSpecifier(specifier) {
+  this.fill = specifier.fill === void 0 ? " " : specifier.fill + "";
+  this.align = specifier.align === void 0 ? ">" : specifier.align + "";
+  this.sign = specifier.sign === void 0 ? "-" : specifier.sign + "";
+  this.symbol = specifier.symbol === void 0 ? "" : specifier.symbol + "";
+  this.zero = !!specifier.zero;
+  this.width = specifier.width === void 0 ? void 0 : +specifier.width;
+  this.comma = !!specifier.comma;
+  this.precision = specifier.precision === void 0 ? void 0 : +specifier.precision;
+  this.trim = !!specifier.trim;
+  this.type = specifier.type === void 0 ? "" : specifier.type + "";
+}
+FormatSpecifier.prototype.toString = function() {
+  return this.fill + this.align + this.sign + this.symbol + (this.zero ? "0" : "") + (this.width === void 0 ? "" : Math.max(1, this.width | 0)) + (this.comma ? "," : "") + (this.precision === void 0 ? "" : "." + Math.max(0, this.precision | 0)) + (this.trim ? "~" : "") + this.type;
+};
+
+// node_modules/d3-format/src/formatTrim.js
+function formatTrim_default(s) {
+  out: for (var n = s.length, i2 = 1, i0 = -1, i1; i2 < n; ++i2) {
+    switch (s[i2]) {
+      case ".":
+        i0 = i1 = i2;
+        break;
+      case "0":
+        if (i0 === 0) i0 = i2;
+        i1 = i2;
+        break;
+      default:
+        if (!+s[i2]) break out;
+        if (i0 > 0) i0 = 0;
+        break;
+    }
+  }
+  return i0 > 0 ? s.slice(0, i0) + s.slice(i1 + 1) : s;
+}
+
+// node_modules/d3-format/src/formatPrefixAuto.js
+var prefixExponent;
+function formatPrefixAuto_default(x2, p) {
+  var d = formatDecimalParts(x2, p);
+  if (!d) return prefixExponent = void 0, x2.toPrecision(p);
+  var coefficient = d[0], exponent = d[1], i2 = exponent - (prefixExponent = Math.max(-8, Math.min(8, Math.floor(exponent / 3))) * 3) + 1, n = coefficient.length;
+  return i2 === n ? coefficient : i2 > n ? coefficient + new Array(i2 - n + 1).join("0") : i2 > 0 ? coefficient.slice(0, i2) + "." + coefficient.slice(i2) : "0." + new Array(1 - i2).join("0") + formatDecimalParts(x2, Math.max(0, p + i2 - 1))[0];
+}
+
+// node_modules/d3-format/src/formatRounded.js
+function formatRounded_default(x2, p) {
+  var d = formatDecimalParts(x2, p);
+  if (!d) return x2 + "";
+  var coefficient = d[0], exponent = d[1];
+  return exponent < 0 ? "0." + new Array(-exponent).join("0") + coefficient : coefficient.length > exponent + 1 ? coefficient.slice(0, exponent + 1) + "." + coefficient.slice(exponent + 1) : coefficient + new Array(exponent - coefficient.length + 2).join("0");
+}
+
+// node_modules/d3-format/src/formatTypes.js
+var formatTypes_default = {
+  "%": (x2, p) => (x2 * 100).toFixed(p),
+  "b": (x2) => Math.round(x2).toString(2),
+  "c": (x2) => x2 + "",
+  "d": formatDecimal_default,
+  "e": (x2, p) => x2.toExponential(p),
+  "f": (x2, p) => x2.toFixed(p),
+  "g": (x2, p) => x2.toPrecision(p),
+  "o": (x2) => Math.round(x2).toString(8),
+  "p": (x2, p) => formatRounded_default(x2 * 100, p),
+  "r": formatRounded_default,
+  "s": formatPrefixAuto_default,
+  "X": (x2) => Math.round(x2).toString(16).toUpperCase(),
+  "x": (x2) => Math.round(x2).toString(16)
+};
+
+// node_modules/d3-format/src/identity.js
+function identity_default(x2) {
+  return x2;
+}
+
+// node_modules/d3-format/src/locale.js
+var map = Array.prototype.map;
+var prefixes = ["y", "z", "a", "f", "p", "n", "\xB5", "m", "", "k", "M", "G", "T", "P", "E", "Z", "Y"];
+function locale_default(locale2) {
+  var group = locale2.grouping === void 0 || locale2.thousands === void 0 ? identity_default : formatGroup_default(map.call(locale2.grouping, Number), locale2.thousands + ""), currencyPrefix = locale2.currency === void 0 ? "" : locale2.currency[0] + "", currencySuffix = locale2.currency === void 0 ? "" : locale2.currency[1] + "", decimal3 = locale2.decimal === void 0 ? "." : locale2.decimal + "", numerals = locale2.numerals === void 0 ? identity_default : formatNumerals_default(map.call(locale2.numerals, String)), percent = locale2.percent === void 0 ? "%" : locale2.percent + "", minus = locale2.minus === void 0 ? "\u2212" : locale2.minus + "", nan = locale2.nan === void 0 ? "NaN" : locale2.nan + "";
+  function newFormat(specifier, options) {
+    specifier = formatSpecifier(specifier);
+    var fill = specifier.fill, align = specifier.align, sign2 = specifier.sign, symbol = specifier.symbol, zero3 = specifier.zero, width = specifier.width, comma = specifier.comma, precision = specifier.precision, trim = specifier.trim, type = specifier.type;
+    if (type === "n") comma = true, type = "g";
+    else if (!formatTypes_default[type]) precision === void 0 && (precision = 12), trim = true, type = "g";
+    if (zero3 || fill === "0" && align === "=") zero3 = true, fill = "0", align = "=";
+    var prefix = (options && options.prefix !== void 0 ? options.prefix : "") + (symbol === "$" ? currencyPrefix : symbol === "#" && /[boxX]/.test(type) ? "0" + type.toLowerCase() : ""), suffix = (symbol === "$" ? currencySuffix : /[%p]/.test(type) ? percent : "") + (options && options.suffix !== void 0 ? options.suffix : "");
+    var formatType = formatTypes_default[type], maybeSuffix = /[defgprs%]/.test(type);
+    precision = precision === void 0 ? 6 : /[gprs]/.test(type) ? Math.max(1, Math.min(21, precision)) : Math.max(0, Math.min(20, precision));
+    function format2(value) {
+      var valuePrefix = prefix, valueSuffix = suffix, i2, n, c;
+      if (type === "c") {
+        valueSuffix = formatType(value) + valueSuffix;
+        value = "";
+      } else {
+        value = +value;
+        var valueNegative = value < 0 || 1 / value < 0;
+        value = isNaN(value) ? nan : formatType(Math.abs(value), precision);
+        if (trim) value = formatTrim_default(value);
+        if (valueNegative && +value === 0 && sign2 !== "+") valueNegative = false;
+        valuePrefix = (valueNegative ? sign2 === "(" ? sign2 : minus : sign2 === "-" || sign2 === "(" ? "" : sign2) + valuePrefix;
+        valueSuffix = (type === "s" && !isNaN(value) && prefixExponent !== void 0 ? prefixes[8 + prefixExponent / 3] : "") + valueSuffix + (valueNegative && sign2 === "(" ? ")" : "");
+        if (maybeSuffix) {
+          i2 = -1, n = value.length;
+          while (++i2 < n) {
+            if (c = value.charCodeAt(i2), 48 > c || c > 57) {
+              valueSuffix = (c === 46 ? decimal3 + value.slice(i2 + 1) : value.slice(i2)) + valueSuffix;
+              value = value.slice(0, i2);
+              break;
+            }
+          }
+        }
+      }
+      if (comma && !zero3) value = group(value, Infinity);
+      var length = valuePrefix.length + value.length + valueSuffix.length, padding = length < width ? new Array(width - length + 1).join(fill) : "";
+      if (comma && zero3) value = group(padding + value, padding.length ? width - valueSuffix.length : Infinity), padding = "";
+      switch (align) {
+        case "<":
+          value = valuePrefix + value + valueSuffix + padding;
+          break;
+        case "=":
+          value = valuePrefix + padding + value + valueSuffix;
+          break;
+        case "^":
+          value = padding.slice(0, length = padding.length >> 1) + valuePrefix + value + valueSuffix + padding.slice(length);
+          break;
+        default:
+          value = padding + valuePrefix + value + valueSuffix;
+          break;
+      }
+      return numerals(value);
+    }
+    format2.toString = function() {
+      return specifier + "";
+    };
+    return format2;
+  }
+  function formatPrefix2(specifier, value) {
+    var e = Math.max(-8, Math.min(8, Math.floor(exponent_default(value) / 3))) * 3, k = Math.pow(10, -e), f = newFormat((specifier = formatSpecifier(specifier), specifier.type = "f", specifier), { suffix: prefixes[8 + e / 3] });
+    return function(value2) {
+      return f(k * value2);
+    };
+  }
+  return {
+    format: newFormat,
+    formatPrefix: formatPrefix2
+  };
+}
+
+// node_modules/d3-format/src/defaultLocale.js
+var locale;
+var format;
+var formatPrefix;
+defaultLocale({
+  thousands: ",",
+  grouping: [3],
+  currency: ["$", ""]
+});
+function defaultLocale(definition) {
+  locale = locale_default(definition);
+  format = locale.format;
+  formatPrefix = locale.formatPrefix;
+  return locale;
+}
+
+// node_modules/d3-format/src/precisionFixed.js
+function precisionFixed_default(step) {
+  return Math.max(0, -exponent_default(Math.abs(step)));
+}
+
+// node_modules/d3-format/src/precisionPrefix.js
+function precisionPrefix_default(step, value) {
+  return Math.max(0, Math.max(-8, Math.min(8, Math.floor(exponent_default(value) / 3))) * 3 - exponent_default(Math.abs(step)));
+}
+
+// node_modules/d3-format/src/precisionRound.js
+function precisionRound_default(step, max2) {
+  step = Math.abs(step), max2 = Math.abs(max2) - step;
+  return Math.max(0, exponent_default(max2) - exponent_default(step)) + 1;
+}
+
+// node_modules/d3-scale/src/tickFormat.js
+function tickFormat(start2, stop2, count, specifier) {
+  var step = tickStep(start2, stop2, count), precision;
+  specifier = formatSpecifier(specifier == null ? ",f" : specifier);
+  switch (specifier.type) {
+    case "s": {
+      var value = Math.max(Math.abs(start2), Math.abs(stop2));
+      if (specifier.precision == null && !isNaN(precision = precisionPrefix_default(step, value))) specifier.precision = precision;
+      return formatPrefix(specifier, value);
+    }
+    case "":
+    case "e":
+    case "g":
+    case "p":
+    case "r": {
+      if (specifier.precision == null && !isNaN(precision = precisionRound_default(step, Math.max(Math.abs(start2), Math.abs(stop2))))) specifier.precision = precision - (specifier.type === "e");
+      break;
+    }
+    case "f":
+    case "%": {
+      if (specifier.precision == null && !isNaN(precision = precisionFixed_default(step))) specifier.precision = precision - (specifier.type === "%") * 2;
+      break;
+    }
+  }
+  return format(specifier);
+}
+
+// node_modules/d3-scale/src/linear.js
+function linearish(scale) {
+  var domain = scale.domain;
+  scale.ticks = function(count) {
+    var d = domain();
+    return ticks(d[0], d[d.length - 1], count == null ? 10 : count);
+  };
+  scale.tickFormat = function(count, specifier) {
+    var d = domain();
+    return tickFormat(d[0], d[d.length - 1], count == null ? 10 : count, specifier);
+  };
+  scale.nice = function(count) {
+    if (count == null) count = 10;
+    var d = domain();
+    var i0 = 0;
+    var i1 = d.length - 1;
+    var start2 = d[i0];
+    var stop2 = d[i1];
+    var prestep;
+    var step;
+    var maxIter = 10;
+    if (stop2 < start2) {
+      step = start2, start2 = stop2, stop2 = step;
+      step = i0, i0 = i1, i1 = step;
+    }
+    while (maxIter-- > 0) {
+      step = tickIncrement(start2, stop2, count);
+      if (step === prestep) {
+        d[i0] = start2;
+        d[i1] = stop2;
+        return domain(d);
+      } else if (step > 0) {
+        start2 = Math.floor(start2 / step) * step;
+        stop2 = Math.ceil(stop2 / step) * step;
+      } else if (step < 0) {
+        start2 = Math.ceil(start2 * step) / step;
+        stop2 = Math.floor(stop2 * step) / step;
+      } else {
+        break;
+      }
+      prestep = step;
+    }
+    return scale;
+  };
+  return scale;
+}
+function linear2() {
+  var scale = continuous();
+  scale.copy = function() {
+    return copy(scale, linear2());
+  };
+  initRange.apply(scale, arguments);
+  return linearish(scale);
+}
+
+// node_modules/d3-shape/src/constant.js
+function constant_default2(x2) {
+  return function constant() {
+    return x2;
+  };
+}
+
+// node_modules/d3-path/src/path.js
+var pi = Math.PI;
+var tau = 2 * pi;
+var epsilon = 1e-6;
+var tauEpsilon = tau - epsilon;
+function append2(strings) {
+  this._ += strings[0];
+  for (let i2 = 1, n = strings.length; i2 < n; ++i2) {
+    this._ += arguments[i2] + strings[i2];
+  }
+}
+function appendRound(digits) {
+  let d = Math.floor(digits);
+  if (!(d >= 0)) throw new Error(`invalid digits: ${digits}`);
+  if (d > 15) return append2;
+  const k = 10 ** d;
+  return function(strings) {
+    this._ += strings[0];
+    for (let i2 = 1, n = strings.length; i2 < n; ++i2) {
+      this._ += Math.round(arguments[i2] * k) / k + strings[i2];
+    }
+  };
+}
+var Path = class {
+  constructor(digits) {
+    this._x0 = this._y0 = // start of current subpath
+    this._x1 = this._y1 = null;
+    this._ = "";
+    this._append = digits == null ? append2 : appendRound(digits);
+  }
+  moveTo(x2, y2) {
+    this._append`M${this._x0 = this._x1 = +x2},${this._y0 = this._y1 = +y2}`;
+  }
+  closePath() {
+    if (this._x1 !== null) {
+      this._x1 = this._x0, this._y1 = this._y0;
+      this._append`Z`;
+    }
+  }
+  lineTo(x2, y2) {
+    this._append`L${this._x1 = +x2},${this._y1 = +y2}`;
+  }
+  quadraticCurveTo(x1, y1, x2, y2) {
+    this._append`Q${+x1},${+y1},${this._x1 = +x2},${this._y1 = +y2}`;
+  }
+  bezierCurveTo(x1, y1, x2, y2, x3, y3) {
+    this._append`C${+x1},${+y1},${+x2},${+y2},${this._x1 = +x3},${this._y1 = +y3}`;
+  }
+  arcTo(x1, y1, x2, y2, r) {
+    x1 = +x1, y1 = +y1, x2 = +x2, y2 = +y2, r = +r;
+    if (r < 0) throw new Error(`negative radius: ${r}`);
+    let x0 = this._x1, y0 = this._y1, x21 = x2 - x1, y21 = y2 - y1, x01 = x0 - x1, y01 = y0 - y1, l01_2 = x01 * x01 + y01 * y01;
+    if (this._x1 === null) {
+      this._append`M${this._x1 = x1},${this._y1 = y1}`;
+    } else if (!(l01_2 > epsilon)) ;
+    else if (!(Math.abs(y01 * x21 - y21 * x01) > epsilon) || !r) {
+      this._append`L${this._x1 = x1},${this._y1 = y1}`;
+    } else {
+      let x20 = x2 - x0, y20 = y2 - y0, l21_2 = x21 * x21 + y21 * y21, l20_2 = x20 * x20 + y20 * y20, l21 = Math.sqrt(l21_2), l01 = Math.sqrt(l01_2), l = r * Math.tan((pi - Math.acos((l21_2 + l01_2 - l20_2) / (2 * l21 * l01))) / 2), t01 = l / l01, t21 = l / l21;
+      if (Math.abs(t01 - 1) > epsilon) {
+        this._append`L${x1 + t01 * x01},${y1 + t01 * y01}`;
+      }
+      this._append`A${r},${r},0,0,${+(y01 * x20 > x01 * y20)},${this._x1 = x1 + t21 * x21},${this._y1 = y1 + t21 * y21}`;
+    }
+  }
+  arc(x2, y2, r, a0, a1, ccw) {
+    x2 = +x2, y2 = +y2, r = +r, ccw = !!ccw;
+    if (r < 0) throw new Error(`negative radius: ${r}`);
+    let dx = r * Math.cos(a0), dy = r * Math.sin(a0), x0 = x2 + dx, y0 = y2 + dy, cw = 1 ^ ccw, da = ccw ? a0 - a1 : a1 - a0;
+    if (this._x1 === null) {
+      this._append`M${x0},${y0}`;
+    } else if (Math.abs(this._x1 - x0) > epsilon || Math.abs(this._y1 - y0) > epsilon) {
+      this._append`L${x0},${y0}`;
+    }
+    if (!r) return;
+    if (da < 0) da = da % tau + tau;
+    if (da > tauEpsilon) {
+      this._append`A${r},${r},0,1,${cw},${x2 - dx},${y2 - dy}A${r},${r},0,1,${cw},${this._x1 = x0},${this._y1 = y0}`;
+    } else if (da > epsilon) {
+      this._append`A${r},${r},0,${+(da >= pi)},${cw},${this._x1 = x2 + r * Math.cos(a1)},${this._y1 = y2 + r * Math.sin(a1)}`;
+    }
+  }
+  rect(x2, y2, w, h) {
+    this._append`M${this._x0 = this._x1 = +x2},${this._y0 = this._y1 = +y2}h${w = +w}v${+h}h${-w}Z`;
+  }
+  toString() {
+    return this._;
+  }
+};
+function path() {
+  return new Path();
+}
+path.prototype = Path.prototype;
+
+// node_modules/d3-shape/src/path.js
+function withPath(shape) {
+  let digits = 3;
+  shape.digits = function(_) {
+    if (!arguments.length) return digits;
+    if (_ == null) {
+      digits = null;
+    } else {
+      const d = Math.floor(_);
+      if (!(d >= 0)) throw new RangeError(`invalid digits: ${_}`);
+      digits = d;
+    }
+    return shape;
+  };
+  return () => new Path(digits);
+}
+
+// node_modules/d3-shape/src/array.js
+var slice = Array.prototype.slice;
+function array_default(x2) {
+  return typeof x2 === "object" && "length" in x2 ? x2 : Array.from(x2);
+}
+
+// node_modules/d3-shape/src/curve/linear.js
+function Linear(context) {
+  this._context = context;
+}
+Linear.prototype = {
+  areaStart: function() {
+    this._line = 0;
+  },
+  areaEnd: function() {
+    this._line = NaN;
+  },
+  lineStart: function() {
+    this._point = 0;
+  },
+  lineEnd: function() {
+    if (this._line || this._line !== 0 && this._point === 1) this._context.closePath();
+    this._line = 1 - this._line;
+  },
+  point: function(x2, y2) {
+    x2 = +x2, y2 = +y2;
+    switch (this._point) {
+      case 0:
+        this._point = 1;
+        this._line ? this._context.lineTo(x2, y2) : this._context.moveTo(x2, y2);
+        break;
+      case 1:
+        this._point = 2;
+      // falls through
+      default:
+        this._context.lineTo(x2, y2);
+        break;
+    }
+  }
+};
+function linear_default(context) {
+  return new Linear(context);
+}
+
+// node_modules/d3-shape/src/point.js
+function x(p) {
+  return p[0];
+}
+function y(p) {
+  return p[1];
+}
+
+// node_modules/d3-shape/src/line.js
+function line_default(x2, y2) {
+  var defined = constant_default2(true), context = null, curve = linear_default, output = null, path2 = withPath(line);
+  x2 = typeof x2 === "function" ? x2 : x2 === void 0 ? x : constant_default2(x2);
+  y2 = typeof y2 === "function" ? y2 : y2 === void 0 ? y : constant_default2(y2);
+  function line(data) {
+    var i2, n = (data = array_default(data)).length, d, defined0 = false, buffer;
+    if (context == null) output = curve(buffer = path2());
+    for (i2 = 0; i2 <= n; ++i2) {
+      if (!(i2 < n && defined(d = data[i2], i2, data)) === defined0) {
+        if (defined0 = !defined0) output.lineStart();
+        else output.lineEnd();
+      }
+      if (defined0) output.point(+x2(d, i2, data), +y2(d, i2, data));
+    }
+    if (buffer) return output = null, buffer + "" || null;
+  }
+  line.x = function(_) {
+    return arguments.length ? (x2 = typeof _ === "function" ? _ : constant_default2(+_), line) : x2;
+  };
+  line.y = function(_) {
+    return arguments.length ? (y2 = typeof _ === "function" ? _ : constant_default2(+_), line) : y2;
+  };
+  line.defined = function(_) {
+    return arguments.length ? (defined = typeof _ === "function" ? _ : constant_default2(!!_), line) : defined;
+  };
+  line.curve = function(_) {
+    return arguments.length ? (curve = _, context != null && (output = curve(context)), line) : curve;
+  };
+  line.context = function(_) {
+    return arguments.length ? (_ == null ? context = output = null : output = curve(context = _), line) : context;
+  };
+  return line;
+}
+
+// node_modules/d3-shape/src/area.js
+function area_default(x0, y0, y1) {
+  var x1 = null, defined = constant_default2(true), context = null, curve = linear_default, output = null, path2 = withPath(area);
+  x0 = typeof x0 === "function" ? x0 : x0 === void 0 ? x : constant_default2(+x0);
+  y0 = typeof y0 === "function" ? y0 : y0 === void 0 ? constant_default2(0) : constant_default2(+y0);
+  y1 = typeof y1 === "function" ? y1 : y1 === void 0 ? y : constant_default2(+y1);
+  function area(data) {
+    var i2, j, k, n = (data = array_default(data)).length, d, defined0 = false, buffer, x0z = new Array(n), y0z = new Array(n);
+    if (context == null) output = curve(buffer = path2());
+    for (i2 = 0; i2 <= n; ++i2) {
+      if (!(i2 < n && defined(d = data[i2], i2, data)) === defined0) {
+        if (defined0 = !defined0) {
+          j = i2;
+          output.areaStart();
+          output.lineStart();
+        } else {
+          output.lineEnd();
+          output.lineStart();
+          for (k = i2 - 1; k >= j; --k) {
+            output.point(x0z[k], y0z[k]);
+          }
+          output.lineEnd();
+          output.areaEnd();
+        }
+      }
+      if (defined0) {
+        x0z[i2] = +x0(d, i2, data), y0z[i2] = +y0(d, i2, data);
+        output.point(x1 ? +x1(d, i2, data) : x0z[i2], y1 ? +y1(d, i2, data) : y0z[i2]);
+      }
+    }
+    if (buffer) return output = null, buffer + "" || null;
+  }
+  function arealine() {
+    return line_default().defined(defined).curve(curve).context(context);
+  }
+  area.x = function(_) {
+    return arguments.length ? (x0 = typeof _ === "function" ? _ : constant_default2(+_), x1 = null, area) : x0;
+  };
+  area.x0 = function(_) {
+    return arguments.length ? (x0 = typeof _ === "function" ? _ : constant_default2(+_), area) : x0;
+  };
+  area.x1 = function(_) {
+    return arguments.length ? (x1 = _ == null ? null : typeof _ === "function" ? _ : constant_default2(+_), area) : x1;
+  };
+  area.y = function(_) {
+    return arguments.length ? (y0 = typeof _ === "function" ? _ : constant_default2(+_), y1 = null, area) : y0;
+  };
+  area.y0 = function(_) {
+    return arguments.length ? (y0 = typeof _ === "function" ? _ : constant_default2(+_), area) : y0;
+  };
+  area.y1 = function(_) {
+    return arguments.length ? (y1 = _ == null ? null : typeof _ === "function" ? _ : constant_default2(+_), area) : y1;
+  };
+  area.lineX0 = area.lineY0 = function() {
+    return arealine().x(x0).y(y0);
+  };
+  area.lineY1 = function() {
+    return arealine().x(x0).y(y1);
+  };
+  area.lineX1 = function() {
+    return arealine().x(x1).y(y0);
+  };
+  area.defined = function(_) {
+    return arguments.length ? (defined = typeof _ === "function" ? _ : constant_default2(!!_), area) : defined;
+  };
+  area.curve = function(_) {
+    return arguments.length ? (curve = _, context != null && (output = curve(context)), area) : curve;
+  };
+  area.context = function(_) {
+    return arguments.length ? (_ == null ? context = output = null : output = curve(context = _), area) : context;
+  };
+  return area;
+}
+
+// node_modules/d3-shape/src/curve/monotone.js
+function sign(x2) {
+  return x2 < 0 ? -1 : 1;
+}
+function slope3(that, x2, y2) {
+  var h0 = that._x1 - that._x0, h1 = x2 - that._x1, s0 = (that._y1 - that._y0) / (h0 || h1 < 0 && -0), s1 = (y2 - that._y1) / (h1 || h0 < 0 && -0), p = (s0 * h1 + s1 * h0) / (h0 + h1);
+  return (sign(s0) + sign(s1)) * Math.min(Math.abs(s0), Math.abs(s1), 0.5 * Math.abs(p)) || 0;
+}
+function slope2(that, t4) {
+  var h = that._x1 - that._x0;
+  return h ? (3 * (that._y1 - that._y0) / h - t4) / 2 : t4;
+}
+function point2(that, t02, t12) {
+  var x0 = that._x0, y0 = that._y0, x1 = that._x1, y1 = that._y1, dx = (x1 - x0) / 3;
+  that._context.bezierCurveTo(x0 + dx, y0 + dx * t02, x1 - dx, y1 - dx * t12, x1, y1);
+}
+function MonotoneX(context) {
+  this._context = context;
+}
+MonotoneX.prototype = {
+  areaStart: function() {
+    this._line = 0;
+  },
+  areaEnd: function() {
+    this._line = NaN;
+  },
+  lineStart: function() {
+    this._x0 = this._x1 = this._y0 = this._y1 = this._t0 = NaN;
+    this._point = 0;
+  },
+  lineEnd: function() {
+    switch (this._point) {
+      case 2:
+        this._context.lineTo(this._x1, this._y1);
+        break;
+      case 3:
+        point2(this, this._t0, slope2(this, this._t0));
+        break;
+    }
+    if (this._line || this._line !== 0 && this._point === 1) this._context.closePath();
+    this._line = 1 - this._line;
+  },
+  point: function(x2, y2) {
+    var t12 = NaN;
+    x2 = +x2, y2 = +y2;
+    if (x2 === this._x1 && y2 === this._y1) return;
+    switch (this._point) {
+      case 0:
+        this._point = 1;
+        this._line ? this._context.lineTo(x2, y2) : this._context.moveTo(x2, y2);
+        break;
+      case 1:
+        this._point = 2;
+        break;
+      case 2:
+        this._point = 3;
+        point2(this, slope2(this, t12 = slope3(this, x2, y2)), t12);
+        break;
+      default:
+        point2(this, this._t0, t12 = slope3(this, x2, y2));
+        break;
+    }
+    this._x0 = this._x1, this._x1 = x2;
+    this._y0 = this._y1, this._y1 = y2;
+    this._t0 = t12;
+  }
+};
+function MonotoneY(context) {
+  this._context = new ReflectContext(context);
+}
+(MonotoneY.prototype = Object.create(MonotoneX.prototype)).point = function(x2, y2) {
+  MonotoneX.prototype.point.call(this, y2, x2);
+};
+function ReflectContext(context) {
+  this._context = context;
+}
+ReflectContext.prototype = {
+  moveTo: function(x2, y2) {
+    this._context.moveTo(y2, x2);
+  },
+  closePath: function() {
+    this._context.closePath();
+  },
+  lineTo: function(x2, y2) {
+    this._context.lineTo(y2, x2);
+  },
+  bezierCurveTo: function(x1, y1, x2, y2, x3, y3) {
+    this._context.bezierCurveTo(y1, x1, y2, x2, y3, x3);
+  }
+};
+function monotoneX(context) {
+  return new MonotoneX(context);
+}
+
+// node_modules/d3-shape/src/offset/none.js
+function none_default(series, order) {
+  if (!((n = series.length) > 1)) return;
+  for (var i2 = 1, j, s0, s1 = series[order[0]], n, m2 = s1.length; i2 < n; ++i2) {
+    s0 = s1, s1 = series[order[i2]];
+    for (j = 0; j < m2; ++j) {
+      s1[j][1] += s1[j][0] = isNaN(s0[j][1]) ? s0[j][0] : s0[j][1];
+    }
+  }
+}
+
+// node_modules/d3-shape/src/order/none.js
+function none_default2(series) {
+  var n = series.length, o = new Array(n);
+  while (--n >= 0) o[n] = n;
+  return o;
+}
+
+// node_modules/d3-shape/src/stack.js
+function stackValue(d, key) {
+  return d[key];
+}
+function stackSeries(key) {
+  const series = [];
+  series.key = key;
+  return series;
+}
+function stack_default() {
+  var keys = constant_default2([]), order = none_default2, offset = none_default, value = stackValue;
+  function stack2(data) {
+    var sz = Array.from(keys.apply(this, arguments), stackSeries), i2, n = sz.length, j = -1, oz;
+    for (const d of data) {
+      for (i2 = 0, ++j; i2 < n; ++i2) {
+        (sz[i2][j] = [0, +value(d, sz[i2].key, j, data)]).data = d;
+      }
+    }
+    for (i2 = 0, oz = array_default(order(sz)); i2 < n; ++i2) {
+      sz[oz[i2]].index = i2;
+    }
+    offset(sz, oz);
+    return sz;
+  }
+  stack2.keys = function(_) {
+    return arguments.length ? (keys = typeof _ === "function" ? _ : constant_default2(Array.from(_)), stack2) : keys;
+  };
+  stack2.value = function(_) {
+    return arguments.length ? (value = typeof _ === "function" ? _ : constant_default2(+_), stack2) : value;
+  };
+  stack2.order = function(_) {
+    return arguments.length ? (order = _ == null ? none_default2 : typeof _ === "function" ? _ : constant_default2(Array.from(_)), stack2) : order;
+  };
+  stack2.offset = function(_) {
+    return arguments.length ? (offset = _ == null ? none_default : _, stack2) : offset;
+  };
+  return stack2;
+}
+
+// node_modules/d3-shape/src/offset/diverging.js
+function diverging_default(series, order) {
+  if (!((n = series.length) > 0)) return;
+  for (var i2, j = 0, d, dy, yp, yn, n, m2 = series[order[0]].length; j < m2; ++j) {
+    for (yp = yn = 0, i2 = 0; i2 < n; ++i2) {
+      if ((dy = (d = series[order[i2]][j])[1] - d[0]) > 0) {
+        d[0] = yp, d[1] = yp += dy;
+      } else if (dy < 0) {
+        d[1] = yn, d[0] = yn += dy;
+      } else {
+        d[0] = 0, d[1] = dy;
+      }
+    }
+  }
+}
+
+// src/fava/charts/ModernChart.svelte
+var root_18 = template(`<span class="mode-switch svelte-1l6ui0a"><label class="button svelte-1l6ui0a"><input type="radio" value="stacked" class="svelte-1l6ui0a"> </label> <label class="button svelte-1l6ui0a"><input type="radio" value="single" class="svelte-1l6ui0a"> </label></span>`);
+var root_36 = template(`<span class="mode-switch svelte-1l6ui0a"><label class="button svelte-1l6ui0a"><input type="radio" value="line" class="svelte-1l6ui0a"> </label> <label class="button svelte-1l6ui0a"><input type="radio" value="area" class="svelte-1l6ui0a"> </label></span>`);
+var root_52 = ns_template(`<line class="grid-line svelte-1l6ui0a"></line><text class="y-tick svelte-1l6ui0a" dy="0.32em" text-anchor="end"> </text>`, 1);
+var root_63 = ns_template(`<text class="x-tick svelte-1l6ui0a" text-anchor="middle"> </text>`);
+var root_92 = ns_template(`<rect class="svelte-1l6ui0a"></rect>`);
+var root_123 = ns_template(`<rect class="svelte-1l6ui0a"></rect>`);
+var root_152 = ns_template(`<path class="area-fill svelte-1l6ui0a"></path>`);
+var root_142 = ns_template(`<g class="svelte-1l6ui0a"><!><path class="series-line svelte-1l6ui0a"></path></g>`);
+var root_172 = ns_template(`<circle class="hover-dot svelte-1l6ui0a"></circle>`);
+var root_162 = ns_template(`<line class="crosshair svelte-1l6ui0a"></line><!>`, 1);
+var root_42 = template(`<svg class="modern-chart svelte-1l6ui0a" role="img"><g><!><!><line class="zero-baseline svelte-1l6ui0a"></line><!><!></g></svg>`);
+var root_19 = template(`<span class="hover-row svelte-1l6ui0a"><i class="svelte-1l6ui0a"></i> </span>`);
+var root_182 = template(`<div class="hover-card svelte-1l6ui0a"><span class="hover-date svelte-1l6ui0a"> </span> <!></div>`);
+var root_202 = template(`<button type="button" class="legend svelte-1l6ui0a"><i class="svelte-1l6ui0a"></i><span class="svelte-1l6ui0a"> </span></button>`);
+var root4 = template(`<section class="modern-chart-card svelte-1l6ui0a"><header class="modern-chart-header svelte-1l6ui0a"><h3 class="svelte-1l6ui0a"> </h3> <!></header> <div class="modern-chart-wrap svelte-1l6ui0a"><!></div> <!> <p class="chart-meta svelte-1l6ui0a"> </p> <!></section>`);
+function ModernChart($$anchor, $$props) {
+  push($$props, false);
+  const catalog = mutable_state();
+  const isBar = mutable_state();
+  const visibleSeries = mutable_state();
+  const innerWidth = mutable_state();
+  const innerHeight2 = mutable_state();
+  const periods = mutable_state();
+  const hasMultipleSeries = mutable_state();
+  const showStacked = mutable_state();
+  const stackData = mutable_state();
+  const stackedLayers = mutable_state();
+  const yExtentValues = mutable_state();
+  const yMin = mutable_state();
+  const yMax = mutable_state();
+  const y2 = mutable_state();
+  const xBand = mutable_state();
+  const yTickValues = mutable_state();
+  const xTickPeriods = mutable_state();
+  const singleBars = mutable_state();
+  const hoverX = mutable_state();
+  let chart2 = prop($$props, "chart", 8);
+  let locale2 = prop($$props, "locale", 8, "en");
+  function label(key) {
+    return get(catalog)[key] ?? translations.en[key] ?? key;
+  }
+  function numberValue(value) {
+    if (value.display.includes("/")) {
+      const [numerator, denominator] = value.display.split("/").map(Number);
+      return denominator ? numerator / denominator : 0;
+    }
+    const parsed = Number(value.display);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  let barMode = mutable_state("stacked");
+  let lineMode = mutable_state("line");
+  try {
+    const storedBar = localStorage.getItem("bar-chart-mode");
+    if (storedBar === "stacked" || storedBar === "single") set(barMode, storedBar);
+    const storedLine = localStorage.getItem("line-chart-mode");
+    if (storedLine === "line" || storedLine === "area") set(lineMode, storedLine);
+  } catch {
+  }
+  function setBarMode(mode) {
+    set(barMode, mode);
+    try {
+      localStorage.setItem("bar-chart-mode", mode);
+    } catch {
+    }
+  }
+  function setLineMode(mode) {
+    set(lineMode, mode);
+    try {
+      localStorage.setItem("line-chart-mode", mode);
+    } catch {
+    }
+  }
+  let hidden = mutable_state([]);
+  function toggleSeries(seriesLabel) {
+    set(hidden, get(hidden).includes(seriesLabel) ? get(hidden).filter((v) => v !== seriesLabel) : [...get(hidden), seriesLabel]);
+  }
+  const paletteStart = "#2563eb";
+  const paletteEnd = "#16a34a";
+  function colorFor(seriesLabel) {
+    const index2 = Math.max(0, chart2().series.findIndex((s) => s.label === seriesLabel));
+    const total = Math.max(1, chart2().series.length);
+    return hcl_default(paletteStart, paletteEnd)(total === 1 ? 0 : index2 / (total - 1));
+  }
+  let containerEl = mutable_state();
+  let width = mutable_state(0);
+  const height = 280;
+  const margin = { top: 16, right: 24, bottom: 32, left: 60 };
+  let resizeObserver = null;
+  onMount(() => {
+    resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) set(width, Math.max(0, entry.contentRect.width));
+    });
+    if (get(containerEl)) resizeObserver.observe(get(containerEl));
+  });
+  onDestroy(() => {
+    resizeObserver?.disconnect();
+  });
+  const compactTick = format("~s");
+  function tickFormat2(value) {
+    try {
+      return compactTick(value);
+    } catch {
+      return String(value);
+    }
+  }
+  function xTickLabel(date2) {
+    if (chart2().interval === "year") return date2.slice(0, 4);
+    if (chart2().interval === "day") return date2;
+    return date2.slice(0, 7);
+  }
+  let hoverIndex = mutable_state(null);
+  let highlighted = mutable_state(null);
+  function onMove(event2) {
+    const svg2 = event2.currentTarget;
+    const rect = svg2.getBoundingClientRect();
+    if (!rect.width || !get(innerWidth)) return;
+    const ratio = (event2.clientX - rect.left - margin.left) / get(innerWidth);
+    if (ratio < -0.02 || ratio > 1.02) {
+      set(hoverIndex, null);
+      return;
+    }
+    set(hoverIndex, get(periods).length > 1 ? Math.max(0, Math.min(get(periods).length - 1, Math.round(ratio * (get(periods).length - 1)))) : 0);
+  }
+  function onLeave() {
+    set(hoverIndex, null);
+  }
+  function linePath(series) {
+    return line_default().x((_, i2) => (get(xBand)(get(periods)[i2]) ?? 0) + get(xBand).bandwidth() / 2).y((p) => get(y2)(numberValue(p.value))).curve(monotoneX)(series.points);
+  }
+  function areaPath(series) {
+    return area_default().x((_, i2) => (get(xBand)(get(periods)[i2]) ?? 0) + get(xBand).bandwidth() / 2).y0(Math.min(get(innerHeight2), get(y2)(0))).y1((p) => get(y2)(numberValue(p.value))).curve(monotoneX)(series.points);
+  }
+  legacy_pre_effect(
+    () => (translations, deep_read_state(locale2())),
+    () => {
+      set(catalog, translations[locale2() === "zh-CN" ? "zh-CN" : "en"]);
+    }
+  );
+  legacy_pre_effect(() => deep_read_state(chart2()), () => {
+    set(isBar, chart2().kind === "bar" || chart2().kind === "stacked-bar");
+  });
+  legacy_pre_effect(
+    () => (deep_read_state(chart2()), get(hidden)),
+    () => {
+      set(visibleSeries, chart2().series.filter((series) => !get(hidden).includes(series.label)));
+    }
+  );
+  legacy_pre_effect(() => get(width), () => {
+    set(innerWidth, Math.max(0, get(width) - margin.left - margin.right));
+  });
+  legacy_pre_effect(() => {
+  }, () => {
+    set(innerHeight2, height - margin.top - margin.bottom);
+  });
+  legacy_pre_effect(() => deep_read_state(chart2()), () => {
+    set(periods, chart2().series[0]?.points.map((p) => p.date) ?? []);
+  });
+  legacy_pre_effect(() => get(visibleSeries), () => {
+    set(hasMultipleSeries, get(visibleSeries).length > 1);
+  });
+  legacy_pre_effect(
+    () => (get(isBar), get(barMode), get(hasMultipleSeries)),
+    () => {
+      set(showStacked, get(isBar) && get(barMode) === "stacked" && get(hasMultipleSeries));
+    }
+  );
+  legacy_pre_effect(() => (get(periods), get(visibleSeries)), () => {
+    set(stackData, get(periods).map((_, i2) => {
+      const row = { __i: i2 };
+      for (const series of get(visibleSeries)) row[series.label] = numberValue(series.points[i2]?.value);
+      return row;
+    }));
+  });
+  legacy_pre_effect(
+    () => (get(showStacked), stack_default, get(visibleSeries), diverging_default, get(stackData)),
+    () => {
+      set(stackedLayers, get(showStacked) ? stack_default().keys(get(visibleSeries).map((s) => s.label)).value((d, key) => d[key] ?? 0).offset(diverging_default)(get(stackData)) : []);
+    }
+  );
+  legacy_pre_effect(
+    () => (get(showStacked), get(stackedLayers), get(visibleSeries)),
+    () => {
+      set(yExtentValues, get(showStacked) ? get(stackedLayers).flatMap((layer2) => layer2.map((seg) => [seg[0], seg[1]]).flat()) : get(visibleSeries).flatMap((s) => s.points.map((p) => numberValue(p.value))));
+    }
+  );
+  legacy_pre_effect(() => (min, get(yExtentValues)), () => {
+    set(yMin, min(get(yExtentValues).concat([0])) ?? 0);
+  });
+  legacy_pre_effect(() => (max, get(yExtentValues)), () => {
+    set(yMax, max(get(yExtentValues).concat([0])) ?? 0);
+  });
+  legacy_pre_effect(
+    () => (linear2, get(innerHeight2), get(yMin), get(yMax)),
+    () => {
+      set(y2, linear2([get(innerHeight2), 0]).domain([get(yMin), get(yMax)]).nice());
+    }
+  );
+  legacy_pre_effect(
+    () => (band, get(innerWidth), get(periods)),
+    () => {
+      set(xBand, band([0, get(innerWidth)]).domain(get(periods)).padding(0.2));
+    }
+  );
+  legacy_pre_effect(() => (get(innerHeight2), get(y2)), () => {
+    set(yTickValues, get(innerHeight2) > 0 ? get(y2).ticks(Math.max(2, Math.floor(get(innerHeight2) / 40))) : []);
+  });
+  legacy_pre_effect(() => (get(innerWidth), get(periods)), () => {
+    set(xTickPeriods, (() => {
+      if (!get(innerWidth) || !get(periods).length) return [];
+      const every = Math.max(1, Math.ceil(get(periods).length / Math.max(2, Math.floor(get(innerWidth) / 80))));
+      return get(periods).filter((_, i2) => i2 % every === 0 || i2 === get(periods).length - 1);
+    })());
+  });
+  legacy_pre_effect(
+    () => (get(isBar), get(showStacked), get(periods), get(xBand), get(visibleSeries), get(y2)),
+    () => {
+      set(singleBars, (() => {
+        if (!get(isBar) || get(showStacked) || !get(periods).length) return [];
+        const groupWidth = get(xBand).bandwidth();
+        const barWidth = Math.max(1, groupWidth / Math.max(1, get(visibleSeries).length));
+        return get(visibleSeries).flatMap((series, s) => series.points.map((point3, i2) => {
+          const value = numberValue(point3.value);
+          return {
+            seriesLabel: series.label,
+            date: point3.date,
+            display: point3.value.display,
+            value,
+            x: (get(xBand)(get(periods)[i2]) ?? 0) + s * barWidth,
+            w: Math.max(0.5, barWidth - 1),
+            y: get(y2)(Math.max(0, value)),
+            h: Math.abs(get(y2)(value) - get(y2)(0))
+          };
+        }));
+      })());
+    }
+  );
+  legacy_pre_effect(
+    () => (get(hoverIndex), get(xBand), get(periods), get(isBar)),
+    () => {
+      set(hoverX, get(hoverIndex) !== null ? (get(xBand)(get(periods)[get(hoverIndex)]) ?? 0) + (get(isBar) ? get(xBand).bandwidth() / 2 : 0) : 0);
+    }
+  );
+  legacy_pre_effect_reset();
+  init2();
+  var section = root4();
+  var header = child(section);
+  var h3 = child(header);
+  var text2 = child(h3, true);
+  reset(h3);
+  var node = sibling(h3, 2);
+  {
+    var consequent = ($$anchor2) => {
+      var span = root_18();
+      var label_1 = child(span);
+      var input = child(label_1);
+      remove_input_defaults(input);
+      var text_1 = sibling(input);
+      template_effect(() => set_text(text_1, ` ${label("stackedBars") ?? ""}`));
+      reset(label_1);
+      var label_2 = sibling(label_1, 2);
+      var input_1 = child(label_2);
+      remove_input_defaults(input_1);
+      var text_2 = sibling(input_1);
+      template_effect(() => set_text(text_2, ` ${label("singleBars") ?? ""}`));
+      reset(label_2);
+      reset(span);
+      template_effect(() => {
+        toggle_class(label_1, "muted", get(barMode) !== "stacked");
+        set_attribute(input, "name", "modern-bar-" + chart2().title);
+        set_checked(input, get(barMode) === "stacked");
+        toggle_class(label_2, "muted", get(barMode) !== "single");
+        set_attribute(input_1, "name", "modern-bar-" + chart2().title);
+        set_checked(input_1, get(barMode) === "single");
+      });
+      event("change", input, () => setBarMode("stacked"));
+      event("change", input_1, () => setBarMode("single"));
+      append($$anchor2, span);
+    };
+    var alternate = ($$anchor2) => {
+      var fragment = comment();
+      var node_1 = first_child(fragment);
+      {
+        var consequent_1 = ($$anchor3) => {
+          var span_1 = root_36();
+          var label_3 = child(span_1);
+          var input_2 = child(label_3);
+          remove_input_defaults(input_2);
+          var text_3 = sibling(input_2);
+          template_effect(() => set_text(text_3, ` ${label("lineChart") ?? ""}`));
+          reset(label_3);
+          var label_4 = sibling(label_3, 2);
+          var input_3 = child(label_4);
+          remove_input_defaults(input_3);
+          var text_4 = sibling(input_3);
+          template_effect(() => set_text(text_4, ` ${label("areaChart") ?? ""}`));
+          reset(label_4);
+          reset(span_1);
+          template_effect(() => {
+            toggle_class(label_3, "muted", get(lineMode) !== "line");
+            set_attribute(input_2, "name", "modern-line-" + chart2().title);
+            set_checked(input_2, get(lineMode) === "line");
+            toggle_class(label_4, "muted", get(lineMode) !== "area");
+            set_attribute(input_3, "name", "modern-line-" + chart2().title);
+            set_checked(input_3, get(lineMode) === "area");
+          });
+          event("change", input_2, () => setLineMode("line"));
+          event("change", input_3, () => setLineMode("area"));
+          append($$anchor3, span_1);
+        };
+        if_block(
+          node_1,
+          ($$render) => {
+            if (!get(isBar) && get(visibleSeries).length) $$render(consequent_1);
+          },
+          true
+        );
+      }
+      append($$anchor2, fragment);
+    };
+    if_block(node, ($$render) => {
+      if (get(isBar) && get(hasMultipleSeries)) $$render(consequent);
+      else $$render(alternate, false);
+    });
+  }
+  reset(header);
+  var div = sibling(header, 2);
+  var node_2 = child(div);
+  {
+    var consequent_6 = ($$anchor2) => {
+      var svg_1 = root_42();
+      set_attribute(svg_1, "height", height);
+      var g = child(svg_1);
+      var node_3 = child(g);
+      each(node_3, 1, () => get(yTickValues), (tick2) => tick2, ($$anchor3, tick2) => {
+        var fragment_1 = root_52();
+        var line_1 = first_child(fragment_1);
+        set_attribute(line_1, "x1", 0);
+        template_effect(() => set_attribute(line_1, "y1", get(y2)(get(tick2))));
+        template_effect(() => set_attribute(line_1, "y2", get(y2)(get(tick2))));
+        var text_5 = sibling(line_1);
+        set_attribute(text_5, "x", -8);
+        template_effect(() => set_attribute(text_5, "y", get(y2)(get(tick2))));
+        var text_6 = child(text_5, true);
+        template_effect(() => set_text(text_6, tickFormat2(get(tick2))));
+        reset(text_5);
+        template_effect(() => set_attribute(line_1, "x2", get(innerWidth)));
+        append($$anchor3, fragment_1);
+      });
+      var node_4 = sibling(node_3);
+      each(node_4, 1, () => get(xTickPeriods), (period) => period, ($$anchor3, period) => {
+        var text_7 = root_63();
+        template_effect(() => set_attribute(text_7, "x", (get(xBand)(get(period)) ?? 0) + get(xBand).bandwidth() / 2));
+        var text_8 = child(text_7, true);
+        template_effect(() => set_text(text_8, xTickLabel(get(period))));
+        reset(text_7);
+        template_effect(() => set_attribute(text_7, "y", get(innerHeight2) + 18));
+        append($$anchor3, text_7);
+      });
+      var line_2 = sibling(node_4);
+      set_attribute(line_2, "x1", 0);
+      template_effect(() => set_attribute(line_2, "y1", get(y2)(0)));
+      template_effect(() => set_attribute(line_2, "y2", get(y2)(0)));
+      var node_5 = sibling(line_2);
+      {
+        var consequent_2 = ($$anchor3) => {
+          var fragment_2 = comment();
+          var node_6 = first_child(fragment_2);
+          each(node_6, 1, () => get(stackedLayers), (layer2) => layer2.key, ($$anchor4, layer2) => {
+            var fragment_3 = comment();
+            var node_7 = first_child(fragment_3);
+            each(node_7, 1, () => get(layer2), index, ($$anchor5, segment, i2) => {
+              var rect_1 = root_92();
+              template_effect(() => set_attribute(rect_1, "x", get(xBand)(get(periods)[i2]) ?? 0));
+              template_effect(() => set_attribute(rect_1, "y", get(y2)(get(segment)[1])));
+              template_effect(() => set_attribute(rect_1, "width", Math.max(0.5, get(xBand).bandwidth() - 1)));
+              template_effect(() => set_attribute(rect_1, "height", Math.max(0, get(y2)(get(segment)[0]) - get(y2)(get(segment)[1]))));
+              template_effect(() => set_attribute(rect_1, "fill", colorFor(String(get(layer2).key))));
+              const class_directive = derived_safe_equal(() => get(highlighted) !== null && get(highlighted) !== String(get(layer2).key));
+              template_effect(() => toggle_class(rect_1, "dimmed", get(class_directive)));
+              event("mouseenter", rect_1, () => set(highlighted, String(get(layer2).key)));
+              event("mouseleave", rect_1, () => set(highlighted, null));
+              append($$anchor5, rect_1);
+            });
+            append($$anchor4, fragment_3);
+          });
+          append($$anchor3, fragment_2);
+        };
+        var alternate_2 = ($$anchor3) => {
+          var fragment_4 = comment();
+          var node_8 = first_child(fragment_4);
+          {
+            var consequent_3 = ($$anchor4) => {
+              var fragment_5 = comment();
+              var node_9 = first_child(fragment_5);
+              each(node_9, 1, () => get(singleBars), (bar) => bar.seriesLabel + "-" + bar.date, ($$anchor5, bar) => {
+                var rect_2 = root_123();
+                template_effect(() => set_attribute(rect_2, "fill", colorFor(get(bar).seriesLabel)));
+                template_effect(() => {
+                  set_attribute(rect_2, "x", get(bar).x);
+                  set_attribute(rect_2, "y", get(bar).y);
+                  set_attribute(rect_2, "width", get(bar).w);
+                  set_attribute(rect_2, "height", get(bar).h);
+                  toggle_class(rect_2, "dimmed", get(highlighted) !== null && get(highlighted) !== get(bar).seriesLabel);
+                });
+                event("mouseenter", rect_2, () => set(highlighted, get(bar).seriesLabel));
+                event("mouseleave", rect_2, () => set(highlighted, null));
+                append($$anchor5, rect_2);
+              });
+              append($$anchor4, fragment_5);
+            };
+            var alternate_1 = ($$anchor4) => {
+              var fragment_6 = comment();
+              var node_10 = first_child(fragment_6);
+              each(node_10, 1, () => get(visibleSeries), (series) => series.label, ($$anchor5, series) => {
+                var g_1 = root_142();
+                var node_11 = child(g_1);
+                {
+                  var consequent_4 = ($$anchor6) => {
+                    var path2 = root_152();
+                    template_effect(() => set_attribute(path2, "d", areaPath(get(series))));
+                    template_effect(() => set_attribute(path2, "fill", colorFor(get(series).label)));
+                    append($$anchor6, path2);
+                  };
+                  if_block(node_11, ($$render) => {
+                    if (get(lineMode) === "area") $$render(consequent_4);
+                  });
+                }
+                var path_1 = sibling(node_11);
+                template_effect(() => set_attribute(path_1, "d", linePath(get(series))));
+                template_effect(() => set_attribute(path_1, "stroke", colorFor(get(series).label)));
+                reset(g_1);
+                template_effect(() => toggle_class(g_1, "dimmed", get(highlighted) !== null && get(highlighted) !== get(series).label));
+                event("mouseenter", g_1, () => set(highlighted, get(series).label));
+                event("mouseleave", g_1, () => set(highlighted, null));
+                append($$anchor5, g_1);
+              });
+              append($$anchor4, fragment_6);
+            };
+            if_block(
+              node_8,
+              ($$render) => {
+                if (get(isBar)) $$render(consequent_3);
+                else $$render(alternate_1, false);
+              },
+              true
+            );
+          }
+          append($$anchor3, fragment_4);
+        };
+        if_block(node_5, ($$render) => {
+          if (get(isBar) && get(showStacked)) $$render(consequent_2);
+          else $$render(alternate_2, false);
+        });
+      }
+      var node_12 = sibling(node_5);
+      {
+        var consequent_5 = ($$anchor3) => {
+          var fragment_7 = root_162();
+          var line_3 = first_child(fragment_7);
+          set_attribute(line_3, "y1", 0);
+          var node_13 = sibling(line_3);
+          each(node_13, 1, () => get(visibleSeries), (series) => series.label, ($$anchor4, series) => {
+            var circle = root_172();
+            template_effect(() => set_attribute(circle, "cy", get(y2)(numberValue(get(series).points[get(hoverIndex)]?.value))));
+            set_attribute(circle, "r", 3.5);
+            template_effect(() => set_attribute(circle, "fill", colorFor(get(series).label)));
+            template_effect(() => set_attribute(circle, "cx", get(hoverX)));
+            append($$anchor4, circle);
+          });
+          template_effect(() => {
+            set_attribute(line_3, "x1", get(hoverX));
+            set_attribute(line_3, "x2", get(hoverX));
+            set_attribute(line_3, "y2", get(innerHeight2));
+          });
+          append($$anchor3, fragment_7);
+        };
+        if_block(node_12, ($$render) => {
+          if (get(hoverIndex) !== null) $$render(consequent_5);
+        });
+      }
+      reset(g);
+      reset(svg_1);
+      template_effect(() => {
+        set_attribute(svg_1, "viewBox", `0 0 ${get(width)} ${height}`);
+        set_attribute(svg_1, "width", get(width));
+        set_attribute(svg_1, "aria-label", chart2().title);
+        set_attribute(g, "transform", `translate(${margin.left},${margin.top})`);
+        set_attribute(line_2, "x2", get(innerWidth));
+      });
+      event("mousemove", svg_1, onMove);
+      event("mouseleave", svg_1, onLeave);
+      append($$anchor2, svg_1);
+    };
+    if_block(node_2, ($$render) => {
+      if (get(width) > 0) $$render(consequent_6);
+    });
+  }
+  reset(div);
+  bind_this(div, ($$value) => set(containerEl, $$value), () => get(containerEl));
+  var node_14 = sibling(div, 2);
+  {
+    var consequent_7 = ($$anchor2) => {
+      var div_1 = root_182();
+      var span_2 = child(div_1);
+      var text_9 = child(span_2, true);
+      reset(span_2);
+      var node_15 = sibling(span_2, 2);
+      each(node_15, 1, () => get(visibleSeries), (series) => series.label, ($$anchor3, series) => {
+        var span_3 = root_19();
+        var i_1 = child(span_3);
+        const style_derived = derived_safe_equal(() => `background:${colorFor(get(series).label)}`);
+        var text_10 = sibling(i_1);
+        template_effect(() => set_text(text_10, `${get(series).label ?? ""}: ${formatAmount(get(series).points[get(hoverIndex)]?.value) ?? ""}${(chart2().currency ? ` ${chart2().currency}` : "") ?? ""}`));
+        reset(span_3);
+        template_effect(() => set_attribute(i_1, "style", get(style_derived)));
+        append($$anchor3, span_3);
+      });
+      reset(div_1);
+      template_effect(() => set_text(text_9, get(periods)[get(hoverIndex)]));
+      append($$anchor2, div_1);
+    };
+    if_block(node_14, ($$render) => {
+      if (get(hoverIndex) !== null) $$render(consequent_7);
+    });
+  }
+  var p_1 = sibling(node_14, 2);
+  var text_11 = child(p_1);
+  reset(p_1);
+  var node_16 = sibling(p_1, 2);
+  each(node_16, 1, () => chart2().series, (series) => series.label, ($$anchor2, series) => {
+    var button = root_202();
+    template_effect(() => set_attribute(button, "aria-pressed", !get(hidden).includes(get(series).label)));
+    const class_directive_1 = derived_safe_equal(() => get(hidden).includes(get(series).label));
+    var i_2 = child(button);
+    const style_derived_1 = derived_safe_equal(() => `background:${colorFor(get(series).label)}`);
+    var span_4 = sibling(i_2);
+    var text_12 = child(span_4, true);
+    reset(span_4);
+    reset(button);
+    template_effect(() => {
+      toggle_class(button, "inactive", get(class_directive_1));
+      set_attribute(i_2, "style", get(style_derived_1));
+      set_text(text_12, get(series).label);
+    });
+    event("click", button, () => toggleSeries(get(series).label));
+    append($$anchor2, button);
+  });
+  reset(section);
+  template_effect(() => {
+    set_attribute(section, "aria-label", chart2().title);
+    set_text(text2, chart2().title);
+    set_text(text_11, `${chart2().interval ?? ""} \xB7 ${chart2().valuation ?? ""}${(chart2().currency ? ` \xB7 ${chart2().currency}` : "") ?? ""}`);
+  });
+  append($$anchor, section);
+  pop();
+}
+
+// src/fava/charts/ChartView.svelte
+var root_110 = template(`<div class="chart-layer-bar svelte-11v9x40"><button type="button" class="chart-layer-toggle svelte-11v9x40"> </button></div>`);
+var root5 = template(`<!> <!>`, 1);
+function ChartView($$anchor, $$props) {
+  push($$props, false);
+  const catalog = mutable_state();
+  const isTimeSeries = mutable_state();
+  const useModern = mutable_state();
+  let chart2 = prop($$props, "chart", 8);
+  let locale2 = prop($$props, "locale", 8, "en");
+  let chartLayer = prop($$props, "chartLayer", 8, "parity");
+  let onChartLayer = prop($$props, "onChartLayer", 8, () => {
+  });
+  function label(key) {
+    return get(catalog)[key] ?? translations.en[key] ?? key;
+  }
+  legacy_pre_effect(
+    () => (translations, deep_read_state(locale2())),
+    () => {
+      set(catalog, translations[locale2() === "zh-CN" ? "zh-CN" : "en"]);
+    }
+  );
+  legacy_pre_effect(() => deep_read_state(chart2()), () => {
+    set(isTimeSeries, chart2().kind === "bar" || chart2().kind === "stacked-bar" || chart2().kind === "line");
+  });
+  legacy_pre_effect(
+    () => (deep_read_state(chartLayer()), get(isTimeSeries)),
+    () => {
+      set(useModern, chartLayer() === "modern" && get(isTimeSeries));
+    }
+  );
+  legacy_pre_effect_reset();
+  init2();
+  var fragment = root5();
+  var node = first_child(fragment);
+  {
+    var consequent = ($$anchor2) => {
+      var div = root_110();
+      var button = child(div);
+      template_effect(() => set_attribute(button, "title", get(useModern) ? label("modernChartLayer") : label("parityChartLayer")));
+      var text2 = child(button, true);
+      template_effect(() => set_text(text2, label(get(useModern) ? "useParityChart" : "useModernChart")));
+      reset(button);
+      reset(div);
+      template_effect(() => {
+        set_attribute(button, "aria-pressed", get(useModern));
+        toggle_class(button, "active", get(useModern));
+      });
+      event("click", button, () => onChartLayer()(get(useModern) ? "" : "modern"));
+      append($$anchor2, div);
+    };
+    if_block(node, ($$render) => {
+      if (get(isTimeSeries)) $$render(consequent);
+    });
+  }
+  var node_1 = sibling(node, 2);
+  {
+    var consequent_1 = ($$anchor2) => {
+      ModernChart($$anchor2, {
+        get chart() {
+          return chart2();
+        },
+        get locale() {
+          return locale2();
+        }
+      });
+    };
+    var alternate = ($$anchor2) => {
+      ReportChart($$anchor2, {
+        get chart() {
+          return chart2();
+        },
+        get locale() {
+          return locale2();
+        }
+      });
+    };
+    if_block(node_1, ($$render) => {
+      if (get(useModern)) $$render(consequent_1);
+      else $$render(alternate, false);
+    });
+  }
+  append($$anchor, fragment);
+  pop();
+}
+
 // src/fava/reports/GenericReport.svelte
-var root_18 = template(`<h2> </h2>`);
+var root_111 = template(`<h2> </h2>`);
 var root_27 = template(`<a class="button">Export CSV</a>`);
 var on_click = (_, toggleSort, column) => toggleSort(get(column));
-var root_52 = template(`<span aria-hidden="true"> </span>`);
-var root_42 = template(`<th scope="col" class="svelte-8vbrz2"><button type="button" class="sort-toggle svelte-8vbrz2"> <!></button></th>`);
+var root_53 = template(`<span aria-hidden="true"> </span>`);
+var root_43 = template(`<th scope="col" class="svelte-8vbrz2"><button type="button" class="sort-toggle svelte-8vbrz2"> <!></button></th>`);
 var root_8 = template(`<a> </a>`);
 var root_102 = template(`<a> </a>`);
 var root_72 = template(`<td class="svelte-8vbrz2"><!></td>`);
-var root_63 = template(`<tr></tr>`);
-var root_123 = template(`<tr><td>No rows.</td></tr>`);
-var root4 = template(`<div class="headerline"><!> <span class="muted svelte-8vbrz2"> </span> <!></div> <!> <div class="table-scroll svelte-8vbrz2"><table class="report-table svelte-8vbrz2"><thead><tr></tr></thead><tbody></tbody></table></div>`, 1);
+var root_64 = template(`<tr></tr>`);
+var root_124 = template(`<tr><td>No rows.</td></tr>`);
+var root6 = template(`<div class="headerline"><!> <span class="muted svelte-8vbrz2"> </span> <!></div> <!> <div class="table-scroll svelte-8vbrz2"><table class="report-table svelte-8vbrz2"><thead><tr></tr></thead><tbody></tbody></table></div>`, 1);
 function GenericReport($$anchor, $$props) {
   push($$props, false);
   const sortedRows = mutable_state();
   let report = prop($$props, "report", 8);
   let title = prop($$props, "title", 8);
   let route = prop($$props, "route", 8, "");
-  let locale = prop($$props, "locale", 8, "en");
+  let locale2 = prop($$props, "locale", 8, "en");
   let renderCommas = prop($$props, "renderCommas", 8, false);
   function display(value) {
     if (value && typeof value === "object" && "display" in value && typeof value.display === "string") {
@@ -6778,12 +9276,12 @@ function GenericReport($$anchor, $$props) {
   );
   legacy_pre_effect_reset();
   init2();
-  var fragment = root4();
+  var fragment = root6();
   var div = first_child(fragment);
   var node = child(div);
   {
     var consequent = ($$anchor2) => {
-      var h2 = root_18();
+      var h2 = root_111();
       var text2 = child(h2, true);
       reset(h2);
       template_effect(() => set_text(text2, title()));
@@ -6816,7 +9314,7 @@ function GenericReport($$anchor, $$props) {
           return report().chart;
         },
         get locale() {
-          return locale();
+          return locale2();
         }
       });
     };
@@ -6829,7 +9327,7 @@ function GenericReport($$anchor, $$props) {
   var thead = child(table);
   var tr = child(thead);
   each(tr, 5, () => report().columns, (column) => column, ($$anchor2, column) => {
-    var th = root_42();
+    var th = root_43();
     const class_directive = derived_safe_equal(() => report().rows.some((row) => isNumberLike(row[get(column)])));
     var button = child(th);
     button.__click = [on_click, toggleSort, column];
@@ -6837,7 +9335,7 @@ function GenericReport($$anchor, $$props) {
     var node_3 = sibling(text_2);
     {
       var consequent_3 = ($$anchor3) => {
-        var span_1 = root_52();
+        var span_1 = root_53();
         var text_3 = child(span_1, true);
         reset(span_1);
         template_effect(() => set_text(text_3, get(sortDirection) === "ascending" ? " \u25B2" : " \u25BC"));
@@ -6865,7 +9363,7 @@ function GenericReport($$anchor, $$props) {
     () => get(sortedRows),
     index,
     ($$anchor2, row) => {
-      var tr_1 = root_63();
+      var tr_1 = root_64();
       each(tr_1, 5, () => report().columns, (column) => column, ($$anchor3, column) => {
         var td = root_72();
         const class_directive_1 = derived_safe_equal(() => isNumberLike(get(row)[get(column)]));
@@ -6920,7 +9418,7 @@ function GenericReport($$anchor, $$props) {
       append($$anchor2, tr_1);
     },
     ($$anchor2) => {
-      var tr_2 = root_123();
+      var tr_2 = root_124();
       var td_1 = child(tr_2);
       reset(tr_2);
       template_effect(() => set_attribute(td_1, "colspan", report().columns.length));
@@ -7001,18 +9499,18 @@ var StringColumn = class {
 
 // src/fava/reports/JournalReport.svelte
 var on_click2 = (_, toggleChip, chip) => toggleChip(get(chip));
-var root_19 = template(`<button type="button"> </button>`);
+var root_112 = template(`<button type="button"> </button>`);
 var on_click_1 = (__1, setSortColumn) => setSortColumn("date");
 var on_click_2 = (__2, setSortColumn) => setSortColumn("flag");
 var on_click_3 = (__3, setSortColumn) => setSortColumn("narration");
-var root_36 = template(`<a> </a>`);
-var root_43 = template(`<strong class="payee"> </strong><span class="separator"></span>`, 1);
+var root_37 = template(`<a> </a>`);
+var root_44 = template(`<strong class="payee"> </strong><span class="separator"></span>`, 1);
 var root_73 = template(`<a> </a>`);
 var root_82 = template(`<span class="custom-value"> </span>`);
-var root_53 = template(`<strong class="custom-type"> </strong> <!>`, 1);
+var root_54 = template(`<strong class="custom-type"> </strong> <!>`, 1);
 var root_103 = template(`<span class="tag"> </span>`);
-var root_112 = template(`<span class="link"> </span>`);
-var root_124 = template(`<span class="filename"> </span>`);
+var root_113 = template(`<span class="link"> </span>`);
+var root_125 = template(`<span class="filename"> </span>`);
 var root_132 = template(`<a class="context-link svelte-osbwps" title="Context" aria-label="Context">\u22EE</a>`);
 var on_click_4 = (__4, toggleEntry, entry) => toggleEntry(get(entry));
 var on_keydown = (event2, toggleEntry, entry) => {
@@ -7021,13 +9519,13 @@ var on_keydown = (event2, toggleEntry, entry) => {
     toggleEntry(get(entry));
   }
 };
-var root_152 = template(`<span class="metadata-indicator"> </span>`);
-var root_172 = template(`<span class="metadata-indicator"> </span>`);
-var root_162 = template(`<span></span> <!>`, 1);
-var root_142 = template(`<span class="indicators" role="button" tabindex="0" title="Toggle postings"><!> <!></span>`);
+var root_153 = template(`<span class="metadata-indicator"> </span>`);
+var root_173 = template(`<span class="metadata-indicator"> </span>`);
+var root_163 = template(`<span></span> <!>`, 1);
+var root_143 = template(`<span class="indicators" role="button" tabindex="0" title="Toggle postings"><!> <!></span>`);
 var root_192 = template(`<span class="metadata-indicator"> </span>`);
-var root_182 = template(`<span class="indicators"></span>`);
-var root_202 = template(`<span class="num bal"> </span> <span class="change num"></span> <span class="change num"> </span>`, 1);
+var root_183 = template(`<span class="indicators"></span>`);
+var root_203 = template(`<span class="num bal"> </span> <span class="change num"></span> <span class="change num"> </span>`, 1);
 var root_223 = template(`<span class="num"></span> <span class="num"></span> <span class="num"> </span>`, 1);
 var root_242 = template(`<span class="num"></span> <span class="num"></span> <span class="num change"> </span>`, 1);
 var root_282 = template(`<dt> </dt> <dd> </dd>`, 1);
@@ -7038,7 +9536,7 @@ var root_312 = template(`<a class="filename" data-remote="" target="_blank" rel=
 var root_302 = template(`<dt> </dt> <dd><!></dd>`, 1);
 var root_292 = template(`<dl class="metadata"></dl>`);
 var root_210 = template(`<li><p><span class="datecell"> </span> <span class="flag"> </span> <span class="description"><!> <!> <!> <!> <!> <!> <!></span> <!> <!></p> <!> <!></li>`);
-var root5 = template(`<form class="flex-row journal-chips svelte-osbwps"><!> <span class="spacer svelte-osbwps"></span> <a class="button" href="/api/v1/reports/journal?format=csv">Export CSV</a></form> <ol><li class="head svelte-osbwps"><p><button type="button" class="datecell unset svelte-osbwps">Date</button> <button type="button" class="flag unset svelte-osbwps">F</button> <button type="button" class="description unset svelte-osbwps">Payee/Narration</button> <span class="num">Units</span> <span class="num">Cost</span> <span class="num"> </span></p></li> <!></ol>`, 1);
+var root7 = template(`<form class="flex-row journal-chips svelte-osbwps"><!> <span class="spacer svelte-osbwps"></span> <a class="button" href="/api/v1/reports/journal?format=csv">Export CSV</a></form> <ol><li class="head svelte-osbwps"><p><button type="button" class="datecell unset svelte-osbwps">Date</button> <button type="button" class="flag unset svelte-osbwps">F</button> <button type="button" class="description unset svelte-osbwps">Payee/Narration</button> <span class="num">Units</span> <span class="num">Cost</span> <span class="num"> </span></p></li> <!></ol>`, 1);
 function JournalReport($$anchor, $$props) {
   push($$props, false);
   const listClasses = mutable_state();
@@ -7271,11 +9769,11 @@ function JournalReport($$anchor, $$props) {
   );
   legacy_pre_effect_reset();
   init2();
-  var fragment = root5();
+  var fragment = root7();
   var form = first_child(fragment);
   var node = child(form);
   each(node, 1, () => chips, (chip) => chip.cls, ($$anchor2, chip) => {
-    var button = root_19();
+    var button = root_112();
     template_effect(() => set_attribute(button, "aria-pressed", get(active).has(get(chip).cls)));
     button.__click = [on_click2, toggleChip, chip];
     const class_directive = derived_safe_equal(() => !get(active).has(get(chip).cls));
@@ -7323,7 +9821,7 @@ function JournalReport($$anchor, $$props) {
     var node_2 = child(span_3);
     {
       var consequent = ($$anchor3) => {
-        var a = root_36();
+        var a = root_37();
         template_effect(() => set_attribute(a, "href", accountHref(get(entry).account)));
         var text_4 = child(a, true);
         reset(a);
@@ -7337,7 +9835,7 @@ function JournalReport($$anchor, $$props) {
     var node_3 = sibling(node_2, 2);
     {
       var consequent_1 = ($$anchor3) => {
-        var fragment_1 = root_43();
+        var fragment_1 = root_44();
         var strong = first_child(fragment_1);
         var text_5 = child(strong, true);
         reset(strong);
@@ -7352,7 +9850,7 @@ function JournalReport($$anchor, $$props) {
     var node_4 = sibling(node_3, 2);
     {
       var consequent_3 = ($$anchor3) => {
-        var fragment_2 = root_53();
+        var fragment_2 = root_54();
         var strong_1 = first_child(fragment_2);
         var text_6 = child(strong_1, true);
         reset(strong_1);
@@ -7406,7 +9904,7 @@ function JournalReport($$anchor, $$props) {
     });
     var node_8 = sibling(node_7, 2);
     each(node_8, 1, () => get(entry).links ?? [], (link2) => link2, ($$anchor3, link2) => {
-      var span_6 = root_112();
+      var span_6 = root_113();
       var text_11 = child(span_6);
       reset(span_6);
       template_effect(() => set_text(text_11, `^${get(link2) ?? ""}`));
@@ -7414,7 +9912,7 @@ function JournalReport($$anchor, $$props) {
     });
     var node_9 = sibling(node_8, 2);
     each(node_9, 1, () => get(entry).filenames ?? [], (filename) => filename, ($$anchor3, filename) => {
-      var span_7 = root_124();
+      var span_7 = root_125();
       var text_12 = child(span_7, true);
       reset(span_7);
       template_effect(() => set_text(text_12, get(filename)));
@@ -7435,12 +9933,12 @@ function JournalReport($$anchor, $$props) {
     var node_11 = sibling(span_3, 2);
     {
       var consequent_5 = ($$anchor3) => {
-        var span_8 = root_142();
+        var span_8 = root_143();
         span_8.__click = [on_click_4, toggleEntry, entry];
         span_8.__keydown = [on_keydown, toggleEntry, entry];
         var node_12 = child(span_8);
         each(node_12, 1, () => get(entry).metadata ?? [], (meta2) => meta2.key, ($$anchor4, meta2) => {
-          var span_9 = root_152();
+          var span_9 = root_153();
           var text_13 = child(span_9, true);
           template_effect(() => set_text(text_13, get(meta2).key.slice(0, 2)));
           reset(span_9);
@@ -7449,12 +9947,12 @@ function JournalReport($$anchor, $$props) {
         });
         var node_13 = sibling(node_12, 2);
         each(node_13, 1, () => get(entry).postings, index, ($$anchor4, posting) => {
-          var fragment_5 = root_162();
+          var fragment_5 = root_163();
           var span_10 = first_child(fragment_5);
           const class_derived_1 = derived_safe_equal(() => `${postingFlagClass(get(posting).flag) ?? ""} svelte-osbwps`);
           var node_14 = sibling(span_10, 2);
           each(node_14, 1, () => get(posting).metadata ?? [], (meta2) => meta2.key, ($$anchor5, meta2) => {
-            var span_11 = root_172();
+            var span_11 = root_173();
             var text_14 = child(span_11, true);
             template_effect(() => set_text(text_14, get(meta2).key.slice(0, 2)));
             reset(span_11);
@@ -7468,7 +9966,7 @@ function JournalReport($$anchor, $$props) {
         append($$anchor3, span_8);
       };
       var alternate_2 = ($$anchor3) => {
-        var span_12 = root_182();
+        var span_12 = root_183();
         each(span_12, 5, () => get(entry).metadata ?? [], (meta2) => meta2.key, ($$anchor4, meta2) => {
           var span_13 = root_192();
           var text_15 = child(span_13, true);
@@ -7488,7 +9986,7 @@ function JournalReport($$anchor, $$props) {
     var node_15 = sibling(node_11, 2);
     {
       var consequent_6 = ($$anchor3) => {
-        var fragment_6 = root_202();
+        var fragment_6 = root_203();
         var span_14 = first_child(fragment_6);
         var text_16 = child(span_14, true);
         template_effect(() => set_text(text_16, amountText(get(entry).amount)));
@@ -7688,16 +10186,16 @@ function JournalReport($$anchor, $$props) {
 delegate(["click", "keydown"]);
 
 // src/fava/reports/AccountReport.svelte
-var root_110 = template(`<section class="state-panel error-panel" role="alert"> </section>`);
-var root_44 = template(`<span class="sep svelte-9toiq4">:</span>`);
-var root_37 = template(`<a class="svelte-9toiq4"> </a><!>`, 1);
-var root_54 = template(`<span></span>`);
+var root_114 = template(`<section class="state-panel error-panel" role="alert"> </section>`);
+var root_45 = template(`<span class="sep svelte-9toiq4">:</span>`);
+var root_38 = template(`<a class="svelte-9toiq4"> </a><!>`, 1);
+var root_55 = template(`<span></span>`);
 var root_74 = template(`<a class="svelte-9toiq4"> </a>`);
-var root_64 = template(`<span class="last-activity svelte-9toiq4"> <!>)</span>`);
-var root_92 = template(`<a class="svelte-9toiq4"> </a>`);
-var root_113 = template(`<a class="svelte-9toiq4"> </a>`);
+var root_65 = template(`<span class="last-activity svelte-9toiq4"> <!>)</span>`);
+var root_93 = template(`<a class="svelte-9toiq4"> </a>`);
+var root_115 = template(`<a class="svelte-9toiq4"> </a>`);
 var root_133 = template(`<a class="svelte-9toiq4"> </a>`);
-var root_183 = template(`<!> <!>`, 1);
+var root_184 = template(`<!> <!>`, 1);
 var root_211 = template(`<div class="headerline"><h2 class="account-breadcrumb svelte-9toiq4"><span class="droptarget svelte-9toiq4"><!><!><!></span></h2></div> <div class="headerline sections svelte-9toiq4"><h3 class="svelte-9toiq4"><!></h3> <h3 class="svelte-9toiq4"><!></h3> <h3 class="svelte-9toiq4"><!></h3></div> <!> <!>`, 1);
 function AccountReport($$anchor, $$props) {
   push($$props, false);
@@ -7712,17 +10210,20 @@ function AccountReport($$anchor, $$props) {
   const lastEntryHash = mutable_state();
   let adapter = prop($$props, "adapter", 8);
   let query = prop($$props, "query", 8);
-  let locale = prop($$props, "locale", 8, "en");
+  let locale2 = prop($$props, "locale", 8, "en");
   let renderCommas = prop($$props, "renderCommas", 8, false);
   let accountDetails = prop($$props, "accountDetails", 24, () => ({}));
-  function t2(key) {
-    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+  let chartLayer = prop($$props, "chartLayer", 8, "parity");
+  let onChartLayer = prop($$props, "onChartLayer", 8, () => {
+  });
+  function t4(key) {
+    const catalog = translations[locale2() === "zh-CN" ? "zh-CN" : "en"];
     return catalog[key] || key;
   }
   function intervalLabelFor(value) {
-    if (value === "quarter") return t2("quarterly");
-    if (value === "year") return t2("yearly");
-    return t2("monthly");
+    if (value === "quarter") return t4("quarterly");
+    if (value === "year") return t4("yearly");
+    return t4("monthly");
   }
   function ancestors(name3) {
     const result = [];
@@ -7820,7 +10321,7 @@ function AccountReport($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent = ($$anchor2) => {
-      var section = root_110();
+      var section = root_114();
       var text2 = child(section, true);
       reset(section);
       template_effect(() => set_text(text2, get(error2)));
@@ -7833,7 +10334,7 @@ function AccountReport($$anchor, $$props) {
       var span = child(h2);
       var node_1 = child(span);
       each(node_1, 3, () => get(parts2), (name3) => name3, ($$anchor3, name3, index2) => {
-        var fragment_2 = root_37();
+        var fragment_2 = root_38();
         var a = first_child(fragment_2);
         template_effect(() => set_attribute(a, "href", accountHref(get(name3))));
         var text_1 = child(a, true);
@@ -7842,7 +10343,7 @@ function AccountReport($$anchor, $$props) {
         var node_2 = sibling(a);
         {
           var consequent_1 = ($$anchor4) => {
-            var span_1 = root_44();
+            var span_1 = root_45();
             append($$anchor4, span_1);
           };
           if_block(node_2, ($$render) => {
@@ -7855,7 +10356,7 @@ function AccountReport($$anchor, $$props) {
       var node_3 = sibling(node_1);
       {
         var consequent_2 = ($$anchor3) => {
-          var span_2 = root_54();
+          var span_2 = root_55();
           template_effect(() => {
             set_class(span_2, `status-indicator status-${get(uptodate) ?? ""} svelte-9toiq4`);
             set_attribute(span_2, "title", get(statusTitle));
@@ -7869,9 +10370,9 @@ function AccountReport($$anchor, $$props) {
       var node_4 = sibling(node_3);
       {
         var consequent_4 = ($$anchor3) => {
-          var span_3 = root_64();
+          var span_3 = root_65();
           var text_2 = child(span_3);
-          template_effect(() => set_text(text_2, `(${t2("lastEntry") ?? ""} `));
+          template_effect(() => set_text(text_2, `(${t4("lastEntry") ?? ""} `));
           var node_5 = sibling(text_2);
           {
             var consequent_3 = ($$anchor4) => {
@@ -7910,16 +10411,16 @@ function AccountReport($$anchor, $$props) {
       var node_6 = child(h3);
       {
         var consequent_5 = ($$anchor3) => {
-          var a_2 = root_92();
+          var a_2 = root_93();
           template_effect(() => set_attribute(a_2, "href", sectionHref("")));
           var text_5 = child(a_2, true);
-          template_effect(() => set_text(text_5, t2("accountBalance")));
+          template_effect(() => set_text(text_5, t4("accountBalance")));
           reset(a_2);
           append($$anchor3, a_2);
         };
         var alternate_1 = ($$anchor3) => {
           var text_6 = text();
-          template_effect(() => set_text(text_6, t2("accountBalance")));
+          template_effect(() => set_text(text_6, t4("accountBalance")));
           append($$anchor3, text_6);
         };
         if_block(node_6, ($$render) => {
@@ -7932,16 +10433,16 @@ function AccountReport($$anchor, $$props) {
       var node_7 = child(h3_1);
       {
         var consequent_6 = ($$anchor3) => {
-          var a_3 = root_113();
+          var a_3 = root_115();
           template_effect(() => set_attribute(a_3, "href", sectionHref("changes")));
           var text_7 = child(a_3);
-          template_effect(() => set_text(text_7, `${t2("changes") ?? ""} (${get(intervalLabel) ?? ""})`));
+          template_effect(() => set_text(text_7, `${t4("changes") ?? ""} (${get(intervalLabel) ?? ""})`));
           reset(a_3);
           append($$anchor3, a_3);
         };
         var alternate_2 = ($$anchor3) => {
           var text_8 = text();
-          template_effect(() => set_text(text_8, `${t2("changes") ?? ""} (${get(intervalLabel) ?? ""})`));
+          template_effect(() => set_text(text_8, `${t4("changes") ?? ""} (${get(intervalLabel) ?? ""})`));
           append($$anchor3, text_8);
         };
         if_block(node_7, ($$render) => {
@@ -7957,13 +10458,13 @@ function AccountReport($$anchor, $$props) {
           var a_4 = root_133();
           template_effect(() => set_attribute(a_4, "href", sectionHref("balances")));
           var text_9 = child(a_4);
-          template_effect(() => set_text(text_9, `${t2("balances") ?? ""} (${get(intervalLabel) ?? ""})`));
+          template_effect(() => set_text(text_9, `${t4("balances") ?? ""} (${get(intervalLabel) ?? ""})`));
           reset(a_4);
           append($$anchor3, a_4);
         };
         var alternate_3 = ($$anchor3) => {
           var text_10 = text();
-          template_effect(() => set_text(text_10, `${t2("balances") ?? ""} (${get(intervalLabel) ?? ""})`));
+          template_effect(() => set_text(text_10, `${t4("balances") ?? ""} (${get(intervalLabel) ?? ""})`));
           append($$anchor3, text_10);
         };
         if_block(node_8, ($$render) => {
@@ -7980,7 +10481,7 @@ function AccountReport($$anchor, $$props) {
           var node_10 = first_child(fragment_7);
           {
             var consequent_8 = ($$anchor4) => {
-              var title = derived_safe_equal(() => `${get(reportType) === "changes" ? t2("changes") : t2("balances")} (${get(intervalLabel)})`);
+              var title = derived_safe_equal(() => `${get(reportType) === "changes" ? t4("changes") : t4("balances")} (${get(intervalLabel)})`);
               GenericReport($$anchor4, {
                 get report() {
                   return get(intervals);
@@ -7989,7 +10490,7 @@ function AccountReport($$anchor, $$props) {
                   return get(title);
                 },
                 get locale() {
-                  return locale();
+                  return locale2();
                 },
                 get renderCommas() {
                   return renderCommas();
@@ -8007,16 +10508,22 @@ function AccountReport($$anchor, $$props) {
           var node_11 = first_child(fragment_9);
           {
             var consequent_11 = ($$anchor4) => {
-              var fragment_10 = root_183();
+              var fragment_10 = root_184();
               var node_12 = first_child(fragment_10);
               {
                 var consequent_10 = ($$anchor5) => {
-                  ReportChart($$anchor5, {
+                  ChartView($$anchor5, {
                     get chart() {
                       return get(chart2);
                     },
                     get locale() {
-                      return locale();
+                      return locale2();
+                    },
+                    get chartLayer() {
+                      return chartLayer();
+                    },
+                    get onChartLayer() {
+                      return onChartLayer();
                     }
                   });
                 };
@@ -8031,7 +10538,7 @@ function AccountReport($$anchor, $$props) {
                 },
                 title: "Balance",
                 get locale() {
-                  return locale();
+                  return locale2();
                 },
                 get renderCommas() {
                   return renderCommas();
@@ -8086,9 +10593,9 @@ function AccountReport($$anchor, $$props) {
 }
 
 // src/fava/reports/HoldingsReport.svelte
-var root_38 = template(`<a> </a>`);
-var root_111 = template(`<h3><!></h3>`);
-var root6 = template(`<div class="headerline"><!> <a class="button"> </a></div> <!>`, 1);
+var root_39 = template(`<a> </a>`);
+var root_116 = template(`<h3><!></h3>`);
+var root8 = template(`<div class="headerline"><!> <a class="button"> </a></div> <!>`, 1);
 function HoldingsReport($$anchor, $$props) {
   push($$props, false);
   const aggregation = mutable_state();
@@ -8096,10 +10603,10 @@ function HoldingsReport($$anchor, $$props) {
   const labeled = mutable_state();
   let report = prop($$props, "report", 8);
   let route = prop($$props, "route", 8);
-  let locale = prop($$props, "locale", 8, "en");
+  let locale2 = prop($$props, "locale", 8, "en");
   let renderCommas = prop($$props, "renderCommas", 8, false);
-  function t2(key) {
-    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+  function t4(key) {
+    const catalog = translations[locale2() === "zh-CN" ? "zh-CN" : "en"];
     return catalog[key] || key;
   }
   const tabs = [
@@ -8146,23 +10653,23 @@ function HoldingsReport($$anchor, $$props) {
   });
   legacy_pre_effect_reset();
   init2();
-  var fragment = root6();
+  var fragment = root8();
   var div = first_child(fragment);
   var node = child(div);
   each(node, 1, () => tabs, (tab) => tab.route, ($$anchor2, tab) => {
-    var h3 = root_111();
+    var h3 = root_116();
     var node_1 = child(h3);
     {
       var consequent = ($$anchor3) => {
         var text2 = text();
-        template_effect(() => set_text(text2, t2(get(tab).key)));
+        template_effect(() => set_text(text2, t4(get(tab).key)));
         append($$anchor3, text2);
       };
       var alternate = ($$anchor3) => {
-        var a = root_38();
+        var a = root_39();
         template_effect(() => set_attribute(a, "href", routeHref(get(tab).route)));
         var text_1 = child(a, true);
-        template_effect(() => set_text(text_1, t2(get(tab).key)));
+        template_effect(() => set_text(text_1, t4(get(tab).key)));
         reset(a);
         append($$anchor3, a);
       };
@@ -8176,7 +10683,7 @@ function HoldingsReport($$anchor, $$props) {
   });
   var a_1 = sibling(node, 2);
   var text_2 = child(a_1, true);
-  template_effect(() => set_text(text_2, t2("exportCSV")));
+  template_effect(() => set_text(text_2, t4("exportCSV")));
   reset(a_1);
   reset(div);
   var node_2 = sibling(div, 2);
@@ -8186,7 +10693,7 @@ function HoldingsReport($$anchor, $$props) {
     },
     title: "",
     get locale() {
-      return locale();
+      return locale2();
     },
     get renderCommas() {
       return renderCommas();
@@ -8198,12 +10705,12 @@ function HoldingsReport($$anchor, $$props) {
 }
 
 // src/fava/reports/ImportReport.svelte
-var root_114 = template(`<option> </option>`);
-var root_39 = template(`<li> </li>`);
+var root_117 = template(`<option> </option>`);
+var root_310 = template(`<li> </li>`);
 var root_212 = template(`<ul class="diagnostics svelte-1anq1wq"></ul>`);
-var root_55 = template(`<tr><td> </td><td> </td><td> </td><td> </td></tr>`);
-var root_45 = template(`<table><thead><tr><th>Date</th><th>Account</th><th>Units</th><th>Currency</th></tr></thead><tbody></tbody></table>`);
-var root7 = template(`<div class="headerline"><h2>Import</h2><span class="muted svelte-1anq1wq">Preview before commit</span></div> <form class="upload-form svelte-1anq1wq"><h2 class="svelte-1anq1wq">Upload files for import</h2> <input type="file" accept=".bean,.beancount,.csv"> <button type="submit">Upload</button></form> <div class="toolbar svelte-1anq1wq"><label>Source path <input></label> <label>Adapter <select><option>Beancount</option><option>CSV</option></select></label> <label>Target <select></select></label></div> <textarea class="import-buffer svelte-1anq1wq" placeholder="Paste Beancount or CSV content, or upload a file above" spellcheck="false"></textarea> <div class="toolbar svelte-1anq1wq"><button type="button">Preview</button> <button type="button">Commit</button> <span class="muted svelte-1anq1wq" role="status"> </span></div> <!> <!>`, 1);
+var root_56 = template(`<tr><td> </td><td> </td><td> </td><td> </td></tr>`);
+var root_46 = template(`<table><thead><tr><th>Date</th><th>Account</th><th>Units</th><th>Currency</th></tr></thead><tbody></tbody></table>`);
+var root9 = template(`<div class="headerline"><h2>Import</h2><span class="muted svelte-1anq1wq">Preview before commit</span></div> <form class="upload-form svelte-1anq1wq"><h2 class="svelte-1anq1wq">Upload files for import</h2> <input type="file" accept=".bean,.beancount,.csv"> <button type="submit">Upload</button></form> <div class="toolbar svelte-1anq1wq"><label>Source path <input></label> <label>Adapter <select><option>Beancount</option><option>CSV</option></select></label> <label>Target <select></select></label></div> <textarea class="import-buffer svelte-1anq1wq" placeholder="Paste Beancount or CSV content, or upload a file above" spellcheck="false"></textarea> <div class="toolbar svelte-1anq1wq"><button type="button">Preview</button> <button type="button">Commit</button> <span class="muted svelte-1anq1wq" role="status"> </span></div> <!> <!>`, 1);
 function ImportReport($$anchor, $$props) {
   push($$props, false);
   let adapter = prop($$props, "adapter", 8);
@@ -8245,8 +10752,8 @@ function ImportReport($$anchor, $$props) {
     reader.readAsText(file);
     mutate(fileInput, get(fileInput).value = "");
   }
-  async function request(path, body2) {
-    const response = await fetch(`/api/v1/import/${path}`, {
+  async function request(path2, body2) {
+    const response = await fetch(`/api/v1/import/${path2}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body2)
@@ -8294,7 +10801,7 @@ function ImportReport($$anchor, $$props) {
     void loadTargets();
   });
   init2();
-  var fragment = root7();
+  var fragment = root9();
   var form = sibling(first_child(fragment), 2);
   var input = sibling(child(form), 2);
   bind_this(input, ($$value) => set(fileInput, $$value), () => get(fileInput));
@@ -8326,16 +10833,16 @@ function ImportReport($$anchor, $$props) {
       get(paths);
     });
   });
-  each(select_1, 5, () => get(paths), (path) => path, ($$anchor2, path) => {
-    var option_2 = root_114();
+  each(select_1, 5, () => get(paths), (path2) => path2, ($$anchor2, path2) => {
+    var option_2 = root_117();
     var option_2_value = {};
     var text2 = child(option_2, true);
     reset(option_2);
     template_effect(() => {
-      if (option_2_value !== (option_2_value = get(path))) {
-        option_2.value = null == (option_2.__value = get(path)) ? "" : get(path);
+      if (option_2_value !== (option_2_value = get(path2))) {
+        option_2.value = null == (option_2.__value = get(path2)) ? "" : get(path2);
       }
-      set_text(text2, get(path));
+      set_text(text2, get(path2));
     });
     append($$anchor2, option_2);
   });
@@ -8356,7 +10863,7 @@ function ImportReport($$anchor, $$props) {
     var consequent = ($$anchor2) => {
       var ul = root_212();
       each(ul, 5, () => get(diagnostics), (diagnostic) => diagnostic.code + diagnostic.line + diagnostic.message, ($$anchor3, diagnostic) => {
-        var li = root_39();
+        var li = root_310();
         var text_2 = child(li);
         reset(li);
         template_effect(() => set_text(text_2, `${get(diagnostic).path ?? ""}:${get(diagnostic).line ?? ""}: ${get(diagnostic).message ?? ""}`));
@@ -8372,10 +10879,10 @@ function ImportReport($$anchor, $$props) {
   var node_1 = sibling(node, 2);
   {
     var consequent_1 = ($$anchor2) => {
-      var table = root_45();
+      var table = root_46();
       var tbody = sibling(child(table));
       each(tbody, 5, () => get(rows), index, ($$anchor3, row) => {
-        var tr = root_55();
+        var tr = root_56();
         var td = child(tr);
         var text_3 = child(td, true);
         template_effect(() => set_text(text_3, String(get(row).date ?? "")));
@@ -8420,8 +10927,8 @@ function ImportReport($$anchor, $$props) {
 
 // src/fava/sort/SortHeader.svelte
 var root_213 = template(`<span aria-hidden="true"> </span>`);
-var root_115 = template(`<th class="svelte-21kpbq"><button type="button" class="sort-toggle svelte-21kpbq"> <!></button></th>`);
-var root_310 = template(`<th class="svelte-21kpbq"> </th>`);
+var root_118 = template(`<th class="svelte-21kpbq"><button type="button" class="sort-toggle svelte-21kpbq"> <!></button></th>`);
+var root_311 = template(`<th class="svelte-21kpbq"> </th>`);
 function SortHeader($$anchor, $$props) {
   push($$props, false);
   const sortable = mutable_state();
@@ -8447,7 +10954,7 @@ function SortHeader($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent_1 = ($$anchor2) => {
-      var th = root_115();
+      var th = root_118();
       var button = child(th);
       var text2 = child(button, true);
       var node_1 = sibling(text2);
@@ -8474,7 +10981,7 @@ function SortHeader($$anchor, $$props) {
       append($$anchor2, th);
     };
     var alternate = ($$anchor2) => {
-      var th_1 = root_310();
+      var th_1 = root_311();
       var text_2 = child(th_1, true);
       reset(th_1);
       template_effect(() => {
@@ -8493,12 +11000,12 @@ function SortHeader($$anchor, $$props) {
 }
 
 // src/fava/reports/StatisticsReport.svelte
-var root_116 = template(`<tr><td> </td><td class="num svelte-1hzrq4y"> </td></tr>`);
-var root_46 = template(`<span></span>`);
-var root_56 = template(`<span> </span><br>`, 1);
-var root_311 = template(`<tr><td class="account svelte-1hzrq4y"><a> </a><!></td><td><a> </a></td><td class="num svelte-1hzrq4y"></td></tr>`);
+var root_119 = template(`<tr><td> </td><td class="num svelte-1hzrq4y"> </td></tr>`);
+var root_47 = template(`<span></span>`);
+var root_57 = template(`<span> </span><br>`, 1);
+var root_313 = template(`<tr><td class="account svelte-1hzrq4y"><a> </a><!></td><td><a> </a></td><td class="num svelte-1hzrq4y"></td></tr>`);
 var root_214 = template(`<div class="left"><h3> </h3> <table class="update-activity svelte-1hzrq4y"><thead><tr><!><!><!></tr></thead><tbody></tbody></table></div>`);
-var root8 = template(`<div class="left"><h3> </h3> <!></div> <div class="left"><h3> </h3> <table class="entries-by-type svelte-1hzrq4y"><thead><tr><!><!></tr></thead><tbody></tbody><tfoot class="svelte-1hzrq4y"><tr><td class="svelte-1hzrq4y"> </td><td class="num svelte-1hzrq4y"> </td></tr></tfoot></table></div> <!>`, 1);
+var root10 = template(`<div class="left"><h3> </h3> <!></div> <div class="left"><h3> </h3> <table class="entries-by-type svelte-1hzrq4y"><thead><tr><!><!></tr></thead><tbody></tbody><tfoot class="svelte-1hzrq4y"><tr><td class="svelte-1hzrq4y"> </td><td class="num svelte-1hzrq4y"> </td></tr></tfoot></table></div> <!>`, 1);
 function StatisticsReport($$anchor, $$props) {
   push($$props, false);
   const total = mutable_state();
@@ -8511,10 +11018,10 @@ function StatisticsReport($$anchor, $$props) {
   let entriesByType = prop($$props, "entriesByType", 8);
   let postings = prop($$props, "postings", 8);
   let updateActivity = prop($$props, "updateActivity", 24, () => []);
-  let locale = prop($$props, "locale", 8, "en");
+  let locale2 = prop($$props, "locale", 8, "en");
   let renderCommas = prop($$props, "renderCommas", 8, false);
-  function t2(key) {
-    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+  function t4(key) {
+    const catalog = translations[locale2() === "zh-CN" ? "zh-CN" : "en"];
     return catalog[key] || key;
   }
   legacy_pre_effect(() => deep_read_state(entriesByType()), () => {
@@ -8522,8 +11029,8 @@ function StatisticsReport($$anchor, $$props) {
   });
   legacy_pre_effect(() => (StringColumn, NumberColumn), () => {
     set(entryColumns, [
-      new StringColumn(t2("type"), (row) => row[0]),
-      new NumberColumn(t2("entriesCount"), (row) => row[1])
+      new StringColumn(t4("type"), (row) => row[0]),
+      new NumberColumn(t4("entriesCount"), (row) => row[1])
     ]);
   });
   legacy_pre_effect(() => (Sorter, get(entryColumns)), () => {
@@ -8537,9 +11044,9 @@ function StatisticsReport($$anchor, $$props) {
   );
   legacy_pre_effect(() => (StringColumn, UnsortedColumn), () => {
     set(activityColumns, [
-      new StringColumn(t2("account"), (row) => row.account),
-      new StringColumn(t2("updateActivityLastEntry"), (row) => row.last_entry_date),
-      new UnsortedColumn(t2("accountBalance"))
+      new StringColumn(t4("account"), (row) => row.account),
+      new StringColumn(t4("updateActivityLastEntry"), (row) => row.last_entry_date),
+      new UnsortedColumn(t4("accountBalance"))
     ]);
   });
   legacy_pre_effect(() => (Sorter, get(activityColumns)), () => {
@@ -8553,11 +11060,11 @@ function StatisticsReport($$anchor, $$props) {
   );
   legacy_pre_effect_reset();
   init2();
-  var fragment = root8();
+  var fragment = root10();
   var div = first_child(fragment);
   var h3 = child(div);
   var text2 = child(h3, true);
-  template_effect(() => set_text(text2, t2("postingsPerAccount")));
+  template_effect(() => set_text(text2, t4("postingsPerAccount")));
   reset(h3);
   var node = sibling(h3, 2);
   GenericReport(node, {
@@ -8566,7 +11073,7 @@ function StatisticsReport($$anchor, $$props) {
     },
     title: "",
     get locale() {
-      return locale();
+      return locale2();
     },
     get renderCommas() {
       return renderCommas();
@@ -8576,7 +11083,7 @@ function StatisticsReport($$anchor, $$props) {
   var div_1 = sibling(div, 2);
   var h3_1 = child(div_1);
   var text_1 = child(h3_1, true);
-  template_effect(() => set_text(text_1, t2("entriesPerType")));
+  template_effect(() => set_text(text_1, t4("entriesPerType")));
   reset(h3_1);
   var table = sibling(h3_1, 2);
   var thead = child(table);
@@ -8614,7 +11121,7 @@ function StatisticsReport($$anchor, $$props) {
   each(tbody, 5, () => get(sortedEntries), ([type, count]) => type, ($$anchor2, $$item) => {
     let type = () => get($$item)[0];
     let count = () => get($$item)[1];
-    var tr_1 = root_116();
+    var tr_1 = root_119();
     var td = child(tr_1);
     var text_2 = child(td, true);
     reset(td);
@@ -8633,7 +11140,7 @@ function StatisticsReport($$anchor, $$props) {
   var tr_2 = child(tfoot);
   var td_2 = child(tr_2);
   var text_4 = child(td_2, true);
-  template_effect(() => set_text(text_4, t2("total")));
+  template_effect(() => set_text(text_4, t4("total")));
   reset(td_2);
   var td_3 = sibling(td_2);
   var text_5 = child(td_3, true);
@@ -8648,7 +11155,7 @@ function StatisticsReport($$anchor, $$props) {
       var div_2 = root_214();
       var h3_2 = child(div_2);
       var text_6 = child(h3_2, true);
-      template_effect(() => set_text(text_6, t2("updateActivity")));
+      template_effect(() => set_text(text_6, t4("updateActivity")));
       reset(h3_2);
       var table_1 = sibling(h3_2, 2);
       var thead_1 = child(table_1);
@@ -8696,7 +11203,7 @@ function StatisticsReport($$anchor, $$props) {
       reset(thead_1);
       var tbody_1 = sibling(thead_1);
       each(tbody_1, 5, () => get(sortedActivity), (row) => row.account, ($$anchor3, row) => {
-        var tr_4 = root_311();
+        var tr_4 = root_313();
         var td_4 = child(tr_4);
         var a = child(td_4);
         template_effect(() => set_attribute(a, "href", routeHref("account", { account: get(row).account })));
@@ -8705,7 +11212,7 @@ function StatisticsReport($$anchor, $$props) {
         var node_7 = sibling(a);
         {
           var consequent = ($$anchor4) => {
-            var span = root_46();
+            var span = root_47();
             template_effect(() => {
               set_class(span, `status-indicator status-${get(row).uptodate_status ?? ""} svelte-1hzrq4y`);
               set_attribute(span, "title", get(row).uptodate_status === "green" ? "The last entry is a passing balance check." : "The last entry is not a balance check.");
@@ -8726,7 +11233,7 @@ function StatisticsReport($$anchor, $$props) {
         each(td_6, 5, () => Object.entries(get(row).balances), ([currency, amount]) => currency, ($$anchor4, $$item) => {
           let currency = () => get($$item)[0];
           let amount = () => get($$item)[1];
-          var fragment_1 = root_56();
+          var fragment_1 = root_57();
           var span_1 = first_child(fragment_1);
           var text_9 = child(span_1);
           reset(span_1);
@@ -8906,11 +11413,11 @@ var NodeType = class _NodeType {
   names, separated by spaces, in a single property name to map
   multiple node names to a single value.
   */
-  static match(map) {
+  static match(map2) {
     let direct = /* @__PURE__ */ Object.create(null);
-    for (let prop2 in map)
+    for (let prop2 in map2)
       for (let name3 of prop2.split(" "))
-        direct[name3] = map[prop2];
+        direct[name3] = map2[prop2];
     return (node) => {
       for (let groups = node.prop(NodeProp.group), i2 = -1; i2 < (groups ? groups.length : 0); i2++) {
         let found = direct[i2 < 0 ? node.name : groups[i2]];
@@ -9226,15 +11733,15 @@ var TreeBuffer = class _TreeBuffer {
   */
   slice(startI, endI, from) {
     let b = this.buffer;
-    let copy = new Uint16Array(endI - startI), len = 0;
+    let copy2 = new Uint16Array(endI - startI), len = 0;
     for (let i2 = startI, j = 0; i2 < endI; ) {
-      copy[j++] = b[i2++];
-      copy[j++] = b[i2++] - from;
-      let to = copy[j++] = b[i2++] - from;
-      copy[j++] = b[i2++] - startI;
+      copy2[j++] = b[i2++];
+      copy2[j++] = b[i2++] - from;
+      let to = copy2[j++] = b[i2++] - from;
+      copy2[j++] = b[i2++] - startI;
       len = Math.max(len, to);
     }
-    return new _TreeBuffer(copy, len, this.set);
+    return new _TreeBuffer(copy2, len, this.set);
   }
 };
 function checkSide(side, pos, from, to) {
@@ -9649,8 +12156,8 @@ function stackIterator(tree, pos, side) {
     } else {
       let mount2 = MountedTree.get(scan.tree);
       if (mount2 && mount2.overlay && mount2.overlay[0].from <= pos && mount2.overlay[mount2.overlay.length - 1].to >= pos) {
-        let root27 = new TreeNode(mount2.tree, mount2.overlay[0].from + scan.from, -1, scan);
-        (layers || (layers = [inner])).push(resolveNode(root27, pos, side, false));
+        let root29 = new TreeNode(mount2.tree, mount2.overlay[0].from + scan.from, -1, scan);
+        (layers || (layers = [inner])).push(resolveNode(root29, pos, side, false));
       }
     }
   }
@@ -10727,9 +13234,9 @@ var TextNode = class _TextNode extends Text2 {
           let updated = child2.replace(from - pos, to - pos, text2);
           let totalLines = this.lines - child2.lines + updated.lines;
           if (updated.lines < totalLines >> 5 - 1 && updated.lines > totalLines >> 5 + 1) {
-            let copy = this.children.slice();
-            copy[i2] = updated;
-            return new _TextNode(copy, this.length - (to - from) + text2.length);
+            let copy2 = this.children.slice();
+            copy2[i2] = updated;
+            return new _TextNode(copy2, this.length - (to - from) + text2.length);
           }
           return super.replace(pos, end, updated);
         }
@@ -10989,10 +13496,10 @@ var Line = class {
   /**
   @internal
   */
-  constructor(from, to, number2, text2) {
+  constructor(from, to, number4, text2) {
     this.from = from;
     this.to = to;
-    this.number = number2;
+    this.number = number4;
     this.text = text2;
   }
   /**
@@ -11776,16 +14283,16 @@ var EditorSelection = class _EditorSelection {
   /**
   Extend this selection with an extra range.
   */
-  addRange(range, main = true) {
-    return _EditorSelection.create([range].concat(this.ranges), main ? 0 : this.mainIndex + 1);
+  addRange(range2, main = true) {
+    return _EditorSelection.create([range2].concat(this.ranges), main ? 0 : this.mainIndex + 1);
   }
   /**
   Replace a given range with another range, and then normalize the
   selection to merge and sort ranges if necessary.
   */
-  replaceRange(range, which = this.mainIndex) {
+  replaceRange(range2, which = this.mainIndex) {
     let ranges = this.ranges.slice();
-    ranges[which] = range;
+    ranges[which] = range2;
     return _EditorSelection.create(ranges, this.mainIndex);
   }
   /**
@@ -11817,10 +14324,10 @@ var EditorSelection = class _EditorSelection {
     if (ranges.length == 0)
       throw new RangeError("A selection needs at least one range");
     for (let pos = 0, i2 = 0; i2 < ranges.length; i2++) {
-      let range = ranges[i2];
-      if (range.empty ? range.from <= pos : range.from < pos)
+      let range2 = ranges[i2];
+      if (range2.empty ? range2.from <= pos : range2.from < pos)
         return _EditorSelection.normalized(ranges.slice(), mainIndex);
-      pos = range.to;
+      pos = range2.to;
     }
     return new _EditorSelection(ranges, mainIndex);
   }
@@ -11857,20 +14364,20 @@ var EditorSelection = class _EditorSelection {
     ranges.sort((a, b) => a.from - b.from);
     mainIndex = ranges.indexOf(main);
     for (let i2 = 1; i2 < ranges.length; i2++) {
-      let range = ranges[i2], prev = ranges[i2 - 1];
-      if (range.empty ? range.from <= prev.to : range.from < prev.to) {
-        let from = prev.from, to = Math.max(range.to, prev.to);
+      let range2 = ranges[i2], prev = ranges[i2 - 1];
+      if (range2.empty ? range2.from <= prev.to : range2.from < prev.to) {
+        let from = prev.from, to = Math.max(range2.to, prev.to);
         if (i2 <= mainIndex)
           mainIndex--;
-        ranges.splice(--i2, 2, range.anchor > range.head ? _EditorSelection.range(to, from) : _EditorSelection.range(from, to));
+        ranges.splice(--i2, 2, range2.anchor > range2.head ? _EditorSelection.range(to, from) : _EditorSelection.range(from, to));
       }
     }
     return new _EditorSelection(ranges, mainIndex);
   }
 };
 function checkSelection(selection, docLength) {
-  for (let range of selection.ranges)
-    if (range.to > docLength)
+  for (let range2 of selection.ranges)
+    if (range2.to > docLength)
       throw new RangeError("Selection points outside of document");
 }
 var nextID = 0;
@@ -11928,7 +14435,7 @@ var Facet = class _Facet {
   }
   from(field, get3) {
     if (!get3)
-      get3 = (x) => x;
+      get3 = (x2) => x2;
     return this.compute([field], (state2) => get3(state2.field(field)));
   }
 };
@@ -12376,8 +14883,8 @@ var StateEffectType = class {
   /**
   @internal
   */
-  constructor(map) {
-    this.map = map;
+  constructor(map2) {
+    this.map = map2;
   }
   /**
   Create a [state effect](https://codemirror.net/6/docs/ref/#state.StateEffect) instance of this
@@ -12756,9 +15263,9 @@ var EditorState = class _EditorState {
   replaceSelection(text2) {
     if (typeof text2 == "string")
       text2 = this.toText(text2);
-    return this.changeByRange((range) => ({
-      changes: { from: range.from, to: range.to, insert: text2 },
-      range: EditorSelection.cursor(range.from + text2.length)
+    return this.changeByRange((range2) => ({
+      changes: { from: range2.from, to: range2.to, insert: text2 },
+      range: EditorSelection.cursor(range2.from + text2.length)
     }));
   }
   /**
@@ -12915,9 +15422,9 @@ var EditorState = class _EditorState {
   literal dollar sign.
   */
   phrase(phrase2, ...insert2) {
-    for (let map of this.facet(_EditorState.phrases))
-      if (Object.prototype.hasOwnProperty.call(map, phrase2)) {
-        phrase2 = map[phrase2];
+    for (let map2 of this.facet(_EditorState.phrases))
+      if (Object.prototype.hasOwnProperty.call(map2, phrase2)) {
+        phrase2 = map2[phrase2];
         break;
       }
     if (insert2.length)
@@ -13194,9 +15701,9 @@ var RangeSet = class _RangeSet {
     let builder = new RangeSetBuilder();
     while (cur2.value || i2 < add2.length) {
       if (i2 < add2.length && (cur2.from - add2[i2].from || cur2.startSide - add2[i2].value.startSide) >= 0) {
-        let range = add2[i2++];
-        if (!builder.addInner(range.from, range.to, range.value))
-          spill.push(range);
+        let range2 = add2[i2++];
+        if (!builder.addInner(range2.from, range2.to, range2.value))
+          spill.push(range2);
       } else if (cur2.rangeIndex == 1 && cur2.chunkIndex < this.chunk.length && (i2 == add2.length || this.chunkEnd(cur2.chunkIndex) < add2[i2].from) && (!filter || filterFrom > this.chunkEnd(cur2.chunkIndex) || filterTo < this.chunkPos[cur2.chunkIndex]) && builder.addChunk(this.chunkPos[cur2.chunkIndex], this.chunk[cur2.chunkIndex])) {
         cur2.nextChunk();
       } else {
@@ -13345,8 +15852,8 @@ var RangeSet = class _RangeSet {
   */
   static of(ranges, sort = false) {
     let build = new RangeSetBuilder();
-    for (let range of ranges instanceof Range2 ? [ranges] : sort ? lazySort(ranges) : ranges)
-      build.add(range.from, range.to, range.value);
+    for (let range2 of ranges instanceof Range2 ? [ranges] : sort ? lazySort(ranges) : ranges)
+      build.add(range2.from, range2.to, range2.value);
     return build.finish();
   }
   /**
@@ -13755,8 +16262,8 @@ function compare(a, startA, b, startB, length, comparator) {
   for (let boundChange = false; ; ) {
     let dEnd = a.to + dPos - b.to, diff = dEnd || a.endSide - b.endSide;
     let end = diff < 0 ? a.to + dPos : b.to, clipEnd = Math.min(end, endB);
-    let point = a.point || b.point;
-    if (point) {
+    let point3 = a.point || b.point;
+    if (point3) {
       if (!(a.point && b.point && cmpVal(a.point, b.point) && sameValues(a.activeForPoint(a.to), b.activeForPoint(b.to))))
         comparator.comparePoint(pos, clipEnd, a.point, b.point);
       boundChange = false;
@@ -13898,20 +16405,20 @@ var StyleModule = class {
   //
   // If a Content Security Policy nonce is provided, it is added to
   // the `<style>` tag generated by the library.
-  static mount(root27, modules, options) {
-    let set2 = root27[SET], nonce = options && options.nonce;
-    if (!set2) set2 = new StyleSet(root27, nonce);
+  static mount(root29, modules, options) {
+    let set2 = root29[SET], nonce = options && options.nonce;
+    if (!set2) set2 = new StyleSet(root29, nonce);
     else if (nonce) set2.setNonce(nonce);
-    set2.mount(Array.isArray(modules) ? modules : [modules], root27);
+    set2.mount(Array.isArray(modules) ? modules : [modules], root29);
   }
 };
 var adoptedSet = /* @__PURE__ */ new Map();
 var StyleSet = class {
-  constructor(root27, nonce) {
-    let doc2 = root27.ownerDocument || root27, win = doc2.defaultView;
-    if (!root27.head && root27.adoptedStyleSheets && win.CSSStyleSheet) {
+  constructor(root29, nonce) {
+    let doc2 = root29.ownerDocument || root29, win = doc2.defaultView;
+    if (!root29.head && root29.adoptedStyleSheets && win.CSSStyleSheet) {
       let adopted = adoptedSet.get(doc2);
-      if (adopted) return root27[SET] = adopted;
+      if (adopted) return root29[SET] = adopted;
       this.sheet = new win.CSSStyleSheet();
       adoptedSet.set(doc2, this);
     } else {
@@ -13919,9 +16426,9 @@ var StyleSet = class {
       if (nonce) this.styleTag.setAttribute("nonce", nonce);
     }
     this.modules = [];
-    root27[SET] = this;
+    root29[SET] = this;
   }
-  mount(modules, root27) {
+  mount(modules, root29) {
     let sheet = this.sheet;
     let pos = 0, j = 0;
     for (let i2 = 0; i2 < modules.length; i2++) {
@@ -13942,14 +16449,14 @@ var StyleSet = class {
       }
     }
     if (sheet) {
-      if (root27.adoptedStyleSheets.indexOf(this.sheet) < 0)
-        root27.adoptedStyleSheets = [this.sheet, ...root27.adoptedStyleSheets];
+      if (root29.adoptedStyleSheets.indexOf(this.sheet) < 0)
+        root29.adoptedStyleSheets = [this.sheet, ...root29.adoptedStyleSheets];
     } else {
       let text2 = "";
       for (let i2 = 0; i2 < this.modules.length; i2++)
         text2 += this.modules[i2].getRules() + "\n";
       this.styleTag.textContent = text2;
-      let target2 = root27.head || root27;
+      let target2 = root29.head || root29;
       if (this.styleTag.parentNode != target2)
         target2.insertBefore(this.styleTag, target2.firstChild);
     }
@@ -14465,12 +16972,12 @@ var BlockWrapper = class _BlockWrapper extends RangeValue {
   }
 };
 BlockWrapper.prototype.startSide = BlockWrapper.prototype.endSide = -1;
-function getSelection(root27) {
+function getSelection(root29) {
   let target2;
-  if (root27.nodeType == 11) {
-    target2 = root27.getSelection ? root27 : root27.ownerDocument;
+  if (root29.nodeType == 11) {
+    target2 = root29.getSelection ? root29 : root29.ownerDocument;
   } else {
-    target2 = root27;
+    target2 = root29;
   }
   return target2.getSelection();
 }
@@ -14536,8 +17043,8 @@ function flattenRect(rect, toLeft) {
   let { left, right } = rect;
   if (left == right)
     return rect;
-  let x = toLeft ? left : right;
-  return { left: x, right: x, top: rect.top, bottom: rect.bottom };
+  let x2 = toLeft ? left : right;
+  return { left: x2, right: x2, top: rect.top, bottom: rect.bottom };
 }
 function windowRect(win) {
   let vp = win.visualViewport;
@@ -14564,7 +17071,7 @@ function getScale(elt, rect) {
     scaleY = 1;
   return { scaleX, scaleY };
 }
-function scrollRectIntoView(dom, rect, side, x, y, xMargin, yMargin, ltr) {
+function scrollRectIntoView(dom, rect, side, x2, y2, xMargin, yMargin, ltr) {
   let doc2 = dom.ownerDocument, win = doc2.defaultView || window;
   for (let cur2 = dom, stop2 = false; cur2 && !stop2; ) {
     if (cur2.nodeType == 1) {
@@ -14589,7 +17096,7 @@ function scrollRectIntoView(dom, rect, side, x, y, xMargin, yMargin, ltr) {
         };
       }
       let moveX = 0, moveY = 0;
-      if (y == "nearest") {
+      if (y2 == "nearest") {
         if (rect.top < bounding.top + yMargin) {
           moveY = rect.top - (bounding.top + yMargin);
           if (side > 0 && rect.bottom > bounding.bottom + moveY)
@@ -14601,10 +17108,10 @@ function scrollRectIntoView(dom, rect, side, x, y, xMargin, yMargin, ltr) {
         }
       } else {
         let rectHeight = rect.bottom - rect.top, boundingHeight = bounding.bottom - bounding.top;
-        let targetTop = y == "center" && rectHeight <= boundingHeight ? rect.top + rectHeight / 2 - boundingHeight / 2 : y == "start" || y == "center" && side < 0 ? rect.top - yMargin : rect.bottom - boundingHeight + yMargin;
+        let targetTop = y2 == "center" && rectHeight <= boundingHeight ? rect.top + rectHeight / 2 - boundingHeight / 2 : y2 == "start" || y2 == "center" && side < 0 ? rect.top - yMargin : rect.bottom - boundingHeight + yMargin;
         moveY = targetTop - bounding.top;
       }
-      if (x == "nearest") {
+      if (x2 == "nearest") {
         if (rect.left < bounding.left + xMargin) {
           moveX = rect.left - (bounding.left + xMargin);
           if (side > 0 && rect.right > bounding.right + moveX)
@@ -14615,7 +17122,7 @@ function scrollRectIntoView(dom, rect, side, x, y, xMargin, yMargin, ltr) {
             moveX = rect.left - (bounding.left + xMargin);
         }
       } else {
-        let targetLeft = x == "center" ? rect.left + (rect.right - rect.left) / 2 - (bounding.right - bounding.left) / 2 : x == "start" == ltr ? rect.left - xMargin : rect.right - (bounding.right - bounding.left) + xMargin;
+        let targetLeft = x2 == "center" ? rect.left + (rect.right - rect.left) / 2 - (bounding.right - bounding.left) / 2 : x2 == "start" == ltr ? rect.left - xMargin : rect.right - (bounding.right - bounding.left) + xMargin;
         moveX = targetLeft - bounding.left;
       }
       if (moveX || moveY) {
@@ -14640,9 +17147,9 @@ function scrollRectIntoView(dom, rect, side, x, y, xMargin, yMargin, ltr) {
             bottom: rect.bottom - movedY
           };
           if (movedX && Math.abs(movedX - moveX) < 1)
-            x = "nearest";
+            x2 = "nearest";
           if (movedY && Math.abs(movedY - moveY) < 1)
-            y = "nearest";
+            y2 = "nearest";
         }
       }
       if (top2)
@@ -14663,15 +17170,15 @@ function scrollRectIntoView(dom, rect, side, x, y, xMargin, yMargin, ltr) {
   }
 }
 function scrollableParents(dom, getX = true) {
-  let doc2 = dom.ownerDocument, x = null, y = null;
+  let doc2 = dom.ownerDocument, x2 = null, y2 = null;
   for (let cur2 = dom.parentNode; cur2; ) {
-    if (cur2 == doc2.body || (!getX || x) && y) {
+    if (cur2 == doc2.body || (!getX || x2) && y2) {
       break;
     } else if (cur2.nodeType == 1) {
-      if (!y && cur2.scrollHeight > cur2.clientHeight)
-        y = cur2;
-      if (getX && !x && cur2.scrollWidth > cur2.clientWidth)
-        x = cur2;
+      if (!y2 && cur2.scrollHeight > cur2.clientHeight)
+        y2 = cur2;
+      if (getX && !x2 && cur2.scrollWidth > cur2.clientWidth)
+        x2 = cur2;
       cur2 = cur2.assignedSlot || cur2.parentNode;
     } else if (cur2.nodeType == 11) {
       cur2 = cur2.host;
@@ -14679,7 +17186,7 @@ function scrollableParents(dom, getX = true) {
       break;
     }
   }
-  return { x, y };
+  return { x: x2, y: y2 };
 }
 var DOMSelectionState = class {
   constructor() {
@@ -14691,9 +17198,9 @@ var DOMSelectionState = class {
   eq(domSel) {
     return this.anchorNode == domSel.anchorNode && this.anchorOffset == domSel.anchorOffset && this.focusNode == domSel.focusNode && this.focusOffset == domSel.focusOffset;
   }
-  setRange(range) {
-    let { anchorNode, focusNode } = range;
-    this.set(anchorNode, Math.min(range.anchorOffset, anchorNode ? maxOffset(anchorNode) : 0), focusNode, Math.min(range.focusOffset, focusNode ? maxOffset(focusNode) : 0));
+  setRange(range2) {
+    let { anchorNode, focusNode } = range2;
+    this.set(anchorNode, Math.min(range2.anchorOffset, anchorNode ? maxOffset(anchorNode) : 0), focusNode, Math.min(range2.focusOffset, focusNode ? maxOffset(focusNode) : 0));
   }
   set(anchorNode, anchorOffset, focusNode, focusOffset) {
     this.anchorNode = anchorNode;
@@ -14740,10 +17247,10 @@ function focusPreventScroll(dom) {
 }
 var scratchRange;
 function textRange(node, from, to = from) {
-  let range = scratchRange || (scratchRange = document.createRange());
-  range.setEnd(node, to);
-  range.setStart(node, from);
-  return range;
+  let range2 = scratchRange || (scratchRange = document.createRange());
+  range2.setEnd(node, to);
+  range2.setStart(node, from);
+  return range2;
 }
 function dispatchKey(elt, name3, code, mods) {
   let options = { key: name3, code: name3, keyCode: code, which: code, cancelable: true };
@@ -15215,17 +17722,17 @@ var focusChangeEffect = /* @__PURE__ */ Facet.define();
 var clipboardInputFilter = /* @__PURE__ */ Facet.define();
 var clipboardOutputFilter = /* @__PURE__ */ Facet.define();
 var perLineTextDirection = /* @__PURE__ */ Facet.define({
-  combine: (values) => values.some((x) => x)
+  combine: (values) => values.some((x2) => x2)
 });
 var nativeSelectionHidden = /* @__PURE__ */ Facet.define({
-  combine: (values) => values.some((x) => x)
+  combine: (values) => values.some((x2) => x2)
 });
 var scrollHandler = /* @__PURE__ */ Facet.define();
 var ScrollTarget = class _ScrollTarget {
-  constructor(range, y, x, yMargin, xMargin, isSnapshot = false) {
-    this.range = range;
-    this.y = y;
-    this.x = x;
+  constructor(range2, y2, x2, yMargin, xMargin, isSnapshot = false) {
+    this.range = range2;
+    this.y = y2;
+    this.x = x2;
     this.yMargin = yMargin;
     this.xMargin = xMargin;
     this.isSnapshot = isSnapshot;
@@ -15237,7 +17744,7 @@ var ScrollTarget = class _ScrollTarget {
     return this.range.to <= state2.doc.length ? this : new _ScrollTarget(EditorSelection.cursor(state2.doc.length), this.y, this.x, this.yMargin, this.xMargin, this.isSnapshot);
   }
 };
-var scrollIntoView = /* @__PURE__ */ StateEffect.define({ map: (t2, ch) => t2.map(ch) });
+var scrollIntoView = /* @__PURE__ */ StateEffect.define({ map: (t4, ch) => t4.map(ch) });
 var setEditContextFormatting = /* @__PURE__ */ StateEffect.define();
 function logException(state2, exception, context) {
   let handler = state2.facet(exceptionSink);
@@ -15422,12 +17929,12 @@ var ChangedRange = class _ChangedRange {
   addToSet(set2) {
     let i2 = set2.length, me = this;
     for (; i2 > 0; i2--) {
-      let range = set2[i2 - 1];
-      if (range.fromA > me.toA)
+      let range2 = set2[i2 - 1];
+      if (range2.fromA > me.toA)
         continue;
-      if (range.toA < me.fromA)
+      if (range2.toA < me.fromA)
         break;
-      me = me.join(range);
+      me = me.join(range2);
       set2.splice(i2 - 1, 1);
     }
     set2.splice(i2, 0, me);
@@ -15642,9 +18149,9 @@ var Tile = class {
     return null;
   }
   get root() {
-    for (let t2 = this; t2; t2 = t2.parent)
-      if (t2 instanceof DocTile)
-        return t2;
+    for (let t4 = this; t4; t4 = t4.parent)
+      if (t4 instanceof DocTile)
+        return t4;
     return null;
   }
   static get(dom) {
@@ -16000,11 +18507,11 @@ var WidgetTile = class _WidgetTile extends Tile {
   get overrideDOMText() {
     if (!this.length)
       return Text2.empty;
-    let { root: root27 } = this;
-    if (!root27)
+    let { root: root29 } = this;
+    if (!root29)
       return Text2.empty;
     let start2 = this.posAtStart;
-    return root27.view.state.doc.slice(start2, start2 + this.length);
+    return root29.view.state.doc.slice(start2, start2 + this.length);
   }
   destroy() {
     super.destroy();
@@ -16115,9 +18622,9 @@ var OpenWrapper = class {
   }
 };
 var TileBuilder = class {
-  constructor(cache, root27, blockWrappers2) {
+  constructor(cache, root29, blockWrappers2) {
     this.cache = cache;
-    this.root = root27;
+    this.root = root29;
     this.blockWrappers = blockWrappers2;
     this.curLine = null;
     this.lastBlock = null;
@@ -16310,7 +18817,7 @@ var TileBuilder = class {
       if (wrap.from < this.pos && last instanceof BlockWrapperTile && last.wrapper.eq(wrap.wrapper)) {
         parent2 = last;
       } else {
-        let tile = BlockWrapperTile.of(wrap.wrapper, (_a2 = this.cache.find(BlockWrapperTile, (t2) => t2.wrapper.eq(wrap.wrapper))) === null || _a2 === void 0 ? void 0 : _a2.dom);
+        let tile = BlockWrapperTile.of(wrap.wrapper, (_a2 = this.cache.find(BlockWrapperTile, (t4) => t4.wrapper.eq(wrap.wrapper))) === null || _a2 === void 0 ? void 0 : _a2.dom);
         parent2.append(tile);
         parent2 = tile;
       }
@@ -16922,13 +19429,13 @@ var DocView = class {
           } catch (_) {
           }
         } else {
-          let range = document.createRange();
+          let range2 = document.createRange();
           if (main.anchor > main.head)
             [anchor, head2] = [head2, anchor];
-          range.setEnd(head2.node, head2.offset);
-          range.setStart(anchor.node, anchor.offset);
+          range2.setEnd(head2.node, head2.offset);
+          range2.setStart(anchor.node, anchor.offset);
           rawSel.removeAllRanges();
-          rawSel.addRange(range);
+          rawSel.addRange(range2);
         }
         if (selectionNotFocus && this.view.root.activeElement == dom) {
           dom.blur();
@@ -17251,11 +19758,11 @@ var DocView = class {
         logException(this.view.state, e, "scroll handler");
       }
     }
-    let { range } = target2;
-    let rect = this.coordsAt(range.head, range.assoc || (range.head > range.anchor ? -1 : 1)), other;
+    let { range: range2 } = target2;
+    let rect = this.coordsAt(range2.head, range2.assoc || (range2.head > range2.anchor ? -1 : 1)), other;
     if (!rect)
       return;
-    if (!range.empty && (other = this.coordsAt(range.anchor, range.anchor > range.head ? -1 : 1)))
+    if (!range2.empty && (other = this.coordsAt(range2.anchor, range2.anchor > range2.head ? -1 : 1)))
       rect = {
         left: Math.min(rect.left, other.left),
         top: Math.min(rect.top, other.top),
@@ -17270,9 +19777,9 @@ var DocView = class {
       bottom: rect.bottom + margins.bottom
     };
     let { offsetWidth, offsetHeight } = this.view.scrollDOM;
-    scrollRectIntoView(this.view.scrollDOM, targetRect, range.head < range.anchor ? -1 : 1, target2.x, target2.y, Math.max(Math.min(target2.xMargin, offsetWidth), -offsetWidth), Math.max(Math.min(target2.yMargin, offsetHeight), -offsetHeight), this.view.textDirection == Direction.LTR);
+    scrollRectIntoView(this.view.scrollDOM, targetRect, range2.head < range2.anchor ? -1 : 1, target2.x, target2.y, Math.max(Math.min(target2.xMargin, offsetWidth), -offsetWidth), Math.max(Math.min(target2.yMargin, offsetHeight), -offsetHeight), this.view.textDirection == Direction.LTR);
     if (window.visualViewport && window.innerHeight - window.visualViewport.height > 1 && (rect.top > window.visualViewport.offsetTop + window.visualViewport.height || rect.bottom < window.visualViewport.offsetTop)) {
-      let line = this.view.docView.lineAt(range.head, 1);
+      let line = this.view.docView.lineAt(range2.head, 1);
       if (line) {
         let stack2 = getScrollStack(line.dom);
         line.dom.scrollIntoView({ block: "nearest" });
@@ -17451,11 +19958,11 @@ function groupAt(state2, pos, bias = 1) {
   }
   return EditorSelection.undirectionalRange(from + line.from, to + line.from);
 }
-function posAtCoordsImprecise(view, contentRect, block2, x, y) {
-  let into = Math.round((x - contentRect.left) * view.defaultCharacterWidth);
+function posAtCoordsImprecise(view, contentRect, block2, x2, y2) {
+  let into = Math.round((x2 - contentRect.left) * view.defaultCharacterWidth);
   if (view.lineWrapping && block2.height > view.defaultLineHeight * 1.5) {
     let textHeight = view.viewState.heightOracle.textHeight;
-    let line = Math.floor((y - block2.top - (view.defaultLineHeight - textHeight) * 0.5) / textHeight);
+    let line = Math.floor((y2 - block2.top - (view.defaultLineHeight - textHeight) * 0.5) / textHeight);
     into += line * view.viewState.heightOracle.lineLength;
   }
   let content2 = view.state.sliceDoc(block2.from, block2.to);
@@ -17548,9 +20055,9 @@ function moveVertically(view, start2, forward, distance) {
   let resolvedGoal = rect.left + goal;
   let halfText = view.viewState.heightOracle.textHeight >> 1, dist2 = distance !== null && distance !== void 0 ? distance : halfText;
   for (let scan = 0; ; scan += halfText) {
-    let y = startY + (dist2 + scan) * dir;
-    let pos = posAtCoords(view, { x: resolvedGoal, y }, false, dir);
-    if (forward ? y > rect.bottom : y < rect.top)
+    let y2 = startY + (dist2 + scan) * dir;
+    let pos = posAtCoords(view, { x: resolvedGoal, y: y2 }, false, dir);
+    if (forward ? y2 > rect.bottom : y2 < rect.top)
       return EditorSelection.cursor(pos.pos, pos.assoc);
     let posCoords = view.coordsAtPos(pos.pos, pos.assoc), mid = posCoords ? (posCoords.top + posCoords.bottom) / 2 : 0;
     if (!posCoords || (forward ? mid > startY : mid < startY))
@@ -17576,19 +20083,19 @@ function skipAtomicRanges(atoms, pos, bias) {
 function skipAtomsForSelection(atoms, sel) {
   let ranges = null;
   for (let i2 = 0; i2 < sel.ranges.length; i2++) {
-    let range = sel.ranges[i2], updated = null;
-    if (range.empty) {
-      let pos = skipAtomicRanges(atoms, range.from, 0);
-      if (pos != range.from)
+    let range2 = sel.ranges[i2], updated = null;
+    if (range2.empty) {
+      let pos = skipAtomicRanges(atoms, range2.from, 0);
+      if (pos != range2.from)
         updated = EditorSelection.cursor(pos, -1);
     } else {
-      let from = skipAtomicRanges(atoms, range.from, -1);
-      let to = skipAtomicRanges(atoms, range.to, 1);
-      if (from != range.from || to != range.to) {
-        if (range.undirectional)
-          updated = EditorSelection.undirectionalRange(range.from, range.to);
+      let from = skipAtomicRanges(atoms, range2.from, -1);
+      let to = skipAtomicRanges(atoms, range2.to, 1);
+      if (from != range2.from || to != range2.to) {
+        if (range2.undirectional)
+          updated = EditorSelection.undirectionalRange(range2.from, range2.to);
         else
-          updated = EditorSelection.range(range.from == range.anchor ? from : to, range.from == range.head ? from : to);
+          updated = EditorSelection.range(range2.from == range2.anchor ? from : to, range2.from == range2.head ? from : to);
       }
     }
     if (updated) {
@@ -17611,7 +20118,7 @@ var PosAssoc = class {
 };
 function posAtCoords(view, coords, precise, scanY) {
   let content2 = view.contentDOM.getBoundingClientRect(), docTop = content2.top + view.viewState.paddingTop;
-  let { x, y } = coords, yOffset = y - docTop, block2;
+  let { x: x2, y: y2 } = coords, yOffset = y2 - docTop, block2;
   for (; ; ) {
     if (yOffset < 0)
       return new PosAssoc(0, 1);
@@ -17634,7 +20141,7 @@ function posAtCoords(view, coords, precise, scanY) {
     if (precise)
       return null;
     if (block2.type == BlockType.Text) {
-      let pos = posAtCoordsImprecise(view, content2, block2, x, y);
+      let pos = posAtCoordsImprecise(view, content2, block2, x2, y2);
       return new PosAssoc(pos, pos == block2.from ? 1 : -1);
     }
   }
@@ -17643,13 +20150,13 @@ function posAtCoords(view, coords, precise, scanY) {
   let line = view.docView.lineAt(block2.from, 2);
   if (!line || line.length != block2.length)
     line = view.docView.lineAt(block2.from, -2);
-  return new InlineCoordsScan(view, x, y, view.textDirectionAt(block2.from)).scanTile(line, block2.from);
+  return new InlineCoordsScan(view, x2, y2, view.textDirectionAt(block2.from)).scanTile(line, block2.from);
 }
 var InlineCoordsScan = class {
-  constructor(view, x, y, baseDir) {
+  constructor(view, x2, y2, baseDir) {
     this.view = view;
-    this.x = x;
-    this.y = y;
+    this.x = x2;
+    this.y = y2;
     this.baseDir = baseDir;
     this.line = null;
     this.spans = null;
@@ -17834,15 +20341,15 @@ var DOMReader = class {
   }
   readTextNode(node) {
     let text2 = node.nodeValue;
-    for (let point of this.points)
-      if (point.node == node)
-        point.pos = this.text.length + Math.min(point.offset, text2.length);
-    for (let off = 0, re = this.lineSeparator ? null : /\r\n?|\n/g; ; ) {
+    for (let point3 of this.points)
+      if (point3.node == node)
+        point3.pos = this.text.length + Math.min(point3.offset, text2.length);
+    for (let off = 0, re2 = this.lineSeparator ? null : /\r\n?|\n/g; ; ) {
       let nextBreak = -1, breakSize = 1, m2;
       if (this.lineSeparator) {
         nextBreak = text2.indexOf(this.lineSeparator, off);
         breakSize = this.lineSeparator.length;
-      } else if (m2 = re.exec(text2)) {
+      } else if (m2 = re2.exec(text2)) {
         nextBreak = m2.index;
         breakSize = m2[0].length;
       }
@@ -17851,9 +20358,9 @@ var DOMReader = class {
         break;
       this.lineBreak();
       if (breakSize > 1) {
-        for (let point of this.points)
-          if (point.node == node && point.pos > this.text.length)
-            point.pos -= breakSize - 1;
+        for (let point3 of this.points)
+          if (point3.node == node && point3.pos > this.text.length)
+            point3.pos -= breakSize - 1;
       }
       off = nextBreak + breakSize;
     }
@@ -17879,14 +20386,14 @@ var DOMReader = class {
     }
   }
   findPointBefore(node, next2) {
-    for (let point of this.points)
-      if (point.node == node && node.childNodes[point.offset] == next2)
-        point.pos = this.text.length;
+    for (let point3 of this.points)
+      if (point3.node == node && node.childNodes[point3.offset] == next2)
+        point3.pos = this.text.length;
   }
   findPointInside(node, length) {
-    for (let point of this.points)
-      if (node.nodeType == 3 ? point.node == node : node.contains(point.node))
-        point.pos = this.text.length + (isAtEnd(node, point.node, point.offset) ? length : 0);
+    for (let point3 of this.points)
+      if (node.nodeType == 3 ? point3.node == node : node.contains(point3.node))
+        point3.pos = this.text.length + (isAtEnd(node, point3.node, point3.offset) ? length : 0);
   }
 };
 function isAtEnd(parent2, node, offset) {
@@ -18108,20 +20615,20 @@ function applyDefaultInsert(view, change, newSel) {
         compositionRange = view.state.doc.lineAt(sel.head);
       }
       let offset = sel.to - change.to;
-      tr = startState.changeByRange((range) => {
-        if (range.from == sel.from && range.to == sel.to)
-          return { changes, range: mainSel || range.map(changes) };
-        let to = range.to - offset, from = to - replaced.length;
+      tr = startState.changeByRange((range2) => {
+        if (range2.from == sel.from && range2.to == sel.to)
+          return { changes, range: mainSel || range2.map(changes) };
+        let to = range2.to - offset, from = to - replaced.length;
         if (view.state.sliceDoc(from, to) != replaced || // Unfortunately, there's no way to make multiple
         // changes in the same node work without aborting
         // composition, so cursors in the composition range are
         // ignored.
         to >= compositionRange.from && from <= compositionRange.to)
-          return { range };
-        let rangeChanges = startState.changes({ from, to, insert: change.insert }), selOff = range.to - sel.to;
+          return { range: range2 };
+        let rangeChanges = startState.changes({ from, to, insert: change.insert }), selOff = range2.to - sel.to;
         return {
           changes: rangeChanges,
-          range: !mainSel ? range.map(rangeChanges) : EditorSelection.range(Math.max(0, mainSel.anchor + selOff), Math.max(0, mainSel.head + selOff))
+          range: !mainSel ? range2.map(rangeChanges) : EditorSelection.range(Math.max(0, mainSel.anchor + selOff), Math.max(0, mainSel.head + selOff))
         };
       });
     } else {
@@ -18189,8 +20696,8 @@ function selectionFromPoints(points, base2) {
   let anchor = points[0].pos, head2 = points.length == 2 ? points[1].pos : anchor;
   return anchor > -1 && head2 > -1 ? EditorSelection.single(anchor + base2, head2 + base2) : null;
 }
-function sameSelPos(selection, range) {
-  return range.head == selection.main.head && range.anchor == selection.main.anchor;
+function sameSelPos(selection, range2) {
+  return range2.head == selection.main.head && range2.anchor == selection.main.anchor;
 }
 var InputState = class {
   setSelectionOrigin(origin) {
@@ -18463,17 +20970,17 @@ var MouseSelection = class {
     }
   }
   scroll() {
-    let { x, y } = this.scrollSpeed;
-    if (x && this.scrollParents.x) {
-      this.scrollParents.x.scrollLeft += x;
-      x = 0;
+    let { x: x2, y: y2 } = this.scrollSpeed;
+    if (x2 && this.scrollParents.x) {
+      this.scrollParents.x.scrollLeft += x2;
+      x2 = 0;
     }
-    if (y && this.scrollParents.y) {
-      this.scrollParents.y.scrollTop += y;
-      y = 0;
+    if (y2 && this.scrollParents.y) {
+      this.scrollParents.y.scrollTop += y2;
+      y2 = 0;
     }
-    if (x || y)
-      this.view.win.scrollBy(x, y);
+    if (x2 || y2)
+      this.view.win.scrollBy(x2, y2);
     if (this.dragging === false)
       this.select(this.lastEvent);
   }
@@ -18554,23 +21061,23 @@ function doPaste(view, input) {
   let linewise = lastLinewiseCopy != null && state2.selection.ranges.every((r) => r.empty) && lastLinewiseCopy == text2.toString();
   if (linewise) {
     let lastLine = -1;
-    changes = state2.changeByRange((range) => {
-      let line = state2.doc.lineAt(range.from);
+    changes = state2.changeByRange((range2) => {
+      let line = state2.doc.lineAt(range2.from);
       if (line.from == lastLine)
-        return { range };
+        return { range: range2 };
       lastLine = line.from;
       let insert2 = state2.toText((byLine ? text2.line(i2++).text : input) + state2.lineBreak);
       return {
         changes: { from: line.from, insert: insert2 },
-        range: EditorSelection.cursor(range.from + insert2.length)
+        range: EditorSelection.cursor(range2.from + insert2.length)
       };
     });
   } else if (byLine) {
-    changes = state2.changeByRange((range) => {
+    changes = state2.changeByRange((range2) => {
       let line = text2.line(i2++);
       return {
-        changes: { from: range.from, to: range.to, insert: line.text },
-        range: EditorSelection.cursor(range.from + line.length)
+        changes: { from: range2.from, to: range2.to, insert: line.text },
+        range: EditorSelection.cursor(range2.from + line.length)
       };
     });
   } else {
@@ -18680,22 +21187,22 @@ function basicMouseSelection(view, event2) {
         startSel = startSel.map(update2.changes);
       }
     },
-    get(event3, extend, multiple) {
+    get(event3, extend2, multiple) {
       let cur2 = view.posAndSideAtCoords({ x: event3.clientX, y: event3.clientY }, false), removed;
-      let range = rangeForClick(view, cur2.pos, cur2.assoc, type);
-      if (start2.pos != cur2.pos && !extend) {
+      let range2 = rangeForClick(view, cur2.pos, cur2.assoc, type);
+      if (start2.pos != cur2.pos && !extend2) {
         let startRange = rangeForClick(view, start2.pos, start2.assoc, type);
-        let from = Math.min(startRange.from, range.from), to = Math.max(startRange.to, range.to);
-        range = from < range.from ? EditorSelection.range(from, to, range.assoc) : EditorSelection.range(to, from, range.assoc);
+        let from = Math.min(startRange.from, range2.from), to = Math.max(startRange.to, range2.to);
+        range2 = from < range2.from ? EditorSelection.range(from, to, range2.assoc) : EditorSelection.range(to, from, range2.assoc);
       }
-      if (extend)
-        return startSel.replaceRange(startSel.main.extend(range.from, range.to, range.assoc));
+      if (extend2)
+        return startSel.replaceRange(startSel.main.extend(range2.from, range2.to, range2.assoc));
       else if (multiple && type == 1 && startSel.ranges.length > 1 && (removed = removeRangeAround(startSel, cur2.pos)))
         return removed;
       else if (multiple)
-        return startSel.addRange(range);
+        return startSel.addRange(range2);
       else
-        return EditorSelection.create([range]);
+        return EditorSelection.create([range2]);
     }
   };
 }
@@ -18708,21 +21215,21 @@ function removeRangeAround(sel, pos) {
   return null;
 }
 handlers.dragstart = (view, event2) => {
-  let { selection: { main: range } } = view.state;
+  let { selection: { main: range2 } } = view.state;
   if (event2.target.draggable) {
     let tile = view.docView.tile.nearest(event2.target);
     if (tile && tile.isWidget()) {
       let from = tile.posAtStart, to = from + tile.length;
-      if (from >= range.to || to <= range.from)
-        range = EditorSelection.undirectionalRange(from, to);
+      if (from >= range2.to || to <= range2.from)
+        range2 = EditorSelection.undirectionalRange(from, to);
     }
   }
   let { inputState } = view;
   if (inputState.mouseSelection)
     inputState.mouseSelection.dragging = true;
-  inputState.draggedContent = range;
+  inputState.draggedContent = range2;
   if (event2.dataTransfer) {
-    event2.dataTransfer.setData("Text", textFilter(view.state, clipboardOutputFilter, view.state.sliceDoc(range.from, range.to)));
+    event2.dataTransfer.setData("Text", textFilter(view.state, clipboardOutputFilter, view.state.sliceDoc(range2.from, range2.to)));
     event2.dataTransfer.effectAllowed = "copyMove";
   }
   return false;
@@ -18810,10 +21317,10 @@ function captureCopy(view, text2) {
 }
 function copiedRange(state2) {
   let content2 = [], ranges = [], linewise = false;
-  for (let range of state2.selection.ranges)
-    if (!range.empty) {
-      content2.push(state2.sliceDoc(range.from, range.to));
-      ranges.push(range);
+  for (let range2 of state2.selection.ranges)
+    if (!range2.empty) {
+      content2.push(state2.sliceDoc(range2.from, range2.to));
+      ranges.push(range2);
     }
   if (!content2.length) {
     let upto = -1;
@@ -19981,21 +22488,21 @@ var ViewState = class {
   }
   getViewport(bias, scrollTarget) {
     let marginTop = 0.5 - Math.max(-0.5, Math.min(0.5, bias / 1e3 / 2));
-    let map = this.heightMap, oracle = this.heightOracle;
+    let map2 = this.heightMap, oracle = this.heightOracle;
     let { visibleTop, visibleBottom } = this;
-    let viewport = new Viewport(map.lineAt(visibleTop - marginTop * 1e3, QueryType.ByHeight, oracle, 0, 0).from, map.lineAt(visibleBottom + (1 - marginTop) * 1e3, QueryType.ByHeight, oracle, 0, 0).to);
+    let viewport = new Viewport(map2.lineAt(visibleTop - marginTop * 1e3, QueryType.ByHeight, oracle, 0, 0).from, map2.lineAt(visibleBottom + (1 - marginTop) * 1e3, QueryType.ByHeight, oracle, 0, 0).to);
     if (scrollTarget) {
       let { head: head2 } = scrollTarget.range;
       if (head2 < viewport.from || head2 > viewport.to) {
         let viewHeight = Math.min(this.editorHeight, this.pixelViewport.bottom - this.pixelViewport.top);
-        let block2 = map.lineAt(head2, QueryType.ByPos, oracle, 0, 0), topPos;
+        let block2 = map2.lineAt(head2, QueryType.ByPos, oracle, 0, 0), topPos;
         if (scrollTarget.y == "center")
           topPos = (block2.top + block2.bottom) / 2 - viewHeight / 2;
         else if (scrollTarget.y == "start" || scrollTarget.y == "nearest" && head2 < viewport.from)
           topPos = block2.top;
         else
           topPos = block2.bottom - viewHeight;
-        viewport = new Viewport(map.lineAt(topPos - 1e3 / 2, QueryType.ByHeight, oracle, 0, 0).from, map.lineAt(topPos + viewHeight + 1e3 / 2, QueryType.ByHeight, oracle, 0, 0).to);
+        viewport = new Viewport(map2.lineAt(topPos - 1e3 / 2, QueryType.ByHeight, oracle, 0, 0).from, map2.lineAt(topPos + viewHeight + 1e3 / 2, QueryType.ByHeight, oracle, 0, 0).to);
       }
     }
     return viewport;
@@ -20774,16 +23281,16 @@ var DOMObserver = class {
     let selection = getSelection(view.root);
     if (!selection)
       return false;
-    let range = browser.safari && view.root.nodeType == 11 && view.root.activeElement == this.dom && safariSelectionRangeHack(this.view, selection) || selection;
-    if (!range || this.selectionRange.eq(range))
+    let range2 = browser.safari && view.root.nodeType == 11 && view.root.activeElement == this.dom && safariSelectionRangeHack(this.view, selection) || selection;
+    if (!range2 || this.selectionRange.eq(range2))
       return false;
-    let local = hasSelection(this.dom, range);
-    if (local && !this.selectionChanged && view.inputState.lastFocusTime > Date.now() - 200 && view.inputState.lastTouchTime < Date.now() - 300 && atElementStart(this.dom, range)) {
+    let local = hasSelection(this.dom, range2);
+    if (local && !this.selectionChanged && view.inputState.lastFocusTime > Date.now() - 200 && view.inputState.lastTouchTime < Date.now() - 300 && atElementStart(this.dom, range2)) {
       this.view.inputState.lastFocusTime = 0;
       view.docView.updateSelection();
       return false;
     }
-    this.selectionRange.setRange(range);
+    this.selectionRange.setRange(range2);
     if (local)
       this.selectionChanged = true;
     return true;
@@ -20920,16 +23427,16 @@ var DOMObserver = class {
       this.queue = [];
     let from = -1, to = -1, typeOver = false;
     for (let record of records) {
-      let range = this.readMutation(record);
-      if (!range)
+      let range2 = this.readMutation(record);
+      if (!range2)
         continue;
-      if (range.typeOver)
+      if (range2.typeOver)
         typeOver = true;
       if (from == -1) {
-        ({ from, to } = range);
+        ({ from, to } = range2);
       } else {
-        from = Math.min(range.from, from);
-        to = Math.max(range.to, to);
+        from = Math.min(range2.from, from);
+        to = Math.max(range2.to, to);
       }
     }
     return { from, to, typeOver };
@@ -21050,9 +23557,9 @@ function findChild(tile, dom, dir) {
   }
   return null;
 }
-function buildSelectionRangeFromRange(view, range) {
-  let anchorNode = range.startContainer, anchorOffset = range.startOffset;
-  let focusNode = range.endContainer, focusOffset = range.endOffset;
+function buildSelectionRangeFromRange(view, range2) {
+  let anchorNode = range2.startContainer, anchorOffset = range2.startOffset;
+  let focusNode = range2.endContainer, focusOffset = range2.endOffset;
   let curAnchor = view.docView.domAtPos(view.state.selection.main.anchor, 1);
   if (isEquivalentPosition(curAnchor.node, curAnchor.offset, focusNode, focusOffset))
     [anchorNode, anchorOffset, focusNode, focusOffset] = [focusNode, focusOffset, anchorNode, anchorOffset];
@@ -21060,9 +23567,9 @@ function buildSelectionRangeFromRange(view, range) {
 }
 function safariSelectionRangeHack(view, selection) {
   if (selection.getComposedRanges) {
-    let range = selection.getComposedRanges(view.root)[0];
-    if (range)
-      return buildSelectionRangeFromRange(view, range);
+    let range2 = selection.getComposedRanges(view.root)[0];
+    if (range2)
+      return buildSelectionRangeFromRange(view, range2);
   }
   let found = null;
   function read(event2) {
@@ -21135,10 +23642,10 @@ var EditContextManager = class {
     };
     this.handlers.textformatupdate = (e) => {
       let deco = [];
-      for (let format of e.getTextFormats()) {
-        let lineStyle = format.underlineStyle, thickness = format.underlineThickness;
+      for (let format2 of e.getTextFormats()) {
+        let lineStyle = format2.underlineStyle, thickness = format2.underlineThickness;
         if (!/none/i.test(lineStyle) && !/none/i.test(thickness)) {
-          let from = this.toEditorPos(format.rangeStart), to = this.toEditorPos(format.rangeEnd);
+          let from = this.toEditorPos(format2.rangeStart), to = this.toEditorPos(format2.rangeEnd);
           if (from < to) {
             let style = `text-decoration: underline ${/^[a-z]/.test(lineStyle) ? lineStyle + " " : lineStyle == "Dashed" ? "dashed " : lineStyle == "Squiggle" ? "wavy " : ""}${/thin/i.test(thickness) ? 1 : 2}px`;
             deco.push(Decoration.mark({ attributes: { style } }).range(from, to));
@@ -21443,8 +23950,8 @@ var EditorView = class _EditorView {
           scrollTarget = scrollTarget.map(tr.changes);
         if (tr.scrollIntoView) {
           let { main } = tr.state.selection;
-          let { x, y } = this.state.facet(_EditorView.cursorScrollMargin);
-          scrollTarget = new ScrollTarget(main.empty ? main : EditorSelection.cursor(main.head, main.head > main.anchor ? -1 : 1), "nearest", "nearest", y, x);
+          let { x: x2, y: y2 } = this.state.facet(_EditorView.cursorScrollMargin);
+          scrollTarget = new ScrollTarget(main.empty ? main : EditorSelection.cursor(main.head, main.head > main.anchor ? -1 : 1), "nearest", "nearest", y2, x2);
         }
         for (let e of tr.effects)
           if (e.is(scrollIntoView))
@@ -22052,10 +24559,10 @@ var EditorView = class _EditorView {
   Update the [root](https://codemirror.net/6/docs/ref/##view.EditorViewConfig.root) in which the editor lives. This is only
   necessary when moving the editor's existing DOM to a new window or shadow root.
   */
-  setRoot(root27) {
-    if (this._root != root27) {
-      this._root = root27;
-      this.observer.setWindow((root27.nodeType == 9 ? root27 : root27.ownerDocument).defaultView || window);
+  setRoot(root29) {
+    if (this._root != root29) {
+      this._root = root29;
+      this.observer.setWindow((root29.nodeType == 9 ? root29 : root29.ownerDocument).defaultView || window);
       this.mountStyles();
     }
   }
@@ -22216,14 +24723,14 @@ EditorView.atomicRanges = atomicRanges;
 EditorView.bidiIsolatedRanges = bidiIsolatedRanges;
 EditorView.cursorScrollMargin = /* @__PURE__ */ Facet.define({
   combine: (inputs) => {
-    let x = 5, y = 5;
+    let x2 = 5, y2 = 5;
     for (let i2 of inputs) {
       if (typeof i2 == "number")
-        x = y = i2;
+        x2 = y2 = i2;
       else
-        ({ x, y } = i2);
+        ({ x: x2, y: y2 } = i2);
     }
-    return { x, y };
+    return { x: x2, y: y2 };
   }
 });
 EditorView.scrollMargins = scrollMargins;
@@ -22319,10 +24826,10 @@ var keymap = /* @__PURE__ */ Facet.define({ enables: handleKeyEvents });
 var Keymaps = /* @__PURE__ */ new WeakMap();
 function getKeymap(state2) {
   let bindings = state2.facet(keymap);
-  let map = Keymaps.get(bindings);
-  if (!map)
-    Keymaps.set(bindings, map = buildKeymap(bindings.reduce((a, b) => a.concat(b), [])));
-  return map;
+  let map2 = Keymaps.get(bindings);
+  if (!map2)
+    Keymaps.set(bindings, map2 = buildKeymap(bindings.reduce((a, b) => a.concat(b), [])));
+  return map2;
 }
 function runScopeHandlers(view, event2, scope) {
   return runHandlers(getKeymap(view.state), event2, view, scope);
@@ -22397,7 +24904,7 @@ function buildKeymap(bindings, platform = currentPlatform) {
   return bound;
 }
 var currentKeyEvent = null;
-function runHandlers(map, event2, view, scope) {
+function runHandlers(map2, event2, view, scope) {
   currentKeyEvent = event2;
   let name3 = keyName(event2);
   let charCode = codePointAt2(name3, 0), isChar = codePointSize2(charCode) == name3.length && name3 != " ";
@@ -22429,7 +24936,7 @@ function runHandlers(map, event2, view, scope) {
     }
     return false;
   };
-  let scopeObj = map[scope], baseName, shiftName;
+  let scopeObj = map2[scope], baseName, shiftName;
   if (scopeObj) {
     if (runFor(scopeObj[prefix + modifiers(name3, event2, !isChar)])) {
       handled = true;
@@ -22495,15 +25002,15 @@ var RectangleMarker = class _RectangleMarker {
   rectangles covering the range's content (in a bidi-aware
   way) for non-empty ones.
   */
-  static forRange(view, className, range) {
-    if (range.empty) {
-      let pos = view.coordsAtPos(range.head, range.assoc || 1);
+  static forRange(view, className, range2) {
+    if (range2.empty) {
+      let pos = view.coordsAtPos(range2.head, range2.assoc || 1);
       if (!pos)
         return [];
       let base2 = getBase(view);
       return [new _RectangleMarker(className, pos.left - base2.left, pos.top - base2.top, null, pos.bottom - pos.top)];
     } else {
-      return rectanglesForRange(view, className, range);
+      return rectanglesForRange(view, className, range2);
     }
   }
 };
@@ -22517,17 +25024,17 @@ function wrappedLine(view, pos, side, inside) {
   if (!coords)
     return inside;
   let editorRect = view.dom.getBoundingClientRect();
-  let y = (coords.top + coords.bottom) / 2;
-  let left = view.posAtCoords({ x: editorRect.left + 1, y });
-  let right = view.posAtCoords({ x: editorRect.right - 1, y });
+  let y2 = (coords.top + coords.bottom) / 2;
+  let left = view.posAtCoords({ x: editorRect.left + 1, y: y2 });
+  let right = view.posAtCoords({ x: editorRect.right - 1, y: y2 });
   if (left == null || right == null)
     return inside;
   return { from: Math.max(inside.from, Math.min(left, right)), to: Math.min(inside.to, Math.max(left, right)) };
 }
-function rectanglesForRange(view, className, range) {
-  if (range.to <= view.viewport.from || range.from >= view.viewport.to)
+function rectanglesForRange(view, className, range2) {
+  if (range2.to <= view.viewport.from || range2.from >= view.viewport.to)
     return [];
-  let from = Math.max(range.from, view.viewport.from), to = Math.min(range.to, view.viewport.to);
+  let from = Math.max(range2.from, view.viewport.from), to = Math.min(range2.to, view.viewport.to);
   let ltr = view.textDirection == Direction.LTR;
   let content2 = view.contentDOM, contentRect = content2.getBoundingClientRect(), base2 = getBase(view);
   let lineElt = content2.querySelector(".cm-line"), lineStyle = lineElt && window.getComputedStyle(lineElt);
@@ -22541,10 +25048,10 @@ function rectanglesForRange(view, className, range) {
   if (visualEnd && (view.lineWrapping || endBlock.widgetLineBreaks))
     visualEnd = wrappedLine(view, to, -1, visualEnd);
   if (visualStart && visualEnd && visualStart.from == visualEnd.from && visualStart.to == visualEnd.to) {
-    return pieces(drawForLine(range.from, range.to, visualStart));
+    return pieces(drawForLine(range2.from, range2.to, visualStart));
   } else {
-    let top2 = visualStart ? drawForLine(range.from, null, visualStart) : drawForWidget(startBlock, false);
-    let bottom = visualEnd ? drawForLine(null, range.to, visualEnd) : drawForWidget(endBlock, true);
+    let top2 = visualStart ? drawForLine(range2.from, null, visualStart) : drawForWidget(startBlock, false);
+    let bottom = visualEnd ? drawForLine(null, range2.to, visualEnd) : drawForWidget(endBlock, true);
     let between = [];
     if ((visualStart || startBlock).to < (visualEnd || endBlock).from - (visualStart && visualEnd ? 1 : 0) || startBlock.widgetLineBreaks > 1 && top2.bottom + view.defaultLineHeight / 2 < bottom.top)
       between.push(piece(leftSide, top2.bottom, rightSide, bottom.top));
@@ -22597,8 +25104,8 @@ function rectanglesForRange(view, className, range) {
     return { top: top2, bottom, horizontal };
   }
   function drawForWidget(block2, top2) {
-    let y = contentRect.top + (top2 ? block2.top : block2.bottom);
-    return { top: y, bottom: y, horizontal: [] };
+    let y2 = contentRect.top + (top2 ? block2.top : block2.bottom);
+    return { top: y2, bottom: y2, horizontal: [] };
   }
 }
 function sameMarker(a, b) {
@@ -22782,11 +25289,11 @@ var hideNativeSelection = /* @__PURE__ */ Prec.highest(/* @__PURE__ */ EditorVie
     }
   }
 }));
-function iterMatches(doc2, re, from, to, f) {
-  re.lastIndex = 0;
+function iterMatches(doc2, re2, from, to, f) {
+  re2.lastIndex = 0;
   for (let cursor = doc2.iterRange(from, to), pos = from, m2; !cursor.next().done; pos += cursor.value.length) {
     if (!cursor.lineBreak)
-      while (m2 = re.exec(cursor.value))
+      while (m2 = re2.exec(cursor.value))
         f(pos + m2.index, m2);
   }
 }
@@ -23134,9 +25641,9 @@ function rectangleFor(state2, a, b) {
   }
   return ranges;
 }
-function absoluteColumn(view, x) {
+function absoluteColumn(view, x2) {
   let ref = view.coordsAtPos(view.viewport.from);
-  return ref ? Math.round(Math.abs((ref.left - x) / view.defaultCharacterWidth)) : -1;
+  return ref ? Math.round(Math.abs((ref.left - x2) / view.defaultCharacterWidth)) : -1;
 }
 function getPos(view, event2) {
   let offset = view.posAtCoords({ x: event2.clientX, y: event2.clientY }, false);
@@ -23182,18 +25689,18 @@ var TooltipViewManager = class {
     this.createTooltipView = createTooltipView;
     this.removeTooltipView = removeTooltipView;
     this.input = view.state.facet(facet);
-    this.tooltips = this.input.filter((t2) => t2);
+    this.tooltips = this.input.filter((t4) => t4);
     let prev = null;
-    this.tooltipViews = this.tooltips.map((t2) => prev = createTooltipView(t2, prev));
+    this.tooltipViews = this.tooltips.map((t4) => prev = createTooltipView(t4, prev));
   }
   update(update2, above) {
     var _a2;
     let input = update2.state.facet(this.facet);
-    let tooltips = input.filter((x) => x);
+    let tooltips = input.filter((x2) => x2);
     if (input === this.input) {
-      for (let t2 of this.tooltipViews)
-        if (t2.update)
-          t2.update(update2);
+      for (let t4 of this.tooltipViews)
+        if (t4.update)
+          t4.update(update2);
       return false;
     }
     let tooltipViews = [], newAbove = above ? [] : null;
@@ -23218,10 +25725,10 @@ var TooltipViewManager = class {
           tooltipView.update(update2);
       }
     }
-    for (let t2 of this.tooltipViews)
-      if (tooltipViews.indexOf(t2) < 0) {
-        this.removeTooltipView(t2);
-        (_a2 = t2.destroy) === null || _a2 === void 0 ? void 0 : _a2.call(t2);
+    for (let t4 of this.tooltipViews)
+      if (tooltipViews.indexOf(t4) < 0) {
+        this.removeTooltipView(t4);
+        (_a2 = t4.destroy) === null || _a2 === void 0 ? void 0 : _a2.call(t4);
       }
     if (above) {
       newAbove.forEach((val, i2) => above[i2] = val);
@@ -23263,12 +25770,12 @@ var tooltipPlugin = /* @__PURE__ */ ViewPlugin.fromClass(class {
     this.createContainer();
     this.measureReq = { read: this.readMeasure.bind(this), write: this.writeMeasure.bind(this), key: this };
     this.resizeObserver = typeof ResizeObserver == "function" ? new ResizeObserver(() => this.measureSoon()) : null;
-    this.manager = new TooltipViewManager(view, showTooltip2, (t2, p) => this.createTooltip(t2, p), (t2) => {
+    this.manager = new TooltipViewManager(view, showTooltip2, (t4, p) => this.createTooltip(t4, p), (t4) => {
       if (this.resizeObserver)
-        this.resizeObserver.unobserve(t2.dom);
-      t2.dom.remove();
+        this.resizeObserver.unobserve(t4.dom);
+      t4.dom.remove();
     });
-    this.above = this.manager.tooltips.map((t2) => !!t2.above);
+    this.above = this.manager.tooltips.map((t4) => !!t4.above);
     this.intersectionObserver = typeof IntersectionObserver == "function" ? new IntersectionObserver((entries) => {
       if (Date.now() > this.lastTransaction - 50 && entries.length > 0 && entries[entries.length - 1].intersectionRatio < 1)
         this.measureSoon();
@@ -23311,8 +25818,8 @@ var tooltipPlugin = /* @__PURE__ */ ViewPlugin.fromClass(class {
     let newConfig = update2.state.facet(tooltipConfig);
     if (newConfig.position != this.position && !this.madeAbsolute) {
       this.position = newConfig.position;
-      for (let t2 of this.manager.tooltipViews)
-        t2.dom.style.position = this.position;
+      for (let t4 of this.manager.tooltipViews)
+        t4.dom.style.position = this.position;
       shouldMeasure = true;
     }
     if (newConfig.parent != this.parent) {
@@ -23320,8 +25827,8 @@ var tooltipPlugin = /* @__PURE__ */ ViewPlugin.fromClass(class {
         this.container.remove();
       this.parent = newConfig.parent;
       this.createContainer();
-      for (let t2 of this.manager.tooltipViews)
-        this.container.appendChild(t2.dom);
+      for (let t4 of this.manager.tooltipViews)
+        this.container.appendChild(t4.dom);
       shouldMeasure = true;
     } else if (this.parent && this.view.themeClasses != this.classes) {
       this.classes = this.container.className = this.view.themeClasses;
@@ -23392,9 +25899,9 @@ var tooltipPlugin = /* @__PURE__ */ ViewPlugin.fromClass(class {
         bottom: visible.bottom - margins.bottom
       },
       parent: this.parent ? this.container.getBoundingClientRect() : this.view.dom.getBoundingClientRect(),
-      pos: this.manager.tooltips.map((t2, i2) => {
+      pos: this.manager.tooltips.map((t4, i2) => {
         let tv = this.manager.tooltipViews[i2];
-        return tv.getCoords ? tv.getCoords(t2.pos) : this.view.coordsAtPos(t2.pos);
+        return tv.getCoords ? tv.getCoords(t4.pos) : this.view.coordsAtPos(t4.pos);
       }),
       size: this.manager.tooltipViews.map(({ dom }) => dom.getBoundingClientRect()),
       space: this.view.state.facet(tooltipConfig).tooltipSpace(this.view),
@@ -23408,8 +25915,8 @@ var tooltipPlugin = /* @__PURE__ */ ViewPlugin.fromClass(class {
     if (measured.makeAbsolute) {
       this.madeAbsolute = true;
       this.position = "absolute";
-      for (let t2 of this.manager.tooltipViews)
-        t2.dom.style.position = "absolute";
+      for (let t4 of this.manager.tooltipViews)
+        t4.dom.style.position = "absolute";
     }
     let { visible, space, scaleX, scaleY } = measured;
     let others = [];
@@ -23568,7 +26075,7 @@ var HoverTooltipHost = class _HoverTooltipHost {
     this.mounted = false;
     this.dom = document.createElement("div");
     this.dom.classList.add("cm-tooltip-hover");
-    this.manager = new TooltipViewManager(view, showHoverTooltip, (t2, p) => this.createHostedView(t2, p), (t2) => t2.dom.remove());
+    this.manager = new TooltipViewManager(view, showHoverTooltip, (t4, p) => this.createHostedView(t4, p), (t4) => t4.dom.remove());
   }
   createHostedView(tooltip, prev) {
     let hostedView = tooltip.create(this.view);
@@ -23596,8 +26103,8 @@ var HoverTooltipHost = class _HoverTooltipHost {
   }
   destroy() {
     var _a2;
-    for (let t2 of this.manager.tooltipViews)
-      (_a2 = t2.destroy) === null || _a2 === void 0 ? void 0 : _a2.call(t2);
+    for (let t4 of this.manager.tooltipViews)
+      (_a2 = t4.destroy) === null || _a2 === void 0 ? void 0 : _a2.call(t4);
   }
   passProp(name3) {
     let value = void 0;
@@ -23630,14 +26137,14 @@ var showHoverTooltipHost = /* @__PURE__ */ showTooltip2.compute([showHoverToolti
   if (tooltips.length === 0)
     return null;
   return {
-    pos: Math.min(...tooltips.map((t2) => t2.pos)),
-    end: Math.max(...tooltips.map((t2) => {
+    pos: Math.min(...tooltips.map((t4) => t4.pos)),
+    end: Math.max(...tooltips.map((t4) => {
       var _a2;
-      return (_a2 = t2.end) !== null && _a2 !== void 0 ? _a2 : t2.pos;
+      return (_a2 = t4.end) !== null && _a2 !== void 0 ? _a2 : t4.pos;
     })),
     create: HoverTooltipHost.create,
     above: tooltips[0].above,
-    arrow: tooltips.some((t2) => t2.arrow)
+    arrow: tooltips.some((t4) => t4.arrow)
   };
 });
 var hoverPlugin = /* @__PURE__ */ Facet.define();
@@ -23723,7 +26230,7 @@ var HoverPlugin = class {
   }
   get tooltip() {
     let plugin = this.view.plugin(tooltipPlugin);
-    let index2 = plugin ? plugin.manager.tooltips.findIndex((t2) => t2.create == HoverTooltipHost.create) : -1;
+    let index2 = plugin ? plugin.manager.tooltips.findIndex((t4) => t4.create == HoverTooltipHost.create) : -1;
     return index2 > -1 ? plugin.manager.tooltipViews[index2] : null;
   }
   mousemove(event2) {
@@ -23779,12 +26286,12 @@ function isInTooltip(tooltip, event2) {
   }
   return event2.clientX >= left - tooltipMargin && event2.clientX <= right + tooltipMargin && event2.clientY >= top2 - tooltipMargin && event2.clientY <= bottom + tooltipMargin;
 }
-function isOverRange(view, from, to, x, y, margin) {
+function isOverRange(view, from, to, x2, y2, margin) {
   let rect = view.scrollDOM.getBoundingClientRect();
   let docBottom = view.documentTop + view.documentPadding.top + view.contentHeight;
-  if (rect.left > x || rect.right < x || rect.top > y || Math.min(rect.bottom, docBottom) < y)
+  if (rect.left > x2 || rect.right < x2 || rect.top > y2 || Math.min(rect.bottom, docBottom) < y2)
     return false;
-  let pos = view.posAtCoords({ x, y }, false);
+  let pos = view.posAtCoords({ x: x2, y: y2 }, false);
   return pos >= from && pos <= to;
 }
 function hoverTooltip(source2, options = {}) {
@@ -23809,11 +26316,11 @@ function hoverTooltip(source2, options = {}) {
         for (let tooltip of value) {
           let newPos = tr.changes.mapPos(tooltip.pos, -1, MapMode.TrackDel);
           if (newPos != null) {
-            let copy = Object.assign(/* @__PURE__ */ Object.create(null), tooltip);
-            copy.pos = newPos;
-            if (copy.end != null)
-              copy.end = tr.changes.mapPos(copy.end);
-            mapped.push(copy);
+            let copy2 = Object.assign(/* @__PURE__ */ Object.create(null), tooltip);
+            copy2.pos = newPos;
+            if (copy2.end != null)
+              copy2.end = tr.changes.mapPos(copy2.end);
+            mapped.push(copy2);
           }
         }
         value = mapped;
@@ -23915,7 +26422,7 @@ var panelPlugin = /* @__PURE__ */ ViewPlugin.fromClass(class {
     this.bottom.syncClasses();
     let input = update2.state.facet(showPanel);
     if (input != this.input) {
-      let specs = input.filter((x) => x);
+      let specs = input.filter((x2) => x2);
       let panels = [], top2 = [], bottom = [], mount2 = [];
       for (let spec of specs) {
         let known = this.specs.indexOf(spec), panel;
@@ -24168,7 +26675,7 @@ function gutter(config2) {
   return [gutters(), activeGutters.of({ ...defaults, ...config2 })];
 }
 var unfixGutters = /* @__PURE__ */ Facet.define({
-  combine: (values) => values.some((x) => x)
+  combine: (values) => values.some((x2) => x2)
 });
 function gutters(config2) {
   let result = [
@@ -24219,10 +26726,10 @@ var gutterView = /* @__PURE__ */ ViewPlugin.fromClass(class {
       this.syncGutters(vpOverlap < (vpB.to - vpB.from) * 0.8);
     }
     if (update2.geometryChanged) {
-      let min = this.view.contentHeight / this.view.scaleY + "px";
-      this.dom.style.minHeight = min;
+      let min2 = this.view.contentHeight / this.view.scaleY + "px";
+      this.dom.style.minHeight = min2;
       if (this.domAfter)
-        this.domAfter.style.minHeight = min;
+        this.domAfter.style.minHeight = min2;
     }
     if (this.view.state.facet(unfixGutters) != !this.fixed) {
       this.fixed = !this.fixed;
@@ -24396,16 +26903,16 @@ var SingleGutterView = class {
     this.dom.className = "cm-gutter" + (this.config.class ? " " + this.config.class : "");
     for (let prop2 in config2.domEventHandlers) {
       this.dom.addEventListener(prop2, (event2) => {
-        let target2 = event2.target, y;
+        let target2 = event2.target, y2;
         if (target2 != this.dom && this.dom.contains(target2)) {
           while (target2.parentNode != this.dom)
             target2 = target2.parentNode;
           let rect = target2.getBoundingClientRect();
-          y = (rect.top + rect.bottom) / 2;
+          y2 = (rect.top + rect.bottom) / 2;
         } else {
-          y = event2.clientY;
+          y2 = event2.clientY;
         }
-        let line = view.lineBlockAtHeight(y - view.documentTop);
+        let line = view.lineBlockAtHeight(y2 - view.documentTop);
         if (config2.domEventHandlers[prop2](view, line, event2))
           event2.preventDefault();
       });
@@ -24521,9 +27028,9 @@ var lineNumberConfig = /* @__PURE__ */ Facet.define({
   }
 });
 var NumberMarker = class extends GutterMarker {
-  constructor(number2) {
+  constructor(number4) {
     super();
-    this.number = number2;
+    this.number = number4;
   }
   eq(other) {
     return this.number == other.number;
@@ -24532,8 +27039,8 @@ var NumberMarker = class extends GutterMarker {
     return document.createTextNode(this.number);
   }
 };
-function formatNumber(view, number2) {
-  return view.state.facet(lineNumberConfig).formatNumber(number2, view.state);
+function formatNumber(view, number4) {
+  return view.state.facet(lineNumberConfig).formatNumber(number4, view.state);
 }
 var lineNumberGutter = /* @__PURE__ */ activeGutters.compute([lineNumberConfig], (state2) => ({
   class: "cm-lineNumbers",
@@ -24559,8 +27066,8 @@ var lineNumberGutter = /* @__PURE__ */ activeGutters.compute([lineNumberConfig],
     return new NumberMarker(formatNumber(view, maxLineNumber(view.state.doc.lines)));
   },
   updateSpacer(spacer, update2) {
-    let max = formatNumber(update2.view, maxLineNumber(update2.view.state.doc.lines));
-    return max == spacer.number ? spacer : new NumberMarker(max);
+    let max2 = formatNumber(update2.view, maxLineNumber(update2.view.state.doc.lines));
+    return max2 == spacer.number ? spacer : new NumberMarker(max2);
   },
   domEventHandlers: state2.facet(lineNumberConfig).domEventHandlers,
   side: "before"
@@ -24625,8 +27132,8 @@ var Tag = class _Tag {
     let tag = new _Tag(name3, [], null, []);
     tag.set.push(tag);
     if (parent2)
-      for (let t2 of parent2.set)
-        tag.set.push(t2);
+      for (let t4 of parent2.set)
+        tag.set.push(t4);
     return tag;
   }
   /**
@@ -24660,7 +27167,7 @@ var Modifier = class _Modifier {
   static get(base2, mods) {
     if (!mods.length)
       return base2;
-    let exists = mods[0].instances.find((t2) => t2.base == base2 && sameArray2(mods, t2.modified));
+    let exists = mods[0].instances.find((t4) => t4.base == base2 && sameArray2(mods, t4.modified));
     if (exists)
       return exists;
     let set2 = [], tag = new Tag(base2.name, set2, base2, mods);
@@ -24675,7 +27182,7 @@ var Modifier = class _Modifier {
   }
 };
 function sameArray2(a, b) {
-  return a.length == b.length && a.every((x, i2) => x == b[i2]);
+  return a.length == b.length && a.every((x2, i2) => x2 == b[i2]);
 }
 function powerSet(array) {
   let sets = [[]];
@@ -24727,7 +27234,7 @@ function styleTags(spec) {
 }
 var ruleNodeProp = new NodeProp({
   combine(a, b) {
-    let cur2, root27, take;
+    let cur2, root29, take;
     while (a || b) {
       if (!a || b && a.depth >= b.depth) {
         take = b;
@@ -24738,14 +27245,14 @@ var ruleNodeProp = new NodeProp({
       }
       if (cur2 && cur2.mode == take.mode && !take.context && !cur2.context)
         continue;
-      let copy = new Rule(take.tags, take.mode, take.context);
+      let copy2 = new Rule(take.tags, take.mode, take.context);
       if (cur2)
-        cur2.next = copy;
+        cur2.next = copy2;
       else
-        root27 = copy;
-      cur2 = copy;
+        root29 = copy2;
+      cur2 = copy2;
     }
-    return root27;
+    return root29;
   }
 });
 var Rule = class {
@@ -24775,13 +27282,13 @@ var Rule = class {
 };
 Rule.empty = new Rule([], 2, null);
 function tagHighlighter(tags2, options) {
-  let map = /* @__PURE__ */ Object.create(null);
+  let map2 = /* @__PURE__ */ Object.create(null);
   for (let style of tags2) {
     if (!Array.isArray(style.tag))
-      map[style.tag.id] = style.class;
+      map2[style.tag.id] = style.class;
     else
       for (let tag of style.tag)
-        map[tag.id] = style.class;
+        map2[tag.id] = style.class;
   }
   let { scope, all = null } = options || {};
   return {
@@ -24789,7 +27296,7 @@ function tagHighlighter(tags2, options) {
       let cls = all;
       for (let tag of tags3) {
         for (let sub of tag.set) {
-          let tagClass = map[sub.id];
+          let tagClass = map2[sub.id];
           if (tagClass) {
             cls = cls ? cls + " " + tagClass : tagClass;
             break;
@@ -24908,7 +27415,7 @@ var typeName = t(name2);
 var propertyName = t(name2);
 var literal = t();
 var string = t(literal);
-var number = t(literal);
+var number3 = t(literal);
 var content = t();
 var heading = t(content);
 var keyword = t();
@@ -24996,15 +27503,15 @@ var tags = {
   /**
   A number [literal](#highlight.tags.literal).
   */
-  number,
+  number: number3,
   /**
   An integer [number](#highlight.tags.number) literal.
   */
-  integer: t(number),
+  integer: t(number3),
   /**
   A floating-point [number](#highlight.tags.number) literal.
   */
-  float: t(number),
+  float: t(number3),
   /**
   A boolean [literal](#highlight.tags.literal).
   */
@@ -25833,15 +28340,15 @@ var indentUnit = /* @__PURE__ */ Facet.define({
   combine: (values) => {
     if (!values.length)
       return "  ";
-    let unit = values[0];
-    if (!unit || /\S/.test(unit) || Array.from(unit).some((e) => e != unit[0]))
+    let unit2 = values[0];
+    if (!unit2 || /\S/.test(unit2) || Array.from(unit2).some((e) => e != unit2[0]))
       throw new Error("Invalid indent unit: " + JSON.stringify(values[0]));
-    return unit;
+    return unit2;
   }
 });
 function getIndentUnit(state2) {
-  let unit = state2.facet(indentUnit);
-  return unit.charCodeAt(0) == 9 ? state2.tabSize * unit.length : unit.length;
+  let unit2 = state2.facet(indentUnit);
+  return unit2.charCodeAt(0) == 9 ? state2.tabSize * unit2.length : unit2.length;
 }
 function indentString(state2, cols) {
   let result = "", ts = state2.tabSize, ch = state2.facet(indentUnit)[0];
@@ -26147,8 +28654,8 @@ function foldable(state2, lineStart, lineEnd) {
   }
   return syntaxFolding(state2, lineStart, lineEnd);
 }
-function mapRange(range, mapping) {
-  let from = mapping.mapPos(range.from, 1), to = mapping.mapPos(range.to, -1);
+function mapRange(range2, mapping) {
+  let from = mapping.mapPos(range2.from, 1), to = mapping.mapPos(range2.to, -1);
   return from >= to ? void 0 : { from, to };
 }
 var foldEffect = /* @__PURE__ */ StateEffect.define({ map: mapRange });
@@ -26249,9 +28756,9 @@ function maybeEnable(state2, other) {
 }
 var foldCode = (view) => {
   for (let line of selectedLines(view)) {
-    let range = foldable(view.state, line.from, line.to);
-    if (range) {
-      view.dispatch({ effects: maybeEnable(view.state, [foldEffect.of(range), announceFold(view, range)]) });
+    let range2 = foldable(view.state, line.from, line.to);
+    if (range2) {
+      view.dispatch({ effects: maybeEnable(view.state, [foldEffect.of(range2), announceFold(view, range2)]) });
       return true;
     }
   }
@@ -26270,17 +28777,17 @@ var unfoldCode = (view) => {
     view.dispatch({ effects });
   return effects.length > 0;
 };
-function announceFold(view, range, fold = true) {
-  let lineFrom = view.state.doc.lineAt(range.from).number, lineTo = view.state.doc.lineAt(range.to).number;
+function announceFold(view, range2, fold = true) {
+  let lineFrom = view.state.doc.lineAt(range2.from).number, lineTo = view.state.doc.lineAt(range2.to).number;
   return EditorView.announce.of(`${view.state.phrase(fold ? "Folded lines" : "Unfolded lines")} ${lineFrom} ${view.state.phrase("to")} ${lineTo}.`);
 }
 var foldAll = (view) => {
   let { state: state2 } = view, effects = [];
   for (let pos = 0; pos < state2.doc.length; ) {
-    let line = view.lineBlockAt(pos), range = foldable(state2, line.from, line.to);
-    if (range)
-      effects.push(foldEffect.of(range));
-    pos = (range ? view.lineBlockAt(range.to) : line).to + 1;
+    let line = view.lineBlockAt(pos), range2 = foldable(state2, line.from, line.to);
+    if (range2)
+      effects.push(foldEffect.of(range2));
+    pos = (range2 ? view.lineBlockAt(range2.to) : line).to + 1;
   }
   if (effects.length)
     view.dispatch({ effects: maybeEnable(view.state, effects) });
@@ -26424,9 +28931,9 @@ function foldGutter(config2 = {}) {
             view.dispatch({ effects: unfoldEffect.of(folded) });
             return true;
           }
-          let range = foldable(view.state, line.from, line.to);
-          if (range) {
-            view.dispatch({ effects: foldEffect.of(range) });
+          let range2 = foldable(view.state, line.from, line.to);
+          if (range2) {
+            view.dispatch({ effects: foldEffect.of(range2) });
             return true;
           }
           return false;
@@ -26661,10 +29168,10 @@ function defaultRenderMatch(match) {
 function bracketDeco(state2) {
   let decorations2 = [];
   let config2 = state2.facet(bracketMatchingConfig);
-  for (let range of state2.selection.ranges) {
-    if (!range.empty)
+  for (let range2 of state2.selection.ranges) {
+    if (!range2.empty)
       continue;
-    let match = matchBrackets(state2, range.head, -1, config2) || range.head > 0 && matchBrackets(state2, range.head - 1, 1, config2) || config2.afterCursor && (matchBrackets(state2, range.head, 1, config2) || range.head < state2.doc.length && matchBrackets(state2, range.head + 1, -1, config2));
+    let match = matchBrackets(state2, range2.head, -1, config2) || range2.head > 0 && matchBrackets(state2, range2.head - 1, 1, config2) || config2.afterCursor && (matchBrackets(state2, range2.head, 1, config2) || range2.head < state2.doc.length && matchBrackets(state2, range2.head + 1, -1, config2));
     if (match)
       decorations2 = decorations2.concat(config2.renderMatch(match, state2));
   }
@@ -27301,7 +29808,7 @@ function createTokenType(extra, tagStr) {
   }
   if (!tags$1.length)
     return 0;
-  let name3 = tagStr.replace(/ /g, "_"), key = name3 + " " + tags$1.map((t2) => t2.id);
+  let name3 = tagStr.replace(/ /g, "_"), key = name3 + " " + tags$1.map((t4) => t4.id);
   let known = byTag[key];
   if (known)
     return known.id;
@@ -27444,13 +29951,13 @@ var pickedCompletion = /* @__PURE__ */ Annotation.define();
 function insertCompletionText(state2, text2, from, to) {
   let { main } = state2.selection, fromOff = from - main.from, toOff = to - main.from;
   return {
-    ...state2.changeByRange((range) => {
-      if (range != main && from != to && state2.sliceDoc(range.from + fromOff, range.from + toOff) != state2.sliceDoc(from, to))
-        return { range };
+    ...state2.changeByRange((range2) => {
+      if (range2 != main && from != to && state2.sliceDoc(range2.from + fromOff, range2.from + toOff) != state2.sliceDoc(from, to))
+        return { range: range2 };
       let lines = state2.toText(text2);
       return {
-        changes: { from: range.from + fromOff, to: to == main.from ? range.to : range.from + toOff, insert: lines },
-        range: EditorSelection.cursor(range.from + fromOff + lines.length)
+        changes: { from: range2.from + fromOff, to: to == main.from ? range2.to : range2.from + toOff, insert: lines },
+        range: EditorSelection.cursor(range2.from + fromOff + lines.length)
       };
     }),
     scrollIntoView: true,
@@ -27720,17 +30227,17 @@ function optionContent(config2) {
   });
   return content2.sort((a, b) => a.position - b.position).map((a) => a.render);
 }
-function rangeAroundSelected(total, selected, max) {
-  if (total <= max)
+function rangeAroundSelected(total, selected, max2) {
+  if (total <= max2)
     return { from: 0, to: total };
   if (selected < 0)
     selected = 0;
   if (selected <= total >> 1) {
-    let off2 = Math.floor(selected / max);
-    return { from: off2 * max, to: (off2 + 1) * max };
+    let off2 = Math.floor(selected / max2);
+    return { from: off2 * max2, to: (off2 + 1) * max2 };
   }
-  let off = Math.ceil((total - selected) / max);
-  return { from: total - off * max, to: total - (off - 1) * max };
+  let off = Math.ceil((total - selected) / max2);
+  return { from: total - off * max2, to: total - (off - 1) * max2 };
 }
 var CompletionTooltip = class {
   constructor(view, stateField, applyCompletion2) {
@@ -27916,7 +30423,7 @@ var CompletionTooltip = class {
       }
     }
   }
-  createListBox(options, id, range) {
+  createListBox(options, id, range2) {
     const ul = document.createElement("ul");
     ul.id = id;
     ul.setAttribute("role", "listbox");
@@ -27927,11 +30434,11 @@ var CompletionTooltip = class {
         e.preventDefault();
     });
     let curSection = null;
-    for (let i2 = range.from; i2 < range.to; i2++) {
+    for (let i2 = range2.from; i2 < range2.to; i2++) {
       let { completion, match } = options[i2], { section } = completion;
       if (section) {
         let name3 = typeof section == "string" ? section : section.name;
-        if (name3 != curSection && (i2 > range.from || range.from == 0)) {
+        if (name3 != curSection && (i2 > range2.from || range2.from == 0)) {
           curSection = name3;
           if (typeof section != "string" && section.header) {
             ul.appendChild(section.header(section));
@@ -27953,9 +30460,9 @@ var CompletionTooltip = class {
           li.appendChild(node);
       }
     }
-    if (range.from)
+    if (range2.from)
       ul.classList.add("cm-completionListIncompleteTop");
-    if (range.to < options.length)
+    if (range2.to < options.length)
       ul.classList.add("cm-completionListIncompleteBottom");
     return ul;
   }
@@ -28777,7 +31284,7 @@ var ActiveSnippet = class _ActiveSnippet {
     return new _ActiveSnippet(ranges, this.active);
   }
   selectionInsideField(sel) {
-    return sel.ranges.every((range) => this.ranges.some((r) => r.field == this.active && r.from <= range.from && r.to >= range.to));
+    return sel.ranges.every((range2) => this.ranges.some((r) => r.field == this.active && r.from <= range2.from && r.to >= range2.to));
   }
 };
 var setActive = /* @__PURE__ */ StateEffect.define({
@@ -28943,18 +31450,18 @@ var deleteBracketPair = ({ state: state2, dispatch }) => {
     return false;
   let conf = config(state2, state2.selection.main.head);
   let tokens = conf.brackets || defaults2.brackets;
-  let dont = null, changes = state2.changeByRange((range) => {
-    if (range.empty) {
-      let before = prevChar(state2.doc, range.head);
+  let dont = null, changes = state2.changeByRange((range2) => {
+    if (range2.empty) {
+      let before = prevChar(state2.doc, range2.head);
       for (let token of tokens) {
-        if (token == before && nextChar(state2.doc, range.head) == closing(codePointAt2(token, 0)))
+        if (token == before && nextChar(state2.doc, range2.head) == closing(codePointAt2(token, 0)))
           return {
-            changes: { from: range.head - token.length, to: range.head + token.length },
-            range: EditorSelection.cursor(range.head - token.length)
+            changes: { from: range2.head - token.length, to: range2.head + token.length },
+            range: EditorSelection.cursor(range2.head - token.length)
           };
       }
     }
-    return { range: dont = range };
+    return { range: dont = range2 };
   });
   if (!dont)
     dispatch(state2.update(changes, { scrollIntoView: true, userEvent: "delete.backward" }));
@@ -28992,21 +31499,21 @@ function prevChar(doc2, pos) {
   return codePointSize2(codePointAt2(prev, 0)) == prev.length ? prev : prev.slice(1);
 }
 function handleOpen(state2, open, close, closeBefore) {
-  let dont = null, changes = state2.changeByRange((range) => {
-    if (!range.empty)
+  let dont = null, changes = state2.changeByRange((range2) => {
+    if (!range2.empty)
       return {
-        changes: [{ insert: open, from: range.from }, { insert: close, from: range.to }],
-        effects: closeBracketEffect.of(range.to + open.length),
-        range: EditorSelection.range(range.anchor + open.length, range.head + open.length)
+        changes: [{ insert: open, from: range2.from }, { insert: close, from: range2.to }],
+        effects: closeBracketEffect.of(range2.to + open.length),
+        range: EditorSelection.range(range2.anchor + open.length, range2.head + open.length)
       };
-    let next2 = nextChar(state2.doc, range.head);
+    let next2 = nextChar(state2.doc, range2.head);
     if (!next2 || /\s/.test(next2) || closeBefore.indexOf(next2) > -1)
       return {
-        changes: { insert: open + close, from: range.head },
-        effects: closeBracketEffect.of(range.head + open.length),
-        range: EditorSelection.cursor(range.head + open.length)
+        changes: { insert: open + close, from: range2.head },
+        effects: closeBracketEffect.of(range2.head + open.length),
+        range: EditorSelection.cursor(range2.head + open.length)
       };
-    return { range: dont = range };
+    return { range: dont = range2 };
   });
   return dont ? null : state2.update(changes, {
     scrollIntoView: true,
@@ -29014,13 +31521,13 @@ function handleOpen(state2, open, close, closeBefore) {
   });
 }
 function handleClose(state2, _open, close) {
-  let dont = null, changes = state2.changeByRange((range) => {
-    if (range.empty && nextChar(state2.doc, range.head) == close)
+  let dont = null, changes = state2.changeByRange((range2) => {
+    if (range2.empty && nextChar(state2.doc, range2.head) == close)
       return {
-        changes: { from: range.head, to: range.head + close.length, insert: close },
-        range: EditorSelection.cursor(range.head + close.length)
+        changes: { from: range2.head, to: range2.head + close.length, insert: close },
+        range: EditorSelection.cursor(range2.head + close.length)
       };
-    return dont = { range };
+    return dont = { range: range2 };
   });
   return dont ? null : state2.update(changes, {
     scrollIntoView: true,
@@ -29029,14 +31536,14 @@ function handleClose(state2, _open, close) {
 }
 function handleSame(state2, token, allowTriple, config2) {
   let stringPrefixes = config2.stringPrefixes || defaults2.stringPrefixes;
-  let dont = null, changes = state2.changeByRange((range) => {
-    if (!range.empty)
+  let dont = null, changes = state2.changeByRange((range2) => {
+    if (!range2.empty)
       return {
-        changes: [{ insert: token, from: range.from }, { insert: token, from: range.to }],
-        effects: closeBracketEffect.of(range.to + token.length),
-        range: EditorSelection.range(range.anchor + token.length, range.head + token.length)
+        changes: [{ insert: token, from: range2.from }, { insert: token, from: range2.to }],
+        effects: closeBracketEffect.of(range2.to + token.length),
+        range: EditorSelection.range(range2.anchor + token.length, range2.head + token.length)
       };
-    let pos = range.head, next2 = nextChar(state2.doc, pos), start2;
+    let pos = range2.head, next2 = nextChar(state2.doc, pos), start2;
     if (next2 == token) {
       if (nodeStart(state2, pos)) {
         return {
@@ -29066,7 +31573,7 @@ function handleSame(state2, token, allowTriple, config2) {
           range: EditorSelection.cursor(pos + token.length)
         };
     }
-    return { range: dont = range };
+    return { range: dont = range2 };
   });
   return dont ? null : state2.update(changes, {
     scrollIntoView: true,
@@ -29077,13 +31584,13 @@ function nodeStart(state2, pos) {
   let tree = syntaxTree(state2).resolveInner(pos + 1);
   return tree.parent && tree.from == pos;
 }
-function probablyInString(state2, pos, quoteToken, prefixes) {
+function probablyInString(state2, pos, quoteToken, prefixes2) {
   let node = syntaxTree(state2).resolveInner(pos, -1);
-  let maxPrefix = prefixes.reduce((m2, p) => Math.max(m2, p.length), 0);
+  let maxPrefix = prefixes2.reduce((m2, p) => Math.max(m2, p.length), 0);
   for (let i2 = 0; i2 < 5; i2++) {
     let start2 = state2.sliceDoc(node.from, Math.min(node.to, node.from + quoteToken.length + maxPrefix));
     let quotePos = start2.indexOf(quoteToken);
-    if (!quotePos || quotePos > -1 && prefixes.indexOf(start2.slice(0, quotePos)) > -1) {
+    if (!quotePos || quotePos > -1 && prefixes2.indexOf(start2.slice(0, quotePos)) > -1) {
       let first = node.firstChild;
       while (first && first.from == node.from && first.to - first.from > quoteToken.length + quotePos) {
         if (state2.sliceDoc(first.to - quoteToken.length, first.to) == quoteToken)
@@ -29099,11 +31606,11 @@ function probablyInString(state2, pos, quoteToken, prefixes) {
   }
   return false;
 }
-function canStartStringAt(state2, pos, prefixes) {
+function canStartStringAt(state2, pos, prefixes2) {
   let charCat = state2.charCategorizer(pos);
   if (charCat(state2.sliceDoc(pos - 1, pos)) != CharCategory.Word)
     return pos;
-  for (let prefix of prefixes) {
+  for (let prefix of prefixes2) {
     let start2 = pos - prefix.length;
     if (state2.sliceDoc(start2, pos) == prefix && charCat(state2.sliceDoc(start2 - 1, start2)) != CharCategory.Word)
       return start2;
@@ -29224,10 +31731,10 @@ function changeBlockComment(option, state2, ranges = state2.selection.ranges) {
     return null;
   let comments = ranges.map((r, i2) => findBlockComment(state2, tokens[i2], r.from, r.to));
   if (option != 2 && !comments.every((c) => c)) {
-    return { changes: state2.changes(ranges.map((range, i2) => {
+    return { changes: state2.changes(ranges.map((range2, i2) => {
       if (comments[i2])
         return [];
-      return [{ from: range.from, insert: tokens[i2].open + " " }, { from: range.to, insert: " " + tokens[i2].close }];
+      return [{ from: range2.from, insert: tokens[i2].open + " " }, { from: range2.to, insert: " " + tokens[i2].close }];
     })) };
   } else if (option != 1 && comments.some((c) => c)) {
     let changes = [];
@@ -29427,11 +31934,11 @@ function updateBranch(branch2, to, maxLen, newEvent) {
 }
 function isAdjacent(a, b) {
   let ranges = [], isAdjacent2 = false;
-  a.iterChangedRanges((f, t2) => ranges.push(f, t2));
-  b.iterChangedRanges((_f, _t, f, t2) => {
+  a.iterChangedRanges((f, t4) => ranges.push(f, t4));
+  b.iterChangedRanges((_f, _t, f, t4) => {
     for (let i2 = 0; i2 < ranges.length; ) {
       let from = ranges[i2++], to = ranges[i2++];
-      if (t2 >= from && f <= to)
+      if (t4 >= from && f <= to)
         isAdjacent2 = true;
     }
   });
@@ -29570,11 +32077,11 @@ function moveSel({ state: state2, dispatch }, how) {
   dispatch(setSel(state2, selection));
   return true;
 }
-function rangeEnd(range, forward) {
-  return EditorSelection.cursor(forward ? range.to : range.from);
+function rangeEnd(range2, forward) {
+  return EditorSelection.cursor(forward ? range2.to : range2.from);
 }
 function cursorByChar(view, forward) {
-  return moveSel(view, (range) => range.empty ? view.moveByChar(range, forward) : rangeEnd(range, forward));
+  return moveSel(view, (range2) => range2.empty ? view.moveByChar(range2, forward) : rangeEnd(range2, forward));
 }
 function ltrAtCursor(view) {
   return view.textDirectionAt(view.state.selection.main.head) == Direction.LTR;
@@ -29582,7 +32089,7 @@ function ltrAtCursor(view) {
 var cursorCharLeft = (view) => cursorByChar(view, !ltrAtCursor(view));
 var cursorCharRight = (view) => cursorByChar(view, ltrAtCursor(view));
 function cursorByGroup(view, forward) {
-  return moveSel(view, (range) => range.empty ? view.moveByGroup(range, forward) : rangeEnd(range, forward));
+  return moveSel(view, (range2) => range2.empty ? view.moveByGroup(range2, forward) : rangeEnd(range2, forward));
 }
 var cursorGroupLeft = (view) => cursorByGroup(view, !ltrAtCursor(view));
 var cursorGroupRight = (view) => cursorByGroup(view, ltrAtCursor(view));
@@ -29612,14 +32119,14 @@ function moveBySyntax(state2, start2, forward) {
     newPos = forward ? pos.to : pos.from;
   return EditorSelection.cursor(newPos, forward ? -1 : 1);
 }
-var cursorSyntaxLeft = (view) => moveSel(view, (range) => moveBySyntax(view.state, range, !ltrAtCursor(view)));
-var cursorSyntaxRight = (view) => moveSel(view, (range) => moveBySyntax(view.state, range, ltrAtCursor(view)));
+var cursorSyntaxLeft = (view) => moveSel(view, (range2) => moveBySyntax(view.state, range2, !ltrAtCursor(view)));
+var cursorSyntaxRight = (view) => moveSel(view, (range2) => moveBySyntax(view.state, range2, ltrAtCursor(view)));
 function cursorByLine(view, forward) {
-  return moveSel(view, (range) => {
-    if (!range.empty)
-      return rangeEnd(range, forward);
-    let moved = view.moveVertically(range, forward);
-    return moved.head != range.head ? moved : view.moveToLineBoundary(range, forward);
+  return moveSel(view, (range2) => {
+    if (!range2.empty)
+      return rangeEnd(range2, forward);
+    let moved = view.moveVertically(range2, forward);
+    return moved.head != range2.head ? moved : view.moveToLineBoundary(range2, forward);
   });
 }
 var cursorLineUp = (view) => cursorByLine(view, false);
@@ -29648,8 +32155,8 @@ function pageInfo(view) {
 }
 function cursorByPage(view, forward) {
   let page = pageInfo(view);
-  let { state: state2 } = view, selection = updateSel(state2.selection, (range) => {
-    return range.empty ? view.moveVertically(range, forward, page.height) : rangeEnd(range, forward);
+  let { state: state2 } = view, selection = updateSel(state2.selection, (range2) => {
+    return range2.empty ? view.moveVertically(range2, forward, page.height) : rangeEnd(range2, forward);
   });
   if (selection.eq(state2.selection))
     return false;
@@ -29677,20 +32184,20 @@ function moveByLineBoundary(view, start2, forward) {
   }
   return moved;
 }
-var cursorLineBoundaryForward = (view) => moveSel(view, (range) => moveByLineBoundary(view, range, true));
-var cursorLineBoundaryBackward = (view) => moveSel(view, (range) => moveByLineBoundary(view, range, false));
-var cursorLineBoundaryLeft = (view) => moveSel(view, (range) => moveByLineBoundary(view, range, !ltrAtCursor(view)));
-var cursorLineBoundaryRight = (view) => moveSel(view, (range) => moveByLineBoundary(view, range, ltrAtCursor(view)));
-var cursorLineStart = (view) => moveSel(view, (range) => EditorSelection.cursor(view.lineBlockAt(range.head).from, 1));
-var cursorLineEnd = (view) => moveSel(view, (range) => EditorSelection.cursor(view.lineBlockAt(range.head).to, -1));
-function toMatchingBracket(state2, dispatch, extend) {
-  let found = false, selection = updateSel(state2.selection, (range) => {
-    let matching = matchBrackets(state2, range.head, -1) || matchBrackets(state2, range.head, 1) || range.head > 0 && matchBrackets(state2, range.head - 1, 1) || range.head < state2.doc.length && matchBrackets(state2, range.head + 1, -1);
+var cursorLineBoundaryForward = (view) => moveSel(view, (range2) => moveByLineBoundary(view, range2, true));
+var cursorLineBoundaryBackward = (view) => moveSel(view, (range2) => moveByLineBoundary(view, range2, false));
+var cursorLineBoundaryLeft = (view) => moveSel(view, (range2) => moveByLineBoundary(view, range2, !ltrAtCursor(view)));
+var cursorLineBoundaryRight = (view) => moveSel(view, (range2) => moveByLineBoundary(view, range2, ltrAtCursor(view)));
+var cursorLineStart = (view) => moveSel(view, (range2) => EditorSelection.cursor(view.lineBlockAt(range2.head).from, 1));
+var cursorLineEnd = (view) => moveSel(view, (range2) => EditorSelection.cursor(view.lineBlockAt(range2.head).to, -1));
+function toMatchingBracket(state2, dispatch, extend2) {
+  let found = false, selection = updateSel(state2.selection, (range2) => {
+    let matching = matchBrackets(state2, range2.head, -1) || matchBrackets(state2, range2.head, 1) || range2.head > 0 && matchBrackets(state2, range2.head - 1, 1) || range2.head < state2.doc.length && matchBrackets(state2, range2.head + 1, -1);
     if (!matching || !matching.end)
-      return range;
+      return range2;
     found = true;
-    let head2 = matching.start.from == range.head ? matching.end.to : matching.end.from;
-    return extend ? EditorSelection.range(range.anchor, head2) : EditorSelection.cursor(head2);
+    let head2 = matching.start.from == range2.head ? matching.end.to : matching.end.from;
+    return extend2 ? EditorSelection.range(range2.anchor, head2) : EditorSelection.cursor(head2);
   });
   if (!found)
     return false;
@@ -29699,11 +32206,11 @@ function toMatchingBracket(state2, dispatch, extend) {
 }
 var cursorMatchingBracket = ({ state: state2, dispatch }) => toMatchingBracket(state2, dispatch, false);
 function extendSel(target2, forward, how) {
-  let selection = updateSel(target2.state.selection, (range) => {
-    if (range.undirectional && range.head >= range.anchor != forward)
-      range = EditorSelection.range(range.head, range.anchor);
-    let head2 = how(range);
-    return EditorSelection.range(range.anchor, head2.head, head2.goalColumn, head2.bidiLevel || void 0, head2.assoc);
+  let selection = updateSel(target2.state.selection, (range2) => {
+    if (range2.undirectional && range2.head >= range2.anchor != forward)
+      range2 = EditorSelection.range(range2.head, range2.anchor);
+    let head2 = how(range2);
+    return EditorSelection.range(range2.anchor, head2.head, head2.goalColumn, head2.bidiLevel || void 0, head2.assoc);
   });
   if (selection.eq(target2.state.selection))
     return false;
@@ -29711,45 +32218,45 @@ function extendSel(target2, forward, how) {
   return true;
 }
 function selectByChar(view, forward) {
-  return extendSel(view, forward, (range) => view.moveByChar(range, forward));
+  return extendSel(view, forward, (range2) => view.moveByChar(range2, forward));
 }
 var selectCharLeft = (view) => selectByChar(view, !ltrAtCursor(view));
 var selectCharRight = (view) => selectByChar(view, ltrAtCursor(view));
 function selectByGroup(view, forward) {
-  return extendSel(view, forward, (range) => view.moveByGroup(range, forward));
+  return extendSel(view, forward, (range2) => view.moveByGroup(range2, forward));
 }
 var selectGroupLeft = (view) => selectByGroup(view, !ltrAtCursor(view));
 var selectGroupRight = (view) => selectByGroup(view, ltrAtCursor(view));
 var selectSyntaxLeft = (view) => {
   let forward = !ltrAtCursor(view);
-  return extendSel(view, forward, (range) => moveBySyntax(view.state, range, forward));
+  return extendSel(view, forward, (range2) => moveBySyntax(view.state, range2, forward));
 };
 var selectSyntaxRight = (view) => {
   let forward = ltrAtCursor(view);
-  return extendSel(view, forward, (range) => moveBySyntax(view.state, range, forward));
+  return extendSel(view, forward, (range2) => moveBySyntax(view.state, range2, forward));
 };
 function selectByLine(view, forward) {
-  return extendSel(view, forward, (range) => view.moveVertically(range, forward));
+  return extendSel(view, forward, (range2) => view.moveVertically(range2, forward));
 }
 var selectLineUp = (view) => selectByLine(view, false);
 var selectLineDown = (view) => selectByLine(view, true);
 function selectByPage(view, forward) {
-  return extendSel(view, forward, (range) => view.moveVertically(range, forward, pageInfo(view).height));
+  return extendSel(view, forward, (range2) => view.moveVertically(range2, forward, pageInfo(view).height));
 }
 var selectPageUp = (view) => selectByPage(view, false);
 var selectPageDown = (view) => selectByPage(view, true);
-var selectLineBoundaryForward = (view) => extendSel(view, true, (range) => moveByLineBoundary(view, range, true));
-var selectLineBoundaryBackward = (view) => extendSel(view, false, (range) => moveByLineBoundary(view, range, false));
+var selectLineBoundaryForward = (view) => extendSel(view, true, (range2) => moveByLineBoundary(view, range2, true));
+var selectLineBoundaryBackward = (view) => extendSel(view, false, (range2) => moveByLineBoundary(view, range2, false));
 var selectLineBoundaryLeft = (view) => {
   let forward = !ltrAtCursor(view);
-  return extendSel(view, forward, (range) => moveByLineBoundary(view, range, forward));
+  return extendSel(view, forward, (range2) => moveByLineBoundary(view, range2, forward));
 };
 var selectLineBoundaryRight = (view) => {
   let forward = ltrAtCursor(view);
-  return extendSel(view, forward, (range) => moveByLineBoundary(view, range, forward));
+  return extendSel(view, forward, (range2) => moveByLineBoundary(view, range2, forward));
 };
-var selectLineStart = (view) => extendSel(view, false, (range) => EditorSelection.cursor(view.lineBlockAt(range.head).from));
-var selectLineEnd = (view) => extendSel(view, true, (range) => EditorSelection.cursor(view.lineBlockAt(range.head).to));
+var selectLineStart = (view) => extendSel(view, false, (range2) => EditorSelection.cursor(view.lineBlockAt(range2.head).from));
+var selectLineEnd = (view) => extendSel(view, true, (range2) => EditorSelection.cursor(view.lineBlockAt(range2.head).to));
 var cursorDocStart = ({ state: state2, dispatch }) => {
   dispatch(setSel(state2, { anchor: 0 }));
   return true;
@@ -29776,19 +32283,19 @@ var selectLine = ({ state: state2, dispatch }) => {
   return true;
 };
 var selectParentSyntax = ({ state: state2, dispatch }) => {
-  let selection = updateSel(state2.selection, (range) => {
-    let tree = syntaxTree(state2), stack2 = tree.resolveStack(range.from, 1);
-    if (range.empty) {
-      let stackBefore = tree.resolveStack(range.from, -1);
+  let selection = updateSel(state2.selection, (range2) => {
+    let tree = syntaxTree(state2), stack2 = tree.resolveStack(range2.from, 1);
+    if (range2.empty) {
+      let stackBefore = tree.resolveStack(range2.from, -1);
       if (stackBefore.node.from >= stack2.node.from && stackBefore.node.to <= stack2.node.to)
         stack2 = stackBefore;
     }
     for (let cur2 = stack2; cur2; cur2 = cur2.next) {
       let { node } = cur2;
-      if ((node.from < range.from && node.to >= range.to || node.to > range.to && node.from <= range.from) && cur2.next)
+      if ((node.from < range2.from && node.to >= range2.to || node.to > range2.to && node.from <= range2.from) && cur2.next)
         return EditorSelection.range(node.to, node.from);
     }
-    return range;
+    return range2;
   });
   if (selection.eq(state2.selection))
     return false;
@@ -29797,10 +32304,10 @@ var selectParentSyntax = ({ state: state2, dispatch }) => {
 };
 function addCursorVertically(view, forward) {
   let { state: state2 } = view, sel = state2.selection, ranges = state2.selection.ranges.slice();
-  for (let range of state2.selection.ranges) {
-    let line = state2.doc.lineAt(range.head);
+  for (let range2 of state2.selection.ranges) {
+    let line = state2.doc.lineAt(range2.head);
     if (forward ? line.to < view.state.doc.length : line.from > 0)
-      for (let cur2 = range; ; ) {
+      for (let cur2 = range2; ; ) {
         let next2 = view.moveVertically(cur2, forward);
         if (next2.head < line.from || next2.head > line.to) {
           if (!ranges.some((r) => r.head == next2.head))
@@ -29835,10 +32342,10 @@ function deleteBy(target2, by) {
   if (target2.state.readOnly)
     return false;
   let event2 = "delete.selection", { state: state2 } = target2;
-  let changes = state2.changeByRange((range) => {
-    let { from, to } = range;
+  let changes = state2.changeByRange((range2) => {
+    let { from, to } = range2;
     if (from == to) {
-      let towards = by(range);
+      let towards = by(range2);
       if (towards < from) {
         event2 = "delete.backward";
         towards = skipAtomic(target2, towards, false);
@@ -29852,7 +32359,7 @@ function deleteBy(target2, by) {
       from = skipAtomic(target2, from, false);
       to = skipAtomic(target2, to, true);
     }
-    return from == to ? { range } : { changes: { from, to }, range: EditorSelection.cursor(from, from < range.head ? -1 : 1) };
+    return from == to ? { range: range2 } : { changes: { from, to }, range: EditorSelection.cursor(from, from < range2.head ? -1 : 1) };
   });
   if (changes.changes.empty)
     return false;
@@ -29872,8 +32379,8 @@ function skipAtomic(target2, pos, forward) {
       });
   return pos;
 }
-var deleteByChar = (target2, forward, byIndentUnit) => deleteBy(target2, (range) => {
-  let pos = range.from, { state: state2 } = target2, line = state2.doc.lineAt(pos), before, targetPos;
+var deleteByChar = (target2, forward, byIndentUnit) => deleteBy(target2, (range2) => {
+  let pos = range2.from, { state: state2 } = target2, line = state2.doc.lineAt(pos), before, targetPos;
   if (byIndentUnit && !forward && pos > line.from && pos < line.from + 200 && !/[^ \t]/.test(before = line.text.slice(0, pos - line.from))) {
     if (before[before.length - 1] == "	")
       return pos - 1;
@@ -29892,12 +32399,12 @@ var deleteByChar = (target2, forward, byIndentUnit) => deleteBy(target2, (range)
 });
 var deleteCharBackward = (view) => deleteByChar(view, false, true);
 var deleteCharForward = (view) => deleteByChar(view, true, false);
-var deleteByGroup = (target2, forward) => deleteBy(target2, (range) => {
-  let pos = range.head, { state: state2 } = target2, line = state2.doc.lineAt(pos);
+var deleteByGroup = (target2, forward) => deleteBy(target2, (range2) => {
+  let pos = range2.head, { state: state2 } = target2, line = state2.doc.lineAt(pos);
   let categorize = state2.charCategorizer(pos);
   for (let cat = null; ; ) {
     if (pos == (forward ? line.to : line.from)) {
-      if (pos == range.head && line.number != (forward ? state2.doc.lines : 1))
+      if (pos == range2.head && line.number != (forward ? state2.doc.lines : 1))
         pos += forward ? 1 : -1;
       break;
     }
@@ -29906,7 +32413,7 @@ var deleteByGroup = (target2, forward) => deleteBy(target2, (range) => {
     let nextCat = categorize(nextChar2);
     if (cat != null && nextCat != cat)
       break;
-    if (nextChar2 != " " || pos != range.head)
+    if (nextChar2 != " " || pos != range2.head)
       cat = nextCat;
     pos = next2;
   }
@@ -29914,25 +32421,25 @@ var deleteByGroup = (target2, forward) => deleteBy(target2, (range) => {
 });
 var deleteGroupBackward = (target2) => deleteByGroup(target2, false);
 var deleteGroupForward = (target2) => deleteByGroup(target2, true);
-var deleteToLineEnd = (view) => deleteBy(view, (range) => {
-  let lineEnd = view.lineBlockAt(range.head).to;
-  return range.head < lineEnd ? lineEnd : Math.min(view.state.doc.length, range.head + 1);
+var deleteToLineEnd = (view) => deleteBy(view, (range2) => {
+  let lineEnd = view.lineBlockAt(range2.head).to;
+  return range2.head < lineEnd ? lineEnd : Math.min(view.state.doc.length, range2.head + 1);
 });
-var deleteLineBoundaryBackward = (view) => deleteBy(view, (range) => {
-  let lineStart = view.moveToLineBoundary(range, false).head;
-  return range.head > lineStart ? lineStart : Math.max(0, range.head - 1);
+var deleteLineBoundaryBackward = (view) => deleteBy(view, (range2) => {
+  let lineStart = view.moveToLineBoundary(range2, false).head;
+  return range2.head > lineStart ? lineStart : Math.max(0, range2.head - 1);
 });
-var deleteLineBoundaryForward = (view) => deleteBy(view, (range) => {
-  let lineStart = view.moveToLineBoundary(range, true).head;
-  return range.head < lineStart ? lineStart : Math.min(view.state.doc.length, range.head + 1);
+var deleteLineBoundaryForward = (view) => deleteBy(view, (range2) => {
+  let lineStart = view.moveToLineBoundary(range2, true).head;
+  return range2.head < lineStart ? lineStart : Math.min(view.state.doc.length, range2.head + 1);
 });
 var splitLine = ({ state: state2, dispatch }) => {
   if (state2.readOnly)
     return false;
-  let changes = state2.changeByRange((range) => {
+  let changes = state2.changeByRange((range2) => {
     return {
-      changes: { from: range.from, to: range.to, insert: Text2.of(["", ""]) },
-      range: EditorSelection.cursor(range.from)
+      changes: { from: range2.from, to: range2.to, insert: Text2.of(["", ""]) },
+      range: EditorSelection.cursor(range2.from)
     };
   });
   dispatch(state2.update(changes, { scrollIntoView: true, userEvent: "input" }));
@@ -29941,10 +32448,10 @@ var splitLine = ({ state: state2, dispatch }) => {
 var transposeChars = ({ state: state2, dispatch }) => {
   if (state2.readOnly)
     return false;
-  let changes = state2.changeByRange((range) => {
-    if (!range.empty || range.from == 0 || range.from == state2.doc.length)
-      return { range };
-    let pos = range.from, line = state2.doc.lineAt(pos);
+  let changes = state2.changeByRange((range2) => {
+    if (!range2.empty || range2.from == 0 || range2.from == state2.doc.length)
+      return { range: range2 };
+    let pos = range2.from, line = state2.doc.lineAt(pos);
     let from = pos == line.from ? pos - 1 : findClusterBreak2(line.text, pos - line.from, false) + line.from;
     let to = pos == line.to ? pos + 1 : findClusterBreak2(line.text, pos - line.from, true) + line.from;
     return {
@@ -29959,16 +32466,16 @@ var transposeChars = ({ state: state2, dispatch }) => {
 };
 function selectedLineBlocks(state2) {
   let blocks = [], upto = -1;
-  for (let range of state2.selection.ranges) {
-    let startLine = state2.doc.lineAt(range.from), endLine = state2.doc.lineAt(range.to);
-    if (!range.empty && range.to == endLine.from)
-      endLine = state2.doc.lineAt(range.to - 1);
+  for (let range2 of state2.selection.ranges) {
+    let startLine = state2.doc.lineAt(range2.from), endLine = state2.doc.lineAt(range2.to);
+    if (!range2.empty && range2.to == endLine.from)
+      endLine = state2.doc.lineAt(range2.to - 1);
     if (upto >= startLine.number) {
       let prev = blocks[blocks.length - 1];
       prev.to = endLine.to;
-      prev.ranges.push(range);
+      prev.ranges.push(range2);
     } else {
-      blocks.push({ from: startLine.from, to: endLine.to, ranges: [range] });
+      blocks.push({ from: startLine.from, to: endLine.to, ranges: [range2] });
     }
     upto = endLine.number + 1;
   }
@@ -30036,14 +32543,14 @@ var deleteLine = (view) => {
       to++;
     return { from, to };
   }));
-  let selection = updateSel(state2.selection, (range) => {
+  let selection = updateSel(state2.selection, (range2) => {
     let dist2 = void 0;
     if (view.lineWrapping) {
-      let block2 = view.lineBlockAt(range.head), pos = view.coordsAtPos(range.head, range.assoc || 1);
+      let block2 = view.lineBlockAt(range2.head), pos = view.coordsAtPos(range2.head, range2.assoc || 1);
       if (pos)
         dist2 = block2.bottom + view.documentTop - pos.bottom + view.defaultLineHeight / 2;
     }
-    return view.moveVertically(range, true, dist2);
+    return view.moveVertically(range2, true, dist2);
   }).map(changes);
   view.dispatch({ changes, selection, scrollIntoView: true, userEvent: "delete.line" });
   return true;
@@ -30063,8 +32570,8 @@ function newlineAndIndent(atEof) {
   return ({ state: state2, dispatch }) => {
     if (state2.readOnly)
       return false;
-    let changes = state2.changeByRange((range) => {
-      let { from, to } = range, line = state2.doc.lineAt(from);
+    let changes = state2.changeByRange((range2) => {
+      let { from, to } = range2, line = state2.doc.lineAt(from);
       let explode = !atEof && from == to && isBetweenBrackets(state2, from);
       if (atEof)
         from = to = (to <= line.to ? line : state2.doc.lineAt(to)).to;
@@ -30092,12 +32599,12 @@ function newlineAndIndent(atEof) {
 }
 function changeBySelectedLine(state2, f) {
   let atLine = -1;
-  return state2.changeByRange((range) => {
+  return state2.changeByRange((range2) => {
     let changes = [];
-    for (let pos = range.from; pos <= range.to; ) {
+    for (let pos = range2.from; pos <= range2.to; ) {
       let line = state2.doc.lineAt(pos);
-      if (line.number > atLine && (range.empty || range.to > line.from)) {
-        f(line, changes, range);
+      if (line.number > atLine && (range2.empty || range2.to > line.from)) {
+        f(line, changes, range2);
         atLine = line.number;
       }
       pos = line.to + 1;
@@ -30105,7 +32612,7 @@ function changeBySelectedLine(state2, f) {
     let changeSet = state2.changes(changes);
     return {
       changes,
-      range: EditorSelection.range(changeSet.mapPos(range.anchor, 1), changeSet.mapPos(range.head, 1))
+      range: EditorSelection.range(changeSet.mapPos(range2.anchor, 1), changeSet.mapPos(range2.head, 1))
     };
   });
 }
@@ -30117,7 +32624,7 @@ var indentSelection = ({ state: state2, dispatch }) => {
     let found = updated[start2];
     return found == null ? -1 : found;
   } });
-  let changes = changeBySelectedLine(state2, (line, changes2, range) => {
+  let changes = changeBySelectedLine(state2, (line, changes2, range2) => {
     let indent = getIndentation(context, line.from);
     if (indent == null)
       return;
@@ -30125,7 +32632,7 @@ var indentSelection = ({ state: state2, dispatch }) => {
       indent = 0;
     let cur2 = /^\s*/.exec(line.text)[0];
     let norm = indentString(state2, indent);
-    if (cur2 != norm || range.from < line.from + cur2.length) {
+    if (cur2 != norm || range2.from < line.from + cur2.length) {
       updated[line.from] = indent;
       changes2.push({ from: line.from, to: line.from + cur2.length, insert: norm });
     }
@@ -30453,7 +32960,7 @@ var lintKeymap = [
 var lintConfig = /* @__PURE__ */ Facet.define({
   combine(input) {
     return {
-      sources: input.map((i2) => i2.source).filter((x) => x != null),
+      sources: input.map((i2) => i2.source).filter((x2) => x2 != null),
       ...combineConfig(input.map((i2) => i2.config), {
         delay: 750,
         markerFilter: null,
@@ -30465,7 +32972,7 @@ var lintConfig = /* @__PURE__ */ Facet.define({
         markerFilter: combineFilter,
         tooltipFilter: combineFilter,
         needsRefresh: (a, b) => !a ? b : !b ? a : (u) => a(u) || b(u),
-        hideOn: (a, b) => !a ? b : !b ? a : (t2, x, y) => a(t2, x, y) || b(t2, x, y),
+        hideOn: (a, b) => !a ? b : !b ? a : (t4, x2, y2) => a(t4, x2, y2) || b(t4, x2, y2),
         autoPanel: (a, b) => a || b
       })
     };
@@ -30710,8 +33217,8 @@ var LintPanel = class _LintPanel {
 function svg(content2, attrs = `viewBox="0 0 40 40"`) {
   return `url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" ${attrs}>${encodeURIComponent(content2)}</svg>')`;
 }
-function underline(color) {
-  return svg(`<path d="m0 2.5 l2 -1.5 l1 0 l2 1.5 l1 0" stroke="${color}" fill="none" stroke-width=".7"/>`, `width="6" height="3"`);
+function underline(color2) {
+  return svg(`<path d="m0 2.5 l2 -1.5 l1 0 l2 1.5 l1 0" stroke="${color2}" fill="none" stroke-width=".7"/>`, `width="6" height="3"`);
 }
 var baseTheme4 = /* @__PURE__ */ EditorView.baseTheme({
   ".cm-diagnostic": {
@@ -30938,7 +33445,7 @@ var lintGutterTooltip = /* @__PURE__ */ StateField.define({
   update(tooltip, tr) {
     if (tooltip && tr.docChanged)
       tooltip = hideTooltip(tr, tooltip) ? null : { ...tooltip, pos: tr.changes.mapPos(tooltip.pos) };
-    return tr.effects.reduce((t2, e) => e.is(setLintGutterTooltip) ? e.value : t2, tooltip);
+    return tr.effects.reduce((t4, e) => e.is(setLintGutterTooltip) ? e.value : t4, tooltip);
   },
   provide: (field) => showTooltip2.from(field)
 });
@@ -30989,7 +33496,7 @@ function lintGutter(config2 = {}) {
 }
 
 // node_modules/@codemirror/search/dist/index.js
-var basicNormalize = typeof String.prototype.normalize == "function" ? (x) => x.normalize("NFKD") : (x) => x;
+var basicNormalize = typeof String.prototype.normalize == "function" ? (x2) => x2.normalize("NFKD") : (x2) => x2;
 var SearchCursor = class {
   /**
   Create a text cursor. The query is the search string, `from` to
@@ -31004,7 +33511,7 @@ var SearchCursor = class {
   [`.normalize("NFKD")`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String/normalize)
   (when supported).
   */
-  constructor(text2, query, from = 0, to = text2.length, normalize, test) {
+  constructor(text2, query, from = 0, to = text2.length, normalize2, test) {
     this.test = test;
     this.value = { from: 0, to: 0, precise: false };
     this.done = false;
@@ -31013,7 +33520,7 @@ var SearchCursor = class {
     this.bufferPos = 0;
     this.iter = text2.iterRange(from, to);
     this.bufferStart = from;
-    this.normalize = normalize ? (x) => normalize(basicNormalize(x)) : basicNormalize;
+    this.normalize = normalize2 ? (x2) => normalize2(basicNormalize(x2)) : basicNormalize;
     this.query = this.normalize(query);
   }
   peek() {
@@ -31278,16 +33785,16 @@ var gotoLine = (view) => {
       return;
     }
     let startLine = state2.doc.lineAt(state2.selection.main.head);
-    let [, sign, ln, cl, percent] = match;
+    let [, sign2, ln, cl, percent] = match;
     let col = cl ? +cl.slice(1) : 0;
     let line2 = ln ? +ln : startLine.number;
     if (ln && percent) {
       let pc = line2 / 100;
-      if (sign)
-        pc = pc * (sign == "-" ? -1 : 1) + startLine.number / state2.doc.lines;
+      if (sign2)
+        pc = pc * (sign2 == "-" ? -1 : 1) + startLine.number / state2.doc.lines;
       line2 = Math.round(state2.doc.lines * pc);
-    } else if (ln && sign) {
-      line2 = line2 * (sign == "-" ? -1 : 1) + startLine.number;
+    } else if (ln && sign2) {
+      line2 = line2 * (sign2 == "-" ? -1 : 1) + startLine.number;
     }
     let docLine = state2.doc.line(Math.max(1, Math.min(state2.doc.lines, line2)));
     let selection = EditorSelection.cursor(docLine.from + Math.max(0, Math.min(col, docLine.length)));
@@ -31340,26 +33847,26 @@ var matchHighlighter = /* @__PURE__ */ ViewPlugin.fromClass(class {
     let { state: state2 } = view, sel = state2.selection;
     if (sel.ranges.length > 1)
       return Decoration.none;
-    let range = sel.main, query, check = null;
-    if (range.empty) {
+    let range2 = sel.main, query, check = null;
+    if (range2.empty) {
       if (!conf.highlightWordAroundCursor)
         return Decoration.none;
-      let word = state2.wordAt(range.head);
+      let word = state2.wordAt(range2.head);
       if (!word)
         return Decoration.none;
-      check = state2.charCategorizer(range.head);
+      check = state2.charCategorizer(range2.head);
       query = state2.sliceDoc(word.from, word.to);
     } else {
-      let len = range.to - range.from;
+      let len = range2.to - range2.from;
       if (len < conf.minSelectionLength || len > 200)
         return Decoration.none;
       if (conf.wholeWords) {
-        query = state2.sliceDoc(range.from, range.to);
-        check = state2.charCategorizer(range.head);
-        if (!(insideWordBoundaries(check, state2, range.from, range.to) && insideWord(check, state2, range.from, range.to)))
+        query = state2.sliceDoc(range2.from, range2.to);
+        check = state2.charCategorizer(range2.head);
+        if (!(insideWordBoundaries(check, state2, range2.from, range2.to) && insideWord(check, state2, range2.from, range2.to)))
           return Decoration.none;
       } else {
-        query = state2.sliceDoc(range.from, range.to);
+        query = state2.sliceDoc(range2.from, range2.to);
         if (!query)
           return Decoration.none;
       }
@@ -31370,9 +33877,9 @@ var matchHighlighter = /* @__PURE__ */ ViewPlugin.fromClass(class {
       while (!cursor.next().done) {
         let { from, to } = cursor.value;
         if (!check || insideWordBoundaries(check, state2, from, to)) {
-          if (range.empty && from <= range.from && to >= range.to)
+          if (range2.empty && from <= range2.from && to >= range2.to)
             deco.push(mainMatchDeco.range(from, to));
-          else if (from >= range.to || to <= range.from)
+          else if (from >= range2.to || to <= range2.from)
             deco.push(matchDeco.range(from, to));
           if (deco.length > conf.maxMatches)
             return Decoration.none;
@@ -31390,7 +33897,7 @@ var defaultTheme = /* @__PURE__ */ EditorView.baseTheme({
 });
 var selectWord = ({ state: state2, dispatch }) => {
   let { selection } = state2;
-  let newSel = EditorSelection.create(selection.ranges.map((range) => state2.wordAt(range.head) || EditorSelection.cursor(range.head)), selection.mainIndex);
+  let newSel = EditorSelection.create(selection.ranges.map((range2) => state2.wordAt(range2.head) || EditorSelection.cursor(range2.head)), selection.mainIndex);
   if (newSel.eq(selection))
     return false;
   dispatch(state2.update({ selection: newSel }));
@@ -31425,12 +33932,12 @@ var selectNextOccurrence = ({ state: state2, dispatch }) => {
   let searchedText = state2.sliceDoc(ranges[0].from, ranges[0].to);
   if (state2.selection.ranges.some((r) => state2.sliceDoc(r.from, r.to) != searchedText))
     return false;
-  let range = findNextOccurrence(state2, searchedText);
-  if (!range)
+  let range2 = findNextOccurrence(state2, searchedText);
+  if (!range2)
     return false;
   dispatch(state2.update({
-    selection: state2.selection.addRange(EditorSelection.range(range.from, range.to), false),
-    effects: EditorView.scrollIntoView(range.to)
+    selection: state2.selection.addRange(EditorSelection.range(range2.from, range2.to), false),
+    effects: EditorView.scrollIntoView(range2.to)
   }));
   return true;
 };
@@ -31443,7 +33950,7 @@ var searchConfigFacet = /* @__PURE__ */ Facet.define({
       regexp: false,
       wholeWord: false,
       createPanel: (view) => new SearchPanel(view),
-      scrollToMatch: (range) => EditorView.scrollIntoView(range)
+      scrollToMatch: (range2) => EditorView.scrollIntoView(range2)
     });
   }
 });
@@ -31510,7 +34017,7 @@ function stringCursor(spec, state2, from, to) {
     test = stringWordTest(state2.doc, state2.charCategorizer(state2.selection.main.head));
   if (spec.test)
     test = wrapStringTest(spec.test, state2, test);
-  return new SearchCursor(state2.doc, spec.unquoted, from, to, spec.caseSensitive ? void 0 : (x) => x.toLowerCase(), test);
+  return new SearchCursor(state2.doc, spec.unquoted, from, to, spec.caseSensitive ? void 0 : (x2) => x2.toLowerCase(), test);
 }
 function stringWordTest(doc2, categorizer) {
   return (from, to, buf, bufPos) => {
@@ -31538,11 +34045,11 @@ var StringQuery = class extends QueryType2 {
   prevMatchInRange(state2, from, to) {
     for (let pos = to; ; ) {
       let start2 = Math.max(from, pos - 1e4 - this.spec.unquoted.length);
-      let cursor = stringCursor(this.spec, state2, start2, pos), range = null;
+      let cursor = stringCursor(this.spec, state2, start2, pos), range2 = null;
       while (!cursor.nextOverlapping().done)
-        range = cursor.value;
-      if (range)
-        return range;
+        range2 = cursor.value;
+      if (range2)
+        return range2;
       if (start2 == from)
         return null;
       pos -= 1e4;
@@ -31608,11 +34115,11 @@ var RegExpQuery = class extends QueryType2 {
         to - size * 1e4
         /* FindPrev.ChunkSize */
       );
-      let cursor = regexpCursor(this.spec, state2, start2, to), range = null;
+      let cursor = regexpCursor(this.spec, state2, start2, to), range2 = null;
       while (!cursor.next().done)
-        range = cursor.value;
-      if (range && (start2 == from || range.from > start2 + 10))
-        return range;
+        range2 = cursor.value;
+      if (range2 && (start2 == from || range2.from > start2 + 10))
+        return range2;
       if (start2 == from)
         return null;
     }
@@ -32401,35 +34908,35 @@ function init_query_editor(value, onDocChanges, placeholder_value, get_submit) {
 
 // src/fava/charts/LineChart.svelte
 var root_215 = ns_template(`<line class="chart-grid svelte-14tawjm"></line><text class="chart-tick svelte-14tawjm" text-anchor="end"> </text>`, 1);
-var root_313 = ns_template(`<path class="area-path svelte-14tawjm"></path>`);
-var root_47 = ns_template(`<text y="51" class="chart-tick svelte-14tawjm" text-anchor="middle"> </text>`);
-var root_117 = template(`<svg class="line-chart svelte-14tawjm" viewBox="0 0 100 52" role="img" aria-label="Price line chart"><!><!><path class="line-path svelte-14tawjm"></path><!></svg>`);
-var root_57 = template(`<p class="chart-empty svelte-14tawjm">No prices.</p>`);
-var root_65 = template(`<div class="chart-tooltip svelte-14tawjm" role="status"> </div>`);
-var root9 = template(`<section class="line-card svelte-14tawjm"><!> <!></section>`);
+var root_314 = ns_template(`<path class="area-path svelte-14tawjm"></path>`);
+var root_48 = ns_template(`<text y="51" class="chart-tick svelte-14tawjm" text-anchor="middle"> </text>`);
+var root_120 = template(`<svg class="line-chart svelte-14tawjm" viewBox="0 0 100 52" role="img" aria-label="Price line chart"><!><!><path class="line-path svelte-14tawjm"></path><!></svg>`);
+var root_58 = template(`<p class="chart-empty svelte-14tawjm">No prices.</p>`);
+var root_66 = template(`<div class="chart-tooltip svelte-14tawjm" role="status"> </div>`);
+var root11 = template(`<section class="line-card svelte-14tawjm"><!> <!></section>`);
 function LineChart($$anchor, $$props) {
   push($$props, false);
   const data = mutable_state();
   const timeExtent = mutable_state();
   const valueExtent = mutable_state();
-  const path = mutable_state();
+  const path2 = mutable_state();
   const areaPath = mutable_state();
   const yTicks = mutable_state();
-  const tickFormat = mutable_state();
+  const tickFormat2 = mutable_state();
   const xTicks = mutable_state();
   let points = prop($$props, "points", 24, () => []);
-  let formatTip = prop($$props, "formatTip", 8, (point) => `${point.date}: ${point.display}`);
+  let formatTip = prop($$props, "formatTip", 8, (point3) => `${point3.date}: ${point3.display}`);
   let mode = prop($$props, "mode", 8, "line");
   const X0 = 14;
   const X1 = 98;
   const Y0 = 4;
   const Y1 = 44;
-  function x(timestamp) {
+  function x2(timestamp) {
     const span = get(timeExtent)[1] - get(timeExtent)[0];
     if (!span) return (X0 + X1) / 2;
     return X0 + (timestamp - get(timeExtent)[0]) / span * (X1 - X0);
   }
-  function y(value) {
+  function y2(value) {
     const span = get(valueExtent)[1] - get(valueExtent)[0];
     if (!span) return (Y0 + Y1) / 2;
     return Y1 - (value - get(valueExtent)[0]) / span * (Y1 - Y0);
@@ -32440,14 +34947,14 @@ function LineChart($$anchor, $$props) {
     const magnitude = Math.pow(10, Math.floor(Math.log10(step0)));
     const residual = step0 / magnitude;
     const step = (residual >= 5 ? 5 : residual >= 2 ? 2 : 1) * magnitude;
-    const ticks = [];
+    const ticks2 = [];
     for (let value = Math.ceil(lo / step) * step; value <= hi + step / 1e-6; value += step) {
-      ticks.push(value);
+      ticks2.push(value);
     }
-    return ticks;
+    return ticks2;
   }
   function tickLabel(value) {
-    return get(tickFormat).format(Math.abs(value) < 1e-9 ? 0 : value);
+    return get(tickFormat2).format(Math.abs(value) < 1e-9 ? 0 : value);
   }
   function xTickLabel(date2) {
     const spanDays = (get(timeExtent)[1] - get(timeExtent)[0]) / 864e5;
@@ -32463,8 +34970,8 @@ function LineChart($$anchor, $$props) {
     if (!box.width || !get(data).length) return;
     const vx = (event2.clientX - box.left) / box.width * 100;
     let best = get(data)[0];
-    for (const point of get(data)) {
-      if (Math.abs(x(point.timestamp) - vx) < Math.abs(x(best.timestamp) - vx)) best = point;
+    for (const point3 of get(data)) {
+      if (Math.abs(x2(point3.timestamp) - vx) < Math.abs(x2(best.timestamp) - vx)) best = point3;
     }
     set(tooltipText, formatTip()(best));
     set(tooltipVisible, true);
@@ -32479,10 +34986,10 @@ function LineChart($$anchor, $$props) {
     set(tooltipVisible, false);
   }
   legacy_pre_effect(() => deep_read_state(points()), () => {
-    set(data, points().filter((point) => Number.isFinite(point.value) && point.date).map((point) => ({
-      ...point,
-      timestamp: Date.parse(point.date)
-    })).filter((point) => Number.isFinite(point.timestamp)).sort((left, right) => left.timestamp - right.timestamp));
+    set(data, points().filter((point3) => Number.isFinite(point3.value) && point3.date).map((point3) => ({
+      ...point3,
+      timestamp: Date.parse(point3.date)
+    })).filter((point3) => Number.isFinite(point3.timestamp)).sort((left, right) => left.timestamp - right.timestamp));
   });
   legacy_pre_effect(() => get(data), () => {
     set(timeExtent, get(data).length ? [
@@ -32495,8 +35002,8 @@ function LineChart($$anchor, $$props) {
     () => {
       set(valueExtent, (() => {
         if (!get(data).length) return [0, 1];
-        let lo = Math.min(...get(data).map((point) => point.value));
-        let hi = Math.max(...get(data).map((point) => point.value));
+        let lo = Math.min(...get(data).map((point3) => point3.value));
+        let hi = Math.max(...get(data).map((point3) => point3.value));
         if (mode() === "area") {
           lo = Math.min(lo, 0);
           hi = Math.max(hi, 0);
@@ -32511,12 +35018,12 @@ function LineChart($$anchor, $$props) {
     }
   );
   legacy_pre_effect(() => get(data), () => {
-    set(path, get(data).map((point, index2) => `${index2 ? "L" : "M"}${x(point.timestamp).toFixed(2)},${y(point.value).toFixed(2)}`).join(" "));
+    set(path2, get(data).map((point3, index2) => `${index2 ? "L" : "M"}${x2(point3.timestamp).toFixed(2)},${y2(point3.value).toFixed(2)}`).join(" "));
   });
   legacy_pre_effect(
-    () => (deep_read_state(mode()), get(data), get(path)),
+    () => (deep_read_state(mode()), get(data), get(path2)),
     () => {
-      set(areaPath, mode() === "area" && get(data).length ? `${get(path)} L${x(get(data)[get(data).length - 1].timestamp).toFixed(2)},${y(0).toFixed(2)} L${x(get(data)[0].timestamp).toFixed(2)},${y(0).toFixed(2)} Z` : "");
+      set(areaPath, mode() === "area" && get(data).length ? `${get(path2)} L${x2(get(data)[get(data).length - 1].timestamp).toFixed(2)},${y2(0).toFixed(2)} L${x2(get(data)[0].timestamp).toFixed(2)},${y2(0).toFixed(2)} Z` : "");
     }
   );
   legacy_pre_effect(() => get(valueExtent), () => {
@@ -32524,42 +35031,42 @@ function LineChart($$anchor, $$props) {
   });
   legacy_pre_effect(() => {
   }, () => {
-    set(tickFormat, new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 2 }));
+    set(tickFormat2, new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 2 }));
   });
   legacy_pre_effect(() => (get(data), get(timeExtent)), () => {
     set(xTicks, (() => {
       if (!get(data).length) return [];
       const count = Math.min(5, get(data).length);
-      const ticks = [];
+      const ticks2 = [];
       for (let stop2 = 0; stop2 < count; stop2 += 1) {
         const timestamp = get(timeExtent)[0] + (get(timeExtent)[1] - get(timeExtent)[0]) * stop2 / Math.max(1, count - 1);
         let nearest = get(data)[0];
-        for (const point of get(data)) {
-          if (Math.abs(point.timestamp - timestamp) < Math.abs(nearest.timestamp - timestamp)) nearest = point;
+        for (const point3 of get(data)) {
+          if (Math.abs(point3.timestamp - timestamp) < Math.abs(nearest.timestamp - timestamp)) nearest = point3;
         }
-        if (!ticks.some((tick2) => tick2.date === nearest.date)) ticks.push(nearest);
+        if (!ticks2.some((tick2) => tick2.date === nearest.date)) ticks2.push(nearest);
       }
-      return ticks;
+      return ticks2;
     })());
   });
   legacy_pre_effect_reset();
   init2();
-  var section = root9();
+  var section = root11();
   var node = child(section);
   {
     var consequent_1 = ($$anchor2) => {
-      var svg_1 = root_117();
+      var svg_1 = root_120();
       var node_1 = child(svg_1);
       each(node_1, 1, () => get(yTicks), (tick2) => tick2, ($$anchor3, tick2) => {
         var fragment = root_215();
         var line = first_child(fragment);
         set_attribute(line, "x1", X0);
-        template_effect(() => set_attribute(line, "y1", y(get(tick2))));
+        template_effect(() => set_attribute(line, "y1", y2(get(tick2))));
         set_attribute(line, "x2", X1);
-        template_effect(() => set_attribute(line, "y2", y(get(tick2))));
+        template_effect(() => set_attribute(line, "y2", y2(get(tick2))));
         var text2 = sibling(line);
         set_attribute(text2, "x", X0 - 1);
-        template_effect(() => set_attribute(text2, "y", y(get(tick2)) + 1));
+        template_effect(() => set_attribute(text2, "y", y2(get(tick2)) + 1));
         var text_1 = child(text2, true);
         template_effect(() => set_text(text_1, tickLabel(get(tick2))));
         reset(text2);
@@ -32568,7 +35075,7 @@ function LineChart($$anchor, $$props) {
       var node_2 = sibling(node_1);
       {
         var consequent = ($$anchor3) => {
-          var path_1 = root_313();
+          var path_1 = root_314();
           template_effect(() => set_attribute(path_1, "d", get(areaPath)));
           append($$anchor3, path_1);
         };
@@ -32579,21 +35086,21 @@ function LineChart($$anchor, $$props) {
       var path_2 = sibling(node_2);
       var node_3 = sibling(path_2);
       each(node_3, 1, () => get(xTicks), (tick2) => tick2.date, ($$anchor3, tick2) => {
-        var text_2 = root_47();
-        template_effect(() => set_attribute(text_2, "x", x(get(tick2).timestamp)));
+        var text_2 = root_48();
+        template_effect(() => set_attribute(text_2, "x", x2(get(tick2).timestamp)));
         var text_3 = child(text_2, true);
         template_effect(() => set_text(text_3, xTickLabel(get(tick2).date)));
         reset(text_2);
         append($$anchor3, text_2);
       });
       reset(svg_1);
-      template_effect(() => set_attribute(path_2, "d", get(path)));
+      template_effect(() => set_attribute(path_2, "d", get(path2)));
       event("mousemove", svg_1, showTip);
       event("mouseleave", svg_1, hideTip);
       append($$anchor2, svg_1);
     };
     var alternate = ($$anchor2) => {
-      var p = root_57();
+      var p = root_58();
       append($$anchor2, p);
     };
     if_block(node, ($$render) => {
@@ -32604,7 +35111,7 @@ function LineChart($$anchor, $$props) {
   var node_4 = sibling(node, 2);
   {
     var consequent_2 = ($$anchor2) => {
-      var div = root_65();
+      var div = root_66();
       var text_4 = child(div, true);
       reset(div);
       template_effect(() => {
@@ -32623,10 +35130,10 @@ function LineChart($$anchor, $$props) {
 }
 
 // src/fava/reports/QueryReport.svelte
-var root_118 = template(`<p class="error-panel svelte-1qlrjvy" role="alert"> </p>`);
-var root_48 = template(`<div class="flex-row svelte-1qlrjvy"><span class="spacer svelte-1qlrjvy"></span> <button type="button" class="show-charts"> </button></div> <!>`, 1);
-var root_314 = template(`<p><a class="button">Export CSV</a></p> <!> <!>`, 1);
-var root10 = template(`<div class="headerline"><h2>Query</h2></div> <form class="query-form svelte-1qlrjvy"><label for="query-editor">BeanQuery</label> <div id="query-editor" aria-label="BeanQuery" class="svelte-1qlrjvy"></div> <button type="submit"> </button></form> <!>`, 1);
+var root_121 = template(`<p class="error-panel svelte-1qlrjvy" role="alert"> </p>`);
+var root_49 = template(`<div class="flex-row svelte-1qlrjvy"><span class="spacer svelte-1qlrjvy"></span> <button type="button" class="show-charts"> </button></div> <!>`, 1);
+var root_315 = template(`<p><a class="button">Export CSV</a></p> <!> <!>`, 1);
+var root12 = template(`<div class="headerline"><h2>Query</h2></div> <form class="query-form svelte-1qlrjvy"><label for="query-editor">BeanQuery</label> <div id="query-editor" aria-label="BeanQuery" class="svelte-1qlrjvy"></div> <button type="submit"> </button></form> <!>`, 1);
 function QueryReport($$anchor, $$props) {
   push($$props, false);
   const chartPoints = mutable_state();
@@ -32733,7 +35240,7 @@ function QueryReport($$anchor, $$props) {
   });
   legacy_pre_effect_reset();
   init2();
-  var fragment = root10();
+  var fragment = root12();
   var form = sibling(first_child(fragment), 2);
   var div = sibling(child(form), 2);
   bind_this(div, ($$value) => set(editorHost, $$value), () => get(editorHost));
@@ -32744,7 +35251,7 @@ function QueryReport($$anchor, $$props) {
   var node = sibling(form, 2);
   {
     var consequent = ($$anchor2) => {
-      var p = root_118();
+      var p = root_121();
       var text_2 = child(p, true);
       reset(p);
       template_effect(() => set_text(text_2, get(error2)));
@@ -32755,7 +35262,7 @@ function QueryReport($$anchor, $$props) {
       var node_1 = first_child(fragment_1);
       {
         var consequent_3 = ($$anchor3) => {
-          var fragment_2 = root_314();
+          var fragment_2 = root_315();
           var p_1 = first_child(fragment_2);
           var a = child(p_1);
           template_effect(() => set_attribute(a, "href", `/api/v1/query?q=${encodeURIComponent(get(queryText))}&format=csv`));
@@ -32763,7 +35270,7 @@ function QueryReport($$anchor, $$props) {
           var node_2 = sibling(p_1, 2);
           {
             var consequent_2 = ($$anchor4) => {
-              var fragment_3 = root_48();
+              var fragment_3 = root_49();
               var div_1 = first_child(fragment_3);
               var button_1 = sibling(child(div_1), 2);
               var text_3 = child(button_1, true);
@@ -32929,14 +35436,14 @@ var Edit = class {
    * based on an edit operation. This is useful for editing points without
    * requiring a tree or node instance.
    */
-  editPoint(point, index2) {
+  editPoint(point3, index2) {
     let newIndex = index2;
-    const newPoint = { ...point };
+    const newPoint = { ...point3 };
     if (index2 >= this.oldEndIndex) {
       newIndex = this.newEndIndex + (index2 - this.oldEndIndex);
-      const originalRow = point.row;
-      newPoint.row = this.newEndPosition.row + (point.row - this.oldEndPosition.row);
-      newPoint.column = originalRow === this.oldEndPosition.row ? this.newEndPosition.column + (point.column - this.oldEndPosition.column) : point.column;
+      const originalRow = point3.row;
+      newPoint.row = this.newEndPosition.row + (point3.row - this.oldEndPosition.row);
+      newPoint.column = originalRow === this.oldEndPosition.row ? this.newEndPosition.column + (point3.column - this.oldEndPosition.column) : point3.column;
     } else if (index2 > this.startIndex) {
       newIndex = this.newEndIndex;
       newPoint.row = this.newEndPosition.row;
@@ -32951,40 +35458,40 @@ var Edit = class {
    * operation. This is useful for editing ranges without requiring a tree
    * or node instance.
    */
-  editRange(range) {
+  editRange(range2) {
     const newRange = {
-      startIndex: range.startIndex,
-      startPosition: { ...range.startPosition },
-      endIndex: range.endIndex,
-      endPosition: { ...range.endPosition }
+      startIndex: range2.startIndex,
+      startPosition: { ...range2.startPosition },
+      endIndex: range2.endIndex,
+      endPosition: { ...range2.endPosition }
     };
-    if (range.endIndex >= this.oldEndIndex) {
-      if (range.endIndex !== Number.MAX_SAFE_INTEGER) {
-        newRange.endIndex = this.newEndIndex + (range.endIndex - this.oldEndIndex);
+    if (range2.endIndex >= this.oldEndIndex) {
+      if (range2.endIndex !== Number.MAX_SAFE_INTEGER) {
+        newRange.endIndex = this.newEndIndex + (range2.endIndex - this.oldEndIndex);
         newRange.endPosition = {
-          row: this.newEndPosition.row + (range.endPosition.row - this.oldEndPosition.row),
-          column: range.endPosition.row === this.oldEndPosition.row ? this.newEndPosition.column + (range.endPosition.column - this.oldEndPosition.column) : range.endPosition.column
+          row: this.newEndPosition.row + (range2.endPosition.row - this.oldEndPosition.row),
+          column: range2.endPosition.row === this.oldEndPosition.row ? this.newEndPosition.column + (range2.endPosition.column - this.oldEndPosition.column) : range2.endPosition.column
         };
         if (newRange.endIndex < this.newEndIndex) {
           newRange.endIndex = Number.MAX_SAFE_INTEGER;
           newRange.endPosition = { row: Number.MAX_SAFE_INTEGER, column: Number.MAX_SAFE_INTEGER };
         }
       }
-    } else if (range.endIndex > this.startIndex) {
+    } else if (range2.endIndex > this.startIndex) {
       newRange.endIndex = this.startIndex;
       newRange.endPosition = { ...this.startPosition };
     }
-    if (range.startIndex >= this.oldEndIndex) {
-      newRange.startIndex = this.newEndIndex + (range.startIndex - this.oldEndIndex);
+    if (range2.startIndex >= this.oldEndIndex) {
+      newRange.startIndex = this.newEndIndex + (range2.startIndex - this.oldEndIndex);
       newRange.startPosition = {
-        row: this.newEndPosition.row + (range.startPosition.row - this.oldEndPosition.row),
-        column: range.startPosition.row === this.oldEndPosition.row ? this.newEndPosition.column + (range.startPosition.column - this.oldEndPosition.column) : range.startPosition.column
+        row: this.newEndPosition.row + (range2.startPosition.row - this.oldEndPosition.row),
+        column: range2.startPosition.row === this.oldEndPosition.row ? this.newEndPosition.column + (range2.startPosition.column - this.oldEndPosition.column) : range2.startPosition.column
       };
       if (newRange.startIndex < this.newEndIndex) {
         newRange.startIndex = Number.MAX_SAFE_INTEGER;
         newRange.startPosition = { row: Number.MAX_SAFE_INTEGER, column: Number.MAX_SAFE_INTEGER };
       }
-    } else if (range.startIndex > this.startIndex) {
+    } else if (range2.startIndex > this.startIndex) {
       newRange.startIndex = this.startIndex;
       newRange.startPosition = { ...this.startPosition };
     }
@@ -32999,12 +35506,12 @@ var SIZE_OF_POINT = 2 * SIZE_OF_INT;
 var SIZE_OF_RANGE = 2 * SIZE_OF_INT + 2 * SIZE_OF_POINT;
 var ZERO_POINT = { row: 0, column: 0 };
 var INTERNAL = /* @__PURE__ */ Symbol("INTERNAL");
-function assertInternal(x) {
-  if (x !== INTERNAL) throw new Error("Illegal constructor");
+function assertInternal(x2) {
+  if (x2 !== INTERNAL) throw new Error("Illegal constructor");
 }
 __name(assertInternal, "assertInternal");
-function isPoint(point) {
-  return !!point && typeof point.row === "number" && typeof point.column === "number";
+function isPoint(point3) {
+  return !!point3 && typeof point3.row === "number" && typeof point3.column === "number";
 }
 __name(isPoint, "isPoint");
 function setModule(module2) {
@@ -33235,10 +35742,10 @@ var TreeCursor2 = class _TreeCursor {
   }
   /** Creates a deep copy of the tree cursor. This allocates new memory. */
   copy() {
-    const copy = new _TreeCursor(INTERNAL, this.tree);
+    const copy2 = new _TreeCursor(INTERNAL, this.tree);
     C2._ts_tree_cursor_copy_wasm(this.tree[0]);
-    unmarshalTreeCursor(copy);
-    return copy;
+    unmarshalTreeCursor(copy2);
+    return copy2;
   }
   /** Delete the tree cursor, freeing its resources. */
   delete() {
@@ -34104,9 +36611,9 @@ function unmarshalTreeCursor(cursor) {
   cursor[3] = C2.getValue(TRANSFER_BUFFER + 3 * SIZE_OF_INT, "i32");
 }
 __name(unmarshalTreeCursor, "unmarshalTreeCursor");
-function marshalPoint(address, point) {
-  C2.setValue(address, point.row, "i32");
-  C2.setValue(address + SIZE_OF_INT, point.column, "i32");
+function marshalPoint(address, point3) {
+  C2.setValue(address, point3.row, "i32");
+  C2.setValue(address + SIZE_OF_INT, point3.column, "i32");
 }
 __name(marshalPoint, "marshalPoint");
 function unmarshalPoint(address) {
@@ -34117,14 +36624,14 @@ function unmarshalPoint(address) {
   return result;
 }
 __name(unmarshalPoint, "unmarshalPoint");
-function marshalRange(address, range) {
-  marshalPoint(address, range.startPosition);
+function marshalRange(address, range2) {
+  marshalPoint(address, range2.startPosition);
   address += SIZE_OF_POINT;
-  marshalPoint(address, range.endPosition);
+  marshalPoint(address, range2.endPosition);
   address += SIZE_OF_POINT;
-  C2.setValue(address, range.startIndex, "i32");
+  C2.setValue(address, range2.startIndex, "i32");
   address += SIZE_OF_INT;
-  C2.setValue(address, range.endIndex, "i32");
+  C2.setValue(address, range2.endIndex, "i32");
   address += SIZE_OF_INT;
 }
 __name(marshalRange, "marshalRange");
@@ -34253,11 +36760,11 @@ var Language2 = class _Language {
   /**
    * Get the node type id for a node type name.
    */
-  idForNodeType(type, named) {
+  idForNodeType(type, named2) {
     const typeLength = C2.lengthBytesUTF8(type);
     const typeAddress = C2._malloc(typeLength + 1);
     C2.stringToUTF8(type, typeAddress, typeLength + 1);
-    const result = C2._ts_language_symbol_for_name(this[0], typeAddress, typeLength, named ? 1 : 0);
+    const result = C2._ts_language_symbol_for_name(this[0], typeAddress, typeLength, named2 ? 1 : 0);
     C2._free(typeAddress);
     return result || null;
   }
@@ -34411,11 +36918,11 @@ async function Module2(moduleArg = {}) {
   }, "quit_");
   var _scriptName = import.meta.url;
   var scriptDirectory = "";
-  function locateFile(path) {
+  function locateFile(path2) {
     if (Module["locateFile"]) {
-      return Module["locateFile"](path, scriptDirectory);
+      return Module["locateFile"](path2, scriptDirectory);
     }
-    return scriptDirectory + path;
+    return scriptDirectory + path2;
   }
   __name(locateFile, "locateFile");
   var readAsync, readBinary;
@@ -35611,7 +38118,7 @@ async function Module2(moduleArg = {}) {
     quit_(code, new ExitStatus(code));
   }, "_proc_exit");
   _proc_exit.sig = "vi";
-  var exitJS = /* @__PURE__ */ __name((status, implicit) => {
+  var exitJS = /* @__PURE__ */ __name((status, implicit2) => {
     EXITSTATUS = status;
     _proc_exit(status);
   }, "exitJS");
@@ -35700,20 +38207,20 @@ async function Module2(moduleArg = {}) {
   }, "stringToUTF16");
   LE_ATOMICS_NATIVE_BYTE_ORDER = new Int8Array(new Int16Array([1]).buffer)[0] === 1 ? [
     /* little endian */
-    ((x) => x),
-    ((x) => x),
+    ((x2) => x2),
+    ((x2) => x2),
     void 0,
-    ((x) => x)
+    ((x2) => x2)
   ] : [
     /* big endian */
-    ((x) => x),
-    ((x) => ((x & 65280) << 8 | (x & 255) << 24) >> 16),
+    ((x2) => x2),
+    ((x2) => ((x2 & 65280) << 8 | (x2 & 255) << 24) >> 16),
     void 0,
-    ((x) => x >> 24 & 255 | x >> 8 & 65280 | (x & 65280) << 8 | (x & 255) << 24)
+    ((x2) => x2 >> 24 & 255 | x2 >> 8 & 65280 | (x2 & 65280) << 8 | (x2 & 255) << 24)
   ];
   function LE_HEAP_UPDATE() {
-    HEAPU16.unsigned = ((x) => x & 65535);
-    HEAPU32.unsigned = ((x) => x >>> 0);
+    HEAPU16.unsigned = ((x2) => x2 & 65535);
+    HEAPU32.unsigned = ((x2) => x2 >>> 0);
   }
   __name(LE_HEAP_UPDATE, "LE_HEAP_UPDATE");
   {
@@ -36964,9 +39471,9 @@ var beancount_completion = (context) => {
     before.prevSibling?.prevSibling?.name,
     before.prevSibling?.prevSibling?.prevSibling?.name
   ];
-  const match = (...types2) => types2.every((t2, i2) => {
+  const match = (...types2) => types2.every((t4, i2) => {
     const nodeType = nodeTypesBefore[i2];
-    return typeof t2 === "string" ? nodeType === t2 : t2.some((n) => nodeType === n);
+    return typeof t4 === "string" ? nodeType === t4 : t4.some((n) => nodeType === n);
   });
   if (match("string", "flag")) {
     return res(get_payees(), before.from + 1);
@@ -37461,9 +39968,9 @@ function notify_err(error2, msg = errorWithCauses) {
 }
 
 // src/fava/reports/editor/AppMenu.svelte
-var root11 = template(`<div role="menubar" class="svelte-5ozbeh"><!></div>`);
+var root13 = template(`<div role="menubar" class="svelte-5ozbeh"><!></div>`);
 function AppMenu($$anchor, $$props) {
-  var div = root11();
+  var div = root13();
   var node = child(div);
   slot(node, $$props, "default", {}, null);
   reset(div);
@@ -37471,11 +39978,11 @@ function AppMenu($$anchor, $$props) {
 }
 
 // src/fava/reports/editor/AppMenuItem.svelte
-var root12 = template(`<span tabindex="0" role="menuitem" class="svelte-1dn9mcy"> <ul role="menu" class="svelte-1dn9mcy"><!></ul></span>`);
+var root14 = template(`<span tabindex="0" role="menuitem" class="svelte-1dn9mcy"> <ul role="menu" class="svelte-1dn9mcy"><!></ul></span>`);
 function AppMenuItem($$anchor, $$props) {
   let name3 = prop($$props, "name", 8);
   let open = mutable_state(false);
-  var span = root12();
+  var span = root14();
   var text2 = child(span);
   var ul = sibling(text2);
   var node = child(ul);
@@ -37500,14 +40007,14 @@ function AppMenuItem($$anchor, $$props) {
 }
 
 // src/fava/reports/editor/AppMenuSubItem.svelte
-var root13 = template(`<li role="menuitem" class="svelte-rln02u"><!> <span class="aspect svelte-rln02u"><!></span></li>`);
+var root15 = template(`<li role="menuitem" class="svelte-rln02u"><!> <span class="aspect svelte-rln02u"><!></span></li>`);
 function AppMenuSubItem($$anchor, $$props) {
   push($$props, false);
   let action2 = prop($$props, "action", 8);
   let title = prop($$props, "title", 8, "");
   let selected = prop($$props, "selected", 8, false);
   init2();
-  var li = root13();
+  var li = root15();
   var node = child(li);
   slot(node, $$props, "default", {}, null);
   var span = sibling(node, 2);
@@ -37532,7 +40039,7 @@ function AppMenuSubItem($$anchor, $$props) {
 }
 
 // src/fava/reports/editor/Key.svelte
-var root_119 = template(`<kbd> </kbd> `, 1);
+var root_126 = template(`<kbd> </kbd> `, 1);
 function Key($$anchor, $$props) {
   push($$props, false);
   let key = prop($$props, "key", 8);
@@ -37540,7 +40047,7 @@ function Key($$anchor, $$props) {
   var fragment = comment();
   var node = first_child(fragment);
   each(node, 3, key, (part) => part, ($$anchor2, part, index2) => {
-    var fragment_1 = root_119();
+    var fragment_1 = root_126();
     var kbd = first_child(fragment_1);
     var text2 = child(kbd, true);
     reset(kbd);
@@ -37664,47 +40171,47 @@ function get2(store) {
 }
 
 // src/fava/lib/paths.ts
-function dirnameBasename(path) {
-  if (path.length < 2) {
-    return ["", path];
+function dirnameBasename(path2) {
+  if (path2.length < 2) {
+    return ["", path2];
   }
-  const lastIndexOfSlash = path.lastIndexOf("/", path.length - 2);
-  const lastIndexOfBackslash = path.lastIndexOf("\\", path.length - 2);
+  const lastIndexOfSlash = path2.lastIndexOf("/", path2.length - 2);
+  const lastIndexOfBackslash = path2.lastIndexOf("\\", path2.length - 2);
   const lastIndex = lastIndexOfSlash > lastIndexOfBackslash ? lastIndexOfSlash : lastIndexOfBackslash;
   if (lastIndex < 0) {
-    return ["", path];
+    return ["", path2];
   }
-  return [path.substring(0, lastIndex + 1), path.substring(lastIndex + 1)];
+  return [path2.substring(0, lastIndex + 1), path2.substring(lastIndex + 1)];
 }
 
 // src/fava/lib/tree.ts
 function stratify(data, id, init3, parent2) {
-  const root27 = { children: [], ...init3("") };
-  const map = /* @__PURE__ */ new Map();
-  map.set("", root27);
+  const root29 = { children: [], ...init3("") };
+  const map2 = /* @__PURE__ */ new Map();
+  map2.set("", root29);
   function addNode(name3, datum) {
-    const existing = map.get(name3);
+    const existing = map2.get(name3);
     if (existing) {
       Object.assign(existing, init3(name3, datum));
       return existing;
     }
     const node = { children: [], ...init3(name3, datum) };
-    map.set(name3, node);
+    map2.set(name3, node);
     const parentName = parent2(name3);
-    const parentNode = map.get(parentName) ?? addNode(parentName);
+    const parentNode = map2.get(parentName) ?? addNode(parentName);
     parentNode.children.push(node);
     return node;
   }
   [...data].forEach((datum) => {
     addNode(id(datum), datum);
   });
-  return root27;
+  return root29;
 }
-function* all_matching(root27, predicate) {
-  if (predicate(root27)) {
-    yield root27;
+function* all_matching(root29, predicate) {
+  if (predicate(root29)) {
+    yield root29;
   }
-  for (const child2 of root27.children) {
+  for (const child2 of root29.children) {
     for (const match of all_matching(child2, predicate)) {
       yield match;
     }
@@ -37716,20 +40223,20 @@ function is_directory(node) {
   return node.children.length > 0;
 }
 function build_compressed_sources_tree(sources) {
-  const root27 = stratify(
+  const root29 = stratify(
     sources,
-    (path) => path,
-    (path) => ({ name: basename(path), path }),
-    (path) => parent(path)
+    (path2) => path2,
+    (path2) => ({ name: basename(path2), path: path2 }),
+    (path2) => parent(path2)
   );
-  return compress_tree(root27);
+  return compress_tree(root29);
 }
-function basename(path) {
-  const [_, basename2] = dirnameBasename(path);
+function basename(path2) {
+  const [_, basename2] = dirnameBasename(path2);
   return basename2;
 }
-function parent(path) {
-  const [dirname, _] = dirnameBasename(path);
+function parent(path2) {
+  const [dirname, _] = dirnameBasename(path2);
   return dirname;
 }
 function compress_tree(parent2) {
@@ -37789,11 +40296,11 @@ function toggle_directory(directory, expand, event2) {
 }
 
 // src/fava/reports/editor/Sources.svelte
-var root_120 = template(`<button type="button" class="unset root svelte-1f4d3ah"> </button>`);
-var root_315 = template(`<button type="button" class="unset toggle svelte-1f4d3ah"> </button>`);
+var root_127 = template(`<button type="button" class="unset root svelte-1f4d3ah"> </button>`);
+var root_316 = template(`<button type="button" class="unset toggle svelte-1f4d3ah"> </button>`);
 var root_216 = template(`<p class="svelte-1f4d3ah"><!> <button type="button" class="unset leaf svelte-1f4d3ah"> </button></p>`);
-var root_49 = template(`<ul class="svelte-1f4d3ah"></ul>`);
-var root14 = template(`<li role="menuitem" class="svelte-1f4d3ah"><!> <!></li>`);
+var root_410 = template(`<ul class="svelte-1f4d3ah"></ul>`);
+var root16 = template(`<li role="menuitem" class="svelte-1f4d3ah"><!> <!></li>`);
 function Sources($$anchor, $$props) {
   push($$props, false);
   const $$stores = setup_stores();
@@ -37830,11 +40337,11 @@ function Sources($$anchor, $$props) {
   );
   legacy_pre_effect_reset();
   init2();
-  var li = root14();
+  var li = root16();
   var node_1 = child(li);
   {
     var consequent = ($$anchor2) => {
-      var button = root_120();
+      var button = root_127();
       set_attribute(button, "title", "Beancount data root directory\nShift-Click to expand/collapse immediate directories\nCtrl-/Cmd-/Meta-Click to expand/collapse all directories.");
       var text2 = child(button, true);
       reset(button);
@@ -37847,7 +40354,7 @@ function Sources($$anchor, $$props) {
       var node_2 = child(p);
       {
         var consequent_1 = ($$anchor3) => {
-          var button_1 = root_315();
+          var button_1 = root_316();
           var text_1 = child(button_1, true);
           reset(button_1);
           template_effect(() => set_text(text_1, get(is_expanded) ? "\u25BE" : "\u25B8"));
@@ -37874,7 +40381,7 @@ function Sources($$anchor, $$props) {
   var node_3 = sibling(node_1, 2);
   {
     var consequent_2 = ($$anchor2) => {
-      var ul = root_49();
+      var ul = root_410();
       each(ul, 5, () => node().children, (child2) => child2.path, ($$anchor3, child2) => {
         var fragment = comment();
         var node_4 = first_child(fragment);
@@ -37905,12 +40412,12 @@ function Sources($$anchor, $$props) {
 }
 
 // src/fava/reports/editor/EditorMenu.svelte
-var root_66 = template(`<span slot="right"><!></span>`);
+var root_67 = template(`<span slot="right"><!></span>`);
 var root_83 = template(`<span slot="right"><!></span>`);
 var root_104 = template(`<span slot="right"><!></span>`);
-var root_410 = template(`<!> <!> <!>`, 1);
-var root_121 = template(`<!> <!>`, 1);
-var root15 = template(`<div class="svelte-1b7r65z"><!> <!></div>`);
+var root_411 = template(`<!> <!> <!>`, 1);
+var root_128 = template(`<!> <!>`, 1);
+var root17 = template(`<div class="svelte-1b7r65z"><!> <!></div>`);
 function EditorMenu($$anchor, $$props) {
   push($$props, false);
   let sources_tree2 = prop($$props, "sources_tree", 8);
@@ -37918,11 +40425,11 @@ function EditorMenu($$anchor, $$props) {
   let editor = prop($$props, "editor", 8);
   let on_open_file = prop($$props, "on_open_file", 8);
   init2();
-  var div = root15();
+  var div = root17();
   var node = child(div);
   AppMenu(node, {
     children: ($$anchor2, $$slotProps) => {
-      var fragment = root_121();
+      var fragment = root_128();
       var node_1 = first_child(fragment);
       AppMenuItem(node_1, {
         name: "File",
@@ -37948,7 +40455,7 @@ function EditorMenu($$anchor, $$props) {
           AppMenuItem($$anchor3, {
             name: "Edit",
             children: ($$anchor4, $$slotProps2) => {
-              var fragment_3 = root_410();
+              var fragment_3 = root_411();
               var node_3 = first_child(fragment_3);
               AppMenuSubItem(node_3, {
                 action: () => toggleComment(editor()),
@@ -37960,7 +40467,7 @@ function EditorMenu($$anchor, $$props) {
                 $$slots: {
                   default: true,
                   right: ($$anchor5, $$slotProps3) => {
-                    var span = root_66();
+                    var span = root_67();
                     var node_4 = child(span);
                     Key(node_4, { key: [modKey, "/"] });
                     reset(span);
@@ -38027,11 +40534,11 @@ function EditorMenu($$anchor, $$props) {
 }
 
 // src/fava/reports/EditorReport.svelte
-var root_125 = template(`<button id="editor-validate" type="button">Validate</button> <button id="editor-save" type="button">Save</button> <span class="muted svelte-17jasfg" role="status"> </span>`, 1);
+var root_129 = template(`<button id="editor-validate" type="button">Validate</button> <button id="editor-save" type="button">Save</button> <span class="muted svelte-17jasfg" role="status"> </span>`, 1);
 var root_217 = template(`<option> </option>`);
-var root_411 = template(`<li> </li>`);
-var root_316 = template(`<ul class="diagnostics svelte-17jasfg"></ul>`);
-var root16 = template(`<div class="headerline"><h2>Editor</h2><span class="muted svelte-17jasfg">Reviewed writes only</span></div> <!> <div class="editor-layout svelte-17jasfg"><aside class="editor-files svelte-17jasfg"><label for="editor-file">Files</label> <select id="editor-file" class="svelte-17jasfg"></select></aside> <section class="editor-pane svelte-17jasfg"><div id="editor-buffer" aria-label="Ledger source" class="svelte-17jasfg"></div> <!></section></div>`, 1);
+var root_412 = template(`<li> </li>`);
+var root_317 = template(`<ul class="diagnostics svelte-17jasfg"></ul>`);
+var root18 = template(`<div class="headerline"><h2>Editor</h2><span class="muted svelte-17jasfg">Reviewed writes only</span></div> <!> <div class="editor-layout svelte-17jasfg"><aside class="editor-files svelte-17jasfg"><label for="editor-file">Files</label> <select id="editor-file" class="svelte-17jasfg"></select></aside> <section class="editor-pane svelte-17jasfg"><div id="editor-buffer" aria-label="Ledger source" class="svelte-17jasfg"></div> <!></section></div>`, 1);
 function EditorReport($$anchor, $$props) {
   push($$props, false);
   const $$stores = setup_stores();
@@ -38083,8 +40590,8 @@ function EditorReport($$anchor, $$props) {
       set(loading, false);
     }
   }
-  async function send(path, body2) {
-    const response = await fetch(`/api/v1/editor/${path}`, {
+  async function send(path2, body2) {
+    const response = await fetch(`/api/v1/editor/${path2}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body2)
@@ -38129,9 +40636,9 @@ function EditorReport($$anchor, $$props) {
       notify_err(value, (error2) => `Saving failed: ${error2.message}`);
     }
   }
-  async function openFile(path) {
-    if (path === get(selected)) return;
-    set(selected, path);
+  async function openFile(path2) {
+    if (path2 === get(selected)) return;
+    set(selected, path2);
     await loadFile();
   }
   onMount(() => {
@@ -38149,7 +40656,7 @@ function EditorReport($$anchor, $$props) {
     return () => get(editor)?.destroy();
   });
   init2();
-  var fragment = root16();
+  var fragment = root18();
   var node = sibling(first_child(fragment), 2);
   EditorMenu(node, {
     get sources_tree() {
@@ -38163,7 +40670,7 @@ function EditorReport($$anchor, $$props) {
     },
     on_open_file: openFile,
     children: ($$anchor2, $$slotProps) => {
-      var fragment_1 = root_125();
+      var fragment_1 = root_129();
       var button = first_child(fragment_1);
       var button_1 = sibling(button, 2);
       var span = sibling(button_1, 2);
@@ -38192,16 +40699,16 @@ function EditorReport($$anchor, $$props) {
     });
   });
   template_effect(() => set_attribute(select, "size", Math.min(Math.max(get(paths).length, 2), 12)));
-  each(select, 5, () => get(paths), (path) => path, ($$anchor2, path) => {
+  each(select, 5, () => get(paths), (path2) => path2, ($$anchor2, path2) => {
     var option = root_217();
     var option_value = {};
     var text_1 = child(option, true);
     reset(option);
     template_effect(() => {
-      if (option_value !== (option_value = get(path))) {
-        option.value = null == (option.__value = get(path)) ? "" : get(path);
+      if (option_value !== (option_value = get(path2))) {
+        option.value = null == (option.__value = get(path2)) ? "" : get(path2);
       }
-      set_text(text_1, get(path));
+      set_text(text_1, get(path2));
     });
     append($$anchor2, option);
   });
@@ -38213,9 +40720,9 @@ function EditorReport($$anchor, $$props) {
   var node_1 = sibling(div_1, 2);
   {
     var consequent = ($$anchor2) => {
-      var ul = root_316();
+      var ul = root_317();
       each(ul, 5, () => get(diagnostics), (diagnostic) => diagnostic.code + diagnostic.line + diagnostic.message, ($$anchor3, diagnostic) => {
-        var li = root_411();
+        var li = root_412();
         var text_2 = child(li);
         reset(li);
         template_effect(() => set_text(text_2, `${get(diagnostic).path ?? ""}:${get(diagnostic).line ?? ""}: ${get(diagnostic).message ?? ""}`));
@@ -38237,18 +40744,18 @@ function EditorReport($$anchor, $$props) {
 }
 
 // src/fava/reports/PriceTable.svelte
-var root_126 = template(`<tr><td> </td><td class="num svelte-pjz8y6"> </td></tr>`);
-var root17 = template(`<table class="prices-table svelte-pjz8y6"><thead><tr><!><!></tr></thead><tbody></tbody></table>`);
+var root_130 = template(`<tr><td> </td><td class="num svelte-pjz8y6"> </td></tr>`);
+var root19 = template(`<table class="prices-table svelte-pjz8y6"><thead><tr><!><!></tr></thead><tbody></tbody></table>`);
 function PriceTable($$anchor, $$props) {
   push($$props, false);
   const columns3 = mutable_state();
   const sorter = mutable_state();
   const sorted = mutable_state();
   let prices = prop($$props, "prices", 8);
-  let locale = prop($$props, "locale", 8, "en");
+  let locale2 = prop($$props, "locale", 8, "en");
   let renderCommas = prop($$props, "renderCommas", 8, false);
-  function t2(key) {
-    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+  function t4(key) {
+    const catalog = translations[locale2() === "zh-CN" ? "zh-CN" : "en"];
     return catalog[key] || key;
   }
   function priceValue(row) {
@@ -38258,8 +40765,8 @@ function PriceTable($$anchor, $$props) {
   }
   legacy_pre_effect(() => (DateColumn, NumberColumn), () => {
     set(columns3, [
-      new DateColumn(t2("date")),
-      new NumberColumn(t2("price"), priceValue)
+      new DateColumn(t4("date")),
+      new NumberColumn(t4("price"), priceValue)
     ]);
   });
   legacy_pre_effect(() => (Sorter, get(columns3)), () => {
@@ -38273,7 +40780,7 @@ function PriceTable($$anchor, $$props) {
   );
   legacy_pre_effect_reset();
   init2();
-  var table = root17();
+  var table = root19();
   var thead = child(table);
   var tr = child(thead);
   var node = child(tr);
@@ -38307,7 +40814,7 @@ function PriceTable($$anchor, $$props) {
   reset(thead);
   var tbody = sibling(thead);
   each(tbody, 5, () => get(sorted), (price) => price.date, ($$anchor2, price) => {
-    var tr_1 = root_126();
+    var tr_1 = root_130();
     var td = child(tr_1);
     var text2 = child(td, true);
     reset(td);
@@ -38326,20 +40833,20 @@ function PriceTable($$anchor, $$props) {
 }
 
 // src/fava/reports/CommoditiesReport.svelte
-var root_317 = template(`<button type="button" class="unset svelte-1vsdq8j"> </button>`);
+var root_318 = template(`<button type="button" class="unset svelte-1vsdq8j"> </button>`);
 var root_218 = template(`<!> <div class="chart-switcher svelte-1vsdq8j"></div>`, 1);
-var root_412 = template(`<div class="left"><h3> </h3> <!></div>`);
-var root_127 = template(`<div class="flex-row svelte-1vsdq8j"><span class="spacer svelte-1vsdq8j"></span> <button type="button" class="chart-mode" title="Toggle line/area"> </button> <button type="button" class="show-charts"> </button></div> <!> <!>`, 1);
-var root_58 = template(`<p> </p>`);
+var root_413 = template(`<div class="left"><h3> </h3> <!></div>`);
+var root_131 = template(`<div class="flex-row svelte-1vsdq8j"><span class="spacer svelte-1vsdq8j"></span> <button type="button" class="chart-mode" title="Toggle line/area"> </button> <button type="button" class="show-charts"> </button></div> <!> <!>`, 1);
+var root_59 = template(`<p> </p>`);
 function CommoditiesReport($$anchor, $$props) {
   push($$props, false);
   const pairs = mutable_state();
   const active = mutable_state();
   let report = prop($$props, "report", 8);
-  let locale = prop($$props, "locale", 8, "en");
+  let locale2 = prop($$props, "locale", 8, "en");
   let renderCommas = prop($$props, "renderCommas", 8, false);
-  function t2(key) {
-    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+  function t4(key) {
+    const catalog = translations[locale2() === "zh-CN" ? "zh-CN" : "en"];
     return catalog[key] || key;
   }
   function numberValue(amount) {
@@ -38355,11 +40862,11 @@ function CommoditiesReport($$anchor, $$props) {
       date: price.date,
       display: price.amount?.display ?? "",
       value: numberValue(price.amount)
-    })).filter((point) => point.date && Number.isFinite(point.value));
+    })).filter((point3) => point3.date && Number.isFinite(point3.value));
   }
   function tipFor(base2, quote) {
-    return (point) => `1 ${base2} = ${point.display} ${quote}
-${point.date}`;
+    return (point3) => `1 ${base2} = ${point3.display} ${quote}
+${point3.date}`;
   }
   let activePair = mutable_state("");
   try {
@@ -38412,7 +40919,7 @@ ${point.date}`;
   var node = first_child(fragment);
   {
     var consequent_1 = ($$anchor2) => {
-      var fragment_1 = root_127();
+      var fragment_1 = root_131();
       var div = first_child(fragment_1);
       var button = sibling(child(div), 2);
       var text2 = child(button, true);
@@ -38442,7 +40949,7 @@ ${point.date}`;
           var div_1 = sibling(node_2, 2);
           each(div_1, 5, () => get(pairs), ([pair]) => pair, ($$anchor4, $$item) => {
             let pair = () => get($$item)[0];
-            var button_2 = root_317();
+            var button_2 = root_318();
             var text_2 = child(button_2, true);
             reset(button_2);
             template_effect(() => {
@@ -38463,7 +40970,7 @@ ${point.date}`;
       each(node_3, 1, () => get(pairs), ([pair, { prices }]) => pair, ($$anchor3, $$item) => {
         let pair = () => get($$item)[0];
         let prices = () => get($$item)[1].prices;
-        var div_2 = root_412();
+        var div_2 = root_413();
         var h3 = child(div_2);
         var text_3 = child(h3, true);
         reset(h3);
@@ -38473,7 +40980,7 @@ ${point.date}`;
             return prices();
           },
           get locale() {
-            return locale();
+            return locale2();
           },
           get renderCommas() {
             return renderCommas();
@@ -38492,9 +40999,9 @@ ${point.date}`;
       append($$anchor2, fragment_1);
     };
     var alternate = ($$anchor2) => {
-      var p = root_58();
+      var p = root_59();
       var text_4 = child(p, true);
-      template_effect(() => set_text(text_4, t2("noPrices")));
+      template_effect(() => set_text(text_4, t4("noPrices")));
       reset(p);
       append($$anchor2, p);
     };
@@ -38509,11 +41016,11 @@ ${point.date}`;
 
 // src/fava/reports/DocumentAccounts.svelte
 var root_219 = template(`<button type="button" class="unset toggle svelte-1se7z4w"> </button>`);
-var root_318 = template(`<span class="count svelte-1se7z4w"> </span>`);
-var root_128 = template(`<p class="droptarget svelte-1se7z4w"><!> <button type="button" class="unset leaf svelte-1se7z4w"> </button> <!></p>`);
-var root_59 = template(`<li><!></li>`);
-var root_413 = template(`<ul class="svelte-1se7z4w"></ul>`);
-var root18 = template(`<!> <!>`, 1);
+var root_319 = template(`<span class="count svelte-1se7z4w"> </span>`);
+var root_134 = template(`<p class="droptarget svelte-1se7z4w"><!> <button type="button" class="unset leaf svelte-1se7z4w"> </button> <!></p>`);
+var root_510 = template(`<li><!></li>`);
+var root_414 = template(`<ul class="svelte-1se7z4w"></ul>`);
+var root20 = template(`<!> <!>`, 1);
 function DocumentAccounts($$anchor, $$props) {
   push($$props, false);
   const account = mutable_state();
@@ -38570,11 +41077,11 @@ function DocumentAccounts($$anchor, $$props) {
   );
   legacy_pre_effect_reset();
   init2();
-  var fragment = root18();
+  var fragment = root20();
   var node_1 = first_child(fragment);
   {
     var consequent_2 = ($$anchor2) => {
-      var p = root_128();
+      var p = root_134();
       var node_2 = child(p);
       {
         var consequent = ($$anchor3) => {
@@ -38595,7 +41102,7 @@ function DocumentAccounts($$anchor, $$props) {
       var node_3 = sibling(button_1, 2);
       {
         var consequent_1 = ($$anchor3) => {
-          var span = root_318();
+          var span = root_319();
           var text_2 = child(span, true);
           reset(span);
           template_effect(() => set_text(text_2, node().count));
@@ -38629,9 +41136,9 @@ function DocumentAccounts($$anchor, $$props) {
   var node_4 = sibling(node_1, 2);
   {
     var consequent_3 = ($$anchor2) => {
-      var ul = root_413();
+      var ul = root_414();
       each(ul, 5, () => node().children, (child2) => child2.name, ($$anchor3, child2) => {
-        var li = root_59();
+        var li = root_510();
         var node_5 = child(li);
         DocumentAccounts(node_5, {
           get node() {
@@ -38672,11 +41179,11 @@ function DocumentAccounts($$anchor, $$props) {
 
 // src/fava/modals/DocumentMoveModal.svelte
 var root_220 = template(`<p class="error svelte-iwkm6x" role="alert"> </p>`);
-var root_319 = template(`<option></option>`);
-var root_129 = template(`<div class="move-backdrop svelte-iwkm6x" role="presentation"><form class="move-modal svelte-iwkm6x" role="dialog" aria-modal="true"><h3 class="svelte-iwkm6x"> </h3> <p><code class="svelte-iwkm6x"> </code></p> <!> <div class="fields svelte-iwkm6x"><input type="text" list="move-accounts" placeholder="Assets:Cash" required autocomplete="off" class="svelte-iwkm6x"> <input required class="svelte-iwkm6x"> <button type="submit" class="svelte-iwkm6x"> </button></div> <datalist id="move-accounts"></datalist></form></div>`);
+var root_320 = template(`<option></option>`);
+var root_135 = template(`<div class="move-backdrop svelte-iwkm6x" role="presentation"><form class="move-modal svelte-iwkm6x" role="dialog" aria-modal="true"><h3 class="svelte-iwkm6x"> </h3> <p><code class="svelte-iwkm6x"> </code></p> <!> <div class="fields svelte-iwkm6x"><input type="text" list="move-accounts" placeholder="Assets:Cash" required autocomplete="off" class="svelte-iwkm6x"> <input required class="svelte-iwkm6x"> <button type="submit" class="svelte-iwkm6x"> </button></div> <datalist id="move-accounts"></datalist></form></div>`);
 function DocumentMoveModal($$anchor, $$props) {
   push($$props, false);
-  let locale = prop($$props, "locale", 8, "en");
+  let locale2 = prop($$props, "locale", 8, "en");
   let accounts = prop($$props, "accounts", 24, () => []);
   let moving = prop($$props, "moving", 8, null);
   let onMoved = prop($$props, "onMoved", 8, () => {
@@ -38687,8 +41194,8 @@ function DocumentMoveModal($$anchor, $$props) {
   let newName = mutable_state("");
   let saving = mutable_state(false);
   let error2 = mutable_state("");
-  function t2(key) {
-    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+  function t4(key) {
+    const catalog = translations[locale2() === "zh-CN" ? "zh-CN" : "en"];
     return catalog[key] || key;
   }
   function onKeydown(event2) {
@@ -38733,12 +41240,12 @@ function DocumentMoveModal($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent_1 = ($$anchor2) => {
-      var div = root_129();
+      var div = root_135();
       var form = child(div);
-      template_effect(() => set_attribute(form, "aria-label", t2("moveDocument")));
+      template_effect(() => set_attribute(form, "aria-label", t4("moveDocument")));
       var h3 = child(form);
       var text2 = child(h3, true);
-      template_effect(() => set_text(text2, t2("moveDocument")));
+      template_effect(() => set_text(text2, t4("moveDocument")));
       reset(h3);
       var p = sibling(h3, 2);
       var code = child(p);
@@ -38766,12 +41273,12 @@ function DocumentMoveModal($$anchor, $$props) {
       set_attribute(input_1, "size", 40);
       var button = sibling(input_1, 2);
       var text_3 = child(button, true);
-      template_effect(() => set_text(text_3, t2("move")));
+      template_effect(() => set_text(text_3, t4("move")));
       reset(button);
       reset(div_1);
       var datalist = sibling(div_1, 2);
       each(datalist, 5, accounts, (name3) => name3, ($$anchor3, name3) => {
-        var option = root_319();
+        var option = root_320();
         var option_value = {};
         template_effect(() => {
           if (option_value !== (option_value = get(name3))) {
@@ -38805,11 +41312,11 @@ function DocumentMoveModal($$anchor, $$props) {
 }
 
 // src/fava/reports/DocumentPreview.svelte
-var root_130 = template(`<object class="svelte-1jfq29f"></object>`);
-var root_414 = template(`<p class="error"> </p>`);
-var root_67 = template(`<pre class="text-preview svelte-1jfq29f"> </pre>`);
+var root_136 = template(`<object class="svelte-1jfq29f"></object>`);
+var root_415 = template(`<p class="error"> </p>`);
+var root_68 = template(`<pre class="text-preview svelte-1jfq29f"> </pre>`);
 var root_75 = template(`<p>\u2026</p>`);
-var root_93 = template(`<img class="svelte-1jfq29f">`);
+var root_94 = template(`<img class="svelte-1jfq29f">`);
 var root_1110 = template(`<iframe sandbox="" class="svelte-1jfq29f"></iframe>`);
 var root_1210 = template(`<p> </p>`);
 function DocumentPreview($$anchor, $$props) {
@@ -38818,7 +41325,7 @@ function DocumentPreview($$anchor, $$props) {
   const url = mutable_state();
   const notice = mutable_state();
   let filename = prop($$props, "filename", 8);
-  let locale = prop($$props, "locale", 8, "en");
+  let locale2 = prop($$props, "locale", 8, "en");
   const plainTextExtensions = ["csv", "json", "qfx", "txt", "xml"];
   const imageExtensions = [
     "gif",
@@ -38830,8 +41337,8 @@ function DocumentPreview($$anchor, $$props) {
     "bmp",
     "ico"
   ];
-  function t2(key) {
-    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+  function t4(key) {
+    const catalog = translations[locale2() === "zh-CN" ? "zh-CN" : "en"];
     return catalog[key] || key;
   }
   function segment(text3) {
@@ -38864,7 +41371,7 @@ function DocumentPreview($$anchor, $$props) {
   legacy_pre_effect(
     () => (deep_read_state(filename()), get(extension)),
     () => {
-      set(notice, t2("previewNotImplemented").replace("%(filename)s", filename()).replace("%(extension)s", get(extension)));
+      set(notice, t4("previewNotImplemented").replace("%(filename)s", filename()).replace("%(extension)s", get(extension)));
     }
   );
   legacy_pre_effect_reset();
@@ -38873,7 +41380,7 @@ function DocumentPreview($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent = ($$anchor2) => {
-      var object = root_130();
+      var object = root_136();
       template_effect(() => {
         set_attribute(object, "title", filename());
         set_attribute(object, "data", get(url));
@@ -38889,7 +41396,7 @@ function DocumentPreview($$anchor, $$props) {
           var node_2 = first_child(fragment_2);
           {
             var consequent_1 = ($$anchor4) => {
-              var p = root_414();
+              var p = root_415();
               var text_1 = child(p, true);
               reset(p);
               template_effect(() => set_text(text_1, get(textError)));
@@ -38900,7 +41407,7 @@ function DocumentPreview($$anchor, $$props) {
               var node_3 = first_child(fragment_3);
               {
                 var consequent_2 = ($$anchor5) => {
-                  var pre = root_67();
+                  var pre = root_68();
                   var text_2 = child(pre, true);
                   reset(pre);
                   template_effect(() => set_text(text_2, get(text2)));
@@ -38933,7 +41440,7 @@ function DocumentPreview($$anchor, $$props) {
           var node_4 = first_child(fragment_4);
           {
             var consequent_4 = ($$anchor4) => {
-              var img = root_93();
+              var img = root_94();
               template_effect(() => {
                 set_attribute(img, "src", get(url));
                 set_attribute(img, "alt", filename());
@@ -39003,19 +41510,19 @@ function DocumentPreview($$anchor, $$props) {
 
 // src/fava/reports/DocumentTable.svelte
 var root_221 = template(`<tr class="svelte-16svwjo"><td> </td><td> </td><td draggable="true"> </td></tr>`);
-var root19 = template(`<table class="documents-table svelte-16svwjo"><thead><tr></tr></thead><tbody class="svelte-16svwjo"></tbody></table>`);
+var root21 = template(`<table class="documents-table svelte-16svwjo"><thead><tr></tr></thead><tbody class="svelte-16svwjo"></tbody></table>`);
 function DocumentTable($$anchor, $$props) {
   push($$props, false);
   const columns3 = mutable_state();
   const sorter = mutable_state();
   const sorted = mutable_state();
   let documents = prop($$props, "documents", 8);
-  let locale = prop($$props, "locale", 8, "en");
+  let locale2 = prop($$props, "locale", 8, "en");
   let selected = prop($$props, "selected", 8, null);
   let onSelect = prop($$props, "onSelect", 8, () => {
   });
-  function t2(key) {
-    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+  function t4(key) {
+    const catalog = translations[locale2() === "zh-CN" ? "zh-CN" : "en"];
     return catalog[key] || key;
   }
   function displayName(doc2) {
@@ -39024,9 +41531,9 @@ function DocumentTable($$anchor, $$props) {
   }
   legacy_pre_effect(() => (DateColumn, StringColumn), () => {
     set(columns3, [
-      new DateColumn(t2("date")),
-      new StringColumn(t2("account"), (doc2) => doc2.account),
-      new StringColumn(t2("name"), displayName)
+      new DateColumn(t4("date")),
+      new StringColumn(t4("account"), (doc2) => doc2.account),
+      new StringColumn(t4("name"), displayName)
     ]);
   });
   legacy_pre_effect(() => (Sorter, get(columns3)), () => {
@@ -39040,7 +41547,7 @@ function DocumentTable($$anchor, $$props) {
   );
   legacy_pre_effect_reset();
   init2();
-  var table = root19();
+  var table = root21();
   var thead = child(table);
   var tr = child(thead);
   each(tr, 5, () => get(columns3), (column) => column.name, ($$anchor2, column) => {
@@ -39093,52 +41600,52 @@ function DocumentTable($$anchor, $$props) {
 }
 
 // src/fava/reports/DocumentsReport.svelte
-var root_415 = template(`<div class="preview"><!></div>`);
+var root_416 = template(`<div class="preview"><!></div>`);
 var root_224 = template(`<div class="documents-layout svelte-10uk1r4"><div class="accounts"></div> <div><!></div> <!></div>`);
-var root_510 = template(`<p> </p>`);
-var root_131 = template(`<!> <!>`, 1);
+var root_511 = template(`<p> </p>`);
+var root_137 = template(`<!> <!>`, 1);
 function DocumentsReport($$anchor, $$props) {
   push($$props, false);
   const documents = mutable_state();
   const tree = mutable_state();
   const visible = mutable_state();
   let report = prop($$props, "report", 12);
-  let locale = prop($$props, "locale", 8, "en");
+  let locale2 = prop($$props, "locale", 8, "en");
   let adapter = prop($$props, "adapter", 8, null);
   let query = prop($$props, "query", 24, () => ({}));
   let accounts = prop($$props, "accounts", 24, () => []);
-  function t2(key) {
-    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+  function t4(key) {
+    const catalog = translations[locale2() === "zh-CN" ? "zh-CN" : "en"];
     return catalog[key] || key;
   }
   function buildTree2(rows) {
     const counts = /* @__PURE__ */ new Map();
     for (const row of rows) counts.set(row.account, (counts.get(row.account) ?? 0) + 1);
-    const root27 = { name: "", count: 0, children: [] };
-    const map = /* @__PURE__ */ new Map([["", root27]]);
+    const root29 = { name: "", count: 0, children: [] };
+    const map2 = /* @__PURE__ */ new Map([["", root29]]);
     const addNode = (name3) => {
-      const existing = map.get(name3);
+      const existing = map2.get(name3);
       if (existing) return existing;
       const node = {
         name: name3,
         count: counts.get(name3) ?? 0,
         children: []
       };
-      map.set(name3, node);
+      map2.set(name3, node);
       const parentName = name3.slice(0, Math.max(0, name3.lastIndexOf(":")));
-      const parent2 = map.get(parentName) ?? addNode(parentName);
+      const parent2 = map2.get(parentName) ?? addNode(parentName);
       parent2.children.push(node);
       return node;
     };
     [...counts.keys()].sort((a, b) => a.localeCompare(b)).forEach(addNode);
-    return root27;
+    return root29;
   }
   let selected = mutable_state(null);
   let accountFilter = mutable_state("");
   let toggled = mutable_state(/* @__PURE__ */ new Set());
   let moving = mutable_state(null);
-  function basename2(path) {
-    return path.split("/").pop() ?? path;
+  function basename2(path2) {
+    return path2.split("/").pop() ?? path2;
   }
   function onSelectAccount(account) {
     set(accountFilter, account);
@@ -39191,12 +41698,12 @@ function DocumentsReport($$anchor, $$props) {
   );
   legacy_pre_effect_reset();
   init2();
-  var fragment = root_131();
+  var fragment = root_137();
   event("keyup", $window, onKeyup);
   var node_1 = first_child(fragment);
   DocumentMoveModal(node_1, {
     get locale() {
-      return locale();
+      return locale2();
     },
     get accounts() {
       return accounts();
@@ -39241,7 +41748,7 @@ function DocumentsReport($$anchor, $$props) {
           return get(visible);
         },
         get locale() {
-          return locale();
+          return locale2();
         },
         get selected() {
           return get(selected);
@@ -39252,14 +41759,14 @@ function DocumentsReport($$anchor, $$props) {
       var node_4 = sibling(div_2, 2);
       {
         var consequent = ($$anchor3) => {
-          var div_3 = root_415();
+          var div_3 = root_416();
           var node_5 = child(div_3);
           DocumentPreview(node_5, {
             get filename() {
               return get(selected).filename;
             },
             get locale() {
-              return locale();
+              return locale2();
             }
           });
           reset(div_3);
@@ -39274,9 +41781,9 @@ function DocumentsReport($$anchor, $$props) {
       append($$anchor2, div);
     };
     var alternate = ($$anchor2) => {
-      var p = root_510();
+      var p = root_511();
       var text2 = child(p, true);
-      template_effect(() => set_text(text2, t2("noDocuments")));
+      template_effect(() => set_text(text2, t4("noDocuments")));
       reset(p);
       append($$anchor2, p);
     };
@@ -39293,23 +41800,23 @@ function DocumentsReport($$anchor, $$props) {
 var on_click3 = (_, toggleSort) => toggleSort("path");
 var root_225 = template(`<span aria-hidden="true"> </span>`);
 var on_click_12 = (__1, toggleSort) => toggleSort("line");
-var root_320 = template(`<span aria-hidden="true"> </span>`);
+var root_321 = template(`<span aria-hidden="true"> </span>`);
 var on_click_22 = (__2, toggleSort) => toggleSort("message");
-var root_416 = template(`<span aria-hidden="true"> </span>`);
-var root_68 = template(`<td class="svelte-1tweq4j"><a> </a></td> <td class="num svelte-1tweq4j"><a> </a></td>`, 1);
+var root_417 = template(`<span aria-hidden="true"> </span>`);
+var root_69 = template(`<td class="svelte-1tweq4j"><a> </a></td> <td class="num svelte-1tweq4j"><a> </a></td>`, 1);
 var root_76 = template(`<td class="svelte-1tweq4j"></td> <td class="num svelte-1tweq4j"></td>`, 1);
 var root_84 = template(`<span class="code svelte-1tweq4j"> </span>`);
-var root_511 = template(`<tr><!><td class="pre svelte-1tweq4j"><!> </td></tr>`);
-var root_134 = template(`<table class="errors-table svelte-1tweq4j"><thead><tr><th><button type="button" class="sort-toggle svelte-1tweq4j"> <!></button></th><th class="num svelte-1tweq4j"><button type="button" class="sort-toggle svelte-1tweq4j"> <!></button></th><th><button type="button" class="sort-toggle svelte-1tweq4j"> <!></button></th></tr></thead><tbody></tbody></table>`);
-var root_94 = template(`<p> </p>`);
+var root_512 = template(`<tr><!><td class="pre svelte-1tweq4j"><!> </td></tr>`);
+var root_138 = template(`<table class="errors-table svelte-1tweq4j"><thead><tr><th><button type="button" class="sort-toggle svelte-1tweq4j"> <!></button></th><th class="num svelte-1tweq4j"><button type="button" class="sort-toggle svelte-1tweq4j"> <!></button></th><th><button type="button" class="sort-toggle svelte-1tweq4j"> <!></button></th></tr></thead><tbody></tbody></table>`);
+var root_95 = template(`<p> </p>`);
 function ErrorsReport($$anchor, $$props) {
   push($$props, false);
   const errors = mutable_state();
   const sortedRows = mutable_state();
   let report = prop($$props, "report", 8);
-  let locale = prop($$props, "locale", 8, "en");
-  function t2(key) {
-    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+  let locale2 = prop($$props, "locale", 8, "en");
+  function t4(key) {
+    const catalog = translations[locale2() === "zh-CN" ? "zh-CN" : "en"];
     return catalog[key] || key;
   }
   let sortColumn = mutable_state("path");
@@ -39357,14 +41864,14 @@ function ErrorsReport($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent_5 = ($$anchor2) => {
-      var table = root_134();
+      var table = root_138();
       var thead = child(table);
       var tr = child(thead);
       var th = child(tr);
       var button = child(th);
       button.__click = [on_click3, toggleSort];
       var text2 = child(button, true);
-      template_effect(() => set_text(text2, t2("file")));
+      template_effect(() => set_text(text2, t4("file")));
       var node_1 = sibling(text2);
       {
         var consequent = ($$anchor3) => {
@@ -39384,11 +41891,11 @@ function ErrorsReport($$anchor, $$props) {
       var button_1 = child(th_1);
       button_1.__click = [on_click_12, toggleSort];
       var text_2 = child(button_1, true);
-      template_effect(() => set_text(text_2, t2("line")));
+      template_effect(() => set_text(text_2, t4("line")));
       var node_2 = sibling(text_2);
       {
         var consequent_1 = ($$anchor3) => {
-          var span_1 = root_320();
+          var span_1 = root_321();
           var text_3 = child(span_1, true);
           reset(span_1);
           template_effect(() => set_text(text_3, get(sortDirection) === "ascending" ? " \u25B2" : " \u25BC"));
@@ -39404,11 +41911,11 @@ function ErrorsReport($$anchor, $$props) {
       var button_2 = child(th_2);
       button_2.__click = [on_click_22, toggleSort];
       var text_4 = child(button_2, true);
-      template_effect(() => set_text(text_4, t2("error")));
+      template_effect(() => set_text(text_4, t4("error")));
       var node_3 = sibling(text_4);
       {
         var consequent_2 = ($$anchor3) => {
-          var span_2 = root_416();
+          var span_2 = root_417();
           var text_5 = child(span_2, true);
           reset(span_2);
           template_effect(() => set_text(text_5, get(sortDirection) === "ascending" ? " \u25B2" : " \u25BC"));
@@ -39424,11 +41931,11 @@ function ErrorsReport($$anchor, $$props) {
       reset(thead);
       var tbody = sibling(thead);
       each(tbody, 5, () => get(sortedRows), index, ($$anchor3, error2) => {
-        var tr_1 = root_511();
+        var tr_1 = root_512();
         var node_4 = child(tr_1);
         {
           var consequent_3 = ($$anchor4) => {
-            var fragment_1 = root_68();
+            var fragment_1 = root_69();
             var td = first_child(fragment_1);
             var a_1 = child(td);
             template_effect(() => set_attribute(a_1, "href", `/source?path=${encodeURIComponent(get(error2).path)}`));
@@ -39490,9 +41997,9 @@ function ErrorsReport($$anchor, $$props) {
       append($$anchor2, table);
     };
     var alternate_1 = ($$anchor2) => {
-      var p = root_94();
+      var p = root_95();
       var text_10 = child(p, true);
-      template_effect(() => set_text(text_10, t2("noErrors")));
+      template_effect(() => set_text(text_10, t4("noErrors")));
       reset(p);
       append($$anchor2, p);
     };
@@ -39508,12 +42015,12 @@ delegate(["click"]);
 
 // src/fava/charts/ScatterPlot.svelte
 var root_226 = ns_template(`<line class="chart-grid svelte-8kp6hz"></line><text class="chart-tick svelte-8kp6hz" text-anchor="end"> </text>`, 1);
-var root_321 = ns_template(`<text y="51" class="chart-tick svelte-8kp6hz" text-anchor="middle"> </text>`);
-var root_417 = ns_template(`<circle r="1.3" class="svelte-8kp6hz"></circle>`);
-var root_135 = template(`<svg class="scatter-chart svelte-8kp6hz" viewBox="0 0 100 52" role="img" aria-label="Events scatterplot"><!><!><!></svg>`);
-var root_512 = template(`<p class="chart-empty svelte-8kp6hz">No events.</p>`);
-var root_69 = template(`<div class="chart-tooltip svelte-8kp6hz" role="status"> </div>`);
-var root20 = template(`<section class="scatter-card svelte-8kp6hz"><!> <!></section>`);
+var root_323 = ns_template(`<text y="51" class="chart-tick svelte-8kp6hz" text-anchor="middle"> </text>`);
+var root_418 = ns_template(`<circle r="1.3" class="svelte-8kp6hz"></circle>`);
+var root_139 = template(`<svg class="scatter-chart svelte-8kp6hz" viewBox="0 0 100 52" role="img" aria-label="Events scatterplot"><!><!><!></svg>`);
+var root_513 = template(`<p class="chart-empty svelte-8kp6hz">No events.</p>`);
+var root_610 = template(`<div class="chart-tooltip svelte-8kp6hz" role="status"> </div>`);
+var root22 = template(`<section class="scatter-card svelte-8kp6hz"><!> <!></section>`);
 function ScatterPlot($$anchor, $$props) {
   push($$props, false);
   const data = mutable_state();
@@ -39527,15 +42034,15 @@ function ScatterPlot($$anchor, $$props) {
   const Y0 = 4;
   const Y1 = 44;
   function colorForType(index2, count) {
-    const hue = (index2 * (360 / Math.max(1, count)) + 270) % 360;
-    return `hsl(${hue.toFixed(0)}, 45%, 60%)`;
+    const hue2 = (index2 * (360 / Math.max(1, count)) + 270) % 360;
+    return `hsl(${hue2.toFixed(0)}, 45%, 60%)`;
   }
-  function x(timestamp) {
+  function x2(timestamp) {
     const span = get(extent)[1] - get(extent)[0];
     if (!span) return (X0 + X1) / 2;
     return X0 + (timestamp - get(extent)[0]) / span * (X1 - X0);
   }
-  function y(type) {
+  function y2(type) {
     const index2 = get(types2).indexOf(type);
     const count = get(types2).length;
     if (!count) return Y0;
@@ -39564,7 +42071,7 @@ function ScatterPlot($$anchor, $$props) {
     let best = null;
     let bestDistance = 3.5;
     for (const datum of get(data)) {
-      const distance = Math.hypot(x(datum.timestamp) - vx, y(datum.type) - vy);
+      const distance = Math.hypot(x2(datum.timestamp) - vx, y2(datum.type) - vy);
       if (distance < bestDistance) {
         bestDistance = distance;
         best = datum;
@@ -39614,36 +42121,36 @@ ${best.date}`);
     set(xTicks, (() => {
       if (!get(data).length) return [];
       const count = Math.min(5, get(data).length);
-      const ticks = [];
+      const ticks2 = [];
       for (let stop2 = 0; stop2 < count; stop2 += 1) {
         const timestamp = get(extent)[0] + (get(extent)[1] - get(extent)[0]) * stop2 / Math.max(1, count - 1);
         let nearest = get(data)[0];
         for (const datum of get(data)) {
           if (Math.abs(datum.timestamp - timestamp) < Math.abs(nearest.timestamp - timestamp)) nearest = datum;
         }
-        if (!ticks.some((tick2) => tick2.date === nearest.date)) ticks.push(nearest);
+        if (!ticks2.some((tick2) => tick2.date === nearest.date)) ticks2.push(nearest);
       }
-      return ticks;
+      return ticks2;
     })());
   });
   legacy_pre_effect_reset();
   init2();
-  var section = root20();
+  var section = root22();
   var node = child(section);
   {
     var consequent = ($$anchor2) => {
-      var svg_1 = root_135();
+      var svg_1 = root_139();
       var node_1 = child(svg_1);
       each(node_1, 1, () => get(types2), (type) => type, ($$anchor3, type) => {
         var fragment = root_226();
         var line = first_child(fragment);
         set_attribute(line, "x1", X0);
-        template_effect(() => set_attribute(line, "y1", y(get(type))));
+        template_effect(() => set_attribute(line, "y1", y2(get(type))));
         set_attribute(line, "x2", X1);
-        template_effect(() => set_attribute(line, "y2", y(get(type))));
+        template_effect(() => set_attribute(line, "y2", y2(get(type))));
         var text2 = sibling(line);
         set_attribute(text2, "x", X0 - 1);
-        template_effect(() => set_attribute(text2, "y", y(get(type)) + 1));
+        template_effect(() => set_attribute(text2, "y", y2(get(type)) + 1));
         var text_1 = child(text2, true);
         template_effect(() => set_text(text_1, typeLabel(get(type))));
         reset(text2);
@@ -39651,8 +42158,8 @@ ${best.date}`);
       });
       var node_2 = sibling(node_1);
       each(node_2, 1, () => get(xTicks), (tick2) => tick2.date, ($$anchor3, tick2) => {
-        var text_2 = root_321();
-        template_effect(() => set_attribute(text_2, "x", x(get(tick2).timestamp)));
+        var text_2 = root_323();
+        template_effect(() => set_attribute(text_2, "x", x2(get(tick2).timestamp)));
         var text_3 = child(text_2, true);
         template_effect(() => set_text(text_3, tickLabel(get(tick2).date)));
         reset(text_2);
@@ -39660,9 +42167,9 @@ ${best.date}`);
       });
       var node_3 = sibling(node_2);
       each(node_3, 1, () => get(data), (dot) => `${dot.date}-${dot.type}`, ($$anchor3, dot) => {
-        var circle = root_417();
-        template_effect(() => set_attribute(circle, "cx", x(get(dot).timestamp)));
-        template_effect(() => set_attribute(circle, "cy", y(get(dot).type)));
+        var circle = root_418();
+        template_effect(() => set_attribute(circle, "cx", x2(get(dot).timestamp)));
+        template_effect(() => set_attribute(circle, "cy", y2(get(dot).type)));
         const style_derived = derived_safe_equal(() => `fill:${colorForType(get(types2).indexOf(get(dot).type), get(types2).length)}`);
         template_effect(() => {
           set_attribute(circle, "style", get(style_derived));
@@ -39676,7 +42183,7 @@ ${best.date}`);
       append($$anchor2, svg_1);
     };
     var alternate = ($$anchor2) => {
-      var p = root_512();
+      var p = root_513();
       append($$anchor2, p);
     };
     if_block(node, ($$render) => {
@@ -39687,7 +42194,7 @@ ${best.date}`);
   var node_4 = sibling(node, 2);
   {
     var consequent_1 = ($$anchor2) => {
-      var div = root_69();
+      var div = root_610();
       var text_4 = child(div, true);
       reset(div);
       template_effect(() => {
@@ -39707,22 +42214,22 @@ ${best.date}`);
 
 // src/fava/reports/EventTable.svelte
 var root_227 = template(`<tr><td> </td><td> </td></tr>`);
-var root21 = template(`<table class="events-table svelte-1nok83z"><thead><tr></tr></thead><tbody></tbody></table>`);
+var root23 = template(`<table class="events-table svelte-1nok83z"><thead><tr></tr></thead><tbody></tbody></table>`);
 function EventTable($$anchor, $$props) {
   push($$props, false);
   const columns3 = mutable_state();
   const sorter = mutable_state();
   const sorted = mutable_state();
   let events = prop($$props, "events", 8);
-  let locale = prop($$props, "locale", 8, "en");
-  function t2(key) {
-    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+  let locale2 = prop($$props, "locale", 8, "en");
+  function t4(key) {
+    const catalog = translations[locale2() === "zh-CN" ? "zh-CN" : "en"];
     return catalog[key] || key;
   }
   legacy_pre_effect(() => (DateColumn, StringColumn), () => {
     set(columns3, [
-      new DateColumn(t2("date")),
-      new StringColumn(t2("description"), (event2) => event2.description)
+      new DateColumn(t4("date")),
+      new StringColumn(t4("description"), (event2) => event2.description)
     ]);
   });
   legacy_pre_effect(() => (Sorter, get(columns3)), () => {
@@ -39736,7 +42243,7 @@ function EventTable($$anchor, $$props) {
   );
   legacy_pre_effect_reset();
   init2();
-  var table = root21();
+  var table = root23();
   var thead = child(table);
   var tr = child(thead);
   each(tr, 5, () => get(columns3), (column) => column.name, ($$anchor2, column) => {
@@ -39779,17 +42286,17 @@ function EventTable($$anchor, $$props) {
 
 // src/fava/reports/EventsReport.svelte
 var root_228 = template(`<!> <div class="chart-switcher svelte-1cxn66i"><button type="button" class="unset selected svelte-1cxn66i"> </button></div>`, 1);
-var root_323 = template(`<div class="left"><h3> </h3> <!></div>`);
-var root_136 = template(`<div class="flex-row svelte-1cxn66i"><span class="spacer svelte-1cxn66i"></span> <button type="button" class="show-charts"> </button></div> <!> <!>`, 1);
-var root_418 = template(`<p> </p>`);
+var root_324 = template(`<div class="left"><h3> </h3> <!></div>`);
+var root_140 = template(`<div class="flex-row svelte-1cxn66i"><span class="spacer svelte-1cxn66i"></span> <button type="button" class="show-charts"> </button></div> <!> <!>`, 1);
+var root_419 = template(`<p> </p>`);
 function EventsReport($$anchor, $$props) {
   push($$props, false);
   const groups = mutable_state();
   const chartEvents = mutable_state();
   let report = prop($$props, "report", 8);
-  let locale = prop($$props, "locale", 8, "en");
-  function t2(key) {
-    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+  let locale2 = prop($$props, "locale", 8, "en");
+  function t4(key) {
+    const catalog = translations[locale2() === "zh-CN" ? "zh-CN" : "en"];
     return catalog[key] || key;
   }
   let showCharts = mutable_state(true);
@@ -39821,7 +42328,7 @@ function EventsReport($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent_1 = ($$anchor2) => {
-      var fragment_1 = root_136();
+      var fragment_1 = root_140();
       var div = first_child(fragment_1);
       var button = sibling(child(div), 2);
       var text2 = child(button, true);
@@ -39840,7 +42347,7 @@ function EventsReport($$anchor, $$props) {
           var div_1 = sibling(node_2, 2);
           var button_1 = child(div_1);
           var text_1 = child(button_1, true);
-          template_effect(() => set_text(text_1, t2("events")));
+          template_effect(() => set_text(text_1, t4("events")));
           reset(button_1);
           reset(div_1);
           append($$anchor3, fragment_2);
@@ -39853,10 +42360,10 @@ function EventsReport($$anchor, $$props) {
       each(node_3, 1, () => get(groups), ([type, events]) => type, ($$anchor3, $$item) => {
         let type = () => get($$item)[0];
         let events = () => get($$item)[1];
-        var div_2 = root_323();
+        var div_2 = root_324();
         var h3 = child(div_2);
         var text_2 = child(h3);
-        template_effect(() => set_text(text_2, `${t2("eventHeading") ?? ""} ${type() ?? ""}`));
+        template_effect(() => set_text(text_2, `${t4("eventHeading") ?? ""} ${type() ?? ""}`));
         reset(h3);
         var node_4 = sibling(h3, 2);
         EventTable(node_4, {
@@ -39864,7 +42371,7 @@ function EventsReport($$anchor, $$props) {
             return events();
           },
           get locale() {
-            return locale();
+            return locale2();
           }
         });
         reset(div_2);
@@ -39875,9 +42382,9 @@ function EventsReport($$anchor, $$props) {
       append($$anchor2, fragment_1);
     };
     var alternate = ($$anchor2) => {
-      var p = root_418();
+      var p = root_419();
       var text_3 = child(p, true);
-      template_effect(() => set_text(text_3, t2("noEvents")));
+      template_effect(() => set_text(text_3, t4("noEvents")));
       reset(p);
       append($$anchor2, p);
     };
@@ -39892,12 +42399,12 @@ function EventsReport($$anchor, $$props) {
 
 // src/fava/tree-table/TreeTableNode.svelte
 var on_click4 = (_, onToggle, node) => onToggle()(node().account);
-var root_137 = template(`<button type="button" class="unset expander svelte-xjp7mv"> </button>`);
+var root_141 = template(`<button type="button" class="unset expander svelte-xjp7mv"> </button>`);
 var root_229 = template(`<span class="num svelte-xjp7mv"> </span>`);
-var root_419 = template(`<span class="other-line svelte-xjp7mv"> </span>`);
-var root_324 = template(`<span class="other num svelte-xjp7mv"></span>`);
-var root_513 = template(`<ol></ol>`);
-var root22 = template(`<li><p><span class="account-cell droptarget svelte-xjp7mv"><!> <a class="account svelte-xjp7mv"> </a></span> <!> <!></p> <!></li>`);
+var root_420 = template(`<span class="other-line svelte-xjp7mv"> </span>`);
+var root_325 = template(`<span class="other num svelte-xjp7mv"></span>`);
+var root_514 = template(`<ol></ol>`);
+var root24 = template(`<li><p><span class="account-cell droptarget svelte-xjp7mv"><!> <a class="account svelte-xjp7mv"> </a></span> <!> <!></p> <!></li>`);
 function TreeTableNode($$anchor, $$props) {
   push($$props, false);
   const isCollapsed = mutable_state();
@@ -39938,13 +42445,13 @@ function TreeTableNode($$anchor, $$props) {
   );
   legacy_pre_effect_reset();
   init2();
-  var li = root22();
+  var li = root24();
   var p = child(li);
   var span = child(p);
   var node_1 = child(span);
   {
     var consequent = ($$anchor2) => {
-      var button = root_137();
+      var button = root_141();
       button.__click = [on_click4, onToggle, node];
       var text2 = child(button, true);
       reset(button);
@@ -39979,9 +42486,9 @@ function TreeTableNode($$anchor, $$props) {
   var node_3 = sibling(node_2, 2);
   {
     var consequent_1 = ($$anchor2) => {
-      var span_2 = root_324();
+      var span_2 = root_325();
       each(span_2, 5, () => get(otherAmounts), (amount) => amount, ($$anchor3, amount) => {
-        var span_3 = root_419();
+        var span_3 = root_420();
         var text_3 = child(span_3, true);
         reset(span_3);
         template_effect(() => set_text(text_3, get(amount)));
@@ -39998,7 +42505,7 @@ function TreeTableNode($$anchor, $$props) {
   var node_4 = sibling(p, 2);
   {
     var consequent_2 = ($$anchor2) => {
-      var ol = root_513();
+      var ol = root_514();
       each(ol, 5, () => node().children, (child2) => child2.account, ($$anchor3, child2) => {
         var fragment = comment();
         var node_5 = first_child(fragment);
@@ -40047,9 +42554,9 @@ function TreeTableNode($$anchor, $$props) {
 delegate(["click"]);
 
 // src/fava/tree-table/TreeTable.svelte
-var root_138 = template(`<span class="num"> </span>`);
+var root_144 = template(`<span class="num"> </span>`);
 var root_230 = template(`<span class="other">Other</span>`);
-var root23 = template(`<ol class="flex-table tree-table-new" data-tree-table=""><li class="head"><p><span class="account-cell svelte-1xyup19"> </span> <!> <!></p></li> <!></ol>`);
+var root25 = template(`<ol class="flex-table tree-table-new" data-tree-table=""><li class="head"><p><span class="account-cell svelte-1xyup19"> </span> <!> <!></p></li> <!></ol>`);
 function TreeTable($$anchor, $$props) {
   push($$props, false);
   const present = mutable_state();
@@ -40087,7 +42594,7 @@ function TreeTable($$anchor, $$props) {
   });
   legacy_pre_effect_reset();
   init2();
-  var ol = root23();
+  var ol = root25();
   var li = child(ol);
   var p = child(li);
   var span = child(p);
@@ -40095,7 +42602,7 @@ function TreeTable($$anchor, $$props) {
   reset(span);
   var node_1 = sibling(span, 2);
   each(node_1, 1, () => get(columns3), (currency) => currency, ($$anchor2, currency) => {
-    var span_1 = root_138();
+    var span_1 = root_144();
     var text_1 = child(span_1, true);
     reset(span_1);
     template_effect(() => {
@@ -40147,10 +42654,10 @@ function TreeTable($$anchor, $$props) {
 }
 
 // src/fava/reports/TreeReport.svelte
-var root_325 = template(`<button type="button" class="unset svelte-1dzjfb9"> </button>`);
+var root_326 = template(`<button type="button" class="unset svelte-1dzjfb9"> </button>`);
 var root_231 = template(`<nav class="chart-picker svelte-1dzjfb9"></nav>`);
-var root_139 = template(`<div class="report-charts"><!> <!></div>`);
-var root24 = template(`<!> <div class="row"><div class="column"></div> <div class="column"></div></div>`, 1);
+var root_145 = template(`<div class="report-charts"><!> <!></div>`);
+var root26 = template(`<!> <div class="row"><div class="column"></div> <div class="column"></div></div>`, 1);
 function TreeReport($$anchor, $$props) {
   push($$props, false);
   const chart2 = mutable_state();
@@ -40158,9 +42665,12 @@ function TreeReport($$anchor, $$props) {
   const secondColumn = mutable_state();
   const end = mutable_state();
   let report = prop($$props, "report", 8);
-  let locale = prop($$props, "locale", 8, "en");
+  let locale2 = prop($$props, "locale", 8, "en");
   let operatingCurrencies = prop($$props, "operatingCurrencies", 24, () => []);
   let renderCommas = prop($$props, "renderCommas", 8, false);
+  let chartLayer = prop($$props, "chartLayer", 8, "parity");
+  let onChartLayer = prop($$props, "onChartLayer", 8, () => {
+  });
   let selected = mutable_state(0);
   legacy_pre_effect(
     () => (get(selected), deep_read_state(report())),
@@ -40185,18 +42695,24 @@ function TreeReport($$anchor, $$props) {
   });
   legacy_pre_effect_reset();
   init2();
-  var fragment = root24();
+  var fragment = root26();
   var node = first_child(fragment);
   {
     var consequent_1 = ($$anchor2) => {
-      var div = root_139();
+      var div = root_145();
       var node_1 = child(div);
-      ReportChart(node_1, {
+      ChartView(node_1, {
         get chart() {
           return get(chart2);
         },
         get locale() {
-          return locale();
+          return locale2();
+        },
+        get chartLayer() {
+          return chartLayer();
+        },
+        get onChartLayer() {
+          return onChartLayer();
         }
       });
       var node_2 = sibling(node_1, 2);
@@ -40204,7 +42720,7 @@ function TreeReport($$anchor, $$props) {
         var consequent = ($$anchor3) => {
           var nav2 = root_231();
           each(nav2, 7, () => report().charts, (option) => option.title, ($$anchor4, option, index2) => {
-            var button = root_325();
+            var button = root_326();
             button.__click = () => set(selected, get(index2));
             var text2 = child(button, true);
             reset(button);
@@ -40274,20 +42790,20 @@ function TreeReport($$anchor, $$props) {
 delegate(["click"]);
 
 // src/fava/reports/UtilityReport.svelte
-var root_140 = template(`<section class="state-panel" role="status">Loading\u2026</section>`);
-var root_326 = template(`<section class="state-panel error-panel" role="alert"> </section>`);
-var root_514 = template(`<div class="headerline"><h2> </h2></div> <p><a href="/help"> </a></p> <div class="help-body svelte-1hd97ci"> </div>`, 1);
+var root_146 = template(`<section class="state-panel" role="status">Loading\u2026</section>`);
+var root_327 = template(`<section class="state-panel error-panel" role="alert"> </section>`);
+var root_515 = template(`<div class="headerline"><h2> </h2></div> <p><a href="/help"> </a></p> <div class="help-body svelte-1hd97ci"> </div>`, 1);
 var root_85 = template(`<li><a> </a></li>`);
 var root_77 = template(`<div class="headerline"><h2>Help</h2></div> <ul class="help-index svelte-1hd97ci"></ul>`, 1);
 var root_105 = template(`<div class="headerline"><h2> </h2></div> <pre class="source-content svelte-1hd97ci"> </pre>`, 1);
 var root_1310 = template(`<li><a> </a></li>`);
 var root_1211 = template(`<div class="headerline"><h2>Source files</h2></div> <ul class="source-list svelte-1hd97ci"></ul>`, 1);
-var root_163 = template(`<label class="button svelte-1hd97ci"><input type="radio" name="color-scheme" class="svelte-1hd97ci"> </label>`);
-var root_184 = template(`<select id="fava-option-locale"><option>English</option><option>\u7B80\u4F53\u4E2D\u6587</option></select>`);
+var root_164 = template(`<label class="button svelte-1hd97ci"><input type="radio" name="color-scheme" class="svelte-1hd97ci"> </label>`);
+var root_185 = template(`<select id="fava-option-locale"><option>English</option><option>\u7B80\u4F53\u4E2D\u6587</option></select>`);
 var root_193 = template(`<pre class="svelte-1hd97ci"> </pre>`);
-var root_173 = template(`<tr><td class="svelte-1hd97ci"> </td><td class="svelte-1hd97ci"><!></td></tr>`);
-var root_203 = template(`<tr><td class="svelte-1hd97ci"> </td><td class="svelte-1hd97ci"><pre class="svelte-1hd97ci"> </pre></td></tr>`);
-var root_153 = template(`<div class="headerline"><h2> </h2></div> <h3> </h3> <p><span class="mode-switch svelte-1hd97ci" role="radiogroup"></span></p> <h3> <a href="/help/options"> </a></h3> <table class="options-table svelte-1hd97ci"><thead><tr><!><!></tr></thead><tbody></tbody></table> <h3> </h3> <table class="options-table svelte-1hd97ci"><thead><tr><!><!></tr></thead><tbody></tbody></table>`, 1);
+var root_174 = template(`<tr><td class="svelte-1hd97ci"> </td><td class="svelte-1hd97ci"><!></td></tr>`);
+var root_204 = template(`<tr><td class="svelte-1hd97ci"> </td><td class="svelte-1hd97ci"><pre class="svelte-1hd97ci"> </pre></td></tr>`);
+var root_154 = template(`<div class="headerline"><h2> </h2></div> <h3> </h3> <p><span class="mode-switch svelte-1hd97ci" role="radiogroup"></span></p> <h3> <a href="/help/options"> </a></h3> <table class="options-table svelte-1hd97ci"><thead><tr><!><!></tr></thead><tbody></tbody></table> <h3> </h3> <table class="options-table svelte-1hd97ci"><thead><tr><!><!></tr></thead><tbody></tbody></table>`, 1);
 var root_21 = template(`<div class="headerline"><h2> </h2></div> <pre class="svelte-1hd97ci"> </pre>`, 1);
 function UtilityReport($$anchor, $$props) {
   push($$props, false);
@@ -40305,14 +42821,14 @@ function UtilityReport($$anchor, $$props) {
   let route = prop($$props, "route", 8);
   let helpPage = prop($$props, "helpPage", 8, "");
   let query = prop($$props, "query", 24, () => ({}));
-  let locale = prop($$props, "locale", 8, "en");
+  let locale2 = prop($$props, "locale", 8, "en");
   let theme2 = prop($$props, "theme", 8, "system");
   let onLocale = prop($$props, "onLocale", 8, () => {
   });
   let onTheme = prop($$props, "onTheme", 8, () => {
   });
-  function t2(key) {
-    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+  function t4(key) {
+    const catalog = translations[locale2() === "zh-CN" ? "zh-CN" : "en"];
     return catalog[key] || key;
   }
   let loading = mutable_state(true);
@@ -40336,19 +42852,19 @@ function UtilityReport($$anchor, $$props) {
   legacy_pre_effect(() => {
   }, () => {
     set(colorSchemes, [
-      ["system", `\u2699\uFE0F ${t2("system")}`],
-      ["dark", `\u{1F319} ${t2("dark")}`],
-      ["light", `\u2600\uFE0F ${t2("light")}`]
+      ["system", `\u2699\uFE0F ${t4("system")}`],
+      ["dark", `\u{1F319} ${t4("dark")}`],
+      ["light", `\u2600\uFE0F ${t4("light")}`]
     ]);
   });
   legacy_pre_effect(
-    () => (get(data), deep_read_state(locale()), deep_read_state(theme2())),
+    () => (get(data), deep_read_state(locale2()), deep_read_state(theme2())),
     () => {
       set(favaRows, (() => {
         const extras = objectEntries(get(data)?.fava_options).filter(([key]) => key !== "locale" && key !== "theme").map(([key, value]) => [key, String(value)]);
         return [
           ...extras,
-          ["locale", locale()],
+          ["locale", locale2()],
           ["theme", theme2()]
         ].sort(([a], [b]) => a.localeCompare(b));
       })());
@@ -40359,8 +42875,8 @@ function UtilityReport($$anchor, $$props) {
   });
   legacy_pre_effect(() => StringColumn, () => {
     set(optionColumns, [
-      new StringColumn(t2("optionKey"), (row) => row[0]),
-      new StringColumn(t2("optionValue"), (row) => row[1])
+      new StringColumn(t4("optionKey"), (row) => row[0]),
+      new StringColumn(t4("optionValue"), (row) => row[1])
     ]);
   });
   legacy_pre_effect(() => (Sorter, get(optionColumns)), () => {
@@ -40393,7 +42909,7 @@ function UtilityReport($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent = ($$anchor2) => {
-      var section_1 = root_140();
+      var section_1 = root_146();
       append($$anchor2, section_1);
     };
     var alternate_7 = ($$anchor2) => {
@@ -40401,7 +42917,7 @@ function UtilityReport($$anchor, $$props) {
       var node_1 = first_child(fragment_1);
       {
         var consequent_1 = ($$anchor3) => {
-          var section_2 = root_326();
+          var section_2 = root_327();
           var text2 = child(section_2, true);
           reset(section_2);
           template_effect(() => set_text(text2, get(error2)));
@@ -40412,7 +42928,7 @@ function UtilityReport($$anchor, $$props) {
           var node_2 = first_child(fragment_2);
           {
             var consequent_2 = ($$anchor4) => {
-              var fragment_3 = root_514();
+              var fragment_3 = root_515();
               var div = first_child(fragment_3);
               var h2 = child(div);
               var text_1 = child(h2, true);
@@ -40421,7 +42937,7 @@ function UtilityReport($$anchor, $$props) {
               var p = sibling(div, 2);
               var a_1 = child(p);
               var text_2 = child(a_1);
-              template_effect(() => set_text(text_2, `\u2039 ${t2("help") ?? ""}`));
+              template_effect(() => set_text(text_2, `\u2039 ${t4("help") ?? ""}`));
               reset(a_1);
               reset(p);
               var div_1 = sibling(p, 2);
@@ -40480,14 +42996,14 @@ function UtilityReport($$anchor, $$props) {
                         var consequent_5 = ($$anchor7) => {
                           var fragment_9 = root_1211();
                           var ul_1 = sibling(first_child(fragment_9), 2);
-                          each(ul_1, 5, () => get(data).paths, (path) => path, ($$anchor8, path) => {
+                          each(ul_1, 5, () => get(data).paths, (path2) => path2, ($$anchor8, path2) => {
                             var li_1 = root_1310();
                             var a_3 = child(li_1);
-                            template_effect(() => set_attribute(a_3, "href", `/source?path=${encodeURIComponent(get(path))}`));
+                            template_effect(() => set_attribute(a_3, "href", `/source?path=${encodeURIComponent(get(path2))}`));
                             var text_7 = child(a_3, true);
                             reset(a_3);
                             reset(li_1);
-                            template_effect(() => set_text(text_7, get(path)));
+                            template_effect(() => set_text(text_7, get(path2)));
                             append($$anchor8, li_1);
                           });
                           reset(ul_1);
@@ -40498,24 +43014,24 @@ function UtilityReport($$anchor, $$props) {
                           var node_6 = first_child(fragment_10);
                           {
                             var consequent_7 = ($$anchor8) => {
-                              var fragment_11 = root_153();
+                              var fragment_11 = root_154();
                               var div_3 = first_child(fragment_11);
                               var h2_2 = child(div_3);
                               var text_8 = child(h2_2, true);
-                              template_effect(() => set_text(text_8, t2("options")));
+                              template_effect(() => set_text(text_8, t4("options")));
                               reset(h2_2);
                               reset(div_3);
                               var h3 = sibling(div_3, 2);
                               var text_9 = child(h3, true);
-                              template_effect(() => set_text(text_9, t2("colorScheme")));
+                              template_effect(() => set_text(text_9, t4("colorScheme")));
                               reset(h3);
                               var p_1 = sibling(h3, 2);
                               var span = child(p_1);
-                              template_effect(() => set_attribute(span, "aria-label", t2("colorScheme")));
+                              template_effect(() => set_attribute(span, "aria-label", t4("colorScheme")));
                               each(span, 5, () => get(colorSchemes), ([value, label]) => value, ($$anchor9, $$item) => {
                                 let value = () => get($$item)[0];
                                 let label = () => get($$item)[1];
-                                var label_1 = root_163();
+                                var label_1 = root_164();
                                 var input = child(label_1);
                                 remove_input_defaults(input);
                                 var text_10 = sibling(input);
@@ -40533,10 +43049,10 @@ function UtilityReport($$anchor, $$props) {
                               reset(p_1);
                               var h3_1 = sibling(p_1, 2);
                               var text_11 = child(h3_1);
-                              template_effect(() => set_text(text_11, `${t2("favaOptions") ?? ""} `));
+                              template_effect(() => set_text(text_11, `${t4("favaOptions") ?? ""} `));
                               var a_4 = sibling(text_11);
                               var text_12 = child(a_4);
-                              template_effect(() => set_text(text_12, `(${t2("help") ?? ""})`));
+                              template_effect(() => set_text(text_12, `(${t4("help") ?? ""})`));
                               reset(a_4);
                               reset(h3_1);
                               var table = sibling(h3_1, 2);
@@ -40574,7 +43090,7 @@ function UtilityReport($$anchor, $$props) {
                               each(tbody, 5, () => get(sortedFavaRows), ([key, value]) => key, ($$anchor9, $$item) => {
                                 let key = () => get($$item)[0];
                                 let value = () => get($$item)[1];
-                                var tr_1 = root_173();
+                                var tr_1 = root_174();
                                 var td = child(tr_1);
                                 var text_13 = child(td, true);
                                 reset(td);
@@ -40582,8 +43098,8 @@ function UtilityReport($$anchor, $$props) {
                                 var node_9 = child(td_1);
                                 {
                                   var consequent_6 = ($$anchor10) => {
-                                    var select = root_184();
-                                    init_select(select, locale);
+                                    var select = root_185();
+                                    init_select(select, locale2);
                                     var select_value;
                                     var option = child(select);
                                     option.value = null == (option.__value = "en") ? "" : "en";
@@ -40591,8 +43107,8 @@ function UtilityReport($$anchor, $$props) {
                                     option_1.value = null == (option_1.__value = "zh-CN") ? "" : "zh-CN";
                                     reset(select);
                                     template_effect(() => {
-                                      if (select_value !== (select_value = locale())) {
-                                        select.value = null == (select.__value = locale()) ? "" : locale(), select_option(select, locale());
+                                      if (select_value !== (select_value = locale2())) {
+                                        select.value = null == (select.__value = locale2()) ? "" : locale2(), select_option(select, locale2());
                                       }
                                     });
                                     event("change", select, (event2) => onLocale()(event2.currentTarget.value));
@@ -40619,7 +43135,7 @@ function UtilityReport($$anchor, $$props) {
                               reset(table);
                               var h3_2 = sibling(table, 2);
                               var text_15 = child(h3_2, true);
-                              template_effect(() => set_text(text_15, t2("beancountOptions")));
+                              template_effect(() => set_text(text_15, t4("beancountOptions")));
                               reset(h3_2);
                               var table_1 = sibling(h3_2, 2);
                               var thead_1 = child(table_1);
@@ -40656,7 +43172,7 @@ function UtilityReport($$anchor, $$props) {
                               each(tbody_1, 5, () => get(sortedBeancountRows), ([key, value]) => key, ($$anchor9, $$item) => {
                                 let key = () => get($$item)[0];
                                 let value = () => get($$item)[1];
-                                var tr_3 = root_203();
+                                var tr_3 = root_204();
                                 var td_2 = child(tr_3);
                                 var text_16 = child(td_2, true);
                                 reset(td_2);
@@ -40766,22 +43282,26 @@ function UtilityReport($$anchor, $$props) {
 }
 
 // src/fava/components/ReportOutlet.svelte
-var root_141 = template(`<section class="state-panel" role="status" aria-live="polite">Loading report\u2026</section>`);
-var root_327 = template(`<section class="state-panel error-panel" role="alert"> </section>`);
-var root_328 = template(`<section class="route-placeholder"><p class="headerline"><strong>Fava-aligned shell</strong></p> <h2> </h2> <p>This route is staged until its OrangeCount adapter contract is implemented.</p></section>`);
+var root_147 = template(`<section class="state-panel" role="status" aria-live="polite">Loading report\u2026</section>`);
+var root_328 = template(`<section class="state-panel error-panel" role="alert"> </section>`);
+var root_329 = template(`<section class="route-placeholder"><p class="headerline"><strong>Fava-aligned shell</strong></p> <h2> </h2> <p>This route is staged until its OrangeCount adapter contract is implemented.</p></section>`);
 function ReportOutlet($$anchor, $$props) {
   push($$props, false);
+  const adapterQuery = mutable_state();
   const requestKey = mutable_state();
   let adapter = prop($$props, "adapter", 8);
   let route = prop($$props, "route", 8);
   let helpPage = prop($$props, "helpPage", 8, "");
   let query = prop($$props, "query", 24, () => ({}));
-  let locale = prop($$props, "locale", 8, "en");
+  let locale2 = prop($$props, "locale", 8, "en");
   let theme2 = prop($$props, "theme", 8, "system");
   let operatingCurrencies = prop($$props, "operatingCurrencies", 24, () => []);
   let renderCommas = prop($$props, "renderCommas", 8, false);
   let accounts = prop($$props, "accounts", 24, () => []);
   let accountDetails = prop($$props, "accountDetails", 24, () => ({}));
+  let chartLayer = prop($$props, "chartLayer", 8, "parity");
+  let onChartLayer = prop($$props, "onChartLayer", 8, () => {
+  });
   let onLocale = prop($$props, "onLocale", 8, () => {
   });
   let onTheme = prop($$props, "onTheme", 8, () => {
@@ -40830,7 +43350,7 @@ function ReportOutlet($$anchor, $$props) {
       return;
     }
     try {
-      const payload = await adapter().load(route(), query());
+      const payload = await adapter().load(route(), get(adapterQuery));
       if (key !== get(requestKey)) return;
       if ([
         "income_statement",
@@ -40859,10 +43379,17 @@ function ReportOutlet($$anchor, $$props) {
       if (key === get(requestKey)) set(loading, false);
     }
   }
+  legacy_pre_effect(() => deep_read_state(query()), () => {
+    set(adapterQuery, (() => {
+      const copy2 = {};
+      for (const [key, value] of Object.entries(query())) if (key !== "chart_layer") copy2[key] = value;
+      return copy2;
+    })());
+  });
   legacy_pre_effect(
-    () => (deep_read_state(route()), deep_read_state(query())),
+    () => (deep_read_state(route()), get(adapterQuery)),
     () => {
-      set(requestKey, `${route()}?${new URLSearchParams(query()).toString()}`);
+      set(requestKey, `${route()}?${new URLSearchParams(get(adapterQuery)).toString()}`);
     }
   );
   legacy_pre_effect(() => (get(requestKey), get(loadedKey)), () => {
@@ -40877,7 +43404,7 @@ function ReportOutlet($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent = ($$anchor2) => {
-      var section = root_141();
+      var section = root_147();
       append($$anchor2, section);
     };
     var alternate_15 = ($$anchor2) => {
@@ -40885,7 +43412,7 @@ function ReportOutlet($$anchor, $$props) {
       var node_1 = first_child(fragment_1);
       {
         var consequent_1 = ($$anchor3) => {
-          var section_1 = root_327();
+          var section_1 = root_328();
           var text2 = child(section_1, true);
           reset(section_1);
           template_effect(() => set_text(text2, get(error2)));
@@ -40918,13 +43445,19 @@ function ReportOutlet($$anchor, $$props) {
                       return query();
                     },
                     get locale() {
-                      return locale();
+                      return locale2();
                     },
                     get renderCommas() {
                       return renderCommas();
                     },
                     get accountDetails() {
                       return accountDetails();
+                    },
+                    get chartLayer() {
+                      return chartLayer();
+                    },
+                    get onChartLayer() {
+                      return onChartLayer();
                     }
                   });
                 };
@@ -40972,7 +43505,7 @@ function ReportOutlet($$anchor, $$props) {
                                   return helpPage();
                                 },
                                 get locale() {
-                                  return locale();
+                                  return locale2();
                                 },
                                 get theme() {
                                   return theme2();
@@ -40995,13 +43528,19 @@ function ReportOutlet($$anchor, $$props) {
                                       return get(report);
                                     },
                                     get locale() {
-                                      return locale();
+                                      return locale2();
                                     },
                                     get operatingCurrencies() {
                                       return operatingCurrencies();
                                     },
                                     get renderCommas() {
                                       return renderCommas();
+                                    },
+                                    get chartLayer() {
+                                      return chartLayer();
+                                    },
+                                    get onChartLayer() {
+                                      return onChartLayer();
                                     }
                                   });
                                 };
@@ -41035,7 +43574,7 @@ function ReportOutlet($$anchor, $$props) {
                                               return get(statistics).updateActivity;
                                             },
                                             get locale() {
-                                              return locale();
+                                              return locale2();
                                             },
                                             get renderCommas() {
                                               return renderCommas();
@@ -41055,7 +43594,7 @@ function ReportOutlet($$anchor, $$props) {
                                                   return route();
                                                 },
                                                 get locale() {
-                                                  return locale();
+                                                  return locale2();
                                                 },
                                                 get renderCommas() {
                                                   return renderCommas();
@@ -41072,7 +43611,7 @@ function ReportOutlet($$anchor, $$props) {
                                                       return get(table);
                                                     },
                                                     get locale() {
-                                                      return locale();
+                                                      return locale2();
                                                     }
                                                   });
                                                 };
@@ -41086,7 +43625,7 @@ function ReportOutlet($$anchor, $$props) {
                                                           return get(table);
                                                         },
                                                         get locale() {
-                                                          return locale();
+                                                          return locale2();
                                                         },
                                                         get adapter() {
                                                           return adapter();
@@ -41109,7 +43648,7 @@ function ReportOutlet($$anchor, $$props) {
                                                               return get(table);
                                                             },
                                                             get locale() {
-                                                              return locale();
+                                                              return locale2();
                                                             },
                                                             get renderCommas() {
                                                               return renderCommas();
@@ -41126,7 +43665,7 @@ function ReportOutlet($$anchor, $$props) {
                                                                   return get(table);
                                                                 },
                                                                 get locale() {
-                                                                  return locale();
+                                                                  return locale2();
                                                                 }
                                                               });
                                                             };
@@ -41147,7 +43686,7 @@ function ReportOutlet($$anchor, $$props) {
                                                                       return route();
                                                                     },
                                                                     get locale() {
-                                                                      return locale();
+                                                                      return locale2();
                                                                     },
                                                                     get renderCommas() {
                                                                       return renderCommas();
@@ -41155,7 +43694,7 @@ function ReportOutlet($$anchor, $$props) {
                                                                   });
                                                                 };
                                                                 var alternate = ($$anchor17) => {
-                                                                  var section_2 = root_328();
+                                                                  var section_2 = root_329();
                                                                   var h2 = sibling(child(section_2), 2);
                                                                   var text_1 = child(h2, true);
                                                                   reset(h2);
@@ -41339,34 +43878,34 @@ function ReportOutlet($$anchor, $$props) {
 }
 
 // src/fava/components/Sidebar.svelte
-var root_143 = template(`<div class="overlay svelte-e0j49v" aria-hidden="true"></div>`);
-var root_329 = template(`<li class="navigation-heading svelte-e0j49v" aria-hidden="true"> </li>`);
+var root_148 = template(`<div class="overlay svelte-e0j49v" aria-hidden="true"></div>`);
+var root_330 = template(`<li class="navigation-heading svelte-e0j49v" aria-hidden="true"> </li>`);
 var on_click5 = (event2, onNavigate, item) => {
   event2.preventDefault();
   onNavigate()(routeHref(get(item)));
 };
-var root_610 = template(`<a href="#export" class="secondary svelte-e0j49v">&#11015;</a>`);
+var root_611 = template(`<a href="#export" class="secondary svelte-e0j49v">&#11015;</a>`);
 var on_click_13 = (event2, onNavigate, saved) => {
   event2.preventDefault();
   onNavigate()(`/query?query_string=${encodeURIComponent(get(saved).query_string)}`);
 };
 var root_86 = template(`<li class="svelte-e0j49v"><a class="svelte-e0j49v"> </a></li>`);
 var root_78 = template(`<ul class="submenu svelte-e0j49v"></ul>`);
-var root_515 = template(`<li class="svelte-e0j49v"><a class="svelte-e0j49v"> </a> <!> <!></li>`);
-var root_95 = template(`<li class="account-selector svelte-e0j49v"><!></li>`);
+var root_516 = template(`<li class="svelte-e0j49v"><a class="svelte-e0j49v"> </a> <!> <!></li>`);
+var root_96 = template(`<li class="account-selector svelte-e0j49v"><!></li>`);
 var on_click_23 = (event2, onNavigate) => {
   event2.preventDefault();
   onNavigate()(routeHref("errors"));
 };
 var root_106 = template(`<ul class="navigation svelte-e0j49v"><li class="svelte-e0j49v"><a class="svelte-e0j49v"> </a></li></ul>`);
 var root_232 = template(`<ul class="navigation svelte-e0j49v"><!> <!> <!></ul> <!>`, 1);
-var root25 = template(`<!> <div class="aside-buttons svelte-e0j49v"><button id="menu-toggle" type="button" aria-controls="sidebar" aria-label="Menu" class="svelte-e0j49v">\u2630</button> <a class="button svelte-e0j49v" href="#add-transaction" aria-label="Add transaction">+</a></div> <aside id="sidebar" aria-label="Primary navigation" class="svelte-e0j49v"></aside>`, 1);
+var root27 = template(`<!> <div class="aside-buttons svelte-e0j49v"><button id="menu-toggle" type="button" aria-controls="sidebar" aria-label="Menu" class="svelte-e0j49v">\u2630</button> <a class="button svelte-e0j49v" href="#add-transaction" aria-label="Add transaction">+</a></div> <aside id="sidebar" aria-label="Primary navigation" class="svelte-e0j49v"></aside>`, 1);
 function Sidebar($$anchor, $$props) {
   push($$props, false);
   let route = prop($$props, "route", 8);
   let open = prop($$props, "open", 8, false);
   let errors = prop($$props, "errors", 24, () => []);
-  let locale = prop($$props, "locale", 8, "en");
+  let locale2 = prop($$props, "locale", 8, "en");
   let accounts = prop($$props, "accounts", 24, () => []);
   let userQueries = prop($$props, "userQueries", 24, () => []);
   let onMenu = prop($$props, "onMenu", 8);
@@ -41444,19 +43983,19 @@ function Sidebar($$anchor, $$props) {
     account: "accounts"
   };
   function label(routeName) {
-    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+    const catalog = translations[locale2() === "zh-CN" ? "zh-CN" : "en"];
     return catalog[keys[routeName] || ""] || pageLabel(routeName);
   }
-  function t2(key) {
-    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+  function t4(key) {
+    const catalog = translations[locale2() === "zh-CN" ? "zh-CN" : "en"];
     return catalog[key] || key;
   }
   init2();
-  var fragment = root25();
+  var fragment = root27();
   var node = first_child(fragment);
   {
     var consequent = ($$anchor2) => {
-      var div = root_143();
+      var div = root_148();
       div.__click = function(...$$args) {
         onMenu()?.apply(this, $$args);
       };
@@ -41482,7 +44021,7 @@ function Sidebar($$anchor, $$props) {
     var node_1 = child(ul);
     {
       var consequent_1 = ($$anchor3) => {
-        var li = root_329();
+        var li = root_330();
         var text2 = child(li, true);
         reset(li);
         template_effect(() => set_text(text2, heading2()));
@@ -41498,7 +44037,7 @@ function Sidebar($$anchor, $$props) {
       var node_3 = first_child(fragment_2);
       {
         var consequent_4 = ($$anchor4) => {
-          var li_1 = root_515();
+          var li_1 = root_516();
           var a = child(li_1);
           template_effect(() => set_attribute(a, "href", routeHref(get(item))));
           a.__click = [on_click5, onNavigate, item];
@@ -41509,9 +44048,9 @@ function Sidebar($$anchor, $$props) {
           var node_4 = sibling(a, 2);
           {
             var consequent_2 = ($$anchor5) => {
-              var a_1 = root_610();
-              template_effect(() => set_attribute(a_1, "title", t2("export")));
-              template_effect(() => set_attribute(a_1, "aria-label", t2("export")));
+              var a_1 = root_611();
+              template_effect(() => set_attribute(a_1, "title", t4("export")));
+              template_effect(() => set_attribute(a_1, "aria-label", t4("export")));
               append($$anchor5, a_1);
             };
             if_block(node_4, ($$render) => {
@@ -41557,9 +44096,9 @@ function Sidebar($$anchor, $$props) {
     var node_6 = sibling(node_2, 2);
     {
       var consequent_5 = ($$anchor3) => {
-        var li_3 = root_95();
+        var li_3 = root_96();
         var node_7 = child(li_3);
-        var placeholder2 = derived_safe_equal(() => t2("goToAccount"));
+        var placeholder2 = derived_safe_equal(() => t4("goToAccount"));
         AutocompleteInput(node_7, {
           get placeholder() {
             return get(placeholder2);
@@ -41625,14 +44164,14 @@ delegate(["click"]);
 
 // src/fava/modals/AddEntryModal.svelte
 var root_233 = template(`<p class="error svelte-1iw1zty" role="alert"> </p>`);
-var root_420 = template(`<tr><td class="svelte-1iw1zty"><input type="text" placeholder="Assets:Cash" autocomplete="off" class="svelte-1iw1zty"></td><td class="svelte-1iw1zty"><input type="text" placeholder="10.00" autocomplete="off" class="svelte-1iw1zty"></td><td class="svelte-1iw1zty"><input type="text" placeholder="USD" autocomplete="off" class="svelte-1iw1zty"></td><td class="svelte-1iw1zty"><button type="button" class="remove svelte-1iw1zty" aria-label="Remove posting">\xD7</button></td></tr>`);
-var root_330 = template(`<div class="row svelte-1iw1zty"><div class="field narrow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <select class="svelte-1iw1zty"><option>*</option><option>!</option></select></div> <div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <!></div> <div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" autocomplete="off" class="svelte-1iw1zty"></div></div> <div class="row svelte-1iw1zty"><div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="tag1 tag2" autocomplete="off" class="svelte-1iw1zty"></div> <div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="link1 link2" autocomplete="off" class="svelte-1iw1zty"></div></div> <table class="postings svelte-1iw1zty"><thead><tr><th class="svelte-1iw1zty"> </th><th class="svelte-1iw1zty"> </th><th class="svelte-1iw1zty"> </th><th class="svelte-1iw1zty"></th></tr></thead><tbody></tbody></table> <button type="button" class="add-posting svelte-1iw1zty"> </button>`, 1);
-var root_611 = template(`<div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="Assets:Cash" required autocomplete="off" class="svelte-1iw1zty"></div> <div class="row svelte-1iw1zty"><div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="100.00" required autocomplete="off" class="svelte-1iw1zty"></div> <div class="field narrow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="USD" required autocomplete="off" class="svelte-1iw1zty"></div></div>`, 1);
+var root_421 = template(`<tr><td class="svelte-1iw1zty"><input type="text" placeholder="Assets:Cash" autocomplete="off" class="svelte-1iw1zty"></td><td class="svelte-1iw1zty"><input type="text" placeholder="10.00" autocomplete="off" class="svelte-1iw1zty"></td><td class="svelte-1iw1zty"><input type="text" placeholder="USD" autocomplete="off" class="svelte-1iw1zty"></td><td class="svelte-1iw1zty"><button type="button" class="remove svelte-1iw1zty" aria-label="Remove posting">\xD7</button></td></tr>`);
+var root_331 = template(`<div class="row svelte-1iw1zty"><div class="field narrow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <select class="svelte-1iw1zty"><option>*</option><option>!</option></select></div> <div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <!></div> <div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" autocomplete="off" class="svelte-1iw1zty"></div></div> <div class="row svelte-1iw1zty"><div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="tag1 tag2" autocomplete="off" class="svelte-1iw1zty"></div> <div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="link1 link2" autocomplete="off" class="svelte-1iw1zty"></div></div> <table class="postings svelte-1iw1zty"><thead><tr><th class="svelte-1iw1zty"> </th><th class="svelte-1iw1zty"> </th><th class="svelte-1iw1zty"> </th><th class="svelte-1iw1zty"></th></tr></thead><tbody></tbody></table> <button type="button" class="add-posting svelte-1iw1zty"> </button>`, 1);
+var root_612 = template(`<div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="Assets:Cash" required autocomplete="off" class="svelte-1iw1zty"></div> <div class="row svelte-1iw1zty"><div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="100.00" required autocomplete="off" class="svelte-1iw1zty"></div> <div class="field narrow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="USD" required autocomplete="off" class="svelte-1iw1zty"></div></div>`, 1);
 var root_79 = template(`<div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="Assets:Cash" required autocomplete="off" class="svelte-1iw1zty"></div> <div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" required autocomplete="off" class="svelte-1iw1zty"></div>`, 1);
-var root_144 = template(`<div class="add-backdrop svelte-1iw1zty" role="presentation"><form class="add-modal svelte-1iw1zty" role="dialog" aria-modal="true"><h3 class="svelte-1iw1zty"> <button type="button" class="svelte-1iw1zty"> </button> <button type="button" class="svelte-1iw1zty"> </button> <button type="button" class="svelte-1iw1zty"> </button></h3> <!> <div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="date" required class="svelte-1iw1zty"></div> <!> <div class="actions svelte-1iw1zty"><span class="spacer svelte-1iw1zty"></span> <label class="continue svelte-1iw1zty"><input type="checkbox"> <span> </span></label> <button type="submit" class="svelte-1iw1zty"> </button></div></form></div>`);
+var root_149 = template(`<div class="add-backdrop svelte-1iw1zty" role="presentation"><form class="add-modal svelte-1iw1zty" role="dialog" aria-modal="true"><h3 class="svelte-1iw1zty"> <button type="button" class="svelte-1iw1zty"> </button> <button type="button" class="svelte-1iw1zty"> </button> <button type="button" class="svelte-1iw1zty"> </button></h3> <!> <div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="date" required class="svelte-1iw1zty"></div> <!> <div class="actions svelte-1iw1zty"><span class="spacer svelte-1iw1zty"></span> <label class="continue svelte-1iw1zty"><input type="checkbox"> <span> </span></label> <button type="submit" class="svelte-1iw1zty"> </button></div></form></div>`);
 function AddEntryModal($$anchor, $$props) {
   push($$props, false);
-  let locale = prop($$props, "locale", 8, "en");
+  let locale2 = prop($$props, "locale", 8, "en");
   let onSaved = prop($$props, "onSaved", 8, () => {
   });
   let payees = prop($$props, "payees", 24, () => []);
@@ -41653,8 +44192,8 @@ function AddEntryModal($$anchor, $$props) {
   let saving = mutable_state(false);
   let error2 = mutable_state("");
   let dateInput = mutable_state();
-  function t2(key) {
-    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+  function t4(key) {
+    const catalog = translations[locale2() === "zh-CN" ? "zh-CN" : "en"];
     return catalog[key] || key;
   }
   function storedContinue() {
@@ -41753,7 +44292,7 @@ function AddEntryModal($$anchor, $$props) {
       if (!response.ok) {
         throw new Error(payload.error || `Adding the entry failed (${response.status})`);
       }
-      notify(t2("entryAdded"));
+      notify(t4("entryAdded"));
       resetForm();
       onSaved()();
       if (!get(continueAdding)) close();
@@ -41786,23 +44325,23 @@ function AddEntryModal($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent_3 = ($$anchor2) => {
-      var div = root_144();
+      var div = root_149();
       var form = child(div);
-      template_effect(() => set_attribute(form, "aria-label", t2("add")));
+      template_effect(() => set_attribute(form, "aria-label", t4("add")));
       var h3 = child(form);
       var text2 = child(h3);
-      template_effect(() => set_text(text2, `${t2("add") ?? ""} `));
+      template_effect(() => set_text(text2, `${t4("add") ?? ""} `));
       var button = sibling(text2);
       var text_1 = child(button, true);
-      template_effect(() => set_text(text_1, t2("transaction")));
+      template_effect(() => set_text(text_1, t4("transaction")));
       reset(button);
       var button_1 = sibling(button, 2);
       var text_2 = child(button_1, true);
-      template_effect(() => set_text(text_2, t2("balance")));
+      template_effect(() => set_text(text_2, t4("balance")));
       reset(button_1);
       var button_2 = sibling(button_1, 2);
       var text_3 = child(button_2, true);
-      template_effect(() => set_text(text_3, t2("note")));
+      template_effect(() => set_text(text_3, t4("note")));
       reset(button_2);
       reset(h3);
       var node_1 = sibling(h3, 2);
@@ -41821,7 +44360,7 @@ function AddEntryModal($$anchor, $$props) {
       var div_1 = sibling(node_1, 2);
       var span = child(div_1);
       var text_5 = child(span, true);
-      template_effect(() => set_text(text_5, t2("date")));
+      template_effect(() => set_text(text_5, t4("date")));
       reset(span);
       var input = sibling(span, 2);
       remove_input_defaults(input);
@@ -41830,12 +44369,12 @@ function AddEntryModal($$anchor, $$props) {
       var node_2 = sibling(div_1, 2);
       {
         var consequent_1 = ($$anchor3) => {
-          var fragment_1 = root_330();
+          var fragment_1 = root_331();
           var div_2 = first_child(fragment_1);
           var div_3 = child(div_2);
           var span_1 = child(div_3);
           var text_6 = child(span_1, true);
-          template_effect(() => set_text(text_6, t2("flag")));
+          template_effect(() => set_text(text_6, t4("flag")));
           reset(span_1);
           var select = sibling(span_1, 2);
           template_effect(() => {
@@ -41852,7 +44391,7 @@ function AddEntryModal($$anchor, $$props) {
           var div_4 = sibling(div_3, 2);
           var span_2 = child(div_4);
           var text_7 = child(span_2, true);
-          template_effect(() => set_text(text_7, t2("payee")));
+          template_effect(() => set_text(text_7, t4("payee")));
           reset(span_2);
           var node_3 = sibling(span_2, 2);
           AutocompleteInput(node_3, {
@@ -41873,7 +44412,7 @@ function AddEntryModal($$anchor, $$props) {
           var div_5 = sibling(div_4, 2);
           var span_3 = child(div_5);
           var text_8 = child(span_3, true);
-          template_effect(() => set_text(text_8, t2("narration")));
+          template_effect(() => set_text(text_8, t4("narration")));
           reset(span_3);
           var input_1 = sibling(span_3, 2);
           remove_input_defaults(input_1);
@@ -41883,7 +44422,7 @@ function AddEntryModal($$anchor, $$props) {
           var div_7 = child(div_6);
           var span_4 = child(div_7);
           var text_9 = child(span_4, true);
-          template_effect(() => set_text(text_9, t2("tag")));
+          template_effect(() => set_text(text_9, t4("tag")));
           reset(span_4);
           var input_2 = sibling(span_4, 2);
           remove_input_defaults(input_2);
@@ -41891,7 +44430,7 @@ function AddEntryModal($$anchor, $$props) {
           var div_8 = sibling(div_7, 2);
           var span_5 = child(div_8);
           var text_10 = child(span_5, true);
-          template_effect(() => set_text(text_10, t2("link")));
+          template_effect(() => set_text(text_10, t4("link")));
           reset(span_5);
           var input_3 = sibling(span_5, 2);
           remove_input_defaults(input_3);
@@ -41902,22 +44441,22 @@ function AddEntryModal($$anchor, $$props) {
           var tr = child(thead);
           var th = child(tr);
           var text_11 = child(th, true);
-          template_effect(() => set_text(text_11, t2("account")));
+          template_effect(() => set_text(text_11, t4("account")));
           reset(th);
           var th_1 = sibling(th);
           var text_12 = child(th_1, true);
-          template_effect(() => set_text(text_12, t2("amount")));
+          template_effect(() => set_text(text_12, t4("amount")));
           reset(th_1);
           var th_2 = sibling(th_1);
           var text_13 = child(th_2, true);
-          template_effect(() => set_text(text_13, t2("currency")));
+          template_effect(() => set_text(text_13, t4("currency")));
           reset(th_2);
           next();
           reset(tr);
           reset(thead);
           var tbody = sibling(thead);
           each(tbody, 5, () => get(postings), index, ($$anchor4, posting, index2) => {
-            var tr_1 = root_420();
+            var tr_1 = root_421();
             var td = child(tr_1);
             var input_4 = child(td);
             remove_input_defaults(input_4);
@@ -41945,7 +44484,7 @@ function AddEntryModal($$anchor, $$props) {
           reset(table);
           var button_4 = sibling(table, 2);
           var text_14 = child(button_4);
-          template_effect(() => set_text(text_14, `+ ${t2("add") ?? ""}`));
+          template_effect(() => set_text(text_14, `+ ${t4("add") ?? ""}`));
           reset(button_4);
           bind_select_value(select, () => get(flag), ($$value) => set(flag, $$value));
           bind_value(input_1, () => get(narration), ($$value) => set(narration, $$value));
@@ -41959,11 +44498,11 @@ function AddEntryModal($$anchor, $$props) {
           var node_4 = first_child(fragment_2);
           {
             var consequent_2 = ($$anchor4) => {
-              var fragment_3 = root_611();
+              var fragment_3 = root_612();
               var div_9 = first_child(fragment_3);
               var span_6 = child(div_9);
               var text_15 = child(span_6, true);
-              template_effect(() => set_text(text_15, t2("account")));
+              template_effect(() => set_text(text_15, t4("account")));
               reset(span_6);
               var input_7 = sibling(span_6, 2);
               remove_input_defaults(input_7);
@@ -41972,7 +44511,7 @@ function AddEntryModal($$anchor, $$props) {
               var div_11 = child(div_10);
               var span_7 = child(div_11);
               var text_16 = child(span_7, true);
-              template_effect(() => set_text(text_16, t2("amount")));
+              template_effect(() => set_text(text_16, t4("amount")));
               reset(span_7);
               var input_8 = sibling(span_7, 2);
               remove_input_defaults(input_8);
@@ -41980,7 +44519,7 @@ function AddEntryModal($$anchor, $$props) {
               var div_12 = sibling(div_11, 2);
               var span_8 = child(div_12);
               var text_17 = child(span_8, true);
-              template_effect(() => set_text(text_17, t2("currency")));
+              template_effect(() => set_text(text_17, t4("currency")));
               reset(span_8);
               var input_9 = sibling(span_8, 2);
               remove_input_defaults(input_9);
@@ -41996,7 +44535,7 @@ function AddEntryModal($$anchor, $$props) {
               var div_13 = first_child(fragment_4);
               var span_9 = child(div_13);
               var text_18 = child(span_9, true);
-              template_effect(() => set_text(text_18, t2("account")));
+              template_effect(() => set_text(text_18, t4("account")));
               reset(span_9);
               var input_10 = sibling(span_9, 2);
               remove_input_defaults(input_10);
@@ -42004,7 +44543,7 @@ function AddEntryModal($$anchor, $$props) {
               var div_14 = sibling(div_13, 2);
               var span_10 = child(div_14);
               var text_19 = child(span_10, true);
-              template_effect(() => set_text(text_19, t2("comment")));
+              template_effect(() => set_text(text_19, t4("comment")));
               reset(span_10);
               var input_11 = sibling(span_10, 2);
               remove_input_defaults(input_11);
@@ -42035,12 +44574,12 @@ function AddEntryModal($$anchor, $$props) {
       remove_input_defaults(input_12);
       var span_11 = sibling(input_12, 2);
       var text_20 = child(span_11, true);
-      template_effect(() => set_text(text_20, t2("continueAdding")));
+      template_effect(() => set_text(text_20, t4("continueAdding")));
       reset(span_11);
       reset(label);
       var button_5 = sibling(label, 2);
       var text_21 = child(button_5, true);
-      template_effect(() => set_text(text_21, t2("save")));
+      template_effect(() => set_text(text_21, t4("save")));
       reset(button_5);
       reset(div_15);
       reset(form);
@@ -42074,26 +44613,26 @@ function AddEntryModal($$anchor, $$props) {
 
 // src/fava/modals/ContextModal.svelte
 var root_234 = template(`<p class="error svelte-kroni5" role="alert"> </p>`);
-var root_516 = template(`<a class="svelte-kroni5"> </a>`);
-var root_612 = template(`<span class="span svelte-kroni5"> </span>`);
+var root_517 = template(`<a class="svelte-kroni5"> </a>`);
+var root_613 = template(`<span class="span svelte-kroni5"> </span>`);
 var root_1311 = template(`<dd class="svelte-kroni5"> </dd>`);
 var root_1212 = template(`<dt class="svelte-kroni5">Balances before</dt> <!>`, 1);
-var root_154 = template(`<dd class="svelte-kroni5"> </dd>`);
-var root_145 = template(`<dt class="svelte-kroni5">Balances after</dt> <!>`, 1);
+var root_155 = template(`<dd class="svelte-kroni5"> </dd>`);
+var root_1410 = template(`<dt class="svelte-kroni5">Balances after</dt> <!>`, 1);
 var root_1111 = template(`<dl class="balances svelte-kroni5"><!> <!></dl>`);
-var root_421 = template(`<p class="location svelte-kroni5"><!> <!></p> <p class="summary svelte-kroni5"> <!> <!> <!> <!></p> <!> <pre class="source svelte-kroni5"> </pre>`, 1);
-var root_164 = template(`<p class="loading svelte-kroni5"> </p>`);
-var root_146 = template(`<div class="context-backdrop svelte-kroni5" role="presentation"><div class="context-modal svelte-kroni5" role="dialog" aria-modal="true"><h3 class="svelte-kroni5"> </h3> <!></div></div>`);
+var root_422 = template(`<p class="location svelte-kroni5"><!> <!></p> <p class="summary svelte-kroni5"> <!> <!> <!> <!></p> <!> <pre class="source svelte-kroni5"> </pre>`, 1);
+var root_165 = template(`<p class="loading svelte-kroni5"> </p>`);
+var root_150 = template(`<div class="context-backdrop svelte-kroni5" role="presentation"><div class="context-modal svelte-kroni5" role="dialog" aria-modal="true"><h3 class="svelte-kroni5"> </h3> <!></div></div>`);
 function ContextModal($$anchor, $$props) {
   push($$props, false);
   let adapter = prop($$props, "adapter", 8);
-  let locale = prop($$props, "locale", 8, "en");
+  let locale2 = prop($$props, "locale", 8, "en");
   let shown = mutable_state(false);
   let entryHash = "";
   let context = mutable_state(null);
   let error2 = mutable_state("");
-  function t2(key) {
-    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+  function t4(key) {
+    const catalog = translations[locale2() === "zh-CN" ? "zh-CN" : "en"];
     return catalog[key] || key;
   }
   function sync() {
@@ -42125,8 +44664,8 @@ function ContextModal($$anchor, $$props) {
       close();
     }
   }
-  function sourceHref(path) {
-    return `/source?path=${encodeURIComponent(path)}`;
+  function sourceHref(path2) {
+    return `/source?path=${encodeURIComponent(path2)}`;
   }
   function amountText(amount) {
     return `${formatAmount(amount.number)} ${amount.currency}`;
@@ -42154,12 +44693,12 @@ function ContextModal($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent_11 = ($$anchor2) => {
-      var div = root_146();
+      var div = root_150();
       var div_1 = child(div);
-      template_effect(() => set_attribute(div_1, "aria-label", t2("context")));
+      template_effect(() => set_attribute(div_1, "aria-label", t4("context")));
       var h3 = child(div_1);
       var text2 = child(h3, true);
-      template_effect(() => set_text(text2, t2("context")));
+      template_effect(() => set_text(text2, t4("context")));
       reset(h3);
       var node_1 = sibling(h3, 2);
       {
@@ -42175,12 +44714,12 @@ function ContextModal($$anchor, $$props) {
           var node_2 = first_child(fragment_1);
           {
             var consequent_10 = ($$anchor4) => {
-              var fragment_2 = root_421();
+              var fragment_2 = root_422();
               var p_1 = first_child(fragment_2);
               var node_3 = child(p_1);
               {
                 var consequent_1 = ($$anchor5) => {
-                  var a = root_516();
+                  var a = root_517();
                   template_effect(() => set_attribute(a, "href", sourceHref(get(context).entry.file)));
                   var text_2 = child(a, true);
                   reset(a);
@@ -42194,7 +44733,7 @@ function ContextModal($$anchor, $$props) {
               var node_4 = sibling(node_3, 2);
               {
                 var consequent_2 = ($$anchor5) => {
-                  var span = root_612();
+                  var span = root_613();
                   var text_3 = child(span, true);
                   reset(span);
                   template_effect(() => set_text(text_3, get(context).entry.span));
@@ -42277,10 +44816,10 @@ function ContextModal($$anchor, $$props) {
                   var node_12 = sibling(node_10, 2);
                   {
                     var consequent_8 = ($$anchor6) => {
-                      var fragment_8 = root_145();
+                      var fragment_8 = root_1410();
                       var node_13 = sibling(first_child(fragment_8), 2);
                       each(node_13, 1, () => balanceLines(get(context).balances_after), (line) => line, ($$anchor7, line) => {
-                        var dd_1 = root_154();
+                        var dd_1 = root_155();
                         var text_10 = child(dd_1, true);
                         reset(dd_1);
                         template_effect(() => set_text(text_10, get(line)));
@@ -42309,9 +44848,9 @@ function ContextModal($$anchor, $$props) {
               append($$anchor4, fragment_2);
             };
             var alternate = ($$anchor4) => {
-              var p_3 = root_164();
+              var p_3 = root_165();
               var text_12 = child(p_3, true);
-              template_effect(() => set_text(text_12, t2("loading")));
+              template_effect(() => set_text(text_12, t4("loading")));
               reset(p_3);
               append($$anchor4, p_3);
             };
@@ -42348,17 +44887,17 @@ function ContextModal($$anchor, $$props) {
 }
 
 // src/fava/modals/DocumentUploadModal.svelte
-var root_331 = template(`<p class="error svelte-bpl3hy" role="alert"> </p>`);
-var root_517 = template(`<input class="file svelte-bpl3hy" type="text">`);
+var root_332 = template(`<p class="error svelte-bpl3hy" role="alert"> </p>`);
+var root_518 = template(`<input class="file svelte-bpl3hy" type="text">`);
 var root_710 = template(`<option> </option>`);
-var root_613 = template(`<div class="field svelte-bpl3hy"><span class="svelte-bpl3hy"> </span> <select class="svelte-bpl3hy"></select></div>`);
+var root_614 = template(`<div class="field svelte-bpl3hy"><span class="svelte-bpl3hy"> </span> <select class="svelte-bpl3hy"></select></div>`);
 var root_87 = template(`<p class="hint svelte-bpl3hy"> </p>`);
-var root_96 = template(`<option></option>`);
+var root_97 = template(`<option></option>`);
 var root_235 = template(`<div class="upload-backdrop svelte-bpl3hy" role="presentation"><form class="upload-modal svelte-bpl3hy" role="dialog" aria-modal="true"><h3 class="svelte-bpl3hy"> </h3> <!> <div class="field svelte-bpl3hy"><span class="svelte-bpl3hy"> </span> <input type="file" multiple></div> <!> <!> <div class="field svelte-bpl3hy"><span class="svelte-bpl3hy"> </span> <input type="text" list="upload-accounts" placeholder="Assets:Cash" required autocomplete="off" class="svelte-bpl3hy"> <datalist id="upload-accounts"></datalist></div> <div class="actions svelte-bpl3hy"><span class="spacer svelte-bpl3hy"></span> <button type="submit" class="svelte-bpl3hy"> </button></div></form></div>`);
 function DocumentUploadModal($$anchor, $$props) {
   push($$props, false);
   const shown = mutable_state();
-  let locale = prop($$props, "locale", 8, "en");
+  let locale2 = prop($$props, "locale", 8, "en");
   let documentRoots = prop($$props, "documentRoots", 24, () => []);
   let accounts = prop($$props, "accounts", 24, () => []);
   let onUploaded = prop($$props, "onUploaded", 8, () => {
@@ -42369,8 +44908,8 @@ function DocumentUploadModal($$anchor, $$props) {
   let folder = mutable_state("");
   let saving = mutable_state(false);
   let error2 = mutable_state("");
-  function t2(key) {
-    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+  function t4(key) {
+    const catalog = translations[locale2() === "zh-CN" ? "zh-CN" : "en"];
     return catalog[key] || key;
   }
   function today() {
@@ -42483,15 +45022,15 @@ function DocumentUploadModal($$anchor, $$props) {
     var consequent_3 = ($$anchor2) => {
       var div = root_235();
       var form = child(div);
-      template_effect(() => set_attribute(form, "aria-label", t2("uploadFiles")));
+      template_effect(() => set_attribute(form, "aria-label", t4("uploadFiles")));
       var h3 = child(form);
       var text2 = child(h3, true);
-      template_effect(() => set_text(text2, t2("uploadFiles")));
+      template_effect(() => set_text(text2, t4("uploadFiles")));
       reset(h3);
       var node_1 = sibling(h3, 2);
       {
         var consequent = ($$anchor3) => {
-          var p = root_331();
+          var p = root_332();
           var text_1 = child(p, true);
           reset(p);
           template_effect(() => set_text(text_1, get(error2)));
@@ -42504,7 +45043,7 @@ function DocumentUploadModal($$anchor, $$props) {
       var div_1 = sibling(node_1, 2);
       var span = child(div_1);
       var text_2 = child(span, true);
-      template_effect(() => set_text(text_2, t2("files")));
+      template_effect(() => set_text(text_2, t4("files")));
       reset(span);
       var input = sibling(span, 2);
       reset(div_1);
@@ -42514,7 +45053,7 @@ function DocumentUploadModal($$anchor, $$props) {
           var fragment_1 = comment();
           var node_3 = first_child(fragment_1);
           each(node_3, 1, () => Array.from(get(files)), index, ($$anchor4, file, index2) => {
-            var input_1 = root_517();
+            var input_1 = root_518();
             remove_input_defaults(input_1);
             template_effect(() => set_value(input_1, getName(get(file), index2)));
             event("input", input_1, (event2) => setOverride(index2, event2.currentTarget.value));
@@ -42529,10 +45068,10 @@ function DocumentUploadModal($$anchor, $$props) {
       var node_4 = sibling(node_2, 2);
       {
         var consequent_2 = ($$anchor3) => {
-          var div_2 = root_613();
+          var div_2 = root_614();
           var span_1 = child(div_2);
           var text_3 = child(span_1, true);
-          template_effect(() => set_text(text_3, t2("documentsFolder")));
+          template_effect(() => set_text(text_3, t4("documentsFolder")));
           reset(span_1);
           var select = sibling(span_1, 2);
           template_effect(() => {
@@ -42541,16 +45080,16 @@ function DocumentUploadModal($$anchor, $$props) {
               documentRoots();
             });
           });
-          each(select, 5, documentRoots, (root27) => root27, ($$anchor4, root27) => {
+          each(select, 5, documentRoots, (root29) => root29, ($$anchor4, root29) => {
             var option = root_710();
             var option_value = {};
             var text_4 = child(option, true);
             reset(option);
             template_effect(() => {
-              if (option_value !== (option_value = get(root27))) {
-                option.value = null == (option.__value = get(root27)) ? "" : get(root27);
+              if (option_value !== (option_value = get(root29))) {
+                option.value = null == (option.__value = get(root29)) ? "" : get(root29);
               }
-              set_text(text_4, get(root27));
+              set_text(text_4, get(root29));
             });
             append($$anchor4, option);
           });
@@ -42562,7 +45101,7 @@ function DocumentUploadModal($$anchor, $$props) {
         var alternate = ($$anchor3) => {
           var p_1 = root_87();
           var text_5 = child(p_1, true);
-          template_effect(() => set_text(text_5, t2("noDocumentRoot")));
+          template_effect(() => set_text(text_5, t4("noDocumentRoot")));
           reset(p_1);
           append($$anchor3, p_1);
         };
@@ -42574,13 +45113,13 @@ function DocumentUploadModal($$anchor, $$props) {
       var div_3 = sibling(node_4, 2);
       var span_2 = child(div_3);
       var text_6 = child(span_2, true);
-      template_effect(() => set_text(text_6, t2("account")));
+      template_effect(() => set_text(text_6, t4("account")));
       reset(span_2);
       var input_2 = sibling(span_2, 2);
       remove_input_defaults(input_2);
       var datalist = sibling(input_2, 2);
       each(datalist, 5, accounts, (name3) => name3, ($$anchor3, name3) => {
-        var option_1 = root_96();
+        var option_1 = root_97();
         var option_1_value = {};
         template_effect(() => {
           if (option_1_value !== (option_1_value = get(name3))) {
@@ -42594,7 +45133,7 @@ function DocumentUploadModal($$anchor, $$props) {
       var div_4 = sibling(div_3, 2);
       var button = sibling(child(div_4), 2);
       var text_7 = child(button, true);
-      template_effect(() => set_text(text_7, t2("upload")));
+      template_effect(() => set_text(text_7, t4("upload")));
       reset(button);
       reset(div_4);
       reset(form);
@@ -42618,14 +45157,14 @@ function DocumentUploadModal($$anchor, $$props) {
 }
 
 // src/fava/modals/ExportModal.svelte
-var root_147 = template(`<div class="export-backdrop svelte-gn9rfu" role="presentation"><div class="export-modal svelte-gn9rfu" role="dialog" aria-modal="true"><h3 class="svelte-gn9rfu"> </h3> <a download="journal.bean" class="svelte-gn9rfu"> </a></div></div>`);
+var root_151 = template(`<div class="export-backdrop svelte-gn9rfu" role="presentation"><div class="export-modal svelte-gn9rfu" role="dialog" aria-modal="true"><h3 class="svelte-gn9rfu"> </h3> <a download="journal.bean" class="svelte-gn9rfu"> </a></div></div>`);
 function ExportModal($$anchor, $$props) {
   push($$props, false);
   const href = mutable_state();
-  let locale = prop($$props, "locale", 8);
+  let locale2 = prop($$props, "locale", 8);
   let shown = mutable_state(false);
-  function t2(key) {
-    const catalog = translations[locale() === "zh-CN" ? "zh-CN" : "en"];
+  function t4(key) {
+    const catalog = translations[locale2() === "zh-CN" ? "zh-CN" : "en"];
     return catalog[key] || key;
   }
   function sync() {
@@ -42658,16 +45197,16 @@ function ExportModal($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent = ($$anchor2) => {
-      var div = root_147();
+      var div = root_151();
       var div_1 = child(div);
-      template_effect(() => set_attribute(div_1, "aria-label", t2("export")));
+      template_effect(() => set_attribute(div_1, "aria-label", t4("export")));
       var h3 = child(div_1);
       var text2 = child(h3);
-      template_effect(() => set_text(text2, `${t2("export") ?? ""}:`));
+      template_effect(() => set_text(text2, `${t4("export") ?? ""}:`));
       reset(h3);
       var a = sibling(h3, 2);
       var text_1 = child(a, true);
-      template_effect(() => set_text(text_1, t2("downloadFilteredEntries")));
+      template_effect(() => set_text(text_1, t4("downloadFilteredEntries")));
       reset(a);
       reset(div_1);
       reset(div);
@@ -42778,8 +45317,8 @@ function createShellStore(initial) {
 }
 
 // src/fava/App.svelte
-var root_148 = template(`<meta name="description" content="OrangeCount local ledger interface">`);
-var root26 = template(`<!> <!> <article id="main-content" tabindex="-1"><!></article> <!> <!> <!> <!>`, 1);
+var root_156 = template(`<meta name="description" content="OrangeCount local ledger interface">`);
+var root28 = template(`<!> <!> <article id="main-content" tabindex="-1"><!></article> <!> <!> <!> <!>`, 1);
 function App($$anchor, $$props) {
   push($$props, false);
   const $$stores = setup_stores();
@@ -42835,12 +45374,21 @@ function App($$anchor, $$props) {
     window.history.replaceState({}, "", target2.href);
     shell.dispatch({ type: "query", query: { interval: value } });
   }
-  function setLocale(locale) {
+  function setChartLayer(value) {
+    const href = updateQuery(window.location.href, { chart_layer: value });
+    const target2 = new URL(href, window.location.href);
+    window.history.replaceState({}, "", target2.href);
+    shell.dispatch({
+      type: "query",
+      query: { chart_layer: value }
+    });
+  }
+  function setLocale(locale2) {
     try {
-      localStorage.setItem("orangecount-locale", locale);
+      localStorage.setItem("orangecount-locale", locale2);
     } catch {
     }
-    shell.dispatch({ type: "locale", locale });
+    shell.dispatch({ type: "locale", locale: locale2 });
   }
   function setTheme(theme2) {
     try {
@@ -42929,9 +45477,9 @@ function App($$anchor, $$props) {
   });
   legacy_pre_effect_reset();
   init2();
-  var fragment = root26();
+  var fragment = root28();
   head(($$anchor2) => {
-    var meta2 = root_148();
+    var meta2 = root_156();
     template_effect(() => $document.title = `${get(current).ledgerTitle ?? ""} \u203A ${(get(current).account || get(current).route) ?? ""}`);
     append($$anchor2, meta2);
   });
@@ -43032,6 +45580,7 @@ function App($$anchor, $$props) {
           var node_3 = first_child(fragment_2);
           key_block(node_3, () => get(current).revision, ($$anchor4) => {
             var helpPage = derived_safe_equal(() => get(current).helpPage || "");
+            var chartLayer = derived_safe_equal(() => get(current).query.chart_layer === "modern" ? "modern" : "parity");
             var query = derived_safe_equal(() => ({
               ...get(current).query,
               ...get(current).account ? { account: get(current).account } : {}
@@ -43062,6 +45611,10 @@ function App($$anchor, $$props) {
               get accountDetails() {
                 return get(current).accountDetails;
               },
+              get chartLayer() {
+                return get(chartLayer);
+              },
+              onChartLayer: setChartLayer,
               onLocale: setLocale,
               onTheme: setTheme,
               get query() {
