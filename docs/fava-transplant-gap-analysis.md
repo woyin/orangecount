@@ -587,11 +587,11 @@ approved）。剩余仅为已登记的实现层差异 / 划界限制 / 计划项
 ## 下一步工作（2026-08-08 后）
 
 用真实账本 `~/Documents/FinanceBook` 双端浏览器冒烟（OC vs Fava 1.30.12
-参考实例）发现以下待办缺口，尚未实现，登记为下一步工作：
+参考实例）发现以下待办缺口。原唯一项（IS/BS 图表类型切换）已实现并验收：
 
 | 缺口 | 双端实测 | 状态 |
 | --- | --- | --- |
-| IS/BS 图表类型切换（stacked/single radio） | Fava 有 `stacked \| single` 切换；OC income_statement 缺失（仅 Conversion/Interval 下拉 + Currency 按钮），图表本身渲染正常 | 待实现 |
+| IS/BS 图表类型切换（stacked/single radio） | 已实现（`459c26d`）：移植上游 `ModeSwitch`/`stores/chart.ts`——条形图（IS，损益表）渲染 Stacked Bars \| Single Bars 单选（默认 stacked，localStorage `bar-chart-mode`，多序列时按上游 `hasStackedData` 门控显示；stacked 用 diverging 累加、single 保持并列）；折线图（BS，资产负债表 + 账户页）渲染 Line chart \| Area chart 单选（默认 line，`line-chart-mode`，area 填充至零基线）。y 轴量程在 stacked 模式跟随堆叠总量重算。冒烟：IS Net profit stacked/shared-band 堆叠 ↔ single 并列几何已证切换重绘；BS Net worth line 0 条 area-fill ↔ area 5 条 area-fill 已证；两处默认值与 localStorage 持久化均与 Fava 同语义（默认 stacked/line）。注：Fava BS 为 linechart，故对应切换为 line/area（非 stacked/single），与 Fava 同义 | 已完成 |
 
 其余验证项（账户页三区块 + 账户图、journal 全量筛选芯片 + 表头 + 真实交易、
 侧栏导航、Add Entry、Export）双端均一致。
