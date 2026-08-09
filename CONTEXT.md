@@ -77,8 +77,12 @@ An approved rendering produced by the pinned Fava release under controlled condi
 _Avoid_: private screenshot, developer recollection, self-referential OrangeCount snapshot
 
 **Approved Fava deviation**:
-An explicit, reviewed departure from the Fava visual baseline or behavior required by OrangeCount's semantic authority, security, data integrity, privacy, or accessibility obligations.
-_Avoid_: opportunistic improvement, silent drift, unreviewed redesign
+An explicit, reviewed departure from the Fava visual baseline or behavior, made either to satisfy OrangeCount's semantic authority, security, data integrity, privacy, or accessibility obligations, or to serve a switchable ledger-owner-approved presentation preference. Each deviation is logged with its basis (obligation or owner preference).
+_Avoid_: silent drift, unreviewed redesign, a presentation change that cannot be switched back to parity
+
+**Modern chart layer**:
+A switchable, owner-presentation-preference chart presentation for the income-statement, balance-sheet, and account time-series charts, enabled by `?chart_layer=modern` and defaulting off. It uses d3 for scales, axes, stack offsets, and tick formatting while consuming the same adapter data contract as the parity layer; it never changes valuation, currency aggregation, or any accounting semantics.
+_Avoid_: new chart system, default skin, dashboard mode
 
 **Fava frontend transplant**:
 The primary OrangeCount web-client migration that starts from Fava 1.30.12's frontend composition, components, styles, and interactions, then replaces Fava data access with Go-backed adapters. The legacy OrangeCount interface is a temporary per-page fallback and is deleted as each page family is accepted.

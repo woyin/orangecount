@@ -2,7 +2,7 @@
 
 This registry is the only place where OrangeCount may accept an observable difference from the pinned Fava 1.30.12 visual baseline or behavior. An implementing agent may propose a deviation and produce evidence, but only the user, acting as product owner, may approve it.
 
-A deviation is valid only when required by OrangeCount's accounting semantic authority, security, data integrity, privacy, or accessibility obligations. Convenience, modernization, product preference, implementation cost, and subjective improvement are not valid reasons.
+A deviation is valid when required by OrangeCount's accounting semantic authority, security, data integrity, privacy, or accessibility obligations, or when approved as a switchable ledger-owner presentation preference (see CONTEXT.md, "Approved Fava deviation"). Silent drift, unreviewed redesign, and presentation changes that cannot be switched back to parity are not valid.
 
 ## Status vocabulary
 
@@ -103,6 +103,25 @@ A deviation is valid only when required by OrangeCount's accounting semantic aut
 | Expiry condition | if upstream auto-reload behavior changes or a silent-reload preference is requested |
 | Baseline impact | alternate expectation for the reload notification |
 
+### FD-0006 — Modern chart layer (switchable owner presentation preference)
+
+| Field | Value |
+| --- | --- |
+| Status | approved |
+| Route and state | R-IS / R-BS / R-ACCOUNT (chart regions of income_statement, balance_sheet, account) |
+| Fava baseline | `ReportChart.svelte` hand-written SVG bar/line time-series charts, the parity default |
+| OrangeCount behavior | an alternative chart presentation enabled by `?chart_layer=modern` (default off, parity remains the standard-route default). It renders the same income-statement, balance-sheet, and account time-series with d3-backed scales/axes/stack-offsets/tick-formatting, per-pixel responsive redrawing, a crosshair with linked series highlighting, and an HCL ordinal palette so >4 currencies do not collide. |
+| Category | presentation preference |
+| Reason | ledger-owner readability preference; the modern layer must be switchable back to parity and is never the default for a standard route |
+| Scope | IS bar chart + BS/account line chart only; hierarchy (treemap/sunburst/icicle), Commodities line, Events scatter, and Statistics activity charts are out of scope (first phase) |
+| Semantic boundaries | the modern layer consumes the same adapter data contract (PresentedChartSpec); it performs no secondary aggregation, no re-valuation, no derived accounting; diverging stack and currency toggling are visual placement only; tooltip values are the DisplayAmount; no new accounting concept is introduced |
+| Tests | `?chart_layer=modern` smoke on multi-currency real ledger (16 currencies): IS bar chart renders stacked (136 rects, shared period band) ↔ single (side-by-side, half bandwidth); BS/account line chart renders line ↔ area (5 area-fills); responsive per-pixel redraw 1063↔300 px with x-axis tick density adapting (13↔3); crosshair + hover-card + linked series dimming; HCL palette yields 5 distinct series colors (no 4-color recycle); parity restored on toggle-back; `?chart_layer=` empty = parity default; full chain npm test 32/32 / build:embedded / make check / go test ./internal/... (10 pkgs) / make build all green |
+| Owner | implementing agent (Francis Chen / OrangeCount maintainer) |
+| Approver | user (product owner) only |
+| Approved evidence | approved by product owner 2026-08-09 after grilling consensus (D1–D7) and implementation with the browser smoke above |
+| Expiry condition | if the modern layer becomes the standard-route default, loses its switch-back, or changes ledger semantics; or on a Fava upgrade that redefines the chart baseline |
+| Baseline impact | alternate presentation under `?chart_layer=modern` only; default route unchanged |
+
 No other deviations are currently approved. Existing differences in the prototype and legacy UI are migration gaps, not approved deviations.
 
 ## Entry template
@@ -116,7 +135,7 @@ No other deviations are currently approved. Existing differences in the prototyp
 | Route and state | route-manifest identifier |
 | Fava baseline | baseline path and bounded region |
 | OrangeCount behavior | precise observable difference |
-| Category | semantics / security / data integrity / privacy / accessibility |
+| Category | semantics / security / data integrity / privacy / accessibility / presentation preference |
 | Reason | why matching Fava would violate the named obligation |
 | Scope | exact themes, viewports, locales, controls, and states covered |
 | Tests | contract, browser, visual, and safety evidence |
