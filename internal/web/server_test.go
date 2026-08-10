@@ -801,14 +801,12 @@ func TestWriteEndpointsRejectCrossOrigin(t *testing.T) {
 // cap retains at most maxImportPreviews entries and that expired previews are
 // evicted, so the server cannot grow its pending map without bound.
 func TestImportPreviewMapIsBounded(t *testing.T) {
-	server := &Server{pending: make(map[string]importPreview)}
+	previews := newImportPreviewStore()
 	for i := 0; i < maxImportPreviews*2; i++ {
 		id := fmt.Sprintf("preview-%d", i)
-		server.storePreview(id, importPreview{Path: "p.bean", Content: "content"})
+		previews.Store(id, importPreview{Path: "p.bean", Content: "content"})
 	}
-	server.pendingMu.Lock()
-	count := len(server.pending)
-	server.pendingMu.Unlock()
+	count := previews.len()
 	if count > maxImportPreviews {
 		t.Fatalf("pending map grew to %d entries, cap is %d", count, maxImportPreviews)
 	}

@@ -59,65 +59,7 @@ type Server struct {
 	readyErr  error
 	optionsMu sync.RWMutex
 	options   map[string]string
-	pendingMu sync.Mutex
-	pending   map[string]importPreview
-}
-
-type importPreview struct {
-	Path    string
-	Content string
-	expires int64
-}
-
-// importPreviewTTL bounds how long a preview may wait before being committed.
-// Previews are anonymous server-side state; an abandoned preview must not
-// accumulate forever in memory.
-const importPreviewTTL = 30 * time.Minute
-
-// maxImportPreviews caps the number of previews retained simultaneously. A
-// client that repeatedly previews hash-distinct content cannot grow server
-// memory without bound.
-const maxImportPreviews = 32
-
-func (p importPreview) live(unix int64) bool { return p.expires > unix }
-
-func (s *Server) storePreview(id string, preview importPreview) {
-	s.pendingMu.Lock()
-	defer s.pendingMu.Unlock()
-	now := time.Now().Unix()
-	for id, existing := range s.pending {
-		if !existing.live(now) {
-			delete(s.pending, id)
-		}
-	}
-	preview.expires = now + int64(importPreviewTTL/time.Second)
-	if len(s.pending) >= maxImportPreviews {
-		// Overflow: drop the oldest live preview to make room, keeping the
-		// most recent previews usable. Idempotent previews share an id.
-		var oldestID string
-		var oldest int64
-		for id, existing := range s.pending {
-			if oldestID == "" || existing.expires < oldest {
-				oldestID, oldest = id, existing.expires
-			}
-		}
-		delete(s.pending, oldestID)
-	}
-	s.pending[id] = preview
-}
-
-func (s *Server) takePreview(id string) (importPreview, bool) {
-	s.pendingMu.Lock()
-	defer s.pendingMu.Unlock()
-	preview, ok := s.pending[id]
-	if !ok {
-		return importPreview{}, false
-	}
-	if !preview.live(time.Now().Unix()) {
-		delete(s.pending, id)
-		return importPreview{}, false
-	}
-	return preview, true
+	previews  *importPreviewStore
 }
 
 func NewServer(config Config) (*Server, error) {
@@ -131,7 +73,7 @@ func NewServer(config Config) (*Server, error) {
 	if config.Store == nil {
 		return nil, fmt.Errorf("serve requires a snapshot store")
 	}
-	server := &Server{store: config.Store, roots: config.DocumentRoots, addr: addr, ready: make(chan struct{}), options: make(map[string]string), pending: make(map[string]importPreview)}
+	server := &Server{store: config.Store, roots: config.DocumentRoots, addr: addr, ready: make(chan struct{}), options: make(map[string]string), previews: newImportPreviewStore()}
 	server.http = &http.Server{Handler: server.Handler(), ReadHeaderTimeout: 5 * time.Second}
 	return server, nil
 }
@@ -1528,7 +1470,7 @@ func (s *Server) handleImportPreview(w http.ResponseWriter, r *http.Request, cur
 		diagnostics = append(diagnostics, value)
 	}
 	previewID := importPreviewID(name, normalized)
-	s.storePreview(previewID, importPreview{Path: name, Content: normalized})
+	s.previews.Store(previewID, importPreview{Path: name, Content: normalized})
 	rows, queryErr := query.Evaluate("SELECT date, account, units, currency, flag, payee, narration FROM postings ORDER BY date, account", *evaluation)
 	if queryErr != nil {
 		rows = query.Result{}
@@ -1584,7 +1526,7 @@ func (s *Server) handleImportCommit(w http.ResponseWriter, r *http.Request, curr
 		writeAPIError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	preview, ok := s.takePreview(request.PreviewID)
+	preview, ok := s.previews.Take(request.PreviewID)
 	if !ok {
 		writeAPIError(w, http.StatusNotFound, "import preview not found or expired")
 		return
@@ -1630,9 +1572,7 @@ func (s *Server) handleImportCommit(w http.ResponseWriter, r *http.Request, curr
 		}{Backup: backup, Diagnostics: diagnosticsPayload(result.Diagnostics, current.Graph())})
 		return
 	}
-	s.pendingMu.Lock()
-	delete(s.pending, request.PreviewID)
-	s.pendingMu.Unlock()
+	s.previews.Discard(request.PreviewID)
 	writeJSON(w, struct {
 		Published  bool   `json:"published"`
 		SnapshotID string `json:"snapshot_id"`
