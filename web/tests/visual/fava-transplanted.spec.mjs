@@ -1,5 +1,29 @@
 import { test, expect } from "./fixtures.mjs";
 
+function wireDecimal(value) {
+  return { display: String(value), exact: String(value), approximate: false };
+}
+
+function sparseAccountChart(measure, title) {
+  return {
+    kind: "line",
+    title,
+    unit: measure === "average-cost" ? "cost per unit" : "units",
+    currency: "",
+    valuation: "at_cost",
+    period: "all",
+    interval: "month",
+    measure,
+    series: ["AAA", "BBB", "CCC", "DDD", "EEE", "FFF"].map((label, seriesIndex) => ({
+      label: `${label} (USD)`,
+      points: Array.from({ length: 6 - seriesIndex }, (_, pointIndex) => ({
+        date: `${2020 + pointIndex}-01`,
+        value: wireDecimal(seriesIndex + pointIndex + 1),
+      })),
+    })),
+  };
+}
+
 async function open(page, route) {
   await page.goto(route, { waitUntil: "networkidle" });
   await expect(page.locator("#page-title")).not.toHaveText("");
@@ -45,5 +69,21 @@ test.describe("transplanted Fava shell smoke", () => {
     await page.locator("#menu-toggle").click();
     await expect(page.locator("#sidebar")).toBeVisible();
     await expect(page.locator("#menu-toggle")).toHaveAttribute("aria-expanded", "true");
+  });
+
+  test("account detail renders sparse multi-series charts", async ({ page }) => {
+    const chart = sparseAccountChart("balance", "Account balance");
+    const averageCostChart = sparseAccountChart("average-cost", "Average cost evolution");
+    await page.route("**/__orangecount/fava/reports/account?*", async (route) => {
+      await route.fulfill({
+        contentType: "application/json",
+        body: JSON.stringify({ data: { columns: [], rows: [], chart, average_cost_chart: averageCostChart } }),
+      });
+    });
+
+    await open(page, "/account/Assets%3AInvestments%3AFund?interval=month");
+    await expect(page.locator(".modern-chart-card")).toHaveCount(2);
+    await expect(page.locator(".average-cost-current li")).toHaveCount(6);
+    await expect(page.locator(".report-table")).toBeVisible();
   });
 });

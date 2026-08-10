@@ -20,7 +20,8 @@
   $: catalog = translations[(locale === "zh-CN" ? "zh-CN" : "en") as Locale];
   function label(key: string): string { return catalog[key] ?? translations.en[key] ?? key; }
 
-  function numberValue(value: { display: string }): number {
+  function numberValue(value: { display: string } | undefined): number {
+    if (!value) return 0;
     if (value.display.includes("/")) {
       const [numerator, denominator] = value.display.split("/").map(Number);
       return denominator ? numerator / denominator : 0;
@@ -84,14 +85,21 @@
   $: innerWidth = Math.max(0, width - margin.left - margin.right);
   $: innerHeight = height - margin.top - margin.bottom;
 
-  $: periods = chart.series[0]?.points.map((p) => p.date) ?? [];
+  // A series may begin later than another (for example, when a commodity is
+  // first purchased years after the account opened). Use the union of dates,
+  // rather than the first series' index positions, so sparse series neither
+  // crash the chart nor appear at the wrong point in time.
+  $: periods = [...new Set(chart.series.flatMap((series) => series.points.map((point) => point.date)))].sort();
+  function pointAt(series: typeof visibleSeries[number], date: string | undefined) {
+    return date === undefined ? undefined : series.points.find((point) => point.date === date);
+  }
   $: hasMultipleSeries = visibleSeries.length > 1;
   $: showStacked = isBar && barMode === "stacked" && hasMultipleSeries;
 
   // Per-period datum for d3 stack: one row per period keyed by series label.
   $: stackData = periods.map((_, i) => {
     const row: Record<string, number> = { __i: i };
-    for (const series of visibleSeries) row[series.label] = numberValue(series.points[i]?.value);
+    for (const series of visibleSeries) row[series.label] = numberValue(pointAt(series, periods[i])?.value);
     return row;
   });
   $: stackedLayers = showStacked
@@ -134,9 +142,11 @@
     if (!isBar || showStacked || !periods.length) return [];
     const groupWidth = xBand.bandwidth();
     const barWidth = Math.max(1, groupWidth / Math.max(1, visibleSeries.length));
-    return visibleSeries.flatMap((series, s) => series.points.map((point, i) => {
+    return visibleSeries.flatMap((series, s) => periods.flatMap((date, i) => {
+      const point = pointAt(series, date);
+      if (!point) return [];
       const value = numberValue(point.value);
-      return { seriesLabel: series.label, date: point.date, display: point.value.display, value, x: (xBand(periods[i]) ?? 0) + s * barWidth, w: Math.max(0.5, barWidth - 1), y: y(Math.max(0, value)), h: Math.abs(y(value) - y(0)) };
+      return [{ seriesLabel: series.label, date: point.date, display: point.value.display, value, x: (xBand(periods[i]) ?? 0) + s * barWidth, w: Math.max(0.5, barWidth - 1), y: y(Math.max(0, value)), h: Math.abs(y(value) - y(0)) }];
     }));
   })();
 
@@ -158,13 +168,13 @@
 
   function linePath(series: typeof visibleSeries[number]): string {
     return line<(typeof series.points)[number]>()
-      .x((_, i) => (xBand(periods[i]) ?? 0) + xBand.bandwidth() / 2)
+      .x((point) => (xBand(point.date) ?? 0) + xBand.bandwidth() / 2)
       .y((p) => y(numberValue(p.value)))
       .curve(curveMonotoneX)(series.points as any);
   }
   function areaPath(series: typeof visibleSeries[number]): string {
     return area<(typeof series.points)[number]>()
-      .x((_, i) => (xBand(periods[i]) ?? 0) + xBand.bandwidth() / 2)
+      .x((point) => (xBand(point.date) ?? 0) + xBand.bandwidth() / 2)
       .y0(Math.min(innerHeight, y(0)))
       .y1((p) => y(numberValue(p.value)))
       .curve(curveMonotoneX)(series.points as any);
@@ -254,7 +264,9 @@
           {#if hoverIndex !== null}
             <line class="crosshair" x1={hoverX} x2={hoverX} y1={0} y2={innerHeight} />
             {#each visibleSeries as series (series.label)}
-              <circle class="hover-dot" cx={hoverX} cy={y(numberValue(series.points[hoverIndex]?.value))} r={3.5} fill={colorFor(series.label)} />
+              {#if pointAt(series, periods[hoverIndex])}
+                <circle class="hover-dot" cx={hoverX} cy={y(numberValue(pointAt(series, periods[hoverIndex])?.value))} r={3.5} fill={colorFor(series.label)} />
+              {/if}
             {/each}
           {/if}
         </g>
@@ -266,7 +278,7 @@
     <div class="hover-card">
       <span class="hover-date">{periods[hoverIndex]}</span>
       {#each visibleSeries as series (series.label)}
-        <span class="hover-row"><i style={`background:${colorFor(series.label)}`}></i>{series.label}: {formatAmount(series.points[hoverIndex]?.value)}{chart.currency ? ` ${chart.currency}` : ""}</span>
+        <span class="hover-row"><i style={`background:${colorFor(series.label)}`}></i>{series.label}: {formatAmount(pointAt(series, periods[hoverIndex])?.value)}{chart.currency ? ` ${chart.currency}` : ""}</span>
       {/each}
     </div>
   {/if}
