@@ -135,6 +135,34 @@ func TestReportDateAndPresentationHelpersHandleEdgeValues(t *testing.T) {
 	}
 }
 
+func TestNativeReportChartsKeepIncomeAndExpenseCurrenciesSeparate(t *testing.T) {
+	text := `2000-01-01 open Assets:Cash USD
+2000-01-01 open Income:Salary USD
+2000-01-01 open Expenses:Food USD
+2000-01-15 * "salary"
+  Assets:Cash 10 USD
+  Income:Salary -10 USD
+2000-02-15 * "food"
+  Assets:Cash -3 USD
+  Expenses:Food 3 USD
+`
+	file, diagnostics := ledger.ParseText("native-charts.bean", []byte(text))
+	if diagnostics.HasErrors() {
+		t.Fatalf("parse=%+v", diagnostics.All())
+	}
+	evaluation := ledger.EvaluateFiles(map[source.FileID]*ledger.File{1: file}, []source.FileID{1}, ledger.EvalOptions{})
+	charts := ReportCharts(*evaluation, "income-statement", "month", "units")
+	if len(charts) != 3 || charts[0].Kind != ChartBar || charts[0].Measure != "flow" {
+		t.Fatalf("native flow charts=%+v", charts)
+	}
+	if len(charts[0].Series) != 1 || len(charts[0].Series[0].Points) != 2 {
+		t.Fatalf("net profit series=%+v", charts[0].Series)
+	}
+	if unknown := ReportCharts(*evaluation, "unknown", "month", "units"); unknown != nil {
+		t.Fatalf("unknown route charts=%+v", unknown)
+	}
+}
+
 func TestErrorsRedactsAbsolutePaths(t *testing.T) {
 	evaluation := ledger.Evaluation{Diagnostics: []diagnostic.Diagnostic{
 		diagnostic.New("E-CUSTOM", diagnostic.Error, source.Span{StartLine: 1, StartColumn: 1}).WithPath("/private/ledger/main.bean"),
