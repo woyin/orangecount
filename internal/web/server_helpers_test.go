@@ -7,6 +7,9 @@ package web
 
 import (
 	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -70,5 +73,47 @@ func TestReportFilterParsingAndOptionValidationCoverSupportedVariants(t *testing
 		if err := validateLocalOption(key, value); err == nil {
 			t.Errorf("invalid option %s=%s succeeded", key, value)
 		}
+	}
+}
+
+func TestImportAndAtomicWriteHelpersRejectUnsafeInputAndPreserveContent(t *testing.T) {
+	for _, tc := range []struct {
+		raw, adapter, want string
+	}{
+		{"ledger.bean", "beancount", "ledger.bean"}, {"ledger.beancount", "beancount", "ledger.beancount"}, {"bank.csv", "csv", "bank.csv"},
+	} {
+		got, err := safeImportName(tc.raw, tc.adapter)
+		if err != nil || got != tc.want {
+			t.Errorf("safeImportName(%q, %q)=%q, %v", tc.raw, tc.adapter, got, err)
+		}
+	}
+	for _, tc := range [][2]string{{"", "beancount"}, {"../ledger.bean", "beancount"}, {"ledger.csv", "beancount"}, {"ledger.bean", "csv"}} {
+		if _, err := safeImportName(tc[0], tc[1]); err == nil {
+			t.Errorf("unsafe import %q/%q accepted", tc[0], tc[1])
+		}
+	}
+	converted, err := csvToBeancount("date,payee,account,amount,currency,narration\n2000-01-02,Cafe,Assets:Cash,1.50,USD,\"note \"\"quoted\"\"\"\n", map[string]string{"offset_account": "Equity:Opening"})
+	if err != nil || !strings.Contains(converted, `"note \"quoted\""`) || !strings.Contains(converted, "Equity:Opening -1.5 USD") {
+		t.Fatalf("converted=%q err=%v", converted, err)
+	}
+	for _, content := range []string{"date,account,amount\n", "date,account\n2000-01-01,Assets:Cash\n", "date,account,amount\ninvalid,Assets:Cash,1\n", "date,account,amount\n2000-01-01,Assets:Cash,nope\n"} {
+		if _, err := csvToBeancount(content, nil); err == nil {
+			t.Errorf("invalid CSV accepted: %q", content)
+		}
+	}
+	dir := t.TempDir()
+	path := filepath.Join(dir, "atomic.txt")
+	if err := atomicWrite(path, []byte("first"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := atomicWrite(path, []byte("second"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(path)
+	if err != nil || string(data) != "second" {
+		t.Fatalf("atomic contents=%q err=%v", data, err)
+	}
+	if err := atomicWrite(filepath.Join(dir, "missing", "file"), []byte("nope"), 0o600); err == nil {
+		t.Fatal("atomic write to missing directory succeeded")
 	}
 }
