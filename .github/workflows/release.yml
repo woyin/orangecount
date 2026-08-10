@@ -1,0 +1,74 @@
+# Build and publish release binaries when a version tag (v*) is pushed.
+# The Go binary embeds the committed web assets via go:embed, so the build only
+# needs Go (no Node toolchain). Cross-compiled with CGO disabled for portable,
+# static binaries; the release tag is injected into orangecount's version var.
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: build ${{ matrix.goos }}/${{ matrix.goarch }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { goos: linux, goarch: amd64 }
+          - { goos: linux, goarch: arm64 }
+          - { goos: darwin, goarch: amd64 }
+          - { goos: darwin, goarch: arm64 }
+          - { goos: windows, goarch: amd64 }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Build
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: "0"
+        run: |
+          set -euo pipefail
+          ext=""
+          if [ "$GOOS" = "windows" ]; then ext=".exe"; fi
+          out="orangecount-${GOOS}-${GOARCH}${ext}"
+          go build -trimpath -ldflags="-s -w -buildid= -X main.version=${GITHUB_REF_NAME}" -o "$out" ./cmd/orangecount
+          sha256sum "$out" > "$out.sha256"
+     - uses: actions/upload-artifact@v4
+       with:
+         name: orangecount-${{ matrix.goos }}-${{ matrix.goarch }}
+         path: |
+           orangecount-${{ matrix.goos }}-${{ matrix.goarch }}
+           orangecount-${{ matrix.goos }}-${{ matrix.goarch }}.exe
+           orangecount-${{ matrix.goos }}-${{ matrix.goarch }}.sha256
+         if-no-files-found: error
+          if-no-files-found: error
+
+  release:
+    name: publish release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - name: Create release with binaries
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/orangecount-*
+          generate_release_notes: true
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-') }}

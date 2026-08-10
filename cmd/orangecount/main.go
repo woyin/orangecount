@@ -24,7 +24,9 @@ import (
 	"orangecount/internal/web"
 )
 
-const version = "0.1.0-dev"
+// version is overridable at build time via -ldflags "-X main.version=<tag>" so
+// release binaries report their release tag; local builds keep the dev marker.
+var version = "0.1.0-dev"
 
 func main() {
 	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
