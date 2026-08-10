@@ -174,6 +174,116 @@ func TestParseRejectsInvalidUTF8(t *testing.T) {
 	}
 }
 
+func TestParserPreservesTypedCustomValuesAndDirectiveMetadata(t *testing.T) {
+	text := `option "title" "Demo"
+  key: "option"
+plugin "example.plugin"
+  key: "plugin"
+include "child.bean"
+  key: "include"
+pushtag #tag
+  key: "tag"
+2000-01-01 open Assets:Cash USD
+  key: "open"
+2000-01-01 close Assets:Cash
+  key: "close"
+2000-01-01 commodity USD
+  key: "commodity"
+2000-01-01 balance Assets:Cash 1 USD
+  key: "balance"
+2000-01-01 pad Assets:Cash Equity:Opening
+  key: "pad"
+2000-01-01 event "kind" "value"
+  key: "event"
+2000-01-01 query "name" "SELECT 1"
+  key: "query"
+2000-01-01 price USD 1 EUR
+  key: "price"
+2000-01-01 document Assets:Cash "receipt.pdf"
+  key: "document"
+2000-01-01 note Assets:Cash "memo"
+  key: "note"
+2000-01-01 custom "all" "text" 1 TRUE 2000-01-01 Assets:Cash USD #tag ^link [1, "two"]
+  key: "custom"
+2000-01-01 * "transaction"
+  Assets:Cash 1 USD
+    key: "posting"
+  Equity:Opening -1 USD
+`
+	file, diagnostics := ParseText("metadata-all.bean", []byte(text))
+	if diagnostics.HasErrors() || len(file.Directives) != 16 {
+		t.Fatalf("diagnostics=%+v directives=%d", diagnostics.All(), len(file.Directives))
+	}
+	for _, directive := range file.Directives[:15] {
+		switch value := directive.(type) {
+		case Option:
+			if len(value.Meta) != 1 {
+				t.Errorf("option metadata=%+v", value.Meta)
+			}
+		case Plugin:
+			if len(value.Meta) != 1 {
+				t.Errorf("plugin metadata=%+v", value.Meta)
+			}
+		case Include:
+			if len(value.Meta) != 1 {
+				t.Errorf("include metadata=%+v", value.Meta)
+			}
+		case TagDirective:
+			if len(value.Meta) != 1 {
+				t.Errorf("tag metadata=%+v", value.Meta)
+			}
+		case Open:
+			if len(value.Meta) != 1 {
+				t.Errorf("open metadata=%+v", value.Meta)
+			}
+		case Close:
+			if len(value.Meta) != 1 {
+				t.Errorf("close metadata=%+v", value.Meta)
+			}
+		case Commodity:
+			if len(value.Meta) != 1 {
+				t.Errorf("commodity metadata=%+v", value.Meta)
+			}
+		case Balance:
+			if len(value.Meta) != 1 {
+				t.Errorf("balance metadata=%+v", value.Meta)
+			}
+		case Pad:
+			if len(value.Meta) != 1 {
+				t.Errorf("pad metadata=%+v", value.Meta)
+			}
+		case Event:
+			if len(value.Meta) != 1 {
+				t.Errorf("event metadata=%+v", value.Meta)
+			}
+		case Query:
+			if len(value.Meta) != 1 {
+				t.Errorf("query metadata=%+v", value.Meta)
+			}
+		case Price:
+			if len(value.Meta) != 1 {
+				t.Errorf("price metadata=%+v", value.Meta)
+			}
+		case Document:
+			if len(value.Meta) != 1 {
+				t.Errorf("document metadata=%+v", value.Meta)
+			}
+		case Note:
+			if len(value.Meta) != 1 {
+				t.Errorf("note metadata=%+v", value.Meta)
+			}
+		case Custom:
+			if len(value.Meta) != 1 || len(value.Values) != 8 || value.Values[7].Kind != ValueList {
+				t.Errorf("custom=%+v", value)
+			}
+		}
+	}
+	transaction, ok := file.Directives[15].(*Transaction)
+	if !ok || len(transaction.Postings) != 2 || len(transaction.Postings[0].Meta) != 1 {
+		t.Fatalf("transaction=%+v", file.Directives[15])
+	}
+}
+
 func bagHasCode(ds []diagnostic.Diagnostic, code string) bool {
 	for _, d := range ds {
 		if d.Code == code {
