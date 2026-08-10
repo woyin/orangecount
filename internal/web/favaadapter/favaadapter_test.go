@@ -672,3 +672,40 @@ func TestAdapterCollectionAndPresentationHelpersPreserveTypedData(t *testing.T) 
 		t.Fatal("invalid note was accepted")
 	}
 }
+
+func TestEntryContextBalancesAndSourceSlicingCoverNonJournalCases(t *testing.T) {
+	date := ledger.Date{Raw: "2000-01-02"}
+	amount := func(raw, currency string) *ledger.Amount {
+		decimal, err := ledger.ParseDecimal(raw)
+		if err != nil {
+			t.Fatal(err)
+		}
+		return &ledger.Amount{Number: ledger.Number{Raw: raw, Rat: decimal.Rat()}, Currency: currency}
+	}
+	first := ledger.Transaction{Date: date, Postings: []ledger.Posting{{Account: "Assets:Cash", Units: amount("1", "USD")}, {Account: "Equity:Opening", Units: amount("-1", "USD")}}}
+	second := ledger.Transaction{Date: ledger.Date{Raw: "2000-01-03"}, Postings: []ledger.Posting{{Account: "Assets:Cash", Units: amount("2", "USD")}, {Account: "Equity:Opening", Units: amount("-2", "USD")}}}
+	entries := []ledger.EntryRecord{{Date: date, Directive: first}, {Date: second.Date, Directive: second}, {Date: ledger.Date{Raw: "2000-01-04"}, Directive: ledger.Balance{Date: ledger.Date{Raw: "2000-01-04"}, Account: "Assets:Cash"}}, {Date: ledger.Date{Raw: "2000-01-05"}, Directive: ledger.Event{Date: ledger.Date{Raw: "2000-01-05"}}}}
+	before, after, ok := journalContextBalances(entries, 1)
+	if !ok || before["Assets:Cash"][0].Number.Exact != "1" || after["Assets:Cash"][0].Number.Exact != "3" {
+		t.Fatalf("transaction balances before=%+v after=%+v ok=%v", before, after, ok)
+	}
+	before, after, ok = journalContextBalances(entries, 2)
+	if !ok || before["Assets:Cash"][0].Number.Exact != "3" || after != nil {
+		t.Fatalf("balance context before=%+v after=%+v ok=%v", before, after, ok)
+	}
+	if before, after, ok := journalContextBalances(entries, 3); ok || before != nil || after != nil {
+		t.Fatalf("event context before=%+v after=%+v ok=%v", before, after, ok)
+	}
+	if presentContextBalances(map[string]map[string]ledger.Decimal{"Assets:Cash": {"USD": ledger.Zero()}}) != nil {
+		t.Fatal("zero context balance was projected")
+	}
+	file := source.NewSourceFile(1, "fixture.bean", []byte("2000-01-01 open Assets:Cash USD\n"))
+	graph := &source.Graph{Files: map[source.FileID]*source.SourceFile{1: file}}
+	record := ledger.EntryRecord{Span: file.Span(0, len(file.Data))}
+	if got := entrySourceBlock(record, graph); got != "2000-01-01 open Assets:Cash USD" {
+		t.Fatalf("source block=%q", got)
+	}
+	if entrySourceBlock(ledger.EntryRecord{}, graph) != "" || entrySourceBlock(record, nil) != "" {
+		t.Fatal("invalid source block was projected")
+	}
+}

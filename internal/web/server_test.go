@@ -1172,6 +1172,46 @@ func TestPrivateAdapterReadOnlyResourcesShareSnapshotContract(t *testing.T) {
 	}
 }
 
+func TestPrivateAdapterAddEntriesUsesReviewedWriteWorkflow(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	initial := "2000-01-01 open Assets:Cash USD\n2000-01-01 open Equity:Opening USD\n"
+	if err := os.WriteFile(entry, []byte(initial), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	built := snapshot.Build(entry)
+	if built.Snapshot == nil {
+		t.Fatalf("build diagnostics=%+v", built.Diagnostics)
+	}
+	server, err := NewServer(Config{Store: snapshot.NewStore(built.Snapshot), Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := func(body string) *httptest.ResponseRecorder {
+		recorder := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodPost, "/__orangecount/fava/add-entries", strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		server.Handler().ServeHTTP(recorder, req)
+		return recorder
+	}
+	invalid := request(`{"entries":[]}`)
+	if invalid.Code != http.StatusBadRequest || !strings.Contains(invalid.Body.String(), "no entries") {
+		t.Fatalf("invalid add status=%d body=%q", invalid.Code, invalid.Body.String())
+	}
+	added := request(`{"entries":[{"type":"note","date":"2000-01-02","account":"Assets:Cash","comment":"reviewed note"}]}`)
+	if added.Code != http.StatusOK || !strings.Contains(added.Body.String(), `"published":true`) {
+		t.Fatalf("add status=%d body=%q", added.Code, added.Body.String())
+	}
+	contents, err := os.ReadFile(entry)
+	if err != nil || !strings.Contains(string(contents), `note Assets:Cash "reviewed note"`) {
+		t.Fatalf("entry contents=%q err=%v", contents, err)
+	}
+	backup, err := os.ReadFile(entry + ".orangecount.bak")
+	if err != nil || string(backup) != initial {
+		t.Fatalf("backup=%q err=%v", backup, err)
+	}
+}
+
 func min(left, right int) int {
 	if left < right {
 		return left
