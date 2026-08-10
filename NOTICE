@@ -34,3 +34,19 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+Bundled fonts (SIL Open Font License 1.1)
+------------------------------------------
+The Fira Sans, Fira Mono, and Source Code Pro typefaces are bundled into the
+OrangeCount binary (embedded as woff2 in the transplanted stylesheet, via the
+@fontsource npm packages). Each is licensed under the SIL Open Font License,
+Version 1.1 (OFL-1.1), which permits embedding in and bundling with a larger
+work distributed under any license, including the Apache License 2.0, provided
+this notice and the OFL are retained.
+
+Fira Sans: Copyright (c) The FiraSans Project Authors. OFL-1.1.
+Fira Mono: Copyright (c) The FiraMono Project Authors. OFL-1.1.
+Source Code Pro: Copyright (c) Adobe Systems Incorporated. OFL-1.1.
+
+The full OFL-1.1 text is at https://scripts.sil.org/OFL and in each
+web/node_modules/@fontsource/*/LICENSE file.
