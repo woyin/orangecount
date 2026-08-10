@@ -45,6 +45,9 @@ var (
 	inspectPortOwners = lsofPortOwners
 	stopPortOwner     = terminatePortOwner
 	waitForPort       = waitForPortRelease
+	runLsof           = func(port string) ([]byte, error) {
+		return exec.Command("lsof", "-nP", "-iTCP:"+port, "-sTCP:LISTEN", "-Fpc").Output()
+	}
 )
 
 func main() {
@@ -321,7 +324,7 @@ func portOwnersAt(addr string) ([]portOwner, error) {
 }
 
 func lsofPortOwners(port string) ([]portOwner, error) {
-	output, err := exec.Command("lsof", "-nP", "-iTCP:"+port, "-sTCP:LISTEN", "-Fpc").Output()
+	output, err := runLsof(port)
 	if err != nil {
 		return nil, err
 	}

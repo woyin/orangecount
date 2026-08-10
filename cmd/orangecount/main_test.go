@@ -7,6 +7,7 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"net"
 	"os"
 	"path/filepath"
@@ -182,6 +183,25 @@ func TestParsePortOwnersAndPortHelpers(t *testing.T) {
 	}
 	if _, err := portOwnersAt("not-an-address"); err == nil {
 		t.Fatal("invalid address was accepted")
+	}
+}
+
+func TestLsofPortOwnersDelegatesProcessExecutionAndPreservesErrors(t *testing.T) {
+	original := runLsof
+	defer func() { runLsof = original }()
+	runLsof = func(port string) ([]byte, error) {
+		if port != "5000" {
+			t.Fatalf("port=%q", port)
+		}
+		return []byte("p77\nclocal-server\n"), nil
+	}
+	owners, err := lsofPortOwners("5000")
+	if err != nil || len(owners) != 1 || owners[0] != (portOwner{PID: 77, Command: "local-server"}) {
+		t.Fatalf("owners=%+v err=%v", owners, err)
+	}
+	runLsof = func(string) ([]byte, error) { return nil, os.ErrNotExist }
+	if _, err := lsofPortOwners("5000"); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("lsof error=%v", err)
 	}
 }
 
