@@ -175,3 +175,7 @@ _Avoid_: rational implementation value, floating-point amount
 **Supported locale**:
 A display locale shipped with the product's complete interface and diagnostic translation catalog. The initial supported locales are Simplified Chinese (`zh-CN`) and English (`en`).
 _Avoid_: partial translation, fallback-only language
+
+**Average cost booking**:
+OrangeCount's first implementation of Beancount's `Booking.AVERAGE` (an enum Beancount v3 defines but leaves disabled, returning "AVERAGE method is not supported"). It is per-account opt-in via the standard `booking "AVERAGE"` open directive; the default booking (FIFO) is unchanged. Lots are merged lazily at reduction time into a single weighted-average lot whose date is the earliest contributing lot's date; reductions with an explicit cost and cross-cost-currency merges are rejected with diagnostics. It never rewrites the source ledger and produces no intermediate files.
+_Avoid_: eager merge, global booking change, display-only average
