@@ -1212,6 +1212,47 @@ func TestPrivateAdapterAddEntriesUsesReviewedWriteWorkflow(t *testing.T) {
 	}
 }
 
+func TestImportCommitRejectsMissingStaleAndUnknownTargets(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	if err := os.WriteFile(entry, []byte("2000-01-01 open Assets:Cash USD\n2000-01-01 open Equity:Opening USD\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	built := snapshot.Build(entry)
+	if built.Snapshot == nil {
+		t.Fatalf("build diagnostics=%+v", built.Diagnostics)
+	}
+	server, err := NewServer(Config{Store: snapshot.NewStore(built.Snapshot), Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	post := func(path, body string) *httptest.ResponseRecorder {
+		recorder := httptest.NewRecorder()
+		req := httptest.NewRequest(http.MethodPost, path, strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		server.Handler().ServeHTTP(recorder, req)
+		return recorder
+	}
+	if response := post("/api/v1/import/commit", `{"preview_id":"missing"}`); response.Code != http.StatusNotFound {
+		t.Fatalf("missing preview status=%d body=%q", response.Code, response.Body.String())
+	}
+	preview := post("/api/v1/import/preview", `{"path":"import.bean","content":"2000-01-02 * \"import\"\n  Assets:Cash 1 USD\n  Equity:Opening -1 USD\n"}`)
+	var payload struct {
+		PreviewID string `json:"preview_id"`
+	}
+	if preview.Code != http.StatusOK || json.Unmarshal(preview.Body.Bytes(), &payload) != nil || payload.PreviewID == "" {
+		t.Fatalf("preview status=%d body=%q", preview.Code, preview.Body.String())
+	}
+	stale := post("/api/v1/import/commit", `{"preview_id":`+jsonString(payload.PreviewID)+`,"expected_snapshot_id":"stale"}`)
+	if stale.Code != http.StatusConflict {
+		t.Fatalf("stale commit status=%d body=%q", stale.Code, stale.Body.String())
+	}
+	unknown := post("/api/v1/import/commit", `{"preview_id":`+jsonString(payload.PreviewID)+`,"target":"unknown.bean"}`)
+	if unknown.Code != http.StatusNotFound {
+		t.Fatalf("unknown target status=%d body=%q", unknown.Code, unknown.Body.String())
+	}
+}
+
 func min(left, right int) int {
 	if left < right {
 		return left
