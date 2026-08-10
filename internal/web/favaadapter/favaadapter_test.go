@@ -537,3 +537,96 @@ func TestUpdateActivityTracksLastEntryPerAccount(t *testing.T) {
 		}
 	}
 }
+
+func TestJournalProjectionHelpersCoverTypedValuesAndFallbackFiltering(t *testing.T) {
+	number := ledger.Number{Raw: "2.5", Rat: big.NewRat(5, 2)}
+	amount := ledger.Amount{Number: number, Currency: "USD"}
+	if journalFlagClass("*") != "cleared" || journalFlagClass("!") != "pending" || journalFlagClass("?") != "other" {
+		t.Fatal("flag classes are inconsistent")
+	}
+	if journalAmount(nil) != nil || journalAmount(&ledger.Amount{}) != nil || journalPrice(nil) != nil {
+		t.Fatal("empty journal amounts were projected")
+	}
+	if got := journalAmount(&amount); got == nil || got.Currency != "USD" || got.Number.Exact != "2.5" {
+		t.Fatalf("amount=%+v", got)
+	}
+	cost := &ledger.CostSpec{Components: []ledger.Value{{Kind: ledger.ValueString}, {Kind: ledger.ValueAmount, Amount: amount}}}
+	if got := journalCost(cost); got == nil || got.Currency != "USD" {
+		t.Fatalf("cost=%+v", got)
+	}
+	if journalCost(&ledger.CostSpec{}) != nil {
+		t.Fatal("cost without amount was projected")
+	}
+	values := journalCustomValues([]ledger.Value{
+		{Kind: ledger.ValueAccount, Raw: "Assets:Cash"}, {Kind: ledger.ValueCurrency, Raw: "USD"}, {Kind: ledger.ValueAmount, Amount: amount}, {Kind: ledger.ValueString, String: "note"}, {Kind: ledger.ValueBool, Bool: true}, {Kind: ledger.ValueDate, Date: ledger.Date{Raw: "2000-01-01"}}, {Kind: ledger.ValueNumber, Raw: "4"}, {Kind: ledger.ValueTag, Raw: "tag"}, {Kind: ledger.ValueLink, Raw: "link"}, {Kind: ledger.ValueList, Raw: "[x]"},
+	})
+	if len(values) != 10 || values[2].Value != "2.5 USD" || values[3].Value != `"note"` || values[4].Value != "True" || values[9].Dtype != "text" || fmtBool(false) != "False" {
+		t.Fatalf("custom values=%+v", values)
+	}
+	entry := JournalEntry{Payee: "Café", Narration: "Dinner", Account: "Assets:Cash", Flag: "*", Tags: []string{"Meal"}, Links: []string{"Trip"}, Postings: []JournalPosting{{Account: "Expenses:Food"}}}
+	for _, needle := range []string{"café", "dinner", "cash", "meal", "trip", "food"} {
+		if !entryMatchesText(entry, needle) {
+			t.Errorf("entry did not match %q", needle)
+		}
+	}
+	if entryMatchesText(entry, "missing") || !containsFold([]string{"Meal"}, "mea") || containsFold(nil, "meal") {
+		t.Fatal("text matching is inconsistent")
+	}
+	filtered := filterJournalEntries([]JournalEntry{entry}, report.Filters{Text: "unclosed:("}, report.JournalFilters{})
+	if len(filtered) != 0 {
+		t.Fatalf("fallback text filter=%+v", filtered)
+	}
+}
+
+func TestAdapterPrimitiveProjectionsHandleAllDirectiveShapes(t *testing.T) {
+	date := ledger.Date{Raw: "2001-02-03"}
+	number := ledger.Number{Raw: "1", Rat: big.NewRat(1, 1)}
+	amount := ledger.Amount{Number: number, Currency: "USD"}
+	records := []ledger.EntryRecord{
+		{Date: date, Directive: ledger.Open{Date: date, Account: "Assets:Cash", Currencies: []string{"USD"}}},
+		{Date: date, Directive: ledger.Close{Date: date, Account: "Assets:Cash"}},
+		{Date: date, Directive: ledger.Balance{Date: date, Account: "Assets:Cash", Amount: amount}},
+		{Date: date, Directive: ledger.Note{Date: date, Account: "Assets:Cash", Comment: "memo"}},
+		{Date: date, Directive: ledger.Document{Date: date, Account: "Assets:Cash", Filenames: []string{"receipt.pdf"}}},
+		{Date: date, Directive: ledger.Pad{Date: date, Account: "Assets:Cash", SourceAccount: "Equity:Opening"}},
+		{Date: date, Directive: ledger.Query{Date: date, Name: "named", Query: "SELECT 1"}},
+		{Date: date, Directive: ledger.Custom{Date: date, Type: "kind"}},
+		{Date: date, Directive: ledger.Price{Date: date, Currency: "USD", Amount: amount}},
+	}
+	wantTypes := []string{"open", "close", "balance", "note", "document", "pad", "query", "custom"}
+	for index, record := range records {
+		entry, ok := projectJournalEntry(record)
+		if index == len(records)-1 {
+			if ok {
+				t.Fatal("price directive appeared in journal")
+			}
+			continue
+		}
+		if !ok || entry.Type != wantTypes[index] {
+			t.Fatalf("record %d entry=%+v ok=%v", index, entry, ok)
+		}
+		if recordDate(record) != date.Raw {
+			t.Fatalf("record date %d=%q", index, recordDate(record))
+		}
+		if index < 6 {
+			if got := recordAccounts(record); len(got) == 0 {
+				t.Fatalf("record accounts %d=%v", index, got)
+			}
+		}
+	}
+	if recordDate(ledger.EntryRecord{}) != "" || len(recordAccounts(ledger.EntryRecord{Directive: ledger.Price{}})) != 0 {
+		t.Fatal("unsupported record helpers returned data")
+	}
+	if normalizeBaseURL(" /fava/ ") != "/fava" || normalizeBaseURL(" ") != "/" {
+		t.Fatal("base URL normalization failed")
+	}
+	if got := firstCurrency(ledger.Evaluation{Options: map[string]string{"operating_currency": " EUR, USD"}}); got != "EUR" {
+		t.Fatalf("configured currency=%q", got)
+	}
+	if got := firstCurrency(ledger.Evaluation{Accounts: map[string]ledger.AccountState{"Assets:Cash": {Balances: map[string]ledger.Decimal{"USD": ledger.Zero(), "CNY": ledger.Zero()}}}}); got != "CNY" {
+		t.Fatalf("fallback currency=%q", got)
+	}
+	if firstCurrency(ledger.Evaluation{}) != "" || evaluationDateRange(ledger.Evaluation{}) != nil {
+		t.Fatal("empty report primitives returned data")
+	}
+}
