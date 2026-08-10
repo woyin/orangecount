@@ -42,15 +42,14 @@ jobs:
           if [ "$GOOS" = "windows" ]; then ext=".exe"; fi
           out="orangecount-${GOOS}-${GOARCH}${ext}"
           go build -trimpath -ldflags="-s -w -buildid= -X main.version=${GITHUB_REF_NAME}" -o "$out" ./cmd/orangecount
-          sha256sum "$out" > "$out.sha256"
-     - uses: actions/upload-artifact@v4
-       with:
-         name: orangecount-${{ matrix.goos }}-${{ matrix.goarch }}
-         path: |
-           orangecount-${{ matrix.goos }}-${{ matrix.goarch }}
-           orangecount-${{ matrix.goos }}-${{ matrix.goarch }}.exe
-           orangecount-${{ matrix.goos }}-${{ matrix.goarch }}.sha256
-         if-no-files-found: error
+          sha256sum "$out" > "${out}.sha256"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: orangecount-${{ matrix.goos }}-${{ matrix.goarch }}
+          path: |
+            orangecount-${{ matrix.goos }}-${{ matrix.goarch }}
+            orangecount-${{ matrix.goos }}-${{ matrix.goarch }}.exe
+            orangecount-${{ matrix.goos }}-${{ matrix.goarch }}.sha256
           if-no-files-found: error
 
   release:
