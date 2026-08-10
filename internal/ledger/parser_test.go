@@ -8,6 +8,7 @@ package ledger
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 
 	"orangecount/internal/diagnostic"
@@ -281,6 +282,129 @@ pushtag #tag
 	transaction, ok := file.Directives[15].(*Transaction)
 	if !ok || len(transaction.Postings) != 2 || len(transaction.Postings[0].Meta) != 1 {
 		t.Fatalf("transaction=%+v", file.Directives[15])
+	}
+}
+
+func TestParserRecoversAcrossMalformedGrammarAndPreservesValidNeighbors(t *testing.T) {
+	text := `option title "missing quotes"
+plugin "module" 9
+include child.bean
+pushtag tag
+2000-02-30 open Assets:Bad USD
+2000-01-01 balance Assets:Cash not-a-number USD
+2000-01-01 pad Assets:Cash
+2000-01-01 event kind "value"
+2000-01-01 query "name" query
+2000-01-01 price USD no-number EUR
+2000-01-01 note Assets:Cash missing
+2000-01-01 * "one" "two" "three" unexpected
+  Assets:Cash 1 USD {{ 2 USD, 2000-01-01, "lot" }} @@ 3 USD = 1 USD ~ 0.1 USD trailing
+    too-deep 1 USD
+  metadata without colon
+  key:
+2000-01-02 * "survives"
+  Assets:Cash 1 USD
+  Equity:Opening -1 USD
+`
+	file, diagnostics := ParseText("grammar-edges.bean", []byte(text))
+	if !diagnostics.HasErrors() {
+		t.Fatal("malformed grammar produced no diagnostics")
+	}
+	if len(file.Directives) == 0 {
+		t.Fatal("parser discarded all directives after recovery")
+	}
+	last, ok := file.Directives[len(file.Directives)-1].(*Transaction)
+	if !ok || last.Narration != "survives" || len(last.Postings) != 2 {
+		t.Fatalf("recovery transaction=%#v", file.Directives[len(file.Directives)-1])
+	}
+	for _, code := range []string{"E-PARSE-EXPECTED", "E-PARSE-DATE", "E-PARSE-TOKEN"} {
+		if !bagHasCode(diagnostics.All(), code) {
+			t.Errorf("diagnostics missing %s: %+v", code, diagnostics.All())
+		}
+	}
+}
+
+func TestParserValueAndGraphEdgeContracts(t *testing.T) {
+	file := source.NewSourceFile(7, "values.bean", []byte("[1, true, 2000-01-01, Assets:Cash, USD, #tag, ^link]\nkey: \"value\"\n"))
+	p := &parser{file: file, bag: new(diagnostic.Bag)}
+	listTokens := tokenize(file, splitLines(file)[0])
+	value, next := p.value(listTokens, 0)
+	if value.Kind != ValueList || next != len(listTokens) || len(value.List) != 7 {
+		t.Fatalf("list value=%+v next=%d tokens=%d", value, next, len(listTokens))
+	}
+	if got := []ValueKind{value.List[0].Kind, value.List[1].Kind, value.List[2].Kind, value.List[3].Kind, value.List[4].Kind, value.List[5].Kind, value.List[6].Kind}; !reflect.DeepEqual(got, []ValueKind{ValueNumber, ValueBool, ValueDate, ValueAccount, ValueCurrency, ValueTag, ValueLink}) {
+		t.Fatalf("value kinds=%v", got)
+	}
+	metaTokens := tokenize(file, splitLines(file)[1])
+	metadata, ok := p.parseMetadata(metaTokens)
+	if !ok || metadata.Key != "key" || metadata.Value.Kind != ValueString {
+		t.Fatalf("metadata=%+v ok=%v", metadata, ok)
+	}
+	if _, ok := p.parseMetadata(metaTokens[:1]); ok {
+		t.Fatal("incomplete metadata accepted")
+	}
+
+	if parsed, bag := ParseGraph(nil); len(parsed) != 0 || bag.Len() != 0 {
+		t.Fatalf("nil graph parsed=%v diagnostics=%+v", parsed, bag.All())
+	}
+	graph := &source.Graph{
+		Order: []source.FileID{7, 99},
+		Files: map[source.FileID]*source.SourceFile{7: file},
+		Diagnostics: []source.GraphIssue{
+			{Code: "W-GRAPH-WARNING", Path: "display.bean", Related: []source.Span{{File: 7}}},
+			{Code: "E-GRAPH-ERROR", SourcePath: "source.bean"},
+		},
+	}
+	parsed, bag := ParseGraph(graph)
+	if len(parsed) != 1 || !bagHasCode(bag.All(), "W-GRAPH-WARNING") || !bagHasCode(bag.All(), "E-GRAPH-ERROR") {
+		t.Fatalf("graph parsed=%d diagnostics=%+v", len(parsed), bag.All())
+	}
+}
+
+func TestParserInternalRecoveryContracts(t *testing.T) {
+	if parsed, diagnostics := Parse(nil); parsed.Source != nil || diagnostics.Len() != 0 {
+		t.Fatalf("nil source parse=%+v diagnostics=%+v", parsed, diagnostics.All())
+	}
+	file := source.NewSourceFile(9, "internal-branches.bean", []byte("unterminated \"string\n  Assets:Cash 1 USD\n"))
+	p := &parser{file: file, bag: new(diagnostic.Bag), out: &File{Source: file}, lastDirective: -1}
+	lines := splitLines(file)
+	if tokens := tokenize(file, lines[0]); len(tokens) < 2 || tokens[len(tokens)-1].text != "<unterminated>" {
+		t.Fatalf("unterminated tokens=%+v", tokens)
+	}
+	p.parseContinuation(lines[1], tokenize(file, lines[1]))
+	if !bagHasCode(p.bag.All(), "E-PARSE-EXPECTED") {
+		t.Fatalf("orphan continuation diagnostics=%+v", p.bag.All())
+	}
+	p.tx = &Transaction{}
+	p.posting = &Posting{}
+	p.parseContinuation(line{indent: 4}, tokenize(file, lines[1]))
+	// Exercise incomplete amounts, punctuation separators, and an invalid
+	// numeric amount directly at the parser boundary. These are the recovery
+	// cases that keep a later top-level directive parseable.
+	for _, raw := range []string{"USD", "1", "bad \"quoted\"", "1 @"} {
+		probe := source.NewSourceFile(10, "amount.bean", []byte(raw))
+		probeParser := &parser{file: probe, bag: new(diagnostic.Bag), out: &File{Source: probe}, lastDirective: -1}
+		tokens := tokenize(probe, splitLines(probe)[0])
+		_, _, _ = probeParser.amount(tokens, 0)
+	}
+	for _, raw := range []string{"2000-01", "bad", "2000-02-30"} {
+		probe := source.NewSourceFile(11, "date.bean", []byte(raw))
+		probeParser := &parser{file: probe, bag: new(diagnostic.Bag), out: &File{Source: probe}, lastDirective: -1}
+		probeParser.parseDate(tokenize(probe, splitLines(probe)[0])[0])
+	}
+	if base := p.base(nil); base.At.Valid() || base.Raw != "" || len(base.Meta) != 0 {
+		t.Fatalf("empty base=%+v", base)
+	}
+	extendDirective(nil, source.Span{}, file)
+	base := DirectiveBase{At: source.Span{End: 10}}
+	extendDirective(&base, source.Span{End: 5}, file)
+	if base.At.End != 10 {
+		t.Fatal("shorter metadata span extended directive")
+	}
+	for _, raw := range []string{"key", "key :", "key value"} {
+		probe := source.NewSourceFile(12, "metadata.bean", []byte(raw))
+		probeParser := &parser{file: probe, bag: new(diagnostic.Bag), out: &File{Source: probe}, lastDirective: -1}
+		_, _ = probeParser.parseMetadata(tokenize(probe, splitLines(probe)[0]))
 	}
 }
 

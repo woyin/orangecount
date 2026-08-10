@@ -70,4 +70,7 @@ func TestDateValidationHandlesLeapYearsAndMonthLengths(t *testing.T) {
 			t.Errorf("date=%+v valid=%v, want %v", tc.date, got, tc.valid)
 		}
 	}
+	if got := (Date{Raw: "2025-12-31"}).String(); got != "2025-12-31" {
+		t.Fatalf("Date.String()=%q", got)
+	}
 }

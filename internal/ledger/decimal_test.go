@@ -60,7 +60,7 @@ func TestDecimalParsingFormattingAndJSONRemainExact(t *testing.T) {
 	if err != nil || string(encoded) != `"1/3"` {
 		t.Fatalf("json=%s err=%v", encoded, err)
 	}
-	if !Zero().IsZero() || Zero().Sign() != 0 || NewDecimal(nil).String() != "0" {
+	if !Zero().IsZero() || Zero().Sign() != 0 || NewDecimal(nil).String() != "0" || value.Neg().Sign() != -1 {
 		t.Fatal("zero behavior is inconsistent")
 	}
 }

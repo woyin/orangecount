@@ -165,3 +165,49 @@ func TestEvaluatorLifecycleAndPriceBranches(t *testing.T) {
 		t.Fatalf("prices=%+v diagnostics=%+v", e.result.Prices, e.result.Diagnostics)
 	}
 }
+
+func TestEvaluatorDirectiveDatesPadsAndBalanceFailures(t *testing.T) {
+	date := Date{Raw: "2000-01-01", Year: 2000, Month: 1, Day: 1}
+	for _, directive := range []Directive{
+		Open{Date: date}, Close{Date: date}, Commodity{Date: date}, Balance{Date: date}, Pad{Date: date}, Event{Date: date}, Query{Date: date}, Price{Date: date}, Document{Date: date}, Note{Date: date}, Custom{Date: date}, Transaction{Date: date}, &Transaction{Date: date}, Option{},
+	} {
+		got := directiveDate(directive)
+		if directive.Kind() == KindOption {
+			if got.Raw != "" {
+				t.Errorf("option date=%+v", got)
+			}
+		} else if got.Raw != date.Raw {
+			t.Errorf("%T date=%+v", directive, got)
+		}
+	}
+	span := source.Span{File: 1}
+	e := &evaluator{result: &Evaluation{Accounts: map[string]AccountState{}, Prices: map[string][]PriceQuote{}}, accounts: map[string]*accountWork{
+		"Assets:Cash":    {state: AccountState{Name: "Assets:Cash", Opened: date, Balances: map[string]Decimal{"USD": mustDecimal(t, "2")}}},
+		"Equity:Opening": {state: AccountState{Name: "Equity:Opening", Opened: date, Balances: map[string]Decimal{}}},
+	}, pads: map[string]Pad{}, options: EvalOptions{InferDecimalTolerance: true}}
+	pad := Pad{DirectiveBase: DirectiveBase{At: span}, Date: date, Account: "Assets:Cash", SourceAccount: "Equity:Opening"}
+	e.applyPad(Balance{DirectiveBase: DirectiveBase{At: span}, Date: date, Account: "Assets:Cash", Amount: Amount{Number: testNumber(t, "5"), Currency: "USD"}}, pad, e.accounts["Assets:Cash"])
+	if got := e.accounts["Assets:Cash"].state.Balances["USD"].String(); got != "5" || len(e.events) != 2 {
+		t.Fatalf("pad balance=%s events=%+v", got, e.events)
+	}
+	e.applyPad(Balance{DirectiveBase: DirectiveBase{At: span}, Date: date, Account: "Assets:Cash", Amount: Amount{Number: testNumber(t, "5"), Currency: "USD"}}, Pad{DirectiveBase: DirectiveBase{At: span}, SourceAccount: "Assets:Missing"}, e.accounts["Assets:Cash"])
+	e.balance(Balance{DirectiveBase: DirectiveBase{At: span}, Date: date, Account: "Assets:Missing"})
+	e.balance(Balance{DirectiveBase: DirectiveBase{At: span}, Date: date, Account: "Assets:Cash", Amount: Amount{Number: testNumber(t, "5"), Currency: "USD"}})
+	e.evaluateDirective(nil, unsupportedDirective{DirectiveBase: DirectiveBase{At: span}})
+	e.finish()
+	for _, code := range []string{"E-EVAL-PAD", "E-EVAL-BALANCE", "W-EVAL-UNSUPPORTED"} {
+		if !hasCode(e.result.Diagnostics, code) {
+			t.Errorf("missing %s diagnostics=%+v", code, e.result.Diagnostics)
+		}
+	}
+	if !within(mustDecimal(t, "0.01"), mustDecimal(t, "0.01")) || within(mustDecimal(t, "0.02"), mustDecimal(t, "0.01")) {
+		t.Fatal("balance tolerance bounds changed")
+	}
+	if !contains([]string{"USD", "EUR"}, "EUR") || contains([]string{"USD"}, "JPY") {
+		t.Fatal("currency membership changed")
+	}
+}
+
+type unsupportedDirective struct{ DirectiveBase }
+
+func (unsupportedDirective) Kind() DirectiveKind { return "unsupported" }

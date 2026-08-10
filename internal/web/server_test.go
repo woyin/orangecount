@@ -1050,6 +1050,212 @@ func TestHTTPHandlersRejectUnsupportedMethodsAndProtectEmptySnapshots(t *testing
 	}
 }
 
+func TestEditorImportAndOptionsFailureContracts(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	content := "2000-01-01 open Assets:Cash USD\n2000-01-01 open Equity:Opening USD\n"
+	if err := os.WriteFile(entry, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	built := snapshot.Build(entry)
+	if built.Snapshot == nil {
+		t.Fatalf("build diagnostics=%+v", built.Diagnostics)
+	}
+	server, err := NewServer(Config{Store: snapshot.NewStore(built.Snapshot), Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := func(method, path, body string) *httptest.ResponseRecorder {
+		recorder := httptest.NewRecorder()
+		req := httptest.NewRequest(method, path, strings.NewReader(body))
+		req.Header.Set("Content-Type", "application/json")
+		server.Handler().ServeHTTP(recorder, req)
+		return recorder
+	}
+	for _, tc := range []struct {
+		method, path, body string
+		status             int
+	}{
+		{http.MethodGet, "/api/v1/options", "", http.StatusOK},
+		{http.MethodPut, "/api/v1/options", "", http.StatusMethodNotAllowed},
+		{http.MethodPost, "/api/v1/options", "not-json", http.StatusBadRequest},
+		{http.MethodPost, "/api/v1/options", `{"currency":"usd"}`, http.StatusBadRequest},
+		{http.MethodGet, "/api/v1/editor/file", "", http.StatusBadRequest},
+		{http.MethodPost, "/api/v1/editor/validate", "not-json", http.StatusBadRequest},
+		{http.MethodPost, "/api/v1/editor/validate", `{"path":"missing.bean","content":""}`, http.StatusNotFound},
+		{http.MethodPost, "/api/v1/editor/validate", `{"path":"main.bean","content":"2000-01-01 open"}`, http.StatusOK},
+		{http.MethodPost, "/api/v1/editor/save", `{"path":"main.bean","content":"` + `2000-01-01 open Assets:Cash USD` + `","expected_snapshot_id":"stale"}`, http.StatusConflict},
+		{http.MethodPost, "/api/v1/editor/save", `{"path":"missing.bean","content":""}`, http.StatusNotFound},
+		{http.MethodGet, "/api/v1/import", "", http.StatusOK},
+		{http.MethodGet, "/api/v1/import/unknown", "", http.StatusNotFound},
+		{http.MethodPut, "/api/v1/import", "", http.StatusNotFound},
+		{http.MethodPost, "/api/v1/import/preview", `{}`, http.StatusBadRequest},
+		{http.MethodPost, "/api/v1/import/preview", `{"path":"bank.txt","adapter":"text","content":""}`, http.StatusBadRequest},
+		{http.MethodPost, "/api/v1/import/preview", `{"path":"bank.bean","content":"2000-01-01 open"}`, http.StatusOK},
+		{http.MethodPost, "/api/v1/import/preview", `{"path":"bank.bean","content":"include \"other.bean\""}`, http.StatusBadRequest},
+		{http.MethodPost, "/api/v1/import/preview", `{"path":"bank.csv","adapter":"csv","content":"date,account,amount\n"}`, http.StatusBadRequest},
+	} {
+		response := request(tc.method, tc.path, tc.body)
+		if response.Code != tc.status {
+			t.Errorf("%s %s status=%d want=%d body=%q", tc.method, tc.path, response.Code, tc.status, response.Body.String())
+		}
+	}
+	// JSON decoders must reject a second object: otherwise a proxy could make
+	// two callers disagree about which state-changing body was accepted.
+	if response := request(http.MethodPost, "/api/v1/options", `{} {}`); response.Code != http.StatusBadRequest {
+		t.Fatalf("multiple JSON documents status=%d body=%q", response.Code, response.Body.String())
+	}
+}
+
+func TestReportEndpointMatrixKeepsAllViewsReachable(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	content := `option "operating_currency" "USD"
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Assets:Broker SH
+2000-01-01 open Income:Salary USD
+2000-01-01 open Expenses:Food USD
+2000-01-01 open Equity:Opening USD
+2000-01-02 * "seed" #tag
+  Assets:Cash 100 USD
+  Equity:Opening -100 USD
+2000-02-02 * "buy"
+  Assets:Broker 2 SH {10 USD}
+  Assets:Cash -20 USD
+2000-03-02 * "payday"
+  Assets:Cash 5 USD
+  Income:Salary -5 USD
+2000-03-03 * "groceries"
+  Assets:Cash -2 USD
+  Expenses:Food 2 USD
+2000-03-04 price SH 11 USD
+2000-03-05 event "status" "ok"
+2000-03-06 document Assets:Cash "receipt.pdf"
+`
+	if err := os.WriteFile(entry, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	built := snapshot.Build(entry)
+	if built.Snapshot == nil {
+		t.Fatalf("build diagnostics=%+v", built.Diagnostics)
+	}
+	server, err := NewServer(Config{Store: snapshot.NewStore(built.Snapshot), Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range []string{
+		"/api/v1/status",
+		"/api/v1/reports/accounts?account=Assets%3ACash&r=changes&interval=month",
+		"/api/v1/reports/accounts?account=Assets%3ACash&r=balances&interval=quarter",
+		"/api/v1/reports/journal?flag=*&tag=tag&payee=seed",
+		"/api/v1/reports/trial-balance?currency=USD&period=year",
+		"/api/v1/reports/balance-sheet?currency=USD&valuation=market-value",
+		"/api/v1/reports/income-statement?currency=USD&period=quarter",
+		"/api/v1/reports/holdings?as_of=2000-03-01&currency=USD&aggregation=currency",
+		"/api/v1/reports/prices",
+		"/api/v1/reports/events",
+		"/api/v1/reports/documents",
+		"/api/v1/reports/statistics",
+		"/api/v1/reports/errors",
+	} {
+		recorder := httptest.NewRecorder()
+		server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
+		if recorder.Code != http.StatusOK || !strings.Contains(recorder.Header().Get("Content-Type"), "application/json") {
+			t.Errorf("GET %s status=%d content-type=%q body=%q", path, recorder.Code, recorder.Header().Get("Content-Type"), recorder.Body.String())
+		}
+	}
+	for _, path := range []string{
+		"/api/v1/reports/accounts?format=xml",
+		"/api/v1/reports/holdings?as_of=not-a-date",
+		"/api/v1/reports/unknown",
+		"/api/v1/query?q=SELECT+account+FROM+accounts&format=xml",
+		"/api/v1/query?q=not+a+query",
+		"/api/v1/source?path=missing.bean",
+	} {
+		recorder := httptest.NewRecorder()
+		server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
+		if recorder.Code < http.StatusBadRequest {
+			t.Errorf("GET %s status=%d should reject request", path, recorder.Code)
+		}
+	}
+}
+
+func TestServerConstructionAndDocumentWriteEdgeContracts(t *testing.T) {
+	if _, err := NewServer(Config{Addr: "127.0.0.1:0"}); err == nil {
+		t.Fatal("server accepted a nil snapshot store")
+	}
+	for address, want := range map[string]bool{"localhost:5000": true, "[::1]:5000": true, "127.0.0.1:5000": true, "0.0.0.0:5000": false, "missing-port": false} {
+		if got := loopbackAddr(address); got != want {
+			t.Errorf("loopbackAddr(%q)=%v, want %v", address, got, want)
+		}
+	}
+	var nilServer *Server
+	if nilServer.Addr() != "" || nilServer.Serve(context.Background()) == nil {
+		t.Fatal("nil server helpers accepted an unusable server")
+	}
+	canceled, cancel := context.WithCancel(context.Background())
+	cancel()
+	server, err := NewServer(Config{Store: snapshot.NewStore(nil), Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := server.WaitReady(canceled); !errors.Is(err, context.Canceled) {
+		t.Fatalf("cancelled WaitReady error=%v", err)
+	}
+
+	ledgerDir := t.TempDir()
+	entry := filepath.Join(ledgerDir, "main.bean")
+	if err := os.WriteFile(entry, []byte("2000-01-01 open Assets:Cash USD\n2000-01-01 open Assets:Bank USD\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	built := snapshot.Build(entry)
+	root := t.TempDir()
+	roots, err := source.NewDocumentRoots([]string{root})
+	if err != nil {
+		t.Fatal(err)
+	}
+	server, err = NewServer(Config{Store: snapshot.NewStore(built.Snapshot), DocumentRoots: roots, Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	call := func(method, path, body, contentType string) *httptest.ResponseRecorder {
+		recorder := httptest.NewRecorder()
+		req := httptest.NewRequest(method, path, strings.NewReader(body))
+		req.Header.Set("Content-Type", contentType)
+		server.Handler().ServeHTTP(recorder, req)
+		return recorder
+	}
+	if response := call(http.MethodPost, "/__orangecount/fava/document", "not-a-multipart-body", "multipart/form-data; boundary=bad"); response.Code != http.StatusBadRequest {
+		t.Fatalf("malformed upload status=%d body=%q", response.Code, response.Body.String())
+	}
+	var multipartBody strings.Builder
+	multipartWriter := multipart.NewWriter(&multipartBody)
+	if err := multipartWriter.WriteField("account", "Assets:Cash"); err != nil {
+		t.Fatal(err)
+	}
+	if err := multipartWriter.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if response := call(http.MethodPost, "/__orangecount/fava/document", multipartBody.String(), multipartWriter.FormDataContentType()); response.Code != http.StatusBadRequest || !strings.Contains(response.Body.String(), "No file") {
+		t.Fatalf("empty upload status=%d body=%q", response.Code, response.Body.String())
+	}
+	if response := call(http.MethodGet, "/__orangecount/fava/move-document", "", ""); response.Code != http.StatusMethodNotAllowed || response.Header().Get("Allow") != "POST" {
+		t.Fatalf("move method status=%d allow=%q", response.Code, response.Header().Get("Allow"))
+	}
+	if response := call(http.MethodPost, "/__orangecount/fava/move-document", "not-json", "application/json"); response.Code != http.StatusBadRequest {
+		t.Fatalf("malformed move status=%d body=%q", response.Code, response.Body.String())
+	}
+	if err := os.MkdirAll(filepath.Join(root, "Assets", "Cash"), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, "Assets", "Cash", "same.pdf"), []byte("same"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if response := call(http.MethodPost, "/__orangecount/fava/move-document", `{"filename":"Assets/Cash/same.pdf","account":"Assets:Cash","new_name":"."}`, "application/json"); response.Code != http.StatusOK || !strings.Contains(response.Body.String(), "Document unchanged") {
+		t.Fatalf("unchanged move status=%d body=%q", response.Code, response.Body.String())
+	}
+}
+
 func TestEditorFileAndStaticAssetEndpointsPreserveHTTPContracts(t *testing.T) {
 	dir := t.TempDir()
 	entry := filepath.Join(dir, "main.bean")

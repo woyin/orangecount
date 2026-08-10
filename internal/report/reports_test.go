@@ -76,6 +76,37 @@ func TestCoreReportsAreDeterministic(t *testing.T) {
 	}
 }
 
+func TestJournalBetweenHonorsEachInclusiveRangeBoundary(t *testing.T) {
+	text := `2000-01-01 open Assets:Cash USD
+2000-01-01 open Equity:Opening USD
+2000-01-02 * "first"
+  Assets:Cash 1 USD
+  Equity:Opening -1 USD
+2000-01-03 * "second"
+  Assets:Cash 2 USD
+  Equity:Opening -2 USD
+2000-01-04 * "third"
+  Assets:Cash 3 USD
+  Equity:Opening -3 USD
+`
+	file, diagnostics := ledger.ParseText("journal-range.bean", []byte(text))
+	if diagnostics.HasErrors() {
+		t.Fatalf("parse=%+v", diagnostics.All())
+	}
+	evaluation := ledger.EvaluateFiles(map[source.FileID]*ledger.File{1: file}, []source.FileID{1}, ledger.EvalOptions{})
+	date := func(raw string) *ledger.Date { return &ledger.Date{Raw: raw} }
+	for _, test := range []struct {
+		from, to *ledger.Date
+		want     int
+	}{
+		{date("2000-01-03"), nil, 4}, {nil, date("2000-01-03"), 4}, {date("2000-01-03"), date("2000-01-03"), 2}, {date("2000-02-01"), nil, 0},
+	} {
+		if result := JournalBetween(*evaluation, test.from, test.to); len(result.Rows) != test.want {
+			t.Errorf("JournalBetween(%+v, %+v) rows=%d want=%d", test.from, test.to, len(result.Rows), test.want)
+		}
+	}
+}
+
 func TestReportSetIncludesEveryCoreProjectionAndSafeGraphPaths(t *testing.T) {
 	text := `2000-01-01 open Assets:Cash USD
 2000-01-01 open Equity:Opening USD

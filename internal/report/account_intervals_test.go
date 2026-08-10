@@ -6,6 +6,7 @@
 package report
 
 import (
+	"reflect"
 	"testing"
 
 	"orangecount/internal/ledger"
@@ -96,5 +97,47 @@ func TestAccountIntervalsHonorTimeFilterAndRejectBadMode(t *testing.T) {
 
 	if got := AccountIntervals(*evaluation, "Assets:Bank", "bogus", "month", Filters{}); len(got.Rows) != 0 || len(got.Columns) != 1 {
 		t.Fatalf("bad mode should stay empty: %+v", got)
+	}
+}
+
+func TestAccountIntervalsPeriodAndFilterEdgeContracts(t *testing.T) {
+	evaluation := evaluateIntervalLedger(t)
+	for _, test := range []struct {
+		key, interval, want string
+	}{
+		{"2000-12", "month", "2001-01"},
+		{"2000-Q4", "quarter", "2001-Q1"},
+		{"2000", "year", "2001"},
+		{"bad", "month", "bad"},
+		{"bad-Qx", "quarter", "bad-Qx"},
+		{"bad", "year", "bad"},
+	} {
+		if got := nextPeriodKey(test.key, test.interval); got != test.want {
+			t.Errorf("nextPeriodKey(%q, %q)=%q, want %q", test.key, test.interval, got, test.want)
+		}
+	}
+	for _, request := range []struct {
+		account, mode string
+	}{
+		{"", "changes"}, {"Assets:Missing", "balances"}, {"Assets:Bank", "other"},
+	} {
+		result := AccountIntervals(*evaluation, request.account, request.mode, "month", Filters{})
+		if !reflect.DeepEqual(result.Columns, []string{"interval"}) || len(result.Rows) != 0 {
+			t.Errorf("AccountIntervals(%q, %q)=%+v", request.account, request.mode, result)
+		}
+	}
+	// An invalid FQL expression falls back to the legacy case-insensitive text
+	// match, while a valid expression is applied to each transaction target.
+	legacy := AccountIntervals(*evaluation, "Assets:Bank", "changes", "quarter", Filters{Text: "child deposit("})
+	if len(legacy.Rows) != 0 {
+		t.Fatalf("unmatched legacy filter rows=%+v", legacy.Rows)
+	}
+	matched := AccountIntervals(*evaluation, "Assets:Bank", "changes", "quarter", Filters{Text: "narration:child"})
+	if len(matched.Rows) != 1 || intervalRows(t, matched)[0]["USD"] != "2" {
+		t.Fatalf("FQL interval rows=%+v", intervalRows(t, matched))
+	}
+	target := fqlTargetFromChartPosting(chartPosting{tags: []string{"tag"}, links: []string{"link"}, payee: "Payee", narration: "Narration", account: "Assets:Bank", flag: "*", date: "2000-01-01"})
+	if !reflect.DeepEqual(target.Tags, []string{"tag"}) || target.Metadata == nil || target.Account != "Assets:Bank" {
+		t.Fatalf("FQL target=%+v", target)
 	}
 }

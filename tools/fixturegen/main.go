@@ -8,18 +8,31 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"os"
 
 	"orangecount/tools/fixturegen/gen"
 )
 
 func main() {
-	output := flag.String("output", "testdata/fixtures/fava-reference", "fixture output directory")
-	flag.Parse()
+	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
+}
+
+// run keeps command-line transport separate from fixture generation so the
+// generator's command contract can be tested without writing to real stdout
+// or terminating the test process.
+func run(args []string, stdout, stderr io.Writer) int {
+	flags := flag.NewFlagSet("fixturegen", flag.ContinueOnError)
+	flags.SetOutput(stderr)
+	output := flags.String("output", "testdata/fixtures/fava-reference", "fixture output directory")
+	if err := flags.Parse(args); err != nil {
+		return 2
+	}
 	result, err := gen.Generate(*output, gen.DefaultConfig)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "fixturegen: %v\n", err)
-		os.Exit(1)
+		fmt.Fprintf(stderr, "fixturegen: %v\n", err)
+		return 1
 	}
-	fmt.Printf("fixturegen: wrote %d files, %d accounts, %d transactions to %s\n", len(result.Files), result.Accounts, result.Transactions, *output)
+	fmt.Fprintf(stdout, "fixturegen: wrote %d files, %d accounts, %d transactions to %s\n", len(result.Files), result.Accounts, result.Transactions, *output)
+	return 0
 }

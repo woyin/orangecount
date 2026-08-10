@@ -278,3 +278,60 @@ func TestCLIHelpersRenderAndWaitWithoutSideEffects(t *testing.T) {
 		t.Fatalf("free port was not reusable: %v", err)
 	}
 }
+
+func TestPortConflictFailureAndServeAddressContracts(t *testing.T) {
+	originalInspect, originalStop, originalWait := inspectPortOwners, stopPortOwner, waitForPort
+	defer func() { inspectPortOwners, stopPortOwner, waitForPort = originalInspect, originalStop, originalWait }()
+	inspectPortOwners = func(string) ([]portOwner, error) { return []portOwner{{PID: 77, Command: "busy"}}, nil }
+	stopPortOwner = func(int) error { return os.ErrPermission }
+	var output bytes.Buffer
+	if retry, err := resolvePortConflict(defaultServeAddr, strings.NewReader("y\n"), &output); retry || !errors.Is(err, os.ErrPermission) || !strings.Contains(err.Error(), "PID 77") {
+		t.Fatalf("stop failure retry=%v err=%v output=%q", retry, err, output.String())
+	}
+	stopPortOwner = func(int) error { return nil }
+	waitForPort = func(string, time.Duration) error { return errors.New("still busy") }
+	if retry, err := resolvePortConflict(defaultServeAddr, strings.NewReader("是\n"), &output); retry || err == nil || !strings.Contains(err.Error(), "still busy") {
+		t.Fatalf("wait failure retry=%v err=%v", retry, err)
+	}
+
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer listener.Close()
+	if err := waitForPortRelease(listener.Addr().String(), 0); err == nil || !strings.Contains(err.Error(), "still in use") {
+		t.Fatalf("occupied port wait error=%v", err)
+	}
+	if err := terminatePortOwner(99999999); err == nil {
+		t.Fatal("signalling a non-existent process unexpectedly succeeded")
+	}
+
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "valid.bean")
+	if err := os.WriteFile(entry, []byte("2000-01-01 open Assets:Cash USD\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	inspectPortOwners = func(string) ([]portOwner, error) { return nil, nil }
+	var stdout, stderr bytes.Buffer
+	if code := runWithInput([]string{"serve", "--addr", "not-an-address", entry}, nil, &stdout, &stderr); code != 2 || !strings.Contains(stderr.String(), "loopback-only") {
+		t.Fatalf("invalid addr code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
+	occupied, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer occupied.Close()
+	inspectionCalls := 0
+	inspectPortOwners = func(string) ([]portOwner, error) {
+		inspectionCalls++
+		if inspectionCalls == 1 {
+			return nil, nil
+		}
+		return []portOwner{{PID: 88, Command: "occupied"}}, nil
+	}
+	stdout.Reset()
+	stderr.Reset()
+	if code := runWithInput([]string{"serve", "--addr", occupied.Addr().String(), entry}, strings.NewReader("no\n"), &stdout, &stderr); code != 1 || !strings.Contains(stderr.String(), "OrangeCount was not started") {
+		t.Fatalf("late conflict code=%d stdout=%q stderr=%q", code, stdout.String(), stderr.String())
+	}
+}

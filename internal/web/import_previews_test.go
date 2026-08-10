@@ -43,3 +43,17 @@ func TestImportPreviewStoreSafelyHandlesNilAndEmptyKeys(t *testing.T) {
 		t.Fatal("empty preview ID was stored")
 	}
 }
+
+func TestImportPreviewStoreEvictsExpiredOnStoreAndFallsBackToWallClock(t *testing.T) {
+	previews := newImportPreviewStore()
+	previews.nowUnix = func() int64 { return 100 }
+	previews.items["expired"] = importPreview{expires: 100}
+	previews.Store("next", importPreview{Path: "next.bean"})
+	if _, ok := previews.items["expired"]; ok {
+		t.Fatal("expired preview was not evicted")
+	}
+	previews.nowUnix = nil
+	if previews.now() <= 0 {
+		t.Fatal("nil preview clock did not use wall time")
+	}
+}

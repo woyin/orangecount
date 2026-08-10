@@ -2,6 +2,20 @@
 
 All notable changes to OrangeCount are documented in this file.
 
+## [0.1.3] - 2026-08-10
+
+### Changed
+
+- Refactored the local server's import-preview retention and port-inspection
+  boundaries without changing the user-facing accounting or UI behavior.
+- Made the fixture generator's command-line transport independently testable.
+
+### Quality
+
+- Expanded unit and HTTP-contract coverage across the ledger evaluator,
+  parser, reports, Fava adapter, CLI, and reviewed write workflows. The full
+  Go suite now reports at least 90% statement coverage.
+
 ## [0.1.2] - 2026-08-10
 
 ### Added

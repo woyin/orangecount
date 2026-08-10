@@ -32,7 +32,7 @@ import (
 
 // version is overridable at build time via -ldflags "-X main.version=<tag>" so
 // release binaries report their release tag; local builds keep the dev marker.
-var version = "0.1.2-dev"
+var version = "0.1.3-dev"
 
 const defaultServeAddr = "127.0.0.1:5000"
 

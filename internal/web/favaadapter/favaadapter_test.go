@@ -78,6 +78,34 @@ func TestEnvelopeHasStableMtimeFromSnapshot(t *testing.T) {
 	}
 }
 
+func TestAdapterRecordAndJournalPrimitiveContracts(t *testing.T) {
+	date := ledger.Date{Raw: "2000-01-02", Year: 2000, Month: 1, Day: 2}
+	number := ledger.Number{Raw: "3", Rat: big.NewRat(3, 1)}
+	balance := ledger.Balance{Date: date, Account: "Assets:Cash"}
+	transaction := ledger.Transaction{Date: date, Postings: []ledger.Posting{{Account: "Assets:Cash"}}}
+	for _, record := range []ledger.EntryRecord{{Directive: balance}, {Directive: &balance}, {Directive: transaction}, {Directive: &transaction}} {
+		if !recordTouchesAccount(record, "Assets:Cash") || lastEntryDate([]ledger.EntryRecord{record}, "Assets:Cash") != date.Raw {
+			t.Errorf("account record=%+v", record)
+		}
+	}
+	if recordTouchesAccount(ledger.EntryRecord{Directive: ledger.Event{Date: date}}, "Assets:Cash") || lastEntryDate([]ledger.EntryRecord{{Directive: ledger.Event{Date: date}}}, "Assets:Cash") != "" {
+		t.Fatal("unrelated directive touched account")
+	}
+	if journalPrice(nil) != nil || journalPrice(&ledger.PriceSpec{}) != nil {
+		t.Fatal("empty journal price was rendered")
+	}
+	if price := journalPrice(&ledger.PriceSpec{Amount: ledger.Amount{Number: number, Currency: "USD"}}); price == nil || price.Number.Display != "3" || price.Currency != "USD" {
+		t.Fatalf("journal price=%+v", price)
+	}
+	for _, directive := range []ledger.Directive{
+		&ledger.Transaction{Date: date}, ledger.Transaction{Date: date}, ledger.Balance{Date: date}, ledger.Open{Date: date}, ledger.Close{Date: date}, ledger.Note{Date: date}, ledger.Document{Date: date}, ledger.Pad{Date: date}, ledger.Event{Date: date}, ledger.Price{Date: date}, ledger.Commodity{Date: date}, ledger.Query{Date: date}, ledger.Custom{Date: date},
+	} {
+		if got := recordDate(ledger.EntryRecord{Directive: directive}); got != date.Raw {
+			t.Errorf("recordDate(%T)=%q", directive, got)
+		}
+	}
+}
+
 func TestAdapterErrorMarshalShape(t *testing.T) {
 	data, err := json.Marshal(AdapterError{Error: "no valid snapshot"})
 	if err != nil {

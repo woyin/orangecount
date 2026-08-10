@@ -116,4 +116,7 @@ func TestImportAndAtomicWriteHelpersRejectUnsafeInputAndPreserveContent(t *testi
 	if err := atomicWrite(filepath.Join(dir, "missing", "file"), []byte("nope"), 0o600); err == nil {
 		t.Fatal("atomic write to missing directory succeeded")
 	}
+	if err := atomicWrite(dir, []byte("nope"), 0o600); err == nil {
+		t.Fatal("atomic write over a directory succeeded")
+	}
 }

@@ -8,6 +8,8 @@ package query
 import (
 	"bytes"
 	"errors"
+	"math/big"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -192,6 +194,65 @@ func TestResultCSVAndValueHelpersHandleAllSupportedShapes(t *testing.T) {
 	}
 	if !truthy(1) || truthy(ledger.Zero()) || truthy("") || truthy(nil) {
 		t.Fatal("truthiness is inconsistent")
+	}
+}
+
+func TestQueryExpressionPrimitiveContractsAndNumericCoercion(t *testing.T) {
+	row := Row{"named": "value", "NUMBER": 2, "tags": []string{"one"}}
+	if (ParseError{Message: "bad query"}).Error() != "bad query" || !reflect.DeepEqual(firstRow(nil), Row{}) {
+		t.Fatal("query primitive helpers changed")
+	}
+	if value, err := (literalExpr{value: "literal", display: "'literal'"}).eval(row, nil); err != nil || value != "literal" {
+		t.Fatalf("literal=%v err=%v", value, err)
+	}
+	if value, err := (starExpr{}).eval(row, nil); err != nil || value.(Row)["named"] != "value" {
+		t.Fatalf("star=%v err=%v", value, err)
+	}
+	if value, err := (fieldExpr{name: "number"}).eval(row, nil); err != nil || value != 2 {
+		t.Fatalf("case-insensitive field=%v err=%v", value, err)
+	}
+	for input, want := range map[any]string{
+		ledger.Number{Raw: "3", Rat: big.NewRat(3, 1)}: "3", int(4): "4", int64(5): "5", float64(6.5): "6.5", "7.25": "7.25",
+	} {
+		value, ok := decimalValue(input)
+		if !ok || value.String() != want {
+			t.Errorf("decimalValue(%T(%v))=%s ok=%v", input, input, value, ok)
+		}
+	}
+	if _, ok := decimalValue(struct{}{}); ok {
+		t.Fatal("non-number coerced to decimal")
+	}
+	for _, item := range []struct {
+		expr Expr
+		want any
+	}{
+		{unaryExpr{operator: "not", inner: literalExpr{value: false}}, true},
+		{unaryExpr{operator: "-", inner: literalExpr{value: 2}}, mustDecimal(t, "-2")},
+		{binaryExpr{operator: "or", left: literalExpr{value: false}, right: literalExpr{value: true}}, true},
+		{binaryExpr{operator: "!=", left: literalExpr{value: 1}, right: literalExpr{value: 2}}, true},
+		{binaryExpr{operator: "<=", left: literalExpr{value: 1}, right: literalExpr{value: 1}}, true},
+		{binaryExpr{operator: ">=", left: literalExpr{value: 2}, right: literalExpr{value: 1}}, true},
+		{binaryExpr{operator: "*", left: literalExpr{value: 2}, right: literalExpr{value: 3}}, mustDecimal(t, "6")},
+	} {
+		value, err := item.expr.eval(row, []Row{row})
+		if err != nil || formatValue(value) != formatValue(item.want) {
+			t.Errorf("expression %s=%v err=%v, want %v", item.expr.String(), value, err, item.want)
+		}
+	}
+	for _, expr := range []Expr{
+		unaryExpr{operator: "-", inner: literalExpr{value: "x"}},
+		binaryExpr{operator: "+", left: literalExpr{value: "x"}, right: literalExpr{value: 1}},
+		binaryExpr{operator: "/", left: literalExpr{value: 1}, right: literalExpr{value: 0}},
+		binaryExpr{operator: "??", left: literalExpr{value: 1}, right: literalExpr{value: 1}},
+	} {
+		if _, err := expr.eval(row, []Row{row}); err == nil {
+			t.Errorf("invalid expression %s succeeded", expr.String())
+		}
+	}
+	for _, token := range []queryToken{{kind: tokenOperator, text: "?"}, {kind: tokenWord, text: "x"}, {kind: tokenComma}} {
+		if operatorPrecedence(token) != -1 {
+			t.Errorf("operator precedence accepted %#v", token)
+		}
 	}
 }
 
