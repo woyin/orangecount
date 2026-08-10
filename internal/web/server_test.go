@@ -1017,6 +1017,84 @@ func TestFavaAdapterDocumentMove(t *testing.T) {
 	}
 }
 
+func TestHTTPHandlersRejectUnsupportedMethodsAndProtectEmptySnapshots(t *testing.T) {
+	server, err := NewServer(Config{Store: snapshot.NewStore(nil), Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, path := range []string{"/", "/api/v1/status", "/api/v1/diagnostics", "/api/v1/reports/accounts", "/api/v1/query", "/api/v1/source", "/api/v1/help", "/app.js", "/app.css", "/documents/file.txt"} {
+		recorder := httptest.NewRecorder()
+		server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, path, nil))
+		if recorder.Code != http.StatusMethodNotAllowed {
+			t.Errorf("POST %s status=%d body=%q", path, recorder.Code, recorder.Body.String())
+		}
+	}
+	for _, path := range []string{"/api/v1/editor", "/api/v1/import/adapters"} {
+		recorder := httptest.NewRecorder()
+		server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, path, nil))
+		if recorder.Code != http.StatusServiceUnavailable {
+			t.Errorf("POST %s status=%d body=%q", path, recorder.Code, recorder.Body.String())
+		}
+	}
+	for _, path := range []string{"/api/v1/reports/accounts", "/api/v1/query?q=SELECT+account+FROM+accounts", "/api/v1/source", "/api/v1/editor", "/__orangecount/fava/ledger_data"} {
+		recorder := httptest.NewRecorder()
+		server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
+		if recorder.Code != http.StatusServiceUnavailable {
+			t.Errorf("GET %s status=%d body=%q", path, recorder.Code, recorder.Body.String())
+		}
+	}
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodPost, "/__orangecount/fava/ledger_data", nil))
+	if recorder.Code != http.StatusMethodNotAllowed || recorder.Header().Get("Allow") != "GET" {
+		t.Fatalf("private adapter method status=%d allow=%q", recorder.Code, recorder.Header().Get("Allow"))
+	}
+}
+
+func TestEditorFileAndStaticAssetEndpointsPreserveHTTPContracts(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	content := "2000-01-01 open Assets:Cash USD\n2000-01-01 open Equity:Opening USD\n"
+	if err := os.WriteFile(entry, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	built := snapshot.Build(entry)
+	if built.Snapshot == nil {
+		t.Fatalf("build diagnostics=%+v", built.Diagnostics)
+	}
+	server, err := NewServer(Config{Store: snapshot.NewStore(built.Snapshot), Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := func(method, path string) *httptest.ResponseRecorder {
+		recorder := httptest.NewRecorder()
+		server.Handler().ServeHTTP(recorder, httptest.NewRequest(method, path, nil))
+		return recorder
+	}
+	file := request(http.MethodGet, "/api/v1/editor/file?path=main.bean")
+	if file.Code != http.StatusOK || !strings.Contains(file.Body.String(), `"content":"2000-01-01 open`) || strings.Contains(file.Body.String(), dir) {
+		t.Fatalf("editor file status=%d body=%q", file.Code, file.Body.String())
+	}
+	for _, path := range []string{"/api/v1/editor/file?path=missing.bean"} {
+		if response := request(http.MethodGet, path); response.Code != http.StatusNotFound {
+			t.Errorf("editor path %s status=%d", path, response.Code)
+		}
+	}
+	for _, tc := range []struct {
+		path        string
+		contentType string
+	}{
+		{"/app.js", "javascript"},
+	} {
+		response := request(http.MethodHead, tc.path)
+		if response.Code != http.StatusOK || !strings.Contains(response.Header().Get("Content-Type"), tc.contentType) {
+			t.Errorf("HEAD %s status=%d content-type=%q body=%d", tc.path, response.Code, response.Header().Get("Content-Type"), response.Body.Len())
+		}
+	}
+	if response := request(http.MethodGet, "/missing-route"); response.Code != http.StatusOK || !strings.Contains(response.Body.String(), "/app.js") {
+		t.Fatalf("SPA route status=%d body=%q", response.Code, response.Body.String())
+	}
+}
+
 func min(left, right int) int {
 	if left < right {
 		return left
