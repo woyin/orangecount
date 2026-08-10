@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestRunCheckHumanAndJSON(t *testing.T) {
@@ -47,5 +48,52 @@ func TestRunQueryJSONAndCSV(t *testing.T) {
 	code = run([]string{"query", "--csv", entry, "SELECT account FROM accounts"}, &out, &errOut)
 	if code != 0 || !strings.Contains(out.String(), "account\n") {
 		t.Fatalf("csv code=%d out=%q err=%q", code, out.String(), errOut.String())
+	}
+}
+
+func TestResolvePortConflictReportsOwnerAndRequiresConfirmation(t *testing.T) {
+	originalInspect, originalStop, originalWait := inspectPortOwners, stopPortOwner, waitForPort
+	defer func() {
+		inspectPortOwners, stopPortOwner, waitForPort = originalInspect, originalStop, originalWait
+	}()
+	inspectPortOwners = func(port string) ([]portOwner, error) {
+		if port != "5000" {
+			t.Fatalf("port=%q", port)
+		}
+		return []portOwner{{PID: 4242, Command: "example-server"}}, nil
+	}
+	stopped := []int{}
+	stopPortOwner = func(pid int) error {
+		stopped = append(stopped, pid)
+		return nil
+	}
+	waitForPort = func(addr string, _ time.Duration) error {
+		if addr != defaultServeAddr {
+			t.Fatalf("addr=%q", addr)
+		}
+		return nil
+	}
+
+	var output bytes.Buffer
+	retry, err := resolvePortConflict(defaultServeAddr, strings.NewReader("yes\n"), &output)
+	if err != nil || !retry || len(stopped) != 1 || stopped[0] != 4242 {
+		t.Fatalf("retry=%v err=%v stopped=%v", retry, err, stopped)
+	}
+	if text := output.String(); !strings.Contains(text, "PID 4242: example-server") || !strings.Contains(text, "Close the listed process") {
+		t.Fatalf("output=%q", text)
+	}
+
+	output.Reset()
+	stopped = nil
+	retry, err = resolvePortConflict(defaultServeAddr, strings.NewReader("no\n"), &output)
+	if err != nil || retry || len(stopped) != 0 || !strings.Contains(output.String(), "OrangeCount was not started.") {
+		t.Fatalf("decline retry=%v err=%v stopped=%v output=%q", retry, err, stopped, output.String())
+	}
+}
+
+func TestServeHelpUsesFixedDefaultPort(t *testing.T) {
+	var out, errOut bytes.Buffer
+	if code := run([]string{"help"}, &out, &errOut); code != 0 || !strings.Contains(out.String(), defaultServeAddr) || errOut.Len() != 0 {
+		t.Fatalf("code=%d out=%q err=%q", code, out.String(), errOut.String())
 	}
 }

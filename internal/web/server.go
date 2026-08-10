@@ -56,6 +56,7 @@ type Server struct {
 	bound     string
 	ready     chan struct{}
 	readyOnce sync.Once
+	readyErr  error
 	optionsMu sync.RWMutex
 	options   map[string]string
 	pendingMu sync.Mutex
@@ -183,10 +184,20 @@ func (s *Server) WaitReady(ctx context.Context) error {
 	}
 	select {
 	case <-s.ready:
-		return nil
+		s.mu.RLock()
+		err := s.readyErr
+		s.mu.RUnlock()
+		return err
 	case <-ctx.Done():
 		return ctx.Err()
 	}
+}
+
+func (s *Server) signalReady(err error) {
+	s.mu.Lock()
+	s.readyErr = err
+	s.mu.Unlock()
+	s.readyOnce.Do(func() { close(s.ready) })
 }
 
 func (s *Server) Serve(ctx context.Context) error {
@@ -195,13 +206,13 @@ func (s *Server) Serve(ctx context.Context) error {
 	}
 	listener, err := net.Listen("tcp", s.addr)
 	if err != nil {
-		s.readyOnce.Do(func() { close(s.ready) })
+		s.signalReady(err)
 		return err
 	}
 	s.mu.Lock()
 	s.bound = listener.Addr().String()
 	s.mu.Unlock()
-	s.readyOnce.Do(func() { close(s.ready) })
+	s.signalReady(nil)
 	finished := make(chan error, 1)
 	go func() { finished <- s.http.Serve(listener) }()
 	select {

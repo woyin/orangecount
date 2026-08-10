@@ -8,14 +8,17 @@ package web
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"mime/multipart"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"testing"
 	"time"
 
@@ -122,6 +125,27 @@ func TestServerPortZeroReportsBoundAddressAndServesAPI(t *testing.T) {
 	cancel()
 	if err := <-done; err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestServerWaitReadyReturnsListenFailure(t *testing.T) {
+	occupied, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer occupied.Close()
+
+	server, err := NewServer(Config{Store: snapshot.NewStore(nil), Addr: occupied.Addr().String()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	done := make(chan error, 1)
+	go func() { done <- server.Serve(context.Background()) }()
+	if err := server.WaitReady(context.Background()); !errors.Is(err, syscall.EADDRINUSE) {
+		t.Fatalf("WaitReady error=%v, want address-in-use", err)
+	}
+	if err := <-done; !errors.Is(err, syscall.EADDRINUSE) {
+		t.Fatalf("Serve error=%v, want address-in-use", err)
 	}
 }
 

@@ -76,14 +76,15 @@ Build first with `make build`, then point commands at an entry ledger:
   "SELECT account, sum(number) AS total FROM postings \
    WHERE currency = 'USD' GROUP BY account ORDER BY total DESC"
 
-./bin/orangecount serve --locale en --addr 127.0.0.1:0 ledger/main.bean
+./bin/orangecount serve --locale en ledger/main.bean
 ```
 
 `check` returns a non-zero status for an invalid snapshot. `query` also
-supports `--format csv` (or `--csv`). `serve` is loopback-only: the default
-`127.0.0.1:0` asks the operating system for a free port, and startup prints
-the actual URL, for example `http://127.0.0.1:54321`. Non-loopback addresses
-are rejected. Stop the local session with Ctrl-C.
+supports `--format csv` (or `--csv`). `serve` is loopback-only and defaults
+to `http://127.0.0.1:5000`; use `--addr` to choose another loopback address.
+When the requested port already has a listener, OrangeCount identifies its
+PID and command, then asks before sending it a termination signal. Non-loopback
+addresses are rejected. Stop the local session with Ctrl-C.
 
 The web UI has an English/Simplified Chinese selector (or `?locale=zh-CN`),
 and the CLI accepts `--locale en|zh-CN` for rendered diagnostics.
