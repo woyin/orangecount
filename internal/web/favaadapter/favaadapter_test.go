@@ -630,3 +630,45 @@ func TestAdapterPrimitiveProjectionsHandleAllDirectiveShapes(t *testing.T) {
 		t.Fatal("empty report primitives returned data")
 	}
 }
+
+func TestAdapterCollectionAndPresentationHelpersPreserveTypedData(t *testing.T) {
+	date := ledger.Date{Raw: "2001-02-03"}
+	transaction := ledger.Transaction{Date: date, Payee: "Payee", Tags: []string{"tag"}, Links: []string{"link"}, Postings: []ledger.Posting{{Account: "Assets:Cash"}}}
+	evaluation := ledger.Evaluation{Entries: []ledger.EntryRecord{
+		{Date: date, Directive: transaction},
+		{Date: ledger.Date{Raw: "2002-03-04"}, Directive: ledger.Document{Date: ledger.Date{Raw: "2002-03-04"}, Tags: []string{"document-tag"}, Links: []string{"document-link"}}},
+		{Date: date, Directive: ledger.Query{Date: date, Name: "z", Query: "SELECT 1"}},
+		{Date: date, Directive: &ledger.Query{Date: date, Name: "a", Query: "SELECT 2"}},
+		{Date: date, Directive: ledger.Event{Date: date}},
+	}}
+	payees, tags, links, years := collectDimensions(evaluation)
+	if !reflect.DeepEqual(payees, []string{"Payee"}) || !reflect.DeepEqual(tags, []string{"document-tag", "tag"}) || !reflect.DeepEqual(links, []string{"document-link", "link"}) || !reflect.DeepEqual(years, []string{"2001", "2002"}) {
+		t.Fatalf("dimensions payees=%v tags=%v links=%v years=%v", payees, tags, links, years)
+	}
+	queries := projectUserQueries(evaluation)
+	if len(queries) != 2 || queries[0].Name != "a" || queries[1].Name != "z" || countEvents(evaluation) != 1 {
+		t.Fatalf("queries=%+v events=%d", queries, countEvents(evaluation))
+	}
+	if details := projectAccountDetails(ledger.Evaluation{Accounts: map[string]ledger.AccountState{"Assets:Cash": {Balances: map[string]ledger.Decimal{"USD": ledger.Zero()}}, "Assets:Empty": {}}}); details["Assets:Cash"].BalanceString != "0 USD" || details["Assets:Empty"].BalanceString != "" {
+		t.Fatalf("account details=%+v", details)
+	}
+	if rangeValue := evaluationDateRange(evaluation); rangeValue == nil || rangeValue.Begin != "2001-02-03" || rangeValue.End != "2002-03-04" {
+		t.Fatalf("date range=%+v", rangeValue)
+	}
+	validAmount := &JournalAmount{Number: report.PresentedDecimal{Exact: "1/3", Display: "0.333333"}}
+	if got := presentedNumber(validAmount); got == nil || got.Text('f', 1) != "0.3" || presentedNumber(&JournalAmount{Number: report.PresentedDecimal{Exact: "invalid"}}) != nil {
+		t.Fatalf("presented amount=%v", got)
+	}
+	if _, err := serializeNewBalance(NewEntry{Date: "2000-01-01", Account: "Assets:Cash", Amount: "1", Currency: "USD"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := serializeNewBalance(NewEntry{Date: "2000-01-01", Account: "bad", Amount: "bad", Currency: "?"}); err == nil {
+		t.Fatal("invalid balance was accepted")
+	}
+	if _, err := serializeNewNote(NewEntry{Date: "2000-01-01", Account: "Assets:Cash", Comment: "note"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := serializeNewNote(NewEntry{Date: "2000-01-01", Account: "bad", Comment: "note"}); err == nil {
+		t.Fatal("invalid note was accepted")
+	}
+}
