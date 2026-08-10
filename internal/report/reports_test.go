@@ -76,6 +76,65 @@ func TestCoreReportsAreDeterministic(t *testing.T) {
 	}
 }
 
+func TestReportSetIncludesEveryCoreProjectionAndSafeGraphPaths(t *testing.T) {
+	text := `2000-01-01 open Assets:Cash USD
+2000-01-01 open Equity:Opening USD
+2000-01-02 * "seed"
+  Assets:Cash 1 USD
+  Equity:Opening -1 USD
+2000-01-03 price USD 1.5 EUR
+2000-01-04 event "status" "ok"
+2000-01-05 document Assets:Cash "receipt.pdf" #proof ^doc
+`
+	file, diagnostics := ledger.ParseText("report-set.bean", []byte(text))
+	if diagnostics.HasErrors() {
+		t.Fatalf("parse=%+v", diagnostics.All())
+	}
+	evaluation := ledger.EvaluateFiles(map[source.FileID]*ledger.File{1: file}, []source.FileID{1}, ledger.EvalOptions{})
+	if !evaluation.Valid {
+		t.Fatalf("evaluation=%+v", evaluation.Diagnostics)
+	}
+	all := All(*evaluation)
+	for name, result := range map[string]query.Result{
+		"accounts": all.Accounts, "journal": all.Journal, "trial": all.TrialBalance, "balance": all.BalanceSheet, "income": all.IncomeStatement, "holdings": all.Holdings, "prices": all.Prices, "events": all.Events, "documents": all.Documents, "statistics": all.Statistics, "errors": all.Errors,
+	} {
+		if result.Columns == nil {
+			t.Fatalf("%s returned nil columns", name)
+		}
+	}
+	if len(all.Prices.Rows) != 1 || len(all.Events.Rows) != 1 || len(all.Documents.Rows) != 1 {
+		t.Fatalf("special reports prices=%+v events=%+v documents=%+v", all.Prices, all.Events, all.Documents)
+	}
+	graphFile := source.NewSourceFile(1, "/private/ledger/main.bean", []byte(text))
+	graph := &source.Graph{Entry: 1, Files: map[source.FileID]*source.SourceFile{1: graphFile}, ByPath: map[string]source.FileID{graphFile.Path: 1}, Order: []source.FileID{1}}
+	withDiagnostic := *evaluation
+	withDiagnostic.Diagnostics = []diagnostic.Diagnostic{diagnostic.New("E-CUSTOM", diagnostic.Error, source.Span{File: 1, StartLine: 2, StartColumn: 1}).WithPath(graphFile.Path)}
+	if got := ErrorsWithGraph(withDiagnostic, graph); len(got.Rows) != 1 || got.Rows[0]["path"] != "main.bean" {
+		t.Fatalf("graph errors=%+v", got)
+	}
+}
+
+func TestReportDateAndPresentationHelpersHandleEdgeValues(t *testing.T) {
+	for _, tc := range []struct {
+		date, anchor, period string
+		want                 bool
+	}{
+		{"2024-02-03", "2024-12-01", "year", true}, {"2024-02-03", "2024-03-01", "month", false}, {"2024-02-03", "2024-03-01", "quarter", true}, {"2024-02-03", "2024-04-01", "quarter", false}, {"bad", "2024-04-01", "quarter", true},
+	} {
+		if got := samePeriod(tc.date, tc.anchor, tc.period); got != tc.want {
+			t.Errorf("samePeriod(%q, %q, %q)=%v", tc.date, tc.anchor, tc.period, got)
+		}
+	}
+	values := []ledger.Decimal{ledger.NewDecimal(big.NewRat(1, 3))}
+	presented, ok := presentValue(values).([]PresentedDecimal)
+	if !ok || len(presented) != 1 || !presented[0].Approximate {
+		t.Fatalf("presented decimals=%+v", presented)
+	}
+	if unchanged := presentValue("text"); unchanged != "text" {
+		t.Fatalf("non-decimal presentation=%v", unchanged)
+	}
+}
+
 func TestErrorsRedactsAbsolutePaths(t *testing.T) {
 	evaluation := ledger.Evaluation{Diagnostics: []diagnostic.Diagnostic{
 		diagnostic.New("E-CUSTOM", diagnostic.Error, source.Span{StartLine: 1, StartColumn: 1}).WithPath("/private/ledger/main.bean"),
