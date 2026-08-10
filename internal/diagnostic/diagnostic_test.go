@@ -41,3 +41,68 @@ func TestCustomMessageIsRedactedAndStable(t *testing.T) {
 		t.Fatalf("localized=%+v", got)
 	}
 }
+
+func TestBagHandlesNilAndOrdersSameLocationBySeverityCodeAndSequence(t *testing.T) {
+	var nilBag *Bag
+	nilBag.Add(New("E-PARSE-DATE", Error, source.Span{}))
+	nilBag.Extend(New("E-PARSE-DATE", Error, source.Span{}))
+	if nilBag.Len() != 0 || !nilBag.Empty() || nilBag.HasErrors() || nilBag.All() != nil {
+		t.Fatal("nil bag did not behave as an empty collection")
+	}
+
+	span := source.Span{Start: 3}
+	var bag Bag
+	bag.Add(New("Z", Info, span).WithPath("same.bean"))
+	bag.Add(New("A", Warning, span).WithPath("same.bean"))
+	bag.Extend(New("B", Error, span).WithPath("same.bean"), New("A", Error, span).WithPath("same.bean"))
+	got := bag.All()
+	if bag.Len() != 4 || bag.Empty() || !bag.HasErrors() {
+		t.Fatalf("bag state len=%d empty=%v errors=%v", bag.Len(), bag.Empty(), bag.HasErrors())
+	}
+	order := []string{got[0].Code, got[1].Code, got[2].Code, got[3].Code}
+	if want := []string{"A", "B", "A", "Z"}; strings.Join(order, ",") != strings.Join(want, ",") {
+		t.Fatalf("sorted order=%v want=%v", order, want)
+	}
+}
+
+func TestLocalizationAndRenderersHaveSafeFallbacks(t *testing.T) {
+	if got := LocalizeCode("E-PARSE-DATE", ""); got != "invalid date" {
+		t.Fatalf("empty locale=%q", got)
+	}
+	if got := LocalizeCode("E-PARSE-DATE", "fr"); got != "invalid date" {
+		t.Fatalf("unknown locale=%q", got)
+	}
+	if got := LocalizeCode("E-UNKNOWN", "zh-CN"); got != "E-UNKNOWN" {
+		t.Fatalf("unknown code=%q", got)
+	}
+	catalogue := New("E-PARSE-DATE", Error, source.Span{StartLine: 2, StartColumn: 3})
+	if catalogue.MessageKeyOrCode() != "E-PARSE-DATE" {
+		t.Fatalf("catalogue message key=%q", catalogue.MessageKeyOrCode())
+	}
+	custom := New("E-CUSTOM", Warning, source.Span{}, "literal")
+	if custom.MessageKeyOrCode() != "E-CUSTOM" || Localize(custom, "zh-CN").Message != "literal" {
+		t.Fatalf("custom diagnostic=%+v", custom)
+	}
+	var human bytes.Buffer
+	if err := RenderHuman(&human, []Diagnostic{catalogue}, "en"); err != nil {
+		t.Fatal(err)
+	}
+	if got := human.String(); got != "<source>:2:3: error E-PARSE-DATE: invalid date\n" {
+		t.Fatalf("human=%q", got)
+	}
+	var jsonOut bytes.Buffer
+	withRelated := catalogue
+	withRelated.Related = []Related{{Message: "context"}}
+	if err := RenderJSON(&jsonOut, []Diagnostic{withRelated}, "zh-CN"); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(jsonOut.String(), "日期无效") || !strings.Contains(jsonOut.String(), "context") {
+		t.Fatalf("json=%q", jsonOut.String())
+	}
+}
+
+func TestRedactMessageNormalizesWhitespaceAndSensitiveFragments(t *testing.T) {
+	if got := RedactMessage("  alpha\r\nbeta\tsecret  ", "secret", ""); got != "alpha  beta [redacted]" {
+		t.Fatalf("redacted=%q", got)
+	}
+}

@@ -325,10 +325,18 @@ func lsofPortOwners(port string) ([]portOwner, error) {
 	if err != nil {
 		return nil, err
 	}
+	return parsePortOwners(string(output)), nil
+}
+
+// parsePortOwners decodes lsof's stable process/command record format. It is
+// deliberately independent from process execution so the platform-specific
+// inspection adapter remains small and the parsing contract is directly
+// testable.
+func parsePortOwners(output string) []portOwner {
 	owners := make([]portOwner, 0)
 	var current *portOwner
 	seen := make(map[int]bool)
-	for _, line := range strings.Split(string(output), "\n") {
+	for _, line := range strings.Split(output, "\n") {
 		if len(line) < 2 {
 			continue
 		}
@@ -348,7 +356,7 @@ func lsofPortOwners(port string) ([]portOwner, error) {
 			}
 		}
 	}
-	return owners, nil
+	return owners
 }
 
 func terminatePortOwner(pid int) error {

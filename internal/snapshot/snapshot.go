@@ -91,7 +91,12 @@ func snapshotID(graph *source.Graph) string {
 	return hex.EncodeToString(hash.Sum(nil))[:16]
 }
 
-func (s *Snapshot) Graph() *source.Graph { return s.graph }
+func (s *Snapshot) Graph() *source.Graph {
+	if s == nil {
+		return nil
+	}
+	return s.graph
+}
 
 func (s *Snapshot) Valid() bool { return s != nil && s.evaluation != nil && s.evaluation.Valid }
 

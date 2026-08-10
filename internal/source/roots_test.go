@@ -8,6 +8,7 @@ package source
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"runtime"
 	"testing"
 )
@@ -40,6 +41,60 @@ func TestDocumentRootsContainment(t *testing.T) {
 			if _, err := roots.Resolve("escape.pdf"); err == nil {
 				t.Fatal("symlink escape was accepted")
 			}
+		}
+	}
+}
+
+func TestDocumentRootsValidateConfigurationAndReturnDefensivePaths(t *testing.T) {
+	if roots, err := NewDocumentRoots([]string{"", "  "}); err != nil || !roots.Empty() || len(roots.Paths()) != 0 {
+		t.Fatalf("empty roots=%+v err=%v paths=%v", roots, err, roots.Paths())
+	}
+	missing := filepath.Join(t.TempDir(), "missing")
+	if _, err := NewDocumentRoots([]string{missing}); err == nil {
+		t.Fatal("missing root was accepted")
+	}
+	file := filepath.Join(t.TempDir(), "not-a-directory")
+	if err := os.WriteFile(file, nil, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := NewDocumentRoots([]string{file}); err == nil {
+		t.Fatal("file root was accepted")
+	}
+
+	root := t.TempDir()
+	roots, err := NewDocumentRoots([]string{root, root})
+	if err != nil {
+		t.Fatal(err)
+	}
+	paths := roots.Paths()
+	if len(paths) != 2 || !reflect.DeepEqual(paths, roots.Paths()) {
+		t.Fatalf("paths=%v", paths)
+	}
+	paths[0] = "changed"
+	if roots.Paths()[0] == "changed" {
+		t.Fatal("Paths leaked internal slice")
+	}
+	for _, name := range []string{"", ".", "dir/../..", "directory"} {
+		if _, err := roots.Resolve(name); err == nil {
+			t.Errorf("expected rejection for %q", name)
+		}
+	}
+}
+
+func TestContainedRequiresARealDescendant(t *testing.T) {
+	root := filepath.Join(string(filepath.Separator), "tmp", "root")
+	cases := []struct {
+		path string
+		want bool
+	}{
+		{root, true},
+		{filepath.Join(root, "child"), true},
+		{filepath.Join(string(filepath.Separator), "tmp", "root-other"), false},
+		{filepath.Join(string(filepath.Separator), "tmp"), false},
+	}
+	for _, tc := range cases {
+		if got := contained(root, tc.path); got != tc.want {
+			t.Errorf("contained(%q, %q)=%v, want %v", root, tc.path, got, tc.want)
 		}
 	}
 }

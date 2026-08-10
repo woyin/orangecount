@@ -7,11 +7,15 @@ package main
 
 import (
 	"bytes"
+	"net"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
+
+	"orangecount/internal/diagnostic"
+	"orangecount/internal/source"
 )
 
 func TestRunCheckHumanAndJSON(t *testing.T) {
@@ -95,5 +99,162 @@ func TestServeHelpUsesFixedDefaultPort(t *testing.T) {
 	var out, errOut bytes.Buffer
 	if code := run([]string{"help"}, &out, &errOut); code != 0 || !strings.Contains(out.String(), defaultServeAddr) || errOut.Len() != 0 {
 		t.Fatalf("code=%d out=%q err=%q", code, out.String(), errOut.String())
+	}
+}
+
+func TestRunDispatchAndArgumentValidation(t *testing.T) {
+	oldVersion := version
+	version = "test-version"
+	defer func() { version = oldVersion }()
+	cases := []struct {
+		name   string
+		args   []string
+		want   int
+		output string
+		stderr string
+	}{
+		{name: "empty help", want: 0, output: "orangecount check"},
+		{name: "version", args: []string{"version"}, want: 0, output: "test-version"},
+		{name: "unknown", args: []string{"unknown"}, want: 2, stderr: "unknown command"},
+		{name: "check invalid locale", args: []string{"check", "--locale", "fr", "ledger.bean"}, want: 2, stderr: "unsupported locale"},
+		{name: "check missing entry", args: []string{"check"}, want: 2, stderr: "expected exactly one"},
+		{name: "query invalid locale", args: []string{"query", "--locale", "fr"}, want: 2, stderr: "unsupported locale"},
+		{name: "query conflicting shortcuts", args: []string{"query", "--json", "--csv"}, want: 2, stderr: "cannot be combined"},
+		{name: "query invalid format", args: []string{"query", "--format", "text"}, want: 2, stderr: "unsupported format"},
+		{name: "query missing arguments", args: []string{"query"}, want: 2, stderr: "expected an entry"},
+		{name: "serve invalid locale", args: []string{"serve", "--locale", "fr"}, want: 2, stderr: "unsupported locale"},
+		{name: "serve missing entry", args: []string{"serve"}, want: 2, stderr: "expected exactly one"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var out, errOut bytes.Buffer
+			if got := run(tc.args, &out, &errOut); got != tc.want {
+				t.Fatalf("run(%v)=%d, want %d; stdout=%q stderr=%q", tc.args, got, tc.want, out.String(), errOut.String())
+			}
+			if tc.output != "" && !strings.Contains(out.String(), tc.output) {
+				t.Fatalf("stdout=%q does not contain %q", out.String(), tc.output)
+			}
+			if tc.stderr != "" && !strings.Contains(errOut.String(), tc.stderr) {
+				t.Fatalf("stderr=%q does not contain %q", errOut.String(), tc.stderr)
+			}
+		})
+	}
+}
+
+func TestRunQueryAndCheckFailuresRemainReported(t *testing.T) {
+	dir := t.TempDir()
+	valid := filepath.Join(dir, "valid.bean")
+	if err := os.WriteFile(valid, []byte("2000-01-01 open Assets:Cash USD\n2000-01-01 open Equity:Opening USD\n2000-01-02 * \"seed\"\n  Assets:Cash 1 USD\n  Equity:Opening -1 USD\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var out, errOut bytes.Buffer
+	if code := run([]string{"query", valid, "not a query"}, &out, &errOut); code != 1 || !strings.Contains(errOut.String(), "orangecount query:") {
+		t.Fatalf("invalid query code=%d out=%q err=%q", code, out.String(), errOut.String())
+	}
+	out.Reset()
+	errOut.Reset()
+	if code := run([]string{"check", filepath.Join(dir, "missing.bean")}, &out, &errOut); code != 1 || !strings.Contains(out.String(), "E-INCLUDE-READ") {
+		t.Fatalf("missing check code=%d out=%q err=%q", code, out.String(), errOut.String())
+	}
+}
+
+func TestParsePortOwnersAndPortHelpers(t *testing.T) {
+	owners := parsePortOwners("p12\ncfirst\np12\ncduplicate\npinvalid\ncignored\np42\n\np77\ncthird\n")
+	want := []portOwner{{PID: 12, Command: "first"}, {PID: 42, Command: "unknown process"}, {PID: 77, Command: "third"}}
+	if len(owners) != len(want) {
+		t.Fatalf("owners=%+v", owners)
+	}
+	for i := range want {
+		if owners[i] != want[i] {
+			t.Fatalf("owner[%d]=%+v want=%+v", i, owners[i], want[i])
+		}
+	}
+	originalInspect := inspectPortOwners
+	defer func() { inspectPortOwners = originalInspect }()
+	inspectPortOwners = func(port string) ([]portOwner, error) {
+		if port != "5001" {
+			t.Fatalf("port=%q", port)
+		}
+		return want[:1], nil
+	}
+	if got, err := portOwnersAt("127.0.0.1:5001"); err != nil || len(got) != 1 || got[0] != want[0] {
+		t.Fatalf("owners=%+v err=%v", got, err)
+	}
+	if _, err := portOwnersAt("not-an-address"); err == nil {
+		t.Fatal("invalid address was accepted")
+	}
+}
+
+func TestResolvePortConflictDeclinesNonInteractiveAndInspectionErrors(t *testing.T) {
+	originalInspect := inspectPortOwners
+	defer func() { inspectPortOwners = originalInspect }()
+	inspectPortOwners = func(string) ([]portOwner, error) { return nil, os.ErrPermission }
+	var output bytes.Buffer
+	retry, err := resolvePortConflict(defaultServeAddr, nil, &output)
+	if err != nil || retry || !strings.Contains(output.String(), "unable to identify") {
+		t.Fatalf("retry=%v err=%v output=%q", retry, err, output.String())
+	}
+	inspectPortOwners = func(string) ([]portOwner, error) { return []portOwner{{PID: 1, Command: "busy"}}, nil }
+	output.Reset()
+	retry, err = resolvePortConflict(defaultServeAddr, nil, &output)
+	if err != nil || retry || !strings.Contains(output.String(), "run interactively") {
+		t.Fatalf("retry=%v err=%v output=%q", retry, err, output.String())
+	}
+}
+
+func TestRunServeValidatesDocumentRootsAndPortConflictsBeforeServing(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "valid.bean")
+	if err := os.WriteFile(entry, []byte("2000-01-01 open Assets:Cash USD\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var out, errOut bytes.Buffer
+	if code := runWithInput([]string{"serve", "--document-root", filepath.Join(dir, "missing"), entry}, strings.NewReader(""), &out, &errOut); code != 1 || !strings.Contains(errOut.String(), "document root") {
+		t.Fatalf("document root code=%d out=%q err=%q", code, out.String(), errOut.String())
+	}
+
+	originalInspect := inspectPortOwners
+	defer func() { inspectPortOwners = originalInspect }()
+	inspectPortOwners = func(port string) ([]portOwner, error) {
+		if port != "5000" {
+			t.Fatalf("port=%q", port)
+		}
+		return []portOwner{{PID: 123, Command: "existing"}}, nil
+	}
+	out.Reset()
+	errOut.Reset()
+	if code := runWithInput([]string{"serve", entry}, nil, &out, &errOut); code != 1 || !strings.Contains(errOut.String(), "currently used") || !strings.Contains(errOut.String(), "run interactively") {
+		t.Fatalf("conflict code=%d out=%q err=%q", code, out.String(), errOut.String())
+	}
+}
+
+func TestCLIHelpersRenderAndWaitWithoutSideEffects(t *testing.T) {
+	if snapshotID(nil) != "" {
+		t.Fatal("nil snapshot ID was non-empty")
+	}
+	if hasDiagnosticErrors(nil) {
+		t.Fatal("empty diagnostics reported an error")
+	}
+	if !hasDiagnosticErrors([]diagnostic.Diagnostic{{Severity: diagnostic.Warning}, {Severity: diagnostic.Error}}) {
+		t.Fatal("error diagnostic was missed")
+	}
+	var output bytes.Buffer
+	if err := renderDiagnostics(&output, "en", true, []diagnostic.Diagnostic{diagnostic.New("E-PARSE-DATE", diagnostic.Error, source.Span{})}); err != nil || !strings.Contains(output.String(), `"code":"E-PARSE-DATE"`) {
+		t.Fatalf("json diagnostics=%q err=%v", output.String(), err)
+	}
+	output.Reset()
+	if err := renderDiagnostics(&output, "en", false, []diagnostic.Diagnostic{diagnostic.New("E-PARSE-DATE", diagnostic.Error, source.Span{})}); err != nil || !strings.Contains(output.String(), "invalid date") {
+		t.Fatalf("human diagnostics=%q err=%v", output.String(), err)
+	}
+	listener, err := net.Listen("tcp", "127.0.0.1:0")
+	if err != nil {
+		t.Fatal(err)
+	}
+	addr := listener.Addr().String()
+	if err := listener.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := waitForPortRelease(addr, time.Second); err != nil {
+		t.Fatalf("free port was not reusable: %v", err)
 	}
 }

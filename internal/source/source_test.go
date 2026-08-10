@@ -8,6 +8,7 @@ package source
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"testing"
 )
 
@@ -102,5 +103,104 @@ func TestGraphDisplayPathsAreRelativeAndConstrained(t *testing.T) {
 	}
 	if got := SafeDisplayPath("../private/ledger/main.bean"); got != "main.bean" {
 		t.Fatalf("safe traversal path=%q", got)
+	}
+}
+
+func TestSourceFileDefensivelyIndexesAndClampsRanges(t *testing.T) {
+	data := []byte("aé\r\nlast")
+	f := NewSourceFile(7, "ledger.bean", data)
+	data[0] = 'x'
+	if got := string(f.Data); got != "aé\r\nlast" {
+		t.Fatalf("source data was not copied: %q", got)
+	}
+	if got := f.Position(-1); got != (Position{Line: 1, Column: 1}) {
+		t.Fatalf("negative position=%+v", got)
+	}
+	if got := f.Position(2); got != (Position{Offset: 2, Line: 1, Column: 2}) {
+		t.Fatalf("continuation-byte position=%+v", got)
+	}
+	if got := f.Position(100); got != (Position{Offset: len(f.Data), Line: 2, Column: 5}) {
+		t.Fatalf("clamped position=%+v", got)
+	}
+	span := f.Span(-4, 100)
+	if span.Start != 0 || span.End != len(f.Data) || f.Text(span) != "aé\r\nlast" {
+		t.Fatalf("clamped span=%+v text=%q", span, f.Text(span))
+	}
+	if got := f.Text(Span{File: 99}); got != "" {
+		t.Fatalf("foreign span text=%q", got)
+	}
+	if got := f.LineText(1); got != "aé" {
+		t.Fatalf("line 1=%q", got)
+	}
+	if got := f.LineText(2); got != "last" {
+		t.Fatalf("line 2=%q", got)
+	}
+	if got := f.LineText(3); got != "" {
+		t.Fatalf("out-of-range line=%q", got)
+	}
+	if f.LineCount() != 2 || f.String() != "ledger.bean" {
+		t.Fatalf("lines=%d string=%q", f.LineCount(), f.String())
+	}
+}
+
+func TestSourceNilAndSpanFormatting(t *testing.T) {
+	var f *SourceFile
+	if f.String() != "<nil>" || f.Position(1) != (Position{}) || f.LineCount() != 0 || f.Text(Span{}) != "" {
+		t.Fatalf("nil source behavior is inconsistent")
+	}
+	if got := (Span{}).String(); got != "<unknown>" {
+		t.Fatalf("unknown span=%q", got)
+	}
+	oneLine := Span{File: 2, Start: 4, End: 6, StartLine: 3, StartColumn: 5, EndLine: 3, EndColumn: 7}
+	if !oneLine.Valid() || oneLine.Empty() || oneLine.String() != "file#2:3:5-7" {
+		t.Fatalf("one-line span=%+v string=%q", oneLine, oneLine.String())
+	}
+	multiLine := oneLine
+	multiLine.End = multiLine.Start
+	multiLine.EndLine, multiLine.EndColumn = 4, 2
+	if !multiLine.Empty() || multiLine.String() != "file#2:3:5-4:2" {
+		t.Fatalf("multi-line span=%+v string=%q", multiLine, multiLine.String())
+	}
+}
+
+func TestLoadGraphRecognizesEscapedIncludesAndKeepsTraversalDeterministic(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	child := filepath.Join(dir, "child name.bean")
+	if err := os.WriteFile(entry, []byte("; include \"ignored.bean\"\ninclude\t\"child name.bean\"\ninclude no-quote\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(child, []byte(""), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	graph, err := Load(entry)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := graph.DisplayPaths(); !reflect.DeepEqual(got, []string{"main.bean", "child name.bean"}) {
+		t.Fatalf("display paths=%v", got)
+	}
+	if id, ok := graph.FileIDForDisplayPath("../main.bean"); ok || id != 0 {
+		t.Fatalf("traversal lookup id=%v ok=%v", id, ok)
+	}
+	if _, err := LoadGraph(filepath.Join(dir, "missing.bean")); err == nil {
+		t.Fatal("missing entry did not fail")
+	}
+}
+
+func TestGraphPathHelpersRejectUnsafeValues(t *testing.T) {
+	if (*Graph)(nil).File(1) != nil || (*Graph)(nil).Path(1) != "" || (*Graph)(nil).DisplayPath(1) != "" || (*Graph)(nil).DisplayPaths() != nil {
+		t.Fatal("nil graph accessors returned data")
+	}
+	if _, ok := (*Graph)(nil).FileIDForDisplayPath("main.bean"); ok {
+		t.Fatal("nil graph resolved a path")
+	}
+	cases := map[string]string{
+		"": "", ".": "", "nested/file.bean": "nested/file.bean", "../secret.bean": "secret.bean", "/tmp/secret.bean": "secret.bean",
+	}
+	for input, want := range cases {
+		if got := SafeDisplayPath(input); got != want {
+			t.Errorf("SafeDisplayPath(%q)=%q, want %q", input, got, want)
+		}
 	}
 }

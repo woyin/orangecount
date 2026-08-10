@@ -9,9 +9,14 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 	"time"
+
+	"orangecount/internal/diagnostic"
+	"orangecount/internal/ledger"
+	"orangecount/internal/source"
 )
 
 func TestBuildAndFailedReloadRetainsPreviousSnapshot(t *testing.T) {
@@ -100,5 +105,100 @@ option "operating_currency" "CNY"
 	}
 	if opts["operating_currency"] != "CNY" {
 		t.Fatalf("operating_currency option lost: %v", opts)
+	}
+}
+
+func TestBuildFailureAndSnapshotAccessorsAreSafeAndDefensive(t *testing.T) {
+	missing := filepath.Join(t.TempDir(), "missing.bean")
+	failed := Build(missing)
+	if failed.Snapshot != nil || failed.Err == nil || len(failed.Diagnostics) != 1 || failed.Diagnostics[0].Code != "E-INCLUDE-READ" {
+		t.Fatalf("failed build=%+v", failed)
+	}
+	if snapshotID(nil) != "" {
+		t.Fatal("nil graph had a snapshot ID")
+	}
+
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	valid := "2000-01-01 open Assets:Cash USD\n2000-01-01 open Equity:Opening USD\n2000-01-02 * \"opening\"\n  Assets:Cash 1 USD\n  Equity:Opening -1 USD\n"
+	if err := os.WriteFile(entry, []byte(valid), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	result := Build(entry)
+	if result.Snapshot == nil || !result.Snapshot.Valid() || result.Snapshot.Graph() == nil {
+		t.Fatalf("snapshot=%+v", result)
+	}
+	parsed := result.Snapshot.Parsed()
+	if len(parsed) != 1 {
+		t.Fatalf("parsed=%v", parsed)
+	}
+	delete(parsed, result.Snapshot.Graph().Entry)
+	if len(result.Snapshot.Parsed()) != 1 {
+		t.Fatal("parsed accessor leaked its map")
+	}
+	evaluation := result.Snapshot.Evaluation()
+	evaluation.Accounts["Assets:Cash"] = ledger.AccountState{}
+	evaluation.Options["title"] = "changed"
+	if result.Snapshot.Evaluation().Options["title"] == "changed" || result.Snapshot.Evaluation().Accounts["Assets:Cash"].Balances["USD"].String() != "1" {
+		t.Fatal("evaluation accessor leaked mutable collections")
+	}
+	diagnostics := result.Snapshot.Diagnostics()
+	diagnostics = append(diagnostics, diagnostic.New("E-TEST", diagnostic.Error, source.Span{}))
+	if len(result.Snapshot.Diagnostics()) != len(result.Diagnostics) {
+		t.Fatal("diagnostics accessor leaked its slice")
+	}
+
+	var nilSnapshot *Snapshot
+	if nilSnapshot.Valid() || nilSnapshot.Graph() != nil || nilSnapshot.Parsed() != nil || nilSnapshot.Diagnostics() != nil || nilSnapshot.Evaluation().Valid {
+		t.Fatal("nil snapshot accessors returned state")
+	}
+}
+
+func TestStorePublishAndWatchOptionsRespectPublicationInvariants(t *testing.T) {
+	var nilStore *Store
+	if nilStore.Current() != nil || nilStore.Diagnostics() != nil || nilStore.Publish(nil, nil) {
+		t.Fatal("nil store mutated or exposed state")
+	}
+	if err := nilStore.Watch(context.Background(), "ignored", BuildOptions{}, WatchOptions{}, nil); err == nil {
+		t.Fatal("nil store watch did not fail")
+	}
+	if got := (WatchOptions{}).normalized(); got.PollInterval != 250*time.Millisecond || got.Debounce != 150*time.Millisecond {
+		t.Fatalf("normalized defaults=%+v", got)
+	}
+	custom := WatchOptions{PollInterval: time.Millisecond, Debounce: 2 * time.Millisecond}.normalized()
+	if custom.PollInterval != time.Millisecond || custom.Debounce != 2*time.Millisecond {
+		t.Fatalf("custom watch options=%+v", custom)
+	}
+
+	store := NewStore(nil)
+	if store.Publish(nil, []diagnostic.Diagnostic{diagnostic.New("E-TEST", diagnostic.Error, source.Span{})}) || store.Current() != nil {
+		t.Fatal("nil candidate was published")
+	}
+	candidate := &Snapshot{ID: "candidate", evaluation: &ledger.Evaluation{Valid: true}}
+	inputDiagnostics := []diagnostic.Diagnostic{diagnostic.New("W-TEST", diagnostic.Warning, source.Span{})}
+	if !store.Publish(candidate, inputDiagnostics) || store.Current() != candidate {
+		t.Fatal("candidate was not published")
+	}
+	inputDiagnostics[0].Code = "mutated"
+	if got := store.Diagnostics()[0].Code; got != "W-TEST" {
+		t.Fatalf("store diagnostics leaked input slice: %q", got)
+	}
+}
+
+func TestGraphSignatureChangesWithContentAndHandlesMissingEntry(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	if err := os.WriteFile(entry, []byte("2000-01-01 open Assets:Cash USD\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	first := graphSignature(entry)
+	if err := os.WriteFile(entry, []byte("2000-01-01 open Assets:Cash USD\n; changed\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if second := graphSignature(entry); second == first {
+		t.Fatal("content change did not alter graph signature")
+	}
+	if missing := graphSignature(filepath.Join(dir, "missing.bean")); !strings.HasPrefix(missing, "error:") {
+		t.Fatalf("missing graph signature=%q", missing)
 	}
 }
