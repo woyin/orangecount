@@ -248,6 +248,10 @@ type Posting struct {
 	Cost    *CostSpec
 	Price   *PriceSpec
 	Meta    []Metadata
+	// averageRejected is evaluator-only booking state. It is never parsed from
+	// or emitted to source/report consumers; applyPosting uses it to diagnose a
+	// disallowed AVERAGE reduction without changing inventory or balances.
+	averageRejected bool
 }
 
 func (p Posting) Span() source.Span { return p.At }

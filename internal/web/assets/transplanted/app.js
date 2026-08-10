@@ -4529,6 +4529,9 @@ var translations = {
     monthly: "monthly",
     quarterly: "quarterly",
     yearly: "yearly",
+    currentAverageCost: "Current average cost",
+    averageCostEvolution: "Average cost evolution",
+    costPerUnit: "cost per unit",
     uploadFiles: "Upload file(s)",
     documentsFolder: "Documents folder",
     upload: "Upload",
@@ -4694,6 +4697,9 @@ var translations = {
     monthly: "\u6BCF\u6708",
     quarterly: "\u6BCF\u5B63\u5EA6",
     yearly: "\u6BCF\u5E74",
+    currentAverageCost: "\u5F53\u524D\u5E73\u5747\u6210\u672C",
+    averageCostEvolution: "\u5E73\u5747\u6210\u672C\u6F14\u5316",
+    costPerUnit: "\u6BCF\u5355\u4F4D\u6210\u672C",
     uploadFiles: "\u4E0A\u4F20\u6587\u4EF6",
     documentsFolder: "\u6587\u6863\u76EE\u5F55",
     upload: "\u4E0A\u4F20",
@@ -5652,10 +5658,14 @@ function parseTableReport(value) {
   if (value.chart !== void 0 && value.chart !== null && !chart(value.chart)) {
     throw new Error("Adapter returned an invalid table-report chart");
   }
+  if (value.average_cost_chart !== void 0 && value.average_cost_chart !== null && !chart(value.average_cost_chart)) {
+    throw new Error("Adapter returned an invalid average-cost chart");
+  }
   return {
     columns: value.columns,
     rows: value.rows,
-    chart: value.chart
+    chart: value.chart,
+    average_cost_chart: value.average_cost_chart
   };
 }
 function parseTreeReport(value) {
@@ -9115,10 +9125,22 @@ function ModernChart($$anchor, $$props) {
 function ChartView($$anchor, $$props) {
   push($$props, false);
   const isTimeSeries = mutable_state();
+  const displayedChart = mutable_state();
   let chart2 = prop($$props, "chart", 8);
   let locale2 = prop($$props, "locale", 8, "en");
+  function t4(key) {
+    const catalog = translations[locale2() === "zh-CN" ? "zh-CN" : "en"];
+    return catalog[key] || key;
+  }
   legacy_pre_effect(() => deep_read_state(chart2()), () => {
     set(isTimeSeries, chart2().kind === "bar" || chart2().kind === "stacked-bar" || chart2().kind === "line");
+  });
+  legacy_pre_effect(() => deep_read_state(chart2()), () => {
+    set(displayedChart, chart2().measure === "average-cost" ? {
+      ...chart2(),
+      title: t4("averageCostEvolution"),
+      unit: t4("costPerUnit")
+    } : chart2());
   });
   legacy_pre_effect_reset();
   init2();
@@ -9128,7 +9150,7 @@ function ChartView($$anchor, $$props) {
     var consequent = ($$anchor2) => {
       ModernChart($$anchor2, {
         get chart() {
-          return chart2();
+          return get(displayedChart);
         },
         get locale() {
           return locale2();
@@ -9138,7 +9160,7 @@ function ChartView($$anchor, $$props) {
     var alternate = ($$anchor2) => {
       ReportChart($$anchor2, {
         get chart() {
-          return chart2();
+          return get(displayedChart);
         },
         get locale() {
           return locale2();
@@ -10136,16 +10158,18 @@ delegate(["click", "keydown"]);
 
 // src/fava/reports/AccountReport.svelte
 var root_113 = template(`<section class="state-panel error-panel" role="alert"> </section>`);
-var root_45 = template(`<span class="sep svelte-9toiq4">:</span>`);
-var root_38 = template(`<a class="svelte-9toiq4"> </a><!>`, 1);
+var root_45 = template(`<span class="sep svelte-psa061">:</span>`);
+var root_38 = template(`<a class="svelte-psa061"> </a><!>`, 1);
 var root_55 = template(`<span></span>`);
-var root_74 = template(`<a class="svelte-9toiq4"> </a>`);
-var root_65 = template(`<span class="last-activity svelte-9toiq4"> <!>)</span>`);
-var root_93 = template(`<a class="svelte-9toiq4"> </a>`);
-var root_114 = template(`<a class="svelte-9toiq4"> </a>`);
-var root_133 = template(`<a class="svelte-9toiq4"> </a>`);
-var root_184 = template(`<!> <!>`, 1);
-var root_211 = template(`<div class="headerline"><h2 class="account-breadcrumb svelte-9toiq4"><span class="droptarget svelte-9toiq4"><!><!><!></span></h2></div> <div class="headerline sections svelte-9toiq4"><h3 class="svelte-9toiq4"><!></h3> <h3 class="svelte-9toiq4"><!></h3> <h3 class="svelte-9toiq4"><!></h3></div> <!> <!>`, 1);
+var root_74 = template(`<a class="svelte-psa061"> </a>`);
+var root_65 = template(`<span class="last-activity svelte-psa061"> <!>)</span>`);
+var root_93 = template(`<a class="svelte-psa061"> </a>`);
+var root_114 = template(`<a class="svelte-psa061"> </a>`);
+var root_133 = template(`<a class="svelte-psa061"> </a>`);
+var root_21 = template(`<li> </li>`);
+var root_204 = template(`<section class="average-cost-current svelte-psa061"><h3 class="svelte-psa061"> </h3> <ul class="svelte-psa061"></ul></section>`);
+var root_184 = template(`<!> <!> <!> <!>`, 1);
+var root_211 = template(`<div class="headerline"><h2 class="account-breadcrumb svelte-psa061"><span class="droptarget svelte-psa061"><!><!><!></span></h2></div> <div class="headerline sections svelte-psa061"><h3 class="svelte-psa061"><!></h3> <h3 class="svelte-psa061"><!></h3> <h3 class="svelte-psa061"><!></h3></div> <!> <!>`, 1);
 function AccountReport($$anchor, $$props) {
   push($$props, false);
   const account = mutable_state();
@@ -10155,6 +10179,8 @@ function AccountReport($$anchor, $$props) {
   const uptodate = mutable_state();
   const statusTitle = mutable_state();
   const chart2 = mutable_state();
+  const averageCostChart = mutable_state();
+  const currentAverageCosts = mutable_state();
   const lastEntry = mutable_state();
   const lastEntryHash = mutable_state();
   let adapter = prop($$props, "adapter", 8);
@@ -10246,6 +10272,15 @@ function AccountReport($$anchor, $$props) {
   legacy_pre_effect(() => get(balance), () => {
     set(chart2, get(balance)?.chart ?? null);
   });
+  legacy_pre_effect(() => get(balance), () => {
+    set(averageCostChart, get(balance)?.average_cost_chart ?? null);
+  });
+  legacy_pre_effect(() => get(averageCostChart), () => {
+    set(currentAverageCosts, get(averageCostChart)?.series.map((series) => ({
+      label: series.label,
+      value: series.points[series.points.length - 1]?.value
+    })).filter((series) => series.value !== void 0) ?? []);
+  });
   legacy_pre_effect(() => get(journal), () => {
     set(lastEntry, get(journal) && get(journal).entries.length ? get(journal).entries[0].date : "");
   });
@@ -10304,7 +10339,7 @@ function AccountReport($$anchor, $$props) {
         var consequent_2 = ($$anchor3) => {
           var span_2 = root_55();
           template_effect(() => {
-            set_class(span_2, `status-indicator status-${get(uptodate) ?? ""} svelte-9toiq4`);
+            set_class(span_2, `status-indicator status-${get(uptodate) ?? ""} svelte-psa061`);
             set_attribute(span_2, "title", get(statusTitle));
           });
           append($$anchor3, span_2);
@@ -10453,7 +10488,7 @@ function AccountReport($$anchor, $$props) {
           var fragment_9 = comment();
           var node_11 = first_child(fragment_9);
           {
-            var consequent_11 = ($$anchor4) => {
+            var consequent_13 = ($$anchor4) => {
               var fragment_10 = root_184();
               var node_12 = first_child(fragment_10);
               {
@@ -10472,7 +10507,48 @@ function AccountReport($$anchor, $$props) {
                 });
               }
               var node_13 = sibling(node_12, 2);
-              GenericReport(node_13, {
+              {
+                var consequent_11 = ($$anchor5) => {
+                  var section_1 = root_204();
+                  template_effect(() => set_attribute(section_1, "aria-label", t4("currentAverageCost")));
+                  var h3_3 = child(section_1);
+                  var text_11 = child(h3_3, true);
+                  template_effect(() => set_text(text_11, t4("currentAverageCost")));
+                  reset(h3_3);
+                  var ul = sibling(h3_3, 2);
+                  each(ul, 5, () => get(currentAverageCosts), index, ($$anchor6, series) => {
+                    var li = root_21();
+                    var text_12 = child(li);
+                    template_effect(() => set_text(text_12, `${get(series).label ?? ""}: ${formatAmount(get(series).value, renderCommas()) ?? ""}`));
+                    reset(li);
+                    append($$anchor6, li);
+                  });
+                  reset(ul);
+                  reset(section_1);
+                  append($$anchor5, section_1);
+                };
+                if_block(node_13, ($$render) => {
+                  if (get(currentAverageCosts).length) $$render(consequent_11);
+                });
+              }
+              var node_14 = sibling(node_13, 2);
+              {
+                var consequent_12 = ($$anchor5) => {
+                  ChartView($$anchor5, {
+                    get chart() {
+                      return get(averageCostChart);
+                    },
+                    get locale() {
+                      return locale2();
+                    }
+                  });
+                };
+                if_block(node_14, ($$render) => {
+                  if (get(averageCostChart)) $$render(consequent_12);
+                });
+              }
+              var node_15 = sibling(node_14, 2);
+              GenericReport(node_15, {
                 get report() {
                   return get(balance);
                 },
@@ -10489,7 +10565,7 @@ function AccountReport($$anchor, $$props) {
             if_block(
               node_11,
               ($$render) => {
-                if (get(balance)) $$render(consequent_11);
+                if (get(balance)) $$render(consequent_13);
               },
               true
             );
@@ -10501,9 +10577,9 @@ function AccountReport($$anchor, $$props) {
           else $$render(alternate_4, false);
         });
       }
-      var node_14 = sibling(node_9, 2);
+      var node_16 = sibling(node_9, 2);
       {
-        var consequent_12 = ($$anchor3) => {
+        var consequent_14 = ($$anchor3) => {
           JournalReport($$anchor3, {
             get report() {
               return get(journal);
@@ -10516,8 +10592,8 @@ function AccountReport($$anchor, $$props) {
             }
           });
         };
-        if_block(node_14, ($$render) => {
-          if (get(journal)) $$render(consequent_12);
+        if_block(node_16, ($$render) => {
+          if (get(journal)) $$render(consequent_14);
         });
       }
       template_effect(() => set_attribute(span, "data-account-name", get(account)));
@@ -42733,9 +42809,9 @@ var root_164 = template(`<label class="button svelte-1hd97ci"><input type="radio
 var root_185 = template(`<select id="fava-option-locale"><option>English</option><option>\u7B80\u4F53\u4E2D\u6587</option></select>`);
 var root_193 = template(`<pre class="svelte-1hd97ci"> </pre>`);
 var root_174 = template(`<tr><td class="svelte-1hd97ci"> </td><td class="svelte-1hd97ci"><!></td></tr>`);
-var root_204 = template(`<tr><td class="svelte-1hd97ci"> </td><td class="svelte-1hd97ci"><pre class="svelte-1hd97ci"> </pre></td></tr>`);
+var root_205 = template(`<tr><td class="svelte-1hd97ci"> </td><td class="svelte-1hd97ci"><pre class="svelte-1hd97ci"> </pre></td></tr>`);
 var root_154 = template(`<div class="headerline"><h2> </h2></div> <h3> </h3> <p><span class="mode-switch svelte-1hd97ci" role="radiogroup"></span></p> <h3> <a href="/help/options"> </a></h3> <table class="options-table svelte-1hd97ci"><thead><tr><!><!></tr></thead><tbody></tbody></table> <h3> </h3> <table class="options-table svelte-1hd97ci"><thead><tr><!><!></tr></thead><tbody></tbody></table>`, 1);
-var root_21 = template(`<div class="headerline"><h2> </h2></div> <pre class="svelte-1hd97ci"> </pre>`, 1);
+var root_2110 = template(`<div class="headerline"><h2> </h2></div> <pre class="svelte-1hd97ci"> </pre>`, 1);
 function UtilityReport($$anchor, $$props) {
   push($$props, false);
   const colorSchemes = mutable_state();
@@ -43103,7 +43179,7 @@ function UtilityReport($$anchor, $$props) {
                               each(tbody_1, 5, () => get(sortedBeancountRows), ([key, value]) => key, ($$anchor9, $$item) => {
                                 let key = () => get($$item)[0];
                                 let value = () => get($$item)[1];
-                                var tr_3 = root_204();
+                                var tr_3 = root_205();
                                 var td_2 = child(tr_3);
                                 var text_16 = child(td_2, true);
                                 reset(td_2);
@@ -43124,7 +43200,7 @@ function UtilityReport($$anchor, $$props) {
                               append($$anchor8, fragment_11);
                             };
                             var alternate_1 = ($$anchor8) => {
-                              var fragment_12 = root_21();
+                              var fragment_12 = root_2110();
                               var div_4 = first_child(fragment_12);
                               var h2_3 = child(div_4);
                               var text_18 = child(h2_3, true);

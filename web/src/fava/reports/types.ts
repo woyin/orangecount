@@ -59,6 +59,7 @@ export interface TableReport {
   columns: string[];
   rows: Record<string, unknown>[];
   chart?: ReportChart;
+  average_cost_chart?: ReportChart;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -99,10 +100,14 @@ export function parseTableReport(value: unknown): TableReport {
   if (value.chart !== undefined && value.chart !== null && !chart(value.chart)) {
     throw new Error("Adapter returned an invalid table-report chart");
   }
+  if (value.average_cost_chart !== undefined && value.average_cost_chart !== null && !chart(value.average_cost_chart)) {
+    throw new Error("Adapter returned an invalid average-cost chart");
+  }
   return {
     columns: value.columns as string[],
     rows: value.rows as Record<string, unknown>[],
     chart: value.chart as ReportChart | undefined,
+    average_cost_chart: value.average_cost_chart as ReportChart | undefined,
   };
 }
 

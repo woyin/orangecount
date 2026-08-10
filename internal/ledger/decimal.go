@@ -69,6 +69,10 @@ func (d Decimal) Mul(other Decimal) Decimal {
 	return Decimal{rat: new(big.Rat).Mul(d.Rat(), other.Rat())}
 }
 
+func (d Decimal) Quo(other Decimal) Decimal {
+	return Decimal{rat: new(big.Rat).Quo(d.Rat(), other.Rat())}
+}
+
 func (d Decimal) Neg() Decimal { return Decimal{rat: new(big.Rat).Neg(d.Rat())} }
 
 func (d Decimal) Cmp(other Decimal) int { return d.Rat().Cmp(other.Rat()) }

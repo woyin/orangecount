@@ -15,6 +15,13 @@ import (
 	"orangecount/internal/source"
 )
 
+// flagMerging marks the internal legs an AVERAGE booking generates to remove
+// old lots and refill the merged lot, mirroring Beancount's FLAG_MERGING. It is
+// diagnostic/display metadata only; booking logic is unaffected by flag.
+const (
+	flagMerging = "M"
+)
+
 // EvalOptions controls deterministic compatibility behavior. A zero tolerance
 // requests exact balancing; when InferDecimalTolerance is true, transaction
 // tolerances are inferred from the decimal places present in their postings.
@@ -499,6 +506,8 @@ func (e *evaluator) bookPosting(posting Posting, working map[string][]Position) 
 		if !remaining.IsZero() {
 			return []Posting{posting}
 		}
+	} else if strings.EqualFold(account.state.Booking, "AVERAGE") {
+		return e.bookAverageReduction(posting, ordered, requested, constraints)
 	} else {
 		total := Zero()
 		for _, match := range ordered {
@@ -529,6 +538,94 @@ func (e *evaluator) bookPosting(posting Posting, working map[string][]Position) 
 		resolved = append(resolved, item)
 	}
 	return resolved
+}
+
+// bookAverageReduction implements Beancount's Booking.AVERAGE (which v3 defines
+// but leaves disabled, returning "AVERAGE method is not supported"). It is the
+// first working implementation, per ADR-0042. Matching lots are merged lazily
+// at reduction time into a single weighted-average lot (date = earliest
+// contributing lot, label cleared), then the reduction is applied to that lot.
+// The merge is encoded as multiple legs so both the working-copy and
+// authoritative applyPosting paths consume it through the normal
+// costMatchesPosition logic without special-casing: legs that remove each old
+// lot (flagged "M", mirroring Beancount's FLAG_MERGING), one leg that refills
+// the merged lot, and the reduction leg. The remove and refill legs carry the
+// same total cost value in opposite directions, so transaction balancing is
+// unaffected. Reductions with an explicit cost and cross-cost-currency merges
+// are converted to an internal rejected leg. applyPosting then emits
+// E-EVAL-INVENTORY exactly once without mutating inventory, consistent with
+// how the other booking methods signal failure (no duplicate diagnostic).
+func (e *evaluator) bookAverageReduction(posting Posting, matches []Position, requested Decimal, constraints costConstraints) []Posting {
+	if constraints.number != nil {
+		// AVERAGE's contract is that the engine owns the cost; an explicit
+		// reduction cost is rejected. applyPosting reports it once.
+		return []Posting{rejectAverageReduction(posting)}
+	}
+	if len(matches) == 0 {
+		return []Posting{posting}
+	}
+	costCurrency := matches[0].Cost.Currency
+	for _, match := range matches[1:] {
+		if match.Cost.Currency != costCurrency {
+			// Cross-cost-currency lots cannot be averaged together.
+			return []Posting{rejectAverageReduction(posting)}
+		}
+	}
+	totalUnits := Zero()
+	totalCostValue := Zero()
+	var earliest *Date
+	for _, match := range matches {
+		totalUnits = totalUnits.Add(match.Units)
+		totalCostValue = totalCostValue.Add(match.Units.Mul(match.Cost.Number))
+		if match.Cost.Date != nil && (earliest == nil || dateKey(*match.Cost.Date) < dateKey(*earliest)) {
+			d := *match.Cost.Date
+			earliest = &d
+		}
+	}
+	if totalUnits.IsZero() {
+		return []Posting{posting}
+	}
+	avgCost := Cost{
+		Number:   totalCostValue.Quo(totalUnits),
+		Currency: costCurrency,
+		Date:     earliest,
+		Label:    "",
+	}
+	legs := make([]Posting, 0, len(matches)+2)
+	// 1. Remove each matching old lot at its own cost.
+	for _, match := range matches {
+		item := posting
+		units := *posting.Units
+		units.Number = numberFromDecimal(match.Units.Neg())
+		item.Units = &units
+		cost := costSpecFromCost(*match.Cost, posting.Cost)
+		item.Cost = &cost
+		item.Flag = flagMerging
+		legs = append(legs, item)
+	}
+	// 2. Refill the merged lot at the weighted-average cost.
+	refill := posting
+	refillUnits := *posting.Units
+	refillUnits.Number = numberFromDecimal(totalUnits)
+	refill.Units = &refillUnits
+	refillCost := costSpecFromCost(avgCost, posting.Cost)
+	refill.Cost = &refillCost
+	refill.Flag = flagMerging
+	legs = append(legs, refill)
+	// 3. Apply the reduction against the merged lot.
+	reduction := posting
+	reductionUnits := *posting.Units
+	reductionUnits.Number = numberFromDecimal(requested.Neg())
+	reduction.Units = &reductionUnits
+	reductionCost := costSpecFromCost(avgCost, posting.Cost)
+	reduction.Cost = &reductionCost
+	legs = append(legs, reduction)
+	return legs
+}
+
+func rejectAverageReduction(posting Posting) Posting {
+	posting.averageRejected = true
+	return posting
 }
 
 type costConstraints struct {
@@ -621,6 +718,9 @@ func costSpecFromCost(cost Cost, original *CostSpec) CostSpec {
 }
 
 func updateWorkingPositions(working map[string][]Position, posting Posting) {
+	if posting.averageRejected {
+		return
+	}
 	if posting.Units == nil || posting.Units.Currency == "" || posting.Units.Number.Raw == "" || posting.Cost == nil {
 		return
 	}
@@ -763,6 +863,10 @@ func (e *evaluator) applyPosting(date Date, posting Posting, amount Decimal, cur
 	account, ok := e.accounts[posting.Account]
 	if !ok || !dateAtLeast(date, account.state.Opened) || (account.state.Closed != nil && !dateBefore(date, *account.state.Closed)) {
 		e.add("E-EVAL-POSTING", diagnostic.Error, posting.Span(), e.pathFor(posting.Span()))
+		return
+	}
+	if posting.averageRejected {
+		e.add("E-EVAL-INVENTORY", diagnostic.Error, posting.Span(), e.pathFor(posting.Span()))
 		return
 	}
 	if len(account.state.Currencies) != 0 && !contains(account.state.Currencies, currency) {

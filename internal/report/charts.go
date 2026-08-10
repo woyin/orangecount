@@ -421,6 +421,80 @@ func accountChart(e ledger.Evaluation, keys []string, ends map[string]string, in
 	return chart
 }
 
+// AccountAverageCostChart returns the weighted-average cost of every held,
+// costed commodity in an account over time. It replays the evaluator's
+// published booked entries, rather than source postings: AVERAGE merge legs
+// and every other booking method have therefore already resolved reductions
+// with the same predicates that produced the current holdings inventory.
+// Cost currencies are never combined, so each line represents one
+// (commodity, cost-currency) pair.
+func AccountAverageCostChart(e ledger.Evaluation, period, account string) ChartSpec {
+	interval := normalizeChartPeriod(period)
+	chart := ChartSpec{
+		Kind: ChartLine, Title: "Average cost evolution", Unit: "cost per unit",
+		Valuation: "at-cost", Period: interval, Interval: interval, Measure: "average-cost",
+	}
+	account = strings.TrimSpace(account)
+	if account == "" {
+		return chart
+	}
+	keys, endDates := chartPeriods(e, interval)
+	if len(keys) == 0 {
+		return chart
+	}
+	type state struct {
+		currency, costCurrency string
+		units, book            ledger.Decimal
+	}
+	states := map[string]*state{}
+	postings := transactionPostings(e)
+	postingIndex := 0
+	points := map[string][]ChartPoint{}
+	for _, key := range keys {
+		end := endDates[key]
+		for postingIndex < len(postings) && postings[postingIndex].date <= end {
+			posting := postings[postingIndex]
+			postingIndex++
+			if !accountWithin(account, posting.account) {
+				continue
+			}
+			cost, costCurrency, total, ok := chartCost(posting.cost)
+			if !ok {
+				continue
+			}
+			id := posting.currency + "\x00" + costCurrency
+			value := states[id]
+			if value == nil {
+				value = &state{currency: posting.currency, costCurrency: costCurrency}
+				states[id] = value
+			}
+			value.units = value.units.Add(posting.amount)
+			bookChange := posting.amount.Mul(cost)
+			if total {
+				bookChange = cost
+				if posting.amount.Sign() < 0 {
+					bookChange = bookChange.Neg()
+				}
+			}
+			value.book = value.book.Add(bookChange)
+		}
+		for id, value := range states {
+			if value.units.Sign() <= 0 {
+				continue
+			}
+			points[id] = append(points[id], ChartPoint{Date: key, Value: value.book.Quo(value.units)})
+		}
+	}
+	for _, id := range sortedKeys(points) {
+		value := states[id]
+		chart.Series = append(chart.Series, ChartSeries{
+			Label:  value.currency + " (" + value.costCurrency + ")",
+			Points: points[id],
+		})
+	}
+	return chart
+}
+
 func sortedKeys(values map[string][]ChartPoint) []string {
 	keys := make([]string, 0, len(values))
 	for key := range values {

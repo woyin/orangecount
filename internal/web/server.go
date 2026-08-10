@@ -562,7 +562,8 @@ func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 			presented := report.Present(result)
 			payload := struct {
 				query.Result
-				Chart *report.PresentedChartSpec `json:"chart,omitempty"`
+				Chart            *report.PresentedChartSpec `json:"chart,omitempty"`
+				AverageCostChart *report.PresentedChartSpec `json:"average_cost_chart,omitempty"`
 			}{Result: presented}
 			if chartRoute != "" {
 				valuation := strings.TrimSpace(r.URL.Query().Get("valuation"))
@@ -571,6 +572,10 @@ func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 				}
 				chart := report.PresentChart(report.ReportChart(current.Evaluation(), chartRoute, r.URL.Query().Get("period"), r.URL.Query().Get("currency"), valuation, r.URL.Query().Get("account")))
 				payload.Chart = &chart
+				if chartRoute == "accounts" && strings.TrimSpace(r.URL.Query().Get("account")) != "" {
+					averageCostChart := report.PresentChart(report.AccountAverageCostChart(current.Evaluation(), r.URL.Query().Get("period"), r.URL.Query().Get("account")))
+					payload.AverageCostChart = &averageCostChart
+				}
 			}
 			writeJSON(w, favaadapter.NewEnvelope(payload, current.BuiltAt))
 			return

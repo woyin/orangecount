@@ -329,6 +329,63 @@ func TestServerQueryReportsAndEmbeddedUI(t *testing.T) {
 	}
 }
 
+func TestServerFavaAccountIncludesAverageCostChart(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	text := `2000-01-01 open Assets:Cash USD
+2000-01-01 open Assets:Shares SH "AVERAGE"
+2000-01-01 open Income:Gains USD
+2000-01-05 * "buy first lot"
+  Assets:Shares 100 SH {10 USD}
+  Assets:Cash -1000 USD
+2000-02-05 * "buy second lot"
+  Assets:Shares 200 SH {12 USD}
+  Assets:Cash -2400 USD
+2000-03-05 * "sell part"
+  Assets:Shares -100 SH {} @ 15 USD
+  Assets:Cash 1500 USD
+  Income:Gains
+`
+	if err := os.WriteFile(entry, []byte(text), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	built := snapshot.Build(entry)
+	if built.Snapshot == nil {
+		t.Fatalf("build diagnostics=%+v", built.Diagnostics)
+	}
+	server, err := NewServer(Config{Store: snapshot.NewStore(built.Snapshot), Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/__orangecount/fava/reports/account?account=Assets%3AShares&period=month", nil))
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("status=%d body=%q", recorder.Code, recorder.Body.String())
+	}
+	var payload struct {
+		Data struct {
+			AverageCostChart struct {
+				Measure string `json:"measure"`
+				Series  []struct {
+					Label  string `json:"label"`
+					Points []struct {
+						Value struct {
+							Exact string `json:"exact"`
+						} `json:"value"`
+					} `json:"points"`
+				} `json:"series"`
+			} `json:"average_cost_chart"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &payload); err != nil {
+		t.Fatal(err)
+	}
+	chart := payload.Data.AverageCostChart
+	if chart.Measure != "average-cost" || len(chart.Series) != 1 || chart.Series[0].Label != "SH (USD)" || len(chart.Series[0].Points) != 3 || chart.Series[0].Points[2].Value.Exact != "34/3" {
+		t.Fatalf("average-cost chart=%+v", chart)
+	}
+}
+
 func TestJournalReportDateFiltersAreInclusiveAndValidated(t *testing.T) {
 	dir := t.TempDir()
 	entry := filepath.Join(dir, "main.bean")

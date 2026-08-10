@@ -9,7 +9,6 @@ package report
 
 import (
 	"fmt"
-	"math/big"
 	"sort"
 	"strconv"
 	"strings"
@@ -489,7 +488,7 @@ func HoldingsAggregate(result query.Result, aggregation string) query.Result {
 	var keyOf func(query.Row) []string
 	switch aggregation {
 	case "by_account":
-		columns = []string{"account", "currency", "cost_currency", "units", "book_value"}
+		columns = []string{"account", "currency", "cost_currency", "units", "average_cost", "book_value"}
 		keyOf = func(row query.Row) []string {
 			return []string{asString(row["account"]), asString(row["currency"]), asString(row["cost_currency"])}
 		}
@@ -499,7 +498,7 @@ func HoldingsAggregate(result query.Result, aggregation string) query.Result {
 			return []string{asString(row["currency"]), asString(row["cost_currency"])}
 		}
 	case "by_root_account":
-		columns = []string{"root_account", "currency", "cost_currency", "units", "book_value"}
+		columns = []string{"root_account", "currency", "cost_currency", "units", "average_cost", "book_value"}
 		keyOf = func(row query.Row) []string {
 			account := asString(row["account"])
 			if index := strings.Index(account, ":"); index > 0 {
@@ -508,10 +507,10 @@ func HoldingsAggregate(result query.Result, aggregation string) query.Result {
 			return []string{account, asString(row["currency"]), asString(row["cost_currency"])}
 		}
 	case "by_cost_currency":
-		columns = []string{"cost_currency", "units", "book_value"}
+		columns = []string{"cost_currency", "units", "average_cost", "book_value"}
 		keyOf = func(row query.Row) []string { return []string{asString(row["cost_currency"])} }
 	case "by_commodity":
-		columns = []string{"currency", "units", "book_value"}
+		columns = []string{"currency", "units", "average_cost", "book_value"}
 		keyOf = func(row query.Row) []string { return []string{asString(row["currency"])} }
 	default:
 		return result
@@ -560,9 +559,8 @@ func HoldingsAggregate(result query.Result, aggregation string) query.Result {
 		row["units"] = aggregate.units
 		if aggregate.hasCost && !aggregate.bookMixed {
 			row["book_value"] = aggregate.book
-			if aggregation == "by_currency" && !aggregate.units.IsZero() {
-				ratio := new(big.Rat).Quo(aggregate.book.Rat(), aggregate.units.Rat())
-				row["average_cost"] = ledger.NewDecimal(ratio)
+			if !aggregate.units.IsZero() {
+				row["average_cost"] = aggregate.book.Quo(aggregate.units)
 			}
 		}
 		rows = append(rows, row)

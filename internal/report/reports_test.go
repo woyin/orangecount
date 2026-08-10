@@ -823,6 +823,9 @@ func TestHoldingsAggregateGroupsAndSumsWithinCostCurrency(t *testing.T) {
 	}
 
 	byAccount := HoldingsAggregate(flat, "by_account")
+	if !strings.Contains(strings.Join(byAccount.Columns, ","), "average_cost") {
+		t.Fatalf("by_account columns=%v, want average_cost", byAccount.Columns)
+	}
 	if len(byAccount.Rows) != 3 {
 		t.Fatalf("by_account produced %d rows, want 3 groups", len(byAccount.Rows))
 	}
@@ -836,6 +839,9 @@ func TestHoldingsAggregateGroupsAndSumsWithinCostCurrency(t *testing.T) {
 	}
 	if got := reserve["book_value"].(ledger.Decimal).String(); got != decimal("56").String() {
 		t.Fatalf("reserve book_value = %s, want 56 (2*10 + 3*12)", got)
+	}
+	if average := reserve["average_cost"].(ledger.Decimal); average.Mul(decimal("5")).Cmp(decimal("56")) != 0 {
+		t.Fatalf("reserve average_cost*units = %s, want 56", average.Mul(decimal("5")).String())
 	}
 
 	byCurrency := HoldingsAggregate(flat, "by_currency")
@@ -854,19 +860,35 @@ func TestHoldingsAggregateGroupsAndSumsWithinCostCurrency(t *testing.T) {
 	}
 
 	byRoot := HoldingsAggregate(flat, "by_root_account")
+	if !strings.Contains(strings.Join(byRoot.Columns, ","), "average_cost") {
+		t.Fatalf("by_root_account columns=%v, want average_cost", byRoot.Columns)
+	}
 	roots := map[string]bool{}
+	var rootFundUSD query.Row
 	for _, row := range byRoot.Rows {
 		roots[row["root_account"].(string)] = true
+		if row["currency"] == "FUND" && row["cost_currency"] == "USD" {
+			rootFundUSD = row
+		}
 	}
 	if len(byRoot.Rows) != 3 || !roots["Assets"] {
 		t.Fatalf("by_root_account rows=%d roots=%v, want 3 rows under Assets", len(byRoot.Rows), roots)
 	}
+	if rootFundUSD == nil || rootFundUSD["average_cost"].(ledger.Decimal).Mul(decimal("5")).Cmp(decimal("56")) != 0 {
+		t.Fatalf("by_root_account FUND/USD average_cost=%v, want 56/5", rootFundUSD["average_cost"])
+	}
 
 	byCommodity := HoldingsAggregate(flat, "by_commodity")
+	if !strings.Contains(strings.Join(byCommodity.Columns, ","), "average_cost") {
+		t.Fatalf("by_commodity columns=%v, want average_cost", byCommodity.Columns)
+	}
 	for _, row := range byCommodity.Rows {
 		if row["currency"] == "FUND" {
 			if _, hasBook := row["book_value"]; hasBook {
 				t.Fatal("by_commodity FUND group must omit book_value when cost currencies are mixed")
+			}
+			if _, hasAverage := row["average_cost"]; hasAverage {
+				t.Fatal("by_commodity FUND group must omit average_cost when cost currencies are mixed")
 			}
 			if got := row["units"].(ledger.Decimal).String(); got != decimal("6").String() {
 				t.Fatalf("by_commodity FUND units = %s, want 6", got)
@@ -875,6 +897,9 @@ func TestHoldingsAggregateGroupsAndSumsWithinCostCurrency(t *testing.T) {
 	}
 
 	byCostCurrency := HoldingsAggregate(flat, "by_cost_currency")
+	if !strings.Contains(strings.Join(byCostCurrency.Columns, ","), "average_cost") {
+		t.Fatalf("by_cost_currency columns=%v, want average_cost", byCostCurrency.Columns)
+	}
 	if len(byCostCurrency.Rows) != 3 {
 		t.Fatalf("by_cost_currency produced %d rows, want 3 groups", len(byCostCurrency.Rows))
 	}
@@ -888,6 +913,9 @@ func TestHoldingsAggregateGroupsAndSumsWithinCostCurrency(t *testing.T) {
 	if got := byCost["USD"]["book_value"].(ledger.Decimal).String(); got != decimal("56").String() {
 		t.Fatalf("by_cost_currency USD book_value = %s, want 56", got)
 	}
+	if average := byCost["USD"]["average_cost"].(ledger.Decimal); average.Mul(decimal("5")).Cmp(decimal("56")) != 0 {
+		t.Fatalf("by_cost_currency USD average_cost*units = %s, want 56", average.Mul(decimal("5")).String())
+	}
 	if got := byCost["EUR"]["book_value"].(ledger.Decimal).String(); got != decimal("7").String() {
 		t.Fatalf("by_cost_currency EUR book_value = %s, want 7", got)
 	}
@@ -897,5 +925,45 @@ func TestHoldingsAggregateGroupsAndSumsWithinCostCurrency(t *testing.T) {
 
 	if passthrough := HoldingsAggregate(flat, ""); len(passthrough.Rows) != len(flat.Rows) {
 		t.Fatal("empty aggregation must return the flat result untouched")
+	}
+}
+
+func TestAccountAverageCostChartReplaysBookedLots(t *testing.T) {
+	text := `2000-01-01 open Assets:Cash USD
+2000-01-01 open Assets:Shares SH "AVERAGE"
+2000-01-01 open Income:Gains USD
+2000-01-05 * "buy first lot"
+  Assets:Shares 100 SH {10 USD}
+  Assets:Cash -1000 USD
+2000-02-05 * "buy second lot"
+  Assets:Shares 200 SH {12 USD}
+  Assets:Cash -2400 USD
+2000-03-05 * "sell part"
+  Assets:Shares -100 SH {} @ 15 USD
+  Assets:Cash 1500 USD
+  Income:Gains
+`
+	file, diagnostics := ledger.ParseText("average-cost-history.bean", []byte(text))
+	if diagnostics.HasErrors() {
+		t.Fatalf("parse=%+v", diagnostics.All())
+	}
+	evaluation := ledger.EvaluateFiles(map[source.FileID]*ledger.File{1: file}, []source.FileID{1}, ledger.EvalOptions{})
+	if !evaluation.Valid {
+		t.Fatalf("evaluation=%+v", evaluation.Diagnostics)
+	}
+	chart := AccountAverageCostChart(*evaluation, "month", "Assets:Shares")
+	if chart.Kind != ChartLine || chart.Measure != "average-cost" || chart.Title != "Average cost evolution" || len(chart.Series) != 1 {
+		t.Fatalf("average-cost chart=%+v", chart)
+	}
+	series := chart.Series[0]
+	if series.Label != "SH (USD)" || len(series.Points) != 3 {
+		t.Fatalf("average-cost series=%+v", series)
+	}
+	expected, err := ledger.ParseDecimal("34/3")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if series.Points[0].Date != "2000-01" || series.Points[0].Value.String() != "10" || !series.Points[1].Value.Equal(expected) || !series.Points[2].Value.Equal(expected) {
+		t.Fatalf("average-cost points=%+v, want 10, 34/3, 34/3", series.Points)
 	}
 }

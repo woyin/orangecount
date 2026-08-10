@@ -458,47 +458,62 @@ table.svelte-1act09h {
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/AccountReport.esbuild-svelte-fake-css */
-.account-breadcrumb.svelte-9toiq4 .droptarget:where(.svelte-9toiq4) {
+.account-breadcrumb.svelte-psa061 .droptarget:where(.svelte-psa061) {
   padding: 0.35em 0.5em;
   margin: -0.35em -0.5em;
 }
-.account-breadcrumb.svelte-9toiq4 a:where(.svelte-9toiq4) {
+.account-breadcrumb.svelte-psa061 a:where(.svelte-psa061) {
   color: unset;
 }
-.account-breadcrumb.svelte-9toiq4 .sep:where(.svelte-9toiq4) {
+.account-breadcrumb.svelte-psa061 .sep:where(.svelte-psa061) {
   color: var(--text-color-lightest);
 }
-.account-breadcrumb.svelte-9toiq4 .last-activity:where(.svelte-9toiq4) {
+.account-breadcrumb.svelte-psa061 .last-activity:where(.svelte-psa061) {
   display: inline-block;
   margin-left: 10px;
   font-size: 12px;
   font-weight: normal;
   opacity: 0.8;
 }
-.sections.svelte-9toiq4 {
+.sections.svelte-psa061 {
   display: flex;
   gap: 1.5em;
   align-items: baseline;
 }
-.sections.svelte-9toiq4 h3:where(.svelte-9toiq4) {
+.sections.svelte-psa061 h3:where(.svelte-psa061) {
   margin: 0;
   font-size: 1em;
 }
-.sections.svelte-9toiq4 a:where(.svelte-9toiq4) {
+.sections.svelte-psa061 a:where(.svelte-psa061) {
   color: var(--link-color);
 }
-.status-indicator.svelte-9toiq4 {
+.status-indicator.svelte-psa061 {
   display: inline-block;
   width: 10px;
   height: 10px;
   margin-left: 10px;
   border-radius: 10px;
 }
-.status-green.svelte-9toiq4 {
+.status-green.svelte-psa061 {
   background: var(--status-green, #2e7d32);
 }
-.status-yellow.svelte-9toiq4 {
+.status-yellow.svelte-psa061 {
   background: var(--status-yellow, #fbc02d);
+}
+.average-cost-current.svelte-psa061 {
+  margin: 0 0 1rem;
+}
+.average-cost-current.svelte-psa061 h3:where(.svelte-psa061) {
+  margin: 0 0 0.25rem;
+  font-size: 1em;
+}
+.average-cost-current.svelte-psa061 ul:where(.svelte-psa061) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/ImportReport.esbuild-svelte-fake-css */

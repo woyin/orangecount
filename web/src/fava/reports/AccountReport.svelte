@@ -29,7 +29,7 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
  import ChartView from "../charts/ChartView.svelte";
   import GenericReport from "./GenericReport.svelte";
   import JournalReport from "./JournalReport.svelte";
-  import { parseJournalReport, parseTableReport, type JournalReport as JournalReportData, type TableReport } from "./types";
+  import { formatAmount, parseJournalReport, parseTableReport, type JournalReport as JournalReportData, type TableReport } from "./types";
 
   export let adapter: AdapterClient;
   export let query: Record<string, string>;
@@ -94,6 +94,10 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
   // The account route returns a chart alongside the balance table; render it
   // above the balance tree the way Fava shows the account chart.
   $: chart = balance?.chart ?? null;
+  $: averageCostChart = balance?.average_cost_chart ?? null;
+  $: currentAverageCosts = averageCostChart?.series
+    .map((series) => ({ label: series.label, value: series.points[series.points.length - 1]?.value }))
+    .filter((series): series is { label: string; value: NonNullable<typeof series.value> } => series.value !== undefined) ?? [];
 
   function sectionHref(mode: string): string {
     const params = new URLSearchParams();
@@ -150,6 +154,13 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
     {#if intervals}<GenericReport report={intervals} title={`${reportType === "changes" ? t("changes") : t("balances")} (${intervalLabel})`} {locale} {renderCommas} />{/if}
   {:else if balance}
    {#if chart}<ChartView {chart} {locale} />{/if}
+    {#if currentAverageCosts.length}
+      <section class="average-cost-current" aria-label={t("currentAverageCost")}>
+        <h3>{t("currentAverageCost")}</h3>
+        <ul>{#each currentAverageCosts as series}<li>{series.label}: {formatAmount(series.value, renderCommas)}</li>{/each}</ul>
+      </section>
+    {/if}
+    {#if averageCostChart}<ChartView chart={averageCostChart} {locale} />{/if}
     <GenericReport report={balance} title="Balance" {locale} {renderCommas} />
   {/if}
   {#if journal}<JournalReport report={journal} {renderCommas} accountFilter={account} />{/if}
@@ -206,5 +217,23 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
 
   .status-yellow {
     background: var(--status-yellow, #fbc02d);
+  }
+
+  .average-cost-current {
+    margin: 0 0 1rem;
+  }
+
+  .average-cost-current h3 {
+    margin: 0 0 0.25rem;
+    font-size: 1em;
+  }
+
+  .average-cost-current ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
   }
 </style>

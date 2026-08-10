@@ -505,3 +505,209 @@ func TestEvaluateInventoryDiagnosticEmittedOnce(t *testing.T) {
 		t.Fatalf("E-EVAL-INVENTORY emitted %d times, want once: %+v", count, evaluation.Diagnostics)
 	}
 }
+
+func TestEvaluateAverageBookingMergesLotsBeforePartialReduction(t *testing.T) {
+	// The independent worked basis is (100×10 + 200×12) / 300 = 34/3 USD per
+	// share. Selling 100 shares must leave one 200-share lot at that basis.
+	text := `2000-01-01 open Assets:Cash USD
+2000-01-01 open Assets:Shares SH "AVERAGE"
+2000-01-01 open Income:Gains USD
+2000-01-02 * "buy first lot"
+  Assets:Shares 100 SH {10 USD, 2000-01-02, "first"}
+  Assets:Cash -1000 USD
+2000-01-03 * "buy second lot"
+  Assets:Shares 200 SH {12 USD, 2000-01-03, "second"}
+  Assets:Cash -2400 USD
+2000-01-04 * "sell part"
+  Assets:Shares -100 SH {} @ 15 USD
+  Assets:Cash 1500 USD
+  Income:Gains
+`
+	file, parseDiagnostics := ParseText("average-partial.bean", []byte(text))
+	if parseDiagnostics.HasErrors() {
+		t.Fatalf("parse diagnostics=%+v", parseDiagnostics.All())
+	}
+	evaluation := EvaluateFiles(map[source.FileID]*File{1: file}, []source.FileID{1}, EvalOptions{})
+	if !evaluation.Valid || hasCode(evaluation.Diagnostics, "E-EVAL-INVENTORY") {
+		t.Fatalf("evaluation diagnostics=%+v", evaluation.Diagnostics)
+	}
+	shares, ok := evaluation.Account("Assets:Shares")
+	if !ok || shares.Booking != "AVERAGE" || len(shares.Positions) != 1 {
+		t.Fatalf("shares=%+v", shares)
+	}
+	position := shares.Positions[0]
+	expectedCost, err := ParseDecimal("34/3")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if position.Units.String() != "200" || position.Cost == nil || position.Cost.Currency != "USD" || !position.Cost.Number.Equal(expectedCost) || position.Cost.Date == nil || position.Cost.Date.Raw != "2000-01-02" || position.Cost.Label != "" {
+		t.Fatalf("remaining position=%+v, want 200 SH at 34/3 USD", position)
+	}
+}
+
+func TestEvaluateAverageBookingRejectsExplicitReductionCost(t *testing.T) {
+	text := `2000-01-01 open Assets:Cash USD
+2000-01-01 open Assets:Shares SH "AVERAGE"
+2000-01-01 open Income:Gains USD
+2000-01-02 * "buy"
+  Assets:Shares 100 SH {10 USD}
+  Assets:Cash -1000 USD
+2000-01-03 * "explicit-cost sell"
+  Assets:Shares -50 SH {10 USD} @ 15 USD
+  Assets:Cash 750 USD
+  Income:Gains
+`
+	file, parseDiagnostics := ParseText("average-explicit-cost.bean", []byte(text))
+	if parseDiagnostics.HasErrors() {
+		t.Fatalf("parse diagnostics=%+v", parseDiagnostics.All())
+	}
+	evaluation := EvaluateFiles(map[source.FileID]*File{1: file}, []source.FileID{1}, EvalOptions{})
+	if count := countCode(evaluation.Diagnostics, "E-EVAL-INVENTORY"); count != 1 {
+		t.Fatalf("E-EVAL-INVENTORY emitted %d times, want once: %+v", count, evaluation.Diagnostics)
+	}
+	shares, ok := evaluation.Account("Assets:Shares")
+	if !ok || len(shares.Positions) != 1 || shares.Positions[0].Units.String() != "100" || shares.Positions[0].Cost == nil || shares.Positions[0].Cost.Number.String() != "10" {
+		t.Fatalf("explicit-cost reduction must leave the lot unbooked, shares=%+v", shares)
+	}
+	if got := shares.Balances["SH"].String(); got != "100" {
+		t.Fatalf("explicit-cost reduction must not change the account balance, got %s", got)
+	}
+}
+
+func TestEvaluateAverageBookingLiquidatesMergedLots(t *testing.T) {
+	text := `2000-01-01 open Assets:Cash USD
+2000-01-01 open Assets:Shares SH "AVERAGE"
+2000-01-01 open Income:Gains USD
+2000-01-02 * "buy first lot"
+  Assets:Shares 100 SH {10 USD}
+  Assets:Cash -1000 USD
+2000-01-03 * "buy second lot"
+  Assets:Shares 200 SH {12 USD}
+  Assets:Cash -2400 USD
+2000-01-04 * "sell all"
+  Assets:Shares -300 SH {} @ 15 USD
+  Assets:Cash 4500 USD
+  Income:Gains
+`
+	file, parseDiagnostics := ParseText("average-liquidation.bean", []byte(text))
+	if parseDiagnostics.HasErrors() {
+		t.Fatalf("parse diagnostics=%+v", parseDiagnostics.All())
+	}
+	evaluation := EvaluateFiles(map[source.FileID]*File{1: file}, []source.FileID{1}, EvalOptions{})
+	if !evaluation.Valid || hasCode(evaluation.Diagnostics, "E-EVAL-INVENTORY") {
+		t.Fatalf("evaluation diagnostics=%+v", evaluation.Diagnostics)
+	}
+	shares, ok := evaluation.Account("Assets:Shares")
+	if !ok || len(shares.Positions) != 0 || shares.Balances["SH"].String() != "0" {
+		t.Fatalf("shares=%+v", shares)
+	}
+}
+
+func TestEvaluateAverageBookingRejectsCrossCostCurrencyReduction(t *testing.T) {
+	text := `2000-01-01 open Assets:Cash USD, HKD
+2000-01-01 open Assets:Shares SH "AVERAGE"
+2000-01-01 open Income:Gains USD
+2000-01-02 * "buy USD lot"
+  Assets:Shares 100 SH {10 USD}
+  Assets:Cash -1000 USD
+2000-01-03 * "buy HKD lot"
+  Assets:Shares 100 SH {80 HKD}
+  Assets:Cash -8000 HKD
+2000-01-04 * "sell"
+  Assets:Shares -100 SH {} @ 15 USD
+  Assets:Cash 1500 USD
+  Income:Gains
+`
+	file, parseDiagnostics := ParseText("average-cross-currency.bean", []byte(text))
+	if parseDiagnostics.HasErrors() {
+		t.Fatalf("parse diagnostics=%+v", parseDiagnostics.All())
+	}
+	evaluation := EvaluateFiles(map[source.FileID]*File{1: file}, []source.FileID{1}, EvalOptions{})
+	if count := countCode(evaluation.Diagnostics, "E-EVAL-INVENTORY"); count != 1 {
+		t.Fatalf("E-EVAL-INVENTORY emitted %d times, want once: %+v", count, evaluation.Diagnostics)
+	}
+	shares, ok := evaluation.Account("Assets:Shares")
+	if !ok || len(shares.Positions) != 2 || shares.Positions[0].Units.String() != "100" || shares.Positions[1].Units.String() != "100" {
+		t.Fatalf("cross-currency reduction must leave lots unbooked, shares=%+v", shares)
+	}
+	if got := shares.Balances["SH"].String(); got != "200" {
+		t.Fatalf("cross-currency reduction must not change the account balance, got %s", got)
+	}
+}
+
+func TestEvaluateAverageBookingRejectsOversell(t *testing.T) {
+	text := `2000-01-01 open Assets:Cash USD
+2000-01-01 open Assets:Shares SH "AVERAGE"
+2000-01-01 open Income:Gains USD
+2000-01-02 * "buy"
+  Assets:Shares 100 SH {10 USD}
+  Assets:Cash -1000 USD
+2000-01-03 * "oversell"
+  Assets:Shares -101 SH {} @ 15 USD
+  Assets:Cash 1515 USD
+  Income:Gains
+`
+	file, parseDiagnostics := ParseText("average-oversell.bean", []byte(text))
+	if parseDiagnostics.HasErrors() {
+		t.Fatalf("parse diagnostics=%+v", parseDiagnostics.All())
+	}
+	evaluation := EvaluateFiles(map[source.FileID]*File{1: file}, []source.FileID{1}, EvalOptions{})
+	if count := countCode(evaluation.Diagnostics, "E-EVAL-INVENTORY"); count != 1 {
+		t.Fatalf("E-EVAL-INVENTORY emitted %d times, want once: %+v", count, evaluation.Diagnostics)
+	}
+}
+
+func TestEvaluateAverageBookingReducesSingleLot(t *testing.T) {
+	text := `2000-01-01 open Assets:Cash USD
+2000-01-01 open Assets:Shares SH "AVERAGE"
+2000-01-01 open Income:Gains USD
+2000-01-02 * "buy"
+  Assets:Shares 100 SH {10 USD}
+  Assets:Cash -1000 USD
+2000-01-03 * "sell part"
+  Assets:Shares -40 SH {} @ 15 USD
+  Assets:Cash 600 USD
+  Income:Gains
+`
+	file, parseDiagnostics := ParseText("average-single-lot.bean", []byte(text))
+	if parseDiagnostics.HasErrors() {
+		t.Fatalf("parse diagnostics=%+v", parseDiagnostics.All())
+	}
+	evaluation := EvaluateFiles(map[source.FileID]*File{1: file}, []source.FileID{1}, EvalOptions{})
+	if !evaluation.Valid || hasCode(evaluation.Diagnostics, "E-EVAL-INVENTORY") {
+		t.Fatalf("evaluation diagnostics=%+v", evaluation.Diagnostics)
+	}
+	shares, ok := evaluation.Account("Assets:Shares")
+	if !ok || len(shares.Positions) != 1 || shares.Positions[0].Units.String() != "60" || shares.Positions[0].Cost == nil || shares.Positions[0].Cost.Number.String() != "10" {
+		t.Fatalf("shares=%+v", shares)
+	}
+}
+
+func TestEvaluateFIFOReductionRemainsUnchangedWithExplicitBooking(t *testing.T) {
+	text := `2000-01-01 open Assets:Cash USD
+2000-01-01 open Assets:Shares SH "FIFO"
+2000-01-01 open Income:Gains USD
+2000-01-02 * "buy first lot"
+  Assets:Shares 100 SH {10 USD}
+  Assets:Cash -1000 USD
+2000-01-03 * "buy second lot"
+  Assets:Shares 200 SH {12 USD}
+  Assets:Cash -2400 USD
+2000-01-04 * "sell part"
+  Assets:Shares -100 SH {} @ 15 USD
+  Assets:Cash 1500 USD
+  Income:Gains
+`
+	file, parseDiagnostics := ParseText("fifo-regression.bean", []byte(text))
+	if parseDiagnostics.HasErrors() {
+		t.Fatalf("parse diagnostics=%+v", parseDiagnostics.All())
+	}
+	evaluation := EvaluateFiles(map[source.FileID]*File{1: file}, []source.FileID{1}, EvalOptions{})
+	if !evaluation.Valid || hasCode(evaluation.Diagnostics, "E-EVAL-INVENTORY") {
+		t.Fatalf("evaluation diagnostics=%+v", evaluation.Diagnostics)
+	}
+	shares, ok := evaluation.Account("Assets:Shares")
+	if !ok || shares.Booking != "FIFO" || len(shares.Positions) != 1 || shares.Positions[0].Units.String() != "200" || shares.Positions[0].Cost == nil || shares.Positions[0].Cost.Number.String() != "12" {
+		t.Fatalf("FIFO booking changed unexpectedly, shares=%+v", shares)
+	}
+}
