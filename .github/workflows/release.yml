@@ -49,7 +49,7 @@ jobs:
           path: |
             orangecount-${{ matrix.goos }}-${{ matrix.goarch }}
             orangecount-${{ matrix.goos }}-${{ matrix.goarch }}.exe
-            orangecount-${{ matrix.goos }}-${{ matrix.goarch }}.sha256
+            orangecount-${{ matrix.goos }}-${{ matrix.goarch }}*.sha256
           if-no-files-found: error
 
   release:
