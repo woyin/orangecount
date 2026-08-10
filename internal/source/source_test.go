@@ -204,3 +204,18 @@ func TestGraphPathHelpersRejectUnsafeValues(t *testing.T) {
 		}
 	}
 }
+
+func TestIncludeScannerAndSpanAliasesHandleEscapesAndInvalidRanges(t *testing.T) {
+	file := NewSourceFile(1, "fixture.bean", []byte("include \"child\\\\name\\\".bean\"\ninclude \"line\\nfeed.bean\"\ninclude \"unterminated\n"))
+	matches := scanIncludes(file)
+	if len(matches) != 2 || matches[0].path != `child\name".bean` || matches[1].path != "line\nfeed.bean" {
+		t.Fatalf("include matches=%+v", matches)
+	}
+	if scanIncludes(nil) != nil || closingQuote(`unterminated\\`) != -1 || closingQuote(`a\\\"b`) != -1 || unescapeString(`a\\qb`) != `a\qb` {
+		t.Fatal("scanner edge cases are inconsistent")
+	}
+	span := file.SpanAt(4, 2)
+	if span.Start != 4 || span.End != 4 || file.Text(Span{File: file.ID, Start: -1, End: 2}) == "" {
+		t.Fatalf("span alias/range handling span=%+v", span)
+	}
+}
