@@ -144,3 +144,24 @@ func TestEvaluationAccountAccessorAndStringDefendState(t *testing.T) {
 		t.Fatal("nil evaluation accessors are inconsistent")
 	}
 }
+
+func TestEvaluatorLifecycleAndPriceBranches(t *testing.T) {
+	e := &evaluator{result: &Evaluation{Prices: map[string][]PriceQuote{}}, accounts: map[string]*accountWork{}}
+	span := source.Span{File: 1}
+	opened := Open{DirectiveBase: DirectiveBase{At: span}, Date: Date{Raw: "2000-01-01", Year: 2000, Month: 1, Day: 1}, Account: "Assets:Cash", Currencies: []string{"USD"}}
+	e.open(opened)
+	e.open(opened)
+	e.close(Close{DirectiveBase: DirectiveBase{At: span}, Date: Date{Raw: "1999-01-01", Year: 1999, Month: 1, Day: 1}, Account: "Assets:Cash"})
+	e.close(Close{DirectiveBase: DirectiveBase{At: span}, Date: Date{Raw: "2000-01-02", Year: 2000, Month: 1, Day: 2}, Account: "Assets:Cash"})
+	e.open(opened)
+	for _, code := range []string{"E-EVAL-OPEN", "E-EVAL-CLOSE", "E-EVAL-REOPEN"} {
+		if !hasCode(e.result.Diagnostics, code) {
+			t.Errorf("missing lifecycle diagnostic %s", code)
+		}
+	}
+	e.price(Price{DirectiveBase: DirectiveBase{At: span}, Date: Date{Raw: "2000-01-03"}, Currency: "USD", Amount: Amount{Number: testNumber(t, "1.5"), Currency: "EUR"}})
+	e.price(Price{DirectiveBase: DirectiveBase{At: span}})
+	if len(e.result.Prices["USD"]) != 1 || !hasCode(e.result.Diagnostics, "E-EVAL-OPTION") {
+		t.Fatalf("prices=%+v diagnostics=%+v", e.result.Prices, e.result.Diagnostics)
+	}
+}
