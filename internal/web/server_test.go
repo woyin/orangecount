@@ -1095,6 +1095,83 @@ func TestEditorFileAndStaticAssetEndpointsPreserveHTTPContracts(t *testing.T) {
 	}
 }
 
+func TestPrivateAdapterReadOnlyResourcesShareSnapshotContract(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	text := `option "title" "Adapter resources"
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Equity:Opening USD
+2000-01-02 * "Seed" "Narration" #tag ^link
+  Assets:Cash 1 USD
+  Equity:Opening -1 USD
+2000-01-03 event "status" "ok"
+2000-01-04 query "named" "SELECT account FROM accounts"
+2000-01-05 document Assets:Cash "receipt.pdf" #proof ^doc
+`
+	if err := os.WriteFile(entry, []byte(text), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	built := snapshot.Build(entry)
+	if built.Snapshot == nil {
+		t.Fatalf("build diagnostics=%+v", built.Diagnostics)
+	}
+	server, err := NewServer(Config{Store: snapshot.NewStore(built.Snapshot), Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := func(path string) *httptest.ResponseRecorder {
+		recorder := httptest.NewRecorder()
+		server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
+		return recorder
+	}
+	for _, path := range []string{
+		"/__orangecount/fava/changed?mtime=stale",
+		"/__orangecount/fava/options",
+		"/__orangecount/fava/help",
+		"/__orangecount/fava/diagnostics?locale=zh-CN",
+		"/__orangecount/fava/editor?path=main.bean",
+		"/__orangecount/fava/import?kind=adapters",
+		"/__orangecount/fava/source?path=main.bean",
+		"/__orangecount/fava/journal?tag=tag&payee=seed",
+		"/__orangecount/fava/download-journal?account=Assets%3ACash",
+		"/__orangecount/fava/income_statement?conversion=units&period=month",
+		"/__orangecount/fava/reports/statistics",
+		"/__orangecount/fava/reports/events",
+	} {
+		response := request(path)
+		if response.Code != http.StatusOK {
+			t.Errorf("GET %s status=%d body=%q", path, response.Code, response.Body.String())
+		}
+	}
+	journal := request("/__orangecount/fava/journal")
+	var journalPayload struct {
+		Data struct {
+			Entries []struct {
+				EntryHash string `json:"entry_hash"`
+			} `json:"entries"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(journal.Body.Bytes(), &journalPayload); err != nil || len(journalPayload.Data.Entries) == 0 || journalPayload.Data.Entries[0].EntryHash == "" {
+		t.Fatalf("journal payload=%q err=%v", journal.Body.String(), err)
+	}
+	contextResponse := request("/__orangecount/fava/entry-context?entry_hash=" + url.QueryEscape(journalPayload.Data.Entries[0].EntryHash))
+	if contextResponse.Code != http.StatusOK || !strings.Contains(contextResponse.Body.String(), `"entry"`) {
+		t.Fatalf("entry context status=%d body=%q", contextResponse.Code, contextResponse.Body.String())
+	}
+	for _, path := range []string{
+		"/__orangecount/fava/entry-context",
+		"/__orangecount/fava/entry-context?entry_hash=missing",
+		"/__orangecount/fava/reports/query",
+		"/__orangecount/fava/reports/query?query_string=not+a+query",
+		"/__orangecount/fava/reports/no-such-report",
+	} {
+		response := request(path)
+		if response.Code < http.StatusBadRequest {
+			t.Errorf("GET %s unexpectedly succeeded: %d body=%q", path, response.Code, response.Body.String())
+		}
+	}
+}
+
 func min(left, right int) int {
 	if left < right {
 		return left
