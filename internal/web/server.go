@@ -48,21 +48,22 @@ type Config struct {
 }
 
 type Server struct {
-	mu        sync.RWMutex
-	writeMu   sync.Mutex
-	store     *snapshot.Store
-	roots     source.DocumentRoots
-	addr      string
-	http      *http.Server
-	bound     string
-	ready     chan struct{}
-	readyOnce sync.Once
-	readyErr  error
-	optionsMu sync.RWMutex
-	options   map[string]string
-	previews  *importPreviewStore
-	quickPreviews *quickPreviewStore
-	quickLastBatch *quickBatchRecord
+	mu               sync.RWMutex
+	writeMu          sync.Mutex
+	store            *snapshot.Store
+	roots            source.DocumentRoots
+	addr             string
+	http             *http.Server
+	bound            string
+	ready            chan struct{}
+	readyOnce        sync.Once
+	readyErr         error
+	optionsMu        sync.RWMutex
+	options          map[string]string
+	previews         *importPreviewStore
+	quickPreviews    *quickPreviewStore
+	quickLastBatch   *quickBatchRecord
+	planningPreviews *planningPreviewStore
 }
 
 func NewServer(config Config) (*Server, error) {
@@ -76,7 +77,7 @@ func NewServer(config Config) (*Server, error) {
 	if config.Store == nil {
 		return nil, fmt.Errorf("serve requires a snapshot store")
 	}
-	server := &Server{store: config.Store, roots: config.DocumentRoots, addr: addr, ready: make(chan struct{}), options: make(map[string]string), previews: newImportPreviewStore(), quickPreviews: newQuickPreviewStore()}
+	server := &Server{store: config.Store, roots: config.DocumentRoots, addr: addr, ready: make(chan struct{}), options: make(map[string]string), previews: newImportPreviewStore(), quickPreviews: newQuickPreviewStore(), planningPreviews: newPlanningPreviewStore()}
 	server.http = &http.Server{Handler: server.Handler(), ReadHeaderTimeout: 5 * time.Second}
 	return server, nil
 }
@@ -208,7 +209,7 @@ func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 	// The adapter is read-only except for the reviewed write paths:
 	// add-entries (ledger append), document (attachment upload), and
 	// move-document (attachment relocation).
-	if r.Method != http.MethodGet && !(r.Method == http.MethodPost && (resource == "add-entries" || resource == "document" || resource == "move-document" || resource == "quick-preview" || resource == "quick-commit" || resource == "quick-undo" || resource == "quick-profile" || resource == "quick-profile-save")) {
+	if r.Method != http.MethodGet && !(r.Method == http.MethodPost && (resource == "add-entries" || resource == "document" || resource == "move-document" || resource == "quick-preview" || resource == "quick-commit" || resource == "quick-undo" || resource == "quick-profile" || resource == "quick-profile-save" || resource == "planning-preview" || resource == "planning-commit")) {
 		w.Header().Set("Allow", "GET")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -456,6 +457,10 @@ func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 		s.handleQuickProfile(w, r, current)
 	case "quick-profile-save":
 		s.handleQuickProfileSave(w, r, current)
+	case "planning-preview":
+		s.handlePlanningPreview(w, r, current)
+	case "planning-commit":
+		s.handlePlanningCommit(w, r, current)
 	case "document":
 		s.handleDocumentUpload(w, r, current)
 	case "move-document":

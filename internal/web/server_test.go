@@ -72,6 +72,56 @@ func TestServerStatusAndDocumentContainment(t *testing.T) {
 	}
 }
 
+func TestPlanningPreviewAndCommitUseReviewedWrite(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	ledgerText := "2000-01-01 open Assets:Cash CNY\n2000-01-01 open Equity:Opening CNY\n"
+	if err := os.WriteFile(entry, []byte(ledgerText), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	built := snapshot.Build(entry)
+	if built.Snapshot == nil {
+		t.Fatalf("build=%+v", built.Diagnostics)
+	}
+	server, err := NewServer(Config{Store: snapshot.NewStore(built.Snapshot), Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	content := `2000-01-02 custom "orangecount.planning-profile.v1" "primary"
+  currency: CNY
+  timezone: "Asia/Singapore"
+  minimum_reserve: 0 CNY
+  spendable_account: Assets:Cash
+  recorded_through: 2000-01-02`
+	previewReq := httptest.NewRequest(http.MethodPost, "/__orangecount/fava/planning-preview", strings.NewReader(`{"content":`+jsonString(content)+`,"target":"main.bean"}`))
+	previewReq.Header.Set("Content-Type", "application/json")
+	preview := httptest.NewRecorder()
+	server.Handler().ServeHTTP(preview, previewReq)
+	if preview.Code != http.StatusOK || !strings.Contains(preview.Body.String(), `"valid":true`) {
+		t.Fatalf("preview=%d %s", preview.Code, preview.Body.String())
+	}
+	var payload struct {
+		Token      string `json:"token"`
+		SnapshotID string `json:"snapshot_id"`
+	}
+	if err := json.Unmarshal(preview.Body.Bytes(), &payload); err != nil || payload.Token == "" {
+		t.Fatalf("payload=%s err=%v", preview.Body.String(), err)
+	}
+	commitReq := httptest.NewRequest(http.MethodPost, "/__orangecount/fava/planning-commit", strings.NewReader(`{"token":`+jsonString(payload.Token)+`,"expected_snapshot_id":`+jsonString(payload.SnapshotID)+`}`))
+	commitReq.Header.Set("Content-Type", "application/json")
+	commit := httptest.NewRecorder()
+	server.Handler().ServeHTTP(commit, commitReq)
+	if commit.Code != http.StatusOK || !strings.Contains(commit.Body.String(), `"published":true`) {
+		t.Fatalf("commit=%d %s", commit.Code, commit.Body.String())
+	}
+	if saved, err := os.ReadFile(entry); err != nil || !strings.Contains(string(saved), "orangecount.planning-profile.v1") {
+		t.Fatalf("saved=%q err=%v", saved, err)
+	}
+	if _, err := os.Stat(entry + ".orangecount.bak"); err != nil {
+		t.Fatalf("backup missing: %v", err)
+	}
+}
+
 func TestServerRejectsNonLoopbackAndServesLoopback(t *testing.T) {
 	store := snapshot.NewStore(nil)
 	if _, err := NewServer(Config{Store: store, Addr: "0.0.0.0:0"}); err == nil {
