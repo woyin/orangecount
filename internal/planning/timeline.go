@@ -51,6 +51,7 @@ type Plan struct {
 	Name       string
 	Date       ledger.Date
 	Amount     ledger.Decimal
+	Currency   string // required by the source-ledger representation
 	Direction  Direction
 	Commitment Commitment // required for outflows
 	Account    string     // optional expected funding account

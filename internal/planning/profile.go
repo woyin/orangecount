@@ -137,6 +137,11 @@ func BuildInput(evaluation *ledger.Evaluation, profile Profile, today, horizonEn
 		}
 		input.ShortTermDebts = append(input.ShortTermDebts, AccountBalance{Account: account, Amount: balance})
 	}
+	for _, plan := range input.Plans {
+		if plan.Currency != "" && plan.Currency != profile.Currency {
+			return Input{}, fmt.Errorf("plan %q uses %s, not planning currency %s", plan.ID, plan.Currency, profile.Currency)
+		}
+	}
 	return input, nil
 }
 
@@ -153,6 +158,7 @@ type profileData struct {
 func parseProfileCustom(custom ledger.Custom) (profileData, []Problem) {
 	var profile profileData
 	var problems []Problem
+	var reserveCurrency string
 	if len(custom.Values) != 1 || custom.Values[0].Kind != ledger.ValueString || strings.TrimSpace(custom.Values[0].String) == "" {
 		return profile, []Problem{{Code: "W-PLANNING-PROFILE-ID", Message: "planning profile requires one non-empty string ID", Source: custom.Type}}
 	}
@@ -170,6 +176,7 @@ func parseProfileCustom(custom ledger.Custom) (profileData, []Problem) {
 				continue
 			}
 			profile.MinimumReserve = ledger.DecimalFromNumber(amount.Number)
+			reserveCurrency = amount.Currency
 			if profile.MinimumReserve.Sign() < 0 {
 				problems = append(problems, problem("W-PLANNING-RESERVE", "minimum_reserve cannot be negative", custom))
 			}
@@ -195,6 +202,8 @@ func parseProfileCustom(custom ledger.Custom) (profileData, []Problem) {
 	}
 	if profile.Currency == "" {
 		problems = append(problems, problem("W-PLANNING-CURRENCY", "planning profile requires currency", custom))
+	} else if reserveCurrency != "" && reserveCurrency != profile.Currency {
+		problems = append(problems, problem("W-PLANNING-RESERVE", "minimum_reserve must use the planning currency", custom))
 	}
 	if profile.Timezone == "" {
 		problems = append(problems, problem("W-PLANNING-TIMEZONE", "planning profile requires timezone", custom))
@@ -244,6 +253,7 @@ func parsePlanCustom(custom ledger.Custom) (planRevision, *Problem, bool) {
 				return planRevision{}, ptr(problem("W-PLANNING-PLAN-AMOUNT", "amount must be an amount", custom)), false
 			}
 			revision.plan.Amount = ledger.DecimalFromNumber(amount.Number)
+			revision.plan.Currency = amount.Currency
 		case "direction":
 			revision.plan.Direction = Direction(stringValue(meta.Value))
 		case "commitment":
