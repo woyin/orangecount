@@ -100,6 +100,10 @@ type Result struct {
 // to headroom. All confirmed outflows through each date are subtracted,
 // including adjustable ones; the lowest dated headroom determines the result.
 func Calculate(input Input) (Result, error) {
+	return calculate(input, false)
+}
+
+func calculate(input Input, includeFutureInflows bool) (Result, error) {
 	if err := validateInput(input); err != nil {
 		return Result{}, err
 	}
@@ -165,6 +169,9 @@ func Calculate(input Input) (Result, error) {
 			AdjustableOutflow: adjustable,
 			IgnoredInflows:    ignoredInflows,
 			Headroom:          base.Sub(committed).Sub(adjustable),
+		}
+		if includeFutureInflows {
+			point.Headroom = point.Headroom.Add(ignoredInflows)
 		}
 		result.Timeline = append(result.Timeline, point)
 	}
