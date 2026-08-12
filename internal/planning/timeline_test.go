@@ -126,8 +126,8 @@ func TestCalculateValidatesUnsafeInputs(t *testing.T) {
 	for name, mutate := range map[string]func(*Input){
 		"negative reserve":     func(in *Input) { in.MinimumReserve = decimal(t, "-1") },
 		"horizon before today": func(in *Input) { in.HorizonEnd = date("2026-08-11") },
-		"negative fund": func(in *Input) {
-			in.SpendableFunds = []AccountBalance{{Account: "Assets:CMB", Amount: decimal(t, "-1")}}
+		"negative debt": func(in *Input) {
+			in.ShortTermDebts = []AccountBalance{{Account: "Liabilities:CMB", Amount: decimal(t, "-1")}}
 		},
 		"invalid outflow commitment": func(in *Input) {
 			in.Plans = []Plan{{ID: "p", Date: date("2026-08-13"), Amount: decimal(t, "1"), Direction: Outflow}}
@@ -140,6 +140,25 @@ func TestCalculateValidatesUnsafeInputs(t *testing.T) {
 				t.Fatal("Calculate accepted invalid input")
 			}
 		})
+	}
+}
+
+func TestCalculateIncludesOverdrawnSpendableAccount(t *testing.T) {
+	result, err := Calculate(Input{
+		Today:           date("2026-08-12"),
+		HorizonEnd:      date("2026-08-20"),
+		RecordedThrough: date("2026-08-12"),
+		Currency:        "CNY",
+		SpendableFunds: []AccountBalance{
+			{Account: "Assets:CMB", Amount: decimal(t, "100")},
+			{Account: "Assets:Alipay", Amount: decimal(t, "-30")},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := result.CurrentFunds.String(); got != "70" {
+		t.Fatalf("funds=%s", got)
 	}
 }
 

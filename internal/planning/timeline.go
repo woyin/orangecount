@@ -36,9 +36,9 @@ const (
 	Outflow Direction = "outflow"
 )
 
-// AccountBalance is a selected account balance expressed as a non-negative
-// amount in the planning currency. The profile layer resolves Beancount signs
-// before calling Calculate: liabilities are represented as amounts owed.
+// AccountBalance is a selected account balance in the planning currency.
+// Spendable balances may be negative (for example, an overdraft); liability
+// balances are represented as positive amounts owed by the profile layer.
 type AccountBalance struct {
 	Account string
 	Amount  ledger.Decimal
@@ -103,11 +103,11 @@ func Calculate(input Input) (Result, error) {
 		return Result{}, err
 	}
 
-	funds, err := sumBalances("spendable funds", input.SpendableFunds)
+	funds, err := sumBalances("spendable funds", input.SpendableFunds, true)
 	if err != nil {
 		return Result{}, err
 	}
-	debts, err := sumBalances("short-term debts", input.ShortTermDebts)
+	debts, err := sumBalances("short-term debts", input.ShortTermDebts, false)
 	if err != nil {
 		return Result{}, err
 	}
@@ -220,13 +220,13 @@ func validatePlan(plan Plan) error {
 	}
 }
 
-func sumBalances(kind string, balances []AccountBalance) (ledger.Decimal, error) {
+func sumBalances(kind string, balances []AccountBalance, allowNegative bool) (ledger.Decimal, error) {
 	total := ledger.Zero()
 	for _, balance := range balances {
 		if strings.TrimSpace(balance.Account) == "" {
 			return ledger.Zero(), fmt.Errorf("%s contain an unnamed account", kind)
 		}
-		if balance.Amount.Sign() < 0 {
+		if !allowNegative && balance.Amount.Sign() < 0 {
 			return ledger.Zero(), fmt.Errorf("%s account %q has a negative amount", kind, balance.Account)
 		}
 		total = total.Add(balance.Amount)
