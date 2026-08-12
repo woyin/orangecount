@@ -57,7 +57,7 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
     ["", ["income_statement", "balance_sheet", "trial_balance", "journal", "query"]],
     ["", ["holdings", "commodities", "documents", "events", "statistics"]],
     ["", ["editor", "import", "options", "help"]],
-    ["OrangeCount", ["account"]],
+    ["OrangeCount", ["account", "quick-profile"]],
   ];
   const known = new Set([...ROUTES, "account"]);
   const shortcuts: Record<string, KeySpec> = {
@@ -76,7 +76,7 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
     options: "g o",
     help: "g H",
   };
-  const keys: Record<string, string> = { income_statement: "incomeStatement", balance_sheet: "balanceSheet", trial_balance: "trialBalance", journal: "journal", query: "query", holdings: "holdings", commodities: "commodities", documents: "documents", events: "events", statistics: "statistics", editor: "editor", import: "import", options: "options", help: "help", account: "accounts" };
+  const keys: Record<string, string> = { income_statement: "incomeStatement", balance_sheet: "balanceSheet", trial_balance: "trialBalance", journal: "journal", query: "query", holdings: "holdings", commodities: "commodities", documents: "documents", events: "events", statistics: "statistics", editor: "editor", import: "import", options: "options", help: "help", diagnostics: "diagnostics", account: "accounts" };
   function label(routeName: string): string { const catalog = translations[(locale === "zh-CN" ? "zh-CN" : "en") as Locale]; return catalog[keys[routeName] || ""] || pageLabel(routeName); }
   function t(key: string): string { const catalog = translations[(locale === "zh-CN" ? "zh-CN" : "en") as Locale]; return catalog[key] || key; }
 </script>
@@ -87,6 +87,7 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
 <div class:active={open} class="aside-buttons">
   <button id="menu-toggle" type="button" aria-controls="sidebar" aria-expanded={open} aria-label="Menu" onclick={onMenu}>☰</button>
   <a class="button" href="#add-transaction" aria-label="Add transaction">+</a>
+  <a class="button quick-btn" href="#add-quick" aria-label="Quick entry" title="Quick entry (a q)" use:keyboardShortcut={"a q"}>⚡</a>
 </div>
 <aside id="sidebar" class:active={open} aria-label="Primary navigation">
   {#each sections as [heading, items], sectionIndex}
@@ -138,6 +139,7 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
     </ul>
     {#if sectionIndex === sections.length - 1 && errors.length}
       <ul class="navigation">
+        <li><a href={routeHref("diagnostics")} class:selected={route === "diagnostics"} aria-current={route === "diagnostics" ? "page" : undefined} onclick={(event) => { event.preventDefault(); onNavigate(routeHref("diagnostics")); }}>{label("diagnostics")} ({errors.length})</a></li>
         <li><a href={routeHref("errors")} class:selected={route === "errors"} aria-current={route === "errors" ? "page" : undefined} onclick={(event) => { event.preventDefault(); onNavigate(routeHref("errors")); }}>Errors ({errors.length})</a></li>
       </ul>
     {/if}

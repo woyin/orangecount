@@ -197,6 +197,11 @@
       "upstream": null,
       "notes": "Unit test asserting the served shell keeps root-absolute asset URLs so nested routes load."
     },
+    "web/tests/unit/adapter-client.test.mjs": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Unit tests for the local repair-guidance and bounded diagnostic-context adapter contracts."
+    },
     "web/tests/unit/router.test.mjs": {
       "current_kind": "original",
       "upstream": null,
@@ -326,25 +331,25 @@
       "notice": "NOTICE",
       "notes": "Adapted Fava tree-table node/account cell with OrangeCount route links and exact values."
     },
-   "web/src/fava/charts/ReportChart.svelte": {
-     "current_kind": "derived",
-     "upstream": "frontend/src/charts/Chart.svelte",
-     "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
-     "upstream_hash": "41d1cf63f5f938289f34615e294563127fa2b5151afee08f569b37f82ccb3274",
-     "notice": "NOTICE",
-     "notes": "Temporary Wave 1 chart presentation preserving the Fava chart contract; full chart transplant remains a later wave."
-   },
-   "web/src/fava/charts/ChartView.svelte": {
-     "current_kind": "original",
-     "upstream": null,
-     "notes": "Switching seam between the parity ReportChart and the ModernChart layer (Approved Fava deviation, ?chart_layer=modern); renders the layer toggle for bar/line time-series only and leaves hierarchy charts on parity."
-   },
-   "web/src/fava/charts/ModernChart.svelte": {
-     "current_kind": "original",
-     "upstream": null,
-     "notes": "Modern chart layer for IS/BS/account time-series: d3-backed scales, axes, diverging stack, and tick formatting (ADR-0040), per-pixel responsive redrawing, crosshair with linked series highlighting, and an HCL ordinal palette so >4 currencies do not collide. Consumes the same adapter data contract as ReportChart; never changes ledger semantics."
-   },
-   "web/src/fava/charts/ScatterPlot.svelte": {
+    "web/src/fava/charts/ReportChart.svelte": {
+      "current_kind": "derived",
+      "upstream": "frontend/src/charts/Chart.svelte",
+      "upstream_revision": "aa7538e8971252c9efc52c8a516a3a77d604553f",
+      "upstream_hash": "41d1cf63f5f938289f34615e294563127fa2b5151afee08f569b37f82ccb3274",
+      "notice": "NOTICE",
+      "notes": "Temporary Wave 1 chart presentation preserving the Fava chart contract; full chart transplant remains a later wave."
+    },
+    "web/src/fava/charts/ChartView.svelte": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Switching seam between the parity ReportChart and the ModernChart layer (Approved Fava deviation, ?chart_layer=modern); renders the layer toggle for bar/line time-series only and leaves hierarchy charts on parity."
+    },
+    "web/src/fava/charts/ModernChart.svelte": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Modern chart layer for IS/BS/account time-series: d3-backed scales, axes, diverging stack, and tick formatting (ADR-0040), per-pixel responsive redrawing, crosshair with linked series highlighting, and an HCL ordinal palette so >4 currencies do not collide. Consumes the same adapter data contract as ReportChart; never changes ledger semantics."
+    },
+    "web/src/fava/charts/ScatterPlot.svelte": {
       "current_kind": "original",
       "upstream": null,
       "notes": "Events scatterplot mirroring Fava's ScatterPlot semantics (time x event-type point scale, per-type colors, pointer tooltip, future dates desaturated), written in the shell's dependency-free SVG chart style instead of upstream's d3 implementation."
@@ -772,6 +777,16 @@
       "current_kind": "original",
       "upstream": null,
       "notes": "Adapted from upstream frontend/src/reports/editor/stores.ts (pinned revision aa7538e8); sources_tree derived from a local editor_sources set store (populated by EditorReport from the adapter paths, replacing the upstream sources API/options store), plus expanded_directories and toggle_directory. Registered as original because the upstream hash is not computable in this environment."
+    },
+    "web/src/fava/modals/QuickEntryPanel.svelte": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Quick-entry shorthand capture panel. OrangeCount original, not derived from Fava."
+    },
+    "web/src/fava/reports/QuickProfileReport.svelte": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Quick-entry profile manager page. OrangeCount original, not derived from Fava."
     }
   }
 }

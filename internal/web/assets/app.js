@@ -34,6 +34,9 @@ const translations = {
     runningBalance: "Running balance", theme: "Theme", system: "System", dark: "Dark", light: "Light",
     optionsFromLedger: "Ledger options", extended: "Extended", accountDetail: "Account detail",
     noConversionData: "No data for this currency", operating: "Operating",
+    fixFirst: "Fix first", recheckAfter: "Recheck after source fixes", repairOrderHint: "Fix source and syntax problems first, then validate again before reviewing accounting diagnostics.",
+    learnHowToFix: "Learn how to fix", hideGuidance: "Hide guidance", loadingGuide: "Loading repair guidance…", noGuidance: "Repair guidance is unavailable for this code.",
+    whatHappened: "What happened", whyBlocks: "Why it blocks", whereToInspect: "Where to inspect", safeChecks: "Safe checks and changes", genericExample: "Generic example", before: "Before", after: "After", nextStep: "Next step", helpTopic: "Open full help topic", showLocalContext: "Show local context", contextUnavailable: "Local context is unavailable.",
   },
   "zh-CN": {
     subtitle: "只读本地账本视图。", language: "语言", overview: "概览", accounts: "账户", journal: "日记账",
@@ -60,6 +63,9 @@ const translations = {
     runningBalance: "运行结存", theme: "主题", system: "跟随系统", dark: "深色", light: "浅色",
     optionsFromLedger: "账本选项", extended: "扩展", accountDetail: "账户详情",
     noConversionData: "该货币暂无数据", operating: "记账本位币",
+    fixFirst: "先处理", recheckAfter: "修复源文件后重新检查", repairOrderHint: "请先处理源文件和语法问题，再重新验证，然后检查会计语义诊断。",
+    learnHowToFix: "查看修复指导", hideGuidance: "隐藏指导", loadingGuide: "正在加载修复指导…", noGuidance: "此错误码暂无修复指导。",
+    whatHappened: "发生了什么", whyBlocks: "为什么阻塞", whereToInspect: "去哪里检查", safeChecks: "安全检查与修改", genericExample: "通用示例", before: "修改前", after: "修改后", nextStep: "下一步", helpTopic: "打开完整帮助主题", showLocalContext: "显示本地上下文", contextUnavailable: "本地上下文不可用。",
   },
 };
 
@@ -98,12 +104,16 @@ const pathViews = {
   "/options": "options",
   "/help": "help",
 };
+let helpPage = "";
+if (window.location.pathname.startsWith("/help/")) {
+  try { helpPage = decodeURIComponent(window.location.pathname.slice("/help/".length)); } catch (_) { helpPage = window.location.pathname.slice("/help/".length); }
+}
 const accountPath = window.location.pathname.match(/^\/account\/(.+)$/);
 let accountFromPath = "";
 if (accountPath) {
   try { accountFromPath = decodeURIComponent(accountPath[1]); } catch (_) { accountFromPath = accountPath[1]; }
 }
-let view = params.get("view") || (accountPath ? "accounts" : pathViews[window.location.pathname]) || "overview";
+let view = helpPage ? "help" : (params.get("view") || (accountPath ? "accounts" : pathViews[window.location.pathname]) || "overview");
 if (!navRoutes.some(([route]) => route === view)) view = "overview";
 let globalState = {
   time: params.get("time") || "all",
@@ -1021,6 +1031,7 @@ function renderNavigation() {
   const errors = diagnosticsVisible ? `<button type="button" data-view="diagnostics" aria-current="${view === "diagnostics" ? "page" : "false"}">${escapeHTML(t("diagnostics"))}${diagnosticCount ? ` (${diagnosticCount})` : ""}</button>` : "";
   navigation.innerHTML = `${core}${errors}${extended ? `<div class="sidebar-heading">${escapeHTML(t("extended"))}</div>${extended}` : ""}`;
   navigation.querySelectorAll("button[data-view]").forEach((button) => button.addEventListener("click", () => {
+    if (button.dataset.view !== "help") helpPage = "";
     view = button.dataset.view;
     updateURL();
     sidebar.classList.remove("open");
@@ -1238,11 +1249,76 @@ function mountRawTable(container, result, options = {}) {
   const columns = result.columns.map((column) => column === "running" && options.runningLabel ? options.runningLabel : column);
   container.innerHTML = `<div class="table-wrap"><table><thead><tr>${columns.map((column) => `<th>${escapeHTML(column)}</th>`).join("")}</tr></thead><tbody>${result.rows.map((row) => `<tr>${result.columns.map((column) => `<td>${escapeHTML(row[column] == null ? "" : String(row[column]))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 }
+function diagnosticPhase(code) {
+  if (code.startsWith("E-INCLUDE") || code.startsWith("E-SOURCE")) return "fix-first-source";
+  if (code.startsWith("E-PARSE")) return "fix-first-syntax";
+  return "recheck-after-semantic";
+}
+function diagnosticRow(value) {
+  const span = value && value.span ? value.span : {};
+  return {
+    code: String(value?.code || ""), severity: String(value?.severity || "error"), path: String(value?.path || ""),
+    line: Number(value?.line || span.start_line || 0), column: Number(value?.column || span.start_column || 0), message: String(value?.message || ""),
+  };
+}
+function renderRepairGuide(guide, row) {
+  const example = guide.example || {};
+  const contextKey = `${row.path}:${row.line}`;
+  return `<div class="repair-guide compact"><p class="repair-action"><strong>${escapeHTML(guide.short_action || "")}</strong></p>${row.path ? `<p><a href="/source?path=${encodeURIComponent(row.path)}">${escapeHTML(`${row.path}:${row.line}:${row.column}`)}</a></p>` : ""}<h4>${escapeHTML(t("whatHappened"))}</h4><p>${escapeHTML(guide.what || "")}</p><h4>${escapeHTML(t("whyBlocks"))}</h4><p>${escapeHTML(guide.why || "")}</p><h4>${escapeHTML(t("whereToInspect"))}</h4><p>${escapeHTML((guide.inspect || []).join(" "))}</p><h4>${escapeHTML(t("safeChecks"))}</h4><p>${escapeHTML((guide.safe_steps || []).join(" "))}</p><h4>${escapeHTML(t("genericExample"))}</h4><div class="example-grid"><pre>${escapeHTML(example.before || "")}</pre><pre>${escapeHTML(example.after || "")}</pre></div><p class="muted">${escapeHTML(example.note || "")}</p><h4>${escapeHTML(t("nextStep"))}</h4><p>${escapeHTML(guide.revalidate || "")}</p><p><a href="/help/${encodeURIComponent(guide.topic || `diagnostics/${row.code}`)}">${escapeHTML(t("helpTopic"))}</a></p>${row.path && row.line ? `<button type="button" data-context-path="${escapeHTML(row.path)}" data-context-line="${row.line}">${escapeHTML(t("showLocalContext"))}</button><pre class="source-content context-snippet" data-context-output="${escapeHTML(contextKey)}" hidden></pre>` : ""}</div>`;
+}
+async function loadLegacyGuide(details, row) {
+  const body = details.querySelector("[data-guidance-body]");
+  if (!body || body.dataset.loaded === "true") return;
+  body.dataset.loaded = "true";
+  body.innerHTML = `<p class="muted">${escapeHTML(t("loadingGuide"))}</p>`;
+  try {
+    const guide = await api(`/api/v1/help?topic=${encodeURIComponent(`diagnostics/${row.code}`)}&locale=${encodeURIComponent(locale)}`);
+    body.innerHTML = renderRepairGuide(guide, row);
+    body.querySelector("[data-context-path]")?.addEventListener("click", async (event) => {
+      const button = event.currentTarget;
+      const path = button.dataset.contextPath || "";
+      const line = Number(button.dataset.contextLine || 0);
+      const output = [...body.querySelectorAll("[data-context-output]")].find((candidate) => candidate.dataset.contextOutput === `${path}:${line}`);
+      button.disabled = true;
+      try {
+        const context = await api(`/api/v1/diagnostics/context?path=${encodeURIComponent(path)}&line=${line}`);
+        if (!output) return;
+        if (context.available) {
+          output.textContent = (context.lines || []).map((item) => `${item.line}: ${item.content}`).join("\n");
+          output.hidden = false;
+        } else {
+          output.textContent = context.reason || t("contextUnavailable");
+          output.hidden = false;
+        }
+      } catch (error) {
+        if (output) {
+          output.textContent = error.message || t("contextUnavailable");
+          output.hidden = false;
+        }
+      } finally { button.disabled = false; }
+    });
+  } catch (error) { body.innerHTML = `<p class="error">${escapeHTML(error.message || t("noGuidance"))}</p>`; }
+}
+function renderDiagnosticGroup(title, rows) {
+  if (!rows.length) return "";
+  return `<section class="diagnostic-group"><h3>${escapeHTML(title)}</h3>${rows.map((row) => row.severity === "error"
+    ? `<details class="diagnostic-card" data-diagnostic-code="${escapeHTML(row.code)}" data-diagnostic-path="${escapeHTML(row.path)}" data-diagnostic-line="${row.line}"><summary><code>${escapeHTML(row.code)}</code> <span class="muted">${escapeHTML(row.path)}:${row.line}:${row.column}</span><p>${escapeHTML(row.message)}</p></summary><div data-guidance-body></div></details>`
+    : `<article class="diagnostic-card warning"><header><code>${escapeHTML(row.code)}</code> <span class="muted">${escapeHTML(row.path)}:${row.line}:${row.column}</span><p>${escapeHTML(row.message)}</p></header></article>`).join("")}</section>`;
+}
 async function renderDiagnostics() {
   app.innerHTML = `<p class="muted">${escapeHTML(t("loading"))}</p>`;
   try {
     const values = await api(`/api/v1/diagnostics?locale=${encodeURIComponent(locale)}`);
-    mountTable(app, { columns: ["severity", "code", "path", "span", "message"], rows: values.map((value) => ({ ...value, span: value.span && `${value.span.start_line}:${value.span.start_column}` })) });
+    const rows = Array.isArray(values) ? values.map(diagnosticRow) : [];
+    const first = rows.filter((row) => diagnosticPhase(row.code) !== "recheck-after-semantic");
+    const later = rows.filter((row) => diagnosticPhase(row.code) === "recheck-after-semantic");
+    const groups = rows.length ? `${renderDiagnosticGroup(t("fixFirst"), first)}${renderDiagnosticGroup(t("recheckAfter"), later)}` : `<p>${escapeHTML(t("noErrors"))}</p>`;
+    app.innerHTML = `<div class="headerline"><h2>${escapeHTML(t("diagnostics"))}</h2></div><p class="muted">${escapeHTML(t("repairOrderHint"))}</p>${groups}`;
+    app.querySelectorAll("details.diagnostic-card").forEach((details) => {
+      const row = [...first, ...later].find((candidate) => candidate.severity === "error" && candidate.code === details.dataset.diagnosticCode && candidate.path === details.dataset.diagnosticPath && candidate.line === Number(details.dataset.diagnosticLine));
+      if (!row) return;
+      details.addEventListener("toggle", () => { if (details.open) loadLegacyGuide(details, row); });
+    });
   } catch (error) { app.innerHTML = renderError(error); }
 }
 async function renderSource() {
@@ -1429,7 +1505,12 @@ async function renderOptions() {
 async function renderHelp() {
   app.innerHTML = `<p class="muted">${escapeHTML(t("loading"))}</p>`;
   try {
-    const response = await api("/api/v1/help");
+    if (helpPage.startsWith("diagnostics/")) {
+      const guide = await api(`/api/v1/help?topic=${encodeURIComponent(helpPage)}&locale=${encodeURIComponent(locale)}`);
+      app.innerHTML = `<div class="headerline"><h2>${escapeHTML(guide.code || helpPage)}</h2></div><p><a href="/help">‹ ${escapeHTML(t("help"))}</a></p>${renderRepairGuide(guide, { code: guide.code || helpPage.slice("diagnostics/".length), path: "", line: 0 })}`;
+      return;
+    }
+    const response = await api(`/api/v1/help?locale=${encodeURIComponent(locale)}`);
     const sections = Array.isArray(response.sections) ? response.sections : [];
     app.innerHTML = `<input id="help-search" type="search" placeholder="${escapeHTML(t("searchHelp"))}" aria-label="${escapeHTML(t("searchHelp"))}"><div id="help-sections" class="help-sections"></div>`;
     const search = document.getElementById("help-search");

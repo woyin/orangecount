@@ -216,6 +216,84 @@ func TestServerSourceAndErrorPathsUseDisplayIdentifiers(t *testing.T) {
 	}
 }
 
+func TestRepairGuidanceHelpAndBoundedContext(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	valid := "2000-01-01 open Assets:Cash USD\n2000-01-01 open Equity:Opening USD\n2000-01-02 * \"seed\"\n  Assets:Cash 1 USD\n  Equity:Opening -1 USD\n"
+	if err := os.WriteFile(entry, []byte(valid), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	store := snapshot.NewStore(nil)
+	if result := store.Reload(entry, snapshot.BuildOptions{}); result.Snapshot == nil {
+		t.Fatalf("initial build diagnostics=%+v", result.Diagnostics)
+	}
+	server, err := NewServer(Config{Store: store, Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	request := func(path string) *httptest.ResponseRecorder {
+		recorder := httptest.NewRecorder()
+		server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
+		return recorder
+	}
+	help := request("/api/v1/help?topic=diagnostics%2FE-EVAL-UNBALANCED&locale=zh-CN")
+	if help.Code != http.StatusOK || !strings.Contains(help.Body.String(), `"topic":"diagnostics/E-EVAL-UNBALANCED"`) || !strings.Contains(help.Body.String(), "检查交易") {
+		t.Fatalf("help status=%d body=%q", help.Code, help.Body.String())
+	}
+	helpIndex := request("/api/v1/help?locale=zh-CN")
+	if helpIndex.Code != http.StatusOK || !strings.Contains(helpIndex.Body.String(), `"title":"诊断"`) {
+		t.Fatalf("localized help index status=%d body=%q", helpIndex.Code, helpIndex.Body.String())
+	}
+	missing := request("/api/v1/help?topic=diagnostics%2FE-NOT-RELEASED")
+	if missing.Code != http.StatusNotFound {
+		t.Fatalf("missing topic status=%d body=%q", missing.Code, missing.Body.String())
+	}
+	missingChinese := request("/api/v1/help?topic=diagnostics%2FE-NOT-RELEASED&locale=zh-CN")
+	if missingChinese.Code != http.StatusNotFound || !strings.Contains(missingChinese.Body.String(), "找不到本地帮助主题") {
+		t.Fatalf("missing localized topic status=%d body=%q", missingChinese.Code, missingChinese.Body.String())
+	}
+	context := request("/api/v1/diagnostics/context?path=main.bean&line=2")
+	if context.Code != http.StatusOK || strings.Contains(context.Body.String(), dir) || !strings.Contains(context.Body.String(), `"focus_line":2`) || !strings.Contains(context.Body.String(), "seed") {
+		t.Fatalf("context status=%d body=%q", context.Code, context.Body.String())
+	}
+	if strings.Contains(context.Body.String(), "2000-01-01") == false {
+		t.Fatalf("context did not include adjacent line: %q", context.Body.String())
+	}
+	outside := request("/api/v1/diagnostics/context?path=" + url.QueryEscape(entry) + "&line=2")
+	if outside.Code != http.StatusBadRequest {
+		t.Fatalf("absolute context status=%d body=%q", outside.Code, outside.Body.String())
+	}
+
+	invalid := "2000-01-01 open Assets:Cash USD\n2000-02-30 * \"broken\"\n"
+	if err := os.WriteFile(entry, []byte(invalid), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	failed := store.Reload(entry, snapshot.BuildOptions{})
+	if failed.Snapshot != nil || store.Current() == nil || len(store.Diagnostics()) == 0 {
+		t.Fatalf("failed reload did not retain valid snapshot and diagnostics: result=%+v", failed)
+	}
+	failedContext := request("/api/v1/diagnostics/context?path=main.bean&line=2")
+	if failedContext.Code != http.StatusOK || !strings.Contains(failedContext.Body.String(), "2000-02-30") {
+		t.Fatalf("failed-reload context status=%d body=%q", failedContext.Code, failedContext.Body.String())
+	}
+	diagnostics := request("/api/v1/diagnostics")
+	if strings.Contains(diagnostics.Body.String(), "content") || strings.Contains(diagnostics.Body.String(), "broken") {
+		t.Fatalf("diagnostics leaked source context: %q", diagnostics.Body.String())
+	}
+}
+
+func TestDiagnosticContextExplainsUnavailableInitialBuild(t *testing.T) {
+	server, err := NewServer(Config{Store: snapshot.NewStore(nil), Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/v1/diagnostics/context?path=main.bean&line=1&locale=zh-CN", nil))
+	if recorder.Code != http.StatusOK || !strings.Contains(recorder.Body.String(), `"available":false`) || !strings.Contains(recorder.Body.String(), "源文件上下文") {
+		t.Fatalf("status=%d body=%q", recorder.Code, recorder.Body.String())
+	}
+}
+
 func TestPrivateFavaAdapterBootstrapAndMetadata(t *testing.T) {
 	dir := t.TempDir()
 	entry := filepath.Join(dir, "main.bean")
@@ -288,6 +366,10 @@ func TestPrivateFavaAdapterBootstrapAndMetadata(t *testing.T) {
 		if response.Code != http.StatusOK || !strings.Contains(response.Body.String(), `"data"`) {
 			t.Fatalf("private %s status=%d body=%q", route, response.Code, response.Body.String())
 		}
+	}
+	guideResponse := request("/__orangecount/fava/help?topic=diagnostics%2FE-PARSE-DATE&locale=zh-CN")
+	if guideResponse.Code != http.StatusOK || !strings.Contains(guideResponse.Body.String(), `"topic":"diagnostics/E-PARSE-DATE"`) || !strings.Contains(guideResponse.Body.String(), "修正日期") {
+		t.Fatalf("private diagnostic guide status=%d body=%q", guideResponse.Code, guideResponse.Body.String())
 	}
 	unknown := request("/__orangecount/fava/not-a-route")
 	if unknown.Code != http.StatusNotFound {
@@ -687,6 +769,10 @@ func TestImportOptionsAndHelpWorkflows(t *testing.T) {
 	help := request(http.MethodGet, "/api/v1/help", "")
 	if help.Code != http.StatusOK || !strings.Contains(help.Body.String(), "Editor safety") {
 		t.Fatalf("help status=%d body=%q", help.Code, help.Body.String())
+	}
+	guide := request(http.MethodGet, "/__orangecount/fava/help?topic=diagnostics%2FE-EVAL-UNBALANCED&locale=zh-CN", "")
+	if guide.Code != http.StatusOK || !strings.Contains(guide.Body.String(), `"topic":"diagnostics/E-EVAL-UNBALANCED"`) || !strings.Contains(guide.Body.String(), "检查交易") {
+		t.Fatalf("adapter guide status=%d body=%q", guide.Code, guide.Body.String())
 	}
 }
 

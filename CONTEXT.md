@@ -132,6 +132,94 @@ _Avoid_: arbitrary local path, file browser
 A local web operation that previews or validates an explicit source-ledger or document change and publishes it only through an atomic, recoverable, revalidated path. Uncommitted editing never changes the source ledger or active snapshot.
 _Avoid_: autosave, direct file mutation, partial snapshot publication
 
+**Quick-entry notation**:
+A transient, deterministically compiled shorthand for capturing accounting intent through explicit aliases, templates, and defaults. Suggestions may be adaptive, but compilation never makes a probabilistic accounting choice; the reviewed result is canonical Beancount source and the sole editable and auditable record.
+_Avoid_: DSL source ledger, alternate ledger format, synchronized shorthand file
+
+**Quick-entry profile**:
+The dated, ledger-owned aliases, templates, and defaults declared with standard Beancount `custom` directives and used to compile quick-entry notation. It is portable and auditable source-ledger configuration that never changes balances by itself.
+_Avoid_: hidden application preference, global alias database, sidecar DSL configuration
+
+**Quick-entry confirmation**:
+The mandatory two-stage keyboard flow in which the first confirmation compiles, previews, and validates canonical Beancount output and the second publishes it through the reviewed write workflow. Ambiguous mappings, invalid accounting output, or a stale ledger snapshot prevent publication.
+_Avoid_: blind append, single-keystroke write, implicit confirmation
+
+**Quick-entry transaction**:
+The first-version quick-entry target: an expense, income, or transfer with one explicit amount and currency and exactly two postings, whose accounts may be supplied by the quick-entry profile. Split postings, costs, prices, balance assertions, and non-transaction directives remain full-authoring work.
+_Avoid_: abbreviated Beancount language, universal entry DSL, hidden split transaction
+
+**Quick-entry grammar**:
+The strict two-form language for a quick-entry transaction: an exact template invocation for the shortest recurring cases and an explicitly delimited form for accounts, direction, narration, tags, and links. Completion may insert valid syntax, but free-form natural language is never interpreted as accounting intent.
+_Avoid_: natural-language bookkeeping, heuristic token order, conversational parser
+
+**Visible quick-entry default**:
+A uniquely resolved date, currency, or transaction flag that may be omitted from quick-entry notation only while its effective value and source remain visible and overridable before preview. Ledger history never supplies a probabilistic default.
+_Avoid_: hidden inference, historical guess, silent fallback
+
+**Quick-entry target**:
+The visible, overridable source-ledger file that receives a confirmed quick-entry transaction. It must already belong to the current include graph; the quick-entry profile may choose its default, otherwise the entry file is used, and first-version capture never creates files or edits includes.
+_Avoid_: hidden append destination, automatic ledger restructuring, unincluded output file
+
+**Quick-entry direction**:
+The value-flow arrow from a source account to a destination account for a strictly positive quick-entry amount. Compilation renders the source decrease and destination increase with Beancount's required posting signs, including negative income balances; reversals use the opposite arrow rather than a negative input amount.
+_Avoid_: debit-credit arrow, signed quick-entry amount, double-negative reversal
+
+**Quick-entry template**:
+A named quick-entry-profile rule that may prefill either or both posting roles, currency, payee, narration, tags, and links while leaving the transaction's amount and effective date explicit for every capture. Its complete expansion is visible before confirmation.
+_Avoid_: fixed-amount macro, scheduled transaction, opaque expansion
+
+**Quick-entry duplicate guard**:
+The combination of a single-use preview token that prevents repeated publication and a non-blocking warning for an equivalent existing transaction. A ledger owner may explicitly confirm a legitimate business duplicate, and no OrangeCount-specific transaction identifier is written into the source ledger.
+_Avoid_: retry duplication, duplicate rejection, private transaction ID
+
+**Quick-entry batch**:
+A set of independent, single-line quick-entry transactions compiled and previewed with line-specific results, then published atomically as one reviewed write. Any invalid or unresolved line prevents the entire batch from changing the source ledger.
+_Avoid_: partial batch write, cross-line grammar, implicit continuation
+
+**Effective quick-entry rule**:
+The latest quick-entry-profile definition dated no later than the transaction it compiles. Future rules do not affect historical capture, same-day competing definitions are ambiguous, and dated retirement preserves rather than deletes configuration history.
+_Avoid_: current-profile lookup, destructive alias edit, future-rule backfill
+
+**Web-first quick entry**:
+The first delivery surface for quick-entry notation: a keyboard-accessible capture interface in the local web session that shares its snapshot, preview, concurrency, rollback, and publication safeguards. The compiler remains UI-independent, while a mutating CLI is deferred until it can use the same reviewed write implementation.
+_Avoid_: web-only compiler, separate CLI writer, divergent publication path
+
+**Quick-entry profile manager**:
+The required first-version reviewed interface for listing effective aliases and templates and creating, superseding, or retiring their dated Beancount `custom` directives with account completion and validation. Direct source editing remains an advanced path to the same representation.
+_Avoid_: hand-authored-only profile, hidden preference editor, destructive profile mutation
+
+**Versioned quick-entry profile schema**:
+The public, ledger-embedded representation whose standard Beancount `custom` type names carry an explicit schema version and whose fields use typed values and directive metadata. Unsupported versions are diagnosed and ignored by compilation; incompatible evolution receives a new version rather than changing an existing meaning.
+_Avoid_: unversioned custom contract, JSON payload, silent schema reinterpretation
+
+**Quick-entry profile diagnostic**:
+A non-accounting problem in syntactically valid quick-entry-profile configuration that disables only the affected rule or quick-entry publication. It never invalidates the ledger snapshot or core reports; ordinary Beancount syntax errors retain their normal blocking behavior.
+_Avoid_: ledger-blocking profile error, silently ignored rule, accounting diagnostic
+
+**Quick-entry append placement**:
+The first-version rule that publishes a confirmed batch only at the end of its visible target file and warns when its date predates that file's latest transaction. It never guesses document sections or chronologically reorders source content.
+_Avoid_: automatic chronological insertion, section inference, source reordering
+
+**Single-target quick-entry batch**:
+A quick-entry batch whose transactions all publish to one visible target file in one atomic write and one undo boundary. Templates cannot override the batch target; capture for another file requires another batch.
+_Avoid_: cross-file quick batch, template-routed write, partial multi-file rollback
+
+**Ephemeral quick-entry draft**:
+Unconfirmed notation retained only in the current page's memory, with a loss warning on dismissal and immediate clearing after successful publication. It is never written to browser persistence, server files, logs, or the source ledger and does not survive reload or restart.
+_Avoid_: recovered DSL draft, local-storage capture history, server-side shorthand queue
+
+**Portable quick-entry syntax**:
+The locale-independent lexical form that uses ungrouped decimal amounts, canonical commodities, and fixed ASCII structure symbols while permitting Unicode in aliases and descriptive text. Interface guidance is localized, but changing display locale never changes compilation.
+_Avoid_: locale-sensitive amount, translated operator, display-driven parsing
+
+**Explicit quick-entry output**:
+The canonical Beancount transaction emitted with both source and destination posting amounts and commodities written explicitly in value-flow order. Generated source remains fully readable and auditable without relying on balance interpolation or OrangeCount-specific metadata.
+_Avoid_: elided balancing amount, generated private metadata, opaque posting order
+
+**Quick-entry undo**:
+The reviewed restoration of the current web session's most recently published quick-entry batch, available only while its resulting ledger snapshot remains current. It previews the exact removal and uses the atomic, backed-up, revalidated write path; later ledger changes require manual correction instead.
+_Avoid_: general history, automatic merge, unconditional rollback
+
 **Core-derived report**:
 A report whose result can be obtained solely from the v3 source ledger and its explicitly supported options, without executing a plugin or reading an OrangeCount-specific extension.
 _Avoid_: plugin report, proprietary report
@@ -143,6 +231,54 @@ _Avoid_: budget plugin, accounting balance, proprietary budget model
 **Diagnostic**:
 An actionable explanation of a compatibility or accounting problem, anchored to its source span and any related ledger locations.
 _Avoid_: parser error, warning text
+
+**Repair guidance**:
+The user-facing, non-mutating explanation attached to a diagnostic that identifies the cause, relevant ledger context, and a safe next edit for the ledger owner to make. It never changes a source ledger or replaces accounting judgment.
+_Avoid_: auto-fix, automatic repair, write-back
+
+**Blocking ledger problem**:
+A source-ledger problem that prevents OrangeCount from producing a valid ledger snapshot, including invalid syntax and failed core accounting validation. It is the first repair-guidance scope; compatibility migration and query/report problems follow later.
+_Avoid_: common error, warning, migration issue
+
+**Web-first repair experience**:
+The delivery model in which the web interface provides the full repair guidance for a blocking ledger problem, while the CLI exposes its concise, script-friendly counterpart. Both representations derive from the same guidance content and diagnostic code.
+_Avoid_: web-only help, separate CLI documentation, divergent advice
+
+**Non-prescriptive repair guidance**:
+Repair guidance that identifies the ledger construct to inspect and may show generic before-and-after examples, but never infers a ledger owner's account, amount, commodity, or accounting intent. It provides no one-click or directly applicable source-ledger change.
+_Avoid_: auto-fix, generated patch, prescriptive bookkeeping
+
+**Complete blocking-guidance coverage**:
+The release condition that every currently emitted error-severity diagnostic code has repair guidance. A code may use a documented generic fallback only while it is not part of the released error catalogue.
+_Avoid_: best-effort help, selected-error coverage, silent fallback
+
+**Repair-guidance anatomy**:
+The common content structure for repair guidance: what happened, why it blocks the ledger, where to inspect, how to check or modify it safely, and a generic example with a revalidation next step. The web interface initially shows the conclusion and source locations; the CLI shows a concise action and help topic.
+_Avoid_: unstructured error article, prose-only error text, full help dump
+
+**Localized repair guidance**:
+Repair guidance whose complete anatomy, examples, and concise CLI action are shipped in every supported display locale. Beancount directives, account names, and diagnostic codes remain canonical rather than translated.
+_Avoid_: English fallback in a released locale, translated directives, partial help translation
+
+**Offline repair knowledge base**:
+The versioned, bundled collection of repair-guidance topics keyed by stable diagnostic code. It is accessible through local web deep links and CLI topic identifiers without network, external AI, or third-party documentation dependencies.
+_Avoid_: online-only manual, external-doc redirect, runtime knowledge lookup
+
+**Repair order**:
+The user-facing ordering that presents source-graph, encoding, and syntax problems as the first repair batch, then asks the ledger owner to revalidate before acting on account, transaction, assertion, inventory, or option problems. It retains every diagnostic and preserves source ordering within each batch; it is not a claim of exact causality.
+_Avoid_: hidden diagnostics, causal-proof ordering, source-order-only triage
+
+**Local repair context**:
+The on-demand display of the diagnostic line, adjacent source lines, and related locations within the local web session. It is never added to diagnostics transport, URLs, logs, committed screenshots, or bundled help topics; the CLI provides locations without source excerpts.
+_Avoid_: diagnostic payload excerpt, logged ledger context, remote source preview
+
+**Static first-version guidance**:
+The first release of repair guidance uses stable diagnostic codes, source locations, local repair context, and generic examples only. Ledger-specific computed explanations are deferred until each fact can be independently validated and privacy-bounded.
+_Avoid_: dynamic repair facts, inferred adjustment, ledger-specific fix recommendation
+
+**Repair-guidance release gate**:
+The acceptance condition requiring complete bilingual guidance for every released error code, a triggering fixture and consistent web/CLI/deep-link behavior for each topic, local-only source context, no network requests, and representative successful revalidation after following the guidance.
+_Avoid_: content-only review, untested help page, partial-code release
 
 **Ledger snapshot**:
 An immutable, fully evaluated view of a source ledger that the interface can safely query. A failed reload never replaces the most recent valid snapshot.

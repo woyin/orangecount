@@ -27,6 +27,7 @@ import (
 	"orangecount/internal/diagnostic"
 	"orangecount/internal/ledger"
 	"orangecount/internal/query"
+	"orangecount/internal/repairguidance"
 	"orangecount/internal/report"
 	"orangecount/internal/snapshot"
 	"orangecount/internal/source"
@@ -60,6 +61,8 @@ type Server struct {
 	optionsMu sync.RWMutex
 	options   map[string]string
 	previews  *importPreviewStore
+	quickPreviews *quickPreviewStore
+	quickLastBatch *quickBatchRecord
 }
 
 func NewServer(config Config) (*Server, error) {
@@ -73,7 +76,7 @@ func NewServer(config Config) (*Server, error) {
 	if config.Store == nil {
 		return nil, fmt.Errorf("serve requires a snapshot store")
 	}
-	server := &Server{store: config.Store, roots: config.DocumentRoots, addr: addr, ready: make(chan struct{}), options: make(map[string]string), previews: newImportPreviewStore()}
+	server := &Server{store: config.Store, roots: config.DocumentRoots, addr: addr, ready: make(chan struct{}), options: make(map[string]string), previews: newImportPreviewStore(), quickPreviews: newQuickPreviewStore()}
 	server.http = &http.Server{Handler: server.Handler(), ReadHeaderTimeout: 5 * time.Second}
 	return server, nil
 }
@@ -83,6 +86,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/", s.handleIndex)
 	mux.HandleFunc("/api/v1/status", s.handleStatus)
 	mux.HandleFunc("/api/v1/diagnostics", s.handleDiagnostics)
+	mux.HandleFunc("/api/v1/diagnostics/context", s.handleDiagnosticContext)
 	mux.HandleFunc("/api/v1/query", s.handleQuery)
 	mux.HandleFunc("/api/v1/source", s.handleSource)
 	mux.HandleFunc("/api/v1/editor", s.handleEditor)
@@ -204,7 +208,7 @@ func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 	// The adapter is read-only except for the reviewed write paths:
 	// add-entries (ledger append), document (attachment upload), and
 	// move-document (attachment relocation).
-	if r.Method != http.MethodGet && !(r.Method == http.MethodPost && (resource == "add-entries" || resource == "document" || resource == "move-document")) {
+	if r.Method != http.MethodGet && !(r.Method == http.MethodPost && (resource == "add-entries" || resource == "document" || resource == "move-document" || resource == "quick-preview" || resource == "quick-commit" || resource == "quick-undo" || resource == "quick-profile" || resource == "quick-profile-save")) {
 		w.Header().Set("Allow", "GET")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -241,9 +245,19 @@ func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 			FavaOptions map[string]string `json:"fava_options"`
 		}{Options: options, FavaOptions: map[string]string{"locale": "en", "theme": "system"}}, current.BuiltAt))
 	case "help":
+		if topic := strings.TrimSpace(r.URL.Query().Get("topic")); topic != "" {
+			code := strings.TrimPrefix(topic, "diagnostics/")
+			guide, ok := repairguidance.Lookup(code, requestedLocale(r))
+			if !ok || topic != guide.Topic {
+				writeAPIError(w, http.StatusNotFound, helpTopicNotFoundMessage(requestedLocale(r)))
+				return
+			}
+			writeJSON(w, favaadapter.NewEnvelope(guide, current.BuiltAt))
+			return
+		}
 		writeJSON(w, favaadapter.NewEnvelope(struct {
 			Sections []map[string]string `json:"sections"`
-		}{Sections: helpSections()}, current.BuiltAt))
+		}{Sections: helpSections(requestedLocale(r))}, current.BuiltAt))
 	case "diagnostics":
 		locale := requestedLocale(r)
 		graph := current.Graph()
@@ -432,6 +446,16 @@ func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 			SnapshotID string `json:"snapshot_id"`
 			Backup     string `json:"backup"`
 		}{Published: true, SnapshotID: result.Snapshot.ID, Backup: backup})
+	case "quick-preview":
+		s.handleQuickPreview(w, r, current)
+	case "quick-commit":
+		s.handleQuickCommit(w, r, current)
+	case "quick-undo":
+		s.handleQuickUndo(w, r, current)
+	case "quick-profile":
+		s.handleQuickProfile(w, r, current)
+	case "quick-profile-save":
+		s.handleQuickProfileSave(w, r, current)
 	case "document":
 		s.handleDocumentUpload(w, r, current)
 	case "move-document":
@@ -570,16 +594,72 @@ func (s *Server) handleDiagnostics(w http.ResponseWriter, r *http.Request) {
 	}
 	locale := requestedLocale(r)
 	diagnostics := s.store.Diagnostics()
-	var graph *source.Graph
-	if current := s.store.Current(); current != nil {
-		graph = current.Graph()
-	}
+	graph := s.store.LatestGraph()
 	localized := make([]diagnostic.Diagnostic, len(diagnostics))
 	for i, value := range diagnostics {
 		localized[i] = diagnostic.Localize(value, locale)
 		localized[i].Path = displayDiagnosticPath(localized[i], graph)
 	}
 	writeJSON(w, localized)
+}
+
+type diagnosticContextLine struct {
+	Line    int    `json:"line"`
+	Content string `json:"content"`
+}
+
+type diagnosticContextResponse struct {
+	Available bool                    `json:"available"`
+	Path      string                  `json:"path,omitempty"`
+	FocusLine int                     `json:"focus_line,omitempty"`
+	Lines     []diagnosticContextLine `json:"lines,omitempty"`
+	Reason    string                  `json:"reason,omitempty"`
+}
+
+func (s *Server) handleDiagnosticContext(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		w.Header().Set("Allow", "GET")
+		w.WriteHeader(http.StatusMethodNotAllowed)
+		return
+	}
+	path := strings.TrimSpace(r.URL.Query().Get("path"))
+	line, err := strconv.Atoi(strings.TrimSpace(r.URL.Query().Get("line")))
+	if path == "" || filepath.IsAbs(path) || err != nil || line <= 0 {
+		writeAPIError(w, http.StatusBadRequest, "path and positive line are required")
+		return
+	}
+	graph := s.store.LatestGraph()
+	if graph == nil {
+		writeJSON(w, diagnosticContextResponse{
+			Available: false,
+			Path:      source.SafeDisplayPath(path),
+			Reason:    diagnosticContextUnavailableReason(requestedLocale(r)),
+		})
+		return
+	}
+	file, display, ok := graphFile(graph, path)
+	if !ok {
+		writeAPIError(w, http.StatusNotFound, "source file is not in the current include graph")
+		return
+	}
+	lines := strings.Split(string(file.Data), "\n")
+	if line > len(lines) {
+		writeAPIError(w, http.StatusBadRequest, "line is outside the source file")
+		return
+	}
+	start := line - 1
+	if start > 0 {
+		start--
+	}
+	end := line + 1
+	if end > len(lines) {
+		end = len(lines)
+	}
+	context := make([]diagnosticContextLine, 0, end-start)
+	for index := start; index < end; index++ {
+		context = append(context, diagnosticContextLine{Line: index + 1, Content: lines[index]})
+	}
+	writeJSON(w, diagnosticContextResponse{Available: true, Path: display, FocusLine: line, Lines: context})
 }
 
 func (s *Server) handleReport(w http.ResponseWriter, r *http.Request) {
@@ -1744,17 +1824,32 @@ func validateLocalOption(key, value string) error {
 	return nil
 }
 
-func helpSections() []map[string]string {
-	return []map[string]string{
-		{"id": "navigation", "title": "Navigation", "body": "Use the sidebar or the menu button to move between reports."},
-		{"id": "filters", "title": "Filters", "body": "Global time, account, and text filters are bookmarkable URL state."},
-		{"id": "options", "title": "Options", "body": "The color scheme, locale, and fava options live on the Options page. Beancount options are declared in the ledger and shown there read-only."},
-		{"id": "editor", "title": "Editor safety", "body": "Validate before saving. Saves are atomic, backed up, and revalidated before publication."},
-		{"id": "import", "title": "Import review", "body": "Preview imported postings and explicitly commit them to a selected ledger file."},
-		{"id": "prices", "title": "Local prices", "body": "Market valuation uses only price directives in the local ledger. Missing quotes are shown as unavailable; no external provider is contacted."},
-		{"id": "plugins", "title": "Plugin migration", "body": "Python plugins are never executed. Plugin directives remain visible as diagnostics so they can be migrated explicitly."},
-		{"id": "shortcuts", "title": "Keyboard", "body": "Tab reaches controls; Enter applies filters and runs queries."},
+func helpSections(locales ...string) []map[string]string {
+	locale := repairguidance.LocaleEnglish
+	if len(locales) > 0 && locales[0] == repairguidance.LocaleChinese {
+		locale = repairguidance.LocaleChinese
 	}
+	sections := []struct{ id, enTitle, enBody, zhTitle, zhBody string }{
+		{"navigation", "Navigation", "Use the sidebar or the menu button to move between reports.", "导航", "使用侧边栏或菜单按钮在报表之间移动。"},
+		{"filters", "Filters", "Global time, account, and text filters are bookmarkable URL state.", "筛选", "全局时间、账户和文本筛选会保存在可收藏的 URL 状态中。"},
+		{"options", "Options", "The color scheme, locale, and fava options live on the Options page. Beancount options are declared in the ledger and shown there read-only.", "选项", "配色、语言和 Fava 选项位于选项页。Beancount 选项在账本中声明，并以只读方式显示。"},
+		{"editor", "Editor safety", "Validate before saving. Saves are atomic, backed up, and revalidated before publication.", "编辑器安全", "保存前会验证。保存采用原子写入、备份，并在发布前重新验证。"},
+		{"import", "Import review", "Preview imported postings and explicitly commit them to a selected ledger file.", "导入审核", "预览导入的记账，并明确提交到选定的账本文件。"},
+		{"prices", "Local prices", "Market valuation uses only price directives in the local ledger. Missing quotes are shown as unavailable; no external provider is contacted.", "本地价格", "市值估算只使用本地账本中的 price 指令。缺少报价时显示不可用；不会联系外部服务。"},
+		{"plugins", "Plugin migration", "Python plugins are never executed. Plugin directives remain visible as diagnostics so they can be migrated explicitly.", "插件迁移", "不会执行 Python 插件。插件指令会保留为诊断，以便明确迁移。"},
+		{"diagnostics", "Diagnostics", "Open a diagnostic to see its repair order, safe checks, generic example, and local source context.", "诊断", "打开诊断可查看修复顺序、安全检查、通用示例和本地源上下文。"},
+		{"shortcuts", "Keyboard", "Tab reaches controls; Enter applies filters and runs queries.", "键盘", "使用 Tab 到达控件，使用 Enter 应用筛选并运行查询。"},
+		{"quick-entry", "Quick Entry", "Use the Quick tab (a q) to capture two-posting transactions with compact shorthand. Template form: 'lunch 28 @wechat'. Explicit form: '28 CNY @source -> @dest : narration'. Press Ctrl+Enter to preview, then Ctrl+Enter again to commit. Aliases and templates are defined in the ledger as dated custom directives; manage them under /quick-profile.", "速记", "使用 Quick 标签页（快捷键 a q）以紧凑语法快速记录双过账交易。模板形式：'午餐 28 @微信'。显式形式：'28 CNY @微信 -> @餐饮 : 摘要'。按 Ctrl+Enter 预览，再按 Ctrl+Enter 确认提交。别名和模板在账本中定义为带日期的 custom 指令；可在 /quick-profile 管理。"},
+	}
+	result := make([]map[string]string, 0, len(sections))
+	for _, section := range sections {
+		title, body := section.enTitle, section.enBody
+		if locale == repairguidance.LocaleChinese {
+			title, body = section.zhTitle, section.zhBody
+		}
+		result = append(result, map[string]string{"id": section.id, "title": title, "body": body})
+	}
+	return result
 }
 
 func (s *Server) handleHelp(w http.ResponseWriter, r *http.Request) {
@@ -1763,9 +1858,19 @@ func (s *Server) handleHelp(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
+	if topic := strings.TrimSpace(r.URL.Query().Get("topic")); topic != "" {
+		code := strings.TrimPrefix(topic, "diagnostics/")
+		guide, ok := repairguidance.Lookup(code, requestedLocale(r))
+		if !ok || topic != guide.Topic {
+			writeAPIError(w, http.StatusNotFound, helpTopicNotFoundMessage(requestedLocale(r)))
+			return
+		}
+		writeJSON(w, guide)
+		return
+	}
 	writeJSON(w, struct {
 		Sections []map[string]string `json:"sections"`
-	}{Sections: helpSections()})
+	}{Sections: helpSections(requestedLocale(r))})
 }
 
 func displayDiagnosticPath(value diagnostic.Diagnostic, graph *source.Graph) string {
@@ -1778,6 +1883,20 @@ func displayDiagnosticPath(value diagnostic.Diagnostic, graph *source.Graph) str
 		}
 	}
 	return source.SafeDisplayPath(value.Path)
+}
+
+func diagnosticContextUnavailableReason(locale string) string {
+	if locale == repairguidance.LocaleChinese {
+		return "当前失败构建没有可安全展示的源文件上下文。请先修复 include 或文件读取问题，然后重新检查。"
+	}
+	return "Source context is unavailable for the failed build. Fix the include or file-read problem, then check again."
+}
+
+func helpTopicNotFoundMessage(locale string) string {
+	if locale == repairguidance.LocaleChinese {
+		return "找不到本地帮助主题。请检查诊断代码。"
+	}
+	return "local help topic not found; check the diagnostic code"
 }
 
 func (s *Server) uiAsset(name string) string {

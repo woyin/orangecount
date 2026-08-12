@@ -89,6 +89,36 @@ addresses are rejected. Stop the local session with Ctrl-C.
 The web UI has an English/Simplified Chinese selector (or `?locale=zh-CN`),
 and the CLI accepts `--locale en|zh-CN` for rendered diagnostics.
 
+## Quick Entry
+
+Quick Entry is a fast capture path for the most common daily bookkeeping:
+two-posting expenses, income, and transfers. It compiles a compact shorthand
+into canonical Beancount transactions through the same reviewed write path
+(preview, atomic write, backup, revalidate) as the Editor and Add Entry modal.
+
+The shorthand has two forms. The compact template form:
+
+```text
+午餐 28 @微信
+```
+
+expands using aliases and templates defined in your ledger as dated Beancount
+`custom` directives (see [ADR-0043](docs/adr/0043-version-the-ledger-embedded-quick-entry-profile.md)).
+The explicit form:
+
+```text
+28 CNY @微信 -> @餐饮 : 工作午餐 #trip
+```
+
+compiles directly without any template. In both cases, amounts are always
+positive; the arrow `->` expresses value flow from source to destination.
+Press Ctrl+Enter to preview, then Ctrl+Enter again to commit. The last batch
+can be undone while the snapshot is still current.
+
+Open Quick Entry from the sidebar Quick button, the Add Entry modal's Quick
+tab, or the keyboard shortcut `a q`. Manage aliases and templates under
+`/quick-profile` in the web UI.
+
 ## Privacy and offline behavior
 
 The runtime reads source files locally, never edits them, makes no outbound

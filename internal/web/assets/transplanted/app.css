@@ -975,29 +975,33 @@ img.svelte-1jfq29f {
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/ErrorsReport.esbuild-svelte-fake-css */
-.errors-table.svelte-1tweq4j {
+.errors-table.svelte-13lbwf2 {
   min-width: 100%;
 }
-.errors-table.svelte-1tweq4j .num:where(.svelte-1tweq4j) {
+.errors-table.svelte-13lbwf2 .num:where(.svelte-13lbwf2) {
   text-align: right;
 }
-.errors-table.svelte-1tweq4j .pre:where(.svelte-1tweq4j) {
+.errors-table.svelte-13lbwf2 .pre:where(.svelte-13lbwf2) {
   white-space: pre-wrap;
   font-family: var(--font-family-monospace, monospace);
 }
-.errors-table.svelte-1tweq4j tr.warning:where(.svelte-1tweq4j) td:where(.svelte-1tweq4j) {
+.errors-table.svelte-13lbwf2 tr.warning:where(.svelte-13lbwf2) td:where(.svelte-13lbwf2) {
   color: var(--text-color-light);
 }
-.errors-table.svelte-1tweq4j .code:where(.svelte-1tweq4j) {
+.errors-table.svelte-13lbwf2 .code:where(.svelte-13lbwf2) {
   color: var(--text-color-lightest);
 }
-.sort-toggle.svelte-1tweq4j {
+.sort-toggle.svelte-13lbwf2 {
   padding: 0;
   font: inherit;
   color: inherit;
   cursor: pointer;
   background: transparent;
   border: 0;
+}
+.repair-link.svelte-13lbwf2 {
+  font-family: var(--font-family, inherit);
+  font-size: 0.9em;
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/charts/ScatterPlot.esbuild-svelte-fake-css */
@@ -1124,37 +1128,136 @@ img.svelte-1jfq29f {
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/UtilityReport.esbuild-svelte-fake-css */
-.source-list.svelte-1hd97ci,
-.help-index.svelte-1hd97ci,
-.help-body.svelte-1hd97ci,
-table.svelte-1hd97ci,
-pre.svelte-1hd97ci {
+.source-list.svelte-18lmd9y,
+.help-index.svelte-18lmd9y,
+.help-body.svelte-18lmd9y,
+table.svelte-18lmd9y,
+pre.svelte-18lmd9y {
   max-width: 70rem;
 }
-.help-index.svelte-1hd97ci {
+.diagnostic-group.svelte-18lmd9y {
+  max-width: 70rem;
+  margin: 1rem 0 1.5rem;
+}
+.diagnostic-card.svelte-18lmd9y {
+  padding: 0.75rem;
+  margin: 0.5rem 0;
+  border: 1px solid var(--border);
+}
+.diagnostic-card.svelte-18lmd9y header:where(.svelte-18lmd9y) p:where(.svelte-18lmd9y) {
+  margin: 0.35rem 0 0.75rem;
+}
+.diagnostic-card.svelte-18lmd9y code:where(.svelte-18lmd9y) {
+  color: var(--text-color-lightest);
+}
+.repair-guide.svelte-18lmd9y {
+  max-width: 70rem;
+}
+.repair-guide.compact.svelte-18lmd9y {
+  padding-top: 0.75rem;
+}
+.repair-action.svelte-18lmd9y {
+  color: var(--link-color);
+}
+.repair-guide.svelte-18lmd9y h3:where(.svelte-18lmd9y),
+.repair-guide.svelte-18lmd9y h4:where(.svelte-18lmd9y) {
+  margin-bottom: 0.25rem;
+}
+.repair-guide.svelte-18lmd9y p:where(.svelte-18lmd9y),
+.repair-guide.svelte-18lmd9y ul:where(.svelte-18lmd9y) {
+  margin-top: 0.25rem;
+}
+.example-grid.svelte-18lmd9y {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.example-grid.svelte-18lmd9y pre:where(.svelte-18lmd9y) {
+  margin: 0;
+}
+.context-snippet.svelte-18lmd9y {
+  border-left: 3px solid var(--accent, #d97706);
+}
+@media (max-width: 40rem) {
+  .example-grid.svelte-18lmd9y {
+    grid-template-columns: 1fr;
+  }
+}
+.help-index.svelte-18lmd9y {
   padding-left: 1.5rem;
 }
-.source-list.svelte-1hd97ci {
+.source-list.svelte-18lmd9y {
   padding-left: 1.5rem;
 }
-.mode-switch.svelte-1hd97ci input:where(.svelte-1hd97ci) {
+.mode-switch.svelte-18lmd9y input:where(.svelte-18lmd9y) {
   display: none;
 }
-.mode-switch.svelte-1hd97ci label:where(.svelte-1hd97ci) + label:where(.svelte-1hd97ci) {
+.mode-switch.svelte-18lmd9y label:where(.svelte-18lmd9y) + label:where(.svelte-18lmd9y) {
   margin-left: 0.125rem;
 }
-.options-table.svelte-1hd97ci td:where(.svelte-1hd97ci):nth-child(1) {
+.options-table.svelte-18lmd9y td:where(.svelte-18lmd9y):nth-child(1) {
   font-weight: 500;
 }
-.options-table.svelte-1hd97ci pre:where(.svelte-1hd97ci) {
+.options-table.svelte-18lmd9y pre:where(.svelte-18lmd9y) {
   padding: 0;
   margin: 0;
   background: transparent;
 }
-pre.svelte-1hd97ci {
+pre.svelte-18lmd9y {
   padding: 0.75rem;
   overflow: auto;
   background: var(--code-background);
+}
+
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/QuickProfileReport.esbuild-svelte-fake-css */
+.profile-section.svelte-10cxupn {
+  margin-bottom: 1.5em;
+}
+.problems.svelte-10cxupn {
+  margin-bottom: 1em;
+}
+.problem.svelte-10cxupn {
+  padding: 0.4em 0.6em;
+  margin-bottom: 0.3em;
+  background: rgba(255, 140, 0, 0.1);
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+.rules-table.svelte-10cxupn {
+  width: 100%;
+  border-collapse: collapse;
+}
+.rules-table.svelte-10cxupn th:where(.svelte-10cxupn),
+.rules-table.svelte-10cxupn td:where(.svelte-10cxupn) {
+  text-align: left;
+  padding: 0.3em 0.5em;
+  border-bottom: 1px solid var(--border-color, #eee);
+  font-size: 0.9em;
+}
+.add-rule-form.svelte-10cxupn {
+  border-top: 1px solid var(--border-color, #ccc);
+  padding-top: 1em;
+}
+.add-rule-form.svelte-10cxupn h3:where(.svelte-10cxupn) {
+  margin: 0 0 0.5em;
+  font-size: 1em;
+}
+.form-row.svelte-10cxupn {
+  display: flex;
+  gap: 0.6em;
+  margin-bottom: 0.5em;
+  flex-wrap: wrap;
+}
+.form-row.svelte-10cxupn label:where(.svelte-10cxupn) {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+  font-size: 0.85em;
+  flex: 1;
+}
+.form-row.svelte-10cxupn input:where(.svelte-10cxupn),
+.form-row.svelte-10cxupn select:where(.svelte-10cxupn) {
+  min-width: 8em;
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/components/Sidebar.esbuild-svelte-fake-css */
@@ -1288,6 +1391,106 @@ aside.svelte-e0j49v {
 }
 .aside-buttons.svelte-e0j49v button:where(.svelte-e0j49v) {
   font-size: 1.2rem;
+}
+
+/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/modals/QuickEntryPanel.esbuild-svelte-fake-css */
+.quick-entry-panel.svelte-118jgj0 {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6em;
+}
+.field-row.svelte-118jgj0 {
+  display: flex;
+  gap: 0.6em;
+  align-items: flex-end;
+}
+.field.svelte-118jgj0 {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+  flex: 1;
+}
+.field.narrow.svelte-118jgj0 {
+  flex: 0 0 auto;
+}
+.field.svelte-118jgj0 span:where(.svelte-118jgj0) {
+  font-size: 0.85em;
+  opacity: 0.7;
+}
+.undo-btn.svelte-118jgj0 {
+  flex: 0 0 auto;
+  align-self: flex-end;
+}
+textarea.svelte-118jgj0 {
+  width: 100%;
+  font-family: var(--mono-font, monospace);
+  font-size: 0.9em;
+  resize: vertical;
+}
+.actions.svelte-118jgj0 {
+  display: flex;
+  gap: 0.5em;
+  align-items: center;
+}
+.actions.svelte-118jgj0 .hint:where(.svelte-118jgj0) {
+  font-size: 0.8em;
+  opacity: 0.6;
+}
+button.primary.svelte-118jgj0 {
+  font-weight: 600;
+}
+.preview-area.svelte-118jgj0 {
+  border-top: 1px solid var(--border-color, #ccc);
+  padding-top: 0.6em;
+  max-height: 40vh;
+  overflow-y: auto;
+}
+.preview-area.svelte-118jgj0 h4:where(.svelte-118jgj0) {
+  margin: 0 0 0.4em;
+  font-size: 0.9em;
+}
+.preview-line.svelte-118jgj0 {
+  margin-bottom: 0.6em;
+  padding: 0.4em;
+  border-radius: 3px;
+  background: var(--background-alt, rgba(0,0,0,0.03));
+}
+.preview-line.has-error.svelte-118jgj0 {
+  background: rgba(255, 0, 0, 0.05);
+}
+.line-source.svelte-118jgj0 {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+}
+.line-number.svelte-118jgj0 {
+  font-size: 0.8em;
+  opacity: 0.5;
+  min-width: 1.5em;
+}
+.line-source.svelte-118jgj0 code:where(.svelte-118jgj0) {
+  font-family: var(--mono-font, monospace);
+  font-size: 0.85em;
+}
+.duplicate-badge.svelte-118jgj0 {
+  color: var(--warning-color, #c80);
+  cursor: help;
+}
+.line-errors.svelte-118jgj0 {
+  margin: 0.3em 0 0;
+  padding-left: 1.5em;
+  color: var(--error-color, #c00);
+  font-size: 0.85em;
+}
+.line-preview.svelte-118jgj0 {
+  margin: 0.3em 0 0;
+  padding: 0.3em;
+  font-family: var(--mono-font, monospace);
+  font-size: 0.82em;
+  background: var(--background, #fff);
+  border: 1px solid var(--border-color, #eee);
+  border-radius: 2px;
+  white-space: pre-wrap;
 }
 
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/modals/AddEntryModal.esbuild-svelte-fake-css */

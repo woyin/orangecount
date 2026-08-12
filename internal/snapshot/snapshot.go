@@ -42,7 +42,11 @@ type Snapshot struct {
 }
 
 type BuildResult struct {
-	Snapshot    *Snapshot
+	Snapshot *Snapshot
+	// Graph is the source graph from the latest attempted build. It is kept
+	// even when Snapshot is nil so local diagnostics can explain a failed
+	// reload without publishing an invalid accounting view.
+	Graph       *source.Graph
 	Diagnostics []diagnostic.Diagnostic
 	Err         error
 }
@@ -56,7 +60,10 @@ func BuildWithOptions(entry string, options BuildOptions) BuildResult {
 	if err != nil {
 		bag := diagnostic.Bag{}
 		bag.Add(diagnostic.New("E-INCLUDE-READ", diagnostic.Error, source.Span{}).WithPath(entry))
-		return BuildResult{Diagnostics: bag.All(), Err: err}
+		// LoadGraph can still return a partial graph (for example, when an
+		// included file is unreadable). Keep it available for bounded source
+		// context even though no accounting snapshot may be published.
+		return BuildResult{Graph: graph, Diagnostics: bag.All(), Err: err}
 	}
 	parsed, parseBag := ledger.ParseGraph(graph)
 	evaluation := ledger.Evaluate(graph, parsed, options.Evaluation)
@@ -67,10 +74,10 @@ func BuildWithOptions(entry string, options BuildOptions) BuildResult {
 	}
 	diagnostics := bag.All()
 	if bag.HasErrors() || !evaluation.Valid {
-		return BuildResult{Diagnostics: diagnostics}
+		return BuildResult{Graph: graph, Diagnostics: diagnostics}
 	}
 	id := snapshotID(graph)
-	return BuildResult{Snapshot: &Snapshot{ID: id, BuiltAt: time.Now().UTC(), EntryPath: graph.Path(graph.Entry), graph: graph, parsed: parsed, evaluation: evaluation, diagnostics: append([]diagnostic.Diagnostic(nil), diagnostics...)}, Diagnostics: diagnostics}
+	return BuildResult{Snapshot: &Snapshot{ID: id, BuiltAt: time.Now().UTC(), EntryPath: graph.Path(graph.Entry), graph: graph, parsed: parsed, evaluation: evaluation, diagnostics: append([]diagnostic.Diagnostic(nil), diagnostics...)}, Graph: graph, Diagnostics: diagnostics}
 }
 
 func snapshotID(graph *source.Graph) string {
@@ -162,10 +169,17 @@ func cloneEvaluation(value ledger.Evaluation) ledger.Evaluation {
 type Store struct {
 	mu          sync.RWMutex
 	current     *Snapshot
+	attempted   *source.Graph
 	diagnostics []diagnostic.Diagnostic
 }
 
-func NewStore(initial *Snapshot) *Store { return &Store{current: initial} }
+func NewStore(initial *Snapshot) *Store {
+	store := &Store{current: initial}
+	if initial != nil {
+		store.attempted = initial.Graph()
+	}
+	return store
+}
 
 func (s *Store) Current() *Snapshot {
 	if s == nil {
@@ -185,6 +199,18 @@ func (s *Store) Diagnostics() []diagnostic.Diagnostic {
 	return append([]diagnostic.Diagnostic(nil), s.diagnostics...)
 }
 
+// LatestGraph returns the immutable source graph from the latest attempted
+// build. It may describe an invalid build and therefore must not be used as a
+// published accounting snapshot.
+func (s *Store) LatestGraph() *source.Graph {
+	if s == nil {
+		return nil
+	}
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return s.attempted
+}
+
 func (s *Store) Publish(candidate *Snapshot, diagnostics []diagnostic.Diagnostic) bool {
 	if s == nil || candidate == nil {
 		return false
@@ -192,6 +218,7 @@ func (s *Store) Publish(candidate *Snapshot, diagnostics []diagnostic.Diagnostic
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	s.current = candidate
+	s.attempted = candidate.Graph()
 	s.diagnostics = append([]diagnostic.Diagnostic(nil), diagnostics...)
 	return true
 }
@@ -199,6 +226,7 @@ func (s *Store) Publish(candidate *Snapshot, diagnostics []diagnostic.Diagnostic
 func (s *Store) Reload(entry string, options BuildOptions) BuildResult {
 	result := BuildWithOptions(entry, options)
 	s.mu.Lock()
+	s.attempted = result.Graph
 	s.diagnostics = append([]diagnostic.Diagnostic(nil), result.Diagnostics...)
 	if result.Snapshot != nil {
 		s.current = result.Snapshot

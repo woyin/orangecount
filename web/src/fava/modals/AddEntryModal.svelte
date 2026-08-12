@@ -28,14 +28,16 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
   import { PRIVATE_ADAPTER_BASE } from "../adapter-client";
   import { notify } from "../notifications";
   import AutocompleteInput from "../components/AutocompleteInput.svelte";
+  import QuickEntryPanel from "./QuickEntryPanel.svelte";
   import { translations, type Locale } from "../../translations";
+  // Locale is already imported above.
 
   export let locale = "en";
   export let onSaved: () => void = () => {};
   /** Known payees, used to autocomplete the payee field of a transaction. */
   export let payees: string[] = [];
 
-  type EntryType = "transaction" | "balance" | "note";
+  type EntryType = "transaction" | "balance" | "note" | "quick";
 
   interface PostingRow {
     account: string;
@@ -83,10 +85,15 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
   }
 
   function sync() {
-    shown = window.location.hash === "#add-transaction";
+    const hash = window.location.hash;
+    shown = hash === "#add-transaction" || hash === "#add-quick";
     if (shown) {
       error = "";
       continueAdding = storedContinue();
+      // If opened via the Quick hash, pre-select the Quick tab.
+      if (hash === "#add-quick") {
+        entryType = "quick";
+      }
       setTimeout(() => dateInput?.focus(), 0);
     }
   }
@@ -223,6 +230,7 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
         <button type="button" class:selected={entryType === "transaction"} on:click={() => setType("transaction")}>{t("transaction")}</button>
         <button type="button" class:selected={entryType === "balance"} on:click={() => setType("balance")}>{t("balance")}</button>
         <button type="button" class:selected={entryType === "note"} on:click={() => setType("note")}>{t("note")}</button>
+        <button type="button" class:selected={entryType === "quick"} on:click={() => setType("quick")}>{t("quickEntry")}</button>
       </h3>
       {#if error}
         <p class="error" role="alert">{error}</p>
@@ -306,6 +314,9 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
           <span>{t("comment")}</span>
           <input type="text" bind:value={comment} required autocomplete="off" />
         </div>
+      {/if}
+      {#if entryType === "quick"}
+        <QuickEntryPanel locale={locale as Locale} {onSaved} />
       {/if}
       <div class="actions">
         <span class="spacer"></span>

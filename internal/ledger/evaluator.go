@@ -224,6 +224,8 @@ func (e *evaluator) evaluateDirective(file *File, directive Directive) {
 			tolerance, err := ParseDecimal(d.Value)
 			if err != nil {
 				e.add("E-EVAL-OPTION", diagnostic.Error, d.Span(), e.pathFor(d.Span()))
+			} else if tolerance.Sign() < 0 {
+				e.add("E-EVAL-TOLERANCE", diagnostic.Error, d.Span(), e.pathFor(d.Span()))
 			} else {
 				e.options.DefaultTolerance = tolerance
 			}
@@ -932,6 +934,10 @@ func (e *evaluator) balance(d Balance) {
 	tolerance := e.options.DefaultTolerance
 	if d.Tolerance != nil {
 		tolerance = DecimalFromNumber(*d.Tolerance)
+		if tolerance.Sign() < 0 {
+			e.add("E-EVAL-TOLERANCE", diagnostic.Error, d.Span(), e.pathFor(d.Span()))
+			return
+		}
 	}
 	if tolerance.IsZero() && e.options.InferDecimalTolerance {
 		tolerance = inferredTolerance([]Posting{{Units: &d.Amount}})

@@ -192,6 +192,20 @@ func LocalizeCode(code, locale string) string {
 	return code
 }
 
+// ReleasedErrorCodes returns the stable error-severity codes in the built-in
+// diagnostic catalogue. Callers receive a sorted copy so coverage checks do
+// not depend on map iteration order.
+func ReleasedErrorCodes() []string {
+	codes := make([]string, 0, len(messages))
+	for code := range messages {
+		if strings.HasPrefix(code, "E-") {
+			codes = append(codes, code)
+		}
+	}
+	sort.Strings(codes)
+	return codes
+}
+
 func Localize(d Diagnostic, locale string) Diagnostic {
 	if d.MessageKey != "" {
 		d.Message = LocalizeCode(d.MessageKey, locale)

@@ -27,7 +27,7 @@ func TestRunCheckHumanAndJSON(t *testing.T) {
 	}
 	var out, errOut bytes.Buffer
 	code := run([]string{"check", "--locale", "zh-CN", entry}, &out, &errOut)
-	if code != 1 || !strings.Contains(out.String(), "日期无效") || errOut.Len() != 0 {
+	if code != 1 || !strings.Contains(out.String(), "日期无效") || !strings.Contains(out.String(), "help: diagnostics/E-PARSE-DATE") || errOut.Len() != 0 {
 		t.Fatalf("code=%d out=%q err=%q", code, out.String(), errOut.String())
 	}
 	out.Reset()
@@ -100,6 +100,28 @@ func TestServeHelpUsesFixedDefaultPort(t *testing.T) {
 	var out, errOut bytes.Buffer
 	if code := run([]string{"help"}, &out, &errOut); code != 0 || !strings.Contains(out.String(), defaultServeAddr) || errOut.Len() != 0 {
 		t.Fatalf("code=%d out=%q err=%q", code, out.String(), errOut.String())
+	}
+}
+
+func TestRunHelpTopicSupportsBothFlagOrdersAndLocales(t *testing.T) {
+	for _, args := range [][]string{
+		{"diagnostics/E-PARSE-DATE"},
+		{"diagnostics/E-PARSE-DATE", "--locale", "zh-CN"},
+		{"--locale", "zh-CN", "diagnostics/E-PARSE-DATE"},
+	} {
+		var out, errOut bytes.Buffer
+		if code := run(append([]string{"help"}, args...), &out, &errOut); code != 0 || !strings.Contains(out.String(), "diagnostics/E-PARSE-DATE") || errOut.Len() != 0 {
+			t.Fatalf("args=%v code=%d out=%q err=%q", args, code, out.String(), errOut.String())
+		}
+	}
+	var out, errOut bytes.Buffer
+	if code := run([]string{"help", "diagnostics/UNKNOWN"}, &out, &errOut); code != 1 || !strings.Contains(errOut.String(), "not found") {
+		t.Fatalf("unknown topic code=%d out=%q err=%q", code, out.String(), errOut.String())
+	}
+	out.Reset()
+	errOut.Reset()
+	if code := run([]string{"help", "--locale", "zh-CN", "diagnostics/UNKNOWN"}, &out, &errOut); code != 1 || !strings.Contains(errOut.String(), "找不到本地帮助主题") {
+		t.Fatalf("unknown localized topic code=%d out=%q err=%q", code, out.String(), errOut.String())
 	}
 }
 

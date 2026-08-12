@@ -92,7 +92,7 @@
             <td></td>
             <td class="num"></td>
           {/if}
-          <td class="pre">{#if error.code}<span class="code">{error.code}</span> {/if}{error.message}</td>
+          <td class="pre">{#if error.code}<span class="code">{error.code}</span> {/if}{error.message}{#if error.severity === "error" && error.code}<br /><a class="repair-link" href={`/help/diagnostics/${encodeURIComponent(error.code)}`}>{t("learnHowToFix")}</a>{/if}</td>
         </tr>
       {/each}
     </tbody>
@@ -130,5 +130,10 @@
     cursor: pointer;
     background: transparent;
     border: 0;
+  }
+
+  .repair-link {
+    font-family: var(--font-family, inherit);
+    font-size: 0.9em;
   }
 </style>

@@ -25,6 +25,7 @@ import (
 	"orangecount/internal/diagnostic"
 	"orangecount/internal/logging"
 	"orangecount/internal/query"
+	"orangecount/internal/repairguidance"
 	"orangecount/internal/snapshot"
 	"orangecount/internal/source"
 	"orangecount/internal/web"
@@ -59,10 +60,11 @@ func run(args []string, stdout, stderr io.Writer) int {
 }
 
 func runWithInput(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
-	if len(args) == 0 || args[0] == "help" || args[0] == "-h" || args[0] == "--help" {
+	if len(args) == 0 || args[0] == "-h" || args[0] == "--help" || (args[0] == "help" && len(args) == 1) {
 		fmt.Fprintln(stdout, "orangecount check [--locale en|zh-CN] [--json] <entry.bean>")
 		fmt.Fprintf(stdout, "orangecount serve [--addr %s] [--document-root DIR] <entry.bean>\n", defaultServeAddr)
 		fmt.Fprintln(stdout, "orangecount query [--locale en|zh-CN] [--format json|csv] <entry.bean> <query>")
+		fmt.Fprintln(stdout, "orangecount help [--locale en|zh-CN] diagnostics/<CODE>")
 		return 0
 	}
 	if args[0] == "version" || args[0] == "--version" {
@@ -70,6 +72,8 @@ func runWithInput(args []string, stdin io.Reader, stdout, stderr io.Writer) int 
 		return 0
 	}
 	switch args[0] {
+	case "help":
+		return runHelp(args[1:], stdout, stderr)
 	case "check":
 		return runCheck(args[1:], stdout, stderr)
 	case "serve":
@@ -80,6 +84,95 @@ func runWithInput(args []string, stdin io.Reader, stdout, stderr io.Writer) int 
 		fmt.Fprintf(stderr, "orangecount: unknown command %q\n", args[0])
 		return 2
 	}
+}
+
+func runHelp(args []string, stdout, stderr io.Writer) int {
+	args = normalizeHelpArgs(args)
+	fs := flag.NewFlagSet("help", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	locale := fs.String("locale", "en", "help display locale (en or zh-CN)")
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+	if *locale != repairguidance.LocaleEnglish && *locale != repairguidance.LocaleChinese {
+		fmt.Fprintf(stderr, "orangecount help: unsupported locale %q\n", *locale)
+		return 2
+	}
+	if fs.NArg() != 1 {
+		fmt.Fprintln(stderr, "orangecount help: expected a topic such as diagnostics/E-EVAL-UNBALANCED")
+		return 2
+	}
+	topic := strings.TrimSpace(fs.Arg(0))
+	if !strings.HasPrefix(topic, "diagnostics/") {
+		fmt.Fprintf(stderr, "orangecount help: unknown topic %q\n", topic)
+		return 1
+	}
+	code := strings.TrimPrefix(topic, "diagnostics/")
+	guide, ok := repairguidance.Lookup(code, *locale)
+	if !ok || guide.Topic != topic {
+		if *locale == repairguidance.LocaleChinese {
+			fmt.Fprintf(stderr, "orangecount help：找不到本地帮助主题 %q，请检查诊断代码。\n", topic)
+		} else {
+			fmt.Fprintf(stderr, "orangecount help: topic %q not found\n", topic)
+		}
+		return 1
+	}
+	return renderGuide(stdout, guide, *locale)
+}
+
+// normalizeHelpArgs keeps the help command friendly to both conventional Go
+// flag ordering and the documented `help diagnostics/<CODE> --locale ...`
+// spelling. The other subcommands retain their existing flag behavior.
+func normalizeHelpArgs(args []string) []string {
+	var flags, topics []string
+	for i := 0; i < len(args); i++ {
+		if args[i] == "--locale" && i+1 < len(args) {
+			flags = append(flags, args[i], args[i+1])
+			i++
+			continue
+		}
+		if strings.HasPrefix(args[i], "--locale=") {
+			flags = append(flags, args[i])
+			continue
+		}
+		topics = append(topics, args[i])
+	}
+	return append(flags, topics...)
+}
+
+func renderGuide(w io.Writer, guide repairguidance.Guide, locale string) int {
+	labels := map[string][2]string{
+		"topic":      {"Topic", "主题"},
+		"what":       {"What happened", "发生了什么"},
+		"why":        {"Why it blocks", "为什么阻塞"},
+		"inspect":    {"Where to inspect", "去哪里检查"},
+		"steps":      {"Safe checks and changes", "安全检查与修改"},
+		"example":    {"Generic example", "通用示例"},
+		"before":     {"Before", "修改前"},
+		"after":      {"After", "修改后"},
+		"note":       {"Note", "说明"},
+		"revalidate": {"Next step", "下一步"},
+	}
+	label := func(key string) string {
+		value := labels[key]
+		if locale == repairguidance.LocaleChinese {
+			return value[1]
+		}
+		return value[0]
+	}
+	fmt.Fprintf(w, "%s: %s\n\n", label("topic"), guide.Topic)
+	fmt.Fprintf(w, "%s\n%s\n\n", label("what"), guide.What)
+	fmt.Fprintf(w, "%s\n%s\n\n", label("why"), guide.Why)
+	fmt.Fprintf(w, "%s\n", label("inspect"))
+	for _, item := range guide.Inspect {
+		fmt.Fprintf(w, "- %s\n", item)
+	}
+	fmt.Fprintf(w, "\n%s\n", label("steps"))
+	for _, item := range guide.SafeSteps {
+		fmt.Fprintf(w, "- %s\n", item)
+	}
+	fmt.Fprintf(w, "\n%s\n%s:\n%s\n%s:\n%s\n%s:\n%s\n\n%s\n%s\n", label("example"), label("before"), guide.Example.Before, label("after"), guide.Example.After, label("note"), guide.Example.Note, label("revalidate"), guide.Revalidate)
+	return 0
 }
 
 func runQuery(args []string, stdout, stderr io.Writer) int {
@@ -166,7 +259,7 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 			fmt.Fprintln(stderr, err)
 			return 1
 		}
-	} else if err := diagnostic.RenderHuman(stdout, ds, *locale); err != nil {
+	} else if err := renderCheckHuman(stdout, ds, *locale); err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
@@ -174,6 +267,25 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 	return 0
+}
+
+func renderCheckHuman(w io.Writer, ds []diagnostic.Diagnostic, locale string) error {
+	if err := diagnostic.RenderHuman(w, ds, locale); err != nil {
+		return err
+	}
+	for _, value := range ds {
+		if value.Severity != diagnostic.Error {
+			continue
+		}
+		guide, ok := repairguidance.Lookup(value.Code, locale)
+		if !ok {
+			continue
+		}
+		if _, err := fmt.Fprintf(w, "  -> %s (help: %s)\n", guide.ShortAction, guide.Topic); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func runServe(args []string, stdin io.Reader, stdout, stderr io.Writer) int {

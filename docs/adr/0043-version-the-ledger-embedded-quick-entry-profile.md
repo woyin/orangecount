@@ -1,0 +1,5 @@
+# Version the ledger-embedded quick-entry profile
+
+Quick-entry aliases and templates will be portable, dated configuration inside the source ledger, expressed as standard Beancount `custom` directives such as `orangecount.quick-account.v1` and `orangecount.quick-template.v1`. Each rule uses Beancount's typed values and directive metadata rather than an embedded JSON payload; this keeps the ledger parseable by compatible implementations and makes the configuration readable and reviewable with the accounting source.
+
+The type-name suffix is a public schema version. OrangeCount will preserve the meaning of `.v1`; an incompatible representation requires a new suffix, and an unsupported version is diagnosed and excluded from quick-entry compilation rather than silently reinterpreted. An unversioned schema was rejected because persisted user ledgers make later incompatible changes expensive, while sidecar and hidden application configuration were rejected because they lose ledger portability, dating, and auditability.

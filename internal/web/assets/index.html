@@ -178,6 +178,16 @@
       .syntax-string { color: var(--series-3); }
       .syntax-comment { color: var(--muted); font-style: italic; }
       .help-sections { display: grid; gap: .65rem; margin-top: .7rem; }
+      .diagnostic-group { max-width: 70rem; margin: 1rem 0 1.5rem; }
+      .diagnostic-card { padding: .75rem; margin: .5rem 0; border: 1px solid var(--card-border); border-radius: .4rem; background: var(--card-bg); }
+      .diagnostic-card summary p { margin: .35rem 0 .1rem; color: var(--fg); }
+      .repair-guide { max-width: 70rem; }
+      .repair-action { color: var(--link); }
+      .repair-guide h4 { margin-bottom: .25rem; color: var(--th-fg); }
+      .repair-guide p { margin-top: .25rem; }
+      .example-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; }
+      .example-grid pre { margin: 0; }
+      .context-snippet { margin-top: .6rem; border-left: 3px solid var(--selected); }
       .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
       .error { color: var(--error); }
       .warning { color: var(--warning); }
@@ -199,6 +209,7 @@
         .sidebar.open { display: block; }
         .page-header, #app { padding-left: 1rem; padding-right: 1rem; }
       }
+      @media (max-width: 600px) { .example-grid { grid-template-columns: 1fr; } }
       @media (max-width: 560px) {
         .brand { font-size: 1rem; }
         .global-filters { flex-wrap: wrap; }
