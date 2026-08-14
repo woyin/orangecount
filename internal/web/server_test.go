@@ -122,6 +122,230 @@ func TestPlanningPreviewAndCommitUseReviewedWrite(t *testing.T) {
 	}
 }
 
+func TestPlanningReadReturnsStableViewModel(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	today := time.Now().In(time.FixedZone("Singapore", 8*60*60)).Format("2006-01-02")
+	ledgerText := fmt.Sprintf(`%s open Assets:Cash CNY
+%s open Equity:Opening CNY
+%s * "opening"
+  Assets:Cash 100 CNY
+  Equity:Opening -100 CNY
+%s custom "orangecount.planning-profile.v1" "primary"
+  currency: CNY
+  timezone: "Asia/Singapore"
+  minimum_reserve: 10 CNY
+  spendable_account: Assets:Cash
+  recorded_through: %s
+`, today, today, today, today, today)
+	if err := os.WriteFile(entry, []byte(ledgerText), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	built := snapshot.Build(entry)
+	if built.Snapshot == nil {
+		t.Fatalf("build=%+v", built.Diagnostics)
+	}
+	server, err := NewServer(Config{Store: snapshot.NewStore(built.Snapshot), Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/__orangecount/fava/planning?horizon_end="+today, nil))
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("status=%d body=%s", recorder.Code, recorder.Body.String())
+	}
+	var envelope struct {
+		Data struct {
+			SnapshotID string `json:"snapshot_id"`
+			Result     struct {
+				PrimarySafeToSpend string `json:"primary_safe_to_spend"`
+				LiquidityLowPoint  struct {
+					Date string `json:"date"`
+				} `json:"liquidity_low_point"`
+			} `json:"result"`
+		} `json:"data"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &envelope); err != nil {
+		t.Fatal(err)
+	}
+	response := envelope.Data
+	if response.SnapshotID == "" || response.Result.PrimarySafeToSpend != "90" || response.Result.LiquidityLowPoint.Date != today {
+		t.Fatalf("response=%s", recorder.Body.String())
+	}
+}
+
+func TestPlanningScenarioDoesNotPersistPurchase(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	today := time.Now().In(time.FixedZone("Singapore", 8*60*60)).Format("2006-01-02")
+	ledgerText := fmt.Sprintf("%s open Assets:Cash CNY\n%s open Equity:Opening CNY\n%s * \"opening\"\n  Assets:Cash 100 CNY\n  Equity:Opening -100 CNY\n%s custom \"orangecount.planning-profile.v1\" \"primary\"\n  currency: CNY\n  timezone: \"Asia/Singapore\"\n  minimum_reserve: 10 CNY\n  spendable_account: Assets:Cash\n  recorded_through: %s\n", today, today, today, today, today)
+	if err := os.WriteFile(entry, []byte(ledgerText), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	built := snapshot.Build(entry)
+	server, err := NewServer(Config{Store: snapshot.NewStore(built.Snapshot), Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := `{"horizon_end":` + jsonString(today) + `,"date":` + jsonString(today) + `,"amount":"95"}`
+	request := httptest.NewRequest(http.MethodPost, "/__orangecount/fava/planning-scenario", strings.NewReader(body))
+	request.Header.Set("Content-Type", "application/json")
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusOK || !strings.Contains(recorder.Body.String(), `"funding_shortfall":"5"`) || !strings.Contains(recorder.Body.String(), `"draft_is_persisted":false`) {
+		t.Fatalf("scenario=%d %s", recorder.Code, recorder.Body.String())
+	}
+	if saved, err := os.ReadFile(entry); err != nil || string(saved) != ledgerText {
+		t.Fatalf("scenario changed ledger: %q err=%v", saved, err)
+	}
+}
+
+func TestPlanningReviewCompletionUsesPreviewCommitAndBecomesStale(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	today := time.Now().In(time.FixedZone("Singapore", 8*60*60)).Format("2006-01-02")
+	text := fmt.Sprintf("%s open Assets:Cash CNY\n%s open Expenses:Food CNY\n%s open Equity:Opening CNY\n%s * \"opening\"\n  Assets:Cash 100 CNY\n  Equity:Opening -100 CNY\n", today, today, today, today)
+	if err := os.WriteFile(entry, []byte(text), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	built := snapshot.Build(entry)
+	server, err := NewServer(Config{Store: snapshot.NewStore(built.Snapshot), Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	preview := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/__orangecount/fava/planning-review-preview", strings.NewReader(`{"matches":[]}`))
+	request.Header.Set("Content-Type", "application/json")
+	server.Handler().ServeHTTP(preview, request)
+	if preview.Code != http.StatusOK {
+		t.Fatalf("preview=%d %s", preview.Code, preview.Body.String())
+	}
+	var payload struct {
+		Token      string `json:"token"`
+		SnapshotID string `json:"snapshot_id"`
+	}
+	if err := json.Unmarshal(preview.Body.Bytes(), &payload); err != nil || payload.Token == "" {
+		t.Fatalf("payload=%s err=%v", preview.Body.String(), err)
+	}
+	commit := httptest.NewRecorder()
+	request = httptest.NewRequest(http.MethodPost, "/__orangecount/fava/planning-commit", strings.NewReader(`{"token":`+jsonString(payload.Token)+`,"expected_snapshot_id":`+jsonString(payload.SnapshotID)+`}`))
+	request.Header.Set("Content-Type", "application/json")
+	server.Handler().ServeHTTP(commit, request)
+	if commit.Code != http.StatusOK || !strings.Contains(commit.Body.String(), `"published":true`) {
+		t.Fatalf("commit=%d %s", commit.Code, commit.Body.String())
+	}
+	current := server.store.Current()
+	evaluation := current.Evaluation()
+	if complete, stale := planningCompletedReview(evaluation, planningReviewFingerprint(evaluation)); !complete || stale {
+		t.Fatalf("review complete=%t stale=%t", complete, stale)
+	}
+}
+
+func TestPlanningGeneratorPreviewsProfileWithoutWriting(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	if err := os.WriteFile(entry, []byte("2000-01-01 open Assets:Cash CNY\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	built := snapshot.Build(entry)
+	server, err := NewServer(Config{Store: snapshot.NewStore(built.Snapshot), Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := `{"kind":"profile","profile":{"id":"primary","currency":"CNY","timezone":"Asia/Singapore","minimum_reserve":"0","recorded_through":"2000-01-01","spendable_accounts":["Assets:Cash"]}}`
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/__orangecount/fava/planning-generate-preview", strings.NewReader(body))
+	request.Header.Set("Content-Type", "application/json")
+	server.Handler().ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusOK || !strings.Contains(recorder.Body.String(), "orangecount.planning-profile.v1") || strings.Contains(mustReadFile(t, entry), "planning-profile") {
+		t.Fatalf("generator=%d %s", recorder.Code, recorder.Body.String())
+	}
+}
+
+func TestPlanningGeneratorReplacesExistingProfileInsteadOfAppending(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	ledgerText := "2000-01-01 open Assets:Cash CNY\n2000-01-01 custom \"orangecount.planning-profile.v1\" \"primary\"\n  currency: CNY\n  timezone: \"Asia/Singapore\"\n  minimum_reserve: 0 CNY\n  spendable_account: Assets:Cash\n  recorded_through: 2000-01-01\n"
+	if err := os.WriteFile(entry, []byte(ledgerText), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	built := snapshot.Build(entry)
+	server, err := NewServer(Config{Store: snapshot.NewStore(built.Snapshot), Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := `{"kind":"profile","profile":{"id":"primary","currency":"CNY","timezone":"Asia/Singapore","minimum_reserve":"20","recorded_through":"2000-01-01","spendable_accounts":["Assets:Cash"]}}`
+	preview := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/__orangecount/fava/planning-generate-preview", strings.NewReader(body))
+	request.Header.Set("Content-Type", "application/json")
+	server.Handler().ServeHTTP(preview, request)
+	var payload struct {
+		Token      string `json:"token"`
+		SnapshotID string `json:"snapshot_id"`
+	}
+	if preview.Code != http.StatusOK || json.Unmarshal(preview.Body.Bytes(), &payload) != nil {
+		t.Fatalf("preview=%d %s", preview.Code, preview.Body.String())
+	}
+	commit := httptest.NewRecorder()
+	request = httptest.NewRequest(http.MethodPost, "/__orangecount/fava/planning-commit", strings.NewReader(`{"token":`+jsonString(payload.Token)+`,"expected_snapshot_id":`+jsonString(payload.SnapshotID)+`}`))
+	request.Header.Set("Content-Type", "application/json")
+	server.Handler().ServeHTTP(commit, request)
+	saved := mustReadFile(t, entry)
+	if commit.Code != http.StatusOK || strings.Count(saved, "orangecount.planning-profile.v1") != 1 || !strings.Contains(saved, "minimum_reserve: 20 CNY") {
+		t.Fatalf("commit=%d saved=%s", commit.Code, saved)
+	}
+}
+
+func TestPlanningGeneratorRejectsMissingRequiredDates(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	ledgerText := `2000-01-01 open Assets:Cash CNY
+2000-01-02 custom "orangecount.planning-profile.v1" "primary"
+  currency: CNY
+  timezone: "Asia/Singapore"
+  minimum_reserve: 0 CNY
+  spendable_account: Assets:Cash
+  recorded_through: 2000-01-02
+`
+	if err := os.WriteFile(entry, []byte(ledgerText), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	built := snapshot.Build(entry)
+	server, err := NewServer(Config{Store: snapshot.NewStore(built.Snapshot), Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Run("recorded through", func(t *testing.T) {
+		body := `{"kind":"profile","profile":{"id":"primary","currency":"CNY","timezone":"Asia/Singapore","minimum_reserve":"0","recorded_through":"","spendable_accounts":["Assets:Cash"]}}`
+		recorder := httptest.NewRecorder()
+		request := httptest.NewRequest(http.MethodPost, "/__orangecount/fava/planning-generate-preview", strings.NewReader(body))
+		request.Header.Set("Content-Type", "application/json")
+		server.Handler().ServeHTTP(recorder, request)
+		if recorder.Code != http.StatusBadRequest || !strings.Contains(recorder.Body.String(), "recorded-through is required") {
+			t.Fatalf("recorded through response=%d %s", recorder.Code, recorder.Body.String())
+		}
+	})
+	t.Run("plan date", func(t *testing.T) {
+		body := `{"kind":"plan","plan":{"id":"rent","name":"Rent","date":"","amount":"100","direction":"outflow","commitment":"committed","revision":1,"status":"active"}}`
+		recorder := httptest.NewRecorder()
+		request := httptest.NewRequest(http.MethodPost, "/__orangecount/fava/planning-generate-preview", strings.NewReader(body))
+		request.Header.Set("Content-Type", "application/json")
+		server.Handler().ServeHTTP(recorder, request)
+		if recorder.Code != http.StatusBadRequest || !strings.Contains(recorder.Body.String(), "plan date is required") {
+			t.Fatalf("plan date response=%d %s", recorder.Code, recorder.Body.String())
+		}
+	})
+}
+
+func mustReadFile(t *testing.T, path string) string {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(data)
+}
+
 func TestServerRejectsNonLoopbackAndServesLoopback(t *testing.T) {
 	store := snapshot.NewStore(nil)
 	if _, err := NewServer(Config{Store: store, Addr: "0.0.0.0:0"}); err == nil {

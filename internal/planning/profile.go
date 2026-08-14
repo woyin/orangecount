@@ -264,6 +264,7 @@ func parsePlanCustom(custom ledger.Custom) (planRevision, *Problem, bool) {
 			revision.status = stringValue(meta.Value)
 		}
 	}
+	revision.plan.Revision = revision.revision
 	if revision.status == "cancelled" || revision.status == "fulfilled" {
 		return revision, nil, true
 	}

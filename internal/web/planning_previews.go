@@ -9,6 +9,7 @@ import (
 
 type planningPreview struct {
 	Content, Target, SnapshotID string
+	ReplaceStart, ReplaceEnd    int
 	expires                     int64
 }
 type planningPreviewStore struct {

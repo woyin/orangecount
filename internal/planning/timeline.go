@@ -48,6 +48,7 @@ type AccountBalance struct {
 // ledger transaction. Amount is always positive; Direction carries its sign.
 type Plan struct {
 	ID         string
+	Revision   int // source revision; excluded from liquidity arithmetic
 	Name       string
 	Date       ledger.Date
 	Amount     ledger.Decimal
@@ -122,10 +123,21 @@ func calculate(input Input, includeFutureInflows bool) (Result, error) {
 		if err := validatePlan(plan); err != nil {
 			return Result{}, err
 		}
-		if compareDate(plan.Date, input.Today) < 0 || compareDate(plan.Date, input.HorizonEnd) > 0 {
+		date := plan.Date
+		if compareDate(date, input.Today) < 0 {
+			// An overdue outflow continues to reserve funds until it is
+			// explicitly resolved (fulfilled, rescheduled, or cancelled).
+			// Treat it as due today so it cannot overstate headroom.
+			if plan.Direction != Outflow {
+				continue
+			}
+			date = input.Today
+		}
+		if compareDate(date, input.HorizonEnd) > 0 {
 			continue
 		}
-		byDate[plan.Date.Raw] = append(byDate[plan.Date.Raw], plan)
+		plan.Date = date
+		byDate[date.Raw] = append(byDate[date.Raw], plan)
 	}
 
 	datesByRaw := map[string]ledger.Date{input.Today.Raw: input.Today}

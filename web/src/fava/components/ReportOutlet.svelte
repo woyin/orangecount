@@ -15,6 +15,7 @@
   import TreeReport from "../reports/TreeReport.svelte";
   import UtilityReport from "../reports/UtilityReport.svelte";
   import QuickProfileReport from "../reports/QuickProfileReport.svelte";
+  import PlanningReport from "../reports/PlanningReport.svelte";
   import { notify_err } from "../notifications";
   import { pageLabel } from "../router.mjs";
   import { parseJournalReport, parseTableReport, parseTreeReport, type JournalReport as JournalReportData, type TableReport, type TreeReport as TreeReportData } from "../reports/types";
@@ -53,7 +54,7 @@
     table = null;
     journal = null;
     statistics = null;
-    if (["query", "options", "help", "diagnostics", "source", "editor", "import", "quick-profile"].includes(route) || !["income_statement", "balance_sheet", "trial_balance", "accounts", "journal", "holdings", "holdings_by_account", "holdings_by_currency", "holdings_by_cost_currency", "holdings_by_root_account", "holdings_by_commodity", "commodities", "events", "documents", "statistics", "errors"].includes(route)) {
+    if (["query", "options", "help", "diagnostics", "source", "editor", "import", "quick-profile", "planning"].includes(route) || !["income_statement", "balance_sheet", "trial_balance", "accounts", "journal", "holdings", "holdings_by_account", "holdings_by_currency", "holdings_by_cost_currency", "holdings_by_root_account", "holdings_by_commodity", "commodities", "events", "documents", "statistics", "errors"].includes(route)) {
       loading = false;
       return;
     }
@@ -97,6 +98,8 @@
   <UtilityReport {adapter} {route} query={query} helpPage={helpPage} {locale} {theme} {onLocale} {onTheme} />
 {:else if route === "quick-profile"}
   <QuickProfileReport {locale} onSaved={() => {}} />
+{:else if route === "planning"}
+  <PlanningReport {adapter} {locale} />
 {:else if report}
  <TreeReport {report} {locale} {operatingCurrencies} {renderCommas} />
 {:else if journal}

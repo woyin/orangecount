@@ -23,6 +23,8 @@ func TestDirectiveInterfaceKeepsKindsSpansAndRawTextUniform(t *testing.T) {
 		{"include", Include{DirectiveBase: base}, KindInclude},
 		{"push tag", TagDirective{DirectiveBase: base, Tag: "tag"}, KindPushTag},
 		{"pop tag", TagDirective{DirectiveBase: DirectiveBase{Raw: "poptag #tag"}}, KindPopTag},
+		{"push meta", PushMeta{DirectiveBase: base, Key: "key"}, KindPushMeta},
+		{"pop meta", PopMeta{DirectiveBase: base, Key: "key"}, KindPopMeta},
 		{"open", Open{DirectiveBase: base}, KindOpen},
 		{"close", Close{DirectiveBase: base}, KindClose},
 		{"commodity", Commodity{DirectiveBase: base}, KindCommodity},

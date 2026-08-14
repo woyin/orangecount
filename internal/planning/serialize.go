@@ -61,7 +61,7 @@ func SerializeProfileDefinition(definition ProfileDefinition) (string, error) {
 	var lines []string
 	lines = append(lines, fmt.Sprintf("%s custom %q %q", definition.Date.Raw, profileCustomType, definition.ID))
 	lines = append(lines, fmt.Sprintf("  currency: %s", strings.TrimSpace(definition.Currency)))
-	lines = append(lines, fmt.Sprintf("  timezone: %q", escapeString(definition.Timezone)))
+	lines = append(lines, fmt.Sprintf("  timezone: %q", definition.Timezone))
 	lines = append(lines, fmt.Sprintf("  minimum_reserve: %s %s", definition.MinimumReserve.String(), strings.TrimSpace(definition.Currency)))
 	for _, account := range definition.SpendableAccounts {
 		if !accountPattern.MatchString(account) {
@@ -113,7 +113,7 @@ func SerializePlanRevision(definition PlanRevisionDefinition) (string, error) {
 		return "", fmt.Errorf("active plan requires a valid currency")
 	}
 	lines = append(lines,
-		fmt.Sprintf("  name: %q", escapeString(definition.Plan.Name)),
+		fmt.Sprintf("  name: %q", definition.Plan.Name),
 		fmt.Sprintf("  expected_date: %s", definition.Plan.Date.Raw),
 		fmt.Sprintf("  amount: %s %s", definition.Plan.Amount.String(), definition.Plan.Currency),
 		fmt.Sprintf("  direction: %q", definition.Plan.Direction),
@@ -134,8 +134,3 @@ var (
 	currencyPattern = regexp.MustCompile(`\A[A-Z][A-Z0-9'._-]*\z`)
 	accountPattern  = regexp.MustCompile(`\A[A-Z][A-Za-z0-9\-]*(?::[A-Z][A-Za-z0-9\-]*)+\z`)
 )
-
-func escapeString(value string) string {
-	value = strings.ReplaceAll(value, `\`, `\\`)
-	return strings.ReplaceAll(value, `"`, `\"`)
-}

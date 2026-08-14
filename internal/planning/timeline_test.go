@@ -121,6 +121,41 @@ func TestCalculateAppliesTodayPlansOnce(t *testing.T) {
 	}
 }
 
+func TestCalculateKeepsOverdueOutflowsReservedUntilToday(t *testing.T) {
+	result, err := Calculate(Input{
+		Today:           date("2026-08-12"),
+		HorizonEnd:      date("2026-08-20"),
+		RecordedThrough: date("2026-08-12"),
+		Currency:        "CNY",
+		SpendableFunds:  []AccountBalance{{Account: "Assets:Cash", Amount: decimal(t, "10000")}},
+		Plans: []Plan{
+			{ID: "missed-rent", Date: date("2026-08-01"), Amount: decimal(t, "5000"), Direction: Outflow, Commitment: Committed},
+			{ID: "old-adjustable", Date: date("2026-08-05"), Amount: decimal(t, "1000"), Direction: Outflow, Commitment: Adjustable},
+			{ID: "old-income", Date: date("2026-08-10"), Amount: decimal(t, "9000"), Direction: Inflow},
+		},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Both overdue outflows must still reserve funds; the overdue inflow must
+	// not increase the primary safe-to-spend amount.
+	if got := result.PrimarySafeToSpend.String(); got != "4000" {
+		t.Fatalf("primary=%s", got)
+	}
+	if len(result.Timeline) != 1 || result.Timeline[0].Date.String() != "2026-08-12" {
+		t.Fatalf("timeline=%+v", result.Timeline)
+	}
+	if got := result.Timeline[0].CommittedOutflow.String(); got != "5000" {
+		t.Fatalf("committed=%s", got)
+	}
+	if got := result.Timeline[0].AdjustableOutflow.String(); got != "1000" {
+		t.Fatalf("adjustable=%s", got)
+	}
+	if got := result.Timeline[0].IgnoredInflows.String(); got != "0" {
+		t.Fatalf("overdue inflow should not be counted: %s", got)
+	}
+}
+
 func TestCalculateValidatesUnsafeInputs(t *testing.T) {
 	base := Input{Today: date("2026-08-12"), HorizonEnd: date("2026-08-20"), RecordedThrough: date("2026-08-12"), Currency: "CNY"}
 	for name, mutate := range map[string]func(*Input){

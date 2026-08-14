@@ -51,6 +51,29 @@ func TestSerializePlanRevisionPreservesTerminalRevisionMinimality(t *testing.T) 
 	}
 }
 
+func TestSerializePlanRevisionRoundTripsQuotedNames(t *testing.T) {
+	name := `Rent "A" \ B`
+	text, err := SerializePlanRevision(PlanRevisionDefinition{Date: date("2026-08-12"), Revision: 1, Status: "active", Plan: Plan{ID: "rent", Name: name, Date: date("2026-09-01"), Amount: decimal(t, "5000"), Currency: "CNY", Direction: Outflow, Commitment: Committed}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	file, bag := ledger.ParseText("planning.bean", []byte(text))
+	if bag.HasErrors() {
+		t.Fatalf("diagnostics=%v", bag.All())
+	}
+	evaluation := &ledger.Evaluation{}
+	for _, directive := range file.Directives {
+		evaluation.Entries = append(evaluation.Entries, ledger.EntryRecord{Directive: directive})
+	}
+	profile := EffectiveProfile(evaluation)
+	if len(profile.Plans) != 1 {
+		t.Fatalf("plans=%+v problems=%+v", profile.Plans, profile.Problems)
+	}
+	if got := profile.Plans[0].Name; got != name {
+		t.Fatalf("round-tripped name=%q, want %q", got, name)
+	}
+}
+
 func TestSerializedPlanningDirectivesRoundTripThroughEffectiveProfile(t *testing.T) {
 	profileText, err := SerializeProfileDefinition(ProfileDefinition{
 		Date:              date("2026-08-12"),

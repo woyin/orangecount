@@ -76,7 +76,12 @@ func (s *Server) handlePlanningCommit(w http.ResponseWriter, r *http.Request, cu
 		writeAPIError(w, http.StatusBadRequest, "target file is no longer in the ledger include graph")
 		return
 	}
-	content := strings.TrimRight(string(file.Data), "\n") + "\n\n" + preview.Content + "\n"
+	content := ""
+	if preview.ReplaceStart >= 0 && preview.ReplaceEnd > preview.ReplaceStart && preview.ReplaceEnd <= len(file.Data) {
+		content = string(file.Data[:preview.ReplaceStart]) + preview.Content + string(file.Data[preview.ReplaceEnd:])
+	} else {
+		content = strings.TrimRight(string(file.Data), "\n") + "\n\n" + preview.Content + "\n"
+	}
 	result, backup, err := s.replaceGraphFile(current, file.Path, display, []byte(content))
 	if err != nil {
 		status := http.StatusUnprocessableEntity

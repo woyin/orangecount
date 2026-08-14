@@ -209,7 +209,7 @@ func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 	// The adapter is read-only except for the reviewed write paths:
 	// add-entries (ledger append), document (attachment upload), and
 	// move-document (attachment relocation).
-	if r.Method != http.MethodGet && !(r.Method == http.MethodPost && (resource == "add-entries" || resource == "document" || resource == "move-document" || resource == "quick-preview" || resource == "quick-commit" || resource == "quick-undo" || resource == "quick-profile" || resource == "quick-profile-save" || resource == "planning-preview" || resource == "planning-commit")) {
+	if r.Method != http.MethodGet && !(r.Method == http.MethodPost && (resource == "add-entries" || resource == "document" || resource == "move-document" || resource == "quick-preview" || resource == "quick-commit" || resource == "quick-undo" || resource == "quick-profile" || resource == "quick-profile-save" || resource == "planning-preview" || resource == "planning-commit" || resource == "planning-scenario" || resource == "planning-review-preview" || resource == "planning-generate-preview")) {
 		w.Header().Set("Allow", "GET")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
@@ -457,6 +457,16 @@ func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
 		s.handleQuickProfile(w, r, current)
 	case "quick-profile-save":
 		s.handleQuickProfileSave(w, r, current)
+	case "planning":
+		s.handlePlanning(w, r, current)
+	case "planning-review":
+		s.handlePlanningReview(w, r, current)
+	case "planning-scenario":
+		s.handlePlanningScenario(w, r, current)
+	case "planning-review-preview":
+		s.handlePlanningReviewPreview(w, r, current)
+	case "planning-generate-preview":
+		s.handlePlanningGeneratePreview(w, r, current)
 	case "planning-preview":
 		s.handlePlanningPreview(w, r, current)
 	case "planning-commit":

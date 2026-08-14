@@ -233,7 +233,7 @@ func (e *evaluator) evaluateDirective(file *File, directive Directive) {
 	case Plugin:
 		// The parser already emits the migration warning. Plugin code is never
 		// executed in this implementation.
-	case Include, TagDirective, Query, Event, Note, Document, Custom:
+	case Include, TagDirective, PushMeta, PopMeta, Query, Event, Note, Document, Custom:
 		// These directives are source-preserved and consumed by later report
 		// layers; they do not mutate account state in the core evaluator.
 	case Open:

@@ -18,10 +18,10 @@ import (
 // server holds it briefly so the commit step can validate that the client is
 // publishing exactly what was previewed, without re-interpreting free text.
 type quickPreview struct {
-	Token    string
-	Entries  []favaadapter.NewEntry
-	Target   string
-	expires  int64
+	Token   string
+	Entries []favaadapter.NewEntry
+	Target  string
+	expires int64
 }
 
 // quickPreviewTTL bounds how long a quick-entry preview may wait before
