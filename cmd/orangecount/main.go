@@ -23,10 +23,14 @@ import (
 	"time"
 
 	"orangecount/internal/diagnostic"
+	"orangecount/internal/dialect"
+	"orangecount/internal/ledger"
 	"orangecount/internal/logging"
 	"orangecount/internal/query"
 	"orangecount/internal/repairguidance"
 	"orangecount/internal/snapshot"
+	"path/filepath"
+
 	"orangecount/internal/source"
 	"orangecount/internal/web"
 )
@@ -64,6 +68,8 @@ func runWithInput(args []string, stdin io.Reader, stdout, stderr io.Writer) int 
 		fmt.Fprintln(stdout, "orangecount check [--locale en|zh-CN] [--json] <entry.bean>")
 		fmt.Fprintf(stdout, "orangecount serve [--addr %s] [--document-root DIR] <entry.bean>\n", defaultServeAddr)
 		fmt.Fprintln(stdout, "orangecount query [--locale en|zh-CN] [--format json|csv] <entry.bean> <query>")
+		fmt.Fprintln(stdout, "orangecount export -out FILE|DIR <entry.bean>")
+		fmt.Fprintln(stdout, "orangecount dialectize -out FILE|DIR <entry.bean>")
 		fmt.Fprintln(stdout, "orangecount help [--locale en|zh-CN] diagnostics/<CODE>")
 		return 0
 	}
@@ -80,6 +86,10 @@ func runWithInput(args []string, stdin io.Reader, stdout, stderr io.Writer) int 
 		return runServe(args[1:], stdin, stdout, stderr)
 	case "query":
 		return runQuery(args[1:], stdout, stderr)
+	case "export":
+		return runExport(args[1:], stdout, stderr)
+	case "dialectize":
+		return runDialectize(args[1:], stdout, stderr)
 	default:
 		fmt.Fprintf(stderr, "orangecount: unknown command %q\n", args[0])
 		return 2
@@ -588,4 +598,130 @@ func renderDiagnostics(w io.Writer, locale string, jsonOutput bool, ds []diagnos
 		return diagnostic.RenderJSON(w, ds, locale)
 	}
 	return diagnostic.RenderHuman(w, ds, locale)
+}
+
+// runExport implements the export subcommand: compile dialect shorthand in a
+// ledger and write the pure Beancount v3 artifact for external tools. The
+// output is a disposable snapshot (ADR-0045): it must never be hand-edited.
+func runExport(args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("export", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	out := fs.String("out", "", "output file (single-file ledger) or directory (include graph)")
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+	if fs.NArg() != 1 {
+		fmt.Fprintln(stderr, "orangecount export: expected exactly one entry ledger path")
+		return 2
+	}
+	if *out == "" {
+		fmt.Fprintln(stderr, "orangecount export: -out is required")
+		return 2
+	}
+	return writeConverted(fs.Arg(0), *out, "export", stdout, stderr, false)
+}
+
+// runDialectize implements the dialectize subcommand: rewrite a standard v3
+// ledger's trivially-representable transactions into dialect shorthand while
+// preserving every other byte (ADR-0045 filter conversion).
+func runDialectize(args []string, stdout, stderr io.Writer) int {
+	fs := flag.NewFlagSet("dialectize", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	out := fs.String("out", "", "output file (single-file ledger) or directory (include graph)")
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+	if fs.NArg() != 1 {
+		fmt.Fprintln(stderr, "orangecount dialectize: expected exactly one entry ledger path")
+		return 2
+	}
+	if *out == "" {
+		fmt.Fprintln(stderr, "orangecount dialectize: -out is required")
+		return 2
+	}
+	return writeConverted(fs.Arg(0), *out, "dialectize", stdout, stderr, true)
+}
+
+// writeConverted is the shared body of export and dialectize: load the graph,
+// render every file's converted text, and mirror the include structure under
+// the output path. A single-file ledger writes one file; an include graph
+// writes a directory tree that preserves relative include paths.
+func writeConverted(entry, out, label string, stdout, stderr io.Writer, reverse bool) int {
+	graph, err := source.LoadGraph(entry)
+	if err != nil {
+		fmt.Fprintf(stderr, "orangecount %s: %v\n", label, err)
+		return 1
+	}
+	parsed, bag := ledger.ParseGraph(graph)
+	if bag.HasErrors() {
+		renderBag(stderr, bag, label)
+		return 1
+	}
+	outputs := make(map[source.FileID][]byte)
+	if reverse {
+		for fileID, file := range parsed {
+			if file == nil || file.Source == nil {
+				continue
+			}
+			edits, _ := dialect.Dialectize(file)
+			outputs[fileID] = dialect.ApplyEdits(file.Source.Data, edits)
+		}
+	} else {
+		rendered, diags := dialect.ExportText(graph, parsed)
+		for _, d := range diags {
+			if d.Severity == diagnostic.Error {
+				fmt.Fprintf(stderr, "orangecount %s: %s %s\n", label, d.Code, d.Message)
+				return 1
+			}
+		}
+		outputs = rendered
+	}
+	return writeConvertedFiles(graph, outputs, out, label, stdout, stderr)
+}
+
+// writeConvertedFiles mirrors the include graph under the output path: a
+// single-file ledger writes one file, an include graph preserves relative
+// paths inside a directory tree.
+func writeConvertedFiles(graph *source.Graph, outputs map[source.FileID][]byte, out, label string, stdout, stderr io.Writer) int {
+	fail := func(err error) int {
+		fmt.Fprintf(stderr, "orangecount %s: %v\n", label, err)
+		return 1
+	}
+	if len(graph.Order) == 1 {
+		if dir := filepath.Dir(out); dir != "." {
+			if err := os.MkdirAll(dir, 0o755); err != nil {
+				return fail(err)
+			}
+		}
+		if err := os.WriteFile(out, outputs[graph.Entry], 0o600); err != nil {
+			return fail(err)
+		}
+		fmt.Fprintf(stdout, "orangecount %s: wrote %s\n", label, out)
+		return 0
+	}
+	if err := os.MkdirAll(out, 0o755); err != nil {
+		return fail(err)
+	}
+	entryDir := filepath.Dir(graph.Path(graph.Entry))
+	for fileID, data := range outputs {
+		rel, err := filepath.Rel(entryDir, graph.Path(fileID))
+		if err != nil {
+			return fail(err)
+		}
+		target := filepath.Join(out, rel)
+		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
+			return fail(err)
+		}
+		if err := os.WriteFile(target, data, 0o600); err != nil {
+			return fail(err)
+		}
+	}
+	fmt.Fprintf(stdout, "orangecount %s: wrote %d files under %s\n", label, len(outputs), out)
+	return 0
+}
+
+func renderBag(w io.Writer, bag *diagnostic.Bag, label string) {
+	for _, d := range bag.All() {
+		fmt.Fprintf(w, "orangecount %s: %s %s\n", label, d.Code, d.Message)
+	}
 }

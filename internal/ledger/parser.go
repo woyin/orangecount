@@ -77,6 +77,9 @@ type parser struct {
 	tx            *Transaction
 	posting       *Posting
 	lastDirective int
+	// dialectAnchor is the most recent explicit date on a dialect line in
+	// this file; undated dialect lines inherit it (ADR-0045 block anchoring).
+	dialectAnchor *Date
 }
 
 type line struct {
@@ -359,6 +362,10 @@ func (p *parser) parseContinuation(ln line, ts []token) {
 
 func (p *parser) parseDirective(ln line, ts []token) {
 	if len(ts) == 0 {
+		return
+	}
+	if isDialectStart(ts) {
+		p.parseDialectLine(ln, ts)
 		return
 	}
 	first := strings.ToLower(ts[0].text)
@@ -677,6 +684,187 @@ func isFlag(s string) bool {
 		return true
 	}
 	return len([]rune(s)) == 1 && unicode.IsLetter([]rune(s)[0])
+}
+
+// isDialectStart reports whether the top-level token stream opens a dialect
+// line (ADR-0045). The shapes — amount-first, flag+amount, date+amount, or
+// date+flag+amount — are all syntax errors in v3, so claiming them cannot
+// misread any standard directive.
+func isDialectStart(ts []token) bool {
+	if len(ts) == 0 {
+		return false
+	}
+	if looksDate(ts[0].text) {
+		// A date opens a dialect line only when followed by an amount, or a
+		// flag then an amount; every other dated shape is standard syntax.
+		if len(ts) > 1 && looksAmountWord(ts[1].text) {
+			return true
+		}
+		return len(ts) > 2 && (ts[1].text == "*" || ts[1].text == "!") && looksAmountWord(ts[2].text)
+	}
+	if looksAmountWord(ts[0].text) {
+		return true
+	}
+	return (ts[0].text == "*" || ts[0].text == "!") && len(ts) > 1 && looksAmountWord(ts[1].text)
+}
+
+// looksAmountWord reports whether text plausibly opens an amount: an ASCII
+// digit, optionally signed, or a leading decimal point followed by a digit.
+// Full validation happens in parseDialectLine.
+func looksAmountWord(text string) bool {
+	if text == "" {
+		return false
+	}
+	start := 0
+	if text[0] == '-' || text[0] == '+' {
+		start = 1
+	}
+	if start >= len(text) {
+		return false
+	}
+	return isASCIIDigit(text[start]) || (text[start] == '.' && start+1 < len(text) && isASCIIDigit(text[start+1]))
+}
+
+// parseDialectLine parses one dialect shorthand line:
+// [DATE] [FLAG] AMOUNT [CURRENCY] @source -> @destination ["payee"] [: narration] [#tag] [^link]
+// Syntax problems are diagnosed here with E-DIALECT-* codes; endpoint and
+// currency semantics are resolved later by the dialect pass.
+func (p *parser) parseDialectLine(ln line, ts []token) {
+	d := Dialect{DirectiveBase: p.base(ts), Flag: "*"}
+	rest := p.dialectHead(ts, &d)
+	if rest == nil {
+		return
+	}
+	next, ok := p.dialectAmount(rest, &d)
+	if !ok {
+		return
+	}
+	source, afterSource, ok := p.dialectEndpoint(rest, next, "source")
+	if !ok {
+		return
+	}
+	d.SourceRef = source
+	if afterSource >= len(rest) || rest[afterSource].kind != tokWord || rest[afterSource].text != "->" {
+		span := rest[len(rest)-1].span
+		if afterSource < len(rest) {
+			span = rest[afterSource].span
+		}
+		p.add("E-DIALECT-ARROW", diagnostic.Error, span)
+		return
+	}
+	dest, afterDest, ok := p.dialectEndpoint(rest, afterSource+1, "destination")
+	if !ok {
+		return
+	}
+	d.DestRef = dest
+	if !p.dialectTail(rest, afterDest, &d) {
+		return
+	}
+	if !d.HasDate {
+		if p.dialectAnchor == nil {
+			p.add("E-DIALECT-DATE", diagnostic.Error, d.At)
+			return
+		}
+		d.Date, d.Anchored = *p.dialectAnchor, true
+	}
+	p.appendDirective(d)
+}
+
+// dialectHead consumes the optional date and flag and applies block
+// anchoring state. It returns the remaining tokens, or nil on failure.
+func (p *parser) dialectHead(ts []token, d *Dialect) []token {
+	idx := 0
+	if looksDate(ts[idx].text) {
+		date := p.parseDate(ts[idx])
+		d.Date, d.HasDate = date, true
+		p.dialectAnchor = &date
+		idx++
+		if idx < len(ts) && (ts[idx].text == "*" || ts[idx].text == "!") {
+			d.Flag = ts[idx].text
+			idx++
+		}
+	} else if ts[idx].text == "*" || ts[idx].text == "!" {
+		d.Flag = ts[idx].text
+		idx++
+	}
+	if idx >= len(ts) {
+		p.add("E-DIALECT-AMOUNT", diagnostic.Error, ts[len(ts)-1].span)
+		return nil
+	}
+	return ts[idx:]
+}
+
+// dialectAmount validates and records the positive amount plus the optional
+// currency word that may follow it. It returns the index of the next
+// unconsumed token.
+func (p *parser) dialectAmount(ts []token, d *Dialect) (int, bool) {
+	amount := tryNumber(ts[0])
+	if amount.Raw == "" || (amount.Rat != nil && amount.Rat.Sign() < 0) {
+		p.add("E-DIALECT-AMOUNT", diagnostic.Error, ts[0].span)
+		return 0, false
+	}
+	d.Amount = amount
+	if len(ts) > 1 && ts[1].kind == tokWord && ts[1].text != "->" {
+		d.Currency = ts[1].text
+		return 2, true
+	}
+	return 1, true
+}
+
+// dialectEndpoint reads the "@name" endpoint at ts[idx]. It returns the
+// endpoint text and the index after it.
+func (p *parser) dialectEndpoint(ts []token, idx int, role string) (string, int, bool) {
+	if idx >= len(ts) || ts[idx].kind != tokPunct || (ts[idx].text != "@" && ts[idx].text != "@@") {
+		span := ts[len(ts)-1].span
+		if idx < len(ts) {
+			span = ts[idx].span
+		}
+		p.add("E-DIALECT-SYNTAX", diagnostic.Error, span)
+		return "", idx, false
+	}
+	if ts[idx].text == "@@" || idx+1 >= len(ts) || ts[idx+1].kind != tokWord {
+		p.add("E-DIALECT-SYNTAX", diagnostic.Error, ts[idx].span)
+		return "", idx, false
+	}
+	return ts[idx+1].text, idx + 2, true
+}
+
+// dialectTail parses everything after the destination endpoint: an optional
+// quoted payee, an optional ": narration" run, and #tag/^link words in any
+// order after their first appearance.
+func (p *parser) dialectTail(ts []token, idx int, d *Dialect) bool {
+	narration := false
+	var words []string
+	for ; idx < len(ts); idx++ {
+		t := ts[idx]
+		switch {
+		case t.kind == tokString && !narration:
+			if d.Payee != "" {
+				p.add("E-DIALECT-SYNTAX", diagnostic.Error, t.span)
+				return false
+			}
+			d.Payee = t.value
+		case t.text == ":" && !narration && len(words) == 0:
+			narration = true
+		case strings.HasPrefix(t.text, "#"):
+			d.Tags = append(d.Tags, strings.TrimPrefix(t.text, "#"))
+		case strings.HasPrefix(t.text, "^"):
+			d.Links = append(d.Links, strings.TrimPrefix(t.text, "^"))
+		case t.kind == tokString || t.kind == tokPunct:
+			p.add("E-DIALECT-SYNTAX", diagnostic.Error, t.span)
+			return false
+		case !narration:
+			// A bare word without a preceding ':' is not part of the grammar.
+			p.add("E-DIALECT-SYNTAX", diagnostic.Error, t.span)
+			return false
+		default:
+			words = append(words, t.text)
+		}
+	}
+	if narration {
+		d.Narration, d.HasNarration = strings.Join(words, " "), true
+	}
+	return true
 }
 
 // parsePosting parses one posting line: account [flag] [units] followed by

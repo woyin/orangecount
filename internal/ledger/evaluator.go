@@ -215,6 +215,11 @@ func (e *evaluator) evaluateDirective(file *File, directive Directive) {
 	case Include, TagDirective, Query, Event, Note, Document, Custom:
 		// These directives are source-preserved and consumed by later report
 		// layers; they do not mutate account state in the core evaluator.
+	case Dialect:
+		// Source-only shorthand: the dialect pass replaces it before
+		// evaluation. Reaching here means a caller bypassed snapshot's
+		// expansion, so warn loudly instead of dropping it silently.
+		e.add("W-DIALECT-UNEXPANDED", diagnostic.Warning, span, path)
 	case Open:
 		e.open(d)
 	case Close:

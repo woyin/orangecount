@@ -68,6 +68,7 @@ const (
 	KindNote      DirectiveKind = "note"
 	KindCustom    DirectiveKind = "custom"
 	KindTxn       DirectiveKind = "transaction"
+	KindDialect   DirectiveKind = "dialect"
 )
 
 // Directive is implemented by every core directive. Span and Raw are kept on
@@ -285,6 +286,32 @@ type Transaction struct {
 
 // Kind implements Directive.
 func (Transaction) Kind() DirectiveKind { return KindTxn }
+
+// Dialect is one OrangeCount dialect shorthand line (ADR-0045): a terse
+// two-posting transaction the dialect pass replaces with a Transaction
+// before evaluation. It is source-only; the evaluator never consumes it.
+// When HasDate is false the parser resolved the date by block anchoring
+// (Anchored) and Date holds the anchor value; a missing anchor is diagnosed
+// at parse time and leaves Date zero.
+type Dialect struct {
+	DirectiveBase
+	Date         Date
+	HasDate      bool
+	Anchored     bool
+	Flag         string
+	Amount       Number
+	Currency     string
+	SourceRef    string
+	DestRef      string
+	Payee        string
+	Narration    string
+	HasNarration bool
+	Tags         []string
+	Links        []string
+}
+
+// Kind implements Directive.
+func (Dialect) Kind() DirectiveKind { return KindDialect }
 
 // Posting is one leg of a transaction: account, optional flag, units, cost
 // and price specs, and metadata.
