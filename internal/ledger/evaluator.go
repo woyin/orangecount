@@ -194,42 +194,21 @@ func (e *evaluator) evaluateFile(fileID source.FileID, parsed map[source.FileID]
 	}
 }
 
+// evaluateDirective folds one parsed directive into the evaluation: entry
+// bookkeeping first, then the per-type state machine. Options configure
+// loading and are retained by the parsed source and the evaluation Options
+// map, but Beancount does not expose them in its loaded entry stream;
+// isEntryDirective keeps Evaluation.Entries aligned with that stream while
+// plugin/tag declarations stay retained for source-preserving diagnostics.
 func (e *evaluator) evaluateDirective(file *File, directive Directive) {
 	span := directive.Span()
-	path := ""
-	if file != nil && file.Source != nil {
-		path = file.Source.Path
-	}
-	// Options configure loading and are retained by the parsed source and the
-	// evaluation Options map, but Beancount does not expose them in its loaded
-	// entry stream. Keep Evaluation.Entries aligned with that stream while
-	// retaining plugin/tag declarations for source-preserving diagnostics.
+	path := sourcePath(file)
 	if isEntryDirective(directive) {
 		e.result.Entries = append(e.result.Entries, EntryRecord{Span: span, Directive: directive, File: path, Date: directiveDate(directive)})
 	}
 	switch d := directive.(type) {
 	case Option:
-		// Beancount accumulates repeated operating_currency declarations
-		// instead of letting the last one win (every other option key is
-		// single-valued and overwrites). Losing all but the last declared
-		// operating currency previously made downstream consumers - the web
-		// UI's default report/chart currency in particular - pick a currency
-		// that was never the ledger's primary one.
-		if strings.EqualFold(d.Key, "operating_currency") {
-			e.result.Options[d.Key] = appendOperatingCurrency(e.result.Options[d.Key], d.Value)
-		} else {
-			e.result.Options[d.Key] = d.Value
-		}
-		if strings.EqualFold(d.Key, "tolerance") {
-			tolerance, err := ParseDecimal(d.Value)
-			if err != nil {
-				e.add("E-EVAL-OPTION", diagnostic.Error, d.Span(), e.pathFor(d.Span()))
-			} else if tolerance.Sign() < 0 {
-				e.add("E-EVAL-TOLERANCE", diagnostic.Error, d.Span(), e.pathFor(d.Span()))
-			} else {
-				e.options.DefaultTolerance = tolerance
-			}
-		}
+		e.applyOption(d)
 	case Plugin:
 		// The parser already emits the migration warning. Plugin code is never
 		// executed in this implementation.
@@ -249,16 +228,51 @@ func (e *evaluator) evaluateDirective(file *File, directive Directive) {
 	case Balance:
 		e.balance(d)
 	case *Transaction:
-		booked := e.bookTransaction(d)
-		e.replaceLastEntry(booked)
-		e.transaction(booked)
+		e.evaluateTransaction(d)
 	case Transaction:
 		copy := d
-		booked := e.bookTransaction(&copy)
-		e.replaceLastEntry(booked)
-		e.transaction(booked)
+		e.evaluateTransaction(&copy)
 	default:
 		e.add("W-EVAL-UNSUPPORTED", diagnostic.Warning, span, path)
+	}
+}
+
+// evaluateTransaction books a transaction and folds its postings in.
+func (e *evaluator) evaluateTransaction(tx *Transaction) {
+	booked := e.bookTransaction(tx)
+	e.replaceLastEntry(booked)
+	e.transaction(booked)
+}
+
+// sourcePath returns the display path of the file a directive came from.
+func sourcePath(file *File) string {
+	if file != nil && file.Source != nil {
+		return file.Source.Path
+	}
+	return ""
+}
+
+// applyOption records one option declaration. Repeated operating_currency
+// values accumulate (see appendOperatingCurrency); every other key is
+// single-valued and overwrites. The tolerance option also seeds the
+// transaction-balancing tolerance after validation.
+func (e *evaluator) applyOption(d Option) {
+	if strings.EqualFold(d.Key, "operating_currency") {
+		e.result.Options[d.Key] = appendOperatingCurrency(e.result.Options[d.Key], d.Value)
+	} else {
+		e.result.Options[d.Key] = d.Value
+	}
+	if !strings.EqualFold(d.Key, "tolerance") {
+		return
+	}
+	tolerance, err := ParseDecimal(d.Value)
+	switch {
+	case err != nil:
+		e.add("E-EVAL-OPTION", diagnostic.Error, d.Span(), e.pathFor(d.Span()))
+	case tolerance.Sign() < 0:
+		e.add("E-EVAL-TOLERANCE", diagnostic.Error, d.Span(), e.pathFor(d.Span()))
+	default:
+		e.options.DefaultTolerance = tolerance
 	}
 }
 
@@ -364,6 +378,21 @@ func (e *evaluator) price(d Price) {
 	e.result.Prices[d.Currency] = append(e.result.Prices[d.Currency], quote)
 }
 
+// resolvedPosting is one posting of a transaction with its units fully
+// interpolated: amount and currency are the values the balancing and state
+// updates must use.
+type resolvedPosting struct {
+	posting  Posting
+	amount   Decimal
+	currency string
+}
+
+// transaction balances one booked transaction and folds its postings into
+// account state. At most one posting may elide its amount (Beancount's
+// interpolation); the elided leg is inferred from the imbalance, completed
+// in the entry stream itself (see inferElision), and every known leg is then
+// applied. A residual imbalance beyond the configured tolerance is reported
+// once per transaction.
 func (e *evaluator) transaction(tx *Transaction) {
 	if tx == nil || len(tx.Postings) == 0 {
 		if tx != nil {
@@ -371,65 +400,72 @@ func (e *evaluator) transaction(tx *Transaction) {
 		}
 		return
 	}
-	type knownPosting struct {
-		posting  Posting
-		amount   Decimal
-		currency string
-	}
-	known := make([]knownPosting, 0, len(tx.Postings))
-	missing := make([]int, 0, len(tx.Postings))
-	totals := make(map[string]Decimal)
-	for index, posting := range tx.Postings {
-		if posting.Units == nil || posting.Units.Currency == "" || posting.Units.Number.Raw == "" {
-			missing = append(missing, index)
-			continue
-		}
-		amount := DecimalFromNumber(posting.Units.Number)
-		known = append(known, knownPosting{posting: posting, amount: amount, currency: posting.Units.Currency})
-		e.addContribution(totals, posting, amount, posting.Units.Currency)
-	}
+	known, missing, totals := collectResolvedPostings(tx, e.addContribution)
 	if len(missing) > 1 {
 		for _, index := range missing {
 			posting := tx.Postings[index]
 			e.add("E-EVAL-INFER", diagnostic.Error, posting.Span(), e.pathFor(posting.Span()))
 		}
 	} else if len(missing) == 1 {
-		index := missing[0]
-		posting := tx.Postings[index]
-		currency := e.inferPostingCurrency(posting, totals)
-		balanceCurrency, factor, ok := e.inferenceTarget(posting, currency, totals)
-		if !ok || factor.IsZero() {
-			e.add("E-EVAL-INFER", diagnostic.Error, posting.Span(), e.pathFor(posting.Span()))
-		} else {
-			inferred := totals[balanceCurrency].Neg()
-			inferred = divideDecimal(inferred, factor)
-			// Complete the posting in the entry stream, the way Beancount's
-			// loader hands back a fully interpolated transaction. Leaving the
-			// amount only in local evaluator state made every consumer that
-			// reads Entries - journal rows, query results, and the report
-			// charts - silently skip the interpolated posting, so a purchase
-			// counted its shares but never the cash that paid for them.
-			units := Amount{Number: numberFromDecimal(inferred), Currency: currency}
-			tx.Postings[index].Units = &units
-			posting = tx.Postings[index]
-			known = append(known, knownPosting{posting: posting, amount: inferred, currency: currency})
-			e.addContribution(totals, posting, inferred, currency)
+		if resolved, ok := e.inferElision(tx, missing[0], totals); ok {
+			known = append(known, resolved)
+			e.addContribution(totals, resolved.posting, resolved.amount, resolved.currency)
 		}
 	}
 	tolerance := e.options.DefaultTolerance
 	if tolerance.IsZero() && e.options.InferDecimalTolerance {
 		tolerance = inferredTolerance(tx.Postings)
 	}
-	for currency, total := range totals {
+	for _, total := range totals {
 		if !within(total, tolerance) {
 			e.add("E-EVAL-UNBALANCED", diagnostic.Error, tx.Span(), e.pathFor(tx.Span()))
-			_ = currency
 			break
 		}
 	}
 	for _, item := range known {
 		e.applyPosting(tx.Date, item.posting, item.amount, item.currency)
 	}
+}
+
+// addContribution folds one posting's amount into the per-currency totals.
+type contributionFunc func(totals map[string]Decimal, posting Posting, amount Decimal, currency string)
+
+// collectResolvedPostings partitions the transaction's postings into fully
+// specified legs and legs with a missing amount side, accumulating the
+// per-currency running totals of the known legs.
+func collectResolvedPostings(tx *Transaction, addContribution contributionFunc) (known []resolvedPosting, missing []int, totals map[string]Decimal) {
+	totals = make(map[string]Decimal)
+	for index, posting := range tx.Postings {
+		if posting.Units == nil || posting.Units.Currency == "" || posting.Units.Number.Raw == "" {
+			missing = append(missing, index)
+			continue
+		}
+		amount := DecimalFromNumber(posting.Units.Number)
+		known = append(known, resolvedPosting{posting: posting, amount: amount, currency: posting.Units.Currency})
+		addContribution(totals, posting, amount, posting.Units.Currency)
+	}
+	return known, missing, totals
+}
+
+// inferElision completes the single amount-less posting: it infers the
+// currency, computes the balancing amount against the other legs, and writes
+// the completed units back into the entry stream. Completing the posting in
+// the stream itself (rather than only in local state) keeps every consumer
+// that reads Entries - journal rows, query results, report charts - from
+// silently skipping the interpolated leg, so a purchase counts both the
+// shares bought and the cash that paid for them.
+func (e *evaluator) inferElision(tx *Transaction, index int, totals map[string]Decimal) (resolvedPosting, bool) {
+	posting := tx.Postings[index]
+	currency := e.inferPostingCurrency(posting, totals)
+	balanceCurrency, factor, ok := e.inferenceTarget(posting, currency, totals)
+	if !ok || factor.IsZero() {
+		e.add("E-EVAL-INFER", diagnostic.Error, posting.Span(), e.pathFor(posting.Span()))
+		return resolvedPosting{}, false
+	}
+	inferred := divideDecimal(totals[balanceCurrency].Neg(), factor)
+	units := Amount{Number: numberFromDecimal(inferred), Currency: currency}
+	tx.Postings[index].Units = &units
+	return resolvedPosting{posting: tx.Postings[index], amount: inferred, currency: currency}, true
 }
 
 // bookTransaction resolves reducing cost specifications against the account's
@@ -457,78 +493,125 @@ func (e *evaluator) bookTransaction(tx *Transaction) *Transaction {
 	return &booked
 }
 
+// bookPosting is the inventory-resolution pre-pass for one reducing posting
+// (a posting with both units and an explicit cost whose number is negative).
+// It matches the reduction against the account's current lots and splits it
+// into per-lot legs under the account's booking method. Non-reducing or
+// unmatched postings pass through unchanged. When the inventory cannot
+// satisfy the reduction it deliberately returns the original posting
+// unchanged: applyPosting later attempts the same reduction against the
+// authoritative account state and emits E-EVAL-INVENTORY exactly once.
+// Reporting in both places produced a duplicate diagnostic for one oversell.
 func (e *evaluator) bookPosting(posting Posting, working map[string][]Position) []Posting {
-	if posting.Cost == nil || posting.Units == nil || posting.Units.Currency == "" || posting.Units.Number.Raw == "" {
+	if !isReducingPosting(posting) {
 		return []Posting{posting}
 	}
 	amount := DecimalFromNumber(posting.Units.Number)
-	if amount.Sign() >= 0 {
-		return []Posting{posting}
-	}
 	account := e.accounts[posting.Account]
 	if account == nil || strings.EqualFold(account.state.Booking, "NONE") {
 		return []Posting{posting}
 	}
 	constraints := deriveCostConstraints(*posting.Cost)
+	ordered := orderBookingMatches(bookingMatches(working[posting.Account], posting.Units.Currency, constraints), account.state.Booking)
+	if len(ordered) == 0 {
+		return []Posting{posting}
+	}
+	requested := amount.Neg()
+	var allocations []Position
+	switch {
+	case isOrderedBooking(account.state.Booking):
+		allocations = allocateOrderedReduction(ordered, requested)
+	case strings.EqualFold(account.state.Booking, "AVERAGE"):
+		return e.bookAverageReduction(posting, ordered, requested, constraints)
+	default:
+		allocations = allocateExactReduction(ordered, requested)
+	}
+	if allocations == nil {
+		return []Posting{posting}
+	}
+	return allocationPostings(posting, allocations)
+}
+
+// isReducingPosting reports whether the posting is a negative-amount posting
+// with the units and explicit cost inventory booking requires.
+func isReducingPosting(posting Posting) bool {
+	if posting.Cost == nil || posting.Units == nil || posting.Units.Currency == "" || posting.Units.Number.Raw == "" {
+		return false
+	}
+	return DecimalFromNumber(posting.Units.Number).Sign() < 0
+}
+
+// isOrderedBooking reports whether the method consumes lots in a fixed order.
+func isOrderedBooking(booking string) bool {
+	switch strings.ToLower(booking) {
+	case "fifo", "lifo", "hifo":
+		return true
+	default:
+		return false
+	}
+}
+
+// bookingMatches selects the positive lots of one currency whose cost
+// satisfies the reduction's cost constraints.
+func bookingMatches(positions []Position, currency string, constraints costConstraints) []Position {
 	matches := make([]Position, 0)
-	for _, position := range working[posting.Account] {
-		if position.Units.Sign() <= 0 || position.Currency != posting.Units.Currency || position.Cost == nil {
+	for _, position := range positions {
+		if position.Units.Sign() <= 0 || position.Currency != currency || position.Cost == nil {
 			continue
 		}
 		if costMatchesPosition(constraints, *position.Cost) {
 			matches = append(matches, position)
 		}
 	}
-	if len(matches) == 0 {
-		return []Posting{posting}
-	}
-	ordered := orderBookingMatches(matches, account.state.Booking)
-	requested := amount.Neg()
+	return matches
+}
+
+// allocateOrderedReduction serves FIFO/LIFO/HIFO bookings: lots are consumed
+// in method order until the reduction is covered. A shortfall returns nil so
+// the caller can leave the posting to applyPosting's single diagnostic.
+func allocateOrderedReduction(ordered []Position, requested Decimal) []Position {
+	remaining := requested
 	allocations := make([]Position, 0, len(ordered))
-	if strings.EqualFold(account.state.Booking, "FIFO") || strings.EqualFold(account.state.Booking, "LIFO") || strings.EqualFold(account.state.Booking, "HIFO") {
-		remaining := requested
-		for _, match := range ordered {
-			if remaining.IsZero() {
-				break
-			}
-			units := match.Units
-			if units.Cmp(remaining) > 0 {
-				units = remaining
-			}
-			match.Units = units
-			allocations = append(allocations, match)
-			remaining = remaining.Sub(units)
+	for _, match := range ordered {
+		if remaining.IsZero() {
+			break
 		}
-		// bookPosting is a resolution pre-pass; it deliberately does not report
-		// inventory exhaustion here. When it cannot satisfy the reduction it
-		// returns the original posting unchanged, and applyPosting later
-		// attempts the same reduction against the authoritative account state
-		// and emits E-EVAL-INVENTORY exactly once if it fails. Reporting in both
-		// places produced a duplicate diagnostic for a single oversell.
-		if !remaining.IsZero() {
-			return []Posting{posting}
+		units := match.Units
+		if units.Cmp(remaining) > 0 {
+			units = remaining
 		}
-	} else if strings.EqualFold(account.state.Booking, "AVERAGE") {
-		return e.bookAverageReduction(posting, ordered, requested, constraints)
-	} else {
-		total := Zero()
-		for _, match := range ordered {
-			total = total.Add(match.Units)
-		}
-		if !total.Equal(requested) {
-			if len(ordered) != 1 {
-				return []Posting{posting}
-			}
-			match := ordered[0]
-			if match.Units.Cmp(requested) < 0 {
-				return []Posting{posting}
-			}
-			match.Units = requested
-			allocations = append(allocations, match)
-		} else {
-			allocations = ordered
-		}
+		match.Units = units
+		allocations = append(allocations, match)
+		remaining = remaining.Sub(units)
 	}
+	if !remaining.IsZero() {
+		return nil
+	}
+	return allocations
+}
+
+// allocateExactReduction serves STRICT (and unknown) bookings: the full
+// reduction must land on the matching lots — all of them together, or the
+// single oversized lot trimmed to size. Anything else is a shortfall (nil).
+func allocateExactReduction(ordered []Position, requested Decimal) []Position {
+	total := Zero()
+	for _, match := range ordered {
+		total = total.Add(match.Units)
+	}
+	if total.Equal(requested) {
+		return ordered
+	}
+	if len(ordered) != 1 || ordered[0].Units.Cmp(requested) < 0 {
+		return nil
+	}
+	match := ordered[0]
+	match.Units = requested
+	return []Position{match}
+}
+
+// allocationPostings renders the per-lot allocations back as postings tied to
+// the original source span: negated per-lot units plus the lot's cost.
+func allocationPostings(posting Posting, allocations []Position) []Posting {
 	resolved := make([]Posting, 0, len(allocations))
 	for _, allocation := range allocations {
 		item := posting
@@ -861,6 +944,10 @@ func (e *evaluator) inferenceTarget(posting Posting, unitsCurrency string, total
 	return "", Zero(), false
 }
 
+// applyPosting folds one fully-interpolated posting into the authoritative
+// account state: lifecycle checks, balance totals, and inventory movement.
+// The lifecycle and currency checks are advisory (only inventory exhaustion
+// and rejected average reductions are hard failures here).
 func (e *evaluator) applyPosting(date Date, posting Posting, amount Decimal, currency string) {
 	account, ok := e.accounts[posting.Account]
 	if !ok || !dateAtLeast(date, account.state.Opened) || (account.state.Closed != nil && !dateBefore(date, *account.state.Closed)) {
@@ -890,14 +977,31 @@ func (e *evaluator) applyPosting(date Date, posting Posting, amount Decimal, cur
 	if !ok {
 		return
 	}
+	e.applyInventory(date, posting, account, amount, currency, cost)
+}
+
+// applyInventory moves the posting's cost-basis inventory: acquisitions
+// append a lot; reductions consume matching lots and report E-EVAL-INVENTORY
+// when the inventory cannot cover the full amount.
+func (e *evaluator) applyInventory(date Date, posting Posting, account *accountWork, amount Decimal, currency string, cost Cost) {
 	if amount.Sign() >= 0 {
 		account.state.Positions = append(account.state.Positions, Position{Units: amount, Currency: currency, Cost: &cost, Span: posting.Span()})
 		return
 	}
-	remaining := amount.Neg()
-	constraints := costConstraints{number: &cost.Number, currency: cost.Currency, date: cost.Date, label: cost.Label}
-	for i := 0; i < len(account.state.Positions) && remaining.Sign() > 0; {
-		position := &account.state.Positions[i]
+	remaining := consumePositions(&account.state.Positions, amount.Neg(), currency, costConstraints{number: &cost.Number, currency: cost.Currency, date: cost.Date, label: cost.Label})
+	if remaining.Sign() > 0 {
+		e.add("E-EVAL-INVENTORY", diagnostic.Error, posting.Span(), e.pathFor(posting.Span()))
+	}
+}
+
+// consumePositions removes up to requested units of one currency from the
+// lots whose cost matches the constraints, deleting emptied lots. It returns
+// the part of the request the inventory could not cover.
+func consumePositions(positions *[]Position, requested Decimal, currency string, constraints costConstraints) Decimal {
+	list := *positions
+	remaining := requested
+	for i := 0; i < len(list) && remaining.Sign() > 0; {
+		position := &list[i]
 		if position.Currency != currency || position.Cost == nil || !costMatchesPosition(constraints, *position.Cost) {
 			i++
 			continue
@@ -909,14 +1013,13 @@ func (e *evaluator) applyPosting(date Date, posting Posting, amount Decimal, cur
 		position.Units = position.Units.Sub(consumed)
 		remaining = remaining.Sub(consumed)
 		if position.Units.IsZero() {
-			account.state.Positions = append(account.state.Positions[:i], account.state.Positions[i+1:]...)
+			list = append(list[:i], list[i+1:]...)
 			continue
 		}
 		i++
 	}
-	if remaining.Sign() > 0 {
-		e.add("E-EVAL-INVENTORY", diagnostic.Error, posting.Span(), e.pathFor(posting.Span()))
-	}
+	*positions = list
+	return remaining
 }
 
 func (e *evaluator) balance(d Balance) {
@@ -1125,6 +1228,8 @@ func dateKey(date Date) int {
 	return date.Year*10000 + date.Month*100 + date.Day
 }
 
+// Account returns a deep copy of the account's evaluated state so callers
+// cannot mutate the evaluation's internal balances.
 func (e *Evaluation) Account(name string) (AccountState, bool) {
 	if e == nil {
 		return AccountState{}, false

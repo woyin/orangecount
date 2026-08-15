@@ -173,8 +173,8 @@ func TestDuplicateDetection(t *testing.T) {
   Expenses:Food 28 CNY
 `)
 	results := Compile(CompileRequest{
-		Text: `28 CNY @微信 -> @餐饮 : 工作午餐`,
-		Date: "2026-08-12",
+		Text:              `28 CNY @微信 -> @餐饮 : 工作午餐`,
+		Date:              "2026-08-12",
 		OperatingCurrency: "CNY",
 		Evaluation:        evaluation,
 	})
@@ -195,8 +195,8 @@ func TestHistoricalDateProfileResolution(t *testing.T) {
 `)
 	// Transaction dated 2026-05-15 should resolve to... no earlier rule, so fails.
 	results := Compile(CompileRequest{
-		Text: `100 CNY @银行卡 -> @Assets:OldBank`,
-		Date: "2026-05-15",
+		Text:              `100 CNY @银行卡 -> @Assets:OldBank`,
+		Date:              "2026-05-15",
 		OperatingCurrency: "CNY",
 		Evaluation:        evaluation,
 	})
@@ -208,8 +208,8 @@ func TestHistoricalDateProfileResolution(t *testing.T) {
 	}
 	// Transaction dated 2026-07-01 should resolve to NewBank.
 	results = Compile(CompileRequest{
-		Text: `100 CNY @银行卡 -> @Assets:OldBank`,
-		Date: "2026-07-01",
+		Text:              `100 CNY @银行卡 -> @Assets:OldBank`,
+		Date:              "2026-07-01",
 		OperatingCurrency: "CNY",
 		Evaluation:        evaluation,
 	})
@@ -265,8 +265,8 @@ func TestNegativeAmountRejected(t *testing.T) {
 2000-01-01 custom "orangecount.quick-account.v1" "餐饮" Expenses:Food
 `)
 	results := Compile(CompileRequest{
-		Text: `-28 CNY @微信 -> @餐饮`,
-		Date: "2026-08-12",
+		Text:              `-28 CNY @微信 -> @餐饮`,
+		Date:              "2026-08-12",
 		OperatingCurrency: "CNY",
 		Evaluation:        evaluation,
 	})
@@ -283,8 +283,8 @@ func TestIncomeDirectionEmitsBothAmounts(t *testing.T) {
 2000-01-01 custom "orangecount.quick-account.v1" "银行卡" Assets:Bank
 `)
 	results := Compile(CompileRequest{
-		Text: `10000 CNY @工资 -> @银行卡 : 八月工资`,
-		Date: "2026-08-12",
+		Text:              `10000 CNY @工资 -> @银行卡 : 八月工资`,
+		Date:              "2026-08-12",
 		OperatingCurrency: "CNY",
 		Evaluation:        evaluation,
 	})

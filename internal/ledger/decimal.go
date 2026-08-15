@@ -18,8 +18,10 @@ import (
 // one exists and otherwise emits a deterministic fraction.
 type Decimal struct{ rat *big.Rat }
 
+// Zero returns the additive identity, safe to use without construction.
 func Zero() Decimal { return Decimal{rat: new(big.Rat)} }
 
+// NewDecimal wraps a big.Rat, copying it; nil yields Zero.
 func NewDecimal(r *big.Rat) Decimal {
 	if r == nil {
 		return Zero()
@@ -27,8 +29,10 @@ func NewDecimal(r *big.Rat) Decimal {
 	return Decimal{rat: new(big.Rat).Set(r)}
 }
 
+// DecimalFromNumber converts a parsed Number literal into a Decimal.
 func DecimalFromNumber(number Number) Decimal { return NewDecimal(number.Rat) }
 
+// ParseDecimal parses source text (commas allowed) into an exact Decimal.
 func ParseDecimal(raw string) (Decimal, error) {
 	raw = strings.TrimSpace(strings.ReplaceAll(raw, ",", ""))
 	if raw == "" {
@@ -41,6 +45,7 @@ func ParseDecimal(raw string) (Decimal, error) {
 	return NewDecimal(rat), nil
 }
 
+// Rat returns a defensive copy of the underlying rational.
 func (d Decimal) Rat() *big.Rat {
 	if d.rat == nil {
 		return new(big.Rat)
@@ -48,8 +53,10 @@ func (d Decimal) Rat() *big.Rat {
 	return new(big.Rat).Set(d.rat)
 }
 
+// IsZero reports whether the value equals zero.
 func (d Decimal) IsZero() bool { return d.rat == nil || d.rat.Sign() == 0 }
 
+// Sign reports -1, 0, or +1 for negative, zero, and positive values.
 func (d Decimal) Sign() int {
 	if d.rat == nil {
 		return 0
@@ -57,26 +64,33 @@ func (d Decimal) Sign() int {
 	return d.rat.Sign()
 }
 
+// Add returns the exact sum; receivers are never mutated.
 func (d Decimal) Add(other Decimal) Decimal {
 	return Decimal{rat: new(big.Rat).Add(d.Rat(), other.Rat())}
 }
 
+// Sub returns the exact difference.
 func (d Decimal) Sub(other Decimal) Decimal {
 	return Decimal{rat: new(big.Rat).Sub(d.Rat(), other.Rat())}
 }
 
+// Mul returns the exact product.
 func (d Decimal) Mul(other Decimal) Decimal {
 	return Decimal{rat: new(big.Rat).Mul(d.Rat(), other.Rat())}
 }
 
+// Quo returns the exact quotient; division by zero follows big.Rat semantics.
 func (d Decimal) Quo(other Decimal) Decimal {
 	return Decimal{rat: new(big.Rat).Quo(d.Rat(), other.Rat())}
 }
 
+// Neg returns the additive inverse.
 func (d Decimal) Neg() Decimal { return Decimal{rat: new(big.Rat).Neg(d.Rat())} }
 
+// Cmp compares magnitudes: -1, 0, or +1.
 func (d Decimal) Cmp(other Decimal) int { return d.Rat().Cmp(other.Rat()) }
 
+// Equal reports exact equality.
 func (d Decimal) Equal(other Decimal) bool { return d.Cmp(other) == 0 }
 
 func (d Decimal) String() string {

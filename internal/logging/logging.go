@@ -16,20 +16,28 @@ import (
 	"time"
 )
 
+// Options configures a Logger; Sensitive disables field redaction for
+// local debugging output.
 type Options struct {
 	Sensitive bool
 }
 
+// Logger emits one JSON object per event. Serialization is mutex-guarded so
+// concurrent reloads and requests cannot interleave records.
 type Logger struct {
 	mu        sync.Mutex
 	out       io.Writer
 	sensitive bool
 }
 
+// New creates a Logger writing to out.
 func New(out io.Writer, options Options) *Logger {
 	return &Logger{out: out, sensitive: options.Sensitive}
 }
 
+// Event writes one structured record. Fields whose keys look like ledger
+// content (paths, accounts, amounts, ...) are replaced with [redacted]
+// unless the logger runs in sensitive mode.
 func (l *Logger) Event(name string, fields map[string]any) error {
 	if l == nil || l.out == nil {
 		return nil

@@ -20,9 +20,9 @@ import (
 // The editable CodeMirror slice belongs to a later phase (H1); this is the
 // read-only projection.
 type EntryContext struct {
-	Entry       JournalEntry                 `json:"entry"`
-	SourceSlice string                       `json:"source_slice"`
-	SHA256Sum   string                       `json:"sha256sum"`
+	Entry       JournalEntry `json:"entry"`
+	SourceSlice string       `json:"source_slice"`
+	SHA256Sum   string       `json:"sha256sum"`
 	// BalancesBefore/After are the per-account balances (grouped by currency)
 	// of the accounts the entry touches, immediately before and after the
 	// entry. Only Transaction and Balance entries carry them; other kinds are
@@ -79,72 +79,90 @@ func ProjectEntryContext(e ledger.Evaluation, graph *source.Graph, hash string) 
 // transaction posting up to (but not including) the target entry for
 // "before", then adds the target's own postings for "after" (a Balance has no
 // after). Accounts are grouped by currency, one JournalAmount per currency.
+// journalContextBalances computes the balances of the accounts an entry
+// touches, immediately before and after it, mirroring Fava's context modal.
+// It returns (before, after, true) only for Transaction and Balance entries;
+// other kinds yield (nil, nil, false). The running balance accumulates every
+// transaction posting up to (but not including) the target entry for
+// "before", then adds the target's own postings for "after" (a Balance has no
+// after). Accounts are grouped by currency, one JournalAmount per currency.
 func journalContextBalances(entries []ledger.EntryRecord, target int) (map[string][]JournalAmount, map[string][]JournalAmount, bool) {
-	// Determine the accounts the target entry touches.
-	accounts := map[string]bool{}
-	var isTransaction bool
-	var isBalance bool
-	var targetTransaction *ledger.Transaction
-	switch directive := entries[target].Directive.(type) {
-	case *ledger.Transaction:
-		isTransaction = true
-		targetTransaction = directive
-	case ledger.Transaction:
-		isTransaction = true
-		targetTransaction = &directive
-	case *ledger.Balance:
-		isBalance = true
-		accounts[directive.Account] = true
-	case ledger.Balance:
-		isBalance = true
-		accounts[directive.Account] = true
-	default:
+	accounts, targetTransaction, isBalance, ok := contextTouchedAccounts(entries[target].Directive)
+	if !ok {
 		return nil, nil, false
 	}
-	if isTransaction {
-		for _, posting := range targetTransaction.Postings {
-			accounts[posting.Account] = true
-		}
-	}
-
-	// Accumulate transaction postings into the touched accounts.
 	running := map[string]map[string]ledger.Decimal{}
-	addPosting := func(account string, units *ledger.Amount) {
-		if units == nil || units.Currency == "" || units.Number.Raw == "" || !accounts[account] {
-			return
-		}
-		byCurrency := running[account]
-		if byCurrency == nil {
-			byCurrency = map[string]ledger.Decimal{}
-			running[account] = byCurrency
-		}
-		value := ledger.DecimalFromNumber(units.Number)
-		if existing, ok := byCurrency[units.Currency]; ok {
-			value = existing.Add(value)
-		}
-		byCurrency[units.Currency] = value
-	}
 	for i := 0; i < target; i++ {
-		switch directive := entries[i].Directive.(type) {
-		case *ledger.Transaction:
-			for _, posting := range directive.Postings {
-				addPosting(posting.Account, posting.Units)
-			}
-		case ledger.Transaction:
-			for _, posting := range directive.Postings {
-				addPosting(posting.Account, posting.Units)
-			}
+		for _, posting := range transactionPostingsOf(entries[i].Directive) {
+			accumulateContextPosting(running, accounts, posting.Account, posting.Units)
 		}
 	}
-
 	before := presentContextBalances(running)
 	if isBalance {
 		return before, nil, true
 	}
 	for _, posting := range targetTransaction.Postings {
-		addPosting(posting.Account, posting.Units)
+		accumulateContextPosting(running, accounts, posting.Account, posting.Units)
 	}
 	return before, presentContextBalances(running), true
+}
+
+// contextTouchedAccounts collects the accounts the target directive touches
+// and, for transactions, the directive itself. ok is false for entry kinds
+// the context modal does not balance.
+func contextTouchedAccounts(directive ledger.Directive) (accounts map[string]bool, tx *ledger.Transaction, isBalance bool, ok bool) {
+	accounts = map[string]bool{}
+	switch value := directive.(type) {
+	case *ledger.Transaction:
+		for _, posting := range value.Postings {
+			accounts[posting.Account] = true
+		}
+		return accounts, value, false, true
+	case ledger.Transaction:
+		for _, posting := range value.Postings {
+			accounts[posting.Account] = true
+		}
+		return accounts, &value, false, true
+	case ledger.Balance:
+		accounts[value.Account] = true
+	case *ledger.Balance:
+		accounts[value.Account] = true
+	default:
+		return nil, nil, false, false
+	}
+	return accounts, nil, true, true
+}
+
+// transactionPostingsOf returns a directive's postings when it is a
+// transaction (either representation), nil otherwise.
+func transactionPostingsOf(directive ledger.Directive) []ledger.Posting {
+	switch value := directive.(type) {
+	case *ledger.Transaction:
+		return value.Postings
+	case ledger.Transaction:
+		return value.Postings
+	default:
+		return nil
+	}
+}
+
+// accumulateContextPosting adds one posting's units into the running
+// per-account, per-currency totals, skipping postings the target does not
+// touch or that carry no complete amount.
+func accumulateContextPosting(running map[string]map[string]ledger.Decimal, accounts map[string]bool, account string, units *ledger.Amount) {
+	if units == nil || units.Currency == "" || units.Number.Raw == "" || !accounts[account] {
+		return
+	}
+	byCurrency := running[account]
+	if byCurrency == nil {
+		byCurrency = map[string]ledger.Decimal{}
+		running[account] = byCurrency
+	}
+	value := ledger.DecimalFromNumber(units.Number)
+	if existing, ok := byCurrency[units.Currency]; ok {
+		value = existing.Add(value)
+	}
+	byCurrency[units.Currency] = value
 }
 
 // presentContextBalances turns the running per-account/per-currency decimal

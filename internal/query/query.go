@@ -21,13 +21,17 @@ import (
 	"orangecount/internal/ledger"
 )
 
+// Row is one result record keyed by output column name.
 type Row map[string]any
 
+// Result is a materialized query result: ordered columns plus rows.
 type Result struct {
 	Columns []string `json:"columns"`
 	Rows    []Row    `json:"rows"`
 }
 
+// WriteCSV serializes the result as CSV, header first, missing values as
+// empty cells.
 func (r Result) WriteCSV(w io.Writer) error {
 	writer := csv.NewWriter(w)
 	if err := writer.Write(r.Columns); err != nil {
@@ -46,6 +50,8 @@ func (r Result) WriteCSV(w io.Writer) error {
 	return writer.Error()
 }
 
+// Query is a parsed BeanQuery: projection, source table, filters, grouping,
+// ordering, and limit.
 type Query struct {
 	Select  []SelectItem
 	From    string
@@ -55,31 +61,39 @@ type Query struct {
 	Limit   int
 }
 
+// SelectItem is one projected expression with an optional output alias.
 type SelectItem struct {
 	Expr  Expr
 	Alias string
 }
 
+// OrderItem is one sort key; Desc reverses its direction.
 type OrderItem struct {
 	Expr Expr
 	Desc bool
 }
 
+// Expr is a query expression node. eval receives the current row and the
+// full row set (window aggregates); aggregate marks nodes that must run
+// once per group rather than per row.
 type Expr interface {
 	String() string
 	eval(row Row, rows []Row) (any, error)
 	aggregate() bool
 }
 
+// ParseError reports a syntax error in the query text.
 type ParseError struct{ Message string }
 
 func (e ParseError) Error() string { return e.Message }
 
+// Parse lexes and parses BeanQuery text into a Query.
 func Parse(text string) (Query, error) {
 	parser := &queryParser{tokens: lex(text)}
 	return parser.parse()
 }
 
+// Evaluate parses and runs one query against the evaluated ledger.
 func Evaluate(text string, evaluation ledger.Evaluation) (Result, error) {
 	query, err := Parse(text)
 	if err != nil {
@@ -88,45 +102,79 @@ func Evaluate(text string, evaluation ledger.Evaluation) (Result, error) {
 	return EvaluateQuery(query, evaluation)
 }
 
+// EvaluateQuery runs a parsed query over an evaluation: resolve the table,
+// apply WHERE, group, project the select list, then order and limit. Each
+// stage is a helper so the pipeline stays readable in order.
 func EvaluateQuery(query Query, evaluation ledger.Evaluation) (Result, error) {
 	rows, err := rowsForTable(query.From, evaluation)
 	if err != nil {
 		return Result{}, err
 	}
-	if query.Where != nil {
-		filtered := make([]Row, 0, len(rows))
-		for _, row := range rows {
-			value, evalErr := query.Where.eval(row, []Row{row})
-			if evalErr != nil {
-				return Result{}, evalErr
-			}
-			if truthy(value) {
-				filtered = append(filtered, row)
-			}
-		}
-		rows = filtered
+	rows, err = applyWhere(query.Where, rows)
+	if err != nil {
+		return Result{}, err
 	}
 	groups := groupRows(rows, query.GroupBy, query.Select)
-	selectItems := query.Select
-	if len(selectItems) == 1 {
-		if _, ok := selectItems[0].Expr.(starExpr); ok {
-			keys := make(map[string]struct{})
-			for _, row := range rows {
-				for key := range row {
-					keys[key] = struct{}{}
-				}
-			}
-			ordered := make([]string, 0, len(keys))
-			for key := range keys {
-				ordered = append(ordered, key)
-			}
-			sort.Strings(ordered)
-			selectItems = make([]SelectItem, 0, len(ordered))
-			for _, key := range ordered {
-				selectItems = append(selectItems, SelectItem{Expr: fieldExpr{name: key}, Alias: key})
-			}
+	selectItems := expandStarSelect(rows, query.Select)
+	result, err := projectGroups(selectItems, groups)
+	if err != nil {
+		return Result{}, err
+	}
+	sortResultRows(result, query.OrderBy)
+	if query.Limit > 0 && len(result.Rows) > query.Limit {
+		result.Rows = result.Rows[:query.Limit]
+	}
+	return result, nil
+}
+
+// applyWhere filters rows by the WHERE predicate, if present.
+func applyWhere(where Expr, rows []Row) ([]Row, error) {
+	if where == nil {
+		return rows, nil
+	}
+	filtered := make([]Row, 0, len(rows))
+	for _, row := range rows {
+		value, err := where.eval(row, []Row{row})
+		if err != nil {
+			return nil, err
+		}
+		if truthy(value) {
+			filtered = append(filtered, row)
 		}
 	}
+	return filtered, nil
+}
+
+// expandStarSelect rewrites a lone `SELECT *` into one field item per column
+// of the underlying rows, alphabetically so the output is deterministic.
+func expandStarSelect(rows []Row, selectItems []SelectItem) []SelectItem {
+	if len(selectItems) != 1 {
+		return selectItems
+	}
+	if _, ok := selectItems[0].Expr.(starExpr); !ok {
+		return selectItems
+	}
+	keys := make(map[string]struct{})
+	for _, row := range rows {
+		for key := range row {
+			keys[key] = struct{}{}
+		}
+	}
+	ordered := make([]string, 0, len(keys))
+	for key := range keys {
+		ordered = append(ordered, key)
+	}
+	sort.Strings(ordered)
+	expanded := make([]SelectItem, 0, len(ordered))
+	for _, key := range ordered {
+		expanded = append(expanded, SelectItem{Expr: fieldExpr{name: key}, Alias: key})
+	}
+	return expanded
+}
+
+// projectGroups evaluates the select list once per group, naming each output
+// column by its alias (or expression text when unaliased).
+func projectGroups(selectItems []SelectItem, groups [][]Row) (Result, error) {
 	result := Result{}
 	for _, item := range selectItems {
 		alias := item.Alias
@@ -142,36 +190,39 @@ func EvaluateQuery(query Query, evaluation ledger.Evaluation) (Result, error) {
 			if alias == "" {
 				alias = item.Expr.String()
 			}
-			value, evalErr := item.Expr.eval(firstRow(group), group)
-			if evalErr != nil {
-				return Result{}, evalErr
+			value, err := item.Expr.eval(firstRow(group), group)
+			if err != nil {
+				return Result{}, err
 			}
 			projected[alias] = value
 		}
 		result.Rows = append(result.Rows, projected)
 	}
-	if len(query.OrderBy) != 0 {
-		sort.SliceStable(result.Rows, func(i, j int) bool {
-			left, right := result.Rows[i], result.Rows[j]
-			for _, item := range query.OrderBy {
-				lv := left[item.Expr.String()]
-				rv := right[item.Expr.String()]
-				comparison := compareValues(lv, rv)
-				if comparison == 0 {
-					continue
-				}
-				if item.Desc {
-					return comparison > 0
-				}
-				return comparison < 0
-			}
-			return false
-		})
-	}
-	if query.Limit > 0 && len(result.Rows) > query.Limit {
-		result.Rows = result.Rows[:query.Limit]
-	}
 	return result, nil
+}
+
+// sortResultRows applies the ORDER BY list; ties keep their prior (stable)
+// order, and rows missing the sort key compare via formatValue.
+func sortResultRows(result Result, orderBy []OrderItem) {
+	if len(orderBy) == 0 {
+		return
+	}
+	sort.SliceStable(result.Rows, func(i, j int) bool {
+		left, right := result.Rows[i], result.Rows[j]
+		for _, item := range orderBy {
+			lv := left[item.Expr.String()]
+			rv := right[item.Expr.String()]
+			comparison := compareValues(lv, rv)
+			if comparison == 0 {
+				continue
+			}
+			if item.Desc {
+				return comparison > 0
+			}
+			return comparison < 0
+		}
+		return false
+	})
 }
 
 func groupRows(rows []Row, groupBy []Expr, selectItems []SelectItem) [][]Row {
@@ -332,6 +383,9 @@ type queryToken struct {
 	text string
 }
 
+// lex splits a query string into words, numbers, strings, operators, and
+// delimiters. Each token family has its own scanner; the loop only routes on
+// the leading rune.
 func lex(text string) []queryToken {
 	tokens := make([]queryToken, 0)
 	for i := 0; i < len(text); {
@@ -341,67 +395,91 @@ func lex(text string) []queryToken {
 			continue
 		}
 		if r == '\'' || r == '"' {
-			quote := byte(r)
-			i += size
-			start := i
-			var value strings.Builder
-			for i < len(text) && text[i] != quote {
-				if text[i] == '\\' && i+1 < len(text) {
-					i++
-				}
-				value.WriteByte(text[i])
-				i++
-			}
-			if i < len(text) {
-				i++
-			}
-			if value.Len() == 0 && start < i-1 {
-				value.WriteString("")
-			}
-			tokens = append(tokens, queryToken{kind: tokenString, text: value.String()})
+			var token queryToken
+			token, i = lexString(text, i, byte(r), size)
+			tokens = append(tokens, token)
 			continue
 		}
-		if strings.ContainsRune("(),", r) {
-			kind := tokenComma
-			if r == '(' {
-				kind = tokenLParen
-			} else if r == ')' {
-				kind = tokenRParen
-			}
+		if kind, ok := delimiterKind(r); ok {
 			tokens = append(tokens, queryToken{kind: kind, text: string(r)})
 			i += size
 			continue
 		}
-		if r == '*' {
-			tokens = append(tokens, queryToken{kind: tokenStar, text: "*"})
-			i += size
-			continue
-		}
 		if strings.ContainsRune("=<>!+-/", r) {
-			start := i
-			i += size
-			if i < len(text) && (text[i] == '=' || (text[start] == '<' && text[i] == '>')) {
-				i++
-			}
-			tokens = append(tokens, queryToken{kind: tokenOperator, text: text[start:i]})
+			var token queryToken
+			token, i = lexOperator(text, i, size)
+			tokens = append(tokens, token)
 			continue
 		}
-		start := i
-		for i < len(text) {
-			r, size = utf8.DecodeRuneInString(text[i:])
-			if unicode.IsSpace(r) || strings.ContainsRune("(),*<>=!+-/\"", r) {
-				break
-			}
-			i += size
-		}
-		word := text[start:i]
-		kind := tokenWord
-		if _, err := strconv.ParseFloat(word, 64); err == nil {
-			kind = tokenNumber
-		}
-		tokens = append(tokens, queryToken{kind: kind, text: word})
+		var token queryToken
+		token, i = lexWord(text, i)
+		tokens = append(tokens, token)
 	}
 	return tokens
+}
+
+// delimiterKind maps one-rune delimiters to their token kinds.
+func delimiterKind(r rune) (queryTokenKind, bool) {
+	switch r {
+	case ',':
+		return tokenComma, true
+	case '(':
+		return tokenLParen, true
+	case ')':
+		return tokenRParen, true
+	case '*':
+		return tokenStar, true
+	default:
+		return tokenWord, false
+	}
+}
+
+// lexString consumes a quoted string starting at text[i]; backslash escapes
+// the next character, and an unterminated string ends at end-of-input.
+func lexString(text string, i int, quote byte, size int) (queryToken, int) {
+	i += size
+	var value strings.Builder
+	for i < len(text) && text[i] != quote {
+		if text[i] == '\\' && i+1 < len(text) {
+			i++
+		}
+		value.WriteByte(text[i])
+		i++
+	}
+	if i < len(text) {
+		i++
+	}
+	return queryToken{kind: tokenString, text: value.String()}, i
+}
+
+// lexOperator consumes an operator starting at text[i]: two-character forms
+// (<=, >=, !=, <>) are glued, everything else is the single rune.
+func lexOperator(text string, i int, size int) (queryToken, int) {
+	start := i
+	i += size
+	if i < len(text) && (text[i] == '=' || (text[start] == '<' && text[i] == '>')) {
+		i++
+	}
+	return queryToken{kind: tokenOperator, text: text[start:i]}, i
+}
+
+// lexWord consumes a bare word and classifies it as a number when it parses
+// as one, mirroring how the primary parser treats numeric literals.
+func lexWord(text string, i int) (queryToken, int) {
+	start := i
+	for i < len(text) {
+		r, size := utf8.DecodeRuneInString(text[i:])
+		if unicode.IsSpace(r) || strings.ContainsRune("(),*<>=!+-/\"", r) {
+			break
+		}
+		i += size
+	}
+	word := text[start:i]
+	kind := tokenWord
+	if _, err := strconv.ParseFloat(word, 64); err == nil {
+		kind = tokenNumber
+	}
+	return queryToken{kind: kind, text: word}, i
 }
 
 type queryParser struct {
@@ -409,34 +487,16 @@ type queryParser struct {
 	index  int
 }
 
+// parse reads one SELECT statement clause by clause. Each clause parser
+// consumes its keywords so this loop only sequences them and verifies the
+// statement is fully consumed at the end.
 func (p *queryParser) parse() (Query, error) {
 	query := Query{}
 	if !p.acceptWord("select") {
 		return query, p.errorf("query must start with SELECT")
 	}
-	for {
-		if p.accept(tokenStar) {
-			query.Select = append(query.Select, SelectItem{Expr: starExpr{}})
-		} else {
-			expr, err := p.expression(0)
-			if err != nil {
-				return query, err
-			}
-			item := SelectItem{Expr: expr}
-			if p.acceptWord("as") {
-				alias, err := p.expectWord("column alias")
-				if err != nil {
-					return query, err
-				}
-				item.Alias = alias
-			} else if p.peek().kind == tokenWord && !isClauseWord(p.peek().text) {
-				item.Alias = p.next().text
-			}
-			query.Select = append(query.Select, item)
-		}
-		if !p.accept(tokenComma) {
-			break
-		}
+	if err := p.parseSelectList(&query); err != nil {
+		return query, err
 	}
 	if len(query.Select) == 0 {
 		return query, p.errorf("SELECT requires at least one expression")
@@ -449,57 +509,123 @@ func (p *queryParser) parse() (Query, error) {
 		return query, err
 	}
 	query.From = from
-	if p.acceptWord("where") {
-		query.Where, err = p.expression(0)
-		if err != nil {
-			return query, err
-		}
+	if err := p.parseWhere(&query); err != nil {
+		return query, err
 	}
-	if p.acceptWord("group") {
-		if !p.acceptWord("by") {
-			return query, p.errorf("GROUP requires BY")
-		}
-		query.GroupBy, err = p.expressionList()
-		if err != nil {
-			return query, err
-		}
+	if err := p.parseGroupBy(&query); err != nil {
+		return query, err
 	}
-	if p.acceptWord("order") {
-		if !p.acceptWord("by") {
-			return query, p.errorf("ORDER requires BY")
-		}
-		for {
-			expr, parseErr := p.expression(0)
-			if parseErr != nil {
-				return query, parseErr
-			}
-			item := OrderItem{Expr: expr}
-			if p.acceptWord("desc") {
-				item.Desc = true
-			} else {
-				p.acceptWord("asc")
-			}
-			query.OrderBy = append(query.OrderBy, item)
-			if !p.accept(tokenComma) {
-				break
-			}
-		}
+	if err := p.parseOrderBy(&query); err != nil {
+		return query, err
 	}
-	if p.acceptWord("limit") {
-		token := p.next()
-		if token.kind != tokenNumber {
-			return query, p.errorf("LIMIT requires a number")
-		}
-		limit, parseErr := strconv.Atoi(token.text)
-		if parseErr != nil || limit < 0 {
-			return query, p.errorf("invalid LIMIT")
-		}
-		query.Limit = limit
+	if err := p.parseLimit(&query); err != nil {
+		return query, err
 	}
 	if p.peek().kind != 0 || p.index < len(p.tokens) {
 		return query, p.errorf("unexpected token %q", p.peek().text)
 	}
 	return query, nil
+}
+
+// parseSelectList consumes the comma-separated projection expressions. A
+// bare word after an expression (not a clause keyword) is its implicit alias.
+func (p *queryParser) parseSelectList(query *Query) error {
+	for {
+		if p.accept(tokenStar) {
+			query.Select = append(query.Select, SelectItem{Expr: starExpr{}})
+		} else {
+			expr, err := p.expression(0)
+			if err != nil {
+				return err
+			}
+			item := SelectItem{Expr: expr}
+			if p.acceptWord("as") {
+				alias, aliasErr := p.expectWord("column alias")
+				if aliasErr != nil {
+					return aliasErr
+				}
+				item.Alias = alias
+			} else if p.peek().kind == tokenWord && !isClauseWord(p.peek().text) {
+				item.Alias = p.next().text
+			}
+			query.Select = append(query.Select, item)
+		}
+		if !p.accept(tokenComma) {
+			return nil
+		}
+	}
+}
+
+// parseWhere consumes the optional WHERE predicate.
+func (p *queryParser) parseWhere(query *Query) error {
+	if !p.acceptWord("where") {
+		return nil
+	}
+	where, err := p.expression(0)
+	if err != nil {
+		return err
+	}
+	query.Where = where
+	return nil
+}
+
+// parseGroupBy consumes the optional GROUP BY expression list.
+func (p *queryParser) parseGroupBy(query *Query) error {
+	if !p.acceptWord("group") {
+		return nil
+	}
+	if !p.acceptWord("by") {
+		return p.errorf("GROUP requires BY")
+	}
+	groupBy, err := p.expressionList()
+	if err != nil {
+		return err
+	}
+	query.GroupBy = groupBy
+	return nil
+}
+
+// parseOrderBy consumes the optional ORDER BY list with per-item ASC/DESC.
+func (p *queryParser) parseOrderBy(query *Query) error {
+	if !p.acceptWord("order") {
+		return nil
+	}
+	if !p.acceptWord("by") {
+		return p.errorf("ORDER requires BY")
+	}
+	for {
+		expr, err := p.expression(0)
+		if err != nil {
+			return err
+		}
+		item := OrderItem{Expr: expr}
+		if p.acceptWord("desc") {
+			item.Desc = true
+		} else {
+			p.acceptWord("asc")
+		}
+		query.OrderBy = append(query.OrderBy, item)
+		if !p.accept(tokenComma) {
+			return nil
+		}
+	}
+}
+
+// parseLimit consumes the optional non-negative LIMIT n.
+func (p *queryParser) parseLimit(query *Query) error {
+	if !p.acceptWord("limit") {
+		return nil
+	}
+	token := p.next()
+	if token.kind != tokenNumber {
+		return p.errorf("LIMIT requires a number")
+	}
+	limit, err := strconv.Atoi(token.text)
+	if err != nil || limit < 0 {
+		return p.errorf("invalid LIMIT")
+	}
+	query.Limit = limit
+	return nil
 }
 
 func (p *queryParser) expression(minPrecedence int) (Expr, error) {
@@ -523,6 +649,8 @@ func (p *queryParser) expression(minPrecedence int) (Expr, error) {
 	return left, nil
 }
 
+// primary parses one primary expression: literals, parenthesized groups,
+// unary operators, function calls, and field references.
 func (p *queryParser) primary() (Expr, error) {
 	token := p.next()
 	switch token.kind {
@@ -535,59 +663,79 @@ func (p *queryParser) primary() (Expr, error) {
 		}
 		return literalExpr{value: decimal, display: token.text}, nil
 	case tokenLParen:
-		expr, err := p.expression(0)
-		if err != nil {
-			return nil, err
-		}
-		if !p.accept(tokenRParen) {
-			return nil, p.errorf("missing closing parenthesis")
-		}
-		return expr, nil
+		return p.parenthesized()
 	case tokenOperator:
 		if token.text == "-" {
-			expr, err := p.primary()
+			inner, err := p.primary()
 			if err != nil {
 				return nil, err
 			}
-			return unaryExpr{operator: "-", inner: expr}, nil
+			return unaryExpr{operator: "-", inner: inner}, nil
 		}
 		return nil, p.errorf("unexpected operator %q", token.text)
 	case tokenWord:
-		if strings.EqualFold(token.text, "not") {
-			expr, err := p.primary()
-			if err != nil {
-				return nil, err
-			}
-			return unaryExpr{operator: "not", inner: expr}, nil
-		}
-		if p.accept(tokenLParen) {
-			args := make([]Expr, 0)
-			if !p.accept(tokenRParen) {
-				for {
-					if p.accept(tokenStar) {
-						args = append(args, starExpr{})
-					} else {
-						expr, err := p.expression(0)
-						if err != nil {
-							return nil, err
-						}
-						args = append(args, expr)
-					}
-					if p.accept(tokenRParen) {
-						break
-					}
-					if !p.accept(tokenComma) {
-						return nil, p.errorf("function arguments require commas")
-					}
-				}
-			}
-			return functionExpr{name: strings.ToLower(token.text), args: args}, nil
-		}
-		return fieldExpr{name: token.text}, nil
+		return p.wordPrimary(token)
 	case tokenStar:
 		return starExpr{}, nil
 	default:
 		return nil, p.errorf("unexpected token %q", token.text)
+	}
+}
+
+// parenthesized parses "( expression )".
+func (p *queryParser) parenthesized() (Expr, error) {
+	expr, err := p.expression(0)
+	if err != nil {
+		return nil, err
+	}
+	if !p.accept(tokenRParen) {
+		return nil, p.errorf("missing closing parenthesis")
+	}
+	return expr, nil
+}
+
+// wordPrimary parses a leading word: NOT, a function call, or a field name.
+func (p *queryParser) wordPrimary(token queryToken) (Expr, error) {
+	if strings.EqualFold(token.text, "not") {
+		inner, err := p.primary()
+		if err != nil {
+			return nil, err
+		}
+		return unaryExpr{operator: "not", inner: inner}, nil
+	}
+	if p.accept(tokenLParen) {
+		args, err := p.callArguments()
+		if err != nil {
+			return nil, err
+		}
+		return functionExpr{name: strings.ToLower(token.text), args: args}, nil
+	}
+	return fieldExpr{name: token.text}, nil
+}
+
+// callArguments parses a function argument list up to the closing
+// parenthesis; a bare * inside the list (as in count(*)) is an argument.
+func (p *queryParser) callArguments() ([]Expr, error) {
+	args := make([]Expr, 0)
+	if p.accept(tokenRParen) {
+		return args, nil
+	}
+	for {
+		if p.accept(tokenStar) {
+			args = append(args, starExpr{})
+		} else {
+			expr, err := p.expression(0)
+			if err != nil {
+				return nil, err
+			}
+			args = append(args, expr)
+		}
+		if p.accept(tokenRParen) {
+			return args, nil
+		}
+		if !p.accept(tokenComma) {
+			return nil, p.errorf("function arguments require commas")
+		}
 	}
 }
 
@@ -747,6 +895,10 @@ func (e binaryExpr) String() string {
 	return e.left.String() + " " + e.operator + " " + e.right.String()
 }
 func (e binaryExpr) aggregate() bool { return e.left.aggregate() || e.right.aggregate() }
+
+// eval evaluates a binary operator: boolean connectives, comparisons, and
+// arithmetic. Arithmetic requires numbers on both sides; comparisons fall
+// back to formatted string order for non-numeric operands.
 func (e binaryExpr) eval(row Row, rows []Row) (any, error) {
 	left, err := e.left.eval(row, rows)
 	if err != nil {
@@ -761,6 +913,15 @@ func (e binaryExpr) eval(row Row, rows []Row) (any, error) {
 		return truthy(left) && truthy(right), nil
 	case "or":
 		return truthy(left) || truthy(right), nil
+	default:
+		return e.evalComparison(left, right)
+	}
+}
+
+// evalComparison evaluates comparisons and arithmetic on already-evaluated
+// operands.
+func (e binaryExpr) evalComparison(left, right any) (any, error) {
+	switch e.operator {
 	case "=":
 		return compareValues(left, right) == 0, nil
 	case "!=", "<>":
@@ -774,26 +935,31 @@ func (e binaryExpr) eval(row Row, rows []Row) (any, error) {
 	case ">=":
 		return compareValues(left, right) >= 0, nil
 	case "+", "-", "*", "/":
-		leftNumber, leftOK := decimalValue(left)
-		rightNumber, rightOK := decimalValue(right)
-		if !leftOK || !rightOK {
-			return nil, fmt.Errorf("arithmetic requires numbers")
-		}
-		switch e.operator {
-		case "+":
-			return leftNumber.Add(rightNumber), nil
-		case "-":
-			return leftNumber.Sub(rightNumber), nil
-		case "*":
-			return leftNumber.Mul(rightNumber), nil
-		default:
-			if rightNumber.IsZero() {
-				return nil, fmt.Errorf("division by zero")
-			}
-			return ledger.NewDecimal(new(big.Rat).Quo(leftNumber.Rat(), rightNumber.Rat())), nil
-		}
+		return e.evalArithmetic(left, right)
 	default:
 		return nil, fmt.Errorf("unsupported operator %q", e.operator)
+	}
+}
+
+// evalArithmetic applies +, -, *, / to numeric operands.
+func (e binaryExpr) evalArithmetic(left, right any) (any, error) {
+	leftNumber, leftOK := decimalValue(left)
+	rightNumber, rightOK := decimalValue(right)
+	if !leftOK || !rightOK {
+		return nil, fmt.Errorf("arithmetic requires numbers")
+	}
+	switch e.operator {
+	case "+":
+		return leftNumber.Add(rightNumber), nil
+	case "-":
+		return leftNumber.Sub(rightNumber), nil
+	case "*":
+		return leftNumber.Mul(rightNumber), nil
+	default: // "/"
+		if rightNumber.IsZero() {
+			return nil, fmt.Errorf("division by zero")
+		}
+		return ledger.NewDecimal(new(big.Rat).Quo(leftNumber.Rat(), rightNumber.Rat())), nil
 	}
 }
 
@@ -824,109 +990,148 @@ func (e functionExpr) aggregate() bool {
 	}
 }
 
+// eval dispatches a function call to its evaluation family. Counting and the
+// numeric aggregates fold over the group's rows; date parts and membership
+// predicates evaluate their single argument against the current row.
 func (e functionExpr) eval(row Row, rows []Row) (any, error) {
 	switch e.name {
 	case "count":
-		if len(e.args) == 0 || (len(e.args) == 1 && e.args[0].String() == "*") {
-			return ledger.NewDecimal(big.NewRat(int64(len(rows)), 1)), nil
-		}
-		count := 0
-		for _, candidate := range rows {
-			value, err := e.args[0].eval(candidate, []Row{candidate})
-			if err != nil {
-				return nil, err
-			}
-			if value != nil {
-				count++
-			}
-		}
-		return ledger.NewDecimal(big.NewRat(int64(count), 1)), nil
+		return e.evalCount(rows)
 	case "sum", "avg", "min", "max", "first", "last":
-		if len(e.args) != 1 {
-			return nil, fmt.Errorf("%s requires one argument", e.name)
-		}
-		values := make([]ledger.Decimal, 0, len(rows))
-		for _, candidate := range rows {
-			value, err := e.args[0].eval(candidate, []Row{candidate})
-			if err != nil {
-				return nil, err
-			}
-			if decimal, ok := decimalValue(value); ok {
-				values = append(values, decimal)
-			}
-		}
-		if len(values) == 0 {
-			return ledger.Zero(), nil
-		}
-		switch e.name {
-		case "sum":
-			result := ledger.Zero()
-			for _, value := range values {
-				result = result.Add(value)
-			}
-			return result, nil
-		case "avg":
-			sum, _ := functionExpr{name: "sum", args: e.args}.eval(row, rows)
-			return ledger.NewDecimal(new(big.Rat).Quo(sum.(ledger.Decimal).Rat(), big.NewRat(int64(len(values)), 1))), nil
-		case "min", "max":
-			result := values[0]
-			for _, value := range values[1:] {
-				if (e.name == "min" && value.Cmp(result) < 0) || (e.name == "max" && value.Cmp(result) > 0) {
-					result = value
-				}
-			}
-			return result, nil
-		case "first":
-			return values[0], nil
-		default:
-			return values[len(values)-1], nil
-		}
+		return e.evalAggregate(row, rows)
 	case "year", "month", "day":
-		if len(e.args) != 1 {
-			return nil, fmt.Errorf("%s requires one argument", e.name)
-		}
-		value, err := e.args[0].eval(row, rows)
-		if err != nil {
-			return nil, err
-		}
-		date, ok := value.(ledger.Date)
-		if !ok {
-			if raw, ok := value.(string); ok {
-				date = parseDate(raw)
-			}
-		}
-		switch e.name {
-		case "year":
-			return ledger.NewDecimal(big.NewRat(int64(date.Year), 1)), nil
-		case "month":
-			return ledger.NewDecimal(big.NewRat(int64(date.Month), 1)), nil
-		default:
-			return ledger.NewDecimal(big.NewRat(int64(date.Day), 1)), nil
-		}
+		return e.evalDatePart(row, rows)
 	case "has_tag", "has_link":
-		if len(e.args) != 2 {
-			return nil, fmt.Errorf("%s requires a collection and value", e.name)
-		}
-		collection, err := e.args[0].eval(row, rows)
-		if err != nil {
-			return nil, err
-		}
-		needle, err := e.args[1].eval(row, rows)
-		if err != nil {
-			return nil, err
-		}
-		needleString := formatValue(needle)
-		if values, ok := collection.([]string); ok {
-			for _, value := range values {
-				if value == needleString {
-					return true, nil
-				}
-			}
-		}
-		return false, nil
+		return e.evalMembership(row, rows)
 	default:
 		return nil, fmt.Errorf("unsupported function %q", e.name)
 	}
+}
+
+// evalCount implements count() and count(expr): the bare form counts rows,
+// the argument form counts rows where the argument is non-NULL.
+func (e functionExpr) evalCount(rows []Row) (any, error) {
+	if len(e.args) == 0 || (len(e.args) == 1 && e.args[0].String() == "*") {
+		return ledger.NewDecimal(big.NewRat(int64(len(rows)), 1)), nil
+	}
+	count := 0
+	for _, candidate := range rows {
+		value, err := e.args[0].eval(candidate, []Row{candidate})
+		if err != nil {
+			return nil, err
+		}
+		if value != nil {
+			count++
+		}
+	}
+	return ledger.NewDecimal(big.NewRat(int64(count), 1)), nil
+}
+
+// evalAggregate implements sum/avg/min/max/first/last over the group's rows;
+// rows where the argument is missing or non-numeric are skipped. An empty
+// input yields 0 (matching the workbench's deterministic presentation).
+func (e functionExpr) evalAggregate(row Row, rows []Row) (any, error) {
+	if len(e.args) != 1 {
+		return nil, fmt.Errorf("%s requires one argument", e.name)
+	}
+	values := make([]ledger.Decimal, 0, len(rows))
+	for _, candidate := range rows {
+		value, err := e.args[0].eval(candidate, []Row{candidate})
+		if err != nil {
+			return nil, err
+		}
+		if decimal, ok := decimalValue(value); ok {
+			values = append(values, decimal)
+		}
+	}
+	if len(values) == 0 {
+		return ledger.Zero(), nil
+	}
+	switch e.name {
+	case "sum":
+		return sumDecimals(values), nil
+	case "avg":
+		sum, _ := functionExpr{name: "sum", args: e.args}.eval(row, rows)
+		return ledger.NewDecimal(new(big.Rat).Quo(sum.(ledger.Decimal).Rat(), big.NewRat(int64(len(values)), 1))), nil
+	case "min", "max":
+		return extremalDecimal(values, e.name == "min"), nil
+	case "first":
+		return values[0], nil
+	default: // "last"
+		return values[len(values)-1], nil
+	}
+}
+
+// evalDatePart implements year()/month()/day() over a date (or date string).
+func (e functionExpr) evalDatePart(row Row, rows []Row) (any, error) {
+	if len(e.args) != 1 {
+		return nil, fmt.Errorf("%s requires one argument", e.name)
+	}
+	value, err := e.args[0].eval(row, rows)
+	if err != nil {
+		return nil, err
+	}
+	date, ok := value.(ledger.Date)
+	if !ok {
+		if raw, isString := value.(string); isString {
+			date = parseDate(raw)
+		}
+	}
+	var part int
+	switch e.name {
+	case "year":
+		part = date.Year
+	case "month":
+		part = date.Month
+	default: // "day"
+		part = date.Day
+	}
+	return ledger.NewDecimal(big.NewRat(int64(part), 1)), nil
+}
+
+// evalMembership implements has_tag/has_link: exact membership of a value in
+// a collection such as the tags or links column.
+func (e functionExpr) evalMembership(row Row, rows []Row) (any, error) {
+	if len(e.args) != 2 {
+		return nil, fmt.Errorf("%s requires a collection and value", e.name)
+	}
+	collection, err := e.args[0].eval(row, rows)
+	if err != nil {
+		return nil, err
+	}
+	needle, err := e.args[1].eval(row, rows)
+	if err != nil {
+		return nil, err
+	}
+	needleString := formatValue(needle)
+	if values, ok := collection.([]string); ok {
+		for _, value := range values {
+			if value == needleString {
+				return true, nil
+			}
+		}
+	}
+	return false, nil
+}
+
+// sumDecimals adds a list of decimals.
+func sumDecimals(values []ledger.Decimal) ledger.Decimal {
+	result := ledger.Zero()
+	for _, value := range values {
+		result = result.Add(value)
+	}
+	return result
+}
+
+// extremalDecimal picks the minimum or maximum of a non-empty list.
+func extremalDecimal(values []ledger.Decimal, min bool) ledger.Decimal {
+	result := values[0]
+	for _, value := range values[1:] {
+		if (min && value.Cmp(result) < 0) || (!min && value.Cmp(result) > 0) {
+			result = value
+		}
+	}
+	return result
 }
 
 func decimalValue(value any) (ledger.Decimal, bool) {

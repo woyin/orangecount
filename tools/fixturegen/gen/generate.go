@@ -201,88 +201,135 @@ func renderAccounts(accounts []accountSpec) string {
 	return b.String()
 }
 
-func renderActivity(accounts []accountSpec, config Config, balances balanceBook) (string, int) {
-	var b strings.Builder
-	b.WriteString("; Dense, deterministic activity. No network prices or private data.\n")
-	transactionCount := 0
-	dateIndex := 0
-	baseDate := time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC)
-	writeDate := func() string {
-		date := baseDate.AddDate(0, 0, dateIndex)
-		dateIndex++
-		return date.Format("2006-01-02")
-	}
-	writeTransaction := func(date, flag, payee, narration string, tags, links []string, metadata string, postings ...postingSpec) {
-		fmt.Fprintf(&b, "%s %s \"%s\" \"%s\"", date, flag, payee, narration)
-		for _, tag := range tags {
-			fmt.Fprintf(&b, " #%s", tag)
-		}
-		for _, link := range links {
-			fmt.Fprintf(&b, " ^%s", link)
-		}
-		b.WriteByte('\n')
-		if metadata != "" {
-			fmt.Fprintf(&b, "  category: \"%s\"\n", metadata)
-		}
-		for _, posting := range postings {
-			fmt.Fprintf(&b, "  %s %s %s\n", posting.Account, posting.Amount, posting.Currency)
-			addBalance(balances, posting.Account, posting.Currency, posting.Amount)
-		}
-		b.WriteByte('\n')
-		transactionCount++
-	}
+// activityWriter renders synthetic transactions into a shared builder while
+// tracking the running date index and transaction count, so each activity
+// phase (opening allocations, dense activity, investment lots) can be its
+// own readable function.
+type activityWriter struct {
+	b                *strings.Builder
+	balances         balanceBook
+	dateIndex        int
+	transactionCount int
+}
 
-	// Opening allocations place every declared currency on a number of accounts,
-	// producing the multi-currency and tree density needed by the reference UI.
+// nextDate hands out strictly increasing dates from the 2024-01-02 base.
+func (w *activityWriter) nextDate() string {
+	date := time.Date(2024, 1, 2, 0, 0, 0, 0, time.UTC).AddDate(0, 0, w.dateIndex)
+	w.dateIndex++
+	return date.Format("2006-01-02")
+}
+
+// transaction writes one transaction with optional tags, links, metadata,
+// and postings, and keeps the fixture's balances in sync.
+func (w *activityWriter) transaction(date, flag, payee, narration string, tags, links []string, metadata string, postings ...postingSpec) {
+	fmt.Fprintf(w.b, "%s %s \"%s\" \"%s\"", date, flag, payee, narration)
+	for _, tag := range tags {
+		fmt.Fprintf(w.b, " #%s", tag)
+	}
+	for _, link := range links {
+		fmt.Fprintf(w.b, " ^%s", link)
+	}
+	w.b.WriteByte('\n')
+	if metadata != "" {
+		fmt.Fprintf(w.b, "  category: \"%s\"\n", metadata)
+	}
+	for _, posting := range postings {
+		fmt.Fprintf(w.b, "  %s %s %s\n", posting.Account, posting.Amount, posting.Currency)
+		addBalance(w.balances, posting.Account, posting.Currency, posting.Amount)
+	}
+	w.b.WriteByte('\n')
+	w.transactionCount++
+}
+
+// renderActivity writes the dense deterministic activity: opening
+// allocations, repeated entries, and investment lots. No network prices or
+// private data are involved.
+func renderActivity(accounts []accountSpec, config Config, balances balanceBook) (string, int) {
+	b := &strings.Builder{}
+	b.WriteString("; Dense, deterministic activity. No network prices or private data.\n")
+	w := &activityWriter{b: b, balances: balances}
+	w.openingAllocations(accounts)
+	w.denseActivity(accounts, config.ActivityEntries)
+	w.investmentLots(config.Investments)
+	return b.String(), w.transactionCount
+}
+
+// openingAllocations places every declared currency on the non-cash
+// accounts, producing the multi-currency and tree density the reference UI
+// needs.
+func (w *activityWriter) openingAllocations(accounts []accountSpec) {
 	for index, account := range accounts[3:] {
 		for currencyIndex, currency := range account.Currencies {
 			amount := fmt.Sprintf("%d", 25+((index+currencyIndex)%17)*5)
-			writeTransaction(writeDate(), "*", "Opening Allocation", fmt.Sprintf("%s opening", account.Name), []string{"opening"}, []string{fmt.Sprintf("open-%03d", index)}, "opening", postingSpec{account.Name, amount, currency}, postingSpec{"Equity:Opening-Balances", negate(amount), currency})
+			w.transaction(w.nextDate(), "*", "Opening Allocation", fmt.Sprintf("%s opening", account.Name), []string{"opening"}, []string{fmt.Sprintf("open-%03d", index)}, "opening", postingSpec{account.Name, amount, currency}, postingSpec{"Equity:Opening-Balances", negate(amount), currency})
 		}
 	}
+}
 
-	// Repeated activity uses all account families, flags, tags, links, and
-	// Unicode labels. Three-posting USD entries exercise grouped journal rows.
+// denseActivity writes repeated entries using all account families, flags,
+// tags, links, and Unicode labels. Three-posting USD entries exercise
+// grouped journal rows.
+func (w *activityWriter) denseActivity(accounts []accountSpec, entries int) {
 	flags := []string{"*", "!", "A", "B", "C", "P", "S", "T", "U", "R"}
-	for i := 0; i < config.ActivityEntries; i++ {
+	for i := 0; i < entries; i++ {
 		account := accounts[3+i%len(accounts[3:])]
 		currency := account.Currencies[i%len(account.Currencies)]
 		amount := fmt.Sprintf("%d.%02d", 3+i%23, (i*7)%100)
-		counter := "Equity:Opening-Balances"
-		if currency == "USD" && strings.HasPrefix(account.Name, "Assets:") {
-			counter = "Expenses:Operations:Category01"
-		}
-		if currency == "USD" && strings.HasPrefix(account.Name, "Expenses:") {
-			counter = "Assets:Cash:Wallet01"
-		}
-		if currency == "USD" && strings.HasPrefix(account.Name, "Income:") {
-			counter = "Assets:Cash:Wallet01"
-		}
-		if i%11 == 0 && currency == "USD" && !strings.HasPrefix(account.Name, "Expenses:") {
-			fee := fmt.Sprintf("%d.%02d", 1+i%4, (i*3)%100)
-			total := addAmount(amount, fee)
-			writeTransaction(writeDate(), flags[i%len(flags)], "Synthetic Counterparty", fmt.Sprintf("Dense activity %03d", i+1), []string{fmt.Sprintf("activity-%d", i%6), "dense"}, []string{fmt.Sprintf("batch-%03d", i%9)}, "activity", postingSpec{account.Name, amount, currency}, postingSpec{"Expenses:Operations:Category01", fee, currency}, postingSpec{"Equity:Adjustments", negate(total), currency})
+		if w.feeEntry(account, currency, i, amount) {
 			continue
 		}
-		writeTransaction(writeDate(), flags[i%len(flags)], "Synthetic Counterparty", fmt.Sprintf("Dense activity %03d — café", i+1), []string{fmt.Sprintf("activity-%d", i%6)}, []string{fmt.Sprintf("batch-%03d", i%9)}, "activity", postingSpec{account.Name, amount, currency}, postingSpec{counter, negate(amount), currency})
+		w.transaction(w.nextDate(), flags[i%len(flags)], "Synthetic Counterparty", fmt.Sprintf("Dense activity %03d — café", i+1), []string{fmt.Sprintf("activity-%d", i%6)}, []string{fmt.Sprintf("batch-%03d", i%9)}, "activity", postingSpec{account.Name, amount, currency}, postingSpec{activityCounter(account, currency), negate(amount), currency})
 	}
+}
 
-	// A few explicit lots make holdings and cost rendering visible.
-	for i := 1; i <= config.Investments; i++ {
-		date := writeDate()
+// feeEntry writes the periodic three-posting USD entry (with an operations
+// fee) and reports whether it applied; every 11th non-expenses USD entry
+// takes this shape.
+func (w *activityWriter) feeEntry(account accountSpec, currency string, i int, amount string) bool {
+	if i%11 != 0 || currency != "USD" || strings.HasPrefix(account.Name, "Expenses:") {
+		return false
+	}
+	fee := fmt.Sprintf("%d.%02d", 1+i%4, (i*3)%100)
+	total := addAmount(amount, fee)
+	w.transaction(w.nextDate(), activityFlags[i%len(activityFlags)], "Synthetic Counterparty", fmt.Sprintf("Dense activity %03d", i+1), []string{fmt.Sprintf("activity-%d", i%6), "dense"}, []string{fmt.Sprintf("batch-%03d", i%9)}, "activity", postingSpec{account.Name, amount, currency}, postingSpec{"Expenses:Operations:Category01", fee, currency}, postingSpec{"Equity:Adjustments", negate(total), currency})
+	return true
+}
+
+// activityFlags is the deterministic flag cycle used by dense activity.
+var activityFlags = []string{"*", "!", "A", "B", "C", "P", "S", "T", "U", "R"}
+
+// activityCounter picks the balancing account for a dense entry by family.
+func activityCounter(account accountSpec, currency string) string {
+	if currency != "USD" {
+		return "Equity:Opening-Balances"
+	}
+	switch {
+	case strings.HasPrefix(account.Name, "Assets:"):
+		return "Expenses:Operations:Category01"
+	case strings.HasPrefix(account.Name, "Expenses:"), strings.HasPrefix(account.Name, "Income:"):
+		return "Assets:Cash:Wallet01"
+	default:
+		return "Equity:Opening-Balances"
+	}
+}
+
+// investmentLots writes explicit cost lots so holdings and cost rendering
+// are visible in the fixture.
+func (w *activityWriter) investmentLots(investments int) {
+	for i := 1; i <= investments; i++ {
+		date := w.nextDate()
 		account := fmt.Sprintf("Assets:Investments:Index%02d", i)
 		units := fmt.Sprintf("%d", 4+i)
 		cost := fmt.Sprintf("%d", 20+i*3)
 		total := fmt.Sprintf("%d", (4+i)*(20+i*3))
-		fmt.Fprintf(&b, "%s * \"Synthetic Broker\" \"Lot purchase %02d\" #lot ^lot-%02d\n", date, i, i)
-		b.WriteString("  lot_type: \"reference\"\n")
-		fmt.Fprintf(&b, "  %s %s SHARES {%s USD}\n", account, units, cost)
-		fmt.Fprintf(&b, "  Equity:Opening-Balances -%s USD\n\n", total)
-		addBalance(balances, account, "SHARES", units)
-		addBalance(balances, "Equity:Opening-Balances", "USD", "-"+total)
-		transactionCount++
+		fmt.Fprintf(w.b, "%s * \"Synthetic Broker\" \"Lot purchase %02d\" #lot ^lot-%02d\n", date, i, i)
+		w.b.WriteString("  lot_type: \"reference\"\n")
+		fmt.Fprintf(w.b, "  %s %s SHARES {%s USD}\n", account, units, cost)
+		fmt.Fprintf(w.b, "  Equity:Opening-Balances -%s USD\n\n", total)
+		addBalance(w.balances, account, "SHARES", units)
+		addBalance(w.balances, "Equity:Opening-Balances", "USD", "-"+total)
+		w.transactionCount++
 	}
-	return b.String(), transactionCount
 }
 
 type postingSpec struct {

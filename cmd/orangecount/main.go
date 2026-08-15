@@ -175,6 +175,9 @@ func renderGuide(w io.Writer, guide repairguidance.Guide, locale string) int {
 	return 0
 }
 
+// runQuery implements the query subcommand: load the ledger, evaluate one
+// BeanQuery-shaped query, and print the result as JSON or CSV. Flag parsing
+// and output rendering are extracted so the command body is the pipeline.
 func runQuery(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("query", flag.ContinueOnError)
 	fs.SetOutput(stderr)
@@ -185,31 +188,13 @@ func runQuery(args []string, stdout, stderr io.Writer) int {
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
-	if *locale != "en" && *locale != "zh-CN" {
-		fmt.Fprintf(stderr, "orangecount: unsupported locale %q\n", *locale)
-		return 2
-	}
-	if *jsonOutput && *csvOutput {
-		fmt.Fprintln(stderr, "orangecount query: --json and --csv cannot be combined")
-		return 2
-	}
-	if *jsonOutput {
-		*format = "json"
-	}
-	if *csvOutput {
-		*format = "csv"
-	}
-	if *format != "json" && *format != "csv" {
-		fmt.Fprintf(stderr, "orangecount query: unsupported format %q\n", *format)
-		return 2
-	}
-	if fs.NArg() != 2 {
-		fmt.Fprintln(stderr, "orangecount query: expected an entry ledger path and query text")
+	options, ok := validateQueryOptions(queryOptions{locale: *locale, format: *format}, *jsonOutput, *csvOutput, fs.NArg(), stderr)
+	if !ok {
 		return 2
 	}
 	result := snapshot.Build(fs.Arg(0))
 	if result.Snapshot == nil || result.Err != nil || hasDiagnosticErrors(result.Diagnostics) {
-		if err := diagnostic.RenderHuman(stderr, result.Diagnostics, *locale); err != nil {
+		if err := diagnostic.RenderHuman(stderr, result.Diagnostics, options.locale); err != nil {
 			return 1
 		}
 		return 1
@@ -219,7 +204,48 @@ func runQuery(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(stderr, "orangecount query: %s\n", err)
 		return 1
 	}
-	if *format == "csv" {
+	return writeQueryResult(stdout, stderr, value, options.format)
+}
+
+// queryOptions is the validated flag set of the query subcommand.
+type queryOptions struct {
+	locale string
+	format string
+}
+
+// validateQueryOptions checks locale, the --json/--csv aliases, the output
+// format, and the positional argument count. Misuse is reported to stderr
+// the way flag.Parse would report it.
+func validateQueryOptions(options queryOptions, jsonOutput, csvOutput bool, argc int, stderr io.Writer) (queryOptions, bool) {
+	if options.locale != "en" && options.locale != "zh-CN" {
+		fmt.Fprintf(stderr, "orangecount: unsupported locale %q\n", options.locale)
+		return options, false
+	}
+	if jsonOutput && csvOutput {
+		fmt.Fprintln(stderr, "orangecount query: --json and --csv cannot be combined")
+		return options, false
+	}
+	switch {
+	case jsonOutput:
+		options.format = "json"
+	case csvOutput:
+		options.format = "csv"
+	}
+	if options.format != "json" && options.format != "csv" {
+		fmt.Fprintf(stderr, "orangecount query: unsupported format %q\n", options.format)
+		return options, false
+	}
+	if argc != 2 {
+		fmt.Fprintln(stderr, "orangecount query: expected an entry ledger path and query text")
+		return options, false
+	}
+	return options, true
+}
+
+// writeQueryResult renders an evaluated query result; the encoder mirrors
+// the API layer (no HTML escaping) so both surfaces print identical JSON.
+func writeQueryResult(stdout, stderr io.Writer, value query.Result, format string) int {
+	if format == "csv" {
 		if err := value.WriteCSV(stdout); err != nil {
 			fmt.Fprintln(stderr, err)
 			return 1
@@ -288,6 +314,13 @@ func renderCheckHuman(w io.Writer, ds []diagnostic.Diagnostic, locale string) er
 	return nil
 }
 
+// runServe implements the serve subcommand: build the initial snapshot, bind
+// the loopback web server (prompting on port conflicts), then reload on
+// source changes until shutdown.
+// runServe implements the serve subcommand: build the initial snapshot, bind
+// the loopback web server (prompting on port conflicts), then reload on
+// source changes until shutdown. Each setup stage is a helper so the body is
+// the serve pipeline in order.
 func runServe(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("serve", flag.ContinueOnError)
 	fs.SetOutput(stderr)
@@ -312,76 +345,111 @@ func runServe(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "orangecount serve: expected exactly one entry ledger path")
 		return 2
 	}
-	entry := fs.Arg(0)
-	initial := snapshot.Build(entry)
-	if err := renderDiagnostics(stdout, *locale, false, initial.Diagnostics); err != nil {
-		fmt.Fprintln(stderr, err)
-		return 1
-	}
-	if initial.Snapshot == nil || initial.Err != nil || hasDiagnosticErrors(initial.Diagnostics) {
-		return 1
+	entry, initial, code := serveInitialSnapshot(fs.Arg(0), *locale, stdout, stderr)
+	if initial == nil {
+		return code
 	}
 	roots, err := source.NewDocumentRoots(documentRoots)
 	if err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
-	if owners, inspectErr := portOwnersAt(*addr); inspectErr == nil && len(owners) > 0 {
-		retry, promptErr := resolvePortConflict(*addr, stdin, stderr)
-		if promptErr != nil {
-			fmt.Fprintln(stderr, promptErr)
-			return 1
-		}
-		if !retry {
-			return 1
-		}
+	if code := resolveExistingPortConflict(*addr, stdin, stderr); code != 0 {
+		return code
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 	store := snapshot.NewStore(initial.Snapshot)
-	var server *web.Server
-	var serveDone <-chan error
-	for {
-		candidate, err := web.NewServer(web.Config{Store: store, DocumentRoots: roots, Addr: *addr})
-		if err != nil {
-			fmt.Fprintln(stderr, err)
-			return 2
-		}
-		done := make(chan error, 1)
-		go func() { done <- candidate.Serve(ctx) }()
-		if err := candidate.WaitReady(ctx); err == nil {
-			server, serveDone = candidate, done
-			break
-		} else if ctx.Err() != nil {
-			return 0
-		} else {
-			<-done
-			if errors.Is(err, syscall.EADDRINUSE) {
-				retry, promptErr := resolvePortConflict(*addr, stdin, stderr)
-				if promptErr != nil {
-					fmt.Fprintln(stderr, promptErr)
-					return 1
-				}
-				if retry {
-					continue
-				}
-			}
-			fmt.Fprintln(stderr, err)
-			return 1
-		}
+	server, serveDone, code := startServeLoop(ctx, store, roots, *addr, stdin, stderr)
+	if server == nil {
+		return code
 	}
-	logger := logging.New(stderr, logging.Options{Sensitive: *sensitiveLogs})
-	go func() {
-		_ = store.Watch(ctx, entry, snapshot.BuildOptions{}, snapshot.WatchOptions{PollInterval: *pollInterval, Debounce: *debounce}, func(result snapshot.ReloadResult) {
-			_ = logger.Event("reload", map[string]any{"reload": true, "published": result.Published, "snapshot_id": snapshotID(result.Snapshot)})
-		})
-	}()
+	watchLedger(ctx, store, entry, *pollInterval, *debounce, logging.New(stderr, logging.Options{Sensitive: *sensitiveLogs}))
 	fmt.Fprintf(stdout, "serving on http://%s\n", server.Addr())
 	if err := <-serveDone; err != nil {
 		fmt.Fprintln(stderr, err)
 		return 1
 	}
 	return 0
+}
+
+// serveInitialSnapshot builds and renders the startup snapshot; a nil result
+// carries the command's exit code. The snapshot must be valid before the
+// server can serve anything.
+func serveInitialSnapshot(entry, locale string, stdout, stderr io.Writer) (string, *snapshot.BuildResult, int) {
+	initial := snapshot.Build(entry)
+	if err := renderDiagnostics(stdout, locale, false, initial.Diagnostics); err != nil {
+		fmt.Fprintln(stderr, err)
+		return entry, nil, 1
+	}
+	if initial.Snapshot == nil || initial.Err != nil || hasDiagnosticErrors(initial.Diagnostics) {
+		return entry, nil, 1
+	}
+	return entry, &initial, 0
+}
+
+// resolveExistingPortConflict pre-checks the listen address for other owners
+// and, when found, offers the interactive close-and-retry prompt. A non-zero
+// return is the command's exit code; zero means continue serving.
+func resolveExistingPortConflict(addr string, stdin io.Reader, stderr io.Writer) int {
+	owners, inspectErr := portOwnersAt(addr)
+	if inspectErr != nil || len(owners) == 0 {
+		return 0
+	}
+	retry, promptErr := resolvePortConflict(addr, stdin, stderr)
+	if promptErr != nil {
+		fmt.Fprintln(stderr, promptErr)
+		return 1
+	}
+	if !retry {
+		return 1
+	}
+	return 0
+}
+
+// watchLedger reloads the include graph on source changes and logs each
+// reload until the context is cancelled.
+func watchLedger(ctx context.Context, store *snapshot.Store, entry string, pollInterval, debounce time.Duration, logger *logging.Logger) {
+	go func() {
+		_ = store.Watch(ctx, entry, snapshot.BuildOptions{}, snapshot.WatchOptions{PollInterval: pollInterval, Debounce: debounce}, func(result snapshot.ReloadResult) {
+			_ = logger.Event("reload", map[string]any{"reload": true, "published": result.Published, "snapshot_id": snapshotID(result.Snapshot)})
+		})
+	}()
+}
+
+// startServeLoop binds the web server, retrying after an interactive port
+// conflict resolution. It returns the running server with its done channel,
+// or an exit code when serving could not start (server nil).
+func startServeLoop(ctx context.Context, store *snapshot.Store, roots source.DocumentRoots, addr string, stdin io.Reader, stderr io.Writer) (*web.Server, <-chan error, int) {
+	for {
+		candidate, err := web.NewServer(web.Config{Store: store, DocumentRoots: roots, Addr: addr})
+		if err != nil {
+			fmt.Fprintln(stderr, err)
+			return nil, nil, 2
+		}
+		done := make(chan error, 1)
+		go func() { done <- candidate.Serve(ctx) }()
+		readyErr := candidate.WaitReady(ctx)
+		if readyErr == nil {
+			return candidate, done, 0
+		}
+		if ctx.Err() != nil {
+			return nil, nil, 0
+		}
+		<-done
+		if errors.Is(readyErr, syscall.EADDRINUSE) {
+			retry, promptErr := resolvePortConflict(addr, stdin, stderr)
+			if promptErr != nil {
+				fmt.Fprintln(stderr, promptErr)
+				return nil, nil, 1
+			}
+			if retry {
+				continue
+			}
+		}
+		fmt.Fprintln(stderr, readyErr)
+		return nil, nil, 1
+	}
 }
 
 func resolvePortConflict(addr string, stdin io.Reader, stderr io.Writer) (bool, error) {

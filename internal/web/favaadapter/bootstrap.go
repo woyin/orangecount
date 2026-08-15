@@ -82,9 +82,9 @@ type Bootstrap struct {
 	Valid bool `json:"valid"`
 }
 
-// AdapterDiagnostic is a redacted, display-safe diagnostic. The frontend
-// errors validator expects {type, message, source{filename,lineno}|null};
-// this is the independent Go mapping (contract row: errors).
+// AccountDetail carries the per-account sidebar extras Fava derives from the
+// evaluation: a human balance string, close date, up-to-date status, and the
+// last entry date used to grey out stale accounts.
 type AccountDetail struct {
 	BalanceString  string `json:"balance_string,omitempty"`
 	CloseDate      string `json:"close_date,omitempty"`
@@ -94,17 +94,23 @@ type AccountDetail struct {
 	LastEntry string `json:"last_entry,omitempty"`
 }
 
+// Extension advertises a bundled Fava extension report and whether it ships
+// a JavaScript module.
 type Extension struct {
 	Name        string `json:"name"`
 	ReportTitle string `json:"report_title,omitempty"`
 	HasJSModule bool   `json:"has_js_module"`
 }
 
+// UserQuery is a named query directive surfaced in Fava's query dropdown.
 type UserQuery struct {
 	Name        string `json:"name"`
 	QueryString string `json:"query_string"`
 }
 
+// AdapterDiagnostic is a redacted, display-safe diagnostic. The frontend
+// errors validator expects {type, message, source{filename,lineno}|null};
+// this is the independent Go mapping (contract row: errors).
 type AdapterDiagnostic struct {
 	// Type echoes the diagnostic code (e.g. "E-CUSTOM").
 	Type string `json:"type"`

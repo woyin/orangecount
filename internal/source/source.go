@@ -41,10 +41,14 @@ type Span struct {
 	EndColumn   int    `json:"end_column"`
 }
 
+// Valid reports whether the span identifies a real location (the zero span
+// is the "unknown" sentinel).
 func (s Span) Valid() bool { return s.File != 0 || s.Start != 0 || s.End != 0 }
 
+// Empty reports whether the span covers zero bytes.
 func (s Span) Empty() bool { return s.Start == s.End }
 
+// String renders the span for diagnostics, collapsing single-line spans.
 func (s Span) String() string {
 	if !s.Valid() {
 		return "<unknown>"
@@ -116,6 +120,8 @@ func (f *SourceFile) Position(offset int) Position {
 	return Position{Offset: offset, Line: i + 1, Column: column}
 }
 
+// Span builds a Span from byte offsets, clamping them to the buffer and
+// resolving line/column positions for both ends.
 func (f *SourceFile) Span(start, end int) Span {
 	if start < 0 {
 		start = 0
@@ -138,6 +144,8 @@ func (f *SourceFile) Span(start, end int) Span {
 // the offset nature explicit at call sites.
 func (f *SourceFile) SpanAt(start, end int) Span { return f.Span(start, end) }
 
+// Text returns the source text covered by span, or "" when the span belongs
+// to another file.
 func (f *SourceFile) Text(span Span) string {
 	if f == nil || span.File != f.ID {
 		return ""

@@ -40,17 +40,17 @@ func TestFQLMatchesTagsLinksAndStrings(t *testing.T) {
 		{"#trips", false}, // exact membership, not substring
 		{"^invoice-1", true},
 		{"^invoice", false},
-		{"coffee", true},          // case-insensitive regex over narration/payee/comment
-		{"COFFEE", true},          // the pattern itself is case-insensitive too
-		{`"Edeka"`, true},         // quoted string still matches payee
-		{"Rent", false},           // no field carries it
-		{"payee:edeka", true},     // key term matches its field
+		{"coffee", true},      // case-insensitive regex over narration/payee/comment
+		{"COFFEE", true},      // the pattern itself is case-insensitive too
+		{`"Edeka"`, true},     // quoted string still matches payee
+		{"Rent", false},       // no field carries it
+		{"payee:edeka", true}, // key term matches its field
 		{"payee:rewe", false},
-		{"purpose:snacks", true},   // metadata keys are reachable
+		{"purpose:snacks", true}, // metadata keys are reachable
 		{`purpose:"^office"`, true},
 		{"missing:value", false},
 		{"account:Expenses", true},
-		{"flag:*", false},         // "*" is not a valid lexeme for a value: parse error below
+		{"flag:*", false}, // "*" is not a valid lexeme for a value: parse error below
 	}
 	for _, testCase := range cases {
 		filter, err := ParseFQL(testCase.text)
@@ -75,20 +75,20 @@ func TestFQLBooleanCombinators(t *testing.T) {
 		text string
 		want bool
 	}{
-		{"#trip coffee", true},                     // juxtaposition is AND
+		{"#trip coffee", true}, // juxtaposition is AND
 		{"#trip rent", false},
-		{"#trip, rent", true},                      // comma is OR
-		{"rent, -#trip", false},                    // negation
+		{"#trip, rent", true},   // comma is OR
+		{"rent, -#trip", false}, // negation
 		{"-rent", true},
-		{"(#trip, #nope) coffee", true},            // parentheses group
-		{"any(account:Assets)", true},              // one posting qualifies
-		{"all(account:Expenses)", false},           // the cash posting does not
+		{"(#trip, #nope) coffee", true},  // parentheses group
+		{"any(account:Assets)", true},    // one posting qualifies
+		{"all(account:Expenses)", false}, // the cash posting does not
 		{"any(account:Liabilities)", false},
-		{">20", true},                              // posting units magnitude
+		{">20", true}, // posting units magnitude
 		{">100", false},
 		{"=12.5", true},
-		{"number=5", false},                        // no entry-level amount here
-		{"#trip and", true},                        // "and" lexes as a plain string, narration contains it
+		{"number=5", false}, // no entry-level amount here
+		{"#trip and", true}, // "and" lexes as a plain string, narration contains it
 	}
 	for _, testCase := range cases {
 		filter, err := ParseFQL(testCase.text)

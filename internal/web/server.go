@@ -41,30 +41,37 @@ import (
 //go:embed assets/*
 var assets embed.FS
 
+// Config wires a Server: the snapshot store, document roots for attachments,
+// and the loopback-only listen address.
 type Config struct {
 	Store         *snapshot.Store
 	DocumentRoots source.DocumentRoots
 	Addr          string
 }
 
+// Server is the Fava-parity web UI: an HTTP mux over the snapshot store
+// with in-memory preview/option state. All handlers run against immutable
+// published snapshots, so a failed edit never corrupts the served view.
 type Server struct {
-	mu        sync.RWMutex
-	writeMu   sync.Mutex
-	store     *snapshot.Store
-	roots     source.DocumentRoots
-	addr      string
-	http      *http.Server
-	bound     string
-	ready     chan struct{}
-	readyOnce sync.Once
-	readyErr  error
-	optionsMu sync.RWMutex
-	options   map[string]string
-	previews  *importPreviewStore
-	quickPreviews *quickPreviewStore
+	mu             sync.RWMutex
+	writeMu        sync.Mutex
+	store          *snapshot.Store
+	roots          source.DocumentRoots
+	addr           string
+	http           *http.Server
+	bound          string
+	ready          chan struct{}
+	readyOnce      sync.Once
+	readyErr       error
+	optionsMu      sync.RWMutex
+	options        map[string]string
+	previews       *importPreviewStore
+	quickPreviews  *quickPreviewStore
 	quickLastBatch *quickBatchRecord
 }
 
+// NewServer validates the loopback address and store, then builds the
+// server around an embedded-asset HTTP handler.
 func NewServer(config Config) (*Server, error) {
 	addr := config.Addr
 	if addr == "" {
@@ -81,6 +88,8 @@ func NewServer(config Config) (*Server, error) {
 	return server, nil
 }
 
+// Handler returns the fully routed mux; tests use it through httptest
+// without binding a listener.
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/", s.handleIndex)
@@ -109,6 +118,8 @@ func (s *Server) Handler() http.Handler {
 	return mux
 }
 
+// Addr returns the bound endpoint once Serve has bound it, falling back to
+// the configured address before that.
 func (s *Server) Addr() string {
 	if s == nil {
 		return ""
@@ -146,6 +157,8 @@ func (s *Server) signalReady(err error) {
 	s.readyOnce.Do(func() { close(s.ready) })
 }
 
+// Serve binds the listener, signals readiness, and serves until ctx is
+// canceled or the listener fails.
 func (s *Server) Serve(ctx context.Context) error {
 	if s == nil || s.http == nil {
 		return fmt.Errorf("nil web server")
@@ -201,364 +214,6 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.Header().Set("Content-Security-Policy", "default-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval'")
 	_, _ = w.Write(data)
-}
-
-func (s *Server) handleFavaAdapter(w http.ResponseWriter, r *http.Request) {
-	resource := strings.Trim(strings.TrimPrefix(r.URL.Path, "/__orangecount/fava/"), "/")
-	// The adapter is read-only except for the reviewed write paths:
-	// add-entries (ledger append), document (attachment upload), and
-	// move-document (attachment relocation).
-	if r.Method != http.MethodGet && !(r.Method == http.MethodPost && (resource == "add-entries" || resource == "document" || resource == "move-document" || resource == "quick-preview" || resource == "quick-commit" || resource == "quick-undo" || resource == "quick-profile" || resource == "quick-profile-save")) {
-		w.Header().Set("Allow", "GET")
-		w.WriteHeader(http.StatusMethodNotAllowed)
-		return
-	}
-	current := s.store.Current()
-	if current == nil {
-		writeAPIError(w, http.StatusServiceUnavailable, "no valid snapshot")
-		return
-	}
-	switch resource {
-	case "changed":
-		previous := strings.TrimSpace(r.URL.Query().Get("mtime"))
-		currentMtime := favaadapter.NewEnvelope(nil, current.BuiltAt).Mtime
-		writeJSON(w, favaadapter.NewEnvelope(previous != "" && previous != currentMtime, current.BuiltAt))
-	case "ledger_data":
-		projection := favaadapter.BootstrapProjection(favaadapter.BootstrapOptions{Snapshot: current, BaseURL: "/", DocumentRoots: s.roots.Paths()})
-		writeJSON(w, favaadapter.NewEnvelope(projection, current.BuiltAt))
-	case "metadata":
-		root := strings.TrimSpace(r.URL.Query().Get("root"))
-		projection := favaadapter.MetadataProjectionOptions(favaadapter.MetadataOptions{Evaluation: current.Evaluation(), Root: root})
-		writeJSON(w, favaadapter.NewEnvelope(projection, current.BuiltAt))
-	case "options":
-		options := map[string]string{}
-		for key, value := range current.Evaluation().Options {
-			options[key] = value
-		}
-		s.optionsMu.RLock()
-		for key, value := range s.options {
-			options[key] = value
-		}
-		s.optionsMu.RUnlock()
-		writeJSON(w, favaadapter.NewEnvelope(struct {
-			Options     map[string]string `json:"options"`
-			FavaOptions map[string]string `json:"fava_options"`
-		}{Options: options, FavaOptions: map[string]string{"locale": "en", "theme": "system"}}, current.BuiltAt))
-	case "help":
-		if topic := strings.TrimSpace(r.URL.Query().Get("topic")); topic != "" {
-			code := strings.TrimPrefix(topic, "diagnostics/")
-			guide, ok := repairguidance.Lookup(code, requestedLocale(r))
-			if !ok || topic != guide.Topic {
-				writeAPIError(w, http.StatusNotFound, helpTopicNotFoundMessage(requestedLocale(r)))
-				return
-			}
-			writeJSON(w, favaadapter.NewEnvelope(guide, current.BuiltAt))
-			return
-		}
-		writeJSON(w, favaadapter.NewEnvelope(struct {
-			Sections []map[string]string `json:"sections"`
-		}{Sections: helpSections(requestedLocale(r))}, current.BuiltAt))
-	case "diagnostics":
-		locale := requestedLocale(r)
-		graph := current.Graph()
-		values := s.store.Diagnostics()
-		localized := make([]diagnostic.Diagnostic, len(values))
-		for i, value := range values {
-			localized[i] = diagnostic.Localize(value, locale)
-			localized[i].Path = displayDiagnosticPath(localized[i], graph)
-		}
-		writeJSON(w, favaadapter.NewEnvelope(localized, current.BuiltAt))
-	case "editor":
-		graph := current.Graph()
-		if graph == nil {
-			writeAPIError(w, http.StatusServiceUnavailable, "no source graph")
-			return
-		}
-		requested := strings.TrimSpace(r.URL.Query().Get("path"))
-		if requested == "" {
-			writeJSON(w, favaadapter.NewEnvelope(struct {
-				Paths      []string `json:"paths"`
-				Entry      string   `json:"entry"`
-				SnapshotID string   `json:"snapshot_id"`
-			}{Paths: graph.DisplayPaths(), Entry: graph.DisplayPath(graph.Entry), SnapshotID: current.ID}, current.BuiltAt))
-			return
-		}
-		file, display, ok := graphFile(graph, requested)
-		if !ok {
-			http.NotFound(w, r)
-			return
-		}
-		writeJSON(w, favaadapter.NewEnvelope(struct {
-			Path       string `json:"path"`
-			Content    string `json:"content"`
-			SnapshotID string `json:"snapshot_id"`
-		}{Path: display, Content: string(file.Data), SnapshotID: current.ID}, current.BuiltAt))
-	case "import":
-		graph := current.Graph()
-		if graph == nil {
-			writeAPIError(w, http.StatusServiceUnavailable, "no source graph")
-			return
-		}
-		if r.URL.Query().Get("kind") == "adapters" {
-			writeJSON(w, favaadapter.NewEnvelope(struct {
-				Adapters []map[string]any `json:"adapters"`
-			}{Adapters: []map[string]any{
-				{"id": "beancount", "label": "Beancount source", "extensions": []string{".bean", ".beancount"}},
-				{"id": "csv", "label": "Generic CSV", "extensions": []string{".csv"}},
-			}}, current.BuiltAt))
-			return
-		}
-		writeJSON(w, favaadapter.NewEnvelope(struct {
-			Paths      []string `json:"paths"`
-			Entry      string   `json:"entry"`
-			SnapshotID string   `json:"snapshot_id"`
-		}{Paths: graph.DisplayPaths(), Entry: graph.DisplayPath(graph.Entry), SnapshotID: current.ID}, current.BuiltAt))
-	case "source":
-		graph := current.Graph()
-		if graph == nil {
-			writeAPIError(w, http.StatusServiceUnavailable, "no source graph")
-			return
-		}
-		requested := strings.TrimSpace(r.URL.Query().Get("path"))
-		if requested == "" {
-			writeJSON(w, favaadapter.NewEnvelope(struct {
-				Paths []string `json:"paths"`
-			}{Paths: graph.DisplayPaths()}, current.BuiltAt))
-			return
-		}
-		id, ok := graph.FileIDForDisplayPath(requested)
-		if !ok {
-			id, ok = graph.ByPath[requested]
-		}
-		if !ok || graph.File(id) == nil {
-			http.NotFound(w, r)
-			return
-		}
-		file := graph.File(id)
-		writeJSON(w, favaadapter.NewEnvelope(struct {
-			Path    string `json:"path"`
-			Content string `json:"content"`
-		}{Path: graph.DisplayPath(id), Content: string(file.Data)}, current.BuiltAt))
-	case "journal":
-		filters, err := globalReportFilters(r)
-		if err != nil {
-			writeAPIError(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		projection := favaadapter.ProjectJournal(current.Evaluation(), current.Graph(), filters, report.JournalFilters{
-			Flag:      r.URL.Query().Get("flag"),
-			Tag:       r.URL.Query().Get("tag"),
-			Link:      r.URL.Query().Get("link"),
-			Payee:     r.URL.Query().Get("payee"),
-			Narration: r.URL.Query().Get("narration"),
-			Kind:      r.URL.Query().Get("kind"),
-		})
-		writeJSON(w, favaadapter.NewEnvelope(projection, current.BuiltAt))
-	case "download-journal":
-		graph := current.Graph()
-		if graph == nil {
-			writeAPIError(w, http.StatusServiceUnavailable, "no source graph")
-			return
-		}
-		filters, err := globalReportFilters(r)
-		if err != nil {
-			writeAPIError(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		// The download is a file, not an adapter envelope: the browser saves
-		// the filtered entries as Beancount source the way Fava does.
-		text := favaadapter.ExportEntries(current.Evaluation(), graph, filters, report.JournalFilters{
-			Flag:      r.URL.Query().Get("flag"),
-			Tag:       r.URL.Query().Get("tag"),
-			Link:      r.URL.Query().Get("link"),
-			Payee:     r.URL.Query().Get("payee"),
-			Narration: r.URL.Query().Get("narration"),
-			Kind:      r.URL.Query().Get("kind"),
-		})
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.Header().Set("Content-Disposition", `attachment; filename="journal.bean"`)
-		if _, err := w.Write([]byte(text)); err != nil {
-			return
-		}
-	case "entry-context":
-		graph := current.Graph()
-		if graph == nil {
-			writeAPIError(w, http.StatusServiceUnavailable, "no source graph")
-			return
-		}
-		entryHash := strings.TrimSpace(r.URL.Query().Get("entry_hash"))
-		if entryHash == "" {
-			writeAPIError(w, http.StatusBadRequest, "missing entry_hash")
-			return
-		}
-		context, ok := favaadapter.ProjectEntryContext(current.Evaluation(), graph, entryHash)
-		if !ok {
-			writeAPIError(w, http.StatusNotFound, "entry not found")
-			return
-		}
-		writeJSON(w, favaadapter.NewEnvelope(context, current.BuiltAt))
-	case "add-entries":
-		if !requireSameOrigin(w, r) {
-			return
-		}
-		graph := current.Graph()
-		if graph == nil {
-			writeAPIError(w, http.StatusServiceUnavailable, "no source graph")
-			return
-		}
-		var request struct {
-			Entries []favaadapter.NewEntry `json:"entries"`
-		}
-		if err := decodeJSONBody(w, r, &request, 1<<20); err != nil {
-			writeAPIError(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		serialized, err := favaadapter.SerializeNewEntries(request.Entries)
-		if err != nil {
-			writeAPIError(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		file, display, ok := graphFile(graph, graph.DisplayPath(graph.Entry))
-		if !ok {
-			writeAPIError(w, http.StatusServiceUnavailable, "entry file unavailable")
-			return
-		}
-		// New entries land at the end of the entry file, separated by one
-		// blank line, the way Fava appends entries it inserts.
-		content := strings.TrimRight(string(file.Data), "\n") + "\n\n" + serialized + "\n"
-		result, backup, err := s.replaceGraphFile(current, file.Path, display, []byte(content))
-		if err != nil {
-			status := http.StatusUnprocessableEntity
-			if result.Err != nil {
-				status = http.StatusInternalServerError
-			}
-			w.Header().Set("Content-Type", "application/json; charset=utf-8")
-			w.WriteHeader(status)
-			writeJSON(w, struct {
-				Published   bool                 `json:"published"`
-				Backup      string               `json:"backup,omitempty"`
-				Diagnostics []diagnosticResponse `json:"diagnostics"`
-			}{Backup: backup, Diagnostics: diagnosticsPayload(result.Diagnostics, current.Graph())})
-			return
-		}
-		writeJSON(w, struct {
-			Published  bool   `json:"published"`
-			SnapshotID string `json:"snapshot_id"`
-			Backup     string `json:"backup"`
-		}{Published: true, SnapshotID: result.Snapshot.ID, Backup: backup})
-	case "quick-preview":
-		s.handleQuickPreview(w, r, current)
-	case "quick-commit":
-		s.handleQuickCommit(w, r, current)
-	case "quick-undo":
-		s.handleQuickUndo(w, r, current)
-	case "quick-profile":
-		s.handleQuickProfile(w, r, current)
-	case "quick-profile-save":
-		s.handleQuickProfileSave(w, r, current)
-	case "document":
-		s.handleDocumentUpload(w, r, current)
-	case "move-document":
-		s.handleDocumentMove(w, r, current)
-	case "income_statement", "balance_sheet", "trial_balance":
-		filters, err := globalReportFilters(r)
-		if err != nil {
-			writeAPIError(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		valuation := strings.TrimSpace(r.URL.Query().Get("valuation"))
-		if valuation == "" {
-			// The shell's conversion selector uses Fava's vocabulary; map it to
-			// the valuation names the report layer understands. "units" must
-			// stay distinct from "at-cost", otherwise choosing it still
-			// converts lots and the control looks broken.
-			switch strings.ToLower(strings.TrimSpace(r.URL.Query().Get("conversion"))) {
-			case "market_value":
-				valuation = "market-value"
-			case "units":
-				valuation = "units"
-			default:
-				valuation = "at-cost"
-			}
-		}
-		projection := favaadapter.ProjectTreeReport(
-			current.Evaluation(),
-			resource,
-			filters,
-			strings.TrimSpace(r.URL.Query().Get("period")),
-			strings.TrimSpace(r.URL.Query().Get("currency")),
-			valuation,
-		)
-		writeJSON(w, favaadapter.NewEnvelope(projection, current.BuiltAt))
-	default:
-		if strings.HasPrefix(resource, "reports/") {
-			name := strings.Trim(strings.TrimPrefix(resource, "reports/"), "/")
-			if name == "query" {
-				text := strings.TrimSpace(r.URL.Query().Get("query_string"))
-				if text == "" {
-					text = strings.TrimSpace(r.URL.Query().Get("q"))
-				}
-				if text == "" {
-					writeAPIError(w, http.StatusBadRequest, "query_string is required")
-					return
-				}
-				result, err := query.Evaluate(text, current.Evaluation())
-				if err != nil {
-					writeAPIError(w, http.StatusBadRequest, err.Error())
-					return
-				}
-				result = redactQueryPaths(result, current.Graph())
-				writeJSON(w, favaadapter.NewEnvelope(report.Present(result), current.BuiltAt))
-				return
-			}
-			if name == "statistics" {
-				// Fava's statistics page composes several datasets; the flat
-				// directive-count table alone cannot feed it.
-				evaluation := current.Evaluation()
-				entriesByType := map[string]int{}
-				for _, row := range report.Statistics(evaluation).Rows {
-					entriesByType[row["directive"].(string)] = row["count"].(int)
-				}
-				payload := struct {
-					EntriesByType      map[string]int                  `json:"entries_by_type"`
-					PostingsPerAccount query.Result                    `json:"postings_per_account"`
-					UpdateActivity     []favaadapter.UpdateActivityRow `json:"update_activity"`
-				}{EntriesByType: entriesByType, PostingsPerAccount: report.Present(report.PostingsPerAccount(evaluation)), UpdateActivity: favaadapter.UpdateActivity(evaluation)}
-				writeJSON(w, favaadapter.NewEnvelope(payload, current.BuiltAt))
-				return
-			}
-			result, chartRoute, known, err := s.buildReport(r, current, name)
-			if err != nil {
-				writeAPIError(w, http.StatusBadRequest, err.Error())
-				return
-			}
-			if !known {
-				http.NotFound(w, r)
-				return
-			}
-			presented := report.Present(result)
-			payload := struct {
-				query.Result
-				Chart            *report.PresentedChartSpec `json:"chart,omitempty"`
-				AverageCostChart *report.PresentedChartSpec `json:"average_cost_chart,omitempty"`
-			}{Result: presented}
-			if chartRoute != "" {
-				valuation := strings.TrimSpace(r.URL.Query().Get("valuation"))
-				if valuation == "" {
-					valuation = "at-cost"
-				}
-				chart := report.PresentChart(report.ReportChart(current.Evaluation(), chartRoute, r.URL.Query().Get("period"), r.URL.Query().Get("currency"), valuation, r.URL.Query().Get("account")))
-				payload.Chart = &chart
-				if chartRoute == "accounts" && strings.TrimSpace(r.URL.Query().Get("account")) != "" {
-					averageCostChart := report.PresentChart(report.AccountAverageCostChart(current.Evaluation(), r.URL.Query().Get("period"), r.URL.Query().Get("account")))
-					payload.AverageCostChart = &averageCostChart
-				}
-			}
-			writeJSON(w, favaadapter.NewEnvelope(payload, current.BuiltAt))
-			return
-		}
-		http.NotFound(w, r)
-	}
 }
 
 func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
@@ -714,69 +369,14 @@ func (s *Server) handleReport(w http.ResponseWriter, r *http.Request) {
 // buildReport is the shared semantic/report projection used by both the
 // existing OrangeCount report endpoint and the private Fava-shaped adapter.
 // Keeping one builder prevents the two surfaces from drifting in filtering,
-// redaction, or report ownership.
+// redaction, or report ownership. Known-but-failing parses are reported as
+// (result, route, true, err); unknown names as (…, false, nil).
 func (s *Server) buildReport(r *http.Request, current *snapshot.Snapshot, name string) (query.Result, string, bool, error) {
-	evaluation := current.Evaluation()
-	chartRoute := ""
-	var result query.Result
-	switch strings.ToLower(name) {
-	case "accounts", "account":
-		// Fava's account page switches between the journal, per-interval
-		// changes, and per-interval balances with the `r` query parameter.
-		// The aggregate interval rows carry no entry columns, so they return
-		// before the generic row filters; time filters are applied inside.
-		switch strings.ToLower(strings.TrimSpace(r.URL.Query().Get("r"))) {
-		case "changes", "balances":
-			filters, err := globalReportFilters(r)
-			if err != nil {
-				return query.Result{}, "", true, err
-			}
-			result = report.AccountIntervals(evaluation, strings.TrimSpace(r.URL.Query().Get("account")), strings.ToLower(strings.TrimSpace(r.URL.Query().Get("r"))), strings.TrimSpace(r.URL.Query().Get("interval")), filters)
-			chartRoute = "accounts"
-			return result, chartRoute, true, nil
-		}
-		result = report.Accounts(evaluation)
-		chartRoute = "accounts"
-	case "journal":
-		from, to, err := journalDateRange(r)
-		if err != nil {
-			return query.Result{}, "", true, err
-		}
-		result = report.JournalBetween(evaluation, from, to)
-	case "trial-balance", "trial_balance", "trialbalance":
-		// The web report needs explicit ancestors for Fava-style hierarchy
-		// rendering. Keep report.TrialBalance flat for query-compatible
-		// consumers and use its tree variant only at this presentation boundary.
-		result = report.TrialBalanceTree(evaluation)
-		chartRoute = "trial-balance"
-	case "balance-sheet", "balance_sheet", "balancesheet":
-		result = report.BalanceSheet(evaluation)
-		chartRoute = "balance-sheet"
-	case "income-statement", "income_statement", "incomestatement":
-		result = report.IncomeStatement(evaluation)
-		chartRoute = "income-statement"
-	case "holdings":
-		asOf, err := reportAsOfDate(r)
-		if err != nil {
-			return query.Result{}, "", true, err
-		}
-		valuation := strings.TrimSpace(r.URL.Query().Get("valuation"))
-		if valuation == "" {
-			valuation = "at-cost"
-		}
-		result = report.HoldingsAtCurrency(evaluation, asOf, valuation, strings.TrimSpace(r.URL.Query().Get("currency")))
-		result = report.HoldingsAggregate(result, strings.TrimSpace(r.URL.Query().Get("aggregation")))
-	case "prices", "price", "commodities", "commodity":
-		result = report.Prices(evaluation)
-	case "events", "event":
-		result = report.Events(evaluation)
-	case "documents", "document":
-		result = report.Documents(evaluation)
-	case "statistics", "statistic", "stats":
-		result = report.Statistics(evaluation)
-	case "errors", "error":
-		result = report.ErrorsWithGraph(evaluation, current.Graph())
-	default:
+	result, chartRoute, err := reportForRequest(r, current, name)
+	if err != nil {
+		return query.Result{}, "", true, err
+	}
+	if !reportKnown(name) {
 		return query.Result{}, "", false, nil
 	}
 	result = redactQueryPaths(result, current.Graph())
@@ -786,18 +386,101 @@ func (s *Server) buildReport(r *http.Request, current *snapshot.Snapshot, name s
 	}
 	result = report.Filter(result, filters)
 	if strings.EqualFold(name, "journal") {
-		result = report.FilterJournal(result, report.JournalFilters{
-			Flag:      r.URL.Query().Get("flag"),
-			Tag:       r.URL.Query().Get("tag"),
-			Link:      r.URL.Query().Get("link"),
-			Payee:     r.URL.Query().Get("payee"),
-			Narration: r.URL.Query().Get("narration"),
-			Kind:      r.URL.Query().Get("kind"),
-		})
+		result = report.FilterJournal(result, journalFiltersFromQuery(r))
 	}
 	return result, chartRoute, true, nil
 }
 
+// reportKnown reports whether name maps to a report this server serves.
+func reportKnown(name string) bool {
+	switch strings.ToLower(name) {
+	case "accounts", "account", "journal", "trial-balance", "trial_balance", "trialbalance",
+		"balance-sheet", "balance_sheet", "balancesheet", "income-statement", "income_statement", "incomestatement",
+		"holdings", "prices", "price", "commodities", "commodity", "events", "event",
+		"documents", "document", "statistics", "statistic", "stats", "errors", "error":
+		return true
+	default:
+		return false
+	}
+}
+
+// reportForRequest computes the unfiltered result and chart route for one
+// report name. A nil result with empty columns and nil error means the name
+// is unknown to the caller only when reportKnown disagrees.
+func reportForRequest(r *http.Request, current *snapshot.Snapshot, name string) (query.Result, string, error) {
+	evaluation := current.Evaluation()
+	switch strings.ToLower(name) {
+	case "accounts", "account":
+		return accountReport(r, evaluation)
+	case "journal":
+		from, to, err := journalDateRange(r)
+		if err != nil {
+			return query.Result{}, "", err
+		}
+		return report.JournalBetween(evaluation, from, to), "", nil
+	case "trial-balance", "trial_balance", "trialbalance":
+		// The web report needs explicit ancestors for Fava-style hierarchy
+		// rendering. Keep report.TrialBalance flat for query-compatible
+		// consumers and use its tree variant only at this presentation boundary.
+		return report.TrialBalanceTree(evaluation), "trial-balance", nil
+	case "balance-sheet", "balance_sheet", "balancesheet":
+		return report.BalanceSheet(evaluation), "balance-sheet", nil
+	case "income-statement", "income_statement", "incomestatement":
+		return report.IncomeStatement(evaluation), "income-statement", nil
+	case "holdings":
+		return holdingsReport(r, evaluation)
+	case "prices", "price", "commodities", "commodity":
+		return report.Prices(evaluation), "", nil
+	case "events", "event":
+		return report.Events(evaluation), "", nil
+	case "documents", "document":
+		return report.Documents(evaluation), "", nil
+	case "statistics", "statistic", "stats":
+		return report.Statistics(evaluation), "", nil
+	case "errors", "error":
+		return report.ErrorsWithGraph(evaluation, current.Graph()), "", nil
+	default:
+		return query.Result{}, "", nil
+	}
+}
+
+// accountReport computes the accounts result. Fava's account page switches
+// between the journal, per-interval changes, and per-interval balances with
+// the `r` query parameter; the aggregate interval rows carry no entry columns,
+// so they skip the generic row filters (time filters are applied inside).
+func accountReport(r *http.Request, evaluation ledger.Evaluation) (query.Result, string, error) {
+	view := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("r")))
+	if view == "changes" || view == "balances" {
+		filters, err := globalReportFilters(r)
+		if err != nil {
+			return query.Result{}, "", err
+		}
+		result := report.AccountIntervals(evaluation, strings.TrimSpace(r.URL.Query().Get("account")), view, strings.TrimSpace(r.URL.Query().Get("interval")), filters)
+		return result, "accounts", nil
+	}
+	return report.Accounts(evaluation), "accounts", nil
+}
+
+// holdingsReport applies the optional as-of date, valuation, and aggregation
+// selectors to the holdings result.
+func holdingsReport(r *http.Request, evaluation ledger.Evaluation) (query.Result, string, error) {
+	asOf, err := reportAsOfDate(r)
+	if err != nil {
+		return query.Result{}, "", err
+	}
+	valuation := strings.TrimSpace(r.URL.Query().Get("valuation"))
+	if valuation == "" {
+		valuation = "at-cost"
+	}
+	result := report.HoldingsAtCurrency(evaluation, asOf, valuation, strings.TrimSpace(r.URL.Query().Get("currency")))
+	result = report.HoldingsAggregate(result, strings.TrimSpace(r.URL.Query().Get("aggregation")))
+	return result, "", nil
+}
+
+// globalReportFilters parses the filter controls every report surface shares
+// (semantic reports, the journal projection, and downloads). Parse errors are
+// returned so the API edge can answer 400 instead of silently matching
+// nothing; each dimension is delegated to a focused parser below.
 func globalReportFilters(r *http.Request) (report.Filters, error) {
 	text := strings.TrimSpace(r.URL.Query().Get("filter"))
 	if text != "" {
@@ -808,64 +491,96 @@ func globalReportFilters(r *http.Request) (report.Filters, error) {
 			return report.Filters{}, err
 		}
 	}
-	filters := report.Filters{Account: strings.TrimSpace(r.URL.Query().Get("account")), Text: text}
-	if period := strings.TrimSpace(r.URL.Query().Get("period")); period != "" {
-		switch period {
-		case "all", "month", "quarter", "year":
-			if period != "all" {
-				filters.Period = period
-			}
-		default:
-			return report.Filters{}, fmt.Errorf("invalid period filter")
-		}
+	period, err := periodFilter(r)
+	if err != nil {
+		return report.Filters{}, err
 	}
 	if valuation := strings.TrimSpace(r.URL.Query().Get("valuation")); valuation != "" && valuation != "at-cost" && valuation != "market-value" {
 		return report.Filters{}, fmt.Errorf("invalid valuation filter")
 	}
-	rawTime := strings.TrimSpace(r.URL.Query().Get("time"))
-	switch rawTime {
-	case "", "all":
-		return filters, nil
-	case "year":
-		filters.TimePrefix = time.Now().Format("2006")
-	case "month":
-		filters.TimePrefix = time.Now().Format("2006-01")
-	default:
-		if len(rawTime) == 4 {
-			if _, err := strconv.Atoi(rawTime); err != nil {
-				return report.Filters{}, fmt.Errorf("invalid time filter")
-			}
-			filters.TimePrefix = rawTime
-			return filters, nil
-		}
-		// Fava's quarter syntax ("2025-Q2") selects a half-open range a
-		// prefix cannot express.
-		if len(rawTime) == 7 && rawTime[4] == '-' && (rawTime[5] == 'Q' || rawTime[5] == 'q') {
-			year, yearErr := strconv.Atoi(rawTime[:4])
-			quarter, quarterErr := strconv.Atoi(rawTime[6:])
-			if yearErr != nil || quarterErr != nil || quarter < 1 || quarter > 4 {
-				return report.Filters{}, fmt.Errorf("invalid time filter")
-			}
-			beginMonth := (quarter-1)*3 + 1
-			endYear, endMonth := year, beginMonth+3
-			if endMonth > 12 {
-				endYear++
-				endMonth = 1
-			}
-			filters.TimeBegin = fmt.Sprintf("%04d-%02d-01", year, beginMonth)
-			filters.TimeEnd = fmt.Sprintf("%04d-%02d-01", endYear, endMonth)
-			return filters, nil
-		}
-		if len(rawTime) == 7 {
-			if _, err := time.Parse("2006-01", rawTime); err != nil {
-				return report.Filters{}, fmt.Errorf("invalid time filter")
-			}
-			filters.TimePrefix = rawTime
-			return filters, nil
-		}
-		return report.Filters{}, fmt.Errorf("invalid time filter")
+	prefix, begin, end, err := reportTimeFilter(strings.TrimSpace(r.URL.Query().Get("time")), time.Now())
+	if err != nil {
+		return report.Filters{}, err
 	}
-	return filters, nil
+	return report.Filters{
+		Account:    strings.TrimSpace(r.URL.Query().Get("account")),
+		Text:       text,
+		Period:     period,
+		TimePrefix: prefix,
+		TimeBegin:  begin,
+		TimeEnd:    end,
+	}, nil
+}
+
+// periodFilter validates the interval selector. "all" and the empty string
+// mean unfiltered and normalize to an empty Period.
+func periodFilter(r *http.Request) (string, error) {
+	period := strings.TrimSpace(r.URL.Query().Get("period"))
+	if period == "" || period == "all" {
+		return "", nil
+	}
+	switch period {
+	case "month", "quarter", "year":
+		return period, nil
+	default:
+		return "", fmt.Errorf("invalid period filter")
+	}
+}
+
+// reportTimeFilter resolves Fava's `time` vocabulary into either a date
+// prefix or a half-open YYYY-MM-01 begin/end range — the two shapes
+// report.Filters can express. Relative words ("year", "month") anchor at
+// now; explicit YYYY, YYYY-MM, and YYYY-Qn forms are validated strictly so a
+// typo becomes a 400 rather than a filter that silently matches nothing.
+func reportTimeFilter(raw string, now time.Time) (prefix, begin, end string, err error) {
+	switch raw {
+	case "", "all":
+		return "", "", "", nil
+	case "year":
+		return now.Format("2006"), "", "", nil
+	case "month":
+		return now.Format("2006-01"), "", "", nil
+	}
+	if isNumericYear(raw) {
+		return raw, "", "", nil
+	}
+	if begin, end, ok := quarterTimeRange(raw); ok {
+		return "", begin, end, nil
+	}
+	if _, parseErr := time.Parse("2006-01", raw); parseErr == nil {
+		return raw, "", "", nil
+	}
+	return "", "", "", fmt.Errorf("invalid time filter")
+}
+
+// isNumericYear reports whether raw is exactly four ASCII digits.
+func isNumericYear(raw string) bool {
+	if len(raw) != 4 {
+		return false
+	}
+	_, err := strconv.Atoi(raw)
+	return err == nil
+}
+
+// quarterTimeRange parses Fava's "2025-Q2" syntax into the half-open month
+// range a prefix cannot express. ok is false for anything else, including a
+// syntactically valid quarter out of range.
+func quarterTimeRange(raw string) (begin, end string, ok bool) {
+	if len(raw) != 7 || raw[4] != '-' || (raw[5] != 'Q' && raw[5] != 'q') {
+		return "", "", false
+	}
+	year, yearErr := strconv.Atoi(raw[:4])
+	quarter, quarterErr := strconv.Atoi(raw[6:])
+	if yearErr != nil || quarterErr != nil || quarter < 1 || quarter > 4 {
+		return "", "", false
+	}
+	beginMonth := (quarter-1)*3 + 1
+	endYear, endMonth := year, beginMonth+3
+	if endMonth > 12 {
+		endYear++
+		endMonth = 1
+	}
+	return fmt.Sprintf("%04d-%02d-01", year, beginMonth), fmt.Sprintf("%04d-%02d-01", endYear, endMonth), true
 }
 
 func journalDateRange(r *http.Request) (*ledger.Date, *ledger.Date, error) {
@@ -1204,19 +919,10 @@ func (s *Server) handleDocumentUpload(w http.ResponseWriter, r *http.Request, cu
 		writeAPIError(w, http.StatusBadRequest, fmt.Sprintf("Not a valid account: %q", account))
 		return
 	}
-	folder := roots[0]
-	if requested := strings.TrimSpace(r.FormValue("folder")); requested != "" {
-		folder = ""
-		for _, candidate := range roots {
-			if requested == candidate {
-				folder = candidate
-				break
-			}
-		}
-		if folder == "" {
-			writeAPIError(w, http.StatusBadRequest, fmt.Sprintf("Not a documents folder: %s.", requested))
-			return
-		}
+	folder, err := uploadFolder(roots, strings.TrimSpace(r.FormValue("folder")))
+	if err != nil {
+		writeAPIError(w, http.StatusBadRequest, err.Error())
+		return
 	}
 	file, header, err := r.FormFile("file")
 	if err != nil || header == nil {
@@ -1227,14 +933,14 @@ func (s *Server) handleDocumentUpload(w http.ResponseWriter, r *http.Request, cu
 	// The basename reduction is Fava's separator-to-space sanitization made
 	// strict: directory components can never survive the upload.
 	name := filepath.Base(strings.TrimSpace(header.Filename))
-	if name == "" || name == "." || name == ".." || strings.HasPrefix(name, "-") {
+	if !validDocumentName(name) {
 		writeAPIError(w, http.StatusBadRequest, "Uploaded file is missing a filename.")
 		return
 	}
-	target := filepath.Join(folder, filepath.Join(strings.Split(account, ":")...), name)
 	// Defense in depth: the components are validated above, but the resolved
 	// target must provably stay inside the chosen document root.
-	if relative, err := filepath.Rel(folder, filepath.Clean(target)); err != nil || relative == ".." || strings.HasPrefix(relative, ".."+string(filepath.Separator)) || filepath.IsAbs(relative) {
+	target, err := documentTargetPath(folder, account, name)
+	if err != nil {
 		writeAPIError(w, http.StatusBadRequest, "Uploaded file is missing a filename.")
 		return
 	}
@@ -1242,35 +948,89 @@ func (s *Server) handleDocumentUpload(w http.ResponseWriter, r *http.Request, cu
 		writeAPIError(w, http.StatusConflict, "Target path already exists: "+name)
 		return
 	}
-	if err := os.MkdirAll(filepath.Dir(target), 0o700); err != nil {
-		writeAPIError(w, http.StatusInternalServerError, "The account folder could not be created.")
+	if writeErr := storeUploadedFile(target, file); writeErr != nil {
+		writeAPIError(w, writeErr.status, writeErr.message)
 		return
 	}
-	created, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
-	if err != nil {
-		writeAPIError(w, http.StatusConflict, "Target path already exists: "+name)
-		return
-	}
-	if _, err := io.Copy(created, file); err != nil {
-		_ = created.Close()
-		_ = os.Remove(target)
-		writeAPIError(w, http.StatusInternalServerError, "The document could not be written.")
-		return
-	}
-	if err := created.Close(); err != nil {
-		_ = os.Remove(target)
-		writeAPIError(w, http.StatusInternalServerError, "The document could not be written.")
-		return
-	}
-	relative, err := filepath.Rel(folder, target)
-	if err != nil {
-		relative = name
-	}
-	relative = filepath.ToSlash(relative)
+	relative := documentRelativePath(folder, target)
 	writeJSON(w, favaadapter.NewEnvelope(struct {
 		Filename string `json:"filename"`
 		Message  string `json:"message"`
 	}{Filename: relative, Message: "Uploaded to " + relative}, current.BuiltAt))
+}
+
+// httpError carries the status/message pair a failed filesystem write wants
+// to answer with.
+type httpError struct {
+	status  int
+	message string
+}
+
+func (e httpError) Error() string { return e.message }
+
+// uploadFolder resolves the form's folder selector against the configured
+// document roots. An empty selector stays on the primary root; an explicit
+// selector must name one of the configured roots exactly.
+func uploadFolder(roots []string, requested string) (string, error) {
+	if requested == "" {
+		return roots[0], nil
+	}
+	for _, candidate := range roots {
+		if requested == candidate {
+			return candidate, nil
+		}
+	}
+	return "", fmt.Errorf("Not a documents folder: %s.", requested)
+}
+
+// validDocumentName rejects basenames that are empty, traversal-shaped, or
+// option-like (leading dash).
+func validDocumentName(name string) bool {
+	return name != "" && name != "." && name != ".." && !strings.HasPrefix(name, "-")
+}
+
+// documentTargetPath nests name under the account's colon-separated subfolder
+// chain inside root. Defense in depth: the components are validated by the
+// caller, but the resolved target must provably stay inside the root.
+func documentTargetPath(root, account, name string) (string, error) {
+	target := filepath.Join(root, filepath.Join(strings.Split(account, ":")...), name)
+	if !pathWithin(root, filepath.Clean(target)) {
+		return "", fmt.Errorf("target escapes document root")
+	}
+	return target, nil
+}
+
+// storeUploadedFile writes the upload into target without ever overwriting:
+// the account folders are created, the file itself is opened O_EXCL, and any
+// later failure removes the partial file again.
+func storeUploadedFile(target string, source io.Reader) *httpError {
+	if err := os.MkdirAll(filepath.Dir(target), 0o700); err != nil {
+		return &httpError{status: http.StatusInternalServerError, message: "The account folder could not be created."}
+	}
+	created, err := os.OpenFile(target, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
+	if err != nil {
+		return &httpError{status: http.StatusConflict, message: "Target path already exists: " + filepath.Base(target)}
+	}
+	if _, err := io.Copy(created, source); err != nil {
+		_ = created.Close()
+		_ = os.Remove(target)
+		return &httpError{status: http.StatusInternalServerError, message: "The document could not be written."}
+	}
+	if err := created.Close(); err != nil {
+		_ = os.Remove(target)
+		return &httpError{status: http.StatusInternalServerError, message: "The document could not be written."}
+	}
+	return nil
+}
+
+// documentRelativePath renders target as the slash-separated path relative
+// to its document root for the response envelope.
+func documentRelativePath(root, target string) string {
+	relative, err := filepath.Rel(root, target)
+	if err != nil {
+		relative = filepath.Base(target)
+	}
+	return filepath.ToSlash(relative)
 }
 
 // handleDocumentMove moves an existing attachment into the subfolder chain of
@@ -1309,34 +1069,27 @@ func (s *Server) handleDocumentMove(w http.ResponseWriter, r *http.Request, curr
 		writeAPIError(w, http.StatusBadRequest, "The document could not be found beneath a configured document root.")
 		return
 	}
-	name := filepath.Base(strings.TrimSpace(request.NewName))
-	if name == "" || name == "." || name == ".." || strings.HasPrefix(name, "-") {
-		name = filepath.Base(sourcePath)
-	}
-	root := ""
-	for _, candidate := range s.roots.Paths() {
-		if relative, relErr := filepath.Rel(candidate, sourcePath); relErr == nil && pathWithin(candidate, sourcePath) && relative != "." {
-			root = candidate
-			break
-		}
-	}
+	root := documentRootFor(s.roots.Paths(), sourcePath)
 	if root == "" {
 		writeAPIError(w, http.StatusInternalServerError, "The document root for this attachment could not be determined.")
 		return
 	}
-	target := filepath.Join(root, filepath.Join(strings.Split(account, ":")...), name)
+	name := filepath.Base(strings.TrimSpace(request.NewName))
+	if !validDocumentName(name) {
+		name = filepath.Base(sourcePath)
+	}
 	// Defense in depth: account and name are validated above, but the resolved
 	// target must provably stay inside the source's document root.
-	if !pathWithin(root, filepath.Clean(target)) {
-		writeAPIError(w, http.StatusBadRequest, "The new filename is not valid.")
-		return
-	}
-	if filepath.Clean(target) == sourcePath {
-		relative, _ := filepath.Rel(root, target)
+	target, targetErr := documentTargetPath(root, account, name)
+	if targetErr != nil || filepath.Clean(target) == sourcePath {
+		if targetErr != nil {
+			writeAPIError(w, http.StatusBadRequest, "The new filename is not valid.")
+			return
+		}
 		writeJSON(w, favaadapter.NewEnvelope(struct {
 			Filename string `json:"filename"`
 			Message  string `json:"message"`
-		}{Filename: filepath.ToSlash(relative), Message: "Document unchanged."}, current.BuiltAt))
+		}{Filename: documentRelativePath(root, target), Message: "Document unchanged."}, current.BuiltAt))
 		return
 	}
 	if _, err := os.Stat(target); err == nil {
@@ -1351,15 +1104,23 @@ func (s *Server) handleDocumentMove(w http.ResponseWriter, r *http.Request, curr
 		writeAPIError(w, http.StatusInternalServerError, "The document could not be moved.")
 		return
 	}
-	relative, err := filepath.Rel(root, target)
-	if err != nil {
-		relative = name
-	}
-	relative = filepath.ToSlash(relative)
+	relative := documentRelativePath(root, target)
 	writeJSON(w, favaadapter.NewEnvelope(struct {
 		Filename string `json:"filename"`
 		Message  string `json:"message"`
 	}{Filename: relative, Message: "Moved to " + relative}, current.BuiltAt))
+}
+
+// documentRootFor finds the configured root that actually contains the
+// attachment. The relative != "." requirement keeps the root directories
+// themselves from being treated as movable documents.
+func documentRootFor(roots []string, sourcePath string) string {
+	for _, candidate := range roots {
+		if relative, relErr := filepath.Rel(candidate, sourcePath); relErr == nil && pathWithin(candidate, sourcePath) && relative != "." {
+			return candidate
+		}
+	}
+	return ""
 }
 
 func pathWithin(root, path string) bool {
@@ -1502,19 +1263,10 @@ func (s *Server) handleImportPreview(w http.ResponseWriter, r *http.Request, cur
 	if adapter == "" {
 		adapter = "beancount"
 	}
-	name, err := safeImportName(request.Path, adapter)
+	name, normalized, err := normalizedImportContent(request, adapter)
 	if err != nil {
 		writeAPIError(w, http.StatusBadRequest, err.Error())
 		return
-	}
-	normalized := request.Content
-	if adapter == "csv" {
-		normalized, err = csvToBeancount(request.Content, request.Mapping)
-		if err != nil {
-			writeAPIError(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		name = strings.TrimSuffix(name, filepath.Ext(name)) + ".bean"
 	}
 	file, bag := ledger.ParseText(name, []byte(normalized))
 	diagnostics := bag.All()
@@ -1525,57 +1277,20 @@ func (s *Server) handleImportPreview(w http.ResponseWriter, r *http.Request, cur
 		}{Valid: false, Diagnostics: diagnosticsPayload(diagnostics, nil)})
 		return
 	}
-	for _, directive := range file.Directives {
-		switch directive.(type) {
-		case ledger.Include, *ledger.Include, ledger.Plugin, *ledger.Plugin:
-			writeAPIError(w, http.StatusBadRequest, "imports cannot add include or plugin directives")
-			return
-		}
+	if err := rejectImportDirectives(file); err != nil {
+		writeAPIError(w, http.StatusBadRequest, err.Error())
+		return
 	}
 	// Evaluate the imported file against the merged include graph rather than
-	// in isolation. The full graph knows which accounts are open and which
-	// currencies are permitted, so a posting to an account opened only in the
-	// main ledger (the common case for an import) is not misreported as an
-	// E-EVAL-POSTING lifecycle error. This mirrors what the commit path
-	// revalidates, so a preview that says "valid" will commit successfully.
-	order := current.Graph().Order
-	parsed := current.Parsed()
-	// The imported file is not yet a member of the published graph, so it is
-	// assigned a fresh FileID that cannot collide with the existing members.
-	importID := source.FileID(len(parsed) + 1)
-	parsed[importID] = file
-	order = append(order, importID)
-	evaluation := ledger.EvaluateFiles(parsed, order, ledger.EvalOptions{})
+	// in isolation (see evaluateImportMerged); this mirrors what the commit
+	// path revalidates, so a preview that says "valid" will commit.
+	evaluation := evaluateImportMerged(current, file)
 	for _, value := range evaluation.Diagnostics {
 		diagnostics = append(diagnostics, value)
 	}
 	previewID := importPreviewID(name, normalized)
 	s.previews.Store(previewID, importPreview{Path: name, Content: normalized})
-	rows, queryErr := query.Evaluate("SELECT date, account, units, currency, flag, payee, narration FROM postings ORDER BY date, account", *evaluation)
-	if queryErr != nil {
-		rows = query.Result{}
-	} else {
-		// The merged graph necessarily includes the existing ledger's postings.
-		// Keep the preview focused on the imported file so the table shows only
-		// what this import would add.
-		imported := rows.Rows[:0]
-		for _, row := range rows.Rows {
-			if row["file"] == name {
-				imported = append(imported, row)
-			}
-		}
-		rows.Rows = imported
-	}
-	// The imported file itself is always valid here (parse errors already
-	// returned); the merged evaluation is valid only when the whole graph,
-	// including the proposed import, is free of error diagnostics.
-	valid := true
-	for _, value := range evaluation.Diagnostics {
-		if value.Severity == diagnostic.Error {
-			valid = false
-			break
-		}
-	}
+	rows := importedRowsOnly(evaluation, name)
 	writeJSON(w, struct {
 		PreviewID   string               `json:"preview_id"`
 		Path        string               `json:"path"`
@@ -1583,7 +1298,85 @@ func (s *Server) handleImportPreview(w http.ResponseWriter, r *http.Request, cur
 		Diagnostics []diagnosticResponse `json:"diagnostics"`
 		Rows        query.Result         `json:"rows"`
 		Diff        importDiff           `json:"diff"`
-	}{PreviewID: previewID, Path: name, Valid: valid, Diagnostics: diagnosticsPayload(diagnostics, nil), Rows: report.Present(rows), Diff: importDiff{AddedLines: strings.Count(normalized, "\n") + 1, Bytes: len([]byte(normalized))}})
+	}{PreviewID: previewID, Path: name, Valid: importEvaluationValid(evaluation), Diagnostics: diagnosticsPayload(diagnostics, nil), Rows: report.Present(rows), Diff: importDiff{AddedLines: strings.Count(normalized, "\n") + 1, Bytes: len([]byte(normalized))}})
+}
+
+// normalizedImportContent validates the request's file name against its
+// adapter and returns the Beancount text the preview should evaluate. CSV
+// input is converted and the file name re-pointed at a .bean extension.
+func normalizedImportContent(request importPreviewRequest, adapter string) (name, content string, err error) {
+	name, err = safeImportName(request.Path, adapter)
+	if err != nil {
+		return "", "", err
+	}
+	content = request.Content
+	if adapter == "csv" {
+		content, err = csvToBeancount(request.Content, request.Mapping)
+		if err != nil {
+			return "", "", err
+		}
+		name = strings.TrimSuffix(name, filepath.Ext(name)) + ".bean"
+	}
+	return name, content, nil
+}
+
+// rejectImportDirectives refuses imports that would grow the include graph
+// or activate plugins; an import may only add entries.
+func rejectImportDirectives(file *ledger.File) error {
+	for _, directive := range file.Directives {
+		switch directive.(type) {
+		case ledger.Include, *ledger.Include, ledger.Plugin, *ledger.Plugin:
+			return fmt.Errorf("imports cannot add include or plugin directives")
+		}
+	}
+	return nil
+}
+
+// evaluateImportMerged evaluates the imported file against the published
+// include graph rather than in isolation. The full graph knows which accounts
+// are open and which currencies are permitted, so a posting to an account
+// opened only in the main ledger (the common case for an import) is not
+// misreported as an E-EVAL-POSTING lifecycle error. The imported file is not
+// yet a member of the published graph, so it is assigned a fresh FileID that
+// cannot collide with the existing members.
+func evaluateImportMerged(current *snapshot.Snapshot, file *ledger.File) *ledger.Evaluation {
+	order := append([]source.FileID(nil), current.Graph().Order...)
+	parsed := current.Parsed()
+	importID := source.FileID(len(parsed) + 1)
+	parsed[importID] = file
+	order = append(order, importID)
+	return ledger.EvaluateFiles(parsed, order, ledger.EvalOptions{})
+}
+
+// importedRowsOnly projects the merged evaluation's postings and keeps only
+// the imported file's rows: the merged graph necessarily includes the
+// existing ledger's postings, but the preview table should show only what
+// this import would add.
+func importedRowsOnly(evaluation *ledger.Evaluation, name string) query.Result {
+	rows, err := query.Evaluate("SELECT date, account, units, currency, flag, payee, narration FROM postings ORDER BY date, account", *evaluation)
+	if err != nil {
+		return query.Result{}
+	}
+	imported := rows.Rows[:0]
+	for _, row := range rows.Rows {
+		if row["file"] == name {
+			imported = append(imported, row)
+		}
+	}
+	rows.Rows = imported
+	return rows
+}
+
+// importEvaluationValid reports whether the whole merged graph, including the
+// proposed import, is free of error diagnostics. The imported file itself is
+// always valid by the time this runs (parse errors returned earlier).
+func importEvaluationValid(evaluation *ledger.Evaluation) bool {
+	for _, value := range evaluation.Diagnostics {
+		if value.Severity == diagnostic.Error {
+			return false
+		}
+	}
+	return true
 }
 
 type importDiff struct {
@@ -1678,6 +1471,9 @@ func safeImportName(raw, adapter string) (string, error) {
 	return raw, nil
 }
 
+// csvToBeancount converts a generic CSV import into Beancount transactions
+// balanced against an offset account. The header row names the columns
+// (date, account, amount required; currency, payee, narration optional).
 func csvToBeancount(content string, mapping map[string]string) (string, error) {
 	reader := csv.NewReader(strings.NewReader(content))
 	records, err := reader.ReadAll()
@@ -1687,56 +1483,89 @@ func csvToBeancount(content string, mapping map[string]string) (string, error) {
 	if len(records) < 2 {
 		return "", fmt.Errorf("CSV must contain a header and at least one row")
 	}
-	header := make(map[string]int, len(records[0]))
-	for index, value := range records[0] {
+	header, err := csvHeaderIndex(records[0])
+	if err != nil {
+		return "", err
+	}
+	offset := csvMappingValue(mapping, "offset_account", "Equity:Imported")
+	currencyDefault := csvMappingValue(mapping, "currency", "USD")
+	var builder strings.Builder
+	for line, record := range records[1:] {
+		rendered, renderErr := csvRecordToBean(record, header, offset, currencyDefault)
+		if renderErr != nil {
+			return "", fmt.Errorf("CSV row %d: %w", line+2, renderErr)
+		}
+		builder.WriteString(rendered)
+	}
+	return builder.String(), nil
+}
+
+// csvHeaderIndex maps lowercased/trimmed header names to record indexes and
+// enforces the required columns.
+func csvHeaderIndex(headerRow []string) (map[string]int, error) {
+	header := make(map[string]int, len(headerRow))
+	for index, value := range headerRow {
 		header[strings.ToLower(strings.TrimSpace(value))] = index
 	}
 	for _, required := range []string{"date", "account", "amount"} {
 		if _, ok := header[required]; !ok {
-			return "", fmt.Errorf("CSV requires %s column", required)
+			return nil, fmt.Errorf("CSV requires %s column", required)
 		}
 	}
-	offset := "Equity:Imported"
-	if mapping != nil && strings.TrimSpace(mapping["offset_account"]) != "" {
-		offset = strings.TrimSpace(mapping["offset_account"])
+	return header, nil
+}
+
+// csvMappingValue reads one mapping override, falling back to the default
+// when the mapping is nil or the value is blank.
+func csvMappingValue(mapping map[string]string, key, fallback string) string {
+	if mapping == nil {
+		return fallback
 	}
-	currencyDefault := "USD"
-	if mapping != nil && strings.TrimSpace(mapping["currency"]) != "" {
-		currencyDefault = strings.TrimSpace(mapping["currency"])
+	if value := strings.TrimSpace(mapping[key]); value != "" {
+		return value
 	}
+	return fallback
+}
+
+// csvRecordToBean renders one CSV record as a balanced transaction with its
+// offset posting. Embedded newlines in payee/narration are flattened so one
+// record can never produce broken directives.
+func csvRecordToBean(record []string, header map[string]int, offset, currencyDefault string) (string, error) {
+	value := func(key string) string {
+		index, ok := header[key]
+		if !ok || index >= len(record) {
+			return ""
+		}
+		return strings.TrimSpace(record[index])
+	}
+	date, amount := value("date"), value("amount")
+	if _, err := parseISODate(date); err != nil {
+		return "", fmt.Errorf("invalid date")
+	}
+	parsedAmount, err := ledger.ParseDecimal(amount)
+	if err != nil {
+		return "", fmt.Errorf("invalid amount")
+	}
+	currency := value("currency")
+	if currency == "" {
+		currency = currencyDefault
+	}
+	payee := csvSingleLine(value("payee"))
+	narration := csvSingleLine(value("narration"))
 	var builder strings.Builder
-	for line, record := range records[1:] {
-		value := func(key string) string {
-			index, ok := header[key]
-			if !ok || index >= len(record) {
-				return ""
-			}
-			return strings.TrimSpace(record[index])
-		}
-		date, amount := value("date"), value("amount")
-		if _, err := parseISODate(date); err != nil {
-			return "", fmt.Errorf("CSV row %d: invalid date", line+2)
-		}
-		parsedAmount, err := ledger.ParseDecimal(amount)
-		if err != nil {
-			return "", fmt.Errorf("CSV row %d: invalid amount", line+2)
-		}
-		currency := value("currency")
-		if currency == "" {
-			currency = currencyDefault
-		}
-		payee := strings.ReplaceAll(strings.ReplaceAll(value("payee"), "\n", " "), "\r", " ")
-		narration := strings.ReplaceAll(strings.ReplaceAll(value("narration"), "\n", " "), "\r", " ")
-		account := value("account")
-		builder.WriteString(fmt.Sprintf("%s * \"%s\"", date, escapeBeanString(payee)))
-		if narration != "" {
-			builder.WriteString(fmt.Sprintf(" \"%s\"", escapeBeanString(narration)))
-		}
-		builder.WriteByte('\n')
-		builder.WriteString(fmt.Sprintf("  %s %s %s\n", account, parsedAmount.String(), currency))
-		builder.WriteString(fmt.Sprintf("  %s %s %s\n", offset, parsedAmount.Neg().String(), currency))
+	builder.WriteString(fmt.Sprintf("%s * \"%s\"", date, escapeBeanString(payee)))
+	if narration != "" {
+		builder.WriteString(fmt.Sprintf(" \"%s\"", escapeBeanString(narration)))
 	}
+	builder.WriteByte('\n')
+	builder.WriteString(fmt.Sprintf("  %s %s %s\n", value("account"), parsedAmount.String(), currency))
+	builder.WriteString(fmt.Sprintf("  %s %s %s\n", offset, parsedAmount.Neg().String(), currency))
 	return builder.String(), nil
+}
+
+// csvSingleLine collapses line breaks so CSV fields stay single-line strings.
+func csvSingleLine(value string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(value, "\n", " "), "\r", " ")
 }
 
 func escapeBeanString(value string) string {

@@ -43,6 +43,8 @@ type FQLTarget struct {
 	Postings []FQLPosting
 }
 
+// FQLPosting carries the posting fields an FQL predicate can match: its
+// account and a float view of its units (display-oriented matching).
 type FQLPosting struct {
 	Account string
 	Units   *big.Float
@@ -67,19 +69,33 @@ type fqlNode struct {
 	child    *fqlNode
 }
 
+// match evaluates the predicate tree against one target: the boolean
+// combinators recurse, the posting quantifiers delegate to matchQuantified,
+// and every leaf shape to matchTerm.
 func (node *fqlNode) match(target FQLTarget) bool {
+	switch node.kind {
+	case "and":
+		return node.left.match(target) && node.right.match(target)
+	case "or":
+		return node.left.match(target) || node.right.match(target)
+	case "not":
+		return !node.child.match(target)
+	case "all", "any":
+		return node.matchQuantified(target)
+	default:
+		return node.matchTerm(target)
+	}
+}
+
+// matchTerm evaluates one leaf predicate against the entry-shaped target.
+func (node *fqlNode) matchTerm(target FQLTarget) bool {
 	switch node.kind {
 	case "tag":
 		return containsExact(target.Tags, node.value)
 	case "link":
 		return containsExact(target.Links, node.value)
 	case "text":
-		for _, value := range []string{target.Narration, target.Payee, target.Comment} {
-			if value != "" && node.matcher(value) {
-				return true
-			}
-		}
-		return false
+		return node.matchText(target)
 	case "key":
 		if value, ok := target.field(node.value); ok {
 			return node.matcher(value)
@@ -88,10 +104,7 @@ func (node *fqlNode) match(target FQLTarget) bool {
 	case "keyNumber":
 		// Fava compares the absolute value of an amount-like attribute; the
 		// only entry-level amount this projection carries is number.
-		if node.value == "number" && target.Amount != nil {
-			return compareAbs(node.operator, target.Amount, node.number)
-		}
-		return false
+		return node.value == "number" && target.Amount != nil && compareAbs(node.operator, target.Amount, node.number)
 	case "postingNumber":
 		for _, posting := range target.Postings {
 			if posting.Units != nil && compareAbs(node.operator, posting.Units, node.number) {
@@ -99,28 +112,36 @@ func (node *fqlNode) match(target FQLTarget) bool {
 			}
 		}
 		return false
-	case "and":
-		return node.left.match(target) && node.right.match(target)
-	case "or":
-		return node.left.match(target) || node.right.match(target)
-	case "not":
-		return !node.child.match(target)
-	case "all":
-		for _, posting := range target.Postings {
-			if !node.child.match(postingTarget(posting)) {
-				return false
-			}
-		}
-		return true
-	case "any":
-		for _, posting := range target.Postings {
-			if node.child.match(postingTarget(posting)) {
-				return true
-			}
-		}
+	default:
 		return false
 	}
+}
+
+// matchText applies the text pattern to the entry's free-text fields,
+// skipping empty ones the way Fava's getattr walk does.
+func (node *fqlNode) matchText(target FQLTarget) bool {
+	for _, value := range []string{target.Narration, target.Payee, target.Comment} {
+		if value != "" && node.matcher(value) {
+			return true
+		}
+	}
 	return false
+}
+
+// matchQuantified evaluates all(...)/any(...) over the target's postings:
+// all requires every posting to match, any at least one. Quantifiers over
+// the (empty) posting list are vacuously true for all, false for any.
+func (node *fqlNode) matchQuantified(target FQLTarget) bool {
+	for _, posting := range target.Postings {
+		matched := node.child.match(postingTarget(posting))
+		if node.kind == "all" && !matched {
+			return false
+		}
+		if node.kind == "any" && matched {
+			return true
+		}
+	}
+	return node.kind == "all"
 }
 
 func postingTarget(posting FQLPosting) FQLTarget {
@@ -224,6 +245,8 @@ func fqlKeyAt(text string, position int) string {
 	return ""
 }
 
+// fqlLex splits a filter query into tokens. Sigil-led tokens (tags, links)
+// and the default token ladder are delegated so the loop only advances.
 func fqlLex(text string) ([]fqlToken, error) {
 	var tokens []fqlToken
 	for position := 0; position < len(text); {
@@ -232,72 +255,74 @@ func fqlLex(text string) ([]fqlToken, error) {
 			position++
 			continue
 		}
-		rest := text[position:]
-		switch {
-		case strings.HasPrefix(rest, "^"):
-			match := fqlReLink.FindString(rest)
-			if match == "" {
-				return nil, fmt.Errorf("failed to parse filter: %s", text)
+		if char == '^' || char == '#' {
+			token, next, err := fqlLexSigil(text, position)
+			if err != nil {
+				return nil, err
 			}
-			tokens = append(tokens, fqlToken{kind: "link", value: match[1:]})
-			position += len(match)
-		case strings.HasPrefix(rest, "#"):
-			match := fqlReTag.FindString(rest)
-			if match == "" {
-				return nil, fmt.Errorf("failed to parse filter: %s", text)
-			}
-			tokens = append(tokens, fqlToken{kind: "tag", value: match[1:]})
-			position += len(match)
-		default:
-			switch match := fqlReAll.FindString(rest); {
-			case match != "":
-				tokens = append(tokens, fqlToken{kind: "all"})
-				position += len(match)
-				continue
-			}
-			if match := fqlReAny.FindString(rest); match != "" {
-				tokens = append(tokens, fqlToken{kind: "any"})
-				position += len(match)
-				continue
-			}
-			if match := fqlKeyAt(text, position); match != "" {
-				tokens = append(tokens, fqlToken{kind: "key", value: match})
-				position += len(match)
-				continue
-			}
-			if strings.HasPrefix(rest, ":") {
-				tokens = append(tokens, fqlToken{kind: "eq"})
-				position++
-				continue
-			}
-			if match := fqlReCmp.FindString(rest); match != "" {
-				tokens = append(tokens, fqlToken{kind: "cmp", value: match})
-				position += len(match)
-				continue
-			}
-			if match := fqlReNumber.FindString(rest); match != "" {
-				tokens = append(tokens, fqlToken{kind: "number", value: match})
-				position += len(match)
-				continue
-			}
-			if match := fqlReString.FindString(rest); match != "" {
-				value := match
-				if strings.HasPrefix(match, `"`) || strings.HasPrefix(match, "'") {
-					value = match[1 : len(match)-1]
-				}
-				tokens = append(tokens, fqlToken{kind: "string", value: value})
-				position += len(match)
-				continue
-			}
-			if char == '-' || char == ',' || char == '(' || char == ')' {
-				tokens = append(tokens, fqlToken{kind: "literal", value: string(char)})
-				position++
-				continue
-			}
+			tokens = append(tokens, token)
+			position = next
+			continue
+		}
+		token, next, ok := fqlLexDefault(text, position)
+		if !ok {
 			return nil, fmt.Errorf("illegal character %q in filter", string(char))
 		}
+		tokens = append(tokens, token)
+		position = next
 	}
 	return tokens, nil
+}
+
+// fqlLexSigil lexes a ^link or #tag starting at position. A sigil with no
+// following word characters is a parse error, mirroring Fava's lexer.
+func fqlLexSigil(text string, position int) (fqlToken, int, error) {
+	match := fqlReTag.FindString(text[position:])
+	kind := "tag"
+	if text[position] == '^' {
+		match = fqlReLink.FindString(text[position:])
+		kind = "link"
+	}
+	if match == "" {
+		return fqlToken{}, position, fmt.Errorf("failed to parse filter: %s", text)
+	}
+	return fqlToken{kind: kind, value: match[1:]}, position + len(match), nil
+}
+
+// fqlLexDefault tries the remaining token shapes in Fava's lexer order —
+// all(/any( quantifiers, lookahead-detected keys, ":"/comparators, numbers,
+// strings, and the literal punctuation — and reports whether one matched.
+func fqlLexDefault(text string, position int) (fqlToken, int, bool) {
+	rest := text[position:]
+	if match := fqlReAll.FindString(rest); match != "" {
+		return fqlToken{kind: "all"}, position + len(match), true
+	}
+	if match := fqlReAny.FindString(rest); match != "" {
+		return fqlToken{kind: "any"}, position + len(match), true
+	}
+	if match := fqlKeyAt(text, position); match != "" {
+		return fqlToken{kind: "key", value: match}, position + len(match), true
+	}
+	if strings.HasPrefix(rest, ":") {
+		return fqlToken{kind: "eq"}, position + 1, true
+	}
+	if match := fqlReCmp.FindString(rest); match != "" {
+		return fqlToken{kind: "cmp", value: match}, position + len(match), true
+	}
+	if match := fqlReNumber.FindString(rest); match != "" {
+		return fqlToken{kind: "number", value: match}, position + len(match), true
+	}
+	if match := fqlReString.FindString(rest); match != "" {
+		value := match
+		if strings.HasPrefix(match, `"`) || strings.HasPrefix(match, "'") {
+			value = match[1 : len(match)-1]
+		}
+		return fqlToken{kind: "string", value: value}, position + len(match), true
+	}
+	if char := text[position]; char == '-' || char == ',' || char == '(' || char == ')' {
+		return fqlToken{kind: "literal", value: string(char)}, position + 1, true
+	}
+	return fqlToken{}, position, false
 }
 
 type fqlParser struct {

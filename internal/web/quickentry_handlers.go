@@ -32,11 +32,11 @@ type quickBatchRecord struct {
 
 // quickLineResponse is the per-line JSON shape returned by preview.
 type quickLineResponse struct {
-	Line      int                 `json:"line"`
-	Source    string              `json:"source"`
-	Preview   string              `json:"preview,omitempty"`
-	Duplicate bool                `json:"duplicate"`
-	Errors    []quickLineError    `json:"errors,omitempty"`
+	Line      int                   `json:"line"`
+	Source    string                `json:"source"`
+	Preview   string                `json:"preview,omitempty"`
+	Duplicate bool                  `json:"duplicate"`
+	Errors    []quickLineError      `json:"errors,omitempty"`
 	Entry     *favaadapter.NewEntry `json:"entry,omitempty"`
 }
 
@@ -46,12 +46,12 @@ type quickLineError struct {
 }
 
 type quickPreviewResponse struct {
-	Token       string             `json:"token"`
-	Lines       []quickLineResponse `json:"lines"`
-	Target      string             `json:"target"`
-	Problems    []quickProfileProblem `json:"problems,omitempty"`
-	SnapshotID  string             `json:"snapshot_id"`
-	HasErrors   bool               `json:"has_errors"`
+	Token      string                `json:"token"`
+	Lines      []quickLineResponse   `json:"lines"`
+	Target     string                `json:"target"`
+	Problems   []quickProfileProblem `json:"problems,omitempty"`
+	SnapshotID string                `json:"snapshot_id"`
+	HasErrors  bool                  `json:"has_errors"`
 }
 
 type quickProfileProblem struct {
@@ -80,10 +80,10 @@ func (s *Server) handleQuickPreview(w http.ResponseWriter, r *http.Request, curr
 		return
 	}
 	var request struct {
-		Text      string `json:"text"`
-		Date      string `json:"date"`
-		Flag      string `json:"flag"`
-		Target    string `json:"target"`
+		Text   string `json:"text"`
+		Date   string `json:"date"`
+		Flag   string `json:"flag"`
+		Target string `json:"target"`
 	}
 	if err := decodeJSONBody(w, r, &request, 1<<20); err != nil {
 		writeAPIError(w, http.StatusBadRequest, err.Error())
@@ -152,7 +152,7 @@ func (s *Server) handleQuickCommit(w http.ResponseWriter, r *http.Request, curre
 		return
 	}
 	var request struct {
-		Token          string `json:"token"`
+		Token            string `json:"token"`
 		ExpectedSnapshot string `json:"expected_snapshot_id"`
 	}
 	if err := decodeJSONBody(w, r, &request, 1<<20); err != nil {
@@ -272,16 +272,16 @@ func (s *Server) handleQuickUndo(w http.ResponseWriter, r *http.Request, current
 
 // quickProfileRule is the JSON shape for one effective rule in the profile listing.
 type quickProfileRule struct {
-	Type    string   `json:"type"`
-	Name    string   `json:"name"`
-	Account string   `json:"account,omitempty"`
-	Source  string   `json:"source,omitempty"`
-	Dest    string   `json:"destination,omitempty"`
-	Currency string  `json:"currency,omitempty"`
-	Payee   string   `json:"payee,omitempty"`
-	Narration string `json:"narration,omitempty"`
-	Tags    []string `json:"tags,omitempty"`
-	Links   []string `json:"links,omitempty"`
+	Type      string   `json:"type"`
+	Name      string   `json:"name"`
+	Account   string   `json:"account,omitempty"`
+	Source    string   `json:"source,omitempty"`
+	Dest      string   `json:"destination,omitempty"`
+	Currency  string   `json:"currency,omitempty"`
+	Payee     string   `json:"payee,omitempty"`
+	Narration string   `json:"narration,omitempty"`
+	Tags      []string `json:"tags,omitempty"`
+	Links     []string `json:"links,omitempty"`
 }
 
 func (s *Server) handleQuickProfile(w http.ResponseWriter, r *http.Request, current *snapshot.Snapshot) {
@@ -315,14 +315,14 @@ func (s *Server) handleQuickProfileSave(w http.ResponseWriter, r *http.Request, 
 		return
 	}
 	var request struct {
-		Date     string `json:"date"`
-		RuleType string `json:"type"`
-		Name     string `json:"name"`
-		Account  string `json:"account"`
-		Source   string `json:"source"`
-		Dest     string `json:"destination"`
-		Currency string `json:"currency"`
-		Payee    string `json:"payee"`
+		Date      string `json:"date"`
+		RuleType  string `json:"type"`
+		Name      string `json:"name"`
+		Account   string `json:"account"`
+		Source    string `json:"source"`
+		Dest      string `json:"destination"`
+		Currency  string `json:"currency"`
+		Payee     string `json:"payee"`
 		Narration string `json:"narration"`
 	}
 	if err := decodeJSONBody(w, r, &request, 1<<20); err != nil {
@@ -416,7 +416,6 @@ func firstOperatingCurrency(options map[string]string) string {
 	}
 	return ""
 }
-
 
 var (
 	quickProfileDateRegex    = regexp.MustCompile(`\A\d{4}-\d{2}-\d{2}\z`)

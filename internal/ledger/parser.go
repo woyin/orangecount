@@ -7,6 +7,7 @@ package ledger
 
 import (
 	"math/big"
+	"reflect"
 	"strconv"
 	"strings"
 	"unicode"
@@ -185,6 +186,11 @@ func commentOnLine(f *source.SourceFile, ln line) *Comment {
 	return nil
 }
 
+// tokenize splits one physical line into parser tokens. Strings keep both
+// their raw text and their unquoted value; sigils are single tokens except
+// the "@@" total-price operator. A semicolon starts a comment and ends the
+// scan. Each token shape is delegated to a scan* helper so the loop itself
+// only decides which scanner applies.
 func tokenize(f *source.SourceFile, ln line) []token {
 	text := ln.text
 	var out []token
@@ -197,77 +203,113 @@ func tokenize(f *source.SourceFile, ln line) []token {
 		if r == ';' {
 			break
 		}
-		start := i
 		if r == '"' {
-			i++
-			escaped, closed := false, false
-			for i < len(text) {
-				if escaped {
-					escaped = false
-					i++
-					continue
-				}
-				if text[i] == '\\' {
-					escaped = true
-					i++
-					continue
-				}
-				if text[i] == '"' {
-					i++
-					closed = true
-					break
-				}
-				i++
-			}
-			raw := text[start:i]
-			value := raw
-			if len(raw) >= 2 && closed {
-				if unquoted, err := strconv.Unquote(raw); err == nil {
-					value = unquoted
-				} else {
-					value = raw[1 : len(raw)-1]
-				}
-			}
-			out = append(out, token{kind: tokString, text: raw, value: value, span: f.Span(ln.start+start, ln.start+i)})
-			if !closed {
-				out = append(out, token{kind: tokPunct, text: "<unterminated>", span: f.Span(ln.start+i, ln.start+len(text))})
-			}
+			var tokens []token
+			tokens, i = scanStringToken(f, ln, text, i)
+			out = append(out, tokens...)
 			continue
 		}
-		if strings.ContainsRune("{}[](),@~=*", r) && !(r == ',' && i > 0 && i+1 < len(text) && isASCIIDigit(text[i-1]) && isASCIIDigit(text[i+1])) {
-			// @@ is one operator; the cost delimiters are represented by two
-			// adjacent braces and interpreted by the posting parser.
-			if text[i] == '@' && i+1 < len(text) && text[i+1] == '@' {
-				i += 2
-				out = append(out, token{kind: tokPunct, text: "@@", span: f.Span(ln.start+start, ln.start+i)})
-				continue
-			}
-			i++
-			out = append(out, token{kind: tokPunct, text: text[start:i], span: f.Span(ln.start+start, ln.start+i)})
+		if isSigilRune(r, text, i) {
+			i = scanSigilToken(f, ln, text, i, &out)
 			continue
 		}
-		for i < len(text) {
-			r, size = utf8.DecodeRuneInString(text[i:])
-			if r == ',' && i > start && i+1 < len(text) && isASCIIDigit(text[i-1]) && isASCIIDigit(text[i+1]) {
-				i++
-				continue
-			}
-			if unicode.IsSpace(r) || strings.ContainsRune("{}[](),@~=*;\"", r) {
-				break
-			}
-			i += size
-		}
-		if i == start {
-			// Invalid UTF-8 is diagnosed by Parse, but tokenization must still
-			// make progress over every byte so malformed input cannot hang.
-			if size <= 0 {
-				size = 1
-			}
-			i += size
-		}
-		out = append(out, token{kind: tokWord, text: text[start:i], value: text[start:i], span: f.Span(ln.start+start, ln.start+i)})
+		i = scanWordToken(f, ln, text, i, &out)
 	}
 	return out
+}
+
+// isSigilRune reports whether the rune at text[i] starts a punctuation token.
+// A comma between two ASCII digits is a thousands separator and therefore
+// belongs to the surrounding word, not a sigil.
+func isSigilRune(r rune, text string, i int) bool {
+	if !strings.ContainsRune("{}[](),@~=*", r) {
+		return false
+	}
+	return !(r == ',' && i > 0 && i+1 < len(text) && isASCIIDigit(text[i-1]) && isASCIIDigit(text[i+1]))
+}
+
+// scanSigilToken appends the sigil token starting at text[i] and returns the
+// index after it. "@@" is one operator; the cost delimiters are represented
+// by two adjacent braces and interpreted by the posting parser.
+func scanSigilToken(f *source.SourceFile, ln line, text string, i int, out *[]token) int {
+	start := i
+	if text[i] == '@' && i+1 < len(text) && text[i+1] == '@' {
+		i += 2
+	} else {
+		i++
+	}
+	*out = append(*out, token{kind: tokPunct, text: text[start:i], span: f.Span(ln.start+start, ln.start+i)})
+	return i
+}
+
+// scanStringToken consumes the double-quoted string starting at text[i] and
+// returns its token plus, when the string is unterminated, a synthetic
+// "<unterminated>" marker token that parse() turns into E-PARSE-STRING.
+func scanStringToken(f *source.SourceFile, ln line, text string, i int) ([]token, int) {
+	start := i
+	i++
+	escaped, closed := false, false
+	for i < len(text) {
+		if escaped {
+			escaped = false
+			i++
+			continue
+		}
+		if text[i] == '\\' {
+			escaped = true
+			i++
+			continue
+		}
+		if text[i] == '"' {
+			i++
+			closed = true
+			break
+		}
+		i++
+	}
+	raw := text[start:i]
+	value := raw
+	if len(raw) >= 2 && closed {
+		if unquoted, err := strconv.Unquote(raw); err == nil {
+			value = unquoted
+		} else {
+			value = raw[1 : len(raw)-1]
+		}
+	}
+	tokens := []token{{kind: tokString, text: raw, value: value, span: f.Span(ln.start+start, ln.start+i)}}
+	if !closed {
+		tokens = append(tokens, token{kind: tokPunct, text: "<unterminated>", span: f.Span(ln.start+i, ln.start+len(text))})
+	}
+	return tokens, i
+}
+
+// scanWordToken appends the word token starting at text[i]: the maximal run
+// that is neither whitespace, a sigil, nor the comment/string openers; a
+// comma between digits is consumed as part of the word. Invalid UTF-8 is
+// diagnosed by Parse, but tokenization must still make progress over every
+// byte so malformed input cannot hang the loop.
+func scanWordToken(f *source.SourceFile, ln line, text string, i int, out *[]token) int {
+	start := i
+	for i < len(text) {
+		r, size := utf8.DecodeRuneInString(text[i:])
+		if r == ',' && i > start && i+1 < len(text) && isASCIIDigit(text[i-1]) && isASCIIDigit(text[i+1]) {
+			i++
+			continue
+		}
+		if unicode.IsSpace(r) || strings.ContainsRune("{}[](),@~=*;\"", r) {
+			break
+		}
+		i += size
+	}
+	if i == start {
+		_, size := utf8.DecodeRuneInString(text[i:])
+		if size <= 0 {
+			size = 1
+		}
+		i += size
+	}
+	*out = append(*out, token{kind: tokWord, text: text[start:i], value: text[start:i], span: f.Span(ln.start+start, ln.start+i)})
+	return i
 }
 
 func isASCIIDigit(value byte) bool { return value >= '0' && value <= '9' }
@@ -365,6 +407,9 @@ func isDateDirective(k string) bool {
 	}
 }
 
+// parseKeyword parses the keywords that may start a line without a date:
+// option, plugin, include, pushtag, and poptag. Each keyword's token-shape
+// validation lives in its own parser.
 func (p *parser) parseKeyword(ts []token) {
 	if len(ts) == 0 {
 		return
@@ -372,167 +417,225 @@ func (p *parser) parseKeyword(ts []token) {
 	base := p.base(ts)
 	switch strings.ToLower(ts[0].text) {
 	case "option":
-		if len(ts) != 3 || ts[1].kind != tokString || ts[2].kind != tokString {
-			p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
-			return
-		}
-		p.appendDirective(Option{DirectiveBase: base, Key: ts[1].value, Value: ts[2].value})
+		p.parseOptionKeyword(base, ts)
 	case "plugin":
-		if (len(ts) != 2 && len(ts) != 3) || ts[1].kind != tokString || (len(ts) == 3 && ts[2].kind != tokString) {
-			p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
-			return
-		}
-		d := Plugin{DirectiveBase: base, Module: ts[1].value}
-		if len(ts) > 2 && ts[2].kind == tokString {
-			d.Config = ts[2].value
-		}
-		p.appendDirective(d)
-		p.add("W-PLUGIN-MIGRATION", diagnostic.Warning, ts[0].span)
+		p.parsePluginKeyword(base, ts)
 	case "include":
-		if len(ts) != 2 || ts[1].kind != tokString {
-			p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
-			return
-		}
-		p.appendDirective(Include{DirectiveBase: base, Path: ts[1].value})
+		p.parseIncludeKeyword(base, ts)
 	case "pushtag", "poptag":
-		if len(ts) != 2 || !strings.HasPrefix(ts[1].text, "#") {
-			p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
-			return
-		}
-		p.appendDirective(TagDirective{DirectiveBase: base, Tag: strings.TrimPrefix(ts[1].text, "#")})
+		p.parseTagKeyword(base, ts)
 	}
 }
 
+// parseOptionKeyword reads `option "key" "value"`.
+func (p *parser) parseOptionKeyword(base DirectiveBase, ts []token) {
+	if len(ts) != 3 || ts[1].kind != tokString || ts[2].kind != tokString {
+		p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
+		return
+	}
+	p.appendDirective(Option{DirectiveBase: base, Key: ts[1].value, Value: ts[2].value})
+}
+
+// parsePluginKeyword reads `plugin "module" ["config"]` and warns that v3
+// migrates plugins into the core engine.
+func (p *parser) parsePluginKeyword(base DirectiveBase, ts []token) {
+	if (len(ts) != 2 && len(ts) != 3) || ts[1].kind != tokString || (len(ts) == 3 && ts[2].kind != tokString) {
+		p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
+		return
+	}
+	d := Plugin{DirectiveBase: base, Module: ts[1].value}
+	if len(ts) > 2 && ts[2].kind == tokString {
+		d.Config = ts[2].value
+	}
+	p.appendDirective(d)
+	p.add("W-PLUGIN-MIGRATION", diagnostic.Warning, ts[0].span)
+}
+
+// parseIncludeKeyword reads `include "path"`.
+func (p *parser) parseIncludeKeyword(base DirectiveBase, ts []token) {
+	if len(ts) != 2 || ts[1].kind != tokString {
+		p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
+		return
+	}
+	p.appendDirective(Include{DirectiveBase: base, Path: ts[1].value})
+}
+
+// parseTagKeyword reads `pushtag #tag` / `poptag #tag`.
+func (p *parser) parseTagKeyword(base DirectiveBase, ts []token) {
+	if len(ts) != 2 || !strings.HasPrefix(ts[1].text, "#") {
+		p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
+		return
+	}
+	p.appendDirective(TagDirective{DirectiveBase: base, Tag: strings.TrimPrefix(ts[1].text, "#")})
+}
+
+// parseDateDirective dispatches a dated directive (open/close/balance/...) to
+// its dedicated parser. Each directive's arity and token-shape rules live
+// with its parser so the dispatcher stays a pure lookup.
 func (p *parser) parseDateDirective(keyword string, date Date, rest []token, dateSpan source.Span) {
 	base := p.base(append([]token{{span: dateSpan}}, rest...))
+	base.At.Start = dateSpan.Start
 	if len(rest) == 0 {
 		p.add("E-PARSE-EXPECTED", diagnostic.Error, dateSpan)
 		return
 	}
-	base.At.Start = dateSpan.Start
-	switch keyword {
-	case "open":
-		d := Open{DirectiveBase: base, Date: date}
-		if len(rest) < 1 {
-			p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
-			return
-		}
-		d.Account = rest[0].text
-		for _, t := range rest[1:] {
-			if t.kind == tokString {
-				d.Booking = t.value
-			} else if t.text != "," {
-				d.Currencies = append(d.Currencies, t.text)
-			}
-		}
-		p.appendDirective(d)
-	case "close":
-		if len(rest) < 1 {
-			p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
-			return
-		}
-		p.appendDirective(Close{DirectiveBase: base, Date: date, Account: rest[0].text})
-	case "commodity":
-		if len(rest) < 1 {
-			p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
-			return
-		}
-		p.appendDirective(Commodity{DirectiveBase: base, Date: date, Currency: rest[0].text})
-	case "balance":
-		d := Balance{DirectiveBase: base, Date: date}
-		if len(rest) < 3 {
-			p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
-			return
-		}
-		d.Account = rest[0].text
-		amount, next, ok := p.amount(rest, 1)
-		if !ok {
-			return
-		}
-		d.Amount = amount
-		if next < len(rest) && rest[next].text == "~" && next+1 < len(rest) {
-			n := p.number(rest[next+1])
-			d.Tolerance = &n
-		}
-		p.appendDirective(d)
-	case "pad":
-		if len(rest) < 2 {
-			p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
-			return
-		}
-		p.appendDirective(Pad{DirectiveBase: base, Date: date, Account: rest[0].text, SourceAccount: rest[1].text})
-	case "event":
-		if len(rest) < 2 || rest[0].kind != tokString || rest[1].kind != tokString {
-			p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
-			return
-		}
-		p.appendDirective(Event{DirectiveBase: base, Date: date, Type: rest[0].value, Value: rest[1].value})
-	case "query":
-		if len(rest) < 2 || rest[0].kind != tokString || rest[1].kind != tokString {
-			p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
-			return
-		}
-		p.appendDirective(Query{DirectiveBase: base, Date: date, Name: rest[0].value, Query: rest[1].value})
-	case "price":
-		if len(rest) < 3 {
-			p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
-			return
-		}
-		amount, _, ok := p.amount(rest, 1)
-		if !ok {
-			return
-		}
-		p.appendDirective(Price{DirectiveBase: base, Date: date, Currency: rest[0].text, Amount: amount})
-	case "document":
-		d := Document{DirectiveBase: base, Date: date}
-		if len(rest) < 2 {
-			p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
-			return
-		}
-		d.Account = rest[0].text
-		for _, t := range rest[1:] {
-			switch t.kind {
-			case tokString:
-				d.Filenames = append(d.Filenames, t.value)
-			default:
-				if strings.HasPrefix(t.text, "#") {
-					d.Tags = append(d.Tags, strings.TrimPrefix(t.text, "#"))
-				} else if strings.HasPrefix(t.text, "^") {
-					d.Links = append(d.Links, strings.TrimPrefix(t.text, "^"))
-				}
-			}
-		}
-		p.appendDirective(d)
-	case "note":
-		if len(rest) < 2 || rest[1].kind != tokString {
-			p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
-			return
-		}
-		p.appendDirective(Note{DirectiveBase: base, Date: date, Account: rest[0].text, Comment: rest[1].value})
-	case "custom":
-		if len(rest) < 2 {
-			p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
-			return
-		}
-		typeName := rest[0].text
-		if rest[0].kind == tokString {
-			typeName = rest[0].value
-		}
-		d := Custom{DirectiveBase: base, Date: date, Type: typeName}
-		for i := 1; i < len(rest); {
-			if rest[i].text == "," {
-				i++
-				continue
-			}
-			v, next := p.value(rest, i)
-			d.Values = append(d.Values, v)
-			if next <= i {
-				next = i + 1
-			}
-			i = next
-		}
-		p.appendDirective(d)
+	parser, ok := dateDirectiveParsers[keyword]
+	if !ok {
+		return
 	}
+	parser(p, base, date, rest)
+}
+
+// dateDirectiveParsers maps directive keywords to their parsers; the keys are
+// exactly the set isDateDirective accepts.
+var dateDirectiveParsers = map[string]func(*parser, DirectiveBase, Date, []token){
+	"open":      (*parser).parseOpenDirective,
+	"close":     (*parser).parseCloseDirective,
+	"commodity": (*parser).parseCommodityDirective,
+	"balance":   (*parser).parseBalanceDirective,
+	"pad":       (*parser).parsePadDirective,
+	"event":     (*parser).parseEventDirective,
+	"query":     (*parser).parseQueryDirective,
+	"price":     (*parser).parsePriceDirective,
+	"document":  (*parser).parseDocumentDirective,
+	"note":      (*parser).parseNoteDirective,
+	"custom":    (*parser).parseCustomDirective,
+}
+
+func (p *parser) parseOpenDirective(base DirectiveBase, date Date, rest []token) {
+	d := Open{DirectiveBase: base, Date: date, Account: rest[0].text}
+	for _, t := range rest[1:] {
+		if t.kind == tokString {
+			d.Booking = t.value
+		} else if t.text != "," {
+			d.Currencies = append(d.Currencies, t.text)
+		}
+	}
+	p.appendDirective(d)
+}
+
+func (p *parser) parseCloseDirective(base DirectiveBase, date Date, rest []token) {
+	p.appendDirective(Close{DirectiveBase: base, Date: date, Account: rest[0].text})
+}
+
+func (p *parser) parseCommodityDirective(base DirectiveBase, date Date, rest []token) {
+	p.appendDirective(Commodity{DirectiveBase: base, Date: date, Currency: rest[0].text})
+}
+
+// parseBalanceDirective reads "account amount [~ tolerance]"; the optional
+// tolerance becomes a pointer so its absence stays distinguishable.
+func (p *parser) parseBalanceDirective(base DirectiveBase, date Date, rest []token) {
+	if len(rest) < 3 {
+		p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
+		return
+	}
+	d := Balance{DirectiveBase: base, Date: date, Account: rest[0].text}
+	amount, next, ok := p.amount(rest, 1)
+	if !ok {
+		return
+	}
+	d.Amount = amount
+	if next < len(rest) && rest[next].text == "~" && next+1 < len(rest) {
+		n := p.number(rest[next+1])
+		d.Tolerance = &n
+	}
+	p.appendDirective(d)
+}
+
+func (p *parser) parsePadDirective(base DirectiveBase, date Date, rest []token) {
+	if len(rest) < 2 {
+		p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
+		return
+	}
+	p.appendDirective(Pad{DirectiveBase: base, Date: date, Account: rest[0].text, SourceAccount: rest[1].text})
+}
+
+// parseEventDirective requires two quoted strings (type and value).
+func (p *parser) parseEventDirective(base DirectiveBase, date Date, rest []token) {
+	if len(rest) < 2 || rest[0].kind != tokString || rest[1].kind != tokString {
+		p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
+		return
+	}
+	p.appendDirective(Event{DirectiveBase: base, Date: date, Type: rest[0].value, Value: rest[1].value})
+}
+
+// parseQueryDirective requires two quoted strings (name and query text).
+func (p *parser) parseQueryDirective(base DirectiveBase, date Date, rest []token) {
+	if len(rest) < 2 || rest[0].kind != tokString || rest[1].kind != tokString {
+		p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
+		return
+	}
+	p.appendDirective(Query{DirectiveBase: base, Date: date, Name: rest[0].value, Query: rest[1].value})
+}
+
+func (p *parser) parsePriceDirective(base DirectiveBase, date Date, rest []token) {
+	if len(rest) < 3 {
+		p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
+		return
+	}
+	amount, _, ok := p.amount(rest, 1)
+	if !ok {
+		return
+	}
+	p.appendDirective(Price{DirectiveBase: base, Date: date, Currency: rest[0].text, Amount: amount})
+}
+
+// parseDocumentDirective collects filenames, tags, and links behind the
+// account in whatever order they appear.
+func (p *parser) parseDocumentDirective(base DirectiveBase, date Date, rest []token) {
+	if len(rest) < 2 {
+		p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
+		return
+	}
+	d := Document{DirectiveBase: base, Date: date, Account: rest[0].text}
+	for _, t := range rest[1:] {
+		switch t.kind {
+		case tokString:
+			d.Filenames = append(d.Filenames, t.value)
+		default:
+			if strings.HasPrefix(t.text, "#") {
+				d.Tags = append(d.Tags, strings.TrimPrefix(t.text, "#"))
+			} else if strings.HasPrefix(t.text, "^") {
+				d.Links = append(d.Links, strings.TrimPrefix(t.text, "^"))
+			}
+		}
+	}
+	p.appendDirective(d)
+}
+
+func (p *parser) parseNoteDirective(base DirectiveBase, date Date, rest []token) {
+	if len(rest) < 2 || rest[1].kind != tokString {
+		p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
+		return
+	}
+	p.appendDirective(Note{DirectiveBase: base, Date: date, Account: rest[0].text, Comment: rest[1].value})
+}
+
+// parseCustomDirective reads typed custom values separated by commas; the
+// type name may be quoted or bare, matching Beancount's grammar.
+func (p *parser) parseCustomDirective(base DirectiveBase, date Date, rest []token) {
+	if len(rest) < 2 {
+		p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
+		return
+	}
+	typeName := rest[0].text
+	if rest[0].kind == tokString {
+		typeName = rest[0].value
+	}
+	d := Custom{DirectiveBase: base, Date: date, Type: typeName}
+	for i := 1; i < len(rest); {
+		if rest[i].text == "," {
+			i++
+			continue
+		}
+		v, next := p.value(rest, i)
+		d.Values = append(d.Values, v)
+		if next <= i {
+			next = i + 1
+		}
+		i = next
+	}
+	p.appendDirective(d)
 }
 
 func (p *parser) parseTransaction(date Date, ts []token) {
@@ -576,6 +679,10 @@ func isFlag(s string) bool {
 	return len([]rune(s)) == 1 && unicode.IsLetter([]rune(s)[0])
 }
 
+// parsePosting parses one posting line: account [flag] [units] followed by
+// cost, price, and assignment modifiers. It returns ok=false only when a
+// modifier is syntactically incomplete; the caller then drops the line (its
+// errors were already reported).
 func (p *parser) parsePosting(ts []token) (Posting, bool) {
 	if len(ts) == 0 {
 		return Posting{}, false
@@ -592,6 +699,13 @@ func (p *parser) parsePosting(ts []token) (Posting, bool) {
 			post.Units, i = &amount, next
 		}
 	}
+	return p.parsePostingTail(post, ts, i)
+}
+
+// parsePostingTail consumes the trailing modifier run: {cost}, @/@@ price,
+// and = / ~ amount assignments. Unknown tokens are reported and skipped so
+// one bad modifier does not cascade.
+func (p *parser) parsePostingTail(post Posting, ts []token, i int) (Posting, bool) {
 	for i < len(ts) {
 		switch ts[i].text {
 		case "{":
@@ -599,25 +713,31 @@ func (p *parser) parsePosting(ts []token) (Posting, bool) {
 			post.Cost, i = &cost, next
 		case "@", "@@":
 			spec := PriceSpec{At: ts[i].span, Total: ts[i].text == "@@"}
-			if amount, next, ok := p.amount(ts, i+1); ok {
-				spec.Amount = amount
-				post.Price, i = &spec, next
-			} else {
+			amount, next, ok := p.amount(ts, i+1)
+			if !ok {
 				return post, false
 			}
+			spec.Amount = amount
+			post.Price, i = &spec, next
 		default:
-			if ts[i].text == "=" || ts[i].text == "~" {
-				i++
-				if _, next, ok := p.amount(ts, i); ok {
-					i = next
-				}
-			} else {
-				p.add("E-PARSE-TOKEN", diagnostic.Error, ts[i].span)
-				i++
-			}
+			i = p.skipPostingAssignment(ts, i)
 		}
 	}
 	return post, true
+}
+
+// skipPostingAssignment consumes an "= amount" or "~ amount" assignment
+// (retained only for source fidelity) or reports an unexpected token.
+func (p *parser) skipPostingAssignment(ts []token, i int) int {
+	if ts[i].text == "=" || ts[i].text == "~" {
+		i++
+		if _, next, ok := p.amount(ts, i); ok {
+			return next
+		}
+		return i
+	}
+	p.add("E-PARSE-TOKEN", diagnostic.Error, ts[i].span)
+	return i + 1
 }
 
 func (p *parser) cost(ts []token, i int) (CostSpec, int) {
@@ -733,31 +853,19 @@ func isMetadataLine(ts []token) bool {
 	return strings.HasSuffix(ts[0].text, ":") || ts[1].text == ":"
 }
 
+// value classifies one token as a typed metadata/custom value: lists (parsed
+// recursively), strings, booleans, dates, tags, links, amounts (number
+// followed by a non-delimiter currency word), numbers, accounts, and finally
+// bare currencies. The order matters: date/tag/link/account shapes are
+// checked before the number fallback so "2026-01-02" is a date, not a
+// subtraction.
 func (p *parser) value(ts []token, i int) (Value, int) {
 	if i >= len(ts) {
 		return Value{Kind: ValueInvalid}, i
 	}
 	t := ts[i]
 	if t.text == "[" {
-		v := Value{Kind: ValueList, At: t.span}
-		i++
-		for i < len(ts) && ts[i].text != "]" {
-			if ts[i].text == "," {
-				i++
-				continue
-			}
-			item, next := p.value(ts, i)
-			v.List = append(v.List, item)
-			if next <= i {
-				next = i + 1
-			}
-			i = next
-		}
-		if i < len(ts) {
-			v.At = p.file.Span(v.At.Start, ts[i].span.End)
-			i++
-		}
-		return v, i
+		return p.listValue(ts, i)
 	}
 	if t.kind == tokString {
 		return Value{Kind: ValueString, Raw: t.text, String: t.value, At: t.span}, i + 1
@@ -775,16 +883,46 @@ func (p *parser) value(ts []token, i int) (Value, int) {
 		return Value{Kind: ValueLink, Raw: t.text, String: strings.TrimPrefix(t.text, "^"), At: t.span}, i + 1
 	}
 	if n := tryNumber(t); n.Raw != "" {
-		if i+1 < len(ts) && !isPunctuation(ts[i+1].text) {
-			a := Amount{Number: n, Currency: ts[i+1].text, At: p.file.Span(t.span.Start, ts[i+1].span.End)}
-			return Value{Kind: ValueAmount, Raw: p.file.Text(a.At), Amount: a, At: a.At}, i + 2
-		}
-		return Value{Kind: ValueNumber, Raw: t.text, Number: n, At: t.span}, i + 1
+		return p.numberValue(ts, i, n)
 	}
 	if isAccount(t.text) {
 		return Value{Kind: ValueAccount, Raw: t.text, String: t.text, At: t.span}, i + 1
 	}
 	return Value{Kind: ValueCurrency, Raw: t.text, String: t.text, At: t.span}, i + 1
+}
+
+// listValue parses a [item, item, ...] list; a missing closing bracket
+// simply ends the list at the line's end rather than failing.
+func (p *parser) listValue(ts []token, i int) (Value, int) {
+	v := Value{Kind: ValueList, At: ts[i].span}
+	i++
+	for i < len(ts) && ts[i].text != "]" {
+		if ts[i].text == "," {
+			i++
+			continue
+		}
+		item, next := p.value(ts, i)
+		v.List = append(v.List, item)
+		if next <= i {
+			next = i + 1
+		}
+		i = next
+	}
+	if i < len(ts) {
+		v.At = p.file.Span(v.At.Start, ts[i].span.End)
+		i++
+	}
+	return v, i
+}
+
+// numberValue classifies a numeric token: followed by a currency word it is
+// an amount, otherwise a bare number.
+func (p *parser) numberValue(ts []token, i int, n Number) (Value, int) {
+	if i+1 < len(ts) && !isPunctuation(ts[i+1].text) {
+		a := Amount{Number: n, Currency: ts[i+1].text, At: p.file.Span(ts[i].span.Start, ts[i+1].span.End)}
+		return Value{Kind: ValueAmount, Raw: p.file.Text(a.At), Amount: a, At: a.At}, i + 2
+	}
+	return Value{Kind: ValueNumber, Raw: ts[i].text, Number: n, At: ts[i].span}, i + 1
 }
 
 func isAccount(s string) bool {
@@ -832,78 +970,33 @@ func (p *parser) appendDirective(d Directive) {
 	p.lastDirective = len(p.out.Directives) - 1
 }
 
+// attachMetadata attaches an orphan metadata line — one that follows a bare
+// directive rather than a transaction or posting — to the most recently
+// parsed directive, extending its span and raw text. Every directive type
+// shares the "Meta []Metadata + embedded DirectiveBase" shape, so the value
+// types are handled uniformly through one reflective write (a copy is made
+// addressable, mutated, and stored back); *Transaction is stored by pointer
+// and mutates in place.
 func (p *parser) attachMetadata(meta Metadata) bool {
 	if p.lastDirective < 0 || p.lastDirective >= len(p.out.Directives) {
 		return false
 	}
 	d := p.out.Directives[p.lastDirective]
-	switch x := d.(type) {
-	case Option:
-		x.Meta = append(x.Meta, meta)
-		extendDirective(&x.DirectiveBase, meta.Span, p.file)
-		p.out.Directives[p.lastDirective] = x
-	case Plugin:
-		x.Meta = append(x.Meta, meta)
-		extendDirective(&x.DirectiveBase, meta.Span, p.file)
-		p.out.Directives[p.lastDirective] = x
-	case Include:
-		x.Meta = append(x.Meta, meta)
-		extendDirective(&x.DirectiveBase, meta.Span, p.file)
-		p.out.Directives[p.lastDirective] = x
-	case TagDirective:
-		x.Meta = append(x.Meta, meta)
-		extendDirective(&x.DirectiveBase, meta.Span, p.file)
-		p.out.Directives[p.lastDirective] = x
-	case Open:
-		x.Meta = append(x.Meta, meta)
-		extendDirective(&x.DirectiveBase, meta.Span, p.file)
-		p.out.Directives[p.lastDirective] = x
-	case Close:
-		x.Meta = append(x.Meta, meta)
-		extendDirective(&x.DirectiveBase, meta.Span, p.file)
-		p.out.Directives[p.lastDirective] = x
-	case Commodity:
-		x.Meta = append(x.Meta, meta)
-		extendDirective(&x.DirectiveBase, meta.Span, p.file)
-		p.out.Directives[p.lastDirective] = x
-	case Balance:
-		x.Meta = append(x.Meta, meta)
-		extendDirective(&x.DirectiveBase, meta.Span, p.file)
-		p.out.Directives[p.lastDirective] = x
-	case Pad:
-		x.Meta = append(x.Meta, meta)
-		extendDirective(&x.DirectiveBase, meta.Span, p.file)
-		p.out.Directives[p.lastDirective] = x
-	case Event:
-		x.Meta = append(x.Meta, meta)
-		extendDirective(&x.DirectiveBase, meta.Span, p.file)
-		p.out.Directives[p.lastDirective] = x
-	case Query:
-		x.Meta = append(x.Meta, meta)
-		extendDirective(&x.DirectiveBase, meta.Span, p.file)
-		p.out.Directives[p.lastDirective] = x
-	case Price:
-		x.Meta = append(x.Meta, meta)
-		extendDirective(&x.DirectiveBase, meta.Span, p.file)
-		p.out.Directives[p.lastDirective] = x
-	case Document:
-		x.Meta = append(x.Meta, meta)
-		extendDirective(&x.DirectiveBase, meta.Span, p.file)
-		p.out.Directives[p.lastDirective] = x
-	case Note:
-		x.Meta = append(x.Meta, meta)
-		extendDirective(&x.DirectiveBase, meta.Span, p.file)
-		p.out.Directives[p.lastDirective] = x
-	case Custom:
-		x.Meta = append(x.Meta, meta)
-		extendDirective(&x.DirectiveBase, meta.Span, p.file)
-		p.out.Directives[p.lastDirective] = x
-	case *Transaction:
-		x.Meta = append(x.Meta, meta)
-		extendDirective(&x.DirectiveBase, meta.Span, p.file)
-	default:
+	if tx, ok := d.(*Transaction); ok {
+		tx.Meta = append(tx.Meta, meta)
+		extendDirective(&tx.DirectiveBase, meta.Span, p.file)
+		return true
+	}
+	value := reflect.New(reflect.TypeOf(d)).Elem()
+	value.Set(reflect.ValueOf(d))
+	metaField := value.FieldByName("Meta")
+	baseField := value.FieldByName("DirectiveBase")
+	if !metaField.IsValid() || metaField.Kind() != reflect.Slice || !baseField.IsValid() {
 		return false
 	}
+	metaField.Set(reflect.Append(metaField, reflect.ValueOf(meta)))
+	extendDirective(baseField.Addr().Interface().(*DirectiveBase), meta.Span, p.file)
+	p.out.Directives[p.lastDirective] = value.Interface().(Directive)
 	return true
 }
 

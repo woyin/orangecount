@@ -78,15 +78,47 @@ func serializeNewEntry(entry NewEntry) (string, error) {
 	}
 }
 
+// serializeNewTransaction renders a transaction as Beancount source: the
+// flag/payee/narration/tags/links head, then one indented posting per line.
+// Every field is validated against the same shapes the parser accepts so a
+// serialized entry round-trips.
 func serializeNewTransaction(entry NewEntry) (string, error) {
-	flag := entry.Flag
+	flag, err := transactionFlag(entry.Flag)
+	if err != nil {
+		return "", err
+	}
+	head, err := transactionHead(entry, flag)
+	if err != nil {
+		return "", err
+	}
+	lines := []string{head}
+	for index, posting := range entry.Postings {
+		line, err := serializeNewPosting(posting, index)
+		if err != nil {
+			return "", err
+		}
+		lines = append(lines, line)
+	}
+	if len(lines) < 2 {
+		return "", fmt.Errorf("transaction needs at least one posting")
+	}
+	return strings.Join(lines, "\n"), nil
+}
+
+// transactionFlag normalizes the flag: empty and "txn" mean the default "*".
+func transactionFlag(flag string) (string, error) {
 	switch flag {
 	case "", "txn":
-		flag = "*"
+		return "*", nil
 	case "*", "!":
+		return flag, nil
 	default:
 		return "", fmt.Errorf("invalid flag %q", flag)
 	}
+}
+
+// transactionHead renders "DATE flag ["payee"] "narration" [#tag] [^link]".
+func transactionHead(entry NewEntry, flag string) (string, error) {
 	head := strings.Builder{}
 	head.WriteString(entry.Date)
 	head.WriteString(" ")
@@ -115,27 +147,27 @@ func serializeNewTransaction(entry NewEntry) (string, error) {
 		}
 		head.WriteString(" ^" + link)
 	}
-	lines := []string{head.String()}
-	for index, posting := range entry.Postings {
-		if !addEntryAccount.MatchString(posting.Account) {
-			return "", fmt.Errorf("posting %d: invalid account %q", index+1, posting.Account)
-		}
-		line := "  " + posting.Account
-		if strings.TrimSpace(posting.Amount) != "" {
-			if !addEntryAmount.MatchString(posting.Amount) {
-				return "", fmt.Errorf("posting %d: invalid amount %q", index+1, posting.Amount)
-			}
-			if !addEntryCurrency.MatchString(posting.Currency) {
-				return "", fmt.Errorf("posting %d: invalid currency %q", index+1, posting.Currency)
-			}
-			line += " " + posting.Amount + " " + posting.Currency
-		}
-		lines = append(lines, line)
+	return head.String(), nil
+}
+
+// serializeNewPosting renders one indented posting line; an empty amount
+// leaves the posting for interpolation, otherwise amount and currency must
+// both validate.
+func serializeNewPosting(posting NewPosting, index int) (string, error) {
+	if !addEntryAccount.MatchString(posting.Account) {
+		return "", fmt.Errorf("posting %d: invalid account %q", index+1, posting.Account)
 	}
-	if len(lines) < 2 {
-		return "", fmt.Errorf("transaction needs at least one posting")
+	line := "  " + posting.Account
+	if strings.TrimSpace(posting.Amount) == "" {
+		return line, nil
 	}
-	return strings.Join(lines, "\n"), nil
+	if !addEntryAmount.MatchString(posting.Amount) {
+		return "", fmt.Errorf("posting %d: invalid amount %q", index+1, posting.Amount)
+	}
+	if !addEntryCurrency.MatchString(posting.Currency) {
+		return "", fmt.Errorf("posting %d: invalid currency %q", index+1, posting.Currency)
+	}
+	return line + " " + posting.Amount + " " + posting.Currency, nil
 }
 
 func serializeNewBalance(entry NewEntry) (string, error) {

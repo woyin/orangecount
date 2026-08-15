@@ -37,8 +37,8 @@ type LineResult struct {
 	Line      int    // 1-based line number in the input text
 	Source    string // the original shorthand text
 	Entry     *favaadapter.NewEntry
-	Preview   string                  // canonical Beancount block, when compiled
-	Duplicate bool                    // equivalent transaction exists in the ledger
+	Preview   string // canonical Beancount block, when compiled
+	Duplicate bool   // equivalent transaction exists in the ledger
 	Errors    []LineError
 }
 
@@ -292,10 +292,45 @@ func parseTemplateRest(rest []token) (amount, currency, payeeAlias, narration st
 }
 
 // compileExplicitForm handles "28 CNY @微信 -> @餐饮 : 工作午餐 #tag".
+// explicitForm holds the parsed pieces of the explicit shorthand form
+// "AMOUNT [CURRENCY] @source -> @destination [: narration] [#tag] [^link]".
+type explicitForm struct {
+	amount, currency, sourceAlias, destAlias, narration string
+	tags, links                                         []string
+}
+
+// compileExplicitForm handles the explicit delimited form. Parsing splits
+// into the left side (before ->), the right side (after), and endpoint
+// resolution, so each stage reports its own error codes.
 func compileExplicitForm(line string, lineNo int, tokens []token, txnDate ledger.Date, flag, operatingCurrency string, profile Profile) LineResult {
 	result := LineResult{Line: lineNo, Source: line}
-	var amount, currency, sourceAlias, destAlias, narration string
-	var tags, links []string
+	form, err := parseExplicitForm(tokens)
+	if err != nil {
+		result.Errors = append(result.Errors, *err)
+		return result
+	}
+	if currencyErr := validateExplicitCurrency(&form, operatingCurrency); currencyErr != nil {
+		result.Errors = append(result.Errors, *currencyErr)
+		return result
+	}
+	sourceAccount, sourceErr := resolveEndpoint(form.sourceAlias, profile, "E-QUICK-SOURCE", "source")
+	if sourceErr != nil {
+		result.Errors = append(result.Errors, *sourceErr)
+		return result
+	}
+	destAccount, destErr := resolveEndpoint(form.destAlias, profile, "E-QUICK-DEST", "destination")
+	if destErr != nil {
+		result.Errors = append(result.Errors, *destErr)
+		return result
+	}
+	result.Entry = buildEntry(txnDate, flag, "", form.narration, sourceAccount, destAccount, form.amount, form.currency, form.tags, form.links)
+	return result
+}
+
+// parseExplicitForm splits the token stream around the -> arrow and parses
+// both sides.
+func parseExplicitForm(tokens []token) (explicitForm, *LineError) {
+	var form explicitForm
 	arrowIdx := -1
 	for i, t := range tokens {
 		if t.kind == tokArrow {
@@ -304,100 +339,100 @@ func compileExplicitForm(line string, lineNo int, tokens []token, txnDate ledger
 		}
 	}
 	if arrowIdx < 0 {
-		result.Errors = append(result.Errors, LineError{Code: "E-QUICK-ARROW", Message: "explicit form requires -> between source and destination"})
-		return result
+		return form, &LineError{Code: "E-QUICK-ARROW", Message: "explicit form requires -> between source and destination"}
 	}
-	// Left side: amount [currency] [@sourceAlias]
-	left := tokens[:arrowIdx]
-	right := tokens[arrowIdx+1:]
+	if err := parseExplicitLeft(tokens[:arrowIdx], &form); err != nil {
+		return form, err
+	}
+	if err := parseExplicitRight(tokens[arrowIdx+1:], &form); err != nil {
+		return form, err
+	}
+	if form.amount == "" {
+		return form, &LineError{Code: "E-QUICK-AMOUNT", Message: "explicit form requires an amount"}
+	}
+	if !compileAmountRegex.MatchString(form.amount) {
+		return form, &LineError{Code: "E-QUICK-AMOUNT", Message: "amount must be a positive decimal number"}
+	}
+	if form.sourceAlias == "" {
+		return form, &LineError{Code: "E-QUICK-SOURCE", Message: "explicit form requires a source account (@alias)"}
+	}
+	if form.destAlias == "" {
+		return form, &LineError{Code: "E-QUICK-DEST", Message: "explicit form requires a destination account (@alias)"}
+	}
+	return form, nil
+}
+
+// parseExplicitLeft reads "AMOUNT [CURRENCY] [@sourceAlias]".
+func parseExplicitLeft(left []token, form *explicitForm) *LineError {
 	for _, t := range left {
 		switch t.kind {
 		case tokWord:
-			if amount == "" {
-				amount = t.text
-			} else if currency == "" {
-				currency = t.text
+			if form.amount == "" {
+				form.amount = t.text
+			} else if form.currency == "" {
+				form.currency = t.text
 			} else {
-				result.Errors = append(result.Errors, LineError{Code: "E-QUICK-LEFT-TOKENS", Message: "too many tokens before ->"})
-				return result
+				return &LineError{Code: "E-QUICK-LEFT-TOKENS", Message: "too many tokens before ->"}
 			}
 		case tokAt:
-			if sourceAlias != "" {
-				result.Errors = append(result.Errors, LineError{Code: "E-QUICK-SOURCE", Message: "only one source account allowed"})
-				return result
+			if form.sourceAlias != "" {
+				return &LineError{Code: "E-QUICK-SOURCE", Message: "only one source account allowed"}
 			}
-			sourceAlias = t.text[1:]
+			form.sourceAlias = t.text[1:]
 		default:
-			result.Errors = append(result.Errors, LineError{Code: "E-QUICK-LEFT-TOKENS", Message: "unexpected token before ->"})
-			return result
+			return &LineError{Code: "E-QUICK-LEFT-TOKENS", Message: "unexpected token before ->"}
 		}
 	}
-	if amount == "" {
-		result.Errors = append(result.Errors, LineError{Code: "E-QUICK-AMOUNT", Message: "explicit form requires an amount"})
-		return result
-	}
-	if !compileAmountRegex.MatchString(amount) {
-		result.Errors = append(result.Errors, LineError{Code: "E-QUICK-AMOUNT", Message: "amount must be a positive decimal number"})
-		return result
-	}
-	if currency == "" {
-		currency = operatingCurrency
-	}
-	if currency == "" {
-		result.Errors = append(result.Errors, LineError{Code: "E-QUICK-CURRENCY", Message: "no currency supplied and none inferable"})
-		return result
-	}
-	if !compileCurrencyRegex.MatchString(currency) {
-		result.Errors = append(result.Errors, LineError{Code: "E-QUICK-CURRENCY", Message: "invalid currency"})
-		return result
-	}
+	return nil
+}
+
+// parseExplicitRight reads "[@destinationAlias] [: narration] [#tag] [^link]".
+func parseExplicitRight(right []token, form *explicitForm) *LineError {
 	for _, t := range right {
 		switch t.kind {
 		case tokAt:
-			if destAlias != "" {
-				result.Errors = append(result.Errors, LineError{Code: "E-QUICK-DEST", Message: "only one destination account allowed"})
-				return result
+			if form.destAlias != "" {
+				return &LineError{Code: "E-QUICK-DEST", Message: "only one destination account allowed"}
 			}
-			destAlias = t.text[1:]
+			form.destAlias = t.text[1:]
 		case tokColon:
-			narration = strings.TrimSpace(t.text[1:])
+			form.narration = strings.TrimSpace(t.text[1:])
 		case tokHash:
-			tags = append(tags, t.text[1:])
+			form.tags = append(form.tags, t.text[1:])
 		case tokLink:
-			links = append(links, t.text[1:])
+			form.links = append(form.links, t.text[1:])
 		default:
-			result.Errors = append(result.Errors, LineError{Code: "E-QUICK-RIGHT-TOKENS", Message: "unexpected token after ->"})
-			return result
+			return &LineError{Code: "E-QUICK-RIGHT-TOKENS", Message: "unexpected token after ->"}
 		}
 	}
-	if sourceAlias == "" {
-		result.Errors = append(result.Errors, LineError{Code: "E-QUICK-SOURCE", Message: "explicit form requires a source account (@alias)"})
-		return result
+	return nil
+}
+
+// validateExplicitCurrency fills the currency default chain (explicit, then
+// operating currency) and validates the result.
+func validateExplicitCurrency(form *explicitForm, operatingCurrency string) *LineError {
+	if form.currency == "" {
+		form.currency = operatingCurrency
 	}
-	if destAlias == "" {
-		result.Errors = append(result.Errors, LineError{Code: "E-QUICK-DEST", Message: "explicit form requires a destination account (@alias)"})
-		return result
+	if form.currency == "" {
+		return &LineError{Code: "E-QUICK-CURRENCY", Message: "no currency supplied and none inferable"}
 	}
-	sourceAccount := resolveAccount(sourceAlias, profile)
-	if sourceAccount == "" {
-		if isValidAccount(sourceAlias) {
-			sourceAccount = sourceAlias
-		} else {
-			result.Errors = append(result.Errors, LineError{Code: "E-QUICK-SOURCE", Message: fmt.Sprintf("unknown source account alias %q", sourceAlias)})
-			return result
-		}
+	if !compileCurrencyRegex.MatchString(form.currency) {
+		return &LineError{Code: "E-QUICK-CURRENCY", Message: "invalid currency"}
 	}
-	destAccount := resolveAccount(destAlias, profile)
-	if destAccount == "" {
-		if isValidAccount(destAlias) {
-			destAccount = destAlias
-		} else {
-			result.Errors = append(result.Errors, LineError{Code: "E-QUICK-DEST", Message: fmt.Sprintf("unknown destination account alias %q", destAlias)})
-			return result
-		}
+	return nil
+}
+
+// resolveEndpoint resolves an @alias through the profile; a full account
+// name is accepted directly so power users can target unregistered accounts.
+func resolveEndpoint(alias string, profile Profile, code, role string) (string, *LineError) {
+	if account := resolveAccount(alias, profile); account != "" {
+		return account, nil
 	}
-	result.Entry = buildEntry(txnDate, flag, "", narration, sourceAccount, destAccount, amount, currency, tags, links)
-	return result
+	if isValidAccount(alias) {
+		return alias, nil
+	}
+	return "", &LineError{Code: code, Message: fmt.Sprintf("unknown %s account alias %q", role, alias)}
 }
 
 func buildEntry(txnDate ledger.Date, flag, payee, narration, source, dest, amount, currency string, tags, links []string) *favaadapter.NewEntry {
@@ -482,71 +517,82 @@ type token struct {
 	text string
 }
 
+// tokenize splits one shorthand line into sigil-prefixed and word tokens.
+// The sigil cases (@ # ^) share the "sigil plus non-space run" shape and
+// delegate to tokenizeSigil; the colon sigil has its own rule because the
+// narration runs until the next tag/link sigil rather than to the next space.
 func tokenize(line string) []token {
 	var tokens []token
-	i := 0
 	runes := []rune(line)
-	for i < len(runes) {
-		// Skip whitespace.
+	for i := 0; i < len(runes); {
 		if runes[i] == ' ' || runes[i] == '\t' {
 			i++
 			continue
 		}
-		// Single-char sigils.
 		switch runes[i] {
-		case '@':
-			start := i
-			i++
-			for i < len(runes) && runes[i] != ' ' && runes[i] != '\t' {
-				i++
-			}
-			tokens = append(tokens, token{kind: tokAt, text: string(runes[start:i])})
-			continue
-		case '#':
-			start := i
-			i++
-			for i < len(runes) && runes[i] != ' ' && runes[i] != '\t' {
-				i++
-			}
-			tokens = append(tokens, token{kind: tokHash, text: string(runes[start:i])})
-			continue
-		case '^':
-			start := i
-			i++
-			for i < len(runes) && runes[i] != ' ' && runes[i] != '\t' {
-				i++
-			}
-			tokens = append(tokens, token{kind: tokLink, text: string(runes[start:i])})
-			continue
+		case '@', '#', '^':
+			var t token
+			t, i = tokenizeSigil(runes, i, sigilKind(runes[i]))
+			tokens = append(tokens, t)
 		case ':':
-			// Colon starts the narration; it runs until the next tag or
-			// link sigil (so inline "#tag" after the narration still
-			// parses as a tag rather than becoming narration text).
-			tail := runes[i+1:]
-			cutoff := len(tail)
-			for j, r := range tail {
-				if r == '#' || r == '^' {
-					cutoff = j
-					break
-				}
-			}
-			narration := strings.TrimSpace(string(tail[:cutoff]))
-			tokens = append(tokens, token{kind: tokColon, text: ":" + narration})
-			i = i + 1 + cutoff
-			continue
+			i = tokenizeNarration(runes, i, &tokens)
+		default:
+			i = tokenizeWord(runes, i, &tokens)
 		}
-		// Arrow.
-		if i+1 < len(runes) && runes[i] == '-' && runes[i+1] == '>' {
-			tokens = append(tokens, token{kind: tokArrow, text: "->"})
-			i += 2
-			continue
-		}
-		// Generic word.
-		start := i
-		for i < len(runes) && runes[i] != ' ' && runes[i] != '\t' {
-			i++
-		}
-		tokens = append(tokens, token{kind: tokWord, text: string(runes[start:i])})
 	}
 	return tokens
+}
+
+// sigilKind maps a sigil rune to its token kind.
+func sigilKind(r rune) tokenKind {
+	switch r {
+	case '@':
+		return tokAt
+	case '#':
+		return tokHash
+	default: // '^'
+		return tokLink
+	}
+}
+
+// tokenizeSigil consumes a sigil character followed by its non-whitespace
+// run (e.g. "@微信" or "#food").
+func tokenizeSigil(runes []rune, i int, kind tokenKind) (token, int) {
+	start := i
+	i++
+	for i < len(runes) && runes[i] != ' ' && runes[i] != '\t' {
+		i++
+	}
+	return token{kind: kind, text: string(runes[start:i])}, i
+}
+
+// tokenizeNarration consumes ": narration..." up to the next # or ^ sigil
+// (so inline "#tag" after the narration still parses as a tag rather than
+// becoming narration text).
+func tokenizeNarration(runes []rune, i int, tokens *[]token) int {
+	tail := runes[i+1:]
+	cutoff := len(tail)
+	for j, r := range tail {
+		if r == '#' || r == '^' {
+			cutoff = j
+			break
+		}
+	}
+	narration := strings.TrimSpace(string(tail[:cutoff]))
+	*tokens = append(*tokens, token{kind: tokColon, text: ":" + narration})
+	return i + 1 + cutoff
+}
+
+// tokenizeWord consumes the -> arrow or a plain non-whitespace word.
+func tokenizeWord(runes []rune, i int, tokens *[]token) int {
+	if i+1 < len(runes) && runes[i] == '-' && runes[i+1] == '>' {
+		*tokens = append(*tokens, token{kind: tokArrow, text: "->"})
+		return i + 2
+	}
+	start := i
+	for i < len(runes) && runes[i] != ' ' && runes[i] != '\t' {
+		i++
+	}
+	*tokens = append(*tokens, token{kind: tokWord, text: string(runes[start:i])})
+	return i
 }

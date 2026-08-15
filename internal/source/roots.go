@@ -17,6 +17,8 @@ import (
 // lexical traversal attempts.
 type DocumentRoots struct{ roots []string }
 
+// NewDocumentRoots resolves each candidate path to a real directory,
+// rejecting symlinks that escape and non-directories.
 func NewDocumentRoots(paths []string) (DocumentRoots, error) {
 	roots := make([]string, 0, len(paths))
 	for _, path := range paths {
@@ -43,8 +45,10 @@ func NewDocumentRoots(paths []string) (DocumentRoots, error) {
 	return DocumentRoots{roots: roots}, nil
 }
 
+// Empty reports whether no document root is configured.
 func (r DocumentRoots) Empty() bool { return len(r.roots) == 0 }
 
+// Paths returns a copy of the configured root directories.
 func (r DocumentRoots) Paths() []string { return append([]string(nil), r.roots...) }
 
 // Resolve resolves a relative attachment name to an existing regular file.

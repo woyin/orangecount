@@ -63,6 +63,8 @@ type JournalCustomValue struct {
 	Value string `json:"value"`
 }
 
+// JournalPosting is one posting in a serialized Fava journal entry, with
+// optional units, booked cost, price, and metadata.
 type JournalPosting struct {
 	Account  string         `json:"account"`
 	Flag     string         `json:"flag,omitempty"`
@@ -72,11 +74,13 @@ type JournalPosting struct {
 	Metadata []JournalMeta  `json:"metadata,omitempty"`
 }
 
+// JournalAmount is a presented number plus its currency.
 type JournalAmount struct {
 	Number   report.PresentedDecimal `json:"number"`
 	Currency string                  `json:"currency"`
 }
 
+// JournalMeta is one flattened metadata key/value pair.
 type JournalMeta struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
@@ -300,6 +304,7 @@ func fmtBool(value bool) string {
 	}
 	return "False"
 }
+
 // so the account journal can show the per-entry change the way Fava does.
 // Only transactions carry postings; every other directive yields no change.
 func journalChange(record ledger.EntryRecord, account string) []JournalAmount {
@@ -395,38 +400,63 @@ func newJournalFilterState(filters report.Filters, journal report.JournalFilters
 	}
 }
 
+// excluded reports whether the projected entry is filtered out: one cheap
+// predicate per active dimension, evaluated field by field.
 func (state journalFilterState) excluded(entry JournalEntry) bool {
+	return !state.matches(entry)
+}
+
+// matches reports whether the entry passes every active filter dimension.
+func (state journalFilterState) matches(entry JournalEntry) bool {
+	return state.matchesDirectives(entry) && state.matchesText(entry)
+}
+
+// matchesDirectives checks the scalar dimensions: time, account, flag, kind,
+// tag, link, payee, and narration.
+// matchesDirectives checks the scalar dimensions: time, account, flag, kind,
+// tag, link, payee, and narration.
+func (state journalFilterState) matchesDirectives(entry JournalEntry) bool {
+	return state.matchesCore(entry) && state.matchesLabels(entry)
+}
+
+// matchesCore checks the time, account, flag, and kind dimensions.
+func (state journalFilterState) matchesCore(entry JournalEntry) bool {
 	if state.hasTime && !state.filters.MatchesDate(entry.Date) {
-		return true
+		return false
 	}
 	if state.account != "" && !entryTouchesAccount(entry, state.account) {
-		return true
+		return false
 	}
 	if state.flag != "" && entry.Flag != state.flag {
-		return true
+		return false
 	}
-	if state.kind != "" && !strings.EqualFold(entry.Type, state.kind) {
-		return true
-	}
+	return state.kind == "" || strings.EqualFold(entry.Type, state.kind)
+}
+
+// matchesLabels checks the tag, link, payee, and narration dimensions.
+func (state journalFilterState) matchesLabels(entry JournalEntry) bool {
 	if state.tag != "" && !containsFold(entry.Tags, state.tag) {
-		return true
+		return false
 	}
 	if state.link != "" && !containsFold(entry.Links, state.link) {
-		return true
+		return false
 	}
 	if state.payee != "" && !strings.Contains(strings.ToLower(entry.Payee), state.payee) {
+		return false
+	}
+	return state.narration == "" || strings.Contains(strings.ToLower(entry.Narration), state.narration)
+}
+
+// matchesText applies the free-text filter: the parsed FQL predicate when
+// available, the legacy substring otherwise.
+func (state journalFilterState) matchesText(entry JournalEntry) bool {
+	if state.text == "" {
 		return true
 	}
-	if state.narration != "" && !strings.Contains(strings.ToLower(entry.Narration), state.narration) {
-		return true
+	if state.textFilter != nil && state.textErr == nil {
+		return state.textFilter.Match(journalFQLTarget(entry))
 	}
-	if state.text != "" {
-		if state.textFilter != nil && state.textErr == nil {
-			return !state.textFilter.Match(journalFQLTarget(entry))
-		}
-		return !entryMatchesText(entry, state.text)
-	}
-	return false
+	return entryMatchesText(entry, state.text)
 }
 
 // journalFQLTarget maps a projected entry onto the shape Fava's filter query

@@ -23,6 +23,7 @@ import (
 	"orangecount/internal/source"
 )
 
+// BuildOptions parameterizes evaluation when building a snapshot.
 type BuildOptions struct {
 	Evaluation ledger.EvalOptions
 }
@@ -41,6 +42,7 @@ type Snapshot struct {
 	diagnostics []diagnostic.Diagnostic
 }
 
+// BuildResult is the outcome of one build attempt.
 type BuildResult struct {
 	Snapshot *Snapshot
 	// Graph is the source graph from the latest attempted build. It is kept
@@ -55,6 +57,7 @@ type BuildResult struct {
 // nil whenever an error diagnostic prevents safe publication.
 func Build(entry string) BuildResult { return BuildWithOptions(entry, BuildOptions{}) }
 
+// BuildWithOptions runs Build with explicit evaluation options.
 func BuildWithOptions(entry string, options BuildOptions) BuildResult {
 	graph, err := source.LoadGraph(entry)
 	if err != nil {
@@ -98,6 +101,7 @@ func snapshotID(graph *source.Graph) string {
 	return hex.EncodeToString(hash.Sum(nil))[:16]
 }
 
+// Graph exposes the parsed include graph; nil when the snapshot is nil.
 func (s *Snapshot) Graph() *source.Graph {
 	if s == nil {
 		return nil
@@ -105,8 +109,10 @@ func (s *Snapshot) Graph() *source.Graph {
 	return s.graph
 }
 
+// Valid reports whether the snapshot carries an evaluation safe to publish.
 func (s *Snapshot) Valid() bool { return s != nil && s.evaluation != nil && s.evaluation.Valid }
 
+// Parsed returns a defensive copy of the per-file parsed ASTs.
 func (s *Snapshot) Parsed() map[source.FileID]*ledger.File {
 	if s == nil {
 		return nil
@@ -114,6 +120,7 @@ func (s *Snapshot) Parsed() map[source.FileID]*ledger.File {
 	return cloneParsed(s.parsed)
 }
 
+// Evaluation returns a deep copy of the evaluated ledger state.
 func (s *Snapshot) Evaluation() ledger.Evaluation {
 	if s == nil || s.evaluation == nil {
 		return ledger.Evaluation{}
@@ -121,6 +128,7 @@ func (s *Snapshot) Evaluation() ledger.Evaluation {
 	return cloneEvaluation(*s.evaluation)
 }
 
+// Diagnostics returns a copy of the build's diagnostics.
 func (s *Snapshot) Diagnostics() []diagnostic.Diagnostic {
 	if s == nil {
 		return nil
@@ -173,6 +181,7 @@ type Store struct {
 	diagnostics []diagnostic.Diagnostic
 }
 
+// NewStore creates a store seeded with an optional initial snapshot.
 func NewStore(initial *Snapshot) *Store {
 	store := &Store{current: initial}
 	if initial != nil {
@@ -181,6 +190,7 @@ func NewStore(initial *Snapshot) *Store {
 	return store
 }
 
+// Current returns the latest published snapshot, or nil.
 func (s *Store) Current() *Snapshot {
 	if s == nil {
 		return nil
@@ -190,6 +200,7 @@ func (s *Store) Current() *Snapshot {
 	return s.current
 }
 
+// Diagnostics returns the diagnostics of the latest attempted reload.
 func (s *Store) Diagnostics() []diagnostic.Diagnostic {
 	if s == nil {
 		return nil
@@ -211,6 +222,8 @@ func (s *Store) LatestGraph() *source.Graph {
 	return s.attempted
 }
 
+// Publish atomically installs a candidate snapshot plus its diagnostics;
+// false means nothing changed (nil receiver or candidate).
 func (s *Store) Publish(candidate *Snapshot, diagnostics []diagnostic.Diagnostic) bool {
 	if s == nil || candidate == nil {
 		return false
@@ -223,6 +236,8 @@ func (s *Store) Publish(candidate *Snapshot, diagnostics []diagnostic.Diagnostic
 	return true
 }
 
+// Reload rebuilds from entry, keeps the attempted graph and diagnostics, and
+// publishes the snapshot only when the build succeeded.
 func (s *Store) Reload(entry string, options BuildOptions) BuildResult {
 	result := BuildWithOptions(entry, options)
 	s.mu.Lock()
@@ -235,6 +250,8 @@ func (s *Store) Reload(entry string, options BuildOptions) BuildResult {
 	return result
 }
 
+// WatchOptions tunes the polling loop: how often to stat the graph and how
+// long to debounce write bursts.
 type WatchOptions struct {
 	PollInterval time.Duration
 	Debounce     time.Duration
@@ -250,6 +267,8 @@ func (o WatchOptions) normalized() WatchOptions {
 	return o
 }
 
+// ReloadResult reports a watched reload's build outcome and whether a valid
+// snapshot was published.
 type ReloadResult struct {
 	BuildResult
 	Published bool

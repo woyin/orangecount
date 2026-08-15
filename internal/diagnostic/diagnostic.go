@@ -16,8 +16,12 @@ import (
 	"orangecount/internal/source"
 )
 
+// Severity classifies a diagnostic: informational notes, warnings that keep
+// the ledger valid, and errors that block publication.
 type Severity string
 
+// SeverityInfo/SeverityWarning/SeverityError are verbose aliases kept for
+// callers that prefer the long spelling.
 const (
 	Info    Severity = "info"
 	Warning Severity = "warning"
@@ -49,6 +53,8 @@ type Diagnostic struct {
 	Sequence   uint64      `json:"-"`
 }
 
+// WithPath returns a copy of the diagnostic with Path set, so callers can
+// attribute a diagnostic to a concrete file without mutating shared state.
 func (d Diagnostic) WithPath(path string) Diagnostic {
 	d.Path = path
 	return d
@@ -66,6 +72,7 @@ type Bag struct {
 // collection rather than its accumulation implementation.
 type Diagnostics = Bag
 
+// Add appends one diagnostic and stamps its stable sequence number.
 func (b *Bag) Add(d Diagnostic) {
 	if b == nil {
 		return
@@ -75,12 +82,14 @@ func (b *Bag) Add(d Diagnostic) {
 	b.items = append(b.items, d)
 }
 
+// Extend appends several diagnostics in order.
 func (b *Bag) Extend(ds ...Diagnostic) {
 	for _, d := range ds {
 		b.Add(d)
 	}
 }
 
+// Len reports how many diagnostics the bag holds (nil bag: zero).
 func (b *Bag) Len() int {
 	if b == nil {
 		return 0
@@ -88,8 +97,11 @@ func (b *Bag) Len() int {
 	return len(b.items)
 }
 
+// Empty reports whether the bag holds no diagnostics at all.
 func (b *Bag) Empty() bool { return b == nil || len(b.items) == 0 }
 
+// HasErrors reports whether at least one error-severity diagnostic blocks
+// publication.
 func (b *Bag) HasErrors() bool {
 	if b == nil {
 		return false
@@ -177,6 +189,8 @@ func New(code string, severity Severity, span source.Span, message ...string) Di
 	return d
 }
 
+// LocalizeCode resolves a message key to localized text, falling back to
+// English, then to the raw code when no catalogue entry exists.
 func LocalizeCode(code, locale string) string {
 	if locale == "" {
 		locale = "en"
@@ -206,6 +220,8 @@ func ReleasedErrorCodes() []string {
 	return codes
 }
 
+// Localize returns a copy of the diagnostic with its message text resolved
+// for locale when it carries a message key.
 func Localize(d Diagnostic, locale string) Diagnostic {
 	if d.MessageKey != "" {
 		d.Message = LocalizeCode(d.MessageKey, locale)
@@ -213,6 +229,7 @@ func Localize(d Diagnostic, locale string) Diagnostic {
 	return d
 }
 
+// MessageKeyOrCode returns the stable identifier for help lookups.
 func (d Diagnostic) MessageKeyOrCode() string {
 	if d.MessageKey != "" {
 		return d.MessageKey

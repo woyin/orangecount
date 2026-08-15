@@ -52,12 +52,15 @@ type ChartSpec struct {
 	Nodes        []ChartNode   `json:"nodes,omitempty"`
 }
 
+// ChartSeries is one labeled series of dated points; Stacked asks the
+// browser to stack it against siblings.
 type ChartSeries struct {
 	Label   string       `json:"label"`
 	Points  []ChartPoint `json:"points"`
 	Stacked bool         `json:"stacked,omitempty"`
 }
 
+// ChartPoint is one exact dated value in a series.
 type ChartPoint struct {
 	Date  string         `json:"date"`
 	Value ledger.Decimal `json:"value"`
@@ -93,17 +96,20 @@ type PresentedChartSpec struct {
 	Nodes        []PresentedChartNode   `json:"nodes,omitempty"`
 }
 
+// PresentedChartSeries is the JSON-safe form of ChartSeries.
 type PresentedChartSeries struct {
 	Label   string                `json:"label"`
 	Points  []PresentedChartPoint `json:"points"`
 	Stacked bool                  `json:"stacked,omitempty"`
 }
 
+// PresentedChartPoint is the JSON-safe form of ChartPoint.
 type PresentedChartPoint struct {
 	Date  string           `json:"date"`
 	Value PresentedDecimal `json:"value"`
 }
 
+// PresentedChartNode is the JSON-safe form of ChartNode.
 type PresentedChartNode struct {
 	Name     string               `json:"name"`
 	Currency string               `json:"currency"`
@@ -113,6 +119,8 @@ type PresentedChartNode struct {
 	Children []PresentedChartNode `json:"children,omitempty"`
 }
 
+// PresentChart converts a chart spec into its JSON-safe display form,
+// applying the same decimal presentation policy as table cells.
 func PresentChart(chart ChartSpec) PresentedChartSpec {
 	presented := PresentedChartSpec{
 		Kind: chart.Kind, Title: chart.Title, Unit: chart.Unit, Currency: chart.Currency,
@@ -495,7 +503,8 @@ func AccountAverageCostChart(e ledger.Evaluation, period, account string) ChartS
 	return chart
 }
 
-func sortedKeys(values map[string][]ChartPoint) []string {
+// sortedKeys returns a map's keys in sorted order.
+func sortedKeys[V any](values map[string]V) []string {
 	keys := make([]string, 0, len(values))
 	for key := range values {
 		keys = append(keys, key)

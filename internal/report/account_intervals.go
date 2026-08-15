@@ -20,6 +20,11 @@ import (
 // mode "balances" reports the running total carried across intervals. Rows
 // cover every interval from the first activity to the last so quiet periods
 // keep their carried balance visible, matching Fava's interval tables.
+// AccountIntervals aggregates the postings of one account's subtree into
+// per-interval totals. Mode "changes" reports each interval's posting sum;
+// mode "balances" reports the running total carried across intervals. Rows
+// cover every interval from the first activity to the last so quiet periods
+// keep their carried balance visible, matching Fava's interval tables.
 func AccountIntervals(e ledger.Evaluation, account, mode, interval string, filters Filters) query.Result {
 	columns := []string{"interval"}
 	account = strings.TrimSpace(account)
@@ -27,6 +32,22 @@ func AccountIntervals(e ledger.Evaluation, account, mode, interval string, filte
 		return query.Result{Columns: columns}
 	}
 	interval = normalizeChartPeriod(interval)
+	totals, currencies := intervalTotals(e, account, interval, filters)
+	if len(totals) == 0 {
+		return query.Result{Columns: columns}
+	}
+	keys := sortedKeys(totals)
+	return query.Result{
+		Columns: append(columns, currencies...),
+		Rows:    intervalTableRows(totals, keys, currencies, mode, interval),
+	}
+}
+
+// intervalTotals sums the account subtree's postings per interval key and
+// collects the currencies seen. The advanced text filter is applied to each
+// transaction posting, matching Fava's filtered ledger view that interval
+// tables aggregate over; unparseable text degrades to a substring match.
+func intervalTotals(e ledger.Evaluation, account, interval string, filters Filters) (map[string]map[string]ledger.Decimal, []string) {
 	textFilter, textErr := ParseFQL(strings.TrimSpace(filters.Text))
 	text := strings.ToLower(strings.TrimSpace(filters.Text))
 	totals := map[string]map[string]ledger.Decimal{}
@@ -35,16 +56,7 @@ func AccountIntervals(e ledger.Evaluation, account, mode, interval string, filte
 		if !filters.MatchesDate(posting.date) {
 			continue
 		}
-		if posting.account != account && !strings.HasPrefix(posting.account, account+":") {
-			continue
-		}
-		// Apply the advanced text filter to each transaction posting, matching
-		// Fava's filtered ledger view that interval tables aggregate over.
-		if textErr == nil {
-			if text != "" && !textFilter.Match(fqlTargetFromChartPosting(posting)) {
-				continue
-			}
-		} else if text != "" && !strings.Contains(strings.ToLower(posting.narration+" "+posting.payee+" "+posting.account), text) {
+		if !withinAccountSubtree(posting.account, account) || !intervalPostingMatchesText(posting, text, textFilter, textErr) {
 			continue
 		}
 		key := chartPeriodKey(posting.date, interval)
@@ -57,20 +69,36 @@ func AccountIntervals(e ledger.Evaluation, account, mode, interval string, filte
 		totals[key][posting.currency] = totals[key][posting.currency].Add(posting.amount)
 		currencySet[posting.currency] = true
 	}
-	if len(totals) == 0 {
-		return query.Result{Columns: columns}
-	}
 	currencies := make([]string, 0, len(currencySet))
 	for currency := range currencySet {
 		currencies = append(currencies, currency)
 	}
 	sort.Strings(currencies)
-	keys := make([]string, 0, len(totals))
-	for key := range totals {
-		keys = append(keys, key)
+	return totals, currencies
+}
+
+// intervalPostingMatchesText applies the text filter to one posting: the
+// parsed FQL predicate when available, the legacy substring otherwise.
+func intervalPostingMatchesText(posting chartPosting, text string, textFilter *FQL, textErr error) bool {
+	if text == "" {
+		return true
 	}
-	sort.Strings(keys)
-	columns = append(columns, currencies...)
+	if textErr == nil {
+		return textFilter.Match(fqlTargetFromChartPosting(posting))
+	}
+	return strings.Contains(strings.ToLower(posting.narration+" "+posting.payee+" "+posting.account), text)
+}
+
+// withinAccountSubtree reports whether an account is the node itself or a
+// descendant of it (colon-separated name hierarchy).
+func withinAccountSubtree(name, account string) bool {
+	return name == account || strings.HasPrefix(name, account+":")
+}
+
+// intervalRows renders one row per interval from the first activity to the
+// last, filling quiet periods with zero changes (balances mode carries the
+// running total across them).
+func intervalTableRows(totals map[string]map[string]ledger.Decimal, keys, currencies []string, mode, interval string) []query.Row {
 	rows := make([]query.Row, 0, len(keys))
 	running := map[string]ledger.Decimal{}
 	for key := keys[0]; ; key = nextPeriodKey(key, interval) {
@@ -91,7 +119,7 @@ func AccountIntervals(e ledger.Evaluation, account, mode, interval string, filte
 			break
 		}
 	}
-	return query.Result{Columns: columns, Rows: rows}
+	return rows
 }
 
 func nextPeriodKey(key, interval string) string {

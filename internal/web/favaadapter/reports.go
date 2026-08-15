@@ -24,6 +24,7 @@ type TreeReport struct {
 	Trees     []TreeNode                  `json:"trees"`
 }
 
+// DateRange is the inclusive display range a filtered report was built for.
 type DateRange struct {
 	Begin string `json:"begin"`
 	End   string `json:"end"`

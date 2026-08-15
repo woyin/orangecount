@@ -13,6 +13,9 @@ import (
 	"strings"
 )
 
+// LocaleEnglish and LocaleChinese select the guidance language. The Phase*
+// constants order repairs: source problems first, then syntax, then
+// semantic rechecks.
 const (
 	LocaleEnglish = "en"
 	LocaleChinese = "zh-CN"
