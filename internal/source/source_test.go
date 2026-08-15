@@ -6,6 +6,7 @@
 package source
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -43,6 +44,32 @@ func TestLoadGraphIncludesAndCycle(t *testing.T) {
 	}
 	if len(g.Edges[1]) != 1 || len(g.Edges[2]) != 1 {
 		t.Fatalf("edges=%+v", g.Edges)
+	}
+}
+
+func TestLoadGraphResolvesAbsoluteIncludesVerbatim(t *testing.T) {
+	dir := t.TempDir()
+	inner := filepath.Join(dir, "inner")
+	if err := os.MkdirAll(inner, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	child := filepath.Join(inner, "child.bean")
+	if err := os.WriteFile(child, []byte("2026-01-01 open Assets:Cash CNY\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	// The entry lives outside inner/ and includes the child by absolute path,
+	// as beancount does: absolute includes are used verbatim rather than
+	// joined onto the including file's directory.
+	entry := filepath.Join(dir, "main.bean")
+	if err := os.WriteFile(entry, []byte(fmt.Sprintf("include %q\n", child)), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	g, err := LoadGraph(entry)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(g.Order) != 2 || len(g.Diagnostics) != 0 {
+		t.Fatalf("order=%v diagnostics=%+v", g.Order, g.Diagnostics)
 	}
 }
 
