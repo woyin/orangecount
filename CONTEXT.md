@@ -315,3 +315,7 @@ _Avoid_: partial translation, fallback-only language
 **Average cost booking**:
 OrangeCount's first implementation of Beancount's `Booking.AVERAGE` (an enum Beancount v3 defines but leaves disabled, returning "AVERAGE method is not supported"). It is per-account opt-in via the standard `booking "AVERAGE"` open directive; the default booking (FIFO) is unchanged. Lots are merged lazily at reduction time into a single weighted-average lot whose date is the earliest contributing lot's date; reductions with an explicit cost and cross-cost-currency merges are rejected with diagnostics. It never rewrites the source ledger and produces no intermediate files.
 _Avoid_: eager merge, global booking change, display-only average
+
+**Stat-only change detection**:
+The watch loop's contract for deciding that a ledger changed: stat the entry, every file of the latest attempted include graph, and every path reported by an `E-INCLUDE-READ` diagnostic, and rebuild when any size or modification time differs. File contents are never re-read to detect change (ADR-0044).
+_Avoid_: content-hash patrol, eager re-read, directory notifications

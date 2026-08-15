@@ -185,20 +185,105 @@ func TestStorePublishAndWatchOptionsRespectPublicationInvariants(t *testing.T) {
 	}
 }
 
-func TestGraphSignatureChangesWithContentAndHandlesMissingEntry(t *testing.T) {
+func TestGraphPatrolSignatureTracksStatIdentity(t *testing.T) {
 	dir := t.TempDir()
 	entry := filepath.Join(dir, "main.bean")
-	if err := os.WriteFile(entry, []byte("2000-01-01 open Assets:Cash USD\n"), 0o600); err != nil {
+	included := filepath.Join(dir, "extra.bean")
+	mainLedger := "2000-01-01 open Assets:Cash USD\ninclude \"extra.bean\"\n"
+	if err := os.WriteFile(entry, []byte(mainLedger), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	first := graphSignature(entry)
-	if err := os.WriteFile(entry, []byte("2000-01-01 open Assets:Cash USD\n; changed\n"), 0o600); err != nil {
+	if err := os.WriteFile(included, []byte("2000-01-01 open Equity:Opening USD\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if second := graphSignature(entry); second == first {
-		t.Fatal("content change did not alter graph signature")
+	patrol := newGraphPatrol(entry)
+	first := patrol.signature()
+	if second := patrol.signature(); second != first {
+		t.Fatal("stable ledger produced unstable signature")
 	}
-	if missing := graphSignature(filepath.Join(dir, "missing.bean")); !strings.HasPrefix(missing, "error:") {
-		t.Fatalf("missing graph signature=%q", missing)
+
+	// Content edit on the entry changes the signature.
+	if err := os.WriteFile(entry, []byte(mainLedger+"; changed\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if second := patrol.signature(); second == first {
+		t.Fatal("content change did not alter patrol signature")
+	}
+
+	// Deletion and re-appearance of an included file both change it.
+	if err := os.Remove(included); err != nil {
+		t.Fatal(err)
+	}
+	deleted := newGraphPatrol(entry).signature()
+	if err := os.WriteFile(included, []byte("2000-01-01 open Equity:Opening USD\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	restored := newGraphPatrol(entry).signature()
+	if deleted == restored {
+		t.Fatal("included file deletion/recreation kept identical signature")
+	}
+
+	// A patrol over a missing entry still stats the entry path itself.
+	missing := newGraphPatrol(filepath.Join(dir, "absent.bean"))
+	if !strings.Contains(missing.signature(), ":missing\x00") {
+		t.Fatalf("missing entry signature=%q", missing.signature())
+	}
+}
+
+func TestGraphPatrolWatchesPreviouslyMissingIncludeTargets(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	target := filepath.Join(dir, "late.bean")
+	if err := os.WriteFile(entry, []byte("2000-01-01 open Assets:Cash USD\ninclude \"late.bean\"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	patrol := newGraphPatrol(entry)
+	before := patrol.signature()
+	if err := os.WriteFile(target, []byte("2000-01-01 open Equity:Opening USD\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if after := patrol.signature(); after == before {
+		t.Fatal("appearance of a previously missing include target was not detected")
+	}
+	// After a rebuild the patrol refreshes: the target is now a graph file
+	// instead of a diagnostic path, and the signature is stable again.
+	refreshed := patrolFromGraph(entry, Build(entry).Graph)
+	if refreshed.signature() != refreshed.signature() {
+		t.Fatal("refreshed patrol signature is unstable")
+	}
+}
+
+func TestWatchReloadsWhenMissingIncludeTargetAppears(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	if err := os.WriteFile(entry, []byte("2000-01-01 open Assets:Cash USD\ninclude \"late.bean\"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	first := Build(entry)
+	// FD-0004: a missing include target is an error-severity diagnostic, so
+	// the initial build publishes no snapshot; the store still watches.
+	store := NewStore(first.Snapshot)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	done := make(chan ReloadResult, 1)
+	go func() {
+		_ = store.Watch(ctx, entry, BuildOptions{}, WatchOptions{PollInterval: 10 * time.Millisecond, Debounce: 20 * time.Millisecond}, func(result ReloadResult) {
+			select {
+			case done <- result:
+			default:
+			}
+		})
+	}()
+	time.Sleep(30 * time.Millisecond)
+	if err := os.WriteFile(filepath.Join(dir, "late.bean"), []byte("2000-01-01 open Equity:Opening USD\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	select {
+	case result := <-done:
+		if !result.Published {
+			t.Fatalf("reload did not publish: diagnostics=%+v", result.Diagnostics)
+		}
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("watcher ignored a missing include target appearing")
 	}
 }

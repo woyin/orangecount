@@ -282,7 +282,10 @@ func (s *Store) Watch(ctx context.Context, entry string, options BuildOptions, w
 		return fmt.Errorf("nil snapshot store")
 	}
 	watch = watch.normalized()
-	lastSignature := graphSignature(entry)
+	// Seed the patrol with one full graph load; every later tick stats the
+	// known paths instead of re-reading file contents (ADR-0044).
+	patrol := newGraphPatrol(entry)
+	lastSignature := patrol.signature()
 	ticker := time.NewTicker(watch.PollInterval)
 	defer ticker.Stop()
 	var changedAt time.Time
@@ -291,13 +294,17 @@ func (s *Store) Watch(ctx context.Context, entry string, options BuildOptions, w
 		case <-ctx.Done():
 			return nil
 		case now := <-ticker.C:
-			signature := graphSignature(entry)
+			signature := patrol.signature()
 			if signature != lastSignature {
 				lastSignature = signature
 				changedAt = now
 			}
 			if !changedAt.IsZero() && now.Sub(changedAt) >= watch.Debounce {
 				result := s.Reload(entry, options)
+				// Refresh the patrol from the attempted graph so newly included
+				// files are watched and resolved misses stop being statted.
+				patrol = patrolFromGraph(entry, result.Graph)
+				lastSignature = patrol.signature()
 				published := result.Snapshot != nil
 				if callback != nil {
 					callback(ReloadResult{BuildResult: result, Published: published})
@@ -308,43 +315,56 @@ func (s *Store) Watch(ctx context.Context, entry string, options BuildOptions, w
 	}
 }
 
-func graphSignature(entry string) string {
-	graph, err := source.LoadGraph(entry)
-	if err != nil {
-		return "error:" + err.Error()
-	}
-	type item struct {
-		path string
-		size int64
-		mod  int64
-	}
-	items := make([]item, 0, len(graph.Order))
-	for _, id := range graph.Order {
-		file := graph.File(id)
-		if file == nil {
-			continue
+// graphPatrol is the stat-only change detector for the watch loop
+// (ADR-0044). It never re-reads file contents: a change is a differing size
+// or modification time on any watched path.
+type graphPatrol struct {
+	paths []string // sorted: entry, graph files, and recorded missing targets
+}
+
+// newGraphPatrol seeds the watched paths with one full graph load. A missing
+// entry still yields a patrol that stats the entry itself, so the ledger
+// appearing later is detected.
+func newGraphPatrol(entry string) *graphPatrol {
+	graph, _ := source.LoadGraph(entry)
+	return patrolFromGraph(entry, graph)
+}
+
+// patrolFromGraph derives the watched paths from an attempted graph: the
+// entry, every loaded file, and every path reported by E-INCLUDE-READ so a
+// previously missing include target is picked up when it appears.
+func patrolFromGraph(entry string, graph *source.Graph) *graphPatrol {
+	seen := map[string]bool{entry: true}
+	paths := []string{entry}
+	if graph != nil {
+		for _, id := range graph.Order {
+			if file := graph.File(id); file != nil && !seen[file.Path] {
+				seen[file.Path] = true
+				paths = append(paths, file.Path)
+			}
 		}
-		info, statErr := os.Stat(file.Path)
-		if statErr != nil {
-			items = append(items, item{path: file.Path})
-			continue
+		for _, issue := range graph.Diagnostics {
+			if issue.Code == "E-INCLUDE-READ" && !seen[issue.Path] {
+				seen[issue.Path] = true
+				paths = append(paths, issue.Path)
+			}
 		}
-		items = append(items, item{path: file.Path, size: info.Size(), mod: info.ModTime().UnixNano()})
 	}
-	sort.Slice(items, func(i, j int) bool { return items[i].path < items[j].path })
+	sort.Strings(paths)
+	return &graphPatrol{paths: paths}
+}
+
+// signature renders the stat identity of every watched path. Missing paths
+// are part of the signature, so both deletions and appearances change it.
+func (p *graphPatrol) signature() string {
 	var builder strings.Builder
-	for _, value := range items {
-		fmt.Fprintf(&builder, "%s:%d:%d\x00", value.path, value.size, value.mod)
-	}
-	// Include content hashes so rapid writes with identical size and timestamp
-	// granularity still trigger a reload.
-	for _, id := range graph.Order {
-		file := graph.File(id)
-		if file == nil {
+	for _, path := range p.paths {
+		info, err := os.Stat(path)
+		if err != nil {
+			fmt.Fprintf(&builder, "%s:missing\x00", path)
 			continue
 		}
-		sum := sha256.Sum256(file.Data)
-		fmt.Fprintf(&builder, "%x\x00", sum[:])
+		fmt.Fprintf(&builder, "%s:%d:%d\x00", path, info.Size(), info.ModTime().UnixNano())
 	}
 	return builder.String()
 }
