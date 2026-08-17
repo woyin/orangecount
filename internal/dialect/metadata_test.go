@@ -142,6 +142,11 @@ func TestPlainTxnMetadataUsesBlockForm(t *testing.T) {
 	if !strings.Contains(export, `event: "宝宝重大资金接收：我父母赠予宝宝 99800.00"`) {
 		t.Fatalf("event metadata dropped from export:\n%s", export)
 	}
+	// The two 49900 gift records must stay two records on both sides —
+	// never merged into a single -99800 line.
+	if strings.Count(export, "Income:Passive:父母赠予 -49900 CNY") != 2 {
+		t.Fatalf("gift records merged or lost in export:\n%s", export)
+	}
 	assertBalancesEqual(t, original, exported)
 
 	// Second hop: the merged two-posting v3 must keep the metadata too

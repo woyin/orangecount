@@ -77,13 +77,10 @@ func transactionOf(directive ledger.Directive) (*ledger.Transaction, bool) {
 // parentheses are safe. Only the bare single-line form requires
 // reparse-safe text.
 func eligibleForDialect(txn *ledger.Transaction) bool {
-	if !txn.Date.Valid() {
+	if !txn.Date.Valid() || len(txn.Postings) < 2 {
 		return false
 	}
 	if txn.Flag != "" && txn.Flag != "*" && txn.Flag != "!" {
-		return false
-	}
-	if len(txn.Postings) < 2 {
 		return false
 	}
 	if txn.Narration == "" && txn.Payee == "" {
@@ -93,9 +90,19 @@ func eligibleForDialect(txn *ledger.Transaction) bool {
 	if classifyInvestment(txn.Postings) != nil {
 		return true
 	}
+	return plainBlockEligible(txn)
+}
+
+// plainBlockEligible applies the plain-block filter: balanced single-
+// currency plain legs, one side singleton or exact amount pairing, and the
+// single-line form's reparse-safe text.
+func plainBlockEligible(txn *ledger.Transaction) bool {
 	negative, positive, balanced := plainLegShape(txn.Postings)
-	if !balanced || (negative != 1 && positive != 1) {
+	if !balanced || negative == 0 || positive == 0 {
 		return false
+	}
+	if negative > 1 && positive > 1 {
+		return splitAmountsPairExactly(txn)
 	}
 	if negative+positive == 2 {
 		// The single-line form leaves narration and payee unquoted.
@@ -105,10 +112,23 @@ func eligibleForDialect(txn *ledger.Transaction) bool {
 	return true
 }
 
+// splitAmountsPairExactly reports whether every source posting of a
+// both-sides-split transaction pairs with a destination of the exact same
+// amount, so each leg stays one faithful record.
+func splitAmountsPairExactly(txn *ledger.Transaction) bool {
+	negatives, positives, ok := splitLegs(txn)
+	if !ok {
+		return false
+	}
+	_, matched := matchLegPairs(negatives, positives)
+	return matched
+}
+
 // investmentTxn classifies the postings of an investment transaction:
 // securities lot, cash leg, optional fee, optional elided gain.
 type investmentTxn struct {
 	cash       *ledger.Posting
+	cashExtra  []*ledger.Posting
 	securities []*ledger.Posting
 	fee        *ledger.Posting
 	gain       *ledger.Posting
@@ -165,16 +185,22 @@ func classifyInvestment(postings []ledger.Posting) *investmentTxn {
 		}
 		return nil
 	}
-	if inv.sell() {
-		if validSell(&inv) {
-			return &inv
-		}
+	if len(inv.cashExtra) > 0 {
 		return nil
 	}
-	if validBuy(&inv) {
+	if validSingleLot(&inv) {
 		return &inv
 	}
 	return nil
+}
+
+// validSingleLot validates a one-lot classification: a sell checks the
+// sell shape, anything else must be a convertible buy.
+func validSingleLot(inv *investmentTxn) bool {
+	if inv.sell() {
+		return validSell(inv)
+	}
+	return validBuy(inv)
 }
 
 // isSecuritiesLeg reports whether the posting is the securities lot: units
@@ -200,7 +226,14 @@ func assignElidedLeg(inv *investmentTxn, p *ledger.Posting) bool {
 		return true
 	}
 	if inv.cash != nil {
-		return false
+		if p.Account != inv.cash.Account {
+			return false
+		}
+		// A multi-asset export writes one cash line per leg; the extras
+		// validate as a sum. Single-lot paths reject them (two payments
+		// are two records and must not merge into one leg).
+		inv.cashExtra = append(inv.cashExtra, p)
+		return true
 	}
 	inv.cash = p
 	return true
@@ -218,7 +251,14 @@ func assignPlainLeg(inv *investmentTxn, p *ledger.Posting) bool {
 		return true
 	}
 	if inv.cash != nil {
-		return false
+		if p.Account != inv.cash.Account {
+			return false
+		}
+		// A multi-asset export writes one cash line per leg; the extras
+		// validate as a sum. Single-lot paths reject them (two payments
+		// are two records and must not merge into one leg).
+		inv.cashExtra = append(inv.cashExtra, p)
+		return true
 	}
 	inv.cash = p
 	return true
@@ -271,30 +311,52 @@ func validMultiBuy(inv *investmentTxn) bool {
 	if inv.fee != nil || inv.gain != nil || inv.cash == nil {
 		return false
 	}
-	sum := new(big.Rat)
-	currency := ""
-	for _, s := range inv.securities {
-		if s.Price != nil || s.Account != inv.securities[0].Account || s.Units.Number.Rat == nil {
-			return false
-		}
-		unit, costCurrency, ok := singleUnitCost(s)
-		if !ok {
-			return false
-		}
-		if currency == "" {
-			currency = costCurrency
-		} else if currency != costCurrency {
-			return false
-		}
-		sum.Add(sum, new(big.Rat).Mul(s.Units.Number.Rat, unit))
+	sum, currency, ok := multiLotSum(inv)
+	if !ok {
+		return false
 	}
 	if inv.cash.Units == nil {
 		return true // elided cash: the residual equals the sum
 	}
-	if inv.cash.Units.Number.Rat == nil || inv.cash.Units.Number.Rat.Sign() >= 0 || inv.cash.Units.Currency != currency {
-		return false
+	total, ok := multiCashTotal(inv, currency)
+	return ok && total.Cmp(sum) == 0
+}
+
+// multiLotSum sums quantity × unit cost across the lots and reports their
+// single cost currency; it fails on priced lots, mixed destination
+// accounts, missing quantities, or non-single costs.
+func multiLotSum(inv *investmentTxn) (*big.Rat, string, bool) {
+	sum := new(big.Rat)
+	currency := ""
+	for _, s := range inv.securities {
+		if s.Price != nil || s.Account != inv.securities[0].Account || s.Units.Number.Rat == nil {
+			return nil, "", false
+		}
+		unit, costCurrency, ok := singleUnitCost(s)
+		if !ok {
+			return nil, "", false
+		}
+		if currency == "" {
+			currency = costCurrency
+		} else if currency != costCurrency {
+			return nil, "", false
+		}
+		sum.Add(sum, new(big.Rat).Mul(s.Units.Number.Rat, unit))
 	}
-	return new(big.Rat).Abs(inv.cash.Units.Number.Rat).Cmp(sum) == 0
+	return sum, currency, true
+}
+
+// multiCashTotal sums the absolute cash postings and reports whether every
+// one is explicit, negative, and in the given currency.
+func multiCashTotal(inv *investmentTxn, currency string) (*big.Rat, bool) {
+	total := new(big.Rat)
+	for _, p := range append([]*ledger.Posting{inv.cash}, inv.cashExtra...) {
+		if p.Units == nil || p.Units.Number.Rat == nil || p.Units.Number.Rat.Sign() >= 0 || p.Units.Currency != currency {
+			return nil, false
+		}
+		total.Add(total, new(big.Rat).Abs(p.Units.Number.Rat))
+	}
+	return total, true
 }
 
 // singleUnitCost returns the unit cost and its currency when the cost batch

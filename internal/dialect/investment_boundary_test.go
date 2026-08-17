@@ -158,3 +158,26 @@ option "operating_currency" "CNY"
 		})
 	}
 }
+
+// TestUnmatchedSplitLegsStayStandard locks the honest boundary: a
+// multi×multi transaction that balances but pairs no equal amounts stays
+// standard — legs would have to invent a split.
+func TestUnmatchedSplitLegsStayStandard(t *testing.T) {
+	v3 := `2000-01-01 open Assets:Bank:工行 CNY
+2000-01-01 open Liabilities:CreditCard:广发 CNY
+2000-01-01 open Assets:Wallet:微信 CNY
+2000-01-01 open Expenses:Social:请客吃饭 CNY
+option "operating_currency" "CNY"
+
+2026-02-10 * "我" "拼单消费"
+  Assets:Wallet:微信 130.00 CNY
+  Expenses:Social:请客吃饭 145.00 CNY
+  Liabilities:CreditCard:广发 -135.00 CNY
+  Liabilities:CreditCard:广发 -140.00 CNY
+`
+	original := writeFile(t, "unmatched.bean", v3)
+	text := readFile(t, dialectizeFile(t, original))
+	if !strings.Contains(text, "Assets:Wallet:微信 130.00 CNY") {
+		t.Fatalf("unmatched multi×multi should stay standard:\n%s", text)
+	}
+}

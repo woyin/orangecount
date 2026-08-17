@@ -243,3 +243,68 @@ option "operating_currency" "USD"
 	// The export must itself be a valid standard ledger.
 	balancesOf(t, exportFile(t, dialectSource))
 }
+
+// TestMatchedSplitLegsRoundTrip locks the multi×multi fixed point: a
+// transaction whose both sides are split converts when amounts pair
+// exactly, exports as per-record postings, and re-converts to the same
+// block — the fixed point the bidirectional loop test demands.
+func TestMatchedSplitLegsRoundTrip(t *testing.T) {
+	v3 := `2000-01-01 open Assets:Bank:工行4515 CNY
+2000-01-01 open Liabilities:CreditCard:广发 CNY
+2000-01-01 open Assets:Wallet:微信 CNY
+2000-01-01 open Expenses:Social:请客吃饭 CNY
+option "operating_currency" "CNY"
+
+2026-02-10 * "我" "信用卡还款与消费"
+  Assets:Wallet:微信 135.00 CNY
+  Expenses:Social:请客吃饭 140.00 CNY
+  Liabilities:CreditCard:广发 -135.00 CNY
+  Liabilities:CreditCard:广发 -140.00 CNY
+`
+	original := writeFile(t, "matched.bean", v3)
+	first := dialectizeFile(t, original)
+	block1 := readFile(t, first)
+	if !strings.Contains(block1, "135.00 CNY @Liabilities:CreditCard:广发 -> @Assets:Wallet:微信") {
+		t.Fatalf("matched legs missing:\n%s", block1)
+	}
+	export := readFile(t, exportFile(t, first))
+	if !strings.Contains(export, "Liabilities:CreditCard:广发 -135.00 CNY") ||
+		!strings.Contains(export, "Liabilities:CreditCard:广发 -140.00 CNY") {
+		t.Fatalf("per-record export missing:\n%s", export)
+	}
+	// Second hop reproduces the same block: the fixed point holds.
+	second := dialectizeFile(t, writeFile(t, "matched2.bean", export))
+	if block2 := readFile(t, second); block2 != block1 {
+		t.Fatalf("fixed point broken:\nfirst:\n%s\nsecond:\n%s", block1, block2)
+	}
+	assertBalancesEqual(t, original, exportFile(t, first))
+}
+
+// TestAggregatedSourceRoundTrip locks the aggregated-source fixed point:
+// one payment fanned into several destinations converts (each destination
+// is a record; the source splits into exact per-leg components), exports
+// per-record, and re-converts to the same block.
+func TestAggregatedSourceRoundTrip(t *testing.T) {
+	v3 := `2000-01-01 open Assets:Bank:华夏0139 CNY
+2000-01-01 open Liabilities:Loan:房贷:营苑东村 CNY
+2000-01-01 open Expenses:Interest:营苑东村 CNY
+option "operating_currency" "CNY"
+
+2021-05-20 * "我" "还房贷"
+  Assets:Bank:华夏0139 -2747.91 CNY
+  Liabilities:Loan:房贷:营苑东村 1472.22 CNY
+  Expenses:Interest:营苑东村 1275.69 CNY
+`
+	original := writeFile(t, "agg.bean", v3)
+	first := dialectizeFile(t, original)
+	block1 := readFile(t, first)
+	if !strings.Contains(block1, "1472.22 CNY @Assets:Bank:华夏0139 -> @Liabilities:Loan:房贷:营苑东村") {
+		t.Fatalf("fan-out legs missing:\n%s", block1)
+	}
+	export := readFile(t, exportFile(t, first))
+	second := dialectizeFile(t, writeFile(t, "agg2.bean", export))
+	if block2 := readFile(t, second); block2 != block1 {
+		t.Fatalf("fixed point broken:\nfirst:\n%s\nsecond:\n%s", block1, block2)
+	}
+	assertBalancesEqual(t, original, exportFile(t, first))
+}

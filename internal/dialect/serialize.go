@@ -7,6 +7,7 @@ package dialect
 
 import (
 	"math/big"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -82,6 +83,13 @@ func flagOrDefault(flag string) string {
 // the inverse of the parser's dialect grammar; only reparse-safe text may be
 // produced (eligible transactions are filtered before this runs).
 func SerializeDialect(txn *ledger.Transaction) string {
+	return sortBlockLegs(serializeDialect(txn))
+}
+
+// serializeDialect renders the dialect block for a transaction; the legs'
+// order follows the input postings. SerializeDialect sorts the legs so the
+// block is a canonical fixed point regardless of posting order.
+func serializeDialect(txn *ledger.Transaction) string {
 	if inv := classifyInvestment(txn.Postings); inv != nil {
 		if inv.sell() {
 			return serializeSellLeg(txn, inv)
@@ -98,10 +106,28 @@ func SerializeDialect(txn *ledger.Transaction) string {
 		return serializeSingleLine(txn, negatives[0], positives[0])
 	}
 	// Block form: a standard header plus one indented leg per counterparty.
+	if len(negatives) > 1 && len(positives) > 1 {
+		pairs, ok := matchLegPairs(negatives, positives)
+		if !ok {
+			return ""
+		}
+		var block strings.Builder
+		writeBlockHeader(&block, txn)
+		writeMetaLines(&block, txn.Meta)
+		for _, pair := range pairs {
+			writeLeg(&block, pair.source, pair.destination, pair.destination.Units)
+		}
+		return block.String()
+	}
 	if len(negatives) != 1 && len(positives) != 1 {
-		// Multiple sources and destinations cannot decompose into legs.
 		return ""
 	}
+	return serializeFanBlock(txn, negatives, positives)
+}
+
+// serializeFanBlock renders the one-side-singleton block: one source
+// fanned into many destinations, or many sources into one destination.
+func serializeFanBlock(txn *ledger.Transaction, negatives, positives []ledger.Posting) string {
 	var block strings.Builder
 	writeBlockHeader(&block, txn)
 	writeMetaLines(&block, txn.Meta)
@@ -233,6 +259,73 @@ func absUnits(units *ledger.Amount) *ledger.Amount {
 }
 
 // writeLeg appends one indented dialect leg "amount @source -> @destination".
+// sortBlockLegs sorts the indented leg lines after the header and
+// metadata so a block serializes to the same bytes from any posting order
+// — the bidirectional fixed point. The header line and metadata lines keep
+// their positions.
+func sortBlockLegs(block string) string {
+	lines := strings.Split(block, "\n")
+	i := 1
+	for i < len(lines) && isBlockMetaLine(lines[i]) {
+		i++
+	}
+	if i >= len(lines) {
+		return block
+	}
+	legs := append([]string(nil), lines[i:]...)
+	sort.Strings(legs)
+	out := append(lines[:i:i], legs...)
+	return strings.Join(out, "\n")
+}
+
+// isBlockMetaLine reports whether an indented block line is a metadata
+// pair ("  key: value") rather than a leg.
+func isBlockMetaLine(line string) bool {
+	if !strings.HasPrefix(line, "  ") {
+		return false
+	}
+	rest := line[2:]
+	for i := 0; i < len(rest); i++ {
+		c := rest[i]
+		if c == ':' {
+			return i > 0 && i+1 < len(rest) && rest[i+1] == ' '
+		}
+		if !(c >= 'a' && c <= 'z' || c >= 'A' && c <= 'Z' || c >= '0' && c <= '9' || c == '-' || c == '_') {
+			return false
+		}
+	}
+	return false
+}
+
+// legPair is one matched source→destination record of a multi×multi
+// block.
+type legPair struct {
+	source, destination ledger.Posting
+}
+
+// matchLegPairs pairs every negative posting with an unused positive
+// posting of the exact same amount. It reports false when no perfect
+// pairing exists — such a transaction is not expressible as independent
+// legs without inventing a split.
+func matchLegPairs(negatives, positives []ledger.Posting) ([]legPair, bool) {
+	used := make([]bool, len(positives))
+	pairs := make([]legPair, 0, len(negatives))
+	for _, n := range negatives {
+		for j, d := range positives {
+			if used[j] || new(big.Rat).Abs(d.Units.Number.Rat).Cmp(new(big.Rat).Abs(n.Units.Number.Rat)) != 0 {
+				continue
+			}
+			used[j] = true
+			pairs = append(pairs, legPair{source: n, destination: d})
+			break
+		}
+	}
+	if len(pairs) != len(negatives) || len(pairs) != len(positives) {
+		return nil, false
+	}
+	return pairs, true
+}
+
 func writeLeg(block *strings.Builder, source, destination ledger.Posting, units *ledger.Amount) {
 	block.WriteString("\n  ")
 	block.WriteString(strings.TrimPrefix(units.Number.Raw, "+"))
@@ -272,9 +365,11 @@ func serializeBuyLeg(txn *ledger.Transaction, inv *investmentTxn) string {
 		block.WriteString(" -> @")
 		block.WriteString(securities.Account)
 		return block.String()
-	case explicitCash && securities.Units.Number.Raw != "":
-		// Explicit cash and quantity (with or without fee): the amount
-		// form carries both numbers exactly as written.
+	case explicitCash && securities.Units.Number.Raw != "" && !cashEqualsCost(inv):
+		// Explicit cash and quantity where the cash is more than quantity
+		// × unit cost (a fee, or a different recorded amount): the amount
+		// form carries both numbers exactly as written. Exact matches take
+		// the derived form so the serialization is a canonical fixed point.
 		cashAbs := absUnits(inv.cash.Units)
 		block.WriteString(cashAbs.Number.Raw)
 		block.WriteString(" ")
@@ -330,6 +425,21 @@ func serializeMultiBuyLeg(txn *ledger.Transaction, inv *investmentTxn) string {
 		block.WriteString(s.Account)
 	}
 	return block.String()
+}
+
+// cashEqualsCost reports whether the explicit cash posting equals
+// quantity × the lot's single unit cost exactly — the derived form then
+// reproduces it, keeping the round trip a byte-stable fixed point.
+func cashEqualsCost(inv *investmentTxn) bool {
+	if inv.fee != nil || inv.cash == nil || inv.cash.Units == nil || inv.securities[0].Units.Number.Rat == nil {
+		return false
+	}
+	unit, _, ok := singleUnitCost(inv.securities[0])
+	if !ok {
+		return false
+	}
+	want := new(big.Rat).Mul(inv.securities[0].Units.Number.Rat, unit)
+	return new(big.Rat).Abs(inv.cash.Units.Number.Rat).Cmp(want) == 0
 }
 
 // serializeSellLeg renders a sale as a single dialect leg: "[CASH CURRENCY]

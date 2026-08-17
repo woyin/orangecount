@@ -232,10 +232,18 @@ option "operating_currency" "CNY"
 	}
 	exported := exportFile(t, dialectVersion)
 	export := readFile(t, exported)
-	if !strings.Contains(export, "Assets:Wallet:微信 -1400 CNY") {
-		t.Fatalf("cash not merged back in export:\n%s", export)
+	if !strings.Contains(export, "Assets:Wallet:微信 -200 CNY") ||
+		!strings.Contains(export, "Assets:Wallet:微信 -1200 CNY") {
+		t.Fatalf("per-asset cash records not kept in export:\n%s", export)
 	}
 	assertBalancesEqual(t, original, exported)
+
+	// Second hop: the per-record export (split cash lines) must
+	// re-convert to the identical block — the fixed point.
+	second := dialectizeFile(t, writeFile(t, "multi2.bean", export))
+	if block2 := readFile(t, second); block2 != text {
+		t.Fatalf("multi-asset fixed point broken:\nfirst:\n%s\nsecond:\n%s", text, block2)
+	}
 }
 
 // TestMultiAssetBuyElidedCash locks the elided-cash variant: the residual

@@ -94,7 +94,13 @@ A purchase of several assets in one transaction converts to parallel derived leg
   60 NOTE_2026_HORSE {20.00 CNY} @微信 -> @收藏品
 ```
 
-The rule: one cash leg (explicit or elided) plus two or more securities lots into the same account, every lot a plain single-cost lot in one currency, no price, fee, or gain, and the explicit cash — when present — exactly the sum of quantity × unit cost. Each leg derives its own cash side; the export merges them back into one posting per account, reproducing the original text byte-for-byte. Fees stay standard: a single expense cannot be attributed across legs without inventing an allocation rule. (286 fund/stock buys including fee buys and bonus shares, all 11 sells in both cash conventions); the four remaining legs are one multi-asset collectible purchase that no single leg can express.
+The rule: one cash side (a single posting or same-account split lines, explicit or elided) plus two or more securities lots into the same account, every lot a plain single-cost lot in one currency, no price, fee, or gain, and the explicit cash — when present — exactly the sum of quantity × unit cost. Each leg derives its own cash side and keeps its own records end to end.
+
+## Records are never merged
+
+The export does not consolidate same-account postings (an earlier design summed them — one -99800 line where the ledger recorded two -49900 gifts). Records keep their granularity through the whole cycle: a dialect block compiles to one posting pair per leg, the export writes each posting as its own line, and same-account lines merely group adjacently. The canonicalization is one-directional and lossless: an aggregated line may split into its exact per-leg components (the coin purchase's -1400 becomes -200 and -1200), but separate records never fuse. Both-sides-split transactions re-convert only when every source pairs with a destination of the exact same amount; a balanced-but-unpaired shape stays standard rather than inventing a split.
+
+Block legs serialize in sorted order, and buys whose explicit cash exactly equals quantity × unit cost take the derived form, so the dialect text is a canonical fixed point: on the reference ledger, dialectize ∘ export reproduces every file byte-for-byte from the first hop (2565 legs, all seven snapshots' balances identical, upstream beancount 3.2.3 accepts every export). (286 fund/stock buys including fee buys and bonus shares, all 11 sells in both cash conventions); the four remaining legs are one multi-asset collectible purchase that no single leg can express.
 
 Two property tests lock round-trip safety mechanically: for any v3 ledger, `dialectize` then `export` must build a snapshot with identical account balances to the original; and re-running the round trip must reach a fixpoint (the second export is byte-stable). Layout of converted lines is rewritten, which forfeits git blame for those lines; accepted for the experiment.
 

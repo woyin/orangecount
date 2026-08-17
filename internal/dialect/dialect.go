@@ -436,7 +436,7 @@ func compileBlock(idx *index, header *ledger.Transaction, legs []ledger.Dialect)
 			},
 		)
 	}
-	txn.Postings = mergePostings(txn.Postings)
+	txn.Postings = groupPostings(txn.Postings)
 	span := source.Span{Start: header.At.Start, End: legs[len(legs)-1].At.End}
 	return txn, Edit{Span: span, Text: SerializeTransaction(txn)}, diags
 }
@@ -601,31 +601,27 @@ func legCurrency(idx *index, leg ledger.Dialect) string {
 	return idx.opCurrency
 }
 
-// mergePostings combines same-account same-currency postings so a block that
-// fans a single source into several destinations recompiles to one source
-// posting (华夏 -2747.91 instead of two -1472.22/-1275.69), keeping the
-// standard export byte-stable across round trips.
-func mergePostings(postings []ledger.Posting) []ledger.Posting {
-	merged := make([]ledger.Posting, 0, len(postings))
-	for _, p := range postings {
-		found := false
-		for i := range merged {
-			if merged[i].Account == p.Account && merged[i].Units != nil && p.Units != nil &&
-				merged[i].Units.Currency == p.Units.Currency {
-				sum := new(big.Rat).Add(merged[i].Units.Number.Rat, p.Units.Number.Rat)
-				merged[i].Units = &ledger.Amount{
-					Number:   ledger.Number{Raw: ledger.NewDecimal(sum).String(), Rat: sum},
-					Currency: p.Units.Currency,
-				}
-				found = true
-				break
+// groupPostings orders postings so same-account entries stay adjacent,
+// matching how a human writes a multi-leg block — without summing them:
+// each leg is its own record (two 49900 gifts are two records), and
+// merging them into one number would destroy that granularity.
+func groupPostings(postings []ledger.Posting) []ledger.Posting {
+	ordered := make([]ledger.Posting, 0, len(postings))
+	used := make([]bool, len(postings))
+	for i := range postings {
+		if used[i] {
+			continue
+		}
+		ordered = append(ordered, postings[i])
+		used[i] = true
+		for j := i + 1; j < len(postings); j++ {
+			if !used[j] && postings[j].Account == postings[i].Account {
+				ordered = append(ordered, postings[j])
+				used[j] = true
 			}
 		}
-		if !found {
-			merged = append(merged, p)
-		}
 	}
-	return merged
+	return ordered
 }
 
 // negateNumber returns the negated copy of a parsed number, normalizing any

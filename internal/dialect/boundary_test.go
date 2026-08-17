@@ -300,21 +300,23 @@ option "operating_currency" "CNY"
 		t.Fatalf("compiled transactions=%d", len(txns))
 	}
 	tx := txns[0]
-	if tx.Narration != "还房贷" || tx.Payee != "我" || len(tx.Postings) != 3 {
+	if tx.Narration != "还房贷" || tx.Payee != "我" || len(tx.Postings) != 4 {
 		t.Fatalf("txn=%+v postings=%d", tx, len(tx.Postings))
 	}
-	byAccount := map[string]string{}
+	byAccount := map[string][]string{}
 	for _, p := range tx.Postings {
-		byAccount[p.Account] = p.Units.Number.Raw
+		byAccount[p.Account] = append(byAccount[p.Account], p.Units.Number.Raw)
 	}
-	if byAccount["Assets:Bank:华夏0139"] != "-2747.91" {
-		t.Fatalf("source merged amount=%q want -2747.91", byAccount["Assets:Bank:华夏0139"])
+	// Each leg is its own record: the source keeps one posting per leg
+	// instead of merging into a single -2747.91 line.
+	if got := byAccount["Assets:Bank:华夏0139"]; len(got) != 2 || got[0] != "-1472.22" || got[1] != "-1275.69" {
+		t.Fatalf("source postings=%v want [-1472.22 -1275.69]", got)
 	}
-	if byAccount["Liabilities:Loan:房贷:营苑东村"] != "1472.22" {
-		t.Fatalf("principal=%q", byAccount["Liabilities:Loan:房贷:营苑东村"])
+	if got := byAccount["Liabilities:Loan:房贷:营苑东村"]; len(got) != 1 || got[0] != "1472.22" {
+		t.Fatalf("principal=%v", got)
 	}
-	if byAccount["Expenses:Interest:营苑东村"] != "1275.69" {
-		t.Fatalf("interest=%q", byAccount["Expenses:Interest:营苑东村"])
+	if got := byAccount["Expenses:Interest:营苑东村"]; len(got) != 1 || got[0] != "1275.69" {
+		t.Fatalf("interest=%v", got)
 	}
 }
 
@@ -343,8 +345,11 @@ option "operating_currency" "CNY"
 	// export the block back to v3 and confirm balance equality.
 	exported := exportFile(t, blockLedger)
 	exportedText := readFile(t, exported)
-	if !strings.Contains(exportedText, "Assets:Bank:华夏0139 -2747.91 CNY") {
-		t.Fatalf("merged source not restored:\n%s", exportedText)
+	// Each leg keeps its own records in the export: two source lines, one
+	// per destination record, never merged into a single sum.
+	if !strings.Contains(exportedText, "Assets:Bank:华夏0139 -1472.22 CNY") ||
+		!strings.Contains(exportedText, "Assets:Bank:华夏0139 -1275.69 CNY") {
+		t.Fatalf("per-record source lines not restored:\n%s", exportedText)
 	}
 	assertBalancesEqual(t, original, exported)
 }
