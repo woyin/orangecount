@@ -31,13 +31,23 @@ func Dialectize(file *ledger.File) ([]Edit, bool) {
 		if !ok || !eligibleForDialect(txn) {
 			continue
 		}
-		line := SerializeDialect(txn)
-		if line == "" {
+		todos, hasOther := spanTodos(file.Source, txn.At)
+		if hasOther {
+			// Free-text comments have no metadata form; converting the
+			// block would delete them, so it stays standard.
 			continue
 		}
-		if spanHasComment(file.Source, txn.At) {
-			// A comment inside the transaction block would be deleted by a
-			// span replacement; keep the block standard instead.
+		if len(todos) > 0 {
+			if metaHasKey(txn.Meta, "todo") {
+				continue
+			}
+			cp := *txn
+			cp.Meta = append(append([]ledger.Metadata(nil), txn.Meta...),
+				ledger.Metadata{Key: "todo", Value: ledger.Value{Kind: ledger.ValueString, String: strings.Join(todos, "; ")}})
+			txn = &cp
+		}
+		line := SerializeDialect(txn)
+		if line == "" {
 			continue
 		}
 		edits = append(edits, Edit{Span: txn.At, Text: line})
@@ -73,7 +83,7 @@ func eligibleForDialect(txn *ledger.Transaction) bool {
 	if txn.Flag != "" && txn.Flag != "*" && txn.Flag != "!" {
 		return false
 	}
-	if len(txn.Meta) > 0 || len(txn.Postings) < 2 {
+	if len(txn.Postings) < 2 {
 		return false
 	}
 	if txn.Narration == "" && txn.Payee == "" {
@@ -119,6 +129,9 @@ func classifyInvestment(postings []ledger.Posting) *investmentTxn {
 	var plains []*ledger.Posting
 	for i := range postings {
 		p := &postings[i]
+		if len(p.Meta) > 0 {
+			return nil
+		}
 		switch {
 		case isSecuritiesLeg(p):
 			if inv.securities != nil {
@@ -339,22 +352,54 @@ func textIsReparseSafe(text string) bool {
 	return true
 }
 
-// spanHasComment reports whether the source bytes covered by span contain a
-// semicolon comment outside a string.
-func spanHasComment(file *source.SourceFile, span source.Span) bool {
+// spanTodos scans the source bytes covered by span for TODO and FIXME
+// comments. It returns the extracted task texts (with the marker prefix
+// stripped) and whether any other free-text comment survives there.
+func spanTodos(file *source.SourceFile, span source.Span) (todos []string, hasOther bool) {
 	if file == nil {
-		return false
+		return nil, false
 	}
 	text := file.Text(span)
+	for _, line := range strings.Split(text, "\n") {
+		idx := indexUnquoted(line, ';')
+		if idx < 0 {
+			continue
+		}
+		comment := strings.TrimSpace(line[idx+1:])
+		trimmed := strings.TrimPrefix(strings.TrimPrefix(comment, "TODO:"), "FIXME:")
+		if trimmed != comment {
+			if task := strings.TrimSpace(trimmed); task != "" {
+				todos = append(todos, task)
+			}
+			continue
+		}
+		hasOther = true
+	}
+	return todos, hasOther
+}
+
+// indexUnquoted returns the first occurrence of b outside double-quoted
+// strings, or -1.
+func indexUnquoted(line string, b byte) int {
 	quoted := false
-	for i := 0; i < len(text); i++ {
-		switch text[i] {
+	for i := 0; i < len(line); i++ {
+		switch line[i] {
 		case '"':
 			quoted = !quoted
-		case ';':
+		case b:
 			if !quoted {
-				return true
+				return i
 			}
+		}
+	}
+	return -1
+}
+
+// metaHasKey reports whether the metadata list already defines key.
+func metaHasKey(meta []ledger.Metadata, key string) bool {
+	for _, m := range meta {
+		if m.Key == key {
+			return true
 		}
 	}
 	return false

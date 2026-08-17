@@ -38,6 +38,7 @@ func SerializeTransaction(txn *ledger.Transaction) string {
 	}
 	var block strings.Builder
 	block.WriteString(head.String())
+	writeMetaLines(&block, txn.Meta)
 	for _, posting := range txn.Postings {
 		block.WriteString("\n  ")
 		block.WriteString(posting.Account)
@@ -101,6 +102,7 @@ func SerializeDialect(txn *ledger.Transaction) string {
 	}
 	var block strings.Builder
 	writeBlockHeader(&block, txn)
+	writeMetaLines(&block, txn.Meta)
 	if len(negatives) == 1 {
 		// One source, many destinations: each destination contributes its
 		// own amount.
@@ -188,6 +190,29 @@ func writeBlockHeader(block *strings.Builder, txn *ledger.Transaction) {
 	}
 }
 
+// writeMetaLines renders transaction metadata as indented v3 pairs after
+// the header line.
+func writeMetaLines(block *strings.Builder, meta []ledger.Metadata) {
+	for _, m := range meta {
+		block.WriteString("\n  ")
+		block.WriteString(m.Key)
+		block.WriteString(": ")
+		block.WriteString(metaValueText(m.Value))
+	}
+}
+
+// metaValueText renders one metadata value: strings quote their content,
+// everything else keeps its raw source form.
+func metaValueText(v ledger.Value) string {
+	if v.Kind == ledger.ValueString {
+		return strconv.Quote(v.String)
+	}
+	if v.Raw != "" {
+		return v.Raw
+	}
+	return strconv.Quote(v.String)
+}
+
 // absUnits returns a copy of units with the number's sign normalized to
 // positive, so a negative posting renders as a positive dialect amount.
 func absUnits(units *ledger.Amount) *ledger.Amount {
@@ -226,6 +251,7 @@ func serializeBuyLeg(txn *ledger.Transaction, inv *investmentTxn) string {
 	securities := inv.securities
 	var block strings.Builder
 	writeInvestmentHeader(&block, txn)
+	writeMetaLines(&block, txn.Meta)
 	block.WriteString("\n  ")
 	explicitCash := inv.cash != nil && inv.cash.Units != nil
 	switch {
@@ -288,6 +314,7 @@ func serializeSellLeg(txn *ledger.Transaction, inv *investmentTxn) string {
 	qty := absUnits(securities.Units)
 	var block strings.Builder
 	writeInvestmentHeader(&block, txn)
+	writeMetaLines(&block, txn.Meta)
 	block.WriteString("\n  ")
 	if inv.cash != nil && inv.cash.Units != nil {
 		cashAbs := absUnits(inv.cash.Units)

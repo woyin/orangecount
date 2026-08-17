@@ -372,9 +372,6 @@ func compileBlock(idx *index, header *ledger.Transaction, legs []ledger.Dialect)
 	if !header.Date.Valid() {
 		return fail("E-DIALECT-DATE", "dialect block header has no valid date")
 	}
-	if len(header.Meta) > 0 {
-		return fail("E-DIALECT-LEG-META", "dialect block header metadata is unsupported; move it into the transaction or drop it")
-	}
 	for _, leg := range legs {
 		if len(leg.Meta) > 0 {
 			return fail("E-DIALECT-LEG-META", "dialect block leg metadata is unsupported")
@@ -388,6 +385,7 @@ func compileBlock(idx *index, header *ledger.Transaction, legs []ledger.Dialect)
 		Narration:     header.Narration,
 		Tags:          header.Tags,
 		Links:         header.Links,
+		Meta:          header.Meta,
 	}
 	if txn.Narration == "" {
 		txn.Narration = "消费"

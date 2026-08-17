@@ -134,7 +134,6 @@ func TestEligibleForDialectRejectsEachIneligibleShape(t *testing.T) {
 	}
 	shapes := map[string]func(*ledger.Transaction){
 		"three legs":     func(tx *ledger.Transaction) { tx.Postings = append(tx.Postings, ledger.Posting{Account: "C"}) },
-		"tx metadata":    func(tx *ledger.Transaction) { tx.Meta = []ledger.Metadata{{Key: "k"}} },
 		"posting flag":   func(tx *ledger.Transaction) { tx.Postings[0].Flag = "!" },
 		"posting meta":   func(tx *ledger.Transaction) { tx.Postings[0].Meta = []ledger.Metadata{{Key: "k"}} },
 		"cost":           func(tx *ledger.Transaction) { tx.Postings[0].Cost = &ledger.CostSpec{Raw: "{5 USD}"} },
@@ -164,16 +163,21 @@ func TestEligibleForDialectRejectsEachIneligibleShape(t *testing.T) {
 func ptr(tx ledger.Transaction) *ledger.Transaction { return &tx }
 
 func TestSpanHasCommentAndTransactionOf(t *testing.T) {
-	file := ledger.File{Source: source.NewSourceFile(1, "x.bean", []byte("abc ; note\n"))}
-	if !spanHasComment(file.Source, file.Source.Span(0, 10)) {
-		t.Fatal("comment not detected")
+	file := ledger.File{Source: source.NewSourceFile(1, "x.bean", []byte("abc ; TODO: fix nav\n"))}
+	todos, hasOther := spanTodos(file.Source, file.Source.Span(0, 20))
+	if hasOther || len(todos) != 1 || todos[0] != "fix nav" {
+		t.Fatalf("todo not extracted: %v %v", todos, hasOther)
 	}
-	quoted := source.NewSourceFile(1, "x.bean", []byte(`"a;b"`))
-	if spanHasComment(quoted, quoted.Span(0, 5)) {
+	free := source.NewSourceFile(1, "x.bean", []byte("abc ; note"))
+	if todos, hasOther := spanTodos(free, free.Span(0, 9)); len(todos) != 0 || !hasOther {
+		t.Fatalf("free comment misread: %v %v", todos, hasOther)
+	}
+	quoted := source.NewSourceFile(1, "x.bean", []byte(`"a;TODO: x"`))
+	if todos, hasOther := spanTodos(quoted, quoted.Span(0, 11)); len(todos) != 0 || hasOther {
 		t.Fatal("semicolon inside string misread as comment")
 	}
-	if spanHasComment(nil, source.Span{}) {
-		t.Fatal("nil file should report no comment")
+	if todos, hasOther := spanTodos(nil, source.Span{}); todos != nil || hasOther {
+		t.Fatal("nil file should report nothing")
 	}
 	asValue := ledger.Transaction{}
 	if _, ok := transactionOf(asValue); !ok {

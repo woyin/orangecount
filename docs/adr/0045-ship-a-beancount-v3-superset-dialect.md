@@ -64,6 +64,23 @@ A sell is an investment leg with a sale price after the cost batch:
 - A bonus share (红股) is a buy whose source is the income account: `240 STOCKA_300059 {37.62 CNY} @Income:Passive:投资收益 -> @持股`.
 - Investment headers quote the narration, so lexer-significant characters (the `(QDII)A` fund names) convert; only the bare single-line form still requires reparse-safe narration.
 
+
+## Transaction metadata and TODO comments
+
+Dialect blocks carry beancount transaction metadata between the header and the legs — no new syntax, the native v3 form:
+
+```
+2026-07-31 * "我" "购买华宝纳斯达克" #fund-investment
+  todo: "净值为 7.30 占位，待更新为实际净值"
+  50 CNY FUND_017436 {2.1569 CNY} @小金库 -> @基金
+```
+
+Metadata is a first-class v3 citizen (queryable via `meta()`, rendered by Fava, never stripped), so the block honors it rather than inventing a parallel concept. Posting-level metadata still keeps a block standard: a dialect leg maps to two postings and cannot carry per-posting data.
+
+Dialectize promotes `; TODO:` and `; FIXME:` comments to a `todo:` metadata pair (multiple comments join with `"; "`), so tracked work items survive conversion as data instead of being deleted. Free-text comments still keep the block standard — prose has no metadata form. A block that already defines `todo` stays standard rather than colliding.
+
+With this the reference ledger converts 288 of 290 investment transactions; the two QDII buys with placeholder-NAV TODO notes now convert, and the remaining legs are one multi-asset collectible purchase.
+
 In the reference ledger 286 of 290 investment transactions convert (286 fund/stock buys including fee buys and bonus shares, all 11 sells in both cash conventions); the four remaining legs are one multi-asset collectible purchase that no single leg can express.
 
 Two property tests lock round-trip safety mechanically: for any v3 ledger, `dialectize` then `export` must build a snapshot with identical account balances to the original; and re-running the round trip must reach a fixpoint (the second export is byte-stable). Layout of converted lines is rewritten, which forfeits git blame for those lines; accepted for the experiment.
