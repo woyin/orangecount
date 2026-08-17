@@ -42,6 +42,8 @@ func newQuickPreviewStore() *quickPreviewStore {
 	return &quickPreviewStore{items: make(map[string]quickPreview), nowUnix: func() int64 { return time.Now().Unix() }}
 }
 
+// Store stages a preview batch and returns its single-use token; expired
+// batches drop on write and, at capacity, the oldest is evicted.
 func (s *quickPreviewStore) Store(entries []favaadapter.NewEntry, target string) string {
 	if s == nil {
 		return ""

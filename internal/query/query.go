@@ -225,6 +225,9 @@ func sortResultRows(result Result, orderBy []OrderItem) {
 	})
 }
 
+// groupRows partitions the joined rows for aggregation: no GROUP BY and no
+// aggregate keeps every row its own group, no GROUP BY with aggregates makes
+// one group, and otherwise rows group by their formatted key values.
 func groupRows(rows []Row, groupBy []Expr, selectItems []SelectItem) [][]Row {
 	aggregate := false
 	for _, item := range selectItems {
@@ -796,6 +799,8 @@ func (p *queryParser) errorf(format string, args ...any) error {
 	return ParseError{Message: fmt.Sprintf(format, args...)}
 }
 
+// operatorPrecedence ranks query operators for expression parsing:
+// OR < AND < comparisons < + - < * /.
 func operatorPrecedence(token queryToken) int {
 	if token.kind == tokenStar {
 		return 5

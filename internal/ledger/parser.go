@@ -105,6 +105,9 @@ type token struct {
 	span  source.Span
 }
 
+// parse drives the line-oriented scan: read lines, skip blanks and
+// standalone comments, hand each directive line to its parser, and recurse
+// into includes.
 func (p *parser) parse() {
 	p.out = &File{Source: p.file}
 	p.lastDirective = -1
@@ -161,6 +164,8 @@ func splitLines(f *source.SourceFile) []line {
 	return lines
 }
 
+// commentOnLine extracts the trailing "; ..." comment of a line, if any,
+// keeping its source span for diagnostics.
 func commentOnLine(f *source.SourceFile, ln line) *Comment {
 	idx := strings.Index(ln.text, ";")
 	if idx < 0 {
@@ -318,6 +323,8 @@ func scanWordToken(f *source.SourceFile, ln line, text string, i int, out *[]tok
 
 func isASCIIDigit(value byte) bool { return value >= '0' && value <= '9' }
 
+// parseContinuation handles one indented line inside a directive: metadata
+// pairs, postings, and the dialect block forms.
 func (p *parser) parseContinuation(ln line, ts []token) {
 	if isMetadataLine(ts) {
 		meta, ok := p.parseMetadata(ts)
@@ -370,6 +377,8 @@ func (p *parser) parseContinuation(ln line, ts []token) {
 	p.tx.Raw = p.file.Text(p.tx.At)
 }
 
+// parseDirective dispatches one top-level line to its directive parser
+// based on the leading keyword.
 func (p *parser) parseDirective(ln line, ts []token) {
 	if len(ts) == 0 {
 		return
@@ -655,6 +664,9 @@ func (p *parser) parseCustomDirective(base DirectiveBase, date Date, rest []toke
 	p.appendDirective(d)
 }
 
+// parseTransaction parses a transaction header line: flag, payee and
+// narration (quoted or bare), tags, and links; postings arrive as
+// continuations.
 func (p *parser) parseTransaction(date Date, ts []token) {
 	base := p.base(ts)
 	tx := Transaction{DirectiveBase: base, Date: date}
@@ -915,6 +927,9 @@ type investmentShape struct {
 	hasAmount bool
 }
 
+// investmentHeadShape recognizes the head of a dialect investment leg —
+// "{cost}" alone, "QTY SEC", "AMT CUR QTY", or "AMT CUR" — and reports where
+// the leg payload starts and whether an explicit amount was written.
 func investmentHeadShape(ts []token) investmentShape {
 	switch {
 	case len(ts) >= 2 && ts[0].kind == tokWord && ts[1].text == "{":
@@ -1157,6 +1172,8 @@ func (p *parser) skipPostingAssignment(ts []token, i int) int {
 	return i + 1
 }
 
+// cost parses a cost or cost-total spec — "{...}" or "{{...}}" — with
+// amount, date, and label components.
 func (p *parser) cost(ts []token, i int) (CostSpec, int) {
 	spec := CostSpec{At: ts[i].span}
 	start := i
@@ -1192,6 +1209,7 @@ func (p *parser) cost(ts []token, i int) (CostSpec, int) {
 	return spec, i
 }
 
+// amount parses a number+currency pair starting at token i.
 func (p *parser) amount(ts []token, i int) (Amount, int, bool) {
 	if i >= len(ts) {
 		return Amount{}, i, false
@@ -1350,6 +1368,8 @@ func isAccount(s string) bool {
 	return first >= 'A' && first <= 'Z'
 }
 
+// isPunctuation reports whether a token is one of the grammar's structural
+// punctuation marks rather than a word or operator.
 func isPunctuation(s string) bool {
 	return s == "{" || s == "}" || s == "[" || s == "]" || s == "," || s == "@" || s == "@@" || s == "~" || s == "="
 }

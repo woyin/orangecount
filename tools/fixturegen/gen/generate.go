@@ -131,6 +131,8 @@ func Generate(root string, config Config) (Result, error) {
 	return result, nil
 }
 
+// normalizeConfig applies defaults and clamps out-of-range values so the
+// generator always runs on a valid config.
 func normalizeConfig(config Config) Config {
 	defaults := DefaultConfig
 	if config.Wallets <= 0 {

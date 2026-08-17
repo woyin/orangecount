@@ -405,6 +405,8 @@ type includeMatch struct {
 	span Span
 }
 
+// scanIncludes finds the include directives of a parsed file with their
+// spans so the loader can recurse and the graph can record the edges.
 func scanIncludes(f *SourceFile) []includeMatch {
 	if f == nil {
 		return nil

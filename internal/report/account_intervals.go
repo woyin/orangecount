@@ -122,6 +122,8 @@ func intervalTableRows(totals map[string]map[string]ledger.Decimal, keys, curren
 	return rows
 }
 
+// nextPeriodKey advances a period bucket key ("2026", "2026-Q2", "2026-03")
+// by one interval, passing malformed keys through unchanged.
 func nextPeriodKey(key, interval string) string {
 	switch interval {
 	case "year":

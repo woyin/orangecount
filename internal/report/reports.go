@@ -185,6 +185,8 @@ func latestDate(rows []query.Row) string {
 	return anchor
 }
 
+// samePeriod reports whether two dates fall in the same year, month, or
+// quarter; missing dates never exclude a row.
 func samePeriod(date, anchor, period string) bool {
 	if date == "" || anchor == "" {
 		return true

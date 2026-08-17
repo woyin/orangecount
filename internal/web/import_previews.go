@@ -44,6 +44,8 @@ func newImportPreviewStore() *importPreviewStore {
 	return &importPreviewStore{items: make(map[string]importPreview), nowUnix: func() int64 { return time.Now().Unix() }}
 }
 
+// Store remembers an import preview under its id for the later commit
+// request; a nil store or empty id is a no-op.
 func (s *importPreviewStore) Store(id string, preview importPreview) {
 	if s == nil || id == "" {
 		return

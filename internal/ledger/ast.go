@@ -32,6 +32,7 @@ func (d Date) Valid() bool {
 // String returns the original source text of the date, keeping output lossless.
 func (d Date) String() string { return d.Raw }
 
+// daysInMonth returns the calendar length of a month, honoring leap years.
 func daysInMonth(year, month int) int {
 	if month == 2 {
 		leap := year%4 == 0 && (year%100 != 0 || year%400 == 0)

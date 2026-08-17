@@ -148,6 +148,8 @@ func postingTarget(posting FQLPosting) FQLTarget {
 	return FQLTarget{Account: posting.Account}
 }
 
+// field resolves a filter field name against the target's text attributes
+// and metadata; unknown names report ok=false.
 func (target FQLTarget) field(name string) (string, bool) {
 	switch name {
 	case "payee":
@@ -411,6 +413,9 @@ func (parser *fqlParser) parseUnary() (*fqlNode, error) {
 	return parser.parsePrimary()
 }
 
+// parsePrimary parses the smallest FQL unit — a parenthesized group, a
+// quoted string, a bare word, or a wildcard — recursing into the operator
+// precedence climb above it.
 func (parser *fqlParser) parsePrimary() (*fqlNode, error) {
 	token := parser.peek()
 	if token == nil {

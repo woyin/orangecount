@@ -163,6 +163,8 @@ type aliasRule struct {
 	account string
 }
 
+// buildIndex walks the include graph in evaluation order and indexes account
+// names and transaction tail lines for the dialect compiler's lookups.
 func buildIndex(graph *source.Graph, parsed map[source.FileID]*ledger.File) *index {
 	idx := &index{accounts: map[string]bool{}, tails: map[string][]string{}}
 	var order []source.FileID

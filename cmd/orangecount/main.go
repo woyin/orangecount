@@ -63,6 +63,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 	return runWithInput(args, nil, stdout, stderr)
 }
 
+// runWithInput dispatches one CLI invocation and returns the exit code;
+// bare or -h invocations print the usage summary.
 func runWithInput(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	if len(args) == 0 || args[0] == "-h" || args[0] == "--help" || (args[0] == "help" && len(args) == 1) {
 		fmt.Fprintln(stdout, "orangecount check [--locale en|zh-CN] [--json] <entry.bean>")
@@ -96,6 +98,8 @@ func runWithInput(args []string, stdin io.Reader, stdout, stderr io.Writer) int 
 	}
 }
 
+// runHelp implements the help subcommand for a diagnostic code's causes and
+// remedies.
 func runHelp(args []string, stdout, stderr io.Writer) int {
 	args = normalizeHelpArgs(args)
 	fs := flag.NewFlagSet("help", flag.ContinueOnError)
@@ -271,6 +275,8 @@ func writeQueryResult(stdout, stderr io.Writer, value query.Result, format strin
 	return 0
 }
 
+// runCheck implements the check subcommand: parse and evaluate a ledger,
+// render diagnostics in text, locale, or JSON form.
 func runCheck(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("check", flag.ContinueOnError)
 	fs.SetOutput(stderr)
@@ -462,6 +468,9 @@ func startServeLoop(ctx context.Context, store *snapshot.Store, roots source.Doc
 	}
 }
 
+// resolvePortConflict handles a busy serve address: it lists the owning
+// processes and, when input is available, asks whether to close them; true
+// means the port was freed and serving should retry.
 func resolvePortConflict(addr string, stdin io.Reader, stderr io.Writer) (bool, error) {
 	owners, err := portOwnersAt(addr)
 	_, port, splitErr := net.SplitHostPort(addr)
