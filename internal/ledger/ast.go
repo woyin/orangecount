@@ -309,11 +309,19 @@ type Dialect struct {
 	Tags         []string
 	Links        []string
 	// Investment legs carry a securities quantity with a cost batch instead
-	// of (or alongside) a plain cash amount.
+	// of (or alongside) a plain cash amount. A leg with a Price is a sell:
+	// the source endpoint is the securities account, the destination receives
+	// the cash, and an optional gain endpoint receives the residual (realized
+	// P&L) as an elided posting. A fee suffix adds an explicit expense posting.
 	HasQuantity bool
 	Quantity    Number
 	Security    string
 	Cost        *CostSpec
+	Price       *PriceSpec
+	GainRef     string
+	FeeAmount   Number
+	FeeCurrency string
+	FeeRef      string
 }
 
 // Kind implements Directive.

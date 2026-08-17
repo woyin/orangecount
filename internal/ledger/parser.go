@@ -6,6 +6,7 @@
 package ledger
 
 import (
+	"fmt"
 	"math/big"
 	"reflect"
 	"strconv"
@@ -828,26 +829,114 @@ func (p *parser) parseDialectLeg(ln line, ts []token) {
 		return
 	}
 	d.DestRef = dest
-	if afterDest != len(ts) {
-		p.add("E-DIALECT-SYNTAX", diagnostic.Error, ts[afterDest].span)
+	cursor, ok := p.dialectLegTail(ts, afterDest, &d)
+	if !ok {
+		return
+	}
+	if cursor != len(ts) {
+		p.add("E-DIALECT-SYNTAX", diagnostic.Error, ts[cursor].span)
 		return
 	}
 	// A leg stays dateless; Expand pairs it with its header transaction.
 	p.appendDirective(d)
 }
 
-// isInvestmentHead reports whether the leg's head is the investment shape:
-// an optional number (quantity), a security word, then an opening brace;
-// or an explicit amount + currency, a security word, then an opening brace.
+// dialectLegTail parses the optional leg tail after the destination: a
+// sell's gain endpoint ("-> @account", receiving the realized P&L as an
+// elided posting) and the fee suffix ("手续费 AMOUNT CURRENCY @account").
+func (p *parser) dialectLegTail(ts []token, idx int, d *Dialect) (int, bool) {
+	cursor := idx
+	if cursor+1 < len(ts) && ts[cursor].kind == tokWord && ts[cursor].text == "->" && ts[cursor+1].text == "@" {
+		gain, afterGain, ok := p.dialectEndpoint(ts, cursor+1, "gain")
+		if !ok {
+			return cursor, false
+		}
+		d.GainRef = gain
+		cursor = afterGain
+	}
+	if cursor < len(ts) && ts[cursor].kind == tokWord && ts[cursor].text == "手续费" {
+		fee, afterFee, ok := p.dialectFee(ts, cursor)
+		if !ok {
+			return cursor, false
+		}
+		d.FeeAmount, d.FeeCurrency, d.FeeRef = fee.amount, fee.currency, fee.ref
+		cursor = afterFee
+	}
+	return cursor, true
+}
+
+// dialectFee parses the fee suffix "手续费 AMOUNT CURRENCY @account" at
+// ts[idx] (the 手续费 word).
+func (p *parser) dialectFee(ts []token, idx int) (fee struct {
+	amount   Number
+	currency string
+	ref      string
+}, next int, ok bool) {
+	amount := tryNumber(ts[idx+1])
+	if amount.Raw == "" || (amount.Rat != nil && amount.Rat.Sign() < 0) {
+		p.add("E-DIALECT-AMOUNT", diagnostic.Error, ts[idx+1].span)
+		return fee, idx, false
+	}
+	fee.amount = amount
+	cursor := idx + 2
+	if cursor >= len(ts) || ts[cursor].kind != tokWord || !isCurrencyWord(ts[cursor].text) {
+		p.addf("E-DIALECT-CURRENCY", diagnostic.Error, ts[idx+1].span, "fee needs an explicit currency")
+		return fee, idx, false
+	}
+	fee.currency = ts[cursor].text
+	ref, afterRef, ok := p.dialectEndpoint(ts, cursor+1, "fee")
+	if !ok {
+		return fee, idx, false
+	}
+	fee.ref = ref
+	return fee, afterRef, true
+}
+
+// isInvestmentHead reports whether the leg's head is the investment shape;
+// see investmentHeadShape for the recognized forms.
 func isInvestmentHead(ts []token) bool {
-	if len(ts) >= 3 && looksAmountWord(ts[0].text) && ts[1].kind == tokWord && ts[2].text == "{" {
-		return true
+	return investmentHeadShape(ts).start != -1
+}
+
+// investmentShape identifies the investment head forms. The position of the
+// cost brace disambiguates them, so ticker symbols without digits (AAPL)
+// never read as currencies:
+//
+//	QUANTITY SECURITY {COST}                 start 1 (buy, explicit qty)
+//	AMOUNT CURRENCY SECURITY {COST}          start 2 (buy, auto qty)
+//	AMOUNT CURRENCY QUANTITY SECURITY {COST} start 3 (sell, explicit cash)
+//	SECURITY {COST}                          start 0 (underdetermined)
+//
+// start is the index of the security word; -1 means not an investment head.
+// The sell form without leading cash (QUANTITY SECURITY {COST} @ PRICE ...)
+// shares the first shape; the price after the cost batch marks it.
+type investmentShape struct {
+	start     int
+	hasAmount bool
+}
+
+func investmentHeadShape(ts []token) investmentShape {
+	switch {
+	case len(ts) >= 2 && ts[0].kind == tokWord && ts[1].text == "{":
+		return investmentShape{start: 0}
+	case quantitySecurityHead(ts):
+		return investmentShape{start: 1}
+	case amountCurrencyPrefix(ts) && len(ts) >= 4 && ts[2].kind == tokWord && ts[3].text == "{":
+		return investmentShape{start: 2, hasAmount: true}
+	case amountCurrencyPrefix(ts) && len(ts) >= 5 && looksAmountWord(ts[2].text) && ts[3].kind == tokWord && ts[4].text == "{":
+		return investmentShape{start: 3, hasAmount: true}
 	}
-	// amount + currency + security + {COST}
-	if len(ts) >= 4 && looksAmountWord(ts[0].text) && isCurrencyWord(ts[1].text) && ts[2].kind == tokWord && ts[3].text == "{" {
-		return true
-	}
-	return len(ts) >= 2 && ts[0].kind == tokWord && ts[1].text == "{"
+	return investmentShape{start: -1}
+}
+
+// quantitySecurityHead reports whether ts starts with "QUANTITY SECURITY {".
+func quantitySecurityHead(ts []token) bool {
+	return len(ts) >= 3 && looksAmountWord(ts[0].text) && ts[1].kind == tokWord && ts[2].text == "{"
+}
+
+// amountCurrencyPrefix reports whether ts starts with "AMOUNT CURRENCY".
+func amountCurrencyPrefix(ts []token) bool {
+	return len(ts) >= 2 && looksAmountWord(ts[0].text) && isCurrencyWord(ts[1].text)
 }
 
 // isCurrencyWord reports whether text is plausibly a currency symbol (an
@@ -863,29 +952,49 @@ func isAccountWord(text string) bool {
 	return text[0] >= 'A' && text[0] <= 'Z'
 }
 
-// dialectSecurity parses the investment leg head. Three shapes:
-//   - "QUANTITY SECURITY {COST}"       (explicit quantity, cash derived)
-//   - "AMOUNT CURRENCY SECURITY {COST}" (explicit cash, quantity derived)
-//   - "SECURITY {COST}"                 (underdetermined; compile errors)
+// dialectSecurity parses the investment leg head. Shapes:
+//   - "QUANTITY SECURITY {COST} [@ PRICE]"        buy or sell (explicit qty)
+//   - "AMOUNT CURRENCY SECURITY {COST}"          buy, auto quantity
+//   - "AMOUNT CURRENCY QUANTITY SECURITY {COST} [@ PRICE]"  sell, explicit cash
+//   - "SECURITY {COST}"                          underdetermined; errors later
 //
-// The cost follows beancount's own posting grammar.
+// The cost follows beancount's own posting grammar. A "@ NUMBER CURRENCY"
+// after the cost batch is the sale price and marks a sell leg.
 func (p *parser) dialectSecurity(ts []token, idx *int, d *Dialect) bool {
-	start := 0
-	if number := tryNumber(ts[0]); number.Raw != "" {
-		if len(ts) >= 2 && isCurrencyWord(ts[1].text) && len(ts) >= 4 && ts[3].text == "{" && ts[2].kind == tokWord {
-			// AMOUNT CURRENCY SECURITY {COST}: explicit cash, auto quantity.
-			d.Amount = number
-			d.Currency = ts[1].text
-			start = 2
-		} else {
-			// QUANTITY SECURITY {COST}: explicit quantity.
-			d.Quantity, d.HasQuantity = number, true
-			start = 1
-		}
+	shape := investmentHeadShape(ts)
+	if shape.start < 0 {
+		p.add("E-DIALECT-SECURITY", diagnostic.Error, ts[0].span)
+		return false
 	}
-	d.Security = ts[start].text
-	cost, next := p.cost(ts, start+1)
+	if shape.hasAmount {
+		d.Amount = tryNumber(ts[0])
+		d.Currency = ts[1].text
+	}
+	switch shape.start {
+	case 1:
+		d.Quantity, d.HasQuantity = tryNumber(ts[0]), true
+	case 3:
+		d.Quantity, d.HasQuantity = tryNumber(ts[2]), true
+	}
+	d.Security = ts[shape.start].text
+	cost, next := p.cost(ts, shape.start+1)
 	d.Cost = &cost
+	if next+1 < len(ts) && ts[next].kind == tokPunct && ts[next].text == "@" && looksAmountWord(ts[next+1].text) {
+		// "@ NUMBER CURRENCY" sale price marks a sell leg. The currency is
+		// required: this ledger runs two operating currencies.
+		price := tryNumber(ts[next+1])
+		if price.Raw == "" {
+			p.add("E-DIALECT-SECURITY", diagnostic.Error, ts[next+1].span)
+			return false
+		}
+		cursor := next + 2
+		if cursor >= len(ts) || ts[cursor].kind != tokWord || !isCurrencyWord(ts[cursor].text) {
+			p.addf("E-DIALECT-SECURITY", diagnostic.Error, ts[next+1].span, "sale price needs an explicit currency")
+			return false
+		}
+		d.Price = &PriceSpec{At: ts[next].span, Amount: Amount{Number: price, Currency: ts[cursor].text, At: ts[next+1].span}}
+		next = cursor + 1
+	}
 	*idx = next
 	return true
 }
@@ -1319,5 +1428,11 @@ func extendDirective(base *DirectiveBase, span source.Span, file *source.SourceF
 
 func (p *parser) add(code string, sev diagnostic.Severity, span source.Span) {
 	d := diagnostic.New(code, sev, span).WithPath(p.file.Path)
+	p.bag.Add(d)
+}
+
+// addf is add with a formatted message.
+func (p *parser) addf(code string, sev diagnostic.Severity, span source.Span, format string, args ...any) {
+	d := diagnostic.New(code, sev, span, fmt.Sprintf(format, args...)).WithPath(p.file.Path)
 	p.bag.Add(d)
 }

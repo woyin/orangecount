@@ -49,7 +49,22 @@ AMOUNT CURRENCY SECURITY {COST} @cash -> @securities  explicit cash, auto quanti
 - The cost batch follows beancount's own posting grammar (`{1.5010 CNY}`), so compiled output reads exactly like hand-written v3.
 - Explicit-quantity legs derive the cash side as quantity × unit cost; explicit-cash legs leave the securities quantity empty and let the evaluator infer the share count (1000 ÷ 1.5010), matching how the ledger already records fund buys.
 - The leg's cash currency falls back to the cost's currency (a stock bought in CNY carries CNY even with two operating currencies), then the single operating currency.
-- Dialectize converts a two-posting buy (cash + securities with cost) into a buy leg; buys with fee legs, parens in the narration, or empty cash remain standard v3. 87 of 88 clean buys in the reference ledger convert; the remaining shapes are the honest filter boundary.
+- Dialectize converts a two-posting buy (cash + securities with cost) into a buy leg. A fee suffix (`手续费 AMOUNT CURRENCY @account`) extends buys and sells with an explicit expense posting: with no explicit amount the cash posting stays elided so the residual absorbs cost plus fee, exactly how the ledger records stock buys.
+
+## Sells, bonus shares, and the narration gate
+
+A sell is an investment leg with a sale price after the cost batch:
+
+```
+[CASH CURRENCY] QUANTITY SECURITY {COST} @ PRICE CURRENCY @securities -> @cash [-> @gain] [手续费 FEE CURRENCY @fee]
+```
+
+- The price (`@ 21.46 CNY`) marks the sell: the source endpoint posts the securities reduction (empty `{}` matches FIFO lots), the destination receives the cash — explicit when written (the ledger records both gross and net-of-fee conventions; the leg preserves whichever was written), elided to absorb the residual otherwise.
+- The optional gain endpoint (`-> @Income:…`) receives the realized P&L as an elided posting, mirroring how the ledger books sells. A gain endpoint requires explicit cash (two elided postings cannot balance).
+- A bonus share (红股) is a buy whose source is the income account: `240 STOCKA_300059 {37.62 CNY} @Income:Passive:投资收益 -> @持股`.
+- Investment headers quote the narration, so lexer-significant characters (the `(QDII)A` fund names) convert; only the bare single-line form still requires reparse-safe narration.
+
+In the reference ledger 286 of 290 investment transactions convert (286 fund/stock buys including fee buys and bonus shares, all 11 sells in both cash conventions); the four remaining legs are one multi-asset collectible purchase that no single leg can express.
 
 Two property tests lock round-trip safety mechanically: for any v3 ledger, `dialectize` then `export` must build a snapshot with identical account balances to the original; and re-running the round trip must reach a fixpoint (the second export is byte-stable). Layout of converted lines is rewritten, which forfeits git blame for those lines; accepted for the experiment.
 

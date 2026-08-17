@@ -58,10 +58,14 @@ func transactionOf(directive ledger.Directive) (*ledger.Transaction, bool) {
 	}
 }
 
-// eligibleForDialect applies the ADR-0045 conversion filter: two postings,
-// opposite signed equal-magnitude amounts in one currency, no cost, price,
-// posting flag, or metadata on either leg, no transaction metadata, flag *
-// or !, and a non-empty reparse-safe narration and payee.
+// eligibleForDialect applies the ADR-0045 conversion filter: two or more
+// postings forming one source with many destinations or vice versa, no
+// cost, price, posting flag, or metadata on plain legs, no transaction
+// metadata, flag * or !, and a non-empty narration and payee. Investment
+// buys and sells are recognized structurally and always convert: their
+// headers quote the narration, so lexer-significant characters such as
+// parentheses are safe. Only the bare single-line form requires
+// reparse-safe text.
 func eligibleForDialect(txn *ledger.Transaction) bool {
 	if !txn.Date.Valid() {
 		return false
@@ -76,63 +80,182 @@ func eligibleForDialect(txn *ledger.Transaction) bool {
 		// An empty narration would be re-materialized as the 消费 default.
 		return false
 	}
-	if !textIsReparseSafe(txn.Narration) || !textIsReparseSafe(txn.Payee) {
-		return false
-	}
-	if buy := investmentBuyLegs(txn.Postings); buy != nil {
-		// A cash leg plus a securities leg with a cost batch is a buy.
+	if classifyInvestment(txn.Postings) != nil {
 		return true
 	}
 	negative, positive, balanced := plainLegShape(txn.Postings)
-	// A dialect block expresses one source with many destinations, or many
-	// sources with one destination.
-	return balanced && (negative == 1 || positive == 1)
+	if !balanced || (negative != 1 && positive != 1) {
+		return false
+	}
+	if negative+positive == 2 {
+		// The single-line form leaves narration and payee unquoted.
+		return textIsReparseSafe(txn.Narration) && textIsReparseSafe(txn.Payee)
+	}
+	// Block headers quote narration and payee.
+	return true
 }
 
-// investmentBuyLegs recognizes the buy shape: exactly two postings, one
-// cash leg (a plain operating-currency amount) and one securities leg (units
-// in a non-operating currency with a cost batch). The securities quantity
-// may be empty, in which case the cash side drives it. It returns the
-// securities posting on success.
-func investmentBuyLegs(postings []ledger.Posting) *ledger.Posting {
-	if len(postings) != 2 {
-		return nil
-	}
-	cash, securities := splitBuyPostings(postings)
-	if cash == nil || securities == nil {
-		return nil
-	}
-	// The securities units currency must differ from the cash currency (it
-	// is a lot, not money), and the cash side must be a plain amount.
-	if securities.Units.Currency == cash.Units.Currency || !plainAmountLeg(*cash) {
-		return nil
-	}
-	if !buyCashMatchesCost(*cash, *securities) {
-		return nil
-	}
-	return securities
+// investmentTxn classifies the postings of an investment transaction:
+// securities lot, cash leg, optional fee, optional elided gain.
+type investmentTxn struct {
+	cash       *ledger.Posting
+	securities *ledger.Posting
+	fee        *ledger.Posting
+	gain       *ledger.Posting
 }
 
-// splitBuyPostings separates the two postings of a buy into the cash leg
-// (no cost) and the securities leg (with cost).
-func splitBuyPostings(postings []ledger.Posting) (cash, securities *ledger.Posting) {
+// sell reports whether the classified transaction is a sale (securities
+// reduction at a price).
+func (inv *investmentTxn) sell() bool {
+	return inv.securities != nil && inv.securities.Price != nil
+}
+
+// classifyInvestment recognizes the investment shapes the dialect can
+// express. The loop sorts postings into a securities lot, an elided gain or
+// cash leg, and explicit plain legs (cash or fee by account prefix); the
+// shape validators then decide whether the mixture converts.
+func classifyInvestment(postings []ledger.Posting) *investmentTxn {
+	var inv investmentTxn
+	var plains []*ledger.Posting
 	for i := range postings {
 		p := &postings[i]
-		if p.Cost != nil && p.Units != nil && p.Units.Currency != "" {
-			if securities != nil {
-				return nil, nil
+		switch {
+		case isSecuritiesLeg(p):
+			if inv.securities != nil {
+				return nil
 			}
-			securities = p
-			continue
-		}
-		if p.Units != nil && p.Cost == nil && p.Price == nil && p.Units.Currency != "" {
-			if cash != nil {
-				return nil, nil
+			inv.securities = p
+		case p.Units == nil:
+			if !assignElidedLeg(&inv, p) {
+				return nil
 			}
-			cash = p
+		case plainAmountLeg(*p):
+			plains = append(plains, p)
+		default:
+			return nil
 		}
 	}
-	return cash, securities
+	if inv.securities == nil {
+		return nil
+	}
+	for _, p := range plains {
+		if !assignPlainLeg(&inv, p) {
+			return nil
+		}
+	}
+	if inv.sell() {
+		if validSell(&inv) {
+			return &inv
+		}
+		return nil
+	}
+	if validBuy(&inv) {
+		return &inv
+	}
+	return nil
+}
+
+// isSecuritiesLeg reports whether the posting is the securities lot: units
+// in a lot currency with a cost batch (and a price marking a reduction).
+func isSecuritiesLeg(p *ledger.Posting) bool {
+	if p.Cost == nil || p.Units == nil || p.Units.Currency == "" {
+		return false
+	}
+	if p.Price != nil {
+		return p.Units.Number.Rat != nil && p.Units.Number.Rat.Sign() < 0
+	}
+	return true
+}
+
+// assignElidedLeg files a nil-units posting as the gain (Income accounts)
+// or the elided cash. It reports false on duplicates.
+func assignElidedLeg(inv *investmentTxn, p *ledger.Posting) bool {
+	if strings.HasPrefix(p.Account, "Income:") {
+		if inv.gain != nil {
+			return false
+		}
+		inv.gain = p
+		return true
+	}
+	if inv.cash != nil {
+		return false
+	}
+	inv.cash = p
+	return true
+}
+
+// assignPlainLeg files an explicit plain posting as the fee (Expenses
+// accounts, positive) or the cash. It reports false on duplicates or an
+// invalid fee.
+func assignPlainLeg(inv *investmentTxn, p *ledger.Posting) bool {
+	if strings.HasPrefix(p.Account, "Expenses:") {
+		if inv.fee != nil || p.Units.Number.Rat.Sign() <= 0 {
+			return false
+		}
+		inv.fee = p
+		return true
+	}
+	if inv.cash != nil {
+		return false
+	}
+	inv.cash = p
+	return true
+}
+
+// validBuy reports whether a buy shape converts: cash negative or elided;
+// with a fee the cash may be elided (derived) or explicit (amount form,
+// which needs an explicit quantity); a bonus share has an elided income
+// source instead of cash; the clean shape needs cash = quantity × cost.
+func validBuy(inv *investmentTxn) bool {
+	if inv.fee != nil {
+		return validFeeBuy(inv)
+	}
+	if inv.gain != nil {
+		return inv.cash == nil && inv.securities.Units.Number.Rat != nil
+	}
+	switch {
+	case inv.cash == nil:
+		return false
+	case inv.cash.Units == nil:
+		return true // elided cash: the derived form
+	case inv.cash.Units.Number.Rat.Sign() >= 0:
+		return false
+	case inv.securities.Units.Currency == inv.cash.Units.Currency:
+		return false
+	default:
+		return buyCashMatchesCost(*inv.cash, *inv.securities)
+	}
+}
+
+// validFeeBuy reports whether a buy with a fee converts.
+func validFeeBuy(inv *investmentTxn) bool {
+	if inv.gain != nil {
+		return false
+	}
+	if inv.cash == nil || inv.cash.Units == nil {
+		// Elided cash: the leg derives cost plus fee from the residual.
+		return inv.cash != nil
+	}
+	// Explicit cash: the amount form requires an explicit quantity and a
+	// negative cash leg.
+	return inv.securities.Units.Number.Rat != nil && inv.cash.Units.Number.Rat.Sign() < 0
+}
+
+// validSell reports whether a sell shape converts: explicit cash (positive)
+// may pair with an elided gain; elided cash needs the fee to balance; a
+// gain with elided cash cannot compile (two elided postings).
+func validSell(inv *investmentTxn) bool {
+	cashElided := inv.cash != nil && inv.cash.Units == nil
+	if inv.cash != nil && !cashElided && inv.cash.Units.Number.Rat.Sign() <= 0 {
+		return false
+	}
+	if inv.gain != nil && (inv.cash == nil || cashElided) {
+		return false
+	}
+	if inv.cash == nil {
+		return false
+	}
+	return !cashElided || inv.fee != nil
 }
 
 // buyCashMatchesCost reports whether the cash posting equals quantity × the

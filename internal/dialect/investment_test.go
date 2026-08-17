@@ -59,3 +59,152 @@ option "operating_currency" "CNY"
 	exported := exportFile(t, block)
 	assertBalancesEqual(t, original, exported)
 }
+
+// TestInvestmentSellRoundTrip locks both sell shapes: explicit cash with an
+// elided gain (shape A) and elided cash with a fee (shape B).
+func TestInvestmentSellRoundTrip(t *testing.T) {
+	v3 := `2000-01-01 open Assets:华泰现金 CNY
+2000-01-01 open Assets:华泰持股 "FIFO"
+2000-01-01 open Expenses:Fees:交易费用 CNY
+2000-01-01 open Income:Passive:投资收益
+option "operating_currency" "CNY"
+
+2022-08-03 * "我" "卖出东方财富2200股" #stock-investment
+  Assets:华泰现金  47212.00 CNY
+  Assets:华泰持股      -2200 STOCKA_300059 {} @ 21.46 CNY
+  Expenses:Fees:交易费用               55.23 CNY
+  Income:Passive:投资收益
+
+2025-11-13 * "我" "卖出豫光金铅2000股" #stock-investment
+  Assets:华泰现金  
+  Assets:华泰持股      -2000 STOCKA_600531 {} @12.60 CNY
+  Expenses:Fees:交易费用                6.39 CNY
+`
+	original := writeFile(t, "sell.bean", v3)
+	dialectVersion := dialectizeFile(t, original)
+	text := readFile(t, dialectVersion)
+	t.Logf("dialectized:\n%s", text)
+	if !strings.Contains(text, "-> @Income:Passive:投资收益 手续费 55.23 CNY @Expenses:Fees:交易费用") {
+		t.Fatalf("sell leg with gain and fee missing:\n%s", text)
+	}
+	if !strings.Contains(text, "-2000 STOCKA_600531 {} @ 12.60 CNY") && !strings.Contains(text, "2000 STOCKA_600531 {} @ 12.60 CNY") {
+		t.Fatalf("elided-cash sell leg missing:\n%s", text)
+	}
+	exported := exportFile(t, dialectVersion)
+	assertBalancesEqual(t, original, exported)
+}
+
+// TestInvestmentFeeBuyRoundTrip locks the buy-with-fee shape: elided cash
+// absorbs quantity × unit cost plus the fee.
+func TestInvestmentFeeBuyRoundTrip(t *testing.T) {
+	v3 := `2000-01-01 open Assets:华泰现金 CNY
+2000-01-01 open Assets:华泰持股 "FIFO"
+2000-01-01 open Expenses:Fees:交易费用 CNY
+option "operating_currency" "CNY"
+
+2021-03-01 * "我" "购买东方财富500股" #stock-investment
+  Assets:华泰现金  
+  Assets:华泰持股        500 STOCKA_300059 {31.12 CNY}
+  Expenses:Fees:交易费用                5.31 CNY
+`
+	original := writeFile(t, "feebuy.bean", v3)
+	dialectVersion := dialectizeFile(t, original)
+	text := readFile(t, dialectVersion)
+	t.Logf("dialectized:\n%s", text)
+	if !strings.Contains(text, "500 STOCKA_300059 {31.12 CNY} @Assets:华泰现金 -> @Assets:华泰持股 手续费 5.31 CNY @Expenses:Fees:交易费用") {
+		t.Fatalf("fee buy leg missing:\n%s", text)
+	}
+	exported := exportFile(t, dialectVersion)
+	assertBalancesEqual(t, original, exported)
+}
+
+// TestInvestmentParenNarrationRoundTrip locks the relaxed narration gate:
+// investment headers quote the narration, so lexer-significant characters
+// like parentheses convert.
+func TestInvestmentParenNarrationRoundTrip(t *testing.T) {
+	v3 := `2000-01-01 open Assets:小金库 CNY
+2000-01-01 open Assets:基金 "FIFO"
+option "operating_currency" "CNY"
+
+2025-09-15 * "我" "购买 华宝纳斯达克精选股票发起式(QDII)A" #fund-investment
+  Assets:小金库 -1000.00 CNY
+  Assets:基金 FUND_017436 {2.2364 CNY}
+`
+	original := writeFile(t, "paren.bean", v3)
+	dialectVersion := dialectizeFile(t, original)
+	text := readFile(t, dialectVersion)
+	t.Logf("dialectized:\n%s", text)
+	if !strings.Contains(text, `"购买 华宝纳斯达克精选股票发起式(QDII)A"`) {
+		t.Fatalf("paren-narration buy not converted:\n%s", text)
+	}
+	exported := exportFile(t, dialectVersion)
+	assertBalancesEqual(t, original, exported)
+}
+
+// TestInvestmentBonusShareRoundTrip locks the bonus-share shape: a
+// securities lot sourced from an elided income leg, no cash.
+func TestInvestmentBonusShareRoundTrip(t *testing.T) {
+	v3 := `2000-01-01 open Assets:华泰持股 "FIFO"
+2000-01-01 open Income:Passive:投资收益
+option "operating_currency" "CNY"
+
+2021-05-26 * "我" "东方财富红股入账240股" #stock-investment
+  Assets:华泰持股        240 STOCKA_300059 {37.62 CNY}
+  Income:Passive:投资收益
+`
+	original := writeFile(t, "bonus.bean", v3)
+	dialectVersion := dialectizeFile(t, original)
+	text := readFile(t, dialectVersion)
+	t.Logf("dialectized:\n%s", text)
+	if !strings.Contains(text, "240 STOCKA_300059 {37.62 CNY} @Income:Passive:投资收益 -> @Assets:华泰持股") {
+		t.Fatalf("bonus-share leg missing:\n%s", text)
+	}
+	exported := exportFile(t, dialectVersion)
+	assertBalancesEqual(t, original, exported)
+}
+
+// TestInvestmentElidedCashBuyRoundTrip locks the elided-cash clean buy: the
+// leg derives cash as quantity × unit cost.
+func TestInvestmentElidedCashBuyRoundTrip(t *testing.T) {
+	v3 := `2000-01-01 open Assets:华泰现金 CNY
+2000-01-01 open Assets:华泰持股 "FIFO"
+option "operating_currency" "CNY"
+
+2022-12-01 * "我" "购买杉杉股份股票2500股" #stock-investment
+  Assets:华泰现金  
+  Assets:华泰持股       2500 STOCKA_600884 {15.17 CNY}
+`
+	original := writeFile(t, "elided.bean", v3)
+	dialectVersion := dialectizeFile(t, original)
+	text := readFile(t, dialectVersion)
+	t.Logf("dialectized:\n%s", text)
+	if !strings.Contains(text, "2500 STOCKA_600884 {15.17 CNY} @Assets:华泰现金 -> @Assets:华泰持股") {
+		t.Fatalf("elided-cash buy leg missing:\n%s", text)
+	}
+	exported := exportFile(t, dialectVersion)
+	assertBalancesEqual(t, original, exported)
+}
+
+// TestInvestmentExplicitCashFeeBuyRoundTrip locks the explicit-cash
+// fee-buy: the amount form carries both cash and quantity exactly.
+func TestInvestmentExplicitCashFeeBuyRoundTrip(t *testing.T) {
+	v3 := `2000-01-01 open Assets:华泰现金 CNY
+2000-01-01 open Assets:华泰持股 "FIFO"
+2000-01-01 open Expenses:Fees:交易费用 CNY
+option "operating_currency" "CNY"
+
+2025-09-18 * "我" "购买兴业银锡股票1100股" #stock-investment
+  Assets:华泰现金  -26295.26 CNY
+  Assets:华泰持股       1100 STOCKA_000426 {23.90 CNY}
+  Expenses:Fees:交易费用                5.26 CNY
+`
+	original := writeFile(t, "explicit.bean", v3)
+	dialectVersion := dialectizeFile(t, original)
+	text := readFile(t, dialectVersion)
+	t.Logf("dialectized:\n%s", text)
+	if !strings.Contains(text, "26295.26 CNY 1100 STOCKA_000426 {23.90 CNY}") {
+		t.Fatalf("explicit-cash fee-buy leg missing:\n%s", text)
+	}
+	exported := exportFile(t, dialectVersion)
+	assertBalancesEqual(t, original, exported)
+}

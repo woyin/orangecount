@@ -81,8 +81,11 @@ func flagOrDefault(flag string) string {
 // the inverse of the parser's dialect grammar; only reparse-safe text may be
 // produced (eligible transactions are filtered before this runs).
 func SerializeDialect(txn *ledger.Transaction) string {
-	if securities := investmentBuyLegs(txn.Postings); securities != nil {
-		return serializeBuyLeg(txn, securities)
+	if inv := classifyInvestment(txn.Postings); inv != nil {
+		if inv.sell() {
+			return serializeSellLeg(txn, inv)
+		}
+		return serializeBuyLeg(txn, inv)
 	}
 	negatives, positives, ok := splitLegs(txn)
 	if !ok || len(txn.Postings) < 2 {
@@ -219,14 +222,105 @@ func writeLeg(block *strings.Builder, source, destination ledger.Posting, units 
 // @cash -> @securities"; an auto-quantity buy (empty securities quantity)
 // becomes "AMOUNT CURRENCY SECURITY {COST} @cash -> @securities" so the
 // share count is derivable from the cash side.
-func serializeBuyLeg(txn *ledger.Transaction, securities *ledger.Posting) string {
-	var cash ledger.Posting
-	for i := range txn.Postings {
-		if txn.Postings[i].Cost == nil {
-			cash = txn.Postings[i]
+func serializeBuyLeg(txn *ledger.Transaction, inv *investmentTxn) string {
+	securities := inv.securities
+	var block strings.Builder
+	writeInvestmentHeader(&block, txn)
+	block.WriteString("\n  ")
+	explicitCash := inv.cash != nil && inv.cash.Units != nil
+	switch {
+	case inv.gain != nil:
+		// Bonus share: the income account is the source.
+		block.WriteString(strings.TrimPrefix(securities.Units.Number.Raw, "+"))
+		block.WriteString(" ")
+		block.WriteString(securities.Units.Currency)
+		block.WriteString(" ")
+		block.WriteString(securities.Cost.Raw)
+		block.WriteString(" @")
+		block.WriteString(inv.gain.Account)
+		block.WriteString(" -> @")
+		block.WriteString(securities.Account)
+		return block.String()
+	case explicitCash && securities.Units.Number.Raw != "":
+		// Explicit cash and quantity (with or without fee): the amount
+		// form carries both numbers exactly as written.
+		cashAbs := absUnits(inv.cash.Units)
+		block.WriteString(cashAbs.Number.Raw)
+		block.WriteString(" ")
+		block.WriteString(cashAbs.Currency)
+		block.WriteString(" ")
+		block.WriteString(strings.TrimPrefix(securities.Units.Number.Raw, "+"))
+		block.WriteString(" ")
+	default:
+		if securities.Units.Number.Raw != "" {
+			block.WriteString(strings.TrimPrefix(securities.Units.Number.Raw, "+"))
+			block.WriteString(" ")
+		} else if explicitCash {
+			// Auto-quantity: carry the cash amount so the share count stays
+			// derivable from quantity × unit cost.
+			cashAbs := absUnits(inv.cash.Units)
+			block.WriteString(cashAbs.Number.Raw)
+			block.WriteString(" ")
+			block.WriteString(cashAbs.Currency)
+			block.WriteString(" ")
 		}
 	}
+	block.WriteString(securities.Units.Currency)
+	block.WriteString(" ")
+	block.WriteString(securities.Cost.Raw)
+	block.WriteString(" @")
+	if inv.cash != nil {
+		block.WriteString(inv.cash.Account)
+	}
+	block.WriteString(" -> @")
+	block.WriteString(securities.Account)
+	writeFeeSuffix(&block, inv)
+	return block.String()
+}
+
+// serializeSellLeg renders a sale as a single dialect leg: "[CASH CURRENCY]
+// QUANTITY SECURITY {COST} @ PRICE CURRENCY @securities -> @cash [-> @gain]
+// [手续费 FEE CURRENCY @fee]". The cash amount stays exactly as written
+// (gross or net of the fee); an elided cash leg omits it so the residual
+// reproduces the original inference.
+func serializeSellLeg(txn *ledger.Transaction, inv *investmentTxn) string {
+	securities := inv.securities
+	qty := absUnits(securities.Units)
 	var block strings.Builder
+	writeInvestmentHeader(&block, txn)
+	block.WriteString("\n  ")
+	if inv.cash != nil && inv.cash.Units != nil {
+		cashAbs := absUnits(inv.cash.Units)
+		block.WriteString(cashAbs.Number.Raw)
+		block.WriteString(" ")
+		block.WriteString(cashAbs.Currency)
+		block.WriteString(" ")
+	}
+	block.WriteString(qty.Number.Raw)
+	block.WriteString(" ")
+	block.WriteString(qty.Currency)
+	block.WriteString(" ")
+	block.WriteString(securities.Cost.Raw)
+	block.WriteString(" @ ")
+	block.WriteString(securities.Price.Amount.Number.Raw)
+	block.WriteString(" ")
+	block.WriteString(securities.Price.Amount.Currency)
+	block.WriteString(" @")
+	block.WriteString(securities.Account)
+	block.WriteString(" -> @")
+	if inv.cash != nil {
+		block.WriteString(inv.cash.Account)
+	}
+	if inv.gain != nil {
+		block.WriteString(" -> @")
+		block.WriteString(inv.gain.Account)
+	}
+	writeFeeSuffix(&block, inv)
+	return block.String()
+}
+
+// writeInvestmentHeader writes the shared quoted transaction header.
+func writeInvestmentHeader(block *strings.Builder, txn *ledger.Transaction) {
 	block.WriteString(canonicalDate(txn.Date))
 	block.WriteString(" ")
 	block.WriteString(flagOrDefault(txn.Flag))
@@ -244,27 +338,21 @@ func serializeBuyLeg(txn *ledger.Transaction, securities *ledger.Posting) string
 		block.WriteString(" ^")
 		block.WriteString(link)
 	}
-	block.WriteString("\n  ")
-	if securities.Units.Number.Raw != "" {
-		block.WriteString(strings.TrimPrefix(securities.Units.Number.Raw, "+"))
-		block.WriteString(" ")
-	} else if cash.Units != nil && cash.Units.Number.Raw != "" {
-		// Auto-quantity: carry the cash amount so the share count stays
-		// derivable from quantity × unit cost.
-		cashAbs := absUnits(cash.Units)
-		block.WriteString(cashAbs.Number.Raw)
-		block.WriteString(" ")
-		block.WriteString(cashAbs.Currency)
-		block.WriteString(" ")
+}
+
+// writeFeeSuffix appends "手续费 AMOUNT CURRENCY @account" when a fee leg
+// exists.
+func writeFeeSuffix(block *strings.Builder, inv *investmentTxn) {
+	if inv.fee == nil {
+		return
 	}
-	block.WriteString(securities.Units.Currency)
+	feeAbs := absUnits(inv.fee.Units)
+	block.WriteString(" 手续费 ")
+	block.WriteString(feeAbs.Number.Raw)
 	block.WriteString(" ")
-	block.WriteString(securities.Cost.Raw)
+	block.WriteString(feeAbs.Currency)
 	block.WriteString(" @")
-	block.WriteString(cash.Account)
-	block.WriteString(" -> @")
-	block.WriteString(securities.Account)
-	return block.String()
+	block.WriteString(inv.fee.Account)
 }
 
 func canonicalDate(date ledger.Date) string {

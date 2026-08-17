@@ -407,54 +407,20 @@ func compileBlock(idx *index, header *ledger.Transaction, legs []ledger.Dialect)
 			dstErr.Span = leg.At
 			return nil, Edit{}, append(diags, *dstErr)
 		}
-		if leg.HasQuantity {
-			// Investment leg with explicit quantity: the destination receives
-			// a securities lot with its cost batch; the source pays cash. The
-			// cash amount is the explicit one when given, otherwise quantity
-			// × unit cost.
-			sourceAmount, ok := investmentCashAmount(leg)
-			if !ok {
-				return nil, Edit{}, append(diags, diagnostic.New("E-DIALECT-SECURITY", diagnostic.Error, leg.At, "investment leg needs an explicit amount or a unit cost to derive the cash side"))
+		if leg.Price != nil {
+			postings, errDiags := compileSellLeg(idx, header, leg, currency, srcAccount, dstAccount)
+			if errDiags != nil {
+				return nil, Edit{}, append(diags, errDiags...)
 			}
-			txn.Postings = append(txn.Postings,
-				ledger.Posting{
-					At:      leg.At,
-					Raw:     leg.Raw,
-					Account: srcAccount,
-					Units:   &ledger.Amount{Number: negateNumber(sourceAmount), Currency: currency, At: leg.At},
-				},
-				ledger.Posting{
-					At:      leg.At,
-					Raw:     leg.Raw,
-					Account: dstAccount,
-					Units:   &ledger.Amount{Number: leg.Quantity, Currency: leg.Security, At: leg.At},
-					Cost:    leg.Cost,
-				},
-			)
+			txn.Postings = append(txn.Postings, postings...)
 			continue
 		}
 		if leg.Security != "" {
-			// Auto-quantity investment leg: the destination receives a
-			// securities lot whose quantity the evaluator infers from the
-			// explicit cash amount and unit cost.
-			if leg.Amount.Raw == "" {
-				return nil, Edit{}, append(diags, diagnostic.New("E-DIALECT-SECURITY", diagnostic.Error, leg.At, "auto-quantity investment leg needs an explicit cash amount"))
+			postings, errDiags := compileBuyLeg(idx, header, leg, currency, srcAccount, dstAccount)
+			if errDiags != nil {
+				return nil, Edit{}, append(diags, errDiags...)
 			}
-			txn.Postings = append(txn.Postings,
-				ledger.Posting{
-					At:      leg.At,
-					Raw:     leg.Raw,
-					Account: srcAccount,
-					Units:   &ledger.Amount{Number: negateNumber(leg.Amount), Currency: currency, At: leg.At},
-				},
-				ledger.Posting{
-					At:      leg.At,
-					Raw:     leg.Raw,
-					Account: dstAccount,
-					Units:   &ledger.Amount{Currency: leg.Security, At: leg.At},
-					Cost:    leg.Cost,
-				},
-			)
+			txn.Postings = append(txn.Postings, postings...)
 			continue
 		}
 		txn.Postings = append(txn.Postings,
@@ -475,6 +441,118 @@ func compileBlock(idx *index, header *ledger.Transaction, legs []ledger.Dialect)
 	txn.Postings = mergePostings(txn.Postings)
 	span := source.Span{Start: header.At.Start, End: legs[len(legs)-1].At.End}
 	return txn, Edit{Span: span, Text: SerializeTransaction(txn)}, diags
+}
+
+// compileBuyLeg builds the postings for one buy leg. With a fee suffix and
+// no explicit amount the cash posting stays elided so the residual absorbs
+// quantity × unit cost plus fee, matching how the ledger records stock
+// buys. Otherwise the source pays the explicit amount or the derived
+// quantity × unit cost (a bonus-share source pays from an income account).
+// The auto-quantity form leaves the securities quantity empty for the
+// evaluator to infer from the explicit cash amount.
+func compileBuyLeg(idx *index, header *ledger.Transaction, leg ledger.Dialect, currency, srcAccount, dstAccount string) ([]ledger.Posting, []diagnostic.Diagnostic) {
+	if leg.FeeAmount.Raw != "" && leg.Amount.Raw == "" {
+		postings := []ledger.Posting{
+			{At: leg.At, Raw: leg.Raw, Account: srcAccount},
+			{At: leg.At, Raw: leg.Raw, Account: dstAccount, Units: &ledger.Amount{Number: leg.Quantity, Currency: leg.Security, At: leg.At}, Cost: leg.Cost},
+		}
+		return appendFeePosting(postings, idx, leg, header.Date)
+	}
+	if !leg.HasQuantity {
+		if leg.Amount.Raw == "" {
+			return nil, []diagnostic.Diagnostic{diagnostic.New("E-DIALECT-SECURITY", diagnostic.Error, leg.At, "auto-quantity investment leg needs an explicit cash amount")}
+		}
+		return []ledger.Posting{
+			{At: leg.At, Raw: leg.Raw, Account: srcAccount, Units: &ledger.Amount{Number: negateNumber(leg.Amount), Currency: currency, At: leg.At}},
+			{At: leg.At, Raw: leg.Raw, Account: dstAccount, Units: &ledger.Amount{Currency: leg.Security, At: leg.At}, Cost: leg.Cost},
+		}, nil
+	}
+	sourceAmount, ok := investmentCashAmount(leg)
+	if !ok {
+		return nil, []diagnostic.Diagnostic{diagnostic.New("E-DIALECT-SECURITY", diagnostic.Error, leg.At, "investment leg needs an explicit amount or a unit cost to derive the cash side")}
+	}
+	postings := []ledger.Posting{
+		{At: leg.At, Raw: leg.Raw, Account: srcAccount, Units: &ledger.Amount{Number: negateNumber(sourceAmount), Currency: currency, At: leg.At}},
+		{At: leg.At, Raw: leg.Raw, Account: dstAccount, Units: &ledger.Amount{Number: leg.Quantity, Currency: leg.Security, At: leg.At}, Cost: leg.Cost},
+	}
+	return appendFeePosting(postings, idx, leg, header.Date)
+}
+
+// appendFeePosting appends the leg's resolved fee expense posting, or
+// returns a diagnostic when a suffix is present but unresolved.
+func appendFeePosting(postings []ledger.Posting, idx *index, leg ledger.Dialect, date ledger.Date) ([]ledger.Posting, []diagnostic.Diagnostic) {
+	fee, ok := legFeePosting(idx, leg, date)
+	if !ok {
+		return nil, []diagnostic.Diagnostic{diagnostic.New("E-DIALECT-ACCOUNT", diagnostic.Error, leg.At, "fee endpoint %q is unknown", leg.FeeRef)}
+	}
+	if fee != nil {
+		postings = append(postings, *fee)
+	}
+	return postings, nil
+}
+
+// compileSellLeg builds the postings for one sell leg: the securities
+// reduction at the sale price (source endpoint), the cash side (explicit or
+// elided to absorb the residual), the elided gain posting, and the fee.
+func compileSellLeg(idx *index, header *ledger.Transaction, leg ledger.Dialect, currency, srcAccount, dstAccount string) ([]ledger.Posting, []diagnostic.Diagnostic) {
+	if !leg.HasQuantity {
+		return nil, []diagnostic.Diagnostic{diagnostic.New("E-DIALECT-SECURITY", diagnostic.Error, leg.At, "sell leg needs an explicit quantity")}
+	}
+	if leg.Amount.Raw == "" && leg.GainRef == "" && leg.FeeAmount.Raw == "" {
+		return nil, []diagnostic.Diagnostic{diagnostic.New("E-DIALECT-SECURITY", diagnostic.Error, leg.At, "sell leg needs an explicit amount, a gain endpoint, or a fee to balance")}
+	}
+	if leg.Amount.Raw == "" && leg.GainRef != "" {
+		return nil, []diagnostic.Diagnostic{diagnostic.New("E-DIALECT-SECURITY", diagnostic.Error, leg.At, "sell leg with a gain endpoint needs an explicit cash amount")}
+	}
+	var postings []ledger.Posting
+	if leg.Amount.Raw != "" {
+		postings = append(postings, ledger.Posting{At: leg.At, Raw: leg.Raw, Account: dstAccount, Units: &ledger.Amount{Number: leg.Amount, Currency: currency, At: leg.At}})
+	} else {
+		postings = append(postings, ledger.Posting{At: leg.At, Raw: leg.Raw, Account: dstAccount})
+	}
+	postings = append(postings, ledger.Posting{
+		At:      leg.At,
+		Raw:     leg.Raw,
+		Account: srcAccount,
+		Units:   &ledger.Amount{Number: negateNumber(leg.Quantity), Currency: leg.Security, At: leg.At},
+		Cost:    leg.Cost,
+		Price:   leg.Price,
+	})
+	if leg.GainRef != "" {
+		gainAccount, gainErr := resolveEndpoint(idx, leg.GainRef, header.Date)
+		if gainErr != nil {
+			gainErr.Span = leg.At
+			return nil, []diagnostic.Diagnostic{*gainErr}
+		}
+		postings = append(postings, ledger.Posting{At: leg.At, Raw: leg.Raw, Account: gainAccount})
+	}
+	fee, ok := legFeePosting(idx, leg, header.Date)
+	if !ok {
+		return nil, []diagnostic.Diagnostic{diagnostic.New("E-DIALECT-ACCOUNT", diagnostic.Error, leg.At, "fee endpoint %q is unknown", leg.FeeRef)}
+	}
+	if fee != nil {
+		postings = append(postings, *fee)
+	}
+	return postings, nil
+}
+
+// legFeePosting resolves and builds the explicit fee expense posting from a
+// leg's fee suffix. It returns nil with ok=true when no suffix is present,
+// and ok=false when a suffix is present but the endpoint does not resolve.
+func legFeePosting(idx *index, leg ledger.Dialect, date ledger.Date) (*ledger.Posting, bool) {
+	if leg.FeeAmount.Raw == "" {
+		return nil, true
+	}
+	account, err := resolveEndpoint(idx, leg.FeeRef, date)
+	if err != nil {
+		return nil, false
+	}
+	return &ledger.Posting{
+		At:      leg.At,
+		Raw:     leg.Raw,
+		Account: account,
+		Units:   &ledger.Amount{Number: leg.FeeAmount, Currency: leg.FeeCurrency, At: leg.At},
+	}, true
 }
 
 // investmentCashAmount returns the cash side of an investment leg: the
@@ -502,8 +580,9 @@ func investmentCashAmount(leg ledger.Dialect) (ledger.Number, bool) {
 
 // legCurrency resolves a leg's cash currency: explicit currency first, then
 // an investment cost's amount currency (so a stock bought in CNY carries
-// CNY even with two operating currencies), then the single operating
-// currency.
+// CNY even with two operating currencies), then the sale price and fee
+// currencies (an elided-cash sell carries its currency only there), then
+// the single operating currency.
 func legCurrency(idx *index, leg ledger.Dialect) string {
 	if leg.Currency != "" {
 		return leg.Currency
@@ -514,6 +593,12 @@ func legCurrency(idx *index, leg ledger.Dialect) string {
 				return value.Amount.Currency
 			}
 		}
+	}
+	if leg.Price != nil && leg.Price.Amount.Currency != "" {
+		return leg.Price.Amount.Currency
+	}
+	if leg.FeeCurrency != "" {
+		return leg.FeeCurrency
 	}
 	return idx.opCurrency
 }
