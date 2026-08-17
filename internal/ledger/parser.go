@@ -349,6 +349,14 @@ func (p *parser) parseContinuation(ln line, ts []token) {
 		p.add("E-PARSE-EXPECTED", diagnostic.Error, ts[0].span)
 		return
 	}
+	// A dialect leg inside a transaction block: an amount-first indented
+	// line after a transaction header. It carries no date of its own; the
+	// header owns date/flag/payee/narration/tags. Standard postings are
+	// always account-first, so the shape is unambiguous.
+	if isDialectStart(ts) {
+		p.parseDialectLeg(ln, ts)
+		return
+	}
 	posting, ok := p.parsePosting(ts)
 	if !ok {
 		return
@@ -767,6 +775,50 @@ func (p *parser) parseDialectLine(ln line, ts []token) {
 		}
 		d.Date, d.Anchored = *p.dialectAnchor, true
 	}
+	p.appendDirective(d)
+}
+
+// parseDialectLeg parses one indented leg of a dialect block: a positive
+// amount, optional currency, and "@src -> @dst" endpoints. The transaction
+// header owns date, flag, payee, narration, and tags; a leg only adds money
+// movement. Legs never take payee/narration/tags of their own.
+func (p *parser) parseDialectLeg(ln line, ts []token) {
+	d := Dialect{DirectiveBase: p.base(ts), Flag: "*"}
+	if p.posting != nil {
+		p.add("E-DIALECT-LEG-ORDER", diagnostic.Error, d.At)
+		return
+	}
+	if len(p.tx.Postings) > 0 {
+		p.add("E-DIALECT-LEG-ORDER", diagnostic.Error, d.At)
+		return
+	}
+	next, ok := p.dialectAmount(ts, &d)
+	if !ok {
+		return
+	}
+	source, afterSource, ok := p.dialectEndpoint(ts, next, "source")
+	if !ok {
+		return
+	}
+	d.SourceRef = source
+	if afterSource >= len(ts) || ts[afterSource].kind != tokWord || ts[afterSource].text != "->" {
+		span := ts[len(ts)-1].span
+		if afterSource < len(ts) {
+			span = ts[afterSource].span
+		}
+		p.add("E-DIALECT-ARROW", diagnostic.Error, span)
+		return
+	}
+	dest, afterDest, ok := p.dialectEndpoint(ts, afterSource+1, "destination")
+	if !ok {
+		return
+	}
+	d.DestRef = dest
+	if afterDest != len(ts) {
+		p.add("E-DIALECT-SYNTAX", diagnostic.Error, ts[afterDest].span)
+		return
+	}
+	// A leg stays dateless; Expand pairs it with its header transaction.
 	p.appendDirective(d)
 }
 

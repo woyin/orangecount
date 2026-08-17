@@ -191,15 +191,24 @@ func TestDialectizeFilterPreservesIneligibleByteForByte(t *testing.T) {
 	rewritten := readFile(t, dialectizeFile(t, original))
 
 	mustContain := []string{
-		"Expenses:Food 20 USD",  // three-leg split stays standard
 		"{101.00 USD}",          // cost lot stays standard
-		`* "三腿" "拆分记账"`,         // its header stays verbatim
 		`* "买入" "带成本批次"`,        // cost txn header stays verbatim
 		"2026-08-19 price AAPL", // price directive stays
 	}
 	for _, want := range mustContain {
 		if !strings.Contains(rewritten, want) {
 			t.Errorf("rewritten output lost %q:\n%s", want, rewritten)
+		}
+	}
+	// The three-leg split is expressible as a block now: header plus one
+	// leg per destination, so its amounts survive as leg text.
+	for _, want := range []string{
+		`* "三腿" "拆分记账"`,
+		" 20 USD @Assets:Cash -> @Expenses:Food",
+		" 10 USD @Assets:Cash -> @Expenses:Travel",
+	} {
+		if !strings.Contains(rewritten, want) {
+			t.Errorf("three-leg split not converted to block (lost %q):\n%s", want, rewritten)
 		}
 	}
 	if !strings.Contains(rewritten, "@Assets:WeChat -> @Expenses:Food") {

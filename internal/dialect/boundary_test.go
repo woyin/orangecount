@@ -8,11 +8,13 @@ package dialect_test
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
 	"orangecount/internal/ledger"
 	"orangecount/internal/snapshot"
+	"orangecount/internal/source"
 )
 
 // buildLedger writes text to a temp ledger and builds a snapshot. It returns
@@ -265,4 +267,126 @@ func TestDialectErrorsBlockSnapshot(t *testing.T) {
 	if result.Snapshot != nil {
 		t.Fatal("dialect error published a snapshot")
 	}
+}
+
+// TestDialectBlockCompilesIntoBalancedTransaction exercises the block form:
+// a standard header followed by indented amount-first legs. Each leg becomes
+// a source/destination posting pair, and same-account postings merge so the
+// standard export shows one source amount.
+func TestDialectBlockCompilesIntoBalancedTransaction(t *testing.T) {
+	entry := writeFile(t, "loan.bean", `2000-01-01 open Assets:Bank:华夏0139 CNY
+2000-01-01 open Liabilities:Loan:房贷:营苑东村 CNY
+2000-01-01 open Expenses:Interest:营苑东村 CNY
+option "operating_currency" "CNY"
+2021-05-20 * "我" "还房贷"
+  1,472.22 CNY @Assets:Bank:华夏0139 -> @Liabilities:Loan:房贷:营苑东村
+  1,275.69 CNY @Assets:Bank:华夏0139 -> @Expenses:Interest:营苑东村
+`)
+	result := snapshot.Build(entry)
+	if result.Err != nil {
+		t.Fatalf("build: %v", result.Err)
+	}
+	if result.Snapshot == nil {
+		t.Fatalf("snapshot nil: %v", result.Diagnostics)
+	}
+	file := result.Snapshot.Parsed()[source.FileID(1)]
+	var txns []*ledger.Transaction
+	for _, d := range file.Directives {
+		if tx, ok := d.(*ledger.Transaction); ok {
+			txns = append(txns, tx)
+		}
+	}
+	if len(txns) != 1 {
+		t.Fatalf("compiled transactions=%d", len(txns))
+	}
+	tx := txns[0]
+	if tx.Narration != "还房贷" || tx.Payee != "我" || len(tx.Postings) != 3 {
+		t.Fatalf("txn=%+v postings=%d", tx, len(tx.Postings))
+	}
+	byAccount := map[string]string{}
+	for _, p := range tx.Postings {
+		byAccount[p.Account] = p.Units.Number.Raw
+	}
+	if byAccount["Assets:Bank:华夏0139"] != "-2747.91" {
+		t.Fatalf("source merged amount=%q want -2747.91", byAccount["Assets:Bank:华夏0139"])
+	}
+	if byAccount["Liabilities:Loan:房贷:营苑东村"] != "1472.22" {
+		t.Fatalf("principal=%q", byAccount["Liabilities:Loan:房贷:营苑东村"])
+	}
+	if byAccount["Expenses:Interest:营苑东村"] != "1275.69" {
+		t.Fatalf("interest=%q", byAccount["Expenses:Interest:营苑东村"])
+	}
+}
+
+// TestDialectBlockRoundTrip exercises the 房贷 shape through dialectize and
+// export: balances are preserved and the fixpoint is byte-stable.
+func TestDialectBlockRoundTrip(t *testing.T) {
+	const v3 = `2000-01-01 open Assets:Bank:华夏0139 CNY
+2000-01-01 open Liabilities:Loan:房贷:营苑东村 CNY
+2000-01-01 open Expenses:Interest:营苑东村 CNY
+option "operating_currency" "CNY"
+
+2021-05-20 * "我" "还房贷"
+  Assets:Bank:华夏0139 -2,747.91 CNY
+  Liabilities:Loan:房贷:营苑东村 1,472.22 CNY
+  Expenses:Interest:营苑东村 1,275.69 CNY
+`
+	original := writeFile(t, "loan.bean", v3)
+	blockLedger := dialectizeFile(t, original)
+	blockText := readFile(t, blockLedger)
+	if !strings.Contains(blockText, `* "我" "还房贷"`) {
+		t.Fatalf("block header missing:\n%s", blockText)
+	}
+	if !strings.Contains(blockText, "1472.22 CNY @Assets:Bank:华夏0139 -> @Liabilities:Loan:房贷:营苑东村") {
+		t.Fatalf("principal leg missing:\n%s", blockText)
+	}
+	// export the block back to v3 and confirm balance equality.
+	exported := exportFile(t, blockLedger)
+	exportedText := readFile(t, exported)
+	if !strings.Contains(exportedText, "Assets:Bank:华夏0139 -2747.91 CNY") {
+		t.Fatalf("merged source not restored:\n%s", exportedText)
+	}
+	assertBalancesEqual(t, original, exported)
+}
+
+func assertBalancesEqual(t *testing.T, a, b string) {
+	t.Helper()
+	ba := balancesOf(t, a)
+	bb := balancesOf(t, b)
+	if !reflect.DeepEqual(ba, bb) {
+		t.Fatalf("balances diverged:\nbefore=%v\nafter=%v", ba, bb)
+	}
+}
+
+// TestDialectBlockManySourcesUsesEachSourceAmount guards the inverse shape:
+// several negative postings into one positive posting must emit one leg per
+// source with that source's own positive magnitude, never the shared target
+// amount and never a negative sign.
+func TestDialectBlockManySourcesUsesEachSourceAmount(t *testing.T) {
+	const v3 = `2000-01-01 open Assets:Bank:工行4515 CNY
+2000-01-01 open Expenses:Social:资助朋友 CNY
+option "operating_currency" "CNY"
+
+2025-08-15 * "小黑" "亲属卡消费"
+  Assets:Bank:工行4515 -59.80 CNY
+  Assets:Bank:工行4515 -24.66 CNY
+  Expenses:Social:资助朋友 84.46 CNY
+`
+	original := writeFile(t, "many-src.bean", v3)
+	blockLedger := dialectizeFile(t, original)
+	blockText := readFile(t, blockLedger)
+	if strings.Contains(blockText, "-59.80") || strings.Contains(blockText, "-24.66") {
+		t.Fatalf("legs must be positive magnitudes:\n%s", blockText)
+	}
+	for _, want := range []string{
+		" 59.8 CNY @Assets:Bank:工行4515 -> @Expenses:Social:资助朋友",
+		" 24.66 CNY @Assets:Bank:工行4515 -> @Expenses:Social:资助朋友",
+	} {
+		if !strings.Contains(blockText, want) {
+			t.Fatalf("leg %q missing:\n%s", want, blockText)
+		}
+	}
+	assertBalancesEqual(t, original, blockLedger)
+	exported := exportFile(t, blockLedger)
+	assertBalancesEqual(t, original, exported)
 }

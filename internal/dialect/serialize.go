@@ -6,6 +6,7 @@
 package dialect
 
 import (
+	"math/big"
 	"strconv"
 	"strings"
 
@@ -63,17 +64,61 @@ func flagOrDefault(flag string) string {
 // the inverse of the parser's dialect grammar; only reparse-safe text may be
 // produced (eligible transactions are filtered before this runs).
 func SerializeDialect(txn *ledger.Transaction) string {
+	negatives, positives, ok := splitLegs(txn)
+	if !ok || len(txn.Postings) < 2 {
+		return ""
+	}
+	if len(txn.Postings) == 2 && len(negatives) == 1 && len(positives) == 1 {
+		return serializeSingleLine(txn, negatives[0], positives[0])
+	}
+	// Block form: a standard header plus one indented leg per counterparty.
+	if len(negatives) != 1 && len(positives) != 1 {
+		// Multiple sources and destinations cannot decompose into legs.
+		return ""
+	}
+	var block strings.Builder
+	writeBlockHeader(&block, txn)
+	if len(negatives) == 1 {
+		// One source, many destinations: each destination contributes its
+		// own amount.
+		for _, p := range positives {
+			writeLeg(&block, negatives[0], p, p.Units)
+		}
+	} else {
+		// Many sources, one destination: each source contributes its own
+		// amount (written as a positive magnitude).
+		for _, n := range negatives {
+			writeLeg(&block, n, positives[0], absUnits(n.Units))
+		}
+	}
+	return block.String()
+}
+
+// splitLegs separates a transaction's postings into negative and positive
+// legs. It returns ok=false when any posting lacks plain units.
+func splitLegs(txn *ledger.Transaction) (negatives, positives []ledger.Posting, ok bool) {
+	for i := range txn.Postings {
+		p := &txn.Postings[i]
+		if p.Units == nil || p.Units.Number.Rat == nil {
+			return nil, nil, false
+		}
+		if p.Units.Number.Rat.Sign() < 0 {
+			negatives = append(negatives, *p)
+		} else {
+			positives = append(positives, *p)
+		}
+	}
+	return negatives, positives, true
+}
+
+// serializeSingleLine renders the compact two-posting dialect line.
+func serializeSingleLine(txn *ledger.Transaction, negative, positive ledger.Posting) string {
 	var line strings.Builder
 	line.WriteString(canonicalDate(txn.Date))
 	if txn.Flag == "!" {
 		line.WriteString(" !")
 	}
 	line.WriteString(" ")
-	positive := positivePosting(txn)
-	if positive == nil || positive.Units == nil {
-		return ""
-	}
-	negative := otherPosting(txn, positive)
 	line.WriteString(strings.TrimPrefix(positive.Units.Number.Raw, "+"))
 	line.WriteString(" ")
 	line.WriteString(positive.Units.Currency)
@@ -85,10 +130,8 @@ func SerializeDialect(txn *ledger.Transaction) string {
 		line.WriteString(" ")
 		line.WriteString(strconv.Quote(txn.Payee))
 	}
-	if txn.Narration != "" {
-		line.WriteString(" : ")
-		line.WriteString(txn.Narration)
-	}
+	line.WriteString(" : ")
+	line.WriteString(txn.Narration)
 	for _, tag := range txn.Tags {
 		line.WriteString(" #")
 		line.WriteString(tag)
@@ -98,6 +141,57 @@ func SerializeDialect(txn *ledger.Transaction) string {
 		line.WriteString(link)
 	}
 	return line.String()
+}
+
+// writeBlockHeader writes the standard v3 header line of a dialect block:
+// date, flag, payee, narration, tags, links.
+func writeBlockHeader(block *strings.Builder, txn *ledger.Transaction) {
+	block.WriteString(canonicalDate(txn.Date))
+	block.WriteString(" ")
+	block.WriteString(flagOrDefault(txn.Flag))
+	if txn.Payee != "" {
+		block.WriteString(" ")
+		block.WriteString(strconv.Quote(txn.Payee))
+	}
+	block.WriteString(" ")
+	block.WriteString(strconv.Quote(txn.Narration))
+	for _, tag := range txn.Tags {
+		block.WriteString(" #")
+		block.WriteString(tag)
+	}
+	for _, link := range txn.Links {
+		block.WriteString(" ^")
+		block.WriteString(link)
+	}
+}
+
+// absUnits returns a copy of units with the number's sign normalized to
+// positive, so a negative posting renders as a positive dialect amount.
+func absUnits(units *ledger.Amount) *ledger.Amount {
+	if units == nil {
+		return nil
+	}
+	rat := units.Number.Rat
+	if rat == nil {
+		return units
+	}
+	abs := new(big.Rat).Abs(rat)
+	return &ledger.Amount{
+		Number:   ledger.Number{Raw: ledger.NewDecimal(abs).String(), Rat: abs},
+		Currency: units.Currency,
+	}
+}
+
+// writeLeg appends one indented dialect leg "amount @source -> @destination".
+func writeLeg(block *strings.Builder, source, destination ledger.Posting, units *ledger.Amount) {
+	block.WriteString("\n  ")
+	block.WriteString(strings.TrimPrefix(units.Number.Raw, "+"))
+	block.WriteString(" ")
+	block.WriteString(units.Currency)
+	block.WriteString(" @")
+	block.WriteString(source.Account)
+	block.WriteString(" -> @")
+	block.WriteString(destination.Account)
 }
 
 func canonicalDate(date ledger.Date) string {

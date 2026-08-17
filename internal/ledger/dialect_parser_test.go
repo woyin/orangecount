@@ -146,3 +146,60 @@ func containsCode(list []string, want string) bool {
 	}
 	return false
 }
+
+func TestParseDialectBlockLegs(t *testing.T) {
+	file, bag := ParseText("m.bean", []byte(`2026-08-20 * "我" "吃饭"
+  100 CNY @WeChat -> @Food
+  50 CNY @Coupon -> @Food
+`))
+	if bag.HasErrors() {
+		t.Fatalf("codes=%v", bag.All())
+	}
+	var header *Transaction
+	var legs []Dialect
+	for _, d := range file.Directives {
+		switch v := d.(type) {
+		case *Transaction:
+			header = v
+		case Dialect:
+			legs = append(legs, v)
+		}
+	}
+	if header == nil || len(header.Postings) != 0 {
+		t.Fatalf("header=%+v", header)
+	}
+	if len(legs) != 2 || legs[0].SourceRef != "WeChat" || legs[0].DestRef != "Food" || legs[1].SourceRef != "Coupon" {
+		t.Fatalf("legs=%+v", legs)
+	}
+	if legs[0].HasDate || legs[0].Anchored {
+		t.Fatalf("leg must be dateless: %+v", legs[0])
+	}
+}
+
+func TestParseDialectBlockRejectsLegAfterStandardPosting(t *testing.T) {
+	_, bag := ParseText("m.bean", []byte(`2026-08-20 * "我" "吃饭"
+  Assets:WeChat -100 CNY
+  50 CNY @Coupon -> @Food
+`))
+	if !bag.HasErrors() {
+		t.Fatal("expected error")
+	}
+	found := false
+	for _, d := range bag.All() {
+		if d.Code == "E-DIALECT-LEG-ORDER" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("expected E-DIALECT-LEG-ORDER, got %v", bag.All())
+	}
+}
+
+func TestParseDialectBlockLegRequiresOnlyAmountAndEndpoints(t *testing.T) {
+	_, bag := ParseText("m.bean", []byte(`2026-08-20 * "我" "吃饭"
+  100 CNY @WeChat -> @Food "payee"
+`))
+	if !bag.HasErrors() {
+		t.Fatal("expected error for trailing tokens on leg")
+	}
+}

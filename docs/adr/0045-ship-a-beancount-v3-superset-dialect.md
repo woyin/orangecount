@@ -25,7 +25,17 @@ A dialect line is:
 
 ## Reverse conversion (dialectize) is a filter, not a translation
 
-`orangecount dialectize v3.bean -o dialect.bean` converts a v3 ledger into the dialect by filtering: a transaction becomes a dialect line only when it is exactly two postings, opposite signed amounts in one currency, no cost, no price, no metadata, flag `*` or `!`, and a non-empty narration (an empty narration would be re-materialized as the "消费" default and mutate the record). Everything else is preserved byte-for-byte in standard syntax. The dialect is a shorthand for the common shape, not a second full language; multi-leg, cost, and metadata transactions never enter it.
+`orangecount dialectize v3.bean -o dialect.bean` converts a v3 ledger into the dialect by filtering: a transaction becomes dialect syntax only when its legs are plain amounts in one currency with no cost, no price, no metadata, flag `*` or `!`, and a non-empty narration (an empty narration would be re-materialized as the "消费" default and mutate the record). Everything else is preserved byte-for-byte in standard syntax. The dialect is a shorthand for the common shape, not a second full language; cost, price, and metadata transactions never enter it.
+
+Two-posting transactions collapse to a single dialect line. Transactions with one source and several destinations (a mortgage split into principal and interest), or several sources and one destination (a meal paid partly from WeChat and partly from a coupon), become a **dialect block**: a standard v3 transaction header followed by one indented leg per counterparty:
+
+```
+2026-01-20 * "我" "还房贷"
+  705.10 CNY @华夏0139 -> @房贷本金
+  346.51 CNY @华夏0139 -> @房贷利息
+```
+
+A leg is `AMOUNT [CURRENCY] @source -> @destination` with the amount always positive (the compiler assigns signs). Legs are detected by their amount-first shape, which no standard posting line can take. The header owns date, flag, payee, narration, and tags; legs only move money, so a block is rejected if a leg follows standard postings (`E-DIALECT-LEG-ORDER`). Compilation merges same-account postings so a block that fans one source recompiles to the original single source posting (华夏 −2747.91 rather than two negative postings), keeping exports byte-stable.
 
 Two property tests lock round-trip safety mechanically: for any v3 ledger, `dialectize` then `export` must build a snapshot with identical account balances to the original; and re-running the round trip must reach a fixpoint (the second export is byte-stable). Layout of converted lines is rewritten, which forfeits git blame for those lines; accepted for the experiment.
 

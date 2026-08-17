@@ -54,29 +54,88 @@ func Expand(graph *source.Graph, parsed map[source.FileID]*ledger.File) (map[sou
 			continue
 		}
 		out := &ledger.File{Source: file.Source, Comments: file.Comments}
-		out.Directives = make([]ledger.Directive, 0, len(file.Directives))
-		for _, directive := range file.Directives {
-			d, ok := directive.(ledger.Dialect)
-			if !ok {
-				out.Directives = append(out.Directives, directive)
-				continue
-			}
-			txn, edit, diags := compileDialect(index, d)
-			diagnostics = append(diagnostics, diags...)
-			if txn != nil {
-				out.Directives = append(out.Directives, txn)
-				edit.FileID = fileID
-				edits = append(edits, edit)
-				continue
-			}
-			// Keep the failing line in the tree so source views can still
-			// navigate to it; the error diagnostic blocks publication.
-			out.Directives = append(out.Directives, d)
-		}
+		out.Directives, edits, diagnostics = expandFile(index, file, fileID, out, edits, diagnostics)
 		expanded[fileID] = out
 	}
 	sort.Slice(edits, func(i, j int) bool { return edits[i].Span.Start < edits[j].Span.Start })
 	return expanded, edits, diagnostics
+}
+
+// expandFile rewrites one parsed file's dialect directives (standalone lines
+// and blocks) into compiled transactions, appending to out.Directives.
+func expandFile(index *index, file *ledger.File, fileID source.FileID, out *ledger.File, edits []Edit, diagnostics []diagnostic.Diagnostic) ([]ledger.Directive, []Edit, []diagnostic.Diagnostic) {
+	out.Directives = make([]ledger.Directive, 0, len(file.Directives))
+	var pendingHeader *ledger.Transaction
+	var pendingLegs []ledger.Dialect
+	flush := func() {
+		if pendingHeader == nil && len(pendingLegs) == 0 {
+			return
+		}
+		if pendingHeader == nil || len(pendingLegs) == 0 {
+			// A posting-less header with no legs (invalid v3, evaluator will
+			// flag it) or a stray dateless leg: keep them in the tree.
+			if pendingHeader != nil {
+				out.Directives = append(out.Directives, pendingHeader)
+			}
+			for _, leg := range pendingLegs {
+				out.Directives = append(out.Directives, leg)
+			}
+			pendingHeader, pendingLegs = nil, nil
+			return
+		}
+		appendCompiled(out, index, fileID, pendingHeader, pendingLegs, &edits, &diagnostics)
+		pendingHeader, pendingLegs = nil, nil
+	}
+	for _, directive := range file.Directives {
+		if txn, ok := directive.(*ledger.Transaction); ok && len(txn.Postings) == 0 {
+			flush()
+			pendingHeader = txn
+			continue
+		}
+		if leg, ok := directive.(ledger.Dialect); ok && !leg.HasDate && pendingHeader != nil {
+			pendingLegs = append(pendingLegs, leg)
+			continue
+		}
+		flush()
+		d, ok := directive.(ledger.Dialect)
+		if !ok {
+			out.Directives = append(out.Directives, directive)
+			continue
+		}
+		txn, edit, diags := compileDialect(index, d)
+		diagnostics = append(diagnostics, diags...)
+		if txn != nil {
+			out.Directives = append(out.Directives, txn)
+			edit.FileID = fileID
+			edits = append(edits, edit)
+			continue
+		}
+		// Keep the failing line in the tree so source views can still
+		// navigate to it; the error diagnostic blocks publication.
+		out.Directives = append(out.Directives, d)
+	}
+	flush()
+	return out.Directives, edits, diagnostics
+}
+
+// appendCompiled compiles a pending block and appends either the compiled
+// transaction (plus its edit) or the raw header and legs when compilation
+// failed, leaving the error diagnostics to block publication.
+func appendCompiled(out *ledger.File, index *index, fileID source.FileID, header *ledger.Transaction, legs []ledger.Dialect, edits *[]Edit, diagnostics *[]diagnostic.Diagnostic) {
+	txn, edit, diags := compileBlock(index, header, legs)
+	*diagnostics = append(*diagnostics, diags...)
+	if txn != nil {
+		out.Directives = append(out.Directives, txn)
+		edit.FileID = fileID
+		*edits = append(*edits, edit)
+		return
+	}
+	// Keep the failing block in the tree so source views can navigate; the
+	// error diagnostics block publication.
+	out.Directives = append(out.Directives, header)
+	for _, leg := range legs {
+		out.Directives = append(out.Directives, leg)
+	}
 }
 
 func hasDialect(file *ledger.File) bool {
@@ -298,6 +357,104 @@ func compileDialect(idx *index, d ledger.Dialect) (*ledger.Transaction, Edit, []
 		},
 	}
 	return txn, Edit{Span: d.At, Text: SerializeTransaction(txn)}, diags
+}
+
+// compileBlock compiles a dialect block: a transaction header (date, flag,
+// payee, narration, tags) followed by one or more dateless legs. Each leg
+// becomes two postings; the header owns the transaction-level fields. The
+// compiled transaction and a single edit spanning the whole block are
+// returned, or nil plus E-DIALECT-* diagnostics when any leg fails.
+func compileBlock(idx *index, header *ledger.Transaction, legs []ledger.Dialect) (*ledger.Transaction, Edit, []diagnostic.Diagnostic) {
+	var diags []diagnostic.Diagnostic
+	fail := func(code, message string) (*ledger.Transaction, Edit, []diagnostic.Diagnostic) {
+		return nil, Edit{}, append(diags, diagnostic.New(code, diagnostic.Error, header.At, message))
+	}
+	if !header.Date.Valid() {
+		return fail("E-DIALECT-DATE", "dialect block header has no valid date")
+	}
+	if len(header.Meta) > 0 {
+		return fail("E-DIALECT-LEG-META", "dialect block header metadata is unsupported; move it into the transaction or drop it")
+	}
+	for _, leg := range legs {
+		if len(leg.Meta) > 0 {
+			return fail("E-DIALECT-LEG-META", "dialect block leg metadata is unsupported")
+		}
+	}
+	txn := &ledger.Transaction{
+		DirectiveBase: header.DirectiveBase,
+		Date:          header.Date,
+		Flag:          flagOrDefault(header.Flag),
+		Payee:         header.Payee,
+		Narration:     header.Narration,
+		Tags:          header.Tags,
+		Links:         header.Links,
+	}
+	if txn.Narration == "" {
+		txn.Narration = "消费"
+	}
+	for _, leg := range legs {
+		currency := leg.Currency
+		if currency == "" {
+			currency = idx.opCurrency
+			if currency == "" {
+				return fail("E-DIALECT-CURRENCY", "no currency given and the ledger has no single operating_currency")
+			}
+		}
+		srcAccount, srcErr := resolveEndpoint(idx, leg.SourceRef, header.Date)
+		if srcErr != nil {
+			srcErr.Span = leg.At
+			return nil, Edit{}, append(diags, *srcErr)
+		}
+		dstAccount, dstErr := resolveEndpoint(idx, leg.DestRef, header.Date)
+		if dstErr != nil {
+			dstErr.Span = leg.At
+			return nil, Edit{}, append(diags, *dstErr)
+		}
+		txn.Postings = append(txn.Postings,
+			ledger.Posting{
+				At:      leg.At,
+				Raw:     leg.Raw,
+				Account: srcAccount,
+				Units:   &ledger.Amount{Number: negateNumber(leg.Amount), Currency: currency, At: leg.At},
+			},
+			ledger.Posting{
+				At:      leg.At,
+				Raw:     leg.Raw,
+				Account: dstAccount,
+				Units:   &ledger.Amount{Number: leg.Amount, Currency: currency, At: leg.At},
+			},
+		)
+	}
+	txn.Postings = mergePostings(txn.Postings)
+	span := source.Span{Start: header.At.Start, End: legs[len(legs)-1].At.End}
+	return txn, Edit{Span: span, Text: SerializeTransaction(txn)}, diags
+}
+
+// mergePostings combines same-account same-currency postings so a block that
+// fans a single source into several destinations recompiles to one source
+// posting (华夏 -2747.91 instead of two -1472.22/-1275.69), keeping the
+// standard export byte-stable across round trips.
+func mergePostings(postings []ledger.Posting) []ledger.Posting {
+	merged := make([]ledger.Posting, 0, len(postings))
+	for _, p := range postings {
+		found := false
+		for i := range merged {
+			if merged[i].Account == p.Account && merged[i].Units != nil && p.Units != nil &&
+				merged[i].Units.Currency == p.Units.Currency {
+				sum := new(big.Rat).Add(merged[i].Units.Number.Rat, p.Units.Number.Rat)
+				merged[i].Units = &ledger.Amount{
+					Number:   ledger.Number{Raw: ledger.NewDecimal(sum).String(), Rat: sum},
+					Currency: p.Units.Currency,
+				}
+				found = true
+				break
+			}
+		}
+		if !found {
+			merged = append(merged, p)
+		}
+	}
+	return merged
 }
 
 // negateNumber returns the negated copy of a parsed number, normalizing any

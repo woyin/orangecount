@@ -69,7 +69,7 @@ func eligibleForDialect(txn *ledger.Transaction) bool {
 	if txn.Flag != "" && txn.Flag != "*" && txn.Flag != "!" {
 		return false
 	}
-	if len(txn.Meta) > 0 || len(txn.Postings) != 2 {
+	if len(txn.Meta) > 0 || len(txn.Postings) < 2 {
 		return false
 	}
 	if txn.Narration == "" && txn.Payee == "" {
@@ -79,25 +79,41 @@ func eligibleForDialect(txn *ledger.Transaction) bool {
 	if !textIsReparseSafe(txn.Narration) || !textIsReparseSafe(txn.Payee) {
 		return false
 	}
-	first, second := txn.Postings[0], txn.Postings[1]
-	return plainAmountLeg(first) && plainAmountLeg(second) && legsMirror(first, second)
+	negative, positive, balanced := plainLegShape(txn.Postings)
+	// A dialect block expresses one source with many destinations, or many
+	// sources with one destination.
+	return balanced && (negative == 1 || positive == 1)
 }
 
-// legsMirror reports whether two plain legs are the exact inverse shape the
-// dialect line expresses: one currency, opposite signed amounts of equal
-// magnitude, neither zero.
-func legsMirror(first, second ledger.Posting) bool {
-	if first.Units.Currency != second.Units.Currency {
-		return false
+// plainLegShape counts negative and positive plain legs and reports whether
+// the transaction is balanced with a single currency and no zero amounts.
+func plainLegShape(postings []ledger.Posting) (negative, positive int, balanced bool) {
+	var sum *big.Rat
+	currency := ""
+	for _, posting := range postings {
+		if !plainAmountLeg(posting) {
+			return 0, 0, false
+		}
+		rat := posting.Units.Number.Rat
+		if rat.Sign() == 0 {
+			return 0, 0, false
+		}
+		if currency == "" {
+			currency = posting.Units.Currency
+		} else if posting.Units.Currency != currency {
+			return 0, 0, false
+		}
+		if rat.Sign() < 0 {
+			negative++
+		} else {
+			positive++
+		}
+		if sum == nil {
+			sum = new(big.Rat)
+		}
+		sum.Add(sum, rat)
 	}
-	firstRat, secondRat := first.Units.Number.Rat, second.Units.Number.Rat
-	if firstRat == nil || secondRat == nil {
-		return false
-	}
-	if new(big.Rat).Add(firstRat, secondRat).Sign() != 0 || firstRat.Sign() == 0 {
-		return false
-	}
-	return true
+	return negative, positive, sum != nil && sum.Sign() == 0
 }
 
 // plainAmountLeg reports whether a posting is a bare `Account Number
