@@ -208,3 +208,53 @@ option "operating_currency" "CNY"
 	exported := exportFile(t, dialectVersion)
 	assertBalancesEqual(t, original, exported)
 }
+
+// TestMultiAssetBuyRoundTrip locks the multi-asset buy: one cash leg plus
+// several same-account cost lots converts to parallel derived legs, and the
+// export merges the derived cash sides back into the original posting.
+func TestMultiAssetBuyRoundTrip(t *testing.T) {
+	v3 := `2000-01-01 open Assets:Wallet:微信 CNY
+2000-01-01 open Assets:收藏品 "FIFO"
+option "operating_currency" "CNY"
+
+2026-01-16 * "我" "购买2026马年纪念币和纪念钞" #collection-investment
+  Assets:Wallet:微信              -1400.00 CNY
+  Assets:收藏品              20 COIN_2026_HORSE {10.00 CNY}
+  Assets:收藏品              60 NOTE_2026_HORSE {20.00 CNY}
+`
+	original := writeFile(t, "multi.bean", v3)
+	dialectVersion := dialectizeFile(t, original)
+	text := readFile(t, dialectVersion)
+	t.Logf("dialectized:\n%s", text)
+	if !strings.Contains(text, "20 COIN_2026_HORSE {10.00 CNY} @Assets:Wallet:微信 -> @Assets:收藏品") ||
+		!strings.Contains(text, "60 NOTE_2026_HORSE {20.00 CNY} @Assets:Wallet:微信 -> @Assets:收藏品") {
+		t.Fatalf("multi-asset legs missing:\n%s", text)
+	}
+	exported := exportFile(t, dialectVersion)
+	export := readFile(t, exported)
+	if !strings.Contains(export, "Assets:Wallet:微信 -1400 CNY") {
+		t.Fatalf("cash not merged back in export:\n%s", export)
+	}
+	assertBalancesEqual(t, original, exported)
+}
+
+// TestMultiAssetBuyElidedCash locks the elided-cash variant: the residual
+// equals the sum of the lots.
+func TestMultiAssetBuyElidedCash(t *testing.T) {
+	v3 := `2000-01-01 open Assets:Wallet:微信 CNY
+2000-01-01 open Assets:收藏品 "FIFO"
+option "operating_currency" "CNY"
+
+2026-01-16 * "我" "购买套装"
+  Assets:Wallet:微信
+  Assets:收藏品              20 COIN_2026_HORSE {10.00 CNY}
+  Assets:收藏品              60 NOTE_2026_HORSE {20.00 CNY}
+`
+	original := writeFile(t, "multie.bean", v3)
+	dialectVersion := dialectizeFile(t, original)
+	text := readFile(t, dialectVersion)
+	if !strings.Contains(text, "-> @Assets:收藏品") {
+		t.Fatalf("elided multi-asset should convert:\n%s", text)
+	}
+	assertBalancesEqual(t, original, exportFile(t, dialectVersion))
+}

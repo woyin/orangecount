@@ -79,9 +79,22 @@ Metadata is a first-class v3 citizen (queryable via `meta()`, rendered by Fava, 
 
 Dialectize promotes `; TODO:` and `; FIXME:` comments to a `todo:` metadata pair (multiple comments join with `"; "`), so tracked work items survive conversion as data instead of being deleted. Free-text comments still keep the block standard — prose has no metadata form. A block that already defines `todo` stays standard rather than colliding.
 
-With this the reference ledger converts 288 of 290 investment transactions; the two QDII buys with placeholder-NAV TODO notes now convert, and the remaining legs are one multi-asset collectible purchase.
+With this the reference ledger converts 288 of 290 investment transactions; the two QDII buys with placeholder-NAV TODO notes now convert, and every investment transaction in the reference ledger now converts.
 
-In the reference ledger 286 of 290 investment transactions convert (286 fund/stock buys including fee buys and bonus shares, all 11 sells in both cash conventions); the four remaining legs are one multi-asset collectible purchase that no single leg can express.
+In the reference ledger 286 of 290 investment transactions convert
+
+
+## Multi-asset buys
+
+A purchase of several assets in one transaction converts to parallel derived legs — no new syntax:
+
+```
+2026-01-16 * "我" "购买2026马年纪念币和纪念钞" #collection-investment
+  20 COIN_2026_HORSE {10.00 CNY} @微信 -> @收藏品
+  60 NOTE_2026_HORSE {20.00 CNY} @微信 -> @收藏品
+```
+
+The rule: one cash leg (explicit or elided) plus two or more securities lots into the same account, every lot a plain single-cost lot in one currency, no price, fee, or gain, and the explicit cash — when present — exactly the sum of quantity × unit cost. Each leg derives its own cash side; the export merges them back into one posting per account, reproducing the original text byte-for-byte. Fees stay standard: a single expense cannot be attributed across legs without inventing an allocation rule. (286 fund/stock buys including fee buys and bonus shares, all 11 sells in both cash conventions); the four remaining legs are one multi-asset collectible purchase that no single leg can express.
 
 Two property tests lock round-trip safety mechanically: for any v3 ledger, `dialectize` then `export` must build a snapshot with identical account balances to the original; and re-running the round trip must reach a fixpoint (the second export is byte-stable). Layout of converted lines is rewritten, which forfeits git blame for those lines; accepted for the experiment.
 

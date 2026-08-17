@@ -109,15 +109,21 @@ func eligibleForDialect(txn *ledger.Transaction) bool {
 // securities lot, cash leg, optional fee, optional elided gain.
 type investmentTxn struct {
 	cash       *ledger.Posting
-	securities *ledger.Posting
+	securities []*ledger.Posting
 	fee        *ledger.Posting
 	gain       *ledger.Posting
+}
+
+// lot returns the single securities lot; multi-asset shapes are validated
+// apart and never reach the single-lot paths.
+func (inv *investmentTxn) lot() *ledger.Posting {
+	return inv.securities[0]
 }
 
 // sell reports whether the classified transaction is a sale (securities
 // reduction at a price).
 func (inv *investmentTxn) sell() bool {
-	return inv.securities != nil && inv.securities.Price != nil
+	return len(inv.securities) == 1 && inv.securities[0].Price != nil
 }
 
 // classifyInvestment recognizes the investment shapes the dialect can
@@ -134,10 +140,7 @@ func classifyInvestment(postings []ledger.Posting) *investmentTxn {
 		}
 		switch {
 		case isSecuritiesLeg(p):
-			if inv.securities != nil {
-				return nil
-			}
-			inv.securities = p
+			inv.securities = append(inv.securities, p)
 		case p.Units == nil:
 			if !assignElidedLeg(&inv, p) {
 				return nil
@@ -148,13 +151,19 @@ func classifyInvestment(postings []ledger.Posting) *investmentTxn {
 			return nil
 		}
 	}
-	if inv.securities == nil {
+	if len(inv.securities) == 0 {
 		return nil
 	}
 	for _, p := range plains {
 		if !assignPlainLeg(&inv, p) {
 			return nil
 		}
+	}
+	if len(inv.securities) > 1 {
+		if validMultiBuy(&inv) {
+			return &inv
+		}
+		return nil
 	}
 	if inv.sell() {
 		if validSell(&inv) {
@@ -224,7 +233,7 @@ func validBuy(inv *investmentTxn) bool {
 		return validFeeBuy(inv)
 	}
 	if inv.gain != nil {
-		return inv.cash == nil && inv.securities.Units.Number.Rat != nil
+		return inv.cash == nil && inv.lot().Units.Number.Rat != nil
 	}
 	switch {
 	case inv.cash == nil:
@@ -233,10 +242,10 @@ func validBuy(inv *investmentTxn) bool {
 		return true // elided cash: the derived form
 	case inv.cash.Units.Number.Rat.Sign() >= 0:
 		return false
-	case inv.securities.Units.Currency == inv.cash.Units.Currency:
+	case inv.lot().Units.Currency == inv.cash.Units.Currency:
 		return false
 	default:
-		return buyCashMatchesCost(*inv.cash, *inv.securities)
+		return buyCashMatchesCost(*inv.cash, *inv.lot())
 	}
 }
 
@@ -251,7 +260,61 @@ func validFeeBuy(inv *investmentTxn) bool {
 	}
 	// Explicit cash: the amount form requires an explicit quantity and a
 	// negative cash leg.
-	return inv.securities.Units.Number.Rat != nil && inv.cash.Units.Number.Rat.Sign() < 0
+	return inv.lot().Units.Number.Rat != nil && inv.cash.Units.Number.Rat.Sign() < 0
+}
+
+// validMultiBuy reports whether a multi-asset buy converts: two or more
+// securities lots into the same account, no price, fee, or gain, every lot
+// a plain single-cost lot in one currency, and the explicit cash (when
+// present) equal to the sum of quantity × unit cost.
+func validMultiBuy(inv *investmentTxn) bool {
+	if inv.fee != nil || inv.gain != nil || inv.cash == nil {
+		return false
+	}
+	sum := new(big.Rat)
+	currency := ""
+	for _, s := range inv.securities {
+		if s.Price != nil || s.Account != inv.securities[0].Account || s.Units.Number.Rat == nil {
+			return false
+		}
+		unit, costCurrency, ok := singleUnitCost(s)
+		if !ok {
+			return false
+		}
+		if currency == "" {
+			currency = costCurrency
+		} else if currency != costCurrency {
+			return false
+		}
+		sum.Add(sum, new(big.Rat).Mul(s.Units.Number.Rat, unit))
+	}
+	if inv.cash.Units == nil {
+		return true // elided cash: the residual equals the sum
+	}
+	if inv.cash.Units.Number.Rat == nil || inv.cash.Units.Number.Rat.Sign() >= 0 || inv.cash.Units.Currency != currency {
+		return false
+	}
+	return new(big.Rat).Abs(inv.cash.Units.Number.Rat).Cmp(sum) == 0
+}
+
+// singleUnitCost returns the unit cost and its currency when the cost batch
+// holds exactly one amount component.
+func singleUnitCost(s *ledger.Posting) (*big.Rat, string, bool) {
+	var found bool
+	var unit *big.Rat
+	currency := ""
+	for _, value := range s.Cost.Components {
+		if value.Kind != ledger.ValueAmount {
+			continue
+		}
+		if found {
+			return nil, "", false
+		}
+		found = true
+		unit = ledger.DecimalFromNumber(value.Amount.Number).Rat()
+		currency = value.Amount.Currency
+	}
+	return unit, currency, found
 }
 
 // validSell reports whether a sell shape converts: explicit cash (positive)

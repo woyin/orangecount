@@ -114,3 +114,47 @@ option "operating_currency" "CNY"
 		})
 	}
 }
+
+// TestMultiAssetBuyRejections locks the honest boundary of the multi-asset
+// rule: fees cannot split across legs, mismatched cash or mixed
+// destinations stay standard.
+func TestMultiAssetBuyRejections(t *testing.T) {
+	base := `2000-01-01 open Assets:Wallet:微信 CNY
+2000-01-01 open Assets:收藏品 "FIFO"
+2000-01-01 open Assets:其他收藏 "FIFO"
+2000-01-01 open Expenses:Fees:交易费用 CNY
+option "operating_currency" "CNY"
+
+`
+	cases := []struct {
+		name string
+		txn  string
+	}{
+		{"cash does not sum", `2026-01-16 * "我" "购买"
+  Assets:Wallet:微信  -1500.00 CNY
+  Assets:收藏品  20 COIN_2026_HORSE {10.00 CNY}
+  Assets:收藏品  60 NOTE_2026_HORSE {20.00 CNY}
+`},
+		{"fee cannot split", `2026-01-16 * "我" "购买"
+  Assets:Wallet:微信
+  Assets:收藏品  20 COIN_2026_HORSE {10.00 CNY}
+  Assets:收藏品  60 NOTE_2026_HORSE {20.00 CNY}
+  Expenses:Fees:交易费用 5.00 CNY
+`},
+		{"mixed destinations", `2026-01-16 * "我" "购买"
+  Assets:Wallet:微信  -1400.00 CNY
+  Assets:收藏品  20 COIN_2026_HORSE {10.00 CNY}
+  Assets:其他收藏  60 NOTE_2026_HORSE {20.00 CNY}
+`},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			original := writeFile(t, "mr.bean", base+tc.txn)
+			dialectVersion := dialectizeFile(t, original)
+			text := readFile(t, dialectVersion)
+			if !strings.Contains(text, "Assets:收藏品 ") && !strings.Contains(text, "Assets:其他收藏 ") {
+				t.Fatalf("should stay standard v3:\n%s", text)
+			}
+		})
+	}
+}

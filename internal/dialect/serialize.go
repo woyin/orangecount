@@ -248,7 +248,10 @@ func writeLeg(block *strings.Builder, source, destination ledger.Posting, units 
 // becomes "AMOUNT CURRENCY SECURITY {COST} @cash -> @securities" so the
 // share count is derivable from the cash side.
 func serializeBuyLeg(txn *ledger.Transaction, inv *investmentTxn) string {
-	securities := inv.securities
+	securities := inv.lot()
+	if len(inv.securities) > 1 {
+		return serializeMultiBuyLeg(txn, inv)
+	}
 	var block strings.Builder
 	writeInvestmentHeader(&block, txn)
 	writeMetaLines(&block, txn.Meta)
@@ -304,13 +307,36 @@ func serializeBuyLeg(txn *ledger.Transaction, inv *investmentTxn) string {
 	return block.String()
 }
 
+// serializeMultiBuyLeg renders a multi-asset buy as parallel derived legs:
+// "QUANTITY SECURITY {COST} @cash -> @securities" per lot, all into the
+// same account. Each leg derives its own cash side; their sum reproduces
+// the original explicit or elided cash posting.
+func serializeMultiBuyLeg(txn *ledger.Transaction, inv *investmentTxn) string {
+	var block strings.Builder
+	writeInvestmentHeader(&block, txn)
+	writeMetaLines(&block, txn.Meta)
+	for _, s := range inv.securities {
+		block.WriteString("\n  ")
+		block.WriteString(strings.TrimPrefix(s.Units.Number.Raw, "+"))
+		block.WriteString(" ")
+		block.WriteString(s.Units.Currency)
+		block.WriteString(" ")
+		block.WriteString(s.Cost.Raw)
+		block.WriteString(" @")
+		block.WriteString(inv.cash.Account)
+		block.WriteString(" -> @")
+		block.WriteString(s.Account)
+	}
+	return block.String()
+}
+
 // serializeSellLeg renders a sale as a single dialect leg: "[CASH CURRENCY]
 // QUANTITY SECURITY {COST} @ PRICE CURRENCY @securities -> @cash [-> @gain]
 // [手续费 FEE CURRENCY @fee]". The cash amount stays exactly as written
 // (gross or net of the fee); an elided cash leg omits it so the residual
 // reproduces the original inference.
 func serializeSellLeg(txn *ledger.Transaction, inv *investmentTxn) string {
-	securities := inv.securities
+	securities := inv.lot()
 	qty := absUnits(securities.Units)
 	var block strings.Builder
 	writeInvestmentHeader(&block, txn)
