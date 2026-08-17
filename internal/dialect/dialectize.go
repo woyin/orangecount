@@ -113,8 +113,11 @@ func textIsReparseSafe(text string) bool {
 	if text != strings.TrimSpace(text) {
 		return false
 	}
-	for _, bad := range []string{"\"", "#", "^", "@", ";", "->", ":"} {
-		if strings.Contains(text, bad) {
+	// Mirror the ledger lexer's word-stop set (parser.go scanWordToken):
+	// any of these inside bare narration/payee would split into extra
+	// tokens and fail to re-parse as one word.
+	for _, r := range text {
+		if strings.ContainsRune("{}[](),@~=*;\"#^:", r) {
 			return false
 		}
 	}

@@ -55,8 +55,8 @@ func TestParseQuickAccountCustomAcceptsAccountAndStringValues(t *testing.T) {
 }
 
 func TestAccountNameValidAndTail(t *testing.T) {
-	valid := []string{"Assets:Cash", "Expenses:Food:Lunch"}
-	invalid := []string{"Assets", "assets:cash", "Assets:", "Assets::Cash", ""}
+	valid := []string{"Assets:Cash", "Expenses:Food:Lunch", "Assets:Wallet:微信", "Assets:", "Assets::Cash"}
+	invalid := []string{"Assets", "assets:cash", ""}
 	for _, name := range valid {
 		if !accountNameValid(name) {
 			t.Errorf("%q should be valid", name)
@@ -217,5 +217,25 @@ func TestSerializeHelpers(t *testing.T) {
 	}
 	if SerializeDialect(noLegs) != "" {
 		t.Fatal("unserializable transaction produced text")
+	}
+}
+
+// TestChineseAccountFullNameEndpoints guards the ADR resolution level 1:
+// a full account name with CJK segments (valid v3, upstream beancount
+// accepts it) must resolve verbatim instead of falling through to the
+// tail/alias levels.
+func TestChineseAccountFullNameEndpoints(t *testing.T) {
+	file, bag := ledger.ParseText("m.bean", []byte(`2026-08-01 13.00 CNY @Assets:Wallet:微信 -> @Expenses:Living:吃的:一日三餐 "我" : 吃早饭`+"\n"))
+	if bag.HasErrors() {
+		t.Fatalf("parse errors: %v", bag.All())
+	}
+	if len(file.Directives) != 1 {
+		t.Fatalf("directives=%d", len(file.Directives))
+	}
+	// Endpoint text is carried through verbatim; resolution happens in
+	// the dialect package against the real account index.
+	d := file.Directives[0].(ledger.Dialect)
+	if d.SourceRef != "Assets:Wallet:微信" || d.DestRef != "Expenses:Living:吃的:一日三餐" {
+		t.Fatalf("refs=%q %q", d.SourceRef, d.DestRef)
 	}
 }

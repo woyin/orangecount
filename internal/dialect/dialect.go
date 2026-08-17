@@ -182,18 +182,14 @@ func accountTail(account string) string {
 // accountNameValid mirrors the Beancount account shape: colon-separated
 // segments, each starting with an uppercase letter.
 func accountNameValid(name string) bool {
+	// Mirror the ledger parser's isAccount rule (parser.go): any
+	// colon-separated name whose first segment starts with an uppercase
+	// ASCII letter. Segments may be CJK or otherwise non-ASCII, as in
+	// Assets:Wallet:微信, which upstream beancount accepts too.
 	if !strings.Contains(name, ":") {
 		return false
 	}
-	for _, part := range strings.Split(name, ":") {
-		if part == "" {
-			return false
-		}
-		if part[0] < 'A' || part[0] > 'Z' {
-			return false
-		}
-	}
-	return true
+	return name[0] >= 'A' && name[0] <= 'Z'
 }
 
 // resolveEndpoint applies the three-level contract from ADR-0045: exact full
