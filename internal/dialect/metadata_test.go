@@ -115,3 +115,40 @@ option "operating_currency" "CNY"
 		t.Fatalf("posting metadata should keep the block standard:\n%s", text)
 	}
 }
+
+// TestPlainTxnMetadataUsesBlockForm locks the round-trip loss found by the
+// bidirectional loop test: a plain two-posting transaction with metadata
+// converts to the block form (the single-line form has no metadata slot),
+// and the export writes the metadata back.
+func TestPlainTxnMetadataUsesBlockForm(t *testing.T) {
+	v3 := `2000-01-01 open Assets:Bank:工行 CNY
+2000-01-01 open Income:Passive:父母赠予 CNY
+
+2026-02-16 * "全家" "我爸妈赠予宝宝" #parenting
+  event: "宝宝重大资金接收：我父母赠予宝宝 99800.00"
+  Income:Passive:父母赠予 -49900.00 CNY
+  Income:Passive:父母赠予 -49900.00 CNY
+  Assets:Bank:工行 99800.00 CNY
+`
+	original := writeFile(t, "event.bean", v3)
+	dialectVersion := dialectizeFile(t, original)
+	text := readFile(t, dialectVersion)
+	t.Logf("dialectized:\n%s", text)
+	if !strings.Contains(text, `event: "宝宝重大资金接收：我父母赠予宝宝 99800.00"`) {
+		t.Fatalf("event metadata dropped:\n%s", text)
+	}
+	exported := exportFile(t, dialectVersion)
+	export := readFile(t, exported)
+	if !strings.Contains(export, `event: "宝宝重大资金接收：我父母赠予宝宝 99800.00"`) {
+		t.Fatalf("event metadata dropped from export:\n%s", export)
+	}
+	assertBalancesEqual(t, original, exported)
+
+	// Second hop: the merged two-posting v3 must keep the metadata too
+	// (this is the exact shape the loop test found losing event:).
+	second := writeFile(t, "event2.bean", export)
+	secondDialect := dialectizeFile(t, second)
+	if !strings.Contains(readFile(t, secondDialect), `event: "宝宝重大资金接收：我父母赠予宝宝 99800.00"`) {
+		t.Fatalf("metadata lost on second dialectize:\n%s", readFile(t, secondDialect))
+	}
+}

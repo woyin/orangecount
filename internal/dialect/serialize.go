@@ -92,7 +92,9 @@ func SerializeDialect(txn *ledger.Transaction) string {
 	if !ok || len(txn.Postings) < 2 {
 		return ""
 	}
-	if len(txn.Postings) == 2 && len(negatives) == 1 && len(positives) == 1 {
+	if len(txn.Postings) == 2 && len(negatives) == 1 && len(positives) == 1 && len(txn.Meta) == 0 {
+		// The single-line form has no room for metadata; a transaction
+		// with metadata takes the block form so nothing is lost.
 		return serializeSingleLine(txn, negatives[0], positives[0])
 	}
 	// Block form: a standard header plus one indented leg per counterparty.
