@@ -19,6 +19,7 @@ import (
 	"time"
 
 	"orangecount/internal/diagnostic"
+	"orangecount/internal/dialect"
 	"orangecount/internal/ledger"
 	"orangecount/internal/source"
 )
@@ -69,9 +70,14 @@ func BuildWithOptions(entry string, options BuildOptions) BuildResult {
 		return BuildResult{Graph: graph, Diagnostics: bag.All(), Err: err}
 	}
 	parsed, parseBag := ledger.ParseGraph(graph)
+	// Dialect shorthand lines are compiled into ordinary transactions before
+	// evaluation so every downstream view behaves exactly as on a standard
+	// ledger (ADR-0045 E3).
+	parsed, _, dialectBag := dialect.Expand(graph, parsed)
 	evaluation := ledger.Evaluate(graph, parsed, options.Evaluation)
 	bag := diagnostic.Bag{}
 	bag.Extend(parseBag.All()...)
+	bag.Extend(dialectBag...)
 	for _, d := range evaluation.Diagnostics {
 		bag.Add(d)
 	}

@@ -179,6 +179,8 @@ func journalDisplayPath(path string, graph *source.Graph) string {
 	return source.SafeDisplayPath(path)
 }
 
+// projectJournalEntry maps one ledger entry to the Fava journal JSON shape;
+// unsupported kinds report ok=false and are skipped.
 func projectJournalEntry(record ledger.EntryRecord) (JournalEntry, bool) {
 	switch directive := record.Directive.(type) {
 	case *ledger.Transaction:

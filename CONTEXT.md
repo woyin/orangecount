@@ -319,3 +319,23 @@ _Avoid_: eager merge, global booking change, display-only average
 **Stat-only change detection**:
 The watch loop's contract for deciding that a ledger changed: stat the entry, every file of the latest attempted include graph, and every path reported by an `E-INCLUDE-READ` diagnostic, and rebuild when any size or modification time differs. File contents are never re-read to detect change (ADR-0044).
 _Avoid_: content-hash patrol, eager re-read, directory notifications
+
+**Dialect line**:
+The one-line two-posting shorthand accepted inside ledger files as a Beancount v3 superset: `[DATE] [!] AMOUNT [CURRENCY] @source -> @destination ["payee"] [: narration] [#tag] [^link]`, compiled into an ordinary transaction at snapshot build (ADR-0045).
+_Avoid_: quick-entry input, template invocation, natural language
+
+**Block anchoring**:
+The dialect date rule: a dialect line without a date inherits the date of the nearest preceding dialect line that has one, in the same file; never the wall clock and never a non-dialect directive.
+_Avoid_: default today, file mtime, compile-time date
+
+**Three-level endpoint resolution**:
+How a dialect endpoint name becomes an account: exact full name, then date-effective declared alias, then a unique tail-segment match over opened accounts; ambiguity or no match is an error that lists candidates.
+_Avoid_: fuzzy match, best guess, case-insensitive match
+
+**Dialect export**:
+`orangecount export`: a disposable, pure-Beancount-v3 snapshot emitted from a dialect source for external tools. Hand-editing an export is prohibited; changes go only to the dialect source (ADR-0045).
+_Avoid_: synchronized copy, mirror file, second ledger
+
+**Dialectize**:
+`orangecount dialectize`: the reverse filter that rewrites a v3 ledger's trivially-representable transactions into dialect lines and preserves every other entry byte-for-byte, with round-trip balance and fixpoint guaranteed by property tests.
+_Avoid_: full translation, lossy conversion, normalization

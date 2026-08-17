@@ -215,6 +215,11 @@ func (e *evaluator) evaluateDirective(file *File, directive Directive) {
 	case Include, TagDirective, Query, Event, Note, Document, Custom:
 		// These directives are source-preserved and consumed by later report
 		// layers; they do not mutate account state in the core evaluator.
+	case Dialect:
+		// Source-only shorthand: the dialect pass replaces it before
+		// evaluation. Reaching here means a caller bypassed snapshot's
+		// expansion, so warn loudly instead of dropping it silently.
+		e.add("W-DIALECT-UNEXPANDED", diagnostic.Warning, span, path)
 	case Open:
 		e.open(d)
 	case Close:
@@ -308,6 +313,9 @@ func (e *evaluator) replaceLastEntry(d Directive) {
 	e.result.Entries[len(e.result.Entries)-1].Directive = d
 }
 
+// directiveDate returns the date of any directive type for chronological
+// ordering; transactions carry it in DirectiveBase so they fall through to
+// the default.
 func directiveDate(d Directive) Date {
 	switch x := d.(type) {
 	case Open:
@@ -742,6 +750,9 @@ func deriveCostConstraints(spec CostSpec) costConstraints {
 	return constraints
 }
 
+// costMatchesPosition reports whether a lot's cost satisfies the booking
+// constraints; nil constraints are wildcards per beancount's exact-match
+// semantics.
 func costMatchesPosition(constraints costConstraints, cost Cost) bool {
 	if constraints.number != nil && cost.Number.Cmp(*constraints.number) != 0 {
 		return false
@@ -758,6 +769,8 @@ func costMatchesPosition(constraints costConstraints, cost Cost) bool {
 	return true
 }
 
+// orderBookingMatches sorts candidate lots per the account's booking
+// method — FIFO ascending and LIFO descending by lot date.
 func orderBookingMatches(matches []Position, booking string) []Position {
 	ordered := append([]Position(nil), matches...)
 	if strings.EqualFold(booking, "FIFO") || strings.EqualFold(booking, "LIFO") {
@@ -802,6 +815,11 @@ func costSpecFromCost(cost Cost, original *CostSpec) CostSpec {
 	return spec
 }
 
+// updateWorkingPositions folds an interpolated posting into the per-account
+// working inventory used by balance assertions. Additions append a lot at the
+// recorded cost; reductions consume matching lots in order without going
+// negative — the booking step has already decided the authoritative
+// matching, so this only tracks quantities.
 func updateWorkingPositions(working map[string][]Position, posting Posting) {
 	if posting.averageRejected {
 		return
@@ -892,6 +910,8 @@ func divideDecimal(left, right Decimal) Decimal {
 	return NewDecimal(new(big.Rat).Quo(left.Rat(), right.Rat()))
 }
 
+// inferPostingCurrency resolves a posting's effective currency for balance
+// totals: explicit units win, then the cost currency, then the price.
 func (e *evaluator) inferPostingCurrency(posting Posting, totals map[string]Decimal) string {
 	if posting.Units != nil && posting.Units.Currency != "" {
 		return posting.Units.Currency
@@ -914,6 +934,10 @@ func (e *evaluator) inferPostingCurrency(posting Posting, totals map[string]Deci
 	return ""
 }
 
+// inferenceTarget picks the currency an amount-less posting converts into
+// and the conversion factor: an explicit price first, then the cost, then the
+// posting's own units currency when it already has a balance, and finally a
+// sole existing total. False means the posting cannot be inferred.
 func (e *evaluator) inferenceTarget(posting Posting, unitsCurrency string, totals map[string]Decimal) (string, Decimal, bool) {
 	if posting.Price != nil && posting.Price.Amount.Currency != "" && posting.Price.Amount.Number.Raw != "" {
 		factor := DecimalFromNumber(posting.Price.Amount.Number)
@@ -1022,6 +1046,9 @@ func consumePositions(positions *[]Position, requested Decimal, currency string,
 	return remaining
 }
 
+// balance evaluates a balance directive against the working inventory: the
+// expected amount is compared with the accumulated positions of that
+// currency within tolerance, and a mismatch or unusable amount is an error.
 func (e *evaluator) balance(d Balance) {
 	currency := d.Amount.Currency
 	if currency == "" || d.Amount.Number.Raw == "" {
@@ -1074,6 +1101,9 @@ func (e *evaluator) applyPad(balance Balance, pad Pad, target *accountWork) {
 	)
 }
 
+// finish closes out evaluation: each deferred balance assertion is replayed
+// against the pad adjustments recorded before it (within tolerance) and its
+// account's lifecycle window, then the final account states are snapshotted.
 func (e *evaluator) finish() {
 	for _, pending := range e.pending {
 		account, ok := e.accounts[pending.account]
@@ -1144,6 +1174,10 @@ func (e *evaluator) pathFor(span source.Span) string {
 	return ""
 }
 
+// normalizeCost collapses a cost spec's component values into one Cost:
+// number-per-currency pairs merge additively (the beancount "{number #
+// number}" form), and a date and label attach when present. ok is false when
+// the components do not resolve to a single amount.
 func normalizeCost(spec CostSpec) (Cost, bool) {
 	cost := Cost{}
 	for _, value := range spec.Components {

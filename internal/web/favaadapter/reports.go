@@ -302,6 +302,8 @@ func evaluationDateRange(e ledger.Evaluation) *DateRange {
 	return &DateRange{Begin: begin, End: end}
 }
 
+// firstCurrency picks the display currency: the first configured operating
+// currency, falling back to CNY when none is configured.
 func firstCurrency(e ledger.Evaluation) string {
 	if configured := strings.TrimSpace(e.Options["operating_currency"]); configured != "" {
 		for _, value := range strings.FieldsFunc(configured, func(r rune) bool { return r == ',' || r == ' ' || r == '\t' }) {

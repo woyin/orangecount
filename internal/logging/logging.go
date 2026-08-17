@@ -61,6 +61,9 @@ func (l *Logger) Event(name string, fields map[string]any) error {
 	return enc.Encode(record)
 }
 
+// allowedField gates which log fields may carry user data: keys naming
+// paths, accounts, amounts, or other ledger content are dropped to keep logs
+// free of financial data.
 func allowedField(key string) bool {
 	key = strings.ToLower(key)
 	if strings.Contains(key, "path") || strings.Contains(key, "account") || strings.Contains(key, "amount") || strings.Contains(key, "query") || strings.Contains(key, "metadata") || strings.Contains(key, "narration") || strings.Contains(key, "transaction") {

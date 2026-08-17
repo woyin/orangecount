@@ -108,6 +108,8 @@ func transactionAccounts(transaction *ledger.Transaction) []string {
 	return accounts
 }
 
+// recordDate extracts the ISO date of any journal entry kind for the
+// statistics timelines.
 func recordDate(record ledger.EntryRecord) string {
 	switch directive := record.Directive.(type) {
 	case *ledger.Transaction:

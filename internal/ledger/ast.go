@@ -32,6 +32,7 @@ func (d Date) Valid() bool {
 // String returns the original source text of the date, keeping output lossless.
 func (d Date) String() string { return d.Raw }
 
+// daysInMonth returns the calendar length of a month, honoring leap years.
 func daysInMonth(year, month int) int {
 	if month == 2 {
 		leap := year%4 == 0 && (year%100 != 0 || year%400 == 0)
@@ -68,6 +69,7 @@ const (
 	KindNote      DirectiveKind = "note"
 	KindCustom    DirectiveKind = "custom"
 	KindTxn       DirectiveKind = "transaction"
+	KindDialect   DirectiveKind = "dialect"
 )
 
 // Directive is implemented by every core directive. Span and Raw are kept on
@@ -285,6 +287,46 @@ type Transaction struct {
 
 // Kind implements Directive.
 func (Transaction) Kind() DirectiveKind { return KindTxn }
+
+// Dialect is one OrangeCount dialect shorthand line (ADR-0045): a terse
+// two-posting transaction the dialect pass replaces with a Transaction
+// before evaluation. It is source-only; the evaluator never consumes it.
+// When HasDate is false the parser resolved the date by block anchoring
+// (Anchored) and Date holds the anchor value; a missing anchor is diagnosed
+// at parse time and leaves Date zero.
+type Dialect struct {
+	DirectiveBase
+	Date         Date
+	HasDate      bool
+	Anchored     bool
+	Flag         string
+	Amount       Number
+	Currency     string
+	SourceRef    string
+	DestRef      string
+	Payee        string
+	Narration    string
+	HasNarration bool
+	Tags         []string
+	Links        []string
+	// Investment legs carry a securities quantity with a cost batch instead
+	// of (or alongside) a plain cash amount. A leg with a Price is a sell:
+	// the source endpoint is the securities account, the destination receives
+	// the cash, and an optional gain endpoint receives the residual (realized
+	// P&L) as an elided posting. A fee suffix adds an explicit expense posting.
+	HasQuantity bool
+	Quantity    Number
+	Security    string
+	Cost        *CostSpec
+	Price       *PriceSpec
+	GainRef     string
+	FeeAmount   Number
+	FeeCurrency string
+	FeeRef      string
+}
+
+// Kind implements Directive.
+func (Dialect) Kind() DirectiveKind { return KindDialect }
 
 // Posting is one leg of a transaction: account, optional flag, units, cost
 // and price specs, and metadata.

@@ -271,6 +271,8 @@ type diagnosticContextResponse struct {
 	Reason    string                  `json:"reason,omitempty"`
 }
 
+// handleDiagnosticContext (GET) returns one diagnostic's rendered context —
+// the offending source lines and its linked entries — for the web UI.
 func (s *Server) handleDiagnosticContext(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.Header().Set("Allow", "GET")
@@ -317,6 +319,8 @@ func (s *Server) handleDiagnosticContext(w http.ResponseWriter, r *http.Request)
 	writeJSON(w, diagnosticContextResponse{Available: true, Path: display, FocusLine: line, Lines: context})
 }
 
+// handleReport (GET) renders a named report (accounts, journal, documents,
+// editor statistics) as paginated JSON for the Fava-compatible UI.
 func (s *Server) handleReport(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.Header().Set("Allow", "GET")
@@ -407,6 +411,8 @@ func reportKnown(name string) bool {
 // reportForRequest computes the unfiltered result and chart route for one
 // report name. A nil result with empty columns and nil error means the name
 // is unknown to the caller only when reportKnown disagrees.
+// reportForRequest dispatches to the named report builder, applying the
+// request's filter parameters (date ranges, accounts, interval).
 func reportForRequest(r *http.Request, current *snapshot.Snapshot, name string) (query.Result, string, error) {
 	evaluation := current.Evaluation()
 	switch strings.ToLower(name) {
@@ -625,6 +631,8 @@ func reportAsOfDate(r *http.Request) (string, error) {
 	return raw, nil
 }
 
+// handleQuery (GET) runs a read-only query against the current snapshot and
+// returns rows in JSON or CSV per the format parameter.
 func (s *Server) handleQuery(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		w.Header().Set("Allow", "GET")
@@ -1204,6 +1212,8 @@ func decodeJSONBody(w http.ResponseWriter, r *http.Request, target any, limit in
 	return nil
 }
 
+// handleImport serves the import pipeline: GET lists adapters and files,
+// POST parses a source file into staged entries pending preview and commit.
 func (s *Server) handleImport(w http.ResponseWriter, r *http.Request) {
 	current := s.store.Current()
 	if current == nil || current.Graph() == nil {
@@ -1390,6 +1400,9 @@ type importCommitRequest struct {
 	ExpectedSnapshot string `json:"expected_snapshot_id"`
 }
 
+// handleImportCommit (POST) applies a staged import: re-validates the
+// previewed entry against the expected snapshot, applies the file edits, and
+// rebuilds; a mismatch aborts with a conflict instead of writing.
 func (s *Server) handleImportCommit(w http.ResponseWriter, r *http.Request, current *snapshot.Snapshot) {
 	if !requireSameOrigin(w, r) {
 		return
@@ -1453,6 +1466,9 @@ func (s *Server) handleImportCommit(w http.ResponseWriter, r *http.Request, curr
 	}{Published: true, SnapshotID: result.Snapshot.ID, Backup: backup})
 }
 
+// safeImportName resolves a user-supplied import path: absolute paths are
+// rejected, the file must live under the adapter's root, and the name must
+// stay within ASCII word characters plus a short allowlist.
 func safeImportName(raw, adapter string) (string, error) {
 	raw = strings.TrimSpace(raw)
 	if raw == "" {
@@ -1580,6 +1596,8 @@ func importPreviewID(path, content string) string {
 	return fmt.Sprintf("%x", hash.Sum(nil))[:16]
 }
 
+// handleOptions serves the local options API: GET returns current values,
+// POST (same-origin) validates and persists them alongside the ledger.
 func (s *Server) handleOptions(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost && !requireSameOrigin(w, r) {
 		return
@@ -1628,6 +1646,8 @@ func (s *Server) handleOptions(w http.ResponseWriter, r *http.Request) {
 	}{Saved: true})
 }
 
+// validateLocalOption checks a settable local option's value; unknown keys
+// and out-of-domain values are rejected so the options file stays clean.
 func validateLocalOption(key, value string) error {
 	switch key {
 	case "locale":

@@ -6,6 +6,7 @@
 package ledger
 
 import (
+	"fmt"
 	"math/big"
 	"reflect"
 	"strconv"
@@ -77,6 +78,9 @@ type parser struct {
 	tx            *Transaction
 	posting       *Posting
 	lastDirective int
+	// dialectAnchor is the most recent explicit date on a dialect line in
+	// this file; undated dialect lines inherit it (ADR-0045 block anchoring).
+	dialectAnchor *Date
 }
 
 type line struct {
@@ -101,6 +105,9 @@ type token struct {
 	span  source.Span
 }
 
+// parse drives the line-oriented scan: read lines, skip blanks and
+// standalone comments, hand each directive line to its parser, and recurse
+// into includes.
 func (p *parser) parse() {
 	p.out = &File{Source: p.file}
 	p.lastDirective = -1
@@ -157,6 +164,8 @@ func splitLines(f *source.SourceFile) []line {
 	return lines
 }
 
+// commentOnLine extracts the trailing "; ..." comment of a line, if any,
+// keeping its source span for diagnostics.
 func commentOnLine(f *source.SourceFile, ln line) *Comment {
 	idx := strings.Index(ln.text, ";")
 	if idx < 0 {
@@ -314,6 +323,8 @@ func scanWordToken(f *source.SourceFile, ln line, text string, i int, out *[]tok
 
 func isASCIIDigit(value byte) bool { return value >= '0' && value <= '9' }
 
+// parseContinuation handles one indented line inside a directive: metadata
+// pairs, postings, and the dialect block forms.
 func (p *parser) parseContinuation(ln line, ts []token) {
 	if isMetadataLine(ts) {
 		meta, ok := p.parseMetadata(ts)
@@ -346,6 +357,15 @@ func (p *parser) parseContinuation(ln line, ts []token) {
 		p.add("E-PARSE-EXPECTED", diagnostic.Error, ts[0].span)
 		return
 	}
+	// A dialect leg inside a transaction block: an amount-first indented
+	// line after a transaction header (or the investment form that starts
+	// with a security word and cost batch). It carries no date of its own;
+	// the header owns date/flag/payee/narration/tags. Standard postings are
+	// always account-first, so the shape is unambiguous.
+	if isDialectStart(ts) || isInvestmentHead(ts) {
+		p.parseDialectLeg(ln, ts)
+		return
+	}
 	posting, ok := p.parsePosting(ts)
 	if !ok {
 		return
@@ -357,8 +377,14 @@ func (p *parser) parseContinuation(ln line, ts []token) {
 	p.tx.Raw = p.file.Text(p.tx.At)
 }
 
+// parseDirective dispatches one top-level line to its directive parser
+// based on the leading keyword.
 func (p *parser) parseDirective(ln line, ts []token) {
 	if len(ts) == 0 {
+		return
+	}
+	if isDialectStart(ts) {
+		p.parseDialectLine(ln, ts)
 		return
 	}
 	first := strings.ToLower(ts[0].text)
@@ -638,6 +664,9 @@ func (p *parser) parseCustomDirective(base DirectiveBase, date Date, rest []toke
 	p.appendDirective(d)
 }
 
+// parseTransaction parses a transaction header line: flag, payee and
+// narration (quoted or bare), tags, and links; postings arrive as
+// continuations.
 func (p *parser) parseTransaction(date Date, ts []token) {
 	base := p.base(ts)
 	tx := Transaction{DirectiveBase: base, Date: date}
@@ -677,6 +706,409 @@ func isFlag(s string) bool {
 		return true
 	}
 	return len([]rune(s)) == 1 && unicode.IsLetter([]rune(s)[0])
+}
+
+// isDialectStart reports whether the top-level token stream opens a dialect
+// line (ADR-0045). The shapes — amount-first, flag+amount, date+amount, or
+// date+flag+amount — are all syntax errors in v3, so claiming them cannot
+// misread any standard directive.
+func isDialectStart(ts []token) bool {
+	if len(ts) == 0 {
+		return false
+	}
+	if looksDate(ts[0].text) {
+		// A date opens a dialect line only when followed by an amount, or a
+		// flag then an amount; every other dated shape is standard syntax.
+		if len(ts) > 1 && looksAmountWord(ts[1].text) {
+			return true
+		}
+		return len(ts) > 2 && (ts[1].text == "*" || ts[1].text == "!") && looksAmountWord(ts[2].text)
+	}
+	if looksAmountWord(ts[0].text) {
+		return true
+	}
+	return (ts[0].text == "*" || ts[0].text == "!") && len(ts) > 1 && looksAmountWord(ts[1].text)
+}
+
+// looksAmountWord reports whether text plausibly opens an amount: an ASCII
+// digit, optionally signed, or a leading decimal point followed by a digit.
+// Full validation happens in parseDialectLine.
+func looksAmountWord(text string) bool {
+	if text == "" {
+		return false
+	}
+	start := 0
+	if text[0] == '-' || text[0] == '+' {
+		start = 1
+	}
+	if start >= len(text) {
+		return false
+	}
+	return isASCIIDigit(text[start]) || (text[start] == '.' && start+1 < len(text) && isASCIIDigit(text[start+1]))
+}
+
+// parseDialectLine parses one dialect shorthand line:
+// [DATE] [FLAG] AMOUNT [CURRENCY] @source -> @destination ["payee"] [: narration] [#tag] [^link]
+// Syntax problems are diagnosed here with E-DIALECT-* codes; endpoint and
+// currency semantics are resolved later by the dialect pass.
+func (p *parser) parseDialectLine(ln line, ts []token) {
+	d := Dialect{DirectiveBase: p.base(ts), Flag: "*"}
+	rest := p.dialectHead(ts, &d)
+	if rest == nil {
+		return
+	}
+	next, ok := p.dialectAmount(rest, &d)
+	if !ok {
+		return
+	}
+	source, afterSource, ok := p.dialectEndpoint(rest, next, "source")
+	if !ok {
+		return
+	}
+	d.SourceRef = source
+	if afterSource >= len(rest) || rest[afterSource].kind != tokWord || rest[afterSource].text != "->" {
+		span := rest[len(rest)-1].span
+		if afterSource < len(rest) {
+			span = rest[afterSource].span
+		}
+		p.add("E-DIALECT-ARROW", diagnostic.Error, span)
+		return
+	}
+	dest, afterDest, ok := p.dialectEndpoint(rest, afterSource+1, "destination")
+	if !ok {
+		return
+	}
+	d.DestRef = dest
+	if !p.dialectTail(rest, afterDest, &d) {
+		return
+	}
+	if !d.HasDate {
+		if p.dialectAnchor == nil {
+			p.add("E-DIALECT-DATE", diagnostic.Error, d.At)
+			return
+		}
+		d.Date, d.Anchored = *p.dialectAnchor, true
+	}
+	p.appendDirective(d)
+}
+
+// parseDialectLeg parses one indented leg of a dialect block: a positive
+// amount, optional currency, and "@src -> @dst" endpoints. The transaction
+// header owns date, flag, payee, narration, and tags; a leg only adds money
+// movement. Legs never take payee/narration/tags of their own.
+func (p *parser) parseDialectLeg(ln line, ts []token) {
+	d := Dialect{DirectiveBase: p.base(ts), Flag: "*"}
+	if p.posting != nil {
+		p.add("E-DIALECT-LEG-ORDER", diagnostic.Error, d.At)
+		return
+	}
+	if len(p.tx.Postings) > 0 {
+		p.add("E-DIALECT-LEG-ORDER", diagnostic.Error, d.At)
+		return
+	}
+	// The leg head is either a plain amount (with optional currency) or an
+	// investment quantity + security + cost batch: "1,000 FUND_019305
+	// {1.5010 CNY}", or the auto-quantity form with the quantity omitted:
+	// "FUND_019305 {1.5010 CNY}". The investment shape replaces the amount
+	// slot so the cash side can be derived or drive the quantity.
+	idx := 0
+	if isInvestmentHead(ts) {
+		if !p.dialectSecurity(ts, &idx, &d) {
+			return
+		}
+	} else {
+		next, ok := p.dialectAmount(ts, &d)
+		if !ok {
+			return
+		}
+		idx = next
+	}
+	source, afterSource, ok := p.dialectEndpoint(ts, idx, "source")
+	if !ok {
+		return
+	}
+	d.SourceRef = source
+	if afterSource >= len(ts) || ts[afterSource].kind != tokWord || ts[afterSource].text != "->" {
+		span := ts[len(ts)-1].span
+		if afterSource < len(ts) {
+			span = ts[afterSource].span
+		}
+		p.add("E-DIALECT-ARROW", diagnostic.Error, span)
+		return
+	}
+	dest, afterDest, ok := p.dialectEndpoint(ts, afterSource+1, "destination")
+	if !ok {
+		return
+	}
+	d.DestRef = dest
+	cursor, ok := p.dialectLegTail(ts, afterDest, &d)
+	if !ok {
+		return
+	}
+	if cursor != len(ts) {
+		p.add("E-DIALECT-SYNTAX", diagnostic.Error, ts[cursor].span)
+		return
+	}
+	// A leg stays dateless; Expand pairs it with its header transaction.
+	p.appendDirective(d)
+}
+
+// dialectLegTail parses the optional leg tail after the destination: a
+// sell's gain endpoint ("-> @account", receiving the realized P&L as an
+// elided posting) and the fee suffix ("手续费 AMOUNT CURRENCY @account").
+func (p *parser) dialectLegTail(ts []token, idx int, d *Dialect) (int, bool) {
+	cursor := idx
+	if cursor+1 < len(ts) && ts[cursor].kind == tokWord && ts[cursor].text == "->" && ts[cursor+1].text == "@" {
+		gain, afterGain, ok := p.dialectEndpoint(ts, cursor+1, "gain")
+		if !ok {
+			return cursor, false
+		}
+		d.GainRef = gain
+		cursor = afterGain
+	}
+	if cursor < len(ts) && ts[cursor].kind == tokWord && ts[cursor].text == "手续费" {
+		fee, afterFee, ok := p.dialectFee(ts, cursor)
+		if !ok {
+			return cursor, false
+		}
+		d.FeeAmount, d.FeeCurrency, d.FeeRef = fee.amount, fee.currency, fee.ref
+		cursor = afterFee
+	}
+	return cursor, true
+}
+
+// dialectFee parses the fee suffix "手续费 AMOUNT CURRENCY @account" at
+// ts[idx] (the 手续费 word).
+func (p *parser) dialectFee(ts []token, idx int) (fee struct {
+	amount   Number
+	currency string
+	ref      string
+}, next int, ok bool) {
+	amount := tryNumber(ts[idx+1])
+	if amount.Raw == "" || (amount.Rat != nil && amount.Rat.Sign() < 0) {
+		p.add("E-DIALECT-AMOUNT", diagnostic.Error, ts[idx+1].span)
+		return fee, idx, false
+	}
+	fee.amount = amount
+	cursor := idx + 2
+	if cursor >= len(ts) || ts[cursor].kind != tokWord || !isCurrencyWord(ts[cursor].text) {
+		p.addf("E-DIALECT-CURRENCY", diagnostic.Error, ts[idx+1].span, "fee needs an explicit currency")
+		return fee, idx, false
+	}
+	fee.currency = ts[cursor].text
+	ref, afterRef, ok := p.dialectEndpoint(ts, cursor+1, "fee")
+	if !ok {
+		return fee, idx, false
+	}
+	fee.ref = ref
+	return fee, afterRef, true
+}
+
+// isInvestmentHead reports whether the leg's head is the investment shape;
+// see investmentHeadShape for the recognized forms.
+func isInvestmentHead(ts []token) bool {
+	return investmentHeadShape(ts).start != -1
+}
+
+// investmentShape identifies the investment head forms. The position of the
+// cost brace disambiguates them, so ticker symbols without digits (AAPL)
+// never read as currencies:
+//
+//	QUANTITY SECURITY {COST}                 start 1 (buy, explicit qty)
+//	AMOUNT CURRENCY SECURITY {COST}          start 2 (buy, auto qty)
+//	AMOUNT CURRENCY QUANTITY SECURITY {COST} start 3 (sell, explicit cash)
+//	SECURITY {COST}                          start 0 (underdetermined)
+//
+// start is the index of the security word; -1 means not an investment head.
+// The sell form without leading cash (QUANTITY SECURITY {COST} @ PRICE ...)
+// shares the first shape; the price after the cost batch marks it.
+type investmentShape struct {
+	start     int
+	hasAmount bool
+}
+
+// investmentHeadShape recognizes the head of a dialect investment leg —
+// "{cost}" alone, "QTY SEC", "AMT CUR QTY", or "AMT CUR" — and reports where
+// the leg payload starts and whether an explicit amount was written.
+func investmentHeadShape(ts []token) investmentShape {
+	switch {
+	case len(ts) >= 2 && ts[0].kind == tokWord && ts[1].text == "{":
+		return investmentShape{start: 0}
+	case quantitySecurityHead(ts):
+		return investmentShape{start: 1}
+	case amountCurrencyPrefix(ts) && len(ts) >= 4 && ts[2].kind == tokWord && ts[3].text == "{":
+		return investmentShape{start: 2, hasAmount: true}
+	case amountCurrencyPrefix(ts) && len(ts) >= 5 && looksAmountWord(ts[2].text) && ts[3].kind == tokWord && ts[4].text == "{":
+		return investmentShape{start: 3, hasAmount: true}
+	}
+	return investmentShape{start: -1}
+}
+
+// quantitySecurityHead reports whether ts starts with "QUANTITY SECURITY {".
+func quantitySecurityHead(ts []token) bool {
+	return len(ts) >= 3 && looksAmountWord(ts[0].text) && ts[1].kind == tokWord && ts[2].text == "{"
+}
+
+// amountCurrencyPrefix reports whether ts starts with "AMOUNT CURRENCY".
+func amountCurrencyPrefix(ts []token) bool {
+	return len(ts) >= 2 && looksAmountWord(ts[0].text) && isCurrencyWord(ts[1].text)
+}
+
+// isCurrencyWord reports whether text is plausibly a currency symbol (an
+// uppercase word that is not a security symbol with an embedded number).
+func isCurrencyWord(text string) bool {
+	return len(text) <= 8 && isAccountWord(text) && !strings.ContainsAny(text, "0123456789")
+}
+
+func isAccountWord(text string) bool {
+	if text == "" {
+		return false
+	}
+	return text[0] >= 'A' && text[0] <= 'Z'
+}
+
+// dialectSecurity parses the investment leg head. Shapes:
+//   - "QUANTITY SECURITY {COST} [@ PRICE]"        buy or sell (explicit qty)
+//   - "AMOUNT CURRENCY SECURITY {COST}"          buy, auto quantity
+//   - "AMOUNT CURRENCY QUANTITY SECURITY {COST} [@ PRICE]"  sell, explicit cash
+//   - "SECURITY {COST}"                          underdetermined; errors later
+//
+// The cost follows beancount's own posting grammar. A "@ NUMBER CURRENCY"
+// after the cost batch is the sale price and marks a sell leg.
+func (p *parser) dialectSecurity(ts []token, idx *int, d *Dialect) bool {
+	shape := investmentHeadShape(ts)
+	if shape.start < 0 {
+		p.add("E-DIALECT-SECURITY", diagnostic.Error, ts[0].span)
+		return false
+	}
+	if shape.hasAmount {
+		d.Amount = tryNumber(ts[0])
+		d.Currency = ts[1].text
+	}
+	switch shape.start {
+	case 1:
+		d.Quantity, d.HasQuantity = tryNumber(ts[0]), true
+	case 3:
+		d.Quantity, d.HasQuantity = tryNumber(ts[2]), true
+	}
+	d.Security = ts[shape.start].text
+	cost, next := p.cost(ts, shape.start+1)
+	d.Cost = &cost
+	if next+1 < len(ts) && ts[next].kind == tokPunct && ts[next].text == "@" && looksAmountWord(ts[next+1].text) {
+		// "@ NUMBER CURRENCY" sale price marks a sell leg. The currency is
+		// required: this ledger runs two operating currencies.
+		price := tryNumber(ts[next+1])
+		if price.Raw == "" {
+			p.add("E-DIALECT-SECURITY", diagnostic.Error, ts[next+1].span)
+			return false
+		}
+		cursor := next + 2
+		if cursor >= len(ts) || ts[cursor].kind != tokWord || !isCurrencyWord(ts[cursor].text) {
+			p.addf("E-DIALECT-SECURITY", diagnostic.Error, ts[next+1].span, "sale price needs an explicit currency")
+			return false
+		}
+		d.Price = &PriceSpec{At: ts[next].span, Amount: Amount{Number: price, Currency: ts[cursor].text, At: ts[next+1].span}}
+		next = cursor + 1
+	}
+	*idx = next
+	return true
+}
+
+// dialectHead consumes the optional date and flag and applies block
+// anchoring state. It returns the remaining tokens, or nil on failure.
+func (p *parser) dialectHead(ts []token, d *Dialect) []token {
+	idx := 0
+	if looksDate(ts[idx].text) {
+		date := p.parseDate(ts[idx])
+		d.Date, d.HasDate = date, true
+		p.dialectAnchor = &date
+		idx++
+		if idx < len(ts) && (ts[idx].text == "*" || ts[idx].text == "!") {
+			d.Flag = ts[idx].text
+			idx++
+		}
+	} else if ts[idx].text == "*" || ts[idx].text == "!" {
+		d.Flag = ts[idx].text
+		idx++
+	}
+	if idx >= len(ts) {
+		p.add("E-DIALECT-AMOUNT", diagnostic.Error, ts[len(ts)-1].span)
+		return nil
+	}
+	return ts[idx:]
+}
+
+// dialectAmount validates and records the positive amount plus the optional
+// currency word that may follow it. It returns the index of the next
+// unconsumed token.
+func (p *parser) dialectAmount(ts []token, d *Dialect) (int, bool) {
+	amount := tryNumber(ts[0])
+	if amount.Raw == "" || (amount.Rat != nil && amount.Rat.Sign() < 0) {
+		p.add("E-DIALECT-AMOUNT", diagnostic.Error, ts[0].span)
+		return 0, false
+	}
+	d.Amount = amount
+	if len(ts) > 1 && ts[1].kind == tokWord && ts[1].text != "->" {
+		d.Currency = ts[1].text
+		return 2, true
+	}
+	return 1, true
+}
+
+// dialectEndpoint reads the "@name" endpoint at ts[idx]. It returns the
+// endpoint text and the index after it.
+func (p *parser) dialectEndpoint(ts []token, idx int, role string) (string, int, bool) {
+	if idx >= len(ts) || ts[idx].kind != tokPunct || (ts[idx].text != "@" && ts[idx].text != "@@") {
+		span := ts[len(ts)-1].span
+		if idx < len(ts) {
+			span = ts[idx].span
+		}
+		p.add("E-DIALECT-SYNTAX", diagnostic.Error, span)
+		return "", idx, false
+	}
+	if ts[idx].text == "@@" || idx+1 >= len(ts) || ts[idx+1].kind != tokWord {
+		p.add("E-DIALECT-SYNTAX", diagnostic.Error, ts[idx].span)
+		return "", idx, false
+	}
+	return ts[idx+1].text, idx + 2, true
+}
+
+// dialectTail parses everything after the destination endpoint: an optional
+// quoted payee, an optional ": narration" run, and #tag/^link words in any
+// order after their first appearance.
+func (p *parser) dialectTail(ts []token, idx int, d *Dialect) bool {
+	narration := false
+	var words []string
+	for ; idx < len(ts); idx++ {
+		t := ts[idx]
+		switch {
+		case t.kind == tokString && !narration:
+			if d.Payee != "" {
+				p.add("E-DIALECT-SYNTAX", diagnostic.Error, t.span)
+				return false
+			}
+			d.Payee = t.value
+		case t.text == ":" && !narration && len(words) == 0:
+			narration = true
+		case strings.HasPrefix(t.text, "#"):
+			d.Tags = append(d.Tags, strings.TrimPrefix(t.text, "#"))
+		case strings.HasPrefix(t.text, "^"):
+			d.Links = append(d.Links, strings.TrimPrefix(t.text, "^"))
+		case t.kind == tokString || t.kind == tokPunct:
+			p.add("E-DIALECT-SYNTAX", diagnostic.Error, t.span)
+			return false
+		case !narration:
+			// A bare word without a preceding ':' is not part of the grammar.
+			p.add("E-DIALECT-SYNTAX", diagnostic.Error, t.span)
+			return false
+		default:
+			words = append(words, t.text)
+		}
+	}
+	if narration {
+		d.Narration, d.HasNarration = strings.Join(words, " "), true
+	}
+	return true
 }
 
 // parsePosting parses one posting line: account [flag] [units] followed by
@@ -740,6 +1172,8 @@ func (p *parser) skipPostingAssignment(ts []token, i int) int {
 	return i + 1
 }
 
+// cost parses a cost or cost-total spec — "{...}" or "{{...}}" — with
+// amount, date, and label components.
 func (p *parser) cost(ts []token, i int) (CostSpec, int) {
 	spec := CostSpec{At: ts[i].span}
 	start := i
@@ -775,6 +1209,7 @@ func (p *parser) cost(ts []token, i int) (CostSpec, int) {
 	return spec, i
 }
 
+// amount parses a number+currency pair starting at token i.
 func (p *parser) amount(ts []token, i int) (Amount, int, bool) {
 	if i >= len(ts) {
 		return Amount{}, i, false
@@ -933,6 +1368,8 @@ func isAccount(s string) bool {
 	return first >= 'A' && first <= 'Z'
 }
 
+// isPunctuation reports whether a token is one of the grammar's structural
+// punctuation marks rather than a word or operator.
 func isPunctuation(s string) bool {
 	return s == "{" || s == "}" || s == "[" || s == "]" || s == "," || s == "@" || s == "@@" || s == "~" || s == "="
 }
@@ -1011,5 +1448,11 @@ func extendDirective(base *DirectiveBase, span source.Span, file *source.SourceF
 
 func (p *parser) add(code string, sev diagnostic.Severity, span source.Span) {
 	d := diagnostic.New(code, sev, span).WithPath(p.file.Path)
+	p.bag.Add(d)
+}
+
+// addf is add with a formatted message.
+func (p *parser) addf(code string, sev diagnostic.Severity, span source.Span, format string, args ...any) {
+	d := diagnostic.New(code, sev, span, fmt.Sprintf(format, args...)).WithPath(p.file.Path)
 	p.bag.Add(d)
 }

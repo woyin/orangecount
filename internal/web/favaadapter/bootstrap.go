@@ -248,6 +248,8 @@ func uptodateStatus(entries []ledger.EntryRecord, account string) string {
 	return ""
 }
 
+// recordTouchesAccount reports whether a journal entry references the
+// account directly (balance, note, document) or through a posting.
 func recordTouchesAccount(record ledger.EntryRecord, account string) bool {
 	switch directive := record.Directive.(type) {
 	case ledger.Balance:

@@ -75,6 +75,8 @@ type quickUndoResponse struct {
 	Error       string               `json:"error,omitempty"`
 }
 
+// handleQuickPreview (POST) compiles a quick-entry line against the current
+// snapshot and returns the would-be entries without writing anything.
 func (s *Server) handleQuickPreview(w http.ResponseWriter, r *http.Request, current *snapshot.Snapshot) {
 	if !requireSameOrigin(w, r) {
 		return
@@ -147,6 +149,9 @@ func (s *Server) handleQuickPreview(w http.ResponseWriter, r *http.Request, curr
 	})
 }
 
+// handleQuickCommit (POST) compiles and appends a quick entry, rebuilding the
+// snapshot; on validation failure nothing is written and the error context
+// comes back for the form.
 func (s *Server) handleQuickCommit(w http.ResponseWriter, r *http.Request, current *snapshot.Snapshot) {
 	if !requireSameOrigin(w, r) {
 		return
@@ -209,6 +214,8 @@ func (s *Server) handleQuickCommit(w http.ResponseWriter, r *http.Request, curre
 	})
 }
 
+// handleQuickUndo (POST) reverts the last quick-entry batch by restoring the
+// files it touched; a post-undo validation failure rolls the restore back.
 func (s *Server) handleQuickUndo(w http.ResponseWriter, r *http.Request, current *snapshot.Snapshot) {
 	if !requireSameOrigin(w, r) {
 		return
@@ -359,6 +366,8 @@ func (s *Server) handleQuickProfileSave(w http.ResponseWriter, r *http.Request, 
 	writeJSON(w, quickCommitResponse{Published: true, SnapshotID: result.Snapshot.ID, Backup: backup})
 }
 
+// serializeQuickProfileDirective renders one quick-profile rule as a ledger
+// directive line, quoting free-text fields and validating the date format.
 func serializeQuickProfileDirective(date, ruleType, name, account, source, dest, currency, payee, narration string) (string, error) {
 	if !quickProfileDateRegex.MatchString(date) {
 		return "", fmt.Errorf("invalid date %q", date)

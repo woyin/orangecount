@@ -264,6 +264,8 @@ func chartPeriodKey(raw, interval string) string {
 	}
 }
 
+// transactionPostings splits a transaction's postings into positive and
+// negative amounts on the chart's currency, skipping others.
 func transactionPostings(e ledger.Evaluation) []chartPosting {
 	result := make([]chartPosting, 0)
 	for _, entry := range e.Entries {
@@ -299,6 +301,8 @@ type chartPosting struct {
 	tags, links            []string
 }
 
+// balanceSheetChart builds the balance sheet's assets, liabilities, and
+// equity lines per interval.
 func balanceSheetChart(e ledger.Evaluation, keys []string, ends map[string]string, interval, currency, valuation string) ChartSpec {
 	labels := []string{"Assets", "Liabilities", "Equity", "Net worth"}
 	seriesValues := make(map[string][]ChartPoint, len(labels))
@@ -336,6 +340,8 @@ func balanceSheetChart(e ledger.Evaluation, keys []string, ends map[string]strin
 	return chart
 }
 
+// incomeStatementChart builds the income statement's revenue and expense
+// lines per interval.
 func incomeStatementChart(e ledger.Evaluation, keys []string, ends map[string]string, interval, currency, valuation string) ChartSpec {
 	labels := []string{"Income", "Expenses", "Net profit"}
 	values := make(map[string][]ChartPoint, len(labels))
@@ -375,6 +381,8 @@ func incomeStatementChart(e ledger.Evaluation, keys []string, ends map[string]st
 	return chart
 }
 
+// accountChart builds the single-account balance line: per-interval end
+// balances of one account in the chosen currency and valuation.
 func accountChart(e ledger.Evaluation, keys []string, ends map[string]string, interval, currency, valuation, account string) ChartSpec {
 	account = strings.TrimSpace(account)
 	if account == "" {

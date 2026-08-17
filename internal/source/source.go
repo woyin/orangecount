@@ -366,7 +366,12 @@ func LoadGraph(entry string) (*Graph, error) {
 		state[path] = visiting
 		stack = append(stack, id)
 		for _, inc := range scanIncludes(file) {
-			childPath := filepath.Join(filepath.Dir(path), inc.path)
+			childPath := inc.path
+			if !filepath.IsAbs(childPath) {
+				// Beancount resolves relative includes against the including
+				// file's directory; absolute paths are used verbatim.
+				childPath = filepath.Join(filepath.Dir(path), inc.path)
+			}
 			child := visit(childPath, id, inc.span)
 			if child != 0 {
 				g.Edges[id] = append(g.Edges[id], IncludeEdge{From: id, To: child, Literal: inc.path, Span: inc.span})
@@ -400,6 +405,8 @@ type includeMatch struct {
 	span Span
 }
 
+// scanIncludes finds the include directives of a parsed file with their
+// spans so the loader can recurse and the graph can record the edges.
 func scanIncludes(f *SourceFile) []includeMatch {
 	if f == nil {
 		return nil

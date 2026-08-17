@@ -64,6 +64,36 @@ make build     # bin/orangecount
 make fmt vet test race license build
 ```
 
+## Dialect superset (experimental)
+
+On the `feature/dialect-superset` branch, OrangeCount accepts a superset of
+Beancount v3: every valid v3 ledger still works, and dialect shorthand lines
+offer a terse two-posting form compiled into ordinary transactions at build
+time (ADR-0045):
+
+```text
+2026-08-12 28 CNY @WeChat -> @Food "美团" : 工作午餐 #food   full form
+2026-08-13 ! 15 @Cash -> @Food                              flag, currency and narration omitted
+6 @Cash -> @Food "地铁"                                     date inherited from the block anchor
+```
+
+- The grammar occupies a syntactic gap: a date followed by a number (or a
+  top-level line starting with a number) is invalid v3, so no standard line
+  can be misread as dialect.
+- Endpoints resolve as full account name, then declared
+  `orangecount.quick-account.v1` alias (date-effective), then unique
+  account tail; ambiguity is an error listing candidates, never a guess.
+- Omitted narration defaults to `消费`; omitted currency requires a single
+  `operating_currency`; omitted dates anchor to the nearest preceding dated
+  dialect line in the same file, so every rebuild is reproducible.
+- The dialect source is the canonical ledger. `orangecount export -out x.bean
+  entry.bean` writes a disposable pure-v3 snapshot for external tools — never
+  hand-edit an export. `orangecount dialectize` is the reverse filter: it
+  rewrites only transactions the dialect can represent exactly (two plain
+  postings, no cost/price/metadata, non-empty narration) and preserves every
+  other byte; balance equality and a byte-stable round-trip fixpoint are
+  enforced by property tests.
+
 ## Performance
 
 OrangeCount builds a fully evaluated snapshot of a large personal ledger in

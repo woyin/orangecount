@@ -261,6 +261,9 @@ func compileTemplateInvocation(line string, lineNo int, tmpl TemplateRule, rest 
 	return result
 }
 
+// parseTemplateRest folds a template invocation's trailing tokens into
+// amount, currency, payee alias, narration, tags, and links; tokens are
+// consumed by shape, so an unknown word is a syntax error.
 func parseTemplateRest(rest []token) (amount, currency, payeeAlias, narration string, tags, links []string, err *LineError) {
 	for _, t := range rest {
 		switch {
