@@ -393,12 +393,9 @@ func compileBlock(idx *index, header *ledger.Transaction, legs []ledger.Dialect)
 		txn.Narration = "消费"
 	}
 	for _, leg := range legs {
-		currency := leg.Currency
+		currency := legCurrency(idx, leg)
 		if currency == "" {
-			currency = idx.opCurrency
-			if currency == "" {
-				return fail("E-DIALECT-CURRENCY", "no currency given and the ledger has no single operating_currency")
-			}
+			return fail("E-DIALECT-CURRENCY", "no currency given and the ledger has no single operating_currency")
 		}
 		srcAccount, srcErr := resolveEndpoint(idx, leg.SourceRef, header.Date)
 		if srcErr != nil {
@@ -409,6 +406,56 @@ func compileBlock(idx *index, header *ledger.Transaction, legs []ledger.Dialect)
 		if dstErr != nil {
 			dstErr.Span = leg.At
 			return nil, Edit{}, append(diags, *dstErr)
+		}
+		if leg.HasQuantity {
+			// Investment leg with explicit quantity: the destination receives
+			// a securities lot with its cost batch; the source pays cash. The
+			// cash amount is the explicit one when given, otherwise quantity
+			// × unit cost.
+			sourceAmount, ok := investmentCashAmount(leg)
+			if !ok {
+				return nil, Edit{}, append(diags, diagnostic.New("E-DIALECT-SECURITY", diagnostic.Error, leg.At, "investment leg needs an explicit amount or a unit cost to derive the cash side"))
+			}
+			txn.Postings = append(txn.Postings,
+				ledger.Posting{
+					At:      leg.At,
+					Raw:     leg.Raw,
+					Account: srcAccount,
+					Units:   &ledger.Amount{Number: negateNumber(sourceAmount), Currency: currency, At: leg.At},
+				},
+				ledger.Posting{
+					At:      leg.At,
+					Raw:     leg.Raw,
+					Account: dstAccount,
+					Units:   &ledger.Amount{Number: leg.Quantity, Currency: leg.Security, At: leg.At},
+					Cost:    leg.Cost,
+				},
+			)
+			continue
+		}
+		if leg.Security != "" {
+			// Auto-quantity investment leg: the destination receives a
+			// securities lot whose quantity the evaluator infers from the
+			// explicit cash amount and unit cost.
+			if leg.Amount.Raw == "" {
+				return nil, Edit{}, append(diags, diagnostic.New("E-DIALECT-SECURITY", diagnostic.Error, leg.At, "auto-quantity investment leg needs an explicit cash amount"))
+			}
+			txn.Postings = append(txn.Postings,
+				ledger.Posting{
+					At:      leg.At,
+					Raw:     leg.Raw,
+					Account: srcAccount,
+					Units:   &ledger.Amount{Number: negateNumber(leg.Amount), Currency: currency, At: leg.At},
+				},
+				ledger.Posting{
+					At:      leg.At,
+					Raw:     leg.Raw,
+					Account: dstAccount,
+					Units:   &ledger.Amount{Currency: leg.Security, At: leg.At},
+					Cost:    leg.Cost,
+				},
+			)
+			continue
 		}
 		txn.Postings = append(txn.Postings,
 			ledger.Posting{
@@ -428,6 +475,47 @@ func compileBlock(idx *index, header *ledger.Transaction, legs []ledger.Dialect)
 	txn.Postings = mergePostings(txn.Postings)
 	span := source.Span{Start: header.At.Start, End: legs[len(legs)-1].At.End}
 	return txn, Edit{Span: span, Text: SerializeTransaction(txn)}, diags
+}
+
+// investmentCashAmount returns the cash side of an investment leg: the
+// explicit amount when written, otherwise quantity × unit cost. The unit
+// cost is the amount component of the cost batch; a cost without an amount
+// cannot drive auto-calc.
+func investmentCashAmount(leg ledger.Dialect) (ledger.Number, bool) {
+	if leg.Amount.Raw != "" {
+		return leg.Amount, true
+	}
+	if leg.Cost == nil || leg.Quantity.Rat == nil {
+		return ledger.Number{}, false
+	}
+	for _, value := range leg.Cost.Components {
+		if value.Kind != ledger.ValueAmount {
+			continue
+		}
+		qty := ledger.NewDecimal(leg.Quantity.Rat)
+		unit := ledger.DecimalFromNumber(value.Amount.Number)
+		product := qty.Mul(unit)
+		return ledger.Number{Raw: product.String(), Rat: product.Rat()}, true
+	}
+	return ledger.Number{}, false
+}
+
+// legCurrency resolves a leg's cash currency: explicit currency first, then
+// an investment cost's amount currency (so a stock bought in CNY carries
+// CNY even with two operating currencies), then the single operating
+// currency.
+func legCurrency(idx *index, leg ledger.Dialect) string {
+	if leg.Currency != "" {
+		return leg.Currency
+	}
+	if leg.Cost != nil {
+		for _, value := range leg.Cost.Components {
+			if value.Kind == ledger.ValueAmount && value.Amount.Currency != "" {
+				return value.Amount.Currency
+			}
+		}
+	}
+	return idx.opCurrency
 }
 
 // mergePostings combines same-account same-currency postings so a block that

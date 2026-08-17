@@ -37,6 +37,20 @@ Two-posting transactions collapse to a single dialect line. Transactions with on
 
 A leg is `AMOUNT [CURRENCY] @source -> @destination` with the amount always positive (the compiler assigns signs). Legs are detected by their amount-first shape, which no standard posting line can take. The header owns date, flag, payee, narration, and tags; legs only move money, so a block is rejected if a leg follows standard postings (`E-DIALECT-LEG-ORDER`). Compilation merges same-account postings so a block that fans one source recompiles to the original single source posting (华夏 −2747.91 rather than two negative postings), keeping exports byte-stable.
 
+## Investment buys
+
+A buy is a dialect leg whose head is a securities lot instead of a plain amount, in either of two shapes:
+
+```
+QUANTITY SECURITY {COST} @cash -> @securities        explicit quantity (stock)
+AMOUNT CURRENCY SECURITY {COST} @cash -> @securities  explicit cash, auto quantity (fund)
+```
+
+- The cost batch follows beancount's own posting grammar (`{1.5010 CNY}`), so compiled output reads exactly like hand-written v3.
+- Explicit-quantity legs derive the cash side as quantity × unit cost; explicit-cash legs leave the securities quantity empty and let the evaluator infer the share count (1000 ÷ 1.5010), matching how the ledger already records fund buys.
+- The leg's cash currency falls back to the cost's currency (a stock bought in CNY carries CNY even with two operating currencies), then the single operating currency.
+- Dialectize converts a two-posting buy (cash + securities with cost) into a buy leg; buys with fee legs, parens in the narration, or empty cash remain standard v3. 87 of 88 clean buys in the reference ledger convert; the remaining shapes are the honest filter boundary.
+
 Two property tests lock round-trip safety mechanically: for any v3 ledger, `dialectize` then `export` must build a snapshot with identical account balances to the original; and re-running the round trip must reach a fixpoint (the second export is byte-stable). Layout of converted lines is rewritten, which forfeits git blame for those lines; accepted for the experiment.
 
 ## Consequences

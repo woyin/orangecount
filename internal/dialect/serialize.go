@@ -49,6 +49,23 @@ func SerializeTransaction(txn *ledger.Transaction) string {
 				block.WriteString(posting.Units.Currency)
 			}
 		}
+		if posting.Cost != nil {
+			block.WriteString(" ")
+			block.WriteString(posting.Cost.Raw)
+		}
+		if posting.Price != nil {
+			if posting.Price.Total {
+				block.WriteString(" @@")
+			} else {
+				block.WriteString(" @")
+			}
+			block.WriteString(" ")
+			block.WriteString(posting.Price.Amount.Number.Raw)
+			if posting.Price.Amount.Currency != "" {
+				block.WriteString(" ")
+				block.WriteString(posting.Price.Amount.Currency)
+			}
+		}
 	}
 	return block.String()
 }
@@ -64,6 +81,9 @@ func flagOrDefault(flag string) string {
 // the inverse of the parser's dialect grammar; only reparse-safe text may be
 // produced (eligible transactions are filtered before this runs).
 func SerializeDialect(txn *ledger.Transaction) string {
+	if securities := investmentBuyLegs(txn.Postings); securities != nil {
+		return serializeBuyLeg(txn, securities)
+	}
 	negatives, positives, ok := splitLegs(txn)
 	if !ok || len(txn.Postings) < 2 {
 		return ""
@@ -192,6 +212,59 @@ func writeLeg(block *strings.Builder, source, destination ledger.Posting, units 
 	block.WriteString(source.Account)
 	block.WriteString(" -> @")
 	block.WriteString(destination.Account)
+}
+
+// serializeBuyLeg renders a buy transaction as a single investment dialect
+// leg. An explicit-quantity buy becomes "QUANTITY SECURITY {COST}
+// @cash -> @securities"; an auto-quantity buy (empty securities quantity)
+// becomes "AMOUNT CURRENCY SECURITY {COST} @cash -> @securities" so the
+// share count is derivable from the cash side.
+func serializeBuyLeg(txn *ledger.Transaction, securities *ledger.Posting) string {
+	var cash ledger.Posting
+	for i := range txn.Postings {
+		if txn.Postings[i].Cost == nil {
+			cash = txn.Postings[i]
+		}
+	}
+	var block strings.Builder
+	block.WriteString(canonicalDate(txn.Date))
+	block.WriteString(" ")
+	block.WriteString(flagOrDefault(txn.Flag))
+	if txn.Payee != "" {
+		block.WriteString(" ")
+		block.WriteString(strconv.Quote(txn.Payee))
+	}
+	block.WriteString(" ")
+	block.WriteString(strconv.Quote(txn.Narration))
+	for _, tag := range txn.Tags {
+		block.WriteString(" #")
+		block.WriteString(tag)
+	}
+	for _, link := range txn.Links {
+		block.WriteString(" ^")
+		block.WriteString(link)
+	}
+	block.WriteString("\n  ")
+	if securities.Units.Number.Raw != "" {
+		block.WriteString(strings.TrimPrefix(securities.Units.Number.Raw, "+"))
+		block.WriteString(" ")
+	} else if cash.Units != nil && cash.Units.Number.Raw != "" {
+		// Auto-quantity: carry the cash amount so the share count stays
+		// derivable from quantity × unit cost.
+		cashAbs := absUnits(cash.Units)
+		block.WriteString(cashAbs.Number.Raw)
+		block.WriteString(" ")
+		block.WriteString(cashAbs.Currency)
+		block.WriteString(" ")
+	}
+	block.WriteString(securities.Units.Currency)
+	block.WriteString(" ")
+	block.WriteString(securities.Cost.Raw)
+	block.WriteString(" @")
+	block.WriteString(cash.Account)
+	block.WriteString(" -> @")
+	block.WriteString(securities.Account)
+	return block.String()
 }
 
 func canonicalDate(date ledger.Date) string {

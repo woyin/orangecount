@@ -308,6 +308,12 @@ type Dialect struct {
 	HasNarration bool
 	Tags         []string
 	Links        []string
+	// Investment legs carry a securities quantity with a cost batch instead
+	// of (or alongside) a plain cash amount.
+	HasQuantity bool
+	Quantity    Number
+	Security    string
+	Cost        *CostSpec
 }
 
 // Kind implements Directive.

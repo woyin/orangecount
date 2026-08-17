@@ -79,10 +79,86 @@ func eligibleForDialect(txn *ledger.Transaction) bool {
 	if !textIsReparseSafe(txn.Narration) || !textIsReparseSafe(txn.Payee) {
 		return false
 	}
+	if buy := investmentBuyLegs(txn.Postings); buy != nil {
+		// A cash leg plus a securities leg with a cost batch is a buy.
+		return true
+	}
 	negative, positive, balanced := plainLegShape(txn.Postings)
 	// A dialect block expresses one source with many destinations, or many
 	// sources with one destination.
 	return balanced && (negative == 1 || positive == 1)
+}
+
+// investmentBuyLegs recognizes the buy shape: exactly two postings, one
+// cash leg (a plain operating-currency amount) and one securities leg (units
+// in a non-operating currency with a cost batch). The securities quantity
+// may be empty, in which case the cash side drives it. It returns the
+// securities posting on success.
+func investmentBuyLegs(postings []ledger.Posting) *ledger.Posting {
+	if len(postings) != 2 {
+		return nil
+	}
+	cash, securities := splitBuyPostings(postings)
+	if cash == nil || securities == nil {
+		return nil
+	}
+	// The securities units currency must differ from the cash currency (it
+	// is a lot, not money), and the cash side must be a plain amount.
+	if securities.Units.Currency == cash.Units.Currency || !plainAmountLeg(*cash) {
+		return nil
+	}
+	if !buyCashMatchesCost(*cash, *securities) {
+		return nil
+	}
+	return securities
+}
+
+// splitBuyPostings separates the two postings of a buy into the cash leg
+// (no cost) and the securities leg (with cost).
+func splitBuyPostings(postings []ledger.Posting) (cash, securities *ledger.Posting) {
+	for i := range postings {
+		p := &postings[i]
+		if p.Cost != nil && p.Units != nil && p.Units.Currency != "" {
+			if securities != nil {
+				return nil, nil
+			}
+			securities = p
+			continue
+		}
+		if p.Units != nil && p.Cost == nil && p.Price == nil && p.Units.Currency != "" {
+			if cash != nil {
+				return nil, nil
+			}
+			cash = p
+		}
+	}
+	return cash, securities
+}
+
+// buyCashMatchesCost reports whether the cash posting equals quantity × the
+// cost batch's unit price, so the auto-calc direction reproduces it exactly.
+// An empty quantity is always consistent (the cash drives the share count).
+func buyCashMatchesCost(cash, securities ledger.Posting) bool {
+	cashRat := cash.Units.Number.Rat
+	if cashRat == nil || securities.Cost == nil {
+		return false
+	}
+	if securities.Units.Number.Rat == nil || securities.Units.Number.Rat.Sign() == 0 {
+		return true
+	}
+	for _, value := range securities.Cost.Components {
+		if value.Kind != ledger.ValueAmount {
+			continue
+		}
+		qty := ledger.NewDecimal(securities.Units.Number.Rat)
+		unit := ledger.DecimalFromNumber(value.Amount.Number)
+		want := qty.Mul(unit).Rat()
+		got := new(big.Rat).Abs(cashRat)
+		if got.Cmp(want) == 0 {
+			return true
+		}
+	}
+	return false
 }
 
 // plainLegShape counts negative and positive plain legs and reports whether

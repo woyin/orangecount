@@ -350,10 +350,11 @@ func (p *parser) parseContinuation(ln line, ts []token) {
 		return
 	}
 	// A dialect leg inside a transaction block: an amount-first indented
-	// line after a transaction header. It carries no date of its own; the
-	// header owns date/flag/payee/narration/tags. Standard postings are
+	// line after a transaction header (or the investment form that starts
+	// with a security word and cost batch). It carries no date of its own;
+	// the header owns date/flag/payee/narration/tags. Standard postings are
 	// always account-first, so the shape is unambiguous.
-	if isDialectStart(ts) {
+	if isDialectStart(ts) || isInvestmentHead(ts) {
 		p.parseDialectLeg(ln, ts)
 		return
 	}
@@ -792,11 +793,24 @@ func (p *parser) parseDialectLeg(ln line, ts []token) {
 		p.add("E-DIALECT-LEG-ORDER", diagnostic.Error, d.At)
 		return
 	}
-	next, ok := p.dialectAmount(ts, &d)
-	if !ok {
-		return
+	// The leg head is either a plain amount (with optional currency) or an
+	// investment quantity + security + cost batch: "1,000 FUND_019305
+	// {1.5010 CNY}", or the auto-quantity form with the quantity omitted:
+	// "FUND_019305 {1.5010 CNY}". The investment shape replaces the amount
+	// slot so the cash side can be derived or drive the quantity.
+	idx := 0
+	if isInvestmentHead(ts) {
+		if !p.dialectSecurity(ts, &idx, &d) {
+			return
+		}
+	} else {
+		next, ok := p.dialectAmount(ts, &d)
+		if !ok {
+			return
+		}
+		idx = next
 	}
-	source, afterSource, ok := p.dialectEndpoint(ts, next, "source")
+	source, afterSource, ok := p.dialectEndpoint(ts, idx, "source")
 	if !ok {
 		return
 	}
@@ -820,6 +834,60 @@ func (p *parser) parseDialectLeg(ln line, ts []token) {
 	}
 	// A leg stays dateless; Expand pairs it with its header transaction.
 	p.appendDirective(d)
+}
+
+// isInvestmentHead reports whether the leg's head is the investment shape:
+// an optional number (quantity), a security word, then an opening brace;
+// or an explicit amount + currency, a security word, then an opening brace.
+func isInvestmentHead(ts []token) bool {
+	if len(ts) >= 3 && looksAmountWord(ts[0].text) && ts[1].kind == tokWord && ts[2].text == "{" {
+		return true
+	}
+	// amount + currency + security + {COST}
+	if len(ts) >= 4 && looksAmountWord(ts[0].text) && isCurrencyWord(ts[1].text) && ts[2].kind == tokWord && ts[3].text == "{" {
+		return true
+	}
+	return len(ts) >= 2 && ts[0].kind == tokWord && ts[1].text == "{"
+}
+
+// isCurrencyWord reports whether text is plausibly a currency symbol (an
+// uppercase word that is not a security symbol with an embedded number).
+func isCurrencyWord(text string) bool {
+	return len(text) <= 8 && isAccountWord(text) && !strings.ContainsAny(text, "0123456789")
+}
+
+func isAccountWord(text string) bool {
+	if text == "" {
+		return false
+	}
+	return text[0] >= 'A' && text[0] <= 'Z'
+}
+
+// dialectSecurity parses the investment leg head. Three shapes:
+//   - "QUANTITY SECURITY {COST}"       (explicit quantity, cash derived)
+//   - "AMOUNT CURRENCY SECURITY {COST}" (explicit cash, quantity derived)
+//   - "SECURITY {COST}"                 (underdetermined; compile errors)
+//
+// The cost follows beancount's own posting grammar.
+func (p *parser) dialectSecurity(ts []token, idx *int, d *Dialect) bool {
+	start := 0
+	if number := tryNumber(ts[0]); number.Raw != "" {
+		if len(ts) >= 2 && isCurrencyWord(ts[1].text) && len(ts) >= 4 && ts[3].text == "{" && ts[2].kind == tokWord {
+			// AMOUNT CURRENCY SECURITY {COST}: explicit cash, auto quantity.
+			d.Amount = number
+			d.Currency = ts[1].text
+			start = 2
+		} else {
+			// QUANTITY SECURITY {COST}: explicit quantity.
+			d.Quantity, d.HasQuantity = number, true
+			start = 1
+		}
+	}
+	d.Security = ts[start].text
+	cost, next := p.cost(ts, start+1)
+	d.Cost = &cost
+	*idx = next
+	return true
 }
 
 // dialectHead consumes the optional date and flag and applies block
