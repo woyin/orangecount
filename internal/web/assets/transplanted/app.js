@@ -5829,32 +5829,31 @@ function parseJournalReport(value) {
 
 // src/fava/charts/ReportChart.svelte
 var root_22 = template(`<span class="mode-switch svelte-1act09h"><label class="button svelte-1act09h"><input type="radio" value="stacked" class="svelte-1act09h"> </label> <label class="button svelte-1act09h"><input type="radio" value="single" class="svelte-1act09h"> </label></span>`);
-var root_4 = template(`<span class="mode-switch svelte-1act09h"><label class="button svelte-1act09h"><input type="radio" value="line" class="svelte-1act09h"> </label> <label class="button svelte-1act09h"><input type="radio" value="area" class="svelte-1act09h"> </label></span>`);
-var root_7 = ns_template(`<a class="svelte-1act09h"><path opacity=".8" class="svelte-1act09h"><title> </title></path></a>`);
-var root_62 = template(`<svg class="report-chart report-hierarchy-chart report-sunburst-chart svelte-1act09h" viewBox="0 0 100 100" role="img"></svg>`);
+var root_5 = ns_template(`<a class="svelte-1act09h"><path opacity=".8" class="svelte-1act09h"><title> </title></path></a>`);
+var root_4 = template(`<svg class="report-chart report-hierarchy-chart report-sunburst-chart svelte-1act09h" viewBox="0 0 100 100" role="img"></svg>`);
+var root_8 = ns_template(`<a class="svelte-1act09h"><rect opacity=".8"><title> </title></rect></a>`);
+var root_7 = template(`<svg class="report-chart report-hierarchy-chart svelte-1act09h" preserveAspectRatio="none" role="img"></svg>`);
 var root_10 = ns_template(`<a class="svelte-1act09h"><rect opacity=".8"><title> </title></rect></a>`);
-var root_9 = template(`<svg class="report-chart report-hierarchy-chart svelte-1act09h" preserveAspectRatio="none" role="img"></svg>`);
-var root_122 = ns_template(`<a class="svelte-1act09h"><rect opacity=".8"><title> </title></rect></a>`);
-var root_11 = template(`<svg class="report-chart report-hierarchy-chart svelte-1act09h" viewBox="0 0 100 52" preserveAspectRatio="none" role="img"></svg>`);
-var root_5 = template(`<div class="hierarchy-picker svelte-1act09h"><button type="button" class="unset svelte-1act09h"> </button> <button type="button" class="unset svelte-1act09h"> </button> <button type="button" class="unset svelte-1act09h"> </button></div> <!>`, 1);
-var root_15 = ns_template(`<line class="chart-grid svelte-1act09h"></line><text class="chart-tick svelte-1act09h" text-anchor="end"> </text>`, 1);
-var root_17 = ns_template(`<rect></rect>`);
-var root_20 = ns_template(`<rect></rect>`);
-var root_222 = ns_template(`<text y="51" class="chart-tick svelte-1act09h" text-anchor="middle"> </text>`);
-var root_14 = template(`<svg class="report-chart report-bar-chart svelte-1act09h" viewBox="0 0 100 52" role="img"><!><line class="chart-axis svelte-1act09h"></line><!><!></svg>`);
-var root_24 = ns_template(`<line class="chart-grid svelte-1act09h"></line><text class="chart-tick svelte-1act09h" text-anchor="end"> </text>`, 1);
-var root_26 = ns_template(`<path class="area-fill svelte-1act09h"></path>`);
-var root_25 = ns_template(`<!><path class="svelte-1act09h"></path>`, 1);
-var root_28 = ns_template(`<text y="51" class="chart-tick svelte-1act09h" text-anchor="middle"> </text>`);
-var root_23 = template(`<svg class="report-chart report-line-chart svelte-1act09h" viewBox="0 0 100 52" role="img"><!><line class="chart-axis svelte-1act09h"></line><!><!></svg>`);
-var root_29 = template(`<button type="button" class="legend svelte-1act09h"><i class="svelte-1act09h"></i><span class="svelte-1act09h"> </span></button>`);
-var root_30 = template(`<p class="chart-availability svelte-1act09h"> </p>`);
-var root_31 = template(`<th scope="col" class="num"> </th>`);
-var root_33 = template(`<td class="num"> </td>`);
-var root_322 = template(`<tr><th scope="row"> </th><!></tr>`);
-var root_34 = template(`<tr><td>No chart data.</td></tr>`);
-var root_35 = template(`<div class="chart-tooltip svelte-1act09h" role="status"> </div>`);
-var root_16 = template(`<section class="chart-card svelte-1act09h"><h3> </h3> <!> <!> <p class="chart-meta svelte-1act09h"> </p> <!> <!> <details class="chart-data svelte-1act09h"><summary class="svelte-1act09h"> </summary> <div class="chart-scroll svelte-1act09h"><table class="svelte-1act09h"><thead><tr><th scope="col">Period</th><!></tr></thead><tbody></tbody></table></div></details> <!></section>`);
+var root_9 = template(`<svg class="report-chart report-hierarchy-chart svelte-1act09h" viewBox="0 0 100 52" preserveAspectRatio="none" role="img"></svg>`);
+var root_33 = template(`<div class="hierarchy-picker svelte-1act09h"><button type="button" class="unset svelte-1act09h"> </button> <button type="button" class="unset svelte-1act09h"> </button> <button type="button" class="unset svelte-1act09h"> </button></div> <!>`, 1);
+var root_132 = ns_template(`<line class="chart-grid svelte-1act09h"></line><text class="chart-tick svelte-1act09h" text-anchor="end"> </text>`, 1);
+var root_15 = ns_template(`<rect></rect>`);
+var root_18 = ns_template(`<rect></rect>`);
+var root_20 = ns_template(`<text y="51" class="chart-tick svelte-1act09h" text-anchor="middle"> </text>`);
+var root_122 = template(`<svg class="report-chart report-bar-chart svelte-1act09h" viewBox="0 0 100 52" role="img"><!><line class="chart-axis svelte-1act09h"></line><!><!></svg>`);
+var root_222 = ns_template(`<line class="chart-grid svelte-1act09h"></line><text class="chart-tick svelte-1act09h" text-anchor="end"> </text>`, 1);
+var root_24 = ns_template(`<path class="area-fill svelte-1act09h"></path>`);
+var root_23 = ns_template(`<!><path class="svelte-1act09h"></path>`, 1);
+var root_26 = ns_template(`<text y="51" class="chart-tick svelte-1act09h" text-anchor="middle"> </text>`);
+var root_21 = template(`<svg class="report-chart report-line-chart svelte-1act09h" viewBox="0 0 100 52" role="img"><!><line class="chart-axis svelte-1act09h"></line><!><!></svg>`);
+var root_27 = template(`<button type="button" class="legend svelte-1act09h"><i class="svelte-1act09h"></i><span class="svelte-1act09h"> </span></button>`);
+var root_28 = template(`<p class="chart-availability svelte-1act09h"> </p>`);
+var root_29 = template(`<th scope="col" class="num"> </th>`);
+var root_31 = template(`<td class="num"> </td>`);
+var root_30 = template(`<tr><th scope="row"> </th><!></tr>`);
+var root_322 = template(`<tr><td>No chart data.</td></tr>`);
+var root_332 = template(`<div class="chart-tooltip svelte-1act09h" role="status"> </div>`);
+var root_14 = template(`<section class="chart-card svelte-1act09h"><h3> </h3> <!> <!> <p class="chart-meta svelte-1act09h"> </p> <!> <!> <details class="chart-data svelte-1act09h"><summary class="svelte-1act09h"> </summary> <div class="chart-scroll svelte-1act09h"><table class="svelte-1act09h"><thead><tr><th scope="col">Period</th><!></tr></thead><tbody></tbody></table></div></details> <!></section>`);
 function ReportChart($$anchor, $$props) {
   push($$props, false);
   const catalog = mutable_state();
@@ -5899,25 +5898,16 @@ function ReportChart($$anchor, $$props) {
     "var(--series-3, #9333ea)"
   ];
   let barMode = mutable_state("stacked");
-  let lineMode = mutable_state("line");
+  const lineMode = "line";
   try {
     const storedBar = localStorage.getItem("bar-chart-mode");
     if (storedBar === "stacked" || storedBar === "single") set(barMode, storedBar);
-    const storedLine = localStorage.getItem("line-chart-mode");
-    if (storedLine === "line" || storedLine === "area") set(lineMode, storedLine);
   } catch {
   }
   function setBarMode(mode) {
     set(barMode, mode);
     try {
       localStorage.setItem("bar-chart-mode", mode);
-    } catch {
-    }
-  }
-  function setLineMode(mode) {
-    set(lineMode, mode);
-    try {
-      localStorage.setItem("line-chart-mode", mode);
     } catch {
     }
   }
@@ -6187,12 +6177,10 @@ ${lines.join("\n")}`);
       set(showBarMode, get(isBarChart) && get(visibleSeries).length > 1);
     }
   );
-  legacy_pre_effect(
-    () => (get(isLineChart), get(visibleSeries)),
-    () => {
-      set(showLineMode, get(isLineChart) && get(visibleSeries).length > 0);
-    }
-  );
+  legacy_pre_effect(() => {
+  }, () => {
+    set(showLineMode, false);
+  });
   legacy_pre_effect(() => get(visibleSeries), () => {
     set(pointValues, get(visibleSeries).flatMap((series) => series.points.map((point3) => numberValue(point3.value))));
   });
@@ -6331,7 +6319,7 @@ ${lines.join("\n")}`);
   });
   legacy_pre_effect_reset();
   init2();
-  var section = root_16();
+  var section = root_14();
   var h3 = child(section);
   var text2 = child(h3, true);
   reset(h3);
@@ -6364,88 +6352,46 @@ ${lines.join("\n")}`);
       event("change", input_1, () => setBarMode("single"));
       append($$anchor2, span_1);
     };
-    var alternate = ($$anchor2) => {
-      var fragment = comment();
-      var node_2 = first_child(fragment);
-      {
-        var consequent_1 = ($$anchor3) => {
-          var span_2 = root_4();
-          var label_3 = child(span_2);
-          var input_2 = child(label_3);
-          remove_input_defaults(input_2);
-          var text_3 = sibling(input_2);
-          template_effect(() => set_text(text_3, ` ${label("lineChart") ?? ""}`));
-          reset(label_3);
-          var label_4 = sibling(label_3, 2);
-          var input_3 = child(label_4);
-          remove_input_defaults(input_3);
-          var text_4 = sibling(input_3);
-          template_effect(() => set_text(text_4, ` ${label("areaChart") ?? ""}`));
-          reset(label_4);
-          reset(span_2);
-          template_effect(() => {
-            toggle_class(label_3, "muted", get(lineMode) !== "line");
-            set_attribute(input_2, "name", "line-mode-" + chart2().title);
-            set_checked(input_2, get(lineMode) === "line");
-            toggle_class(label_4, "muted", get(lineMode) !== "area");
-            set_attribute(input_3, "name", "line-mode-" + chart2().title);
-            set_checked(input_3, get(lineMode) === "area");
-          });
-          event("change", input_2, () => setLineMode("line"));
-          event("change", input_3, () => setLineMode("area"));
-          append($$anchor3, span_2);
-        };
-        if_block(
-          node_2,
-          ($$render) => {
-            if (get(showLineMode)) $$render(consequent_1);
-          },
-          true
-        );
-      }
-      append($$anchor2, fragment);
-    };
     if_block(node_1, ($$render) => {
       if (get(showBarMode)) $$render(consequent);
-      else $$render(alternate, false);
     });
   }
-  var node_3 = sibling(node_1, 2);
+  var node_2 = sibling(node_1, 2);
   {
-    var consequent_4 = ($$anchor2) => {
-      var fragment_1 = root_5();
-      var div = first_child(fragment_1);
+    var consequent_3 = ($$anchor2) => {
+      var fragment = root_33();
+      var div = first_child(fragment);
       var button = child(div);
-      var text_5 = child(button, true);
-      template_effect(() => set_text(text_5, label("treemap")));
+      var text_3 = child(button, true);
+      template_effect(() => set_text(text_3, label("treemap")));
       reset(button);
       var button_1 = sibling(button, 2);
-      var text_6 = child(button_1, true);
-      template_effect(() => set_text(text_6, label("sunburst")));
+      var text_4 = child(button_1, true);
+      template_effect(() => set_text(text_4, label("sunburst")));
       reset(button_1);
       var button_2 = sibling(button_1, 2);
-      var text_7 = child(button_2, true);
-      template_effect(() => set_text(text_7, label("icicle")));
+      var text_5 = child(button_2, true);
+      template_effect(() => set_text(text_5, label("icicle")));
       reset(button_2);
       reset(div);
-      var node_4 = sibling(div, 2);
+      var node_3 = sibling(div, 2);
       {
-        var consequent_2 = ($$anchor3) => {
-          var svg_1 = root_62();
+        var consequent_1 = ($$anchor3) => {
+          var svg_1 = root_4();
           each(svg_1, 5, () => get(sunSegments), (item) => item.name, ($$anchor4, item) => {
-            var a = root_7();
+            var a = root_5();
             template_effect(() => set_attribute(a, "href", accountHref(get(item).name)));
             var path2 = child(a);
             template_effect(() => set_attribute(path2, "d", arcPath(get(item))));
             const style_derived = derived_safe_equal(() => `fill:${sunColor(get(item))}`);
             var title = child(path2);
-            var text_8 = child(title);
+            var text_6 = child(title);
             reset(title);
             reset(path2);
             reset(a);
             template_effect(() => {
               set_attribute(path2, "style", get(style_derived));
-              set_text(text_8, `${get(item).name ?? ""}: ${get(item).display ?? ""} ${chart2().currency ?? ""}`);
+              set_text(text_6, `${get(item).name ?? ""}: ${get(item).display ?? ""} ${chart2().currency ?? ""}`);
             });
             append($$anchor4, a);
           });
@@ -6453,22 +6399,22 @@ ${lines.join("\n")}`);
           template_effect(() => set_attribute(svg_1, "aria-label", chart2().title));
           append($$anchor3, svg_1);
         };
-        var alternate_2 = ($$anchor3) => {
-          var fragment_2 = comment();
-          var node_5 = first_child(fragment_2);
+        var alternate_1 = ($$anchor3) => {
+          var fragment_1 = comment();
+          var node_4 = first_child(fragment_1);
           {
-            var consequent_3 = ($$anchor4) => {
-              var svg_2 = root_9();
+            var consequent_2 = ($$anchor4) => {
+              var svg_2 = root_7();
               template_effect(() => set_attribute(svg_2, "viewBox", `0 0 100 ${Math.max(6, get(iceDepth)) ?? ""}`));
               each(svg_2, 5, () => get(iceRects), (item) => item.name, ($$anchor5, item) => {
-                var a_1 = root_10();
+                var a_1 = root_8();
                 template_effect(() => set_attribute(a_1, "href", accountHref(get(item).name)));
                 var rect_1 = child(a_1);
                 template_effect(() => set_attribute(rect_1, "width", Math.max(0.2, get(item).w - 0.2)));
                 template_effect(() => set_attribute(rect_1, "height", Math.max(0.3, get(item).h - 0.3)));
                 const style_derived_1 = derived_safe_equal(() => `fill:${iceColor(get(item))}`);
                 var title_1 = child(rect_1);
-                var text_9 = child(title_1);
+                var text_7 = child(title_1);
                 reset(title_1);
                 reset(rect_1);
                 reset(a_1);
@@ -6476,7 +6422,7 @@ ${lines.join("\n")}`);
                   set_attribute(rect_1, "x", get(item).x + 0.1);
                   set_attribute(rect_1, "y", get(item).y + 0.15);
                   set_attribute(rect_1, "style", get(style_derived_1));
-                  set_text(text_9, `${get(item).name ?? ""}: ${get(item).display ?? ""} ${chart2().currency ?? ""}`);
+                  set_text(text_7, `${get(item).name ?? ""}: ${get(item).display ?? ""} ${chart2().currency ?? ""}`);
                 });
                 append($$anchor5, a_1);
               });
@@ -6484,17 +6430,17 @@ ${lines.join("\n")}`);
               template_effect(() => set_attribute(svg_2, "aria-label", chart2().title));
               append($$anchor4, svg_2);
             };
-            var alternate_1 = ($$anchor4) => {
-              var svg_3 = root_11();
+            var alternate = ($$anchor4) => {
+              var svg_3 = root_9();
               each(svg_3, 5, () => get(tiles), (item) => item.name, ($$anchor5, item) => {
-                var a_2 = root_122();
+                var a_2 = root_10();
                 template_effect(() => set_attribute(a_2, "href", accountHref(get(item).name)));
                 var rect_2 = child(a_2);
                 template_effect(() => set_attribute(rect_2, "width", Math.max(0.3, get(item).w - 0.3)));
                 template_effect(() => set_attribute(rect_2, "height", Math.max(0.3, get(item).h - 0.3)));
                 const style_derived_2 = derived_safe_equal(() => `fill:${tileColor(get(item))}`);
                 var title_2 = child(rect_2);
-                var text_10 = child(title_2);
+                var text_8 = child(title_2);
                 reset(title_2);
                 reset(rect_2);
                 reset(a_2);
@@ -6502,7 +6448,7 @@ ${lines.join("\n")}`);
                   set_attribute(rect_2, "x", get(item).x + 0.15);
                   set_attribute(rect_2, "y", get(item).y + 0.15);
                   set_attribute(rect_2, "style", get(style_derived_2));
-                  set_text(text_10, `${get(item).name ?? ""}: ${get(item).display ?? ""} ${chart2().currency ?? ""}`);
+                  set_text(text_8, `${get(item).name ?? ""}: ${get(item).display ?? ""} ${chart2().currency ?? ""}`);
                 });
                 append($$anchor5, a_2);
               });
@@ -6511,19 +6457,19 @@ ${lines.join("\n")}`);
               append($$anchor4, svg_3);
             };
             if_block(
-              node_5,
+              node_4,
               ($$render) => {
-                if (get(hierarchyView) === "icicle" && get(iceRects).length) $$render(consequent_3);
-                else $$render(alternate_1, false);
+                if (get(hierarchyView) === "icicle" && get(iceRects).length) $$render(consequent_2);
+                else $$render(alternate, false);
               },
               true
             );
           }
-          append($$anchor3, fragment_2);
+          append($$anchor3, fragment_1);
         };
-        if_block(node_4, ($$render) => {
-          if (get(hierarchyView) === "sunburst" && get(sunSegments).length) $$render(consequent_2);
-          else $$render(alternate_2, false);
+        if_block(node_3, ($$render) => {
+          if (get(hierarchyView) === "sunburst" && get(sunSegments).length) $$render(consequent_1);
+          else $$render(alternate_1, false);
         });
       }
       template_effect(() => {
@@ -6534,42 +6480,42 @@ ${lines.join("\n")}`);
       event("click", button, () => set(hierarchyView, "treemap"));
       event("click", button_1, () => set(hierarchyView, "sunburst"));
       event("click", button_2, () => set(hierarchyView, "icicle"));
-      append($$anchor2, fragment_1);
+      append($$anchor2, fragment);
     };
-    var alternate_5 = ($$anchor2) => {
-      var fragment_3 = comment();
-      var node_6 = first_child(fragment_3);
+    var alternate_4 = ($$anchor2) => {
+      var fragment_2 = comment();
+      var node_5 = first_child(fragment_2);
       {
-        var consequent_7 = ($$anchor3) => {
-          var svg_4 = root_14();
-          var node_7 = child(svg_4);
-          each(node_7, 1, () => get(yTicks), (tick2) => tick2, ($$anchor4, tick2) => {
-            var fragment_4 = root_15();
-            var line_1 = first_child(fragment_4);
+        var consequent_6 = ($$anchor3) => {
+          var svg_4 = root_122();
+          var node_6 = child(svg_4);
+          each(node_6, 1, () => get(yTicks), (tick2) => tick2, ($$anchor4, tick2) => {
+            var fragment_3 = root_132();
+            var line_1 = first_child(fragment_3);
             set_attribute(line_1, "x1", X0);
             template_effect(() => set_attribute(line_1, "y1", y2(get(tick2))));
             set_attribute(line_1, "x2", X1);
             template_effect(() => set_attribute(line_1, "y2", y2(get(tick2))));
-            var text_11 = sibling(line_1);
-            set_attribute(text_11, "x", X0 - 1);
-            template_effect(() => set_attribute(text_11, "y", y2(get(tick2)) + 1));
-            var text_12 = child(text_11, true);
-            template_effect(() => set_text(text_12, tickLabel(get(tick2))));
-            reset(text_11);
-            append($$anchor4, fragment_4);
+            var text_9 = sibling(line_1);
+            set_attribute(text_9, "x", X0 - 1);
+            template_effect(() => set_attribute(text_9, "y", y2(get(tick2)) + 1));
+            var text_10 = child(text_9, true);
+            template_effect(() => set_text(text_10, tickLabel(get(tick2))));
+            reset(text_9);
+            append($$anchor4, fragment_3);
           });
-          var line_2 = sibling(node_7);
+          var line_2 = sibling(node_6);
           set_attribute(line_2, "x1", X0);
           template_effect(() => set_attribute(line_2, "y1", y2(0)));
           set_attribute(line_2, "x2", X1);
           template_effect(() => set_attribute(line_2, "y2", y2(0)));
-          var node_8 = sibling(line_2);
+          var node_7 = sibling(line_2);
           {
-            var consequent_5 = ($$anchor4) => {
-              var fragment_5 = comment();
-              var node_9 = first_child(fragment_5);
-              each(node_9, 1, () => get(stackedBarRects), (rect) => rect.seriesLabel + "-" + rect.date, ($$anchor5, rect) => {
-                var rect_3 = root_17();
+            var consequent_4 = ($$anchor4) => {
+              var fragment_4 = comment();
+              var node_8 = first_child(fragment_4);
+              each(node_8, 1, () => get(stackedBarRects), (rect) => rect.seriesLabel + "-" + rect.date, ($$anchor5, rect) => {
+                var rect_3 = root_15();
                 template_effect(() => {
                   set_attribute(rect_3, "x", get(rect).x);
                   set_attribute(rect_3, "y", get(rect).y);
@@ -6584,16 +6530,16 @@ ${lines.join("\n")}`);
                 event("mouseleave", rect_3, hideTip);
                 append($$anchor5, rect_3);
               });
-              append($$anchor4, fragment_5);
+              append($$anchor4, fragment_4);
             };
-            var alternate_3 = ($$anchor4) => {
-              var fragment_6 = comment();
-              var node_10 = first_child(fragment_6);
-              each(node_10, 3, () => get(visibleSeries), (series) => series.label, ($$anchor5, series, seriesIndex) => {
-                var fragment_7 = comment();
-                var node_11 = first_child(fragment_7);
-                each(node_11, 3, () => get(series).points, (point3) => point3.date, ($$anchor6, point3, index2) => {
-                  var rect_4 = root_20();
+            var alternate_2 = ($$anchor4) => {
+              var fragment_5 = comment();
+              var node_9 = first_child(fragment_5);
+              each(node_9, 3, () => get(visibleSeries), (series) => series.label, ($$anchor5, series, seriesIndex) => {
+                var fragment_6 = comment();
+                var node_10 = first_child(fragment_6);
+                each(node_10, 3, () => get(series).points, (point3) => point3.date, ($$anchor6, point3, index2) => {
+                  var rect_4 = root_18();
                   const value = derived_safe_equal(() => numberValue(get(point3).value));
                   const barWidth = derived_safe_equal(() => Math.max(1, (X1 - X0) / Math.max(1, get(width)) / Math.max(1, get(visibleSeries).length)));
                   template_effect(() => set_attribute(rect_4, "x", x2(get(index2)) - (X1 - X0) / (2 * Math.max(1, get(width))) + get(seriesIndex) * get(barWidth)));
@@ -6608,103 +6554,103 @@ ${lines.join("\n")}`);
                   event("mouseleave", rect_4, hideTip);
                   append($$anchor6, rect_4);
                 });
-                append($$anchor5, fragment_7);
+                append($$anchor5, fragment_6);
               });
-              append($$anchor4, fragment_6);
+              append($$anchor4, fragment_5);
             };
-            if_block(node_8, ($$render) => {
-              if (get(barMode) === "stacked" && get(visibleSeries).length > 1) $$render(consequent_5);
-              else $$render(alternate_3, false);
+            if_block(node_7, ($$render) => {
+              if (get(barMode) === "stacked" && get(visibleSeries).length > 1) $$render(consequent_4);
+              else $$render(alternate_2, false);
             });
           }
-          var node_12 = sibling(node_8);
-          each(node_12, 1, () => get(xTickIndices), (index2) => index2, ($$anchor4, index2) => {
-            var fragment_8 = comment();
+          var node_11 = sibling(node_7);
+          each(node_11, 1, () => get(xTickIndices), (index2) => index2, ($$anchor4, index2) => {
+            var fragment_7 = comment();
             const point3 = derived_safe_equal(() => chart2().series[0]?.points[get(index2)]);
-            var node_13 = first_child(fragment_8);
+            var node_12 = first_child(fragment_7);
             {
-              var consequent_6 = ($$anchor5) => {
-                var text_13 = root_222();
-                template_effect(() => set_attribute(text_13, "x", x2(get(index2))));
-                var text_14 = child(text_13, true);
-                template_effect(() => set_text(text_14, xTickLabel(get(point3).date)));
-                reset(text_13);
-                append($$anchor5, text_13);
+              var consequent_5 = ($$anchor5) => {
+                var text_11 = root_20();
+                template_effect(() => set_attribute(text_11, "x", x2(get(index2))));
+                var text_12 = child(text_11, true);
+                template_effect(() => set_text(text_12, xTickLabel(get(point3).date)));
+                reset(text_11);
+                append($$anchor5, text_11);
               };
-              if_block(node_13, ($$render) => {
-                if (get(point3)) $$render(consequent_6);
+              if_block(node_12, ($$render) => {
+                if (get(point3)) $$render(consequent_5);
               });
             }
-            append($$anchor4, fragment_8);
+            append($$anchor4, fragment_7);
           });
           reset(svg_4);
           template_effect(() => set_attribute(svg_4, "aria-label", chart2().title));
           append($$anchor3, svg_4);
         };
-        var alternate_4 = ($$anchor3) => {
-          var svg_5 = root_23();
-          var node_14 = child(svg_5);
-          each(node_14, 1, () => get(yTicks), (tick2) => tick2, ($$anchor4, tick2) => {
-            var fragment_9 = root_24();
-            var line_3 = first_child(fragment_9);
+        var alternate_3 = ($$anchor3) => {
+          var svg_5 = root_21();
+          var node_13 = child(svg_5);
+          each(node_13, 1, () => get(yTicks), (tick2) => tick2, ($$anchor4, tick2) => {
+            var fragment_8 = root_222();
+            var line_3 = first_child(fragment_8);
             set_attribute(line_3, "x1", X0);
             template_effect(() => set_attribute(line_3, "y1", y2(get(tick2))));
             set_attribute(line_3, "x2", X1);
             template_effect(() => set_attribute(line_3, "y2", y2(get(tick2))));
-            var text_15 = sibling(line_3);
-            set_attribute(text_15, "x", X0 - 1);
-            template_effect(() => set_attribute(text_15, "y", y2(get(tick2)) + 1));
-            var text_16 = child(text_15, true);
-            template_effect(() => set_text(text_16, tickLabel(get(tick2))));
-            reset(text_15);
-            append($$anchor4, fragment_9);
+            var text_13 = sibling(line_3);
+            set_attribute(text_13, "x", X0 - 1);
+            template_effect(() => set_attribute(text_13, "y", y2(get(tick2)) + 1));
+            var text_14 = child(text_13, true);
+            template_effect(() => set_text(text_14, tickLabel(get(tick2))));
+            reset(text_13);
+            append($$anchor4, fragment_8);
           });
-          var line_4 = sibling(node_14);
+          var line_4 = sibling(node_13);
           set_attribute(line_4, "x1", X0);
           template_effect(() => set_attribute(line_4, "y1", y2(0)));
           set_attribute(line_4, "x2", X1);
           template_effect(() => set_attribute(line_4, "y2", y2(0)));
-          var node_15 = sibling(line_4);
-          each(node_15, 1, () => get(visibleSeries), (series) => series.label, ($$anchor4, series) => {
-            var fragment_10 = root_25();
-            var node_16 = first_child(fragment_10);
+          var node_14 = sibling(line_4);
+          each(node_14, 1, () => get(visibleSeries), (series) => series.label, ($$anchor4, series) => {
+            var fragment_9 = root_23();
+            var node_15 = first_child(fragment_9);
             {
-              var consequent_8 = ($$anchor5) => {
-                var path_1 = root_26();
+              var consequent_7 = ($$anchor5) => {
+                var path_1 = root_24();
                 template_effect(() => set_attribute(path_1, "d", areaPath(get(series).points)));
                 const style_derived_4 = derived_safe_equal(() => `fill:${colorFor(get(series).label)}`);
                 template_effect(() => set_attribute(path_1, "style", get(style_derived_4)));
                 append($$anchor5, path_1);
               };
-              if_block(node_16, ($$render) => {
-                if (get(lineMode) === "area") $$render(consequent_8);
+              if_block(node_15, ($$render) => {
+                if (lineMode === "area") $$render(consequent_7);
               });
             }
-            var path_2 = sibling(node_16);
+            var path_2 = sibling(node_15);
             template_effect(() => set_attribute(path_2, "d", linePath(get(series).points)));
             const style_derived_5 = derived_safe_equal(() => `stroke:${colorFor(get(series).label)}`);
             template_effect(() => set_attribute(path_2, "style", get(style_derived_5)));
-            append($$anchor4, fragment_10);
+            append($$anchor4, fragment_9);
           });
-          var node_17 = sibling(node_15);
-          each(node_17, 1, () => get(xTickIndices), (index2) => index2, ($$anchor4, index2) => {
-            var fragment_11 = comment();
+          var node_16 = sibling(node_14);
+          each(node_16, 1, () => get(xTickIndices), (index2) => index2, ($$anchor4, index2) => {
+            var fragment_10 = comment();
             const point3 = derived_safe_equal(() => chart2().series[0]?.points[get(index2)]);
-            var node_18 = first_child(fragment_11);
+            var node_17 = first_child(fragment_10);
             {
-              var consequent_9 = ($$anchor5) => {
-                var text_17 = root_28();
-                template_effect(() => set_attribute(text_17, "x", x2(get(index2))));
-                var text_18 = child(text_17, true);
-                template_effect(() => set_text(text_18, xTickLabel(get(point3).date)));
-                reset(text_17);
-                append($$anchor5, text_17);
+              var consequent_8 = ($$anchor5) => {
+                var text_15 = root_26();
+                template_effect(() => set_attribute(text_15, "x", x2(get(index2))));
+                var text_16 = child(text_15, true);
+                template_effect(() => set_text(text_16, xTickLabel(get(point3).date)));
+                reset(text_15);
+                append($$anchor5, text_15);
               };
-              if_block(node_18, ($$render) => {
-                if (get(point3)) $$render(consequent_9);
+              if_block(node_17, ($$render) => {
+                if (get(point3)) $$render(consequent_8);
               });
             }
-            append($$anchor4, fragment_11);
+            append($$anchor4, fragment_10);
           });
           reset(svg_5);
           template_effect(() => set_attribute(svg_5, "aria-label", chart2().title));
@@ -6713,71 +6659,71 @@ ${lines.join("\n")}`);
           append($$anchor3, svg_5);
         };
         if_block(
-          node_6,
+          node_5,
           ($$render) => {
-            if (chart2().kind === "stacked-bar" || chart2().kind === "bar") $$render(consequent_7);
-            else $$render(alternate_4, false);
+            if (chart2().kind === "stacked-bar" || chart2().kind === "bar") $$render(consequent_6);
+            else $$render(alternate_3, false);
           },
           true
         );
       }
-      append($$anchor2, fragment_3);
+      append($$anchor2, fragment_2);
     };
-    if_block(node_3, ($$render) => {
-      if (chart2().kind === "hierarchy" && (get(tiles).length || get(iceRects).length || get(sunSegments).length)) $$render(consequent_4);
-      else $$render(alternate_5, false);
+    if_block(node_2, ($$render) => {
+      if (chart2().kind === "hierarchy" && (get(tiles).length || get(iceRects).length || get(sunSegments).length)) $$render(consequent_3);
+      else $$render(alternate_4, false);
     });
   }
-  var p = sibling(node_3, 2);
-  var text_19 = child(p);
+  var p = sibling(node_2, 2);
+  var text_17 = child(p);
   reset(p);
-  var node_19 = sibling(p, 2);
-  each(node_19, 1, () => chart2().series, (series) => series.label, ($$anchor2, series) => {
-    var button_3 = root_29();
+  var node_18 = sibling(p, 2);
+  each(node_18, 1, () => chart2().series, (series) => series.label, ($$anchor2, series) => {
+    var button_3 = root_27();
     template_effect(() => set_attribute(button_3, "aria-pressed", !get(hidden).includes(get(series).label)));
     const class_directive = derived_safe_equal(() => get(hidden).includes(get(series).label));
     var i2 = child(button_3);
     const style_derived_6 = derived_safe_equal(() => `background:${colorFor(get(series).label)}`);
-    var span_3 = sibling(i2);
-    var text_20 = child(span_3, true);
-    reset(span_3);
+    var span_2 = sibling(i2);
+    var text_18 = child(span_2, true);
+    reset(span_2);
     reset(button_3);
     template_effect(() => {
       toggle_class(button_3, "inactive", get(class_directive));
       set_attribute(i2, "style", get(style_derived_6));
-      set_text(text_20, get(series).label);
+      set_text(text_18, get(series).label);
     });
     event("click", button_3, () => toggleSeries(get(series).label));
     append($$anchor2, button_3);
   });
-  var node_20 = sibling(node_19, 2);
+  var node_19 = sibling(node_18, 2);
   {
-    var consequent_10 = ($$anchor2) => {
-      var p_1 = root_30();
-      var text_21 = child(p_1, true);
+    var consequent_9 = ($$anchor2) => {
+      var p_1 = root_28();
+      var text_19 = child(p_1, true);
       reset(p_1);
-      template_effect(() => set_text(text_21, get(availabilityText)));
+      template_effect(() => set_text(text_19, get(availabilityText)));
       append($$anchor2, p_1);
     };
-    if_block(node_20, ($$render) => {
-      if (get(availabilityText)) $$render(consequent_10);
+    if_block(node_19, ($$render) => {
+      if (get(availabilityText)) $$render(consequent_9);
     });
   }
-  var details = sibling(node_20, 2);
+  var details = sibling(node_19, 2);
   var summary = child(details);
-  var text_22 = child(summary, true);
-  template_effect(() => set_text(text_22, label("chartData")));
+  var text_20 = child(summary, true);
+  template_effect(() => set_text(text_20, label("chartData")));
   reset(summary);
   var div_1 = sibling(summary, 2);
   var table = child(div_1);
   var thead = child(table);
   var tr = child(thead);
-  var node_21 = sibling(child(tr));
-  each(node_21, 1, () => chart2().series, (series) => series.label, ($$anchor2, series) => {
-    var th = root_31();
-    var text_23 = child(th, true);
+  var node_20 = sibling(child(tr));
+  each(node_20, 1, () => chart2().series, (series) => series.label, ($$anchor2, series) => {
+    var th = root_29();
+    var text_21 = child(th, true);
     reset(th);
-    template_effect(() => set_text(text_23, get(series).label));
+    template_effect(() => set_text(text_21, get(series).label));
     append($$anchor2, th);
   });
   reset(tr);
@@ -6789,24 +6735,24 @@ ${lines.join("\n")}`);
     () => chart2().series[0]?.points ?? [],
     (point3) => point3.date,
     ($$anchor2, point3, index2) => {
-      var tr_1 = root_322();
+      var tr_1 = root_30();
       var th_1 = child(tr_1);
-      var text_24 = child(th_1, true);
+      var text_22 = child(th_1, true);
       reset(th_1);
-      var node_22 = sibling(th_1);
-      each(node_22, 1, () => chart2().series, (series) => series.label, ($$anchor3, series) => {
-        var td = root_33();
-        var text_25 = child(td, true);
-        template_effect(() => set_text(text_25, formatAmount(get(series).points[get(index2)]?.value)));
+      var node_21 = sibling(th_1);
+      each(node_21, 1, () => chart2().series, (series) => series.label, ($$anchor3, series) => {
+        var td = root_31();
+        var text_23 = child(td, true);
+        template_effect(() => set_text(text_23, formatAmount(get(series).points[get(index2)]?.value)));
         reset(td);
         append($$anchor3, td);
       });
       reset(tr_1);
-      template_effect(() => set_text(text_24, get(point3).date));
+      template_effect(() => set_text(text_22, get(point3).date));
       append($$anchor2, tr_1);
     },
     ($$anchor2) => {
-      var tr_2 = root_34();
+      var tr_2 = root_322();
       var td_1 = child(tr_2);
       reset(tr_2);
       template_effect(() => set_attribute(td_1, "colspan", chart2().series.length + 1));
@@ -6817,27 +6763,27 @@ ${lines.join("\n")}`);
   reset(table);
   reset(div_1);
   reset(details);
-  var node_23 = sibling(details, 2);
+  var node_22 = sibling(details, 2);
   {
-    var consequent_11 = ($$anchor2) => {
-      var div_2 = root_35();
-      var text_26 = child(div_2, true);
+    var consequent_10 = ($$anchor2) => {
+      var div_2 = root_332();
+      var text_24 = child(div_2, true);
       reset(div_2);
       template_effect(() => {
         set_attribute(div_2, "style", `left:${get(tooltipLeft)}px;top:${get(tooltipTop)}px`);
-        set_text(text_26, get(tooltipText));
+        set_text(text_24, get(tooltipText));
       });
       append($$anchor2, div_2);
     };
-    if_block(node_23, ($$render) => {
-      if (get(tooltipVisible)) $$render(consequent_11);
+    if_block(node_22, ($$render) => {
+      if (get(tooltipVisible)) $$render(consequent_10);
     });
   }
   reset(section);
   template_effect(() => {
     set_attribute(section, "aria-label", chart2().title);
     set_text(text2, chart2().title);
-    set_text(text_19, `${chart2().interval ?? ""} \xB7 ${chart2().valuation ?? ""}${(chart2().currency ? ` \xB7 ${chart2().currency}` : "") ?? ""}`);
+    set_text(text_17, `${chart2().interval ?? ""} \xB7 ${chart2().valuation ?? ""}${(chart2().currency ? ` \xB7 ${chart2().currency}` : "") ?? ""}`);
   });
   append($$anchor, section);
   pop();
@@ -8684,20 +8630,19 @@ function diverging_default(series, order) {
 }
 
 // src/fava/charts/ModernChart.svelte
-var root_18 = template(`<span class="mode-switch svelte-1l6ui0a"><label class="button svelte-1l6ui0a"><input type="radio" value="stacked" class="svelte-1l6ui0a"> </label> <label class="button svelte-1l6ui0a"><input type="radio" value="single" class="svelte-1l6ui0a"> </label></span>`);
-var root_36 = template(`<span class="mode-switch svelte-1l6ui0a"><label class="button svelte-1l6ui0a"><input type="radio" value="line" class="svelte-1l6ui0a"> </label> <label class="button svelte-1l6ui0a"><input type="radio" value="area" class="svelte-1l6ui0a"> </label></span>`);
-var root_52 = ns_template(`<line class="grid-line svelte-1l6ui0a"></line><text class="y-tick svelte-1l6ui0a" dy="0.32em" text-anchor="end"> </text>`, 1);
-var root_63 = ns_template(`<text class="x-tick svelte-1l6ui0a" text-anchor="middle"> </text>`);
-var root_92 = ns_template(`<rect class="svelte-1l6ui0a"></rect>`);
-var root_123 = ns_template(`<rect class="svelte-1l6ui0a"></rect>`);
-var root_152 = ns_template(`<path class="area-fill svelte-1l6ui0a"></path>`);
-var root_142 = ns_template(`<g class="svelte-1l6ui0a"><!><path class="series-line svelte-1l6ui0a"></path></g>`);
-var root_182 = ns_template(`<circle class="hover-dot svelte-1l6ui0a"></circle>`);
-var root_162 = ns_template(`<line class="crosshair svelte-1l6ui0a"></line><!>`, 1);
-var root_42 = template(`<svg class="modern-chart svelte-1l6ui0a" role="button" tabindex="0"><g><!><!><line class="zero-baseline svelte-1l6ui0a"></line><!><!></g></svg>`);
-var root_202 = template(`<span class="hover-row svelte-1l6ui0a"><i class="svelte-1l6ui0a"></i> </span>`);
-var root_19 = template(`<div class="hover-card svelte-1l6ui0a"><span class="hover-date svelte-1l6ui0a"> </span> <!></div>`);
-var root_21 = template(`<button type="button" class="legend svelte-1l6ui0a"><i class="svelte-1l6ui0a"></i><span class="svelte-1l6ui0a"> </span></button>`);
+var root_16 = template(`<span class="mode-switch svelte-1l6ui0a"><label class="button svelte-1l6ui0a"><input type="radio" value="stacked" class="svelte-1l6ui0a"> </label> <label class="button svelte-1l6ui0a"><input type="radio" value="single" class="svelte-1l6ui0a"> </label></span>`);
+var root_34 = ns_template(`<line class="grid-line svelte-1l6ui0a"></line><text class="y-tick svelte-1l6ui0a" dy="0.32em" text-anchor="end"> </text>`, 1);
+var root_42 = ns_template(`<text class="x-tick svelte-1l6ui0a" text-anchor="middle"> </text>`);
+var root_72 = ns_template(`<rect class="svelte-1l6ui0a"></rect>`);
+var root_102 = ns_template(`<rect class="svelte-1l6ui0a"></rect>`);
+var root_133 = ns_template(`<path class="area-fill svelte-1l6ui0a"></path>`);
+var root_123 = ns_template(`<g class="svelte-1l6ui0a"><!><path class="series-line svelte-1l6ui0a"></path></g>`);
+var root_162 = ns_template(`<circle class="hover-dot svelte-1l6ui0a"></circle>`);
+var root_142 = ns_template(`<line class="crosshair svelte-1l6ui0a"></line><!>`, 1);
+var root_25 = template(`<svg class="modern-chart svelte-1l6ui0a" role="button" tabindex="0"><g><!><!><line class="zero-baseline svelte-1l6ui0a"></line><!><!></g></svg>`);
+var root_182 = template(`<span class="hover-row svelte-1l6ui0a"><i class="svelte-1l6ui0a"></i> </span>`);
+var root_17 = template(`<div class="hover-card svelte-1l6ui0a"><span class="hover-date svelte-1l6ui0a"> </span> <!></div>`);
+var root_19 = template(`<button type="button" class="legend svelte-1l6ui0a"><i class="svelte-1l6ui0a"></i><span class="svelte-1l6ui0a"> </span></button>`);
 var root4 = template(`<section class="modern-chart-card svelte-1l6ui0a"><header class="modern-chart-header svelte-1l6ui0a"><h3 class="svelte-1l6ui0a"> </h3> <!></header> <div class="modern-chart-wrap svelte-1l6ui0a"><!></div> <!> <p class="chart-meta svelte-1l6ui0a"> </p> <!></section>`);
 function ModernChart($$anchor, $$props) {
   push($$props, false);
@@ -8735,25 +8680,16 @@ function ModernChart($$anchor, $$props) {
     return Number.isFinite(parsed) ? parsed : 0;
   }
   let barMode = mutable_state("stacked");
-  let lineMode = mutable_state("line");
+  const lineMode = "line";
   try {
     const storedBar = localStorage.getItem("bar-chart-mode");
     if (storedBar === "stacked" || storedBar === "single") set(barMode, storedBar);
-    const storedLine = localStorage.getItem("line-chart-mode");
-    if (storedLine === "line" || storedLine === "area") set(lineMode, storedLine);
   } catch {
   }
   function setBarMode(mode) {
     set(barMode, mode);
     try {
       localStorage.setItem("bar-chart-mode", mode);
-    } catch {
-    }
-  }
-  function setLineMode(mode) {
-    set(lineMode, mode);
-    try {
-      localStorage.setItem("line-chart-mode", mode);
     } catch {
     }
   }
@@ -8958,7 +8894,7 @@ function ModernChart($$anchor, $$props) {
   var node = sibling(h3, 2);
   {
     var consequent = ($$anchor2) => {
-      var span = root_18();
+      var span = root_16();
       var label_1 = child(span);
       var input = child(label_1);
       remove_input_defaults(input);
@@ -8984,100 +8920,58 @@ function ModernChart($$anchor, $$props) {
       event("change", input_1, () => setBarMode("single"));
       append($$anchor2, span);
     };
-    var alternate = ($$anchor2) => {
-      var fragment = comment();
-      var node_1 = first_child(fragment);
-      {
-        var consequent_1 = ($$anchor3) => {
-          var span_1 = root_36();
-          var label_3 = child(span_1);
-          var input_2 = child(label_3);
-          remove_input_defaults(input_2);
-          var text_3 = sibling(input_2);
-          template_effect(() => set_text(text_3, ` ${label("lineChart") ?? ""}`));
-          reset(label_3);
-          var label_4 = sibling(label_3, 2);
-          var input_3 = child(label_4);
-          remove_input_defaults(input_3);
-          var text_4 = sibling(input_3);
-          template_effect(() => set_text(text_4, ` ${label("areaChart") ?? ""}`));
-          reset(label_4);
-          reset(span_1);
-          template_effect(() => {
-            toggle_class(label_3, "muted", get(lineMode) !== "line");
-            set_attribute(input_2, "name", "modern-line-" + chart2().title);
-            set_checked(input_2, get(lineMode) === "line");
-            toggle_class(label_4, "muted", get(lineMode) !== "area");
-            set_attribute(input_3, "name", "modern-line-" + chart2().title);
-            set_checked(input_3, get(lineMode) === "area");
-          });
-          event("change", input_2, () => setLineMode("line"));
-          event("change", input_3, () => setLineMode("area"));
-          append($$anchor3, span_1);
-        };
-        if_block(
-          node_1,
-          ($$render) => {
-            if (!get(isBar) && get(visibleSeries).length) $$render(consequent_1);
-          },
-          true
-        );
-      }
-      append($$anchor2, fragment);
-    };
     if_block(node, ($$render) => {
       if (get(isBar) && get(hasMultipleSeries)) $$render(consequent);
-      else $$render(alternate, false);
     });
   }
   reset(header);
   var div = sibling(header, 2);
-  var node_2 = child(div);
+  var node_1 = child(div);
   {
-    var consequent_7 = ($$anchor2) => {
-      var svg_1 = root_42();
+    var consequent_6 = ($$anchor2) => {
+      var svg_1 = root_25();
       set_attribute(svg_1, "height", height);
       var g = child(svg_1);
-      var node_3 = child(g);
-      each(node_3, 1, () => get(yTickValues), (tick2) => tick2, ($$anchor3, tick2) => {
-        var fragment_1 = root_52();
-        var line_1 = first_child(fragment_1);
+      var node_2 = child(g);
+      each(node_2, 1, () => get(yTickValues), (tick2) => tick2, ($$anchor3, tick2) => {
+        var fragment = root_34();
+        var line_1 = first_child(fragment);
         set_attribute(line_1, "x1", 0);
         template_effect(() => set_attribute(line_1, "y1", get(y2)(get(tick2))));
         template_effect(() => set_attribute(line_1, "y2", get(y2)(get(tick2))));
-        var text_5 = sibling(line_1);
-        set_attribute(text_5, "x", -8);
-        template_effect(() => set_attribute(text_5, "y", get(y2)(get(tick2))));
-        var text_6 = child(text_5, true);
-        template_effect(() => set_text(text_6, tickFormat2(get(tick2))));
-        reset(text_5);
+        var text_3 = sibling(line_1);
+        set_attribute(text_3, "x", -8);
+        template_effect(() => set_attribute(text_3, "y", get(y2)(get(tick2))));
+        var text_4 = child(text_3, true);
+        template_effect(() => set_text(text_4, tickFormat2(get(tick2))));
+        reset(text_3);
         template_effect(() => set_attribute(line_1, "x2", get(innerWidth)));
-        append($$anchor3, fragment_1);
+        append($$anchor3, fragment);
       });
-      var node_4 = sibling(node_3);
-      each(node_4, 1, () => get(xTickPeriods), (period) => period, ($$anchor3, period) => {
-        var text_7 = root_63();
-        template_effect(() => set_attribute(text_7, "x", (get(xBand)(get(period)) ?? 0) + get(xBand).bandwidth() / 2));
-        var text_8 = child(text_7, true);
-        template_effect(() => set_text(text_8, xTickLabel(get(period))));
-        reset(text_7);
-        template_effect(() => set_attribute(text_7, "y", get(innerHeight2) + 18));
-        append($$anchor3, text_7);
+      var node_3 = sibling(node_2);
+      each(node_3, 1, () => get(xTickPeriods), (period) => period, ($$anchor3, period) => {
+        var text_5 = root_42();
+        template_effect(() => set_attribute(text_5, "x", (get(xBand)(get(period)) ?? 0) + get(xBand).bandwidth() / 2));
+        var text_6 = child(text_5, true);
+        template_effect(() => set_text(text_6, xTickLabel(get(period))));
+        reset(text_5);
+        template_effect(() => set_attribute(text_5, "y", get(innerHeight2) + 18));
+        append($$anchor3, text_5);
       });
-      var line_2 = sibling(node_4);
+      var line_2 = sibling(node_3);
       set_attribute(line_2, "x1", 0);
       template_effect(() => set_attribute(line_2, "y1", get(y2)(0)));
       template_effect(() => set_attribute(line_2, "y2", get(y2)(0)));
-      var node_5 = sibling(line_2);
+      var node_4 = sibling(line_2);
       {
-        var consequent_2 = ($$anchor3) => {
-          var fragment_2 = comment();
-          var node_6 = first_child(fragment_2);
-          each(node_6, 1, () => get(stackedLayers), (layer2) => layer2.key, ($$anchor4, layer2) => {
-            var fragment_3 = comment();
-            var node_7 = first_child(fragment_3);
-            each(node_7, 1, () => get(layer2), index, ($$anchor5, segment, i2) => {
-              var rect_1 = root_92();
+        var consequent_1 = ($$anchor3) => {
+          var fragment_1 = comment();
+          var node_5 = first_child(fragment_1);
+          each(node_5, 1, () => get(stackedLayers), (layer2) => layer2.key, ($$anchor4, layer2) => {
+            var fragment_2 = comment();
+            var node_6 = first_child(fragment_2);
+            each(node_6, 1, () => get(layer2), index, ($$anchor5, segment, i2) => {
+              var rect_1 = root_72();
               template_effect(() => set_attribute(rect_1, "x", get(xBand)(get(periods)[i2]) ?? 0));
               template_effect(() => set_attribute(rect_1, "y", get(y2)(get(segment)[1])));
               template_effect(() => set_attribute(rect_1, "width", Math.max(0.5, get(xBand).bandwidth() - 1)));
@@ -9089,19 +8983,19 @@ function ModernChart($$anchor, $$props) {
               event("mouseleave", rect_1, () => set(highlighted, null));
               append($$anchor5, rect_1);
             });
-            append($$anchor4, fragment_3);
+            append($$anchor4, fragment_2);
           });
-          append($$anchor3, fragment_2);
+          append($$anchor3, fragment_1);
         };
-        var alternate_2 = ($$anchor3) => {
-          var fragment_4 = comment();
-          var node_8 = first_child(fragment_4);
+        var alternate_1 = ($$anchor3) => {
+          var fragment_3 = comment();
+          var node_7 = first_child(fragment_3);
           {
-            var consequent_3 = ($$anchor4) => {
-              var fragment_5 = comment();
-              var node_9 = first_child(fragment_5);
-              each(node_9, 1, () => get(singleBars), (bar) => bar.seriesLabel + "-" + bar.date, ($$anchor5, bar) => {
-                var rect_2 = root_123();
+            var consequent_2 = ($$anchor4) => {
+              var fragment_4 = comment();
+              var node_8 = first_child(fragment_4);
+              each(node_8, 1, () => get(singleBars), (bar) => bar.seriesLabel + "-" + bar.date, ($$anchor5, bar) => {
+                var rect_2 = root_102();
                 template_effect(() => set_attribute(rect_2, "fill", colorFor(get(bar).seriesLabel)));
                 template_effect(() => {
                   set_attribute(rect_2, "x", get(bar).x);
@@ -9114,26 +9008,26 @@ function ModernChart($$anchor, $$props) {
                 event("mouseleave", rect_2, () => set(highlighted, null));
                 append($$anchor5, rect_2);
               });
-              append($$anchor4, fragment_5);
+              append($$anchor4, fragment_4);
             };
-            var alternate_1 = ($$anchor4) => {
-              var fragment_6 = comment();
-              var node_10 = first_child(fragment_6);
-              each(node_10, 1, () => get(visibleSeries), (series) => series.label, ($$anchor5, series) => {
-                var g_1 = root_142();
-                var node_11 = child(g_1);
+            var alternate = ($$anchor4) => {
+              var fragment_5 = comment();
+              var node_9 = first_child(fragment_5);
+              each(node_9, 1, () => get(visibleSeries), (series) => series.label, ($$anchor5, series) => {
+                var g_1 = root_123();
+                var node_10 = child(g_1);
                 {
-                  var consequent_4 = ($$anchor6) => {
-                    var path2 = root_152();
+                  var consequent_3 = ($$anchor6) => {
+                    var path2 = root_133();
                     template_effect(() => set_attribute(path2, "d", areaPath(get(series))));
                     template_effect(() => set_attribute(path2, "fill", colorFor(get(series).label)));
                     append($$anchor6, path2);
                   };
-                  if_block(node_11, ($$render) => {
-                    if (get(lineMode) === "area") $$render(consequent_4);
+                  if_block(node_10, ($$render) => {
+                    if (lineMode === "area") $$render(consequent_3);
                   });
                 }
-                var path_1 = sibling(node_11);
+                var path_1 = sibling(node_10);
                 template_effect(() => set_attribute(path_1, "d", linePath(get(series))));
                 template_effect(() => set_attribute(path_1, "stroke", colorFor(get(series).label)));
                 reset(g_1);
@@ -9142,58 +9036,58 @@ function ModernChart($$anchor, $$props) {
                 event("mouseleave", g_1, () => set(highlighted, null));
                 append($$anchor5, g_1);
               });
-              append($$anchor4, fragment_6);
+              append($$anchor4, fragment_5);
             };
             if_block(
-              node_8,
+              node_7,
               ($$render) => {
-                if (get(isBar)) $$render(consequent_3);
-                else $$render(alternate_1, false);
+                if (get(isBar)) $$render(consequent_2);
+                else $$render(alternate, false);
               },
               true
             );
           }
-          append($$anchor3, fragment_4);
+          append($$anchor3, fragment_3);
         };
-        if_block(node_5, ($$render) => {
-          if (get(isBar) && get(showStacked)) $$render(consequent_2);
-          else $$render(alternate_2, false);
+        if_block(node_4, ($$render) => {
+          if (get(isBar) && get(showStacked)) $$render(consequent_1);
+          else $$render(alternate_1, false);
         });
       }
-      var node_12 = sibling(node_5);
+      var node_11 = sibling(node_4);
       {
-        var consequent_6 = ($$anchor3) => {
-          var fragment_7 = root_162();
-          var line_3 = first_child(fragment_7);
+        var consequent_5 = ($$anchor3) => {
+          var fragment_6 = root_142();
+          var line_3 = first_child(fragment_6);
           set_attribute(line_3, "y1", 0);
-          var node_13 = sibling(line_3);
-          each(node_13, 1, () => get(visibleSeries), (series) => series.label, ($$anchor4, series) => {
-            var fragment_8 = comment();
-            var node_14 = first_child(fragment_8);
+          var node_12 = sibling(line_3);
+          each(node_12, 1, () => get(visibleSeries), (series) => series.label, ($$anchor4, series) => {
+            var fragment_7 = comment();
+            var node_13 = first_child(fragment_7);
             {
-              var consequent_5 = ($$anchor5) => {
-                var circle = root_182();
+              var consequent_4 = ($$anchor5) => {
+                var circle = root_162();
                 template_effect(() => set_attribute(circle, "cy", get(y2)(numberValue(pointAt(get(series), get(periods)[get(hoverIndex)])?.value))));
                 set_attribute(circle, "r", 3.5);
                 template_effect(() => set_attribute(circle, "fill", colorFor(get(series).label)));
                 template_effect(() => set_attribute(circle, "cx", get(hoverX)));
                 append($$anchor5, circle);
               };
-              if_block(node_14, ($$render) => {
-                if (pointAt(get(series), get(periods)[get(hoverIndex)])) $$render(consequent_5);
+              if_block(node_13, ($$render) => {
+                if (pointAt(get(series), get(periods)[get(hoverIndex)])) $$render(consequent_4);
               });
             }
-            append($$anchor4, fragment_8);
+            append($$anchor4, fragment_7);
           });
           template_effect(() => {
             set_attribute(line_3, "x1", get(hoverX));
             set_attribute(line_3, "x2", get(hoverX));
             set_attribute(line_3, "y2", get(innerHeight2));
           });
-          append($$anchor3, fragment_7);
+          append($$anchor3, fragment_6);
         };
-        if_block(node_12, ($$render) => {
-          if (get(hoverIndex) !== null) $$render(consequent_6);
+        if_block(node_11, ($$render) => {
+          if (get(hoverIndex) !== null) $$render(consequent_5);
         });
       }
       reset(g);
@@ -9211,56 +9105,56 @@ function ModernChart($$anchor, $$props) {
       event("keydown", svg_1, onKeydown);
       append($$anchor2, svg_1);
     };
-    if_block(node_2, ($$render) => {
-      if (get(width) > 0) $$render(consequent_7);
+    if_block(node_1, ($$render) => {
+      if (get(width) > 0) $$render(consequent_6);
     });
   }
   reset(div);
   bind_this(div, ($$value) => set(containerEl, $$value), () => get(containerEl));
-  var node_15 = sibling(div, 2);
+  var node_14 = sibling(div, 2);
   {
-    var consequent_8 = ($$anchor2) => {
-      var div_1 = root_19();
-      var span_2 = child(div_1);
-      var text_9 = child(span_2, true);
-      reset(span_2);
-      var node_16 = sibling(span_2, 2);
-      each(node_16, 1, () => get(visibleSeries), (series) => series.label, ($$anchor3, series) => {
-        var span_3 = root_202();
-        var i_1 = child(span_3);
+    var consequent_7 = ($$anchor2) => {
+      var div_1 = root_17();
+      var span_1 = child(div_1);
+      var text_7 = child(span_1, true);
+      reset(span_1);
+      var node_15 = sibling(span_1, 2);
+      each(node_15, 1, () => get(visibleSeries), (series) => series.label, ($$anchor3, series) => {
+        var span_2 = root_182();
+        var i_1 = child(span_2);
         const style_derived = derived_safe_equal(() => `background:${colorFor(get(series).label)}`);
-        var text_10 = sibling(i_1);
-        template_effect(() => set_text(text_10, `${get(series).label ?? ""}: ${formatAmount(pointAt(get(series), get(periods)[get(hoverIndex)])?.value) ?? ""}${(chart2().currency ? ` ${chart2().currency}` : "") ?? ""}`));
-        reset(span_3);
+        var text_8 = sibling(i_1);
+        template_effect(() => set_text(text_8, `${get(series).label ?? ""}: ${formatAmount(pointAt(get(series), get(periods)[get(hoverIndex)])?.value) ?? ""}${(chart2().currency ? ` ${chart2().currency}` : "") ?? ""}`));
+        reset(span_2);
         template_effect(() => set_attribute(i_1, "style", get(style_derived)));
-        append($$anchor3, span_3);
+        append($$anchor3, span_2);
       });
       reset(div_1);
-      template_effect(() => set_text(text_9, get(periods)[get(hoverIndex)]));
+      template_effect(() => set_text(text_7, get(periods)[get(hoverIndex)]));
       append($$anchor2, div_1);
     };
-    if_block(node_15, ($$render) => {
-      if (get(hoverIndex) !== null) $$render(consequent_8);
+    if_block(node_14, ($$render) => {
+      if (get(hoverIndex) !== null) $$render(consequent_7);
     });
   }
-  var p_1 = sibling(node_15, 2);
-  var text_11 = child(p_1);
+  var p_1 = sibling(node_14, 2);
+  var text_9 = child(p_1);
   reset(p_1);
-  var node_17 = sibling(p_1, 2);
-  each(node_17, 1, () => chart2().series, (series) => series.label, ($$anchor2, series) => {
-    var button = root_21();
+  var node_16 = sibling(p_1, 2);
+  each(node_16, 1, () => chart2().series, (series) => series.label, ($$anchor2, series) => {
+    var button = root_19();
     template_effect(() => set_attribute(button, "aria-pressed", !get(hidden).includes(get(series).label)));
     const class_directive_1 = derived_safe_equal(() => get(hidden).includes(get(series).label));
     var i_2 = child(button);
     const style_derived_1 = derived_safe_equal(() => `background:${colorFor(get(series).label)}`);
-    var span_4 = sibling(i_2);
-    var text_12 = child(span_4, true);
-    reset(span_4);
+    var span_3 = sibling(i_2);
+    var text_10 = child(span_3, true);
+    reset(span_3);
     reset(button);
     template_effect(() => {
       toggle_class(button, "inactive", get(class_directive_1));
       set_attribute(i_2, "style", get(style_derived_1));
-      set_text(text_12, get(series).label);
+      set_text(text_10, get(series).label);
     });
     event("click", button, () => toggleSeries(get(series).label));
     append($$anchor2, button);
@@ -9269,7 +9163,7 @@ function ModernChart($$anchor, $$props) {
   template_effect(() => {
     set_attribute(section, "aria-label", chart2().title);
     set_text(text2, chart2().title);
-    set_text(text_11, `${chart2().interval ?? ""} \xB7 ${chart2().valuation ?? ""}${(chart2().currency ? ` \xB7 ${chart2().currency}` : "") ?? ""}`);
+    set_text(text_9, `${chart2().interval ?? ""} \xB7 ${chart2().valuation ?? ""}${(chart2().currency ? ` \xB7 ${chart2().currency}` : "") ?? ""}`);
   });
   append($$anchor, section);
   pop();
@@ -9332,14 +9226,14 @@ function ChartView($$anchor, $$props) {
 
 // src/fava/reports/GenericReport.svelte
 var root_110 = template(`<h2> </h2>`);
-var root_27 = template(`<a class="button">Export CSV</a>`);
+var root_210 = template(`<a class="button">Export CSV</a>`);
 var on_click = (_, toggleSort, column) => toggleSort(get(column));
-var root_53 = template(`<span aria-hidden="true"> </span>`);
+var root_52 = template(`<span aria-hidden="true"> </span>`);
 var root_43 = template(`<th scope="col" class="svelte-8vbrz2"><button type="button" class="sort-toggle svelte-8vbrz2"> <!></button></th>`);
-var root_8 = template(`<a> </a>`);
-var root_102 = template(`<a> </a>`);
-var root_72 = template(`<td class="svelte-8vbrz2"><!></td>`);
-var root_64 = template(`<tr></tr>`);
+var root_82 = template(`<a> </a>`);
+var root_103 = template(`<a> </a>`);
+var root_73 = template(`<td class="svelte-8vbrz2"><!></td>`);
+var root_62 = template(`<tr></tr>`);
 var root_124 = template(`<tr><td>No rows.</td></tr>`);
 var root5 = template(`<div class="headerline"><!> <span class="muted svelte-8vbrz2"> </span> <!></div> <!> <div class="table-scroll svelte-8vbrz2"><table class="report-table svelte-8vbrz2"><thead><tr></tr></thead><tbody></tbody></table></div>`, 1);
 function GenericReport($$anchor, $$props) {
@@ -9422,7 +9316,7 @@ function GenericReport($$anchor, $$props) {
   var node_1 = sibling(span, 2);
   {
     var consequent_1 = ($$anchor2) => {
-      var a_1 = root_27();
+      var a_1 = root_210();
       template_effect(() => set_attribute(a_1, "href", `/api/v1/reports/${route()}?format=csv`));
       append($$anchor2, a_1);
     };
@@ -9460,7 +9354,7 @@ function GenericReport($$anchor, $$props) {
     var node_3 = sibling(text_2);
     {
       var consequent_3 = ($$anchor3) => {
-        var span_1 = root_53();
+        var span_1 = root_52();
         var text_3 = child(span_1, true);
         reset(span_1);
         template_effect(() => set_text(text_3, get(sortDirection) === "ascending" ? " \u25B2" : " \u25BC"));
@@ -9488,15 +9382,15 @@ function GenericReport($$anchor, $$props) {
     () => get(sortedRows),
     index,
     ($$anchor2, row) => {
-      var tr_1 = root_64();
+      var tr_1 = root_62();
       each(tr_1, 5, () => report().columns, (column) => column, ($$anchor3, column) => {
-        var td = root_72();
+        var td = root_73();
         const class_directive_1 = derived_safe_equal(() => isNumberLike(get(row)[get(column)]));
         template_effect(() => toggle_class(td, "num", get(class_directive_1)));
         var node_4 = child(td);
         {
           var consequent_4 = ($$anchor4) => {
-            var a_2 = root_8();
+            var a_2 = root_82();
             template_effect(() => set_attribute(a_2, "href", `/documents/${encodeURIComponent(get(row)[get(column)])}`));
             var text_4 = child(a_2, true);
             template_effect(() => set_text(text_4, display(get(row)[get(column)])));
@@ -9508,7 +9402,7 @@ function GenericReport($$anchor, $$props) {
             var node_5 = first_child(fragment_2);
             {
               var consequent_5 = ($$anchor5) => {
-                var a_3 = root_102();
+                var a_3 = root_103();
                 template_effect(() => set_attribute(a_3, "href", `/source?path=${encodeURIComponent(get(row)[get(column)])}`));
                 var text_5 = child(a_3, true);
                 template_effect(() => set_text(text_5, display(get(row)[get(column)])));
@@ -9628,15 +9522,15 @@ var root_111 = template(`<button type="button"> </button>`);
 var on_click_1 = (__1, setSortColumn) => setSortColumn("date");
 var on_click_2 = (__2, setSortColumn) => setSortColumn("flag");
 var on_click_3 = (__3, setSortColumn) => setSortColumn("narration");
-var root_37 = template(`<a> </a>`);
+var root_35 = template(`<a> </a>`);
 var root_44 = template(`<strong class="payee"> </strong><span class="separator"></span>`, 1);
-var root_73 = template(`<a> </a>`);
-var root_82 = template(`<span class="custom-value"> </span>`);
-var root_54 = template(`<strong class="custom-type"> </strong> <!>`, 1);
-var root_103 = template(`<span class="tag"> </span>`);
-var root_112 = template(`<span class="link"> </span>`);
+var root_74 = template(`<a> </a>`);
+var root_83 = template(`<span class="custom-value"> </span>`);
+var root_53 = template(`<strong class="custom-type"> </strong> <!>`, 1);
+var root_104 = template(`<span class="tag"> </span>`);
+var root_11 = template(`<span class="link"> </span>`);
 var root_125 = template(`<span class="filename"> </span>`);
-var root_132 = template(`<a class="context-link svelte-osbwps" title="Context" aria-label="Context">\u22EE</a>`);
+var root_134 = template(`<a class="context-link svelte-osbwps" title="Context" aria-label="Context">\u22EE</a>`);
 var on_click_4 = (__4, toggleEntry, entry) => toggleEntry(get(entry));
 var on_keydown = (event2, toggleEntry, entry) => {
   if (event2.key === "Enter" || event2.key === " ") {
@@ -9644,13 +9538,13 @@ var on_keydown = (event2, toggleEntry, entry) => {
     toggleEntry(get(entry));
   }
 };
-var root_153 = template(`<span class="metadata-indicator"> </span>`);
+var root_152 = template(`<span class="metadata-indicator"> </span>`);
 var root_172 = template(`<span class="metadata-indicator"> </span>`);
 var root_163 = template(`<span></span> <!>`, 1);
 var root_143 = template(`<span class="indicators" role="button" tabindex="0" title="Toggle postings"><!> <!></span>`);
 var root_192 = template(`<span class="metadata-indicator"> </span>`);
 var root_183 = template(`<span class="indicators"></span>`);
-var root_203 = template(`<span class="num bal"> </span> <span class="change num"></span> <span class="change num"> </span>`, 1);
+var root_202 = template(`<span class="num bal"> </span> <span class="change num"></span> <span class="change num"> </span>`, 1);
 var root_223 = template(`<span class="num"></span> <span class="num"></span> <span class="num"> </span>`, 1);
 var root_242 = template(`<span class="num"></span> <span class="num"></span> <span class="num change"> </span>`, 1);
 var root_282 = template(`<dt> </dt> <dd> </dd>`, 1);
@@ -9660,7 +9554,7 @@ var root_252 = template(`<ul class="postings"></ul>`);
 var root_312 = template(`<a class="filename" data-remote="" target="_blank" rel="noopener noreferrer"> </a>`);
 var root_302 = template(`<dt> </dt> <dd><!></dd>`, 1);
 var root_292 = template(`<dl class="metadata"></dl>`);
-var root_210 = template(`<li><p><span class="datecell"> </span> <span class="flag"> </span> <span class="description"><!> <!> <!> <!> <!> <!> <!></span> <!> <!></p> <!> <!></li>`);
+var root_211 = template(`<li><p><span class="datecell"> </span> <span class="flag"> </span> <span class="description"><!> <!> <!> <!> <!> <!> <!></span> <!> <!></p> <!> <!></li>`);
 var root6 = template(`<form class="flex-row journal-chips svelte-osbwps"><!> <span class="spacer svelte-osbwps"></span> <a class="button" href="/api/v1/reports/journal?format=csv">Export CSV</a></form> <ol><li class="head svelte-osbwps"><p><button type="button" class="datecell unset svelte-osbwps">Date</button> <button type="button" class="flag unset svelte-osbwps">F</button> <button type="button" class="description unset svelte-osbwps">Payee/Narration</button> <span class="num">Units</span> <span class="num">Cost</span> <span class="num"> </span></p></li> <!></ol>`, 1);
 function JournalReport($$anchor, $$props) {
   push($$props, false);
@@ -9930,7 +9824,7 @@ function JournalReport($$anchor, $$props) {
   reset(li_1);
   var node_1 = sibling(li_1, 2);
   each(node_1, 3, () => get(sortedEntries), (entry, index2) => entry.type + entry.date + index2, ($$anchor2, entry) => {
-    var li_2 = root_210();
+    var li_2 = root_211();
     const class_derived = derived_safe_equal(() => `${get(entry).type ?? ""} ${flagClass(get(entry)) ?? ""} svelte-osbwps`);
     const class_directive_1 = derived_safe_equal(() => hasTag(get(entry), "linked"));
     const class_directive_2 = derived_safe_equal(() => hasTag(get(entry), "discovered"));
@@ -9946,7 +9840,7 @@ function JournalReport($$anchor, $$props) {
     var node_2 = child(span_3);
     {
       var consequent = ($$anchor3) => {
-        var a = root_37();
+        var a = root_35();
         template_effect(() => set_attribute(a, "href", accountHref(get(entry).account)));
         var text_4 = child(a, true);
         reset(a);
@@ -9975,7 +9869,7 @@ function JournalReport($$anchor, $$props) {
     var node_4 = sibling(node_3, 2);
     {
       var consequent_3 = ($$anchor3) => {
-        var fragment_2 = root_54();
+        var fragment_2 = root_53();
         var strong_1 = first_child(fragment_2);
         var text_6 = child(strong_1, true);
         reset(strong_1);
@@ -9985,7 +9879,7 @@ function JournalReport($$anchor, $$props) {
           var node_6 = first_child(fragment_3);
           {
             var consequent_2 = ($$anchor5) => {
-              var a_1 = root_73();
+              var a_1 = root_74();
               template_effect(() => set_attribute(a_1, "href", accountHref(get(cv).value)));
               var text_7 = child(a_1, true);
               reset(a_1);
@@ -9993,7 +9887,7 @@ function JournalReport($$anchor, $$props) {
               append($$anchor5, a_1);
             };
             var alternate = ($$anchor5) => {
-              var span_4 = root_82();
+              var span_4 = root_83();
               var text_8 = child(span_4, true);
               reset(span_4);
               template_effect(() => set_text(text_8, get(cv).value));
@@ -10021,7 +9915,7 @@ function JournalReport($$anchor, $$props) {
     }
     var node_7 = sibling(node_4, 2);
     each(node_7, 1, () => get(entry).tags ?? [], (tag) => tag, ($$anchor3, tag) => {
-      var span_5 = root_103();
+      var span_5 = root_104();
       var text_10 = child(span_5);
       reset(span_5);
       template_effect(() => set_text(text_10, `#${get(tag) ?? ""}`));
@@ -10029,7 +9923,7 @@ function JournalReport($$anchor, $$props) {
     });
     var node_8 = sibling(node_7, 2);
     each(node_8, 1, () => get(entry).links ?? [], (link2) => link2, ($$anchor3, link2) => {
-      var span_6 = root_112();
+      var span_6 = root_11();
       var text_11 = child(span_6);
       reset(span_6);
       template_effect(() => set_text(text_11, `^${get(link2) ?? ""}`));
@@ -10046,7 +9940,7 @@ function JournalReport($$anchor, $$props) {
     var node_10 = sibling(node_9, 2);
     {
       var consequent_4 = ($$anchor3) => {
-        var a_2 = root_132();
+        var a_2 = root_134();
         template_effect(() => set_attribute(a_2, "href", `#context-${get(entry).entry_hash ?? ""}`));
         append($$anchor3, a_2);
       };
@@ -10063,7 +9957,7 @@ function JournalReport($$anchor, $$props) {
         span_8.__keydown = [on_keydown, toggleEntry, entry];
         var node_12 = child(span_8);
         each(node_12, 1, () => get(entry).metadata ?? [], (meta2) => meta2.key, ($$anchor4, meta2) => {
-          var span_9 = root_153();
+          var span_9 = root_152();
           var text_13 = child(span_9, true);
           template_effect(() => set_text(text_13, get(meta2).key.slice(0, 2)));
           reset(span_9);
@@ -10111,7 +10005,7 @@ function JournalReport($$anchor, $$props) {
     var node_15 = sibling(node_11, 2);
     {
       var consequent_6 = ($$anchor3) => {
-        var fragment_6 = root_203();
+        var fragment_6 = root_202();
         var span_14 = first_child(fragment_6);
         var text_16 = child(span_14, true);
         template_effect(() => set_text(text_16, amountText(get(entry).amount)));
@@ -10311,19 +10205,19 @@ function JournalReport($$anchor, $$props) {
 delegate(["click", "keydown"]);
 
 // src/fava/reports/AccountReport.svelte
-var root_113 = template(`<section class="state-panel error-panel" role="alert"> </section>`);
+var root_112 = template(`<section class="state-panel error-panel" role="alert"> </section>`);
 var root_45 = template(`<span class="sep svelte-psa061">:</span>`);
-var root_38 = template(`<a class="svelte-psa061"> </a><!>`, 1);
-var root_55 = template(`<span></span>`);
-var root_74 = template(`<a class="svelte-psa061"> </a>`);
-var root_65 = template(`<span class="last-activity svelte-psa061"> <!>)</span>`);
-var root_93 = template(`<a class="svelte-psa061"> </a>`);
-var root_114 = template(`<a class="svelte-psa061"> </a>`);
-var root_133 = template(`<a class="svelte-psa061"> </a>`);
+var root_36 = template(`<a class="svelte-psa061"> </a><!>`, 1);
+var root_54 = template(`<span></span>`);
+var root_75 = template(`<a class="svelte-psa061"> </a>`);
+var root_63 = template(`<span class="last-activity svelte-psa061"> <!>)</span>`);
+var root_92 = template(`<a class="svelte-psa061"> </a>`);
+var root_113 = template(`<a class="svelte-psa061"> </a>`);
+var root_135 = template(`<a class="svelte-psa061"> </a>`);
 var root_212 = template(`<li> </li>`);
-var root_204 = template(`<section class="average-cost-current svelte-psa061"><h3 class="svelte-psa061"> </h3> <ul class="svelte-psa061"></ul></section>`);
+var root_203 = template(`<section class="average-cost-current svelte-psa061"><h3 class="svelte-psa061"> </h3> <ul class="svelte-psa061"></ul></section>`);
 var root_184 = template(`<!> <!> <!> <!>`, 1);
-var root_211 = template(`<div class="headerline"><h2 class="account-breadcrumb svelte-psa061"><span class="droptarget svelte-psa061"><!><!><!></span></h2></div> <div class="headerline sections svelte-psa061"><h3 class="svelte-psa061"><!></h3> <h3 class="svelte-psa061"><!></h3> <h3 class="svelte-psa061"><!></h3></div> <!> <!>`, 1);
+var root_213 = template(`<div class="headerline"><h2 class="account-breadcrumb svelte-psa061"><span class="droptarget svelte-psa061"><!><!><!></span></h2></div> <div class="headerline sections svelte-psa061"><h3 class="svelte-psa061"><!></h3> <h3 class="svelte-psa061"><!></h3> <h3 class="svelte-psa061"><!></h3></div> <!> <!>`, 1);
 function AccountReport($$anchor, $$props) {
   push($$props, false);
   const account = mutable_state();
@@ -10456,20 +10350,20 @@ function AccountReport($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent = ($$anchor2) => {
-      var section = root_113();
+      var section = root_112();
       var text2 = child(section, true);
       reset(section);
       template_effect(() => set_text(text2, get(error2)));
       append($$anchor2, section);
     };
     var alternate_5 = ($$anchor2) => {
-      var fragment_1 = root_211();
+      var fragment_1 = root_213();
       var div = first_child(fragment_1);
       var h2 = child(div);
       var span = child(h2);
       var node_1 = child(span);
       each(node_1, 3, () => get(parts2), (name3) => name3, ($$anchor3, name3, index2) => {
-        var fragment_2 = root_38();
+        var fragment_2 = root_36();
         var a = first_child(fragment_2);
         template_effect(() => set_attribute(a, "href", accountHref(get(name3))));
         var text_1 = child(a, true);
@@ -10491,7 +10385,7 @@ function AccountReport($$anchor, $$props) {
       var node_3 = sibling(node_1);
       {
         var consequent_2 = ($$anchor3) => {
-          var span_2 = root_55();
+          var span_2 = root_54();
           template_effect(() => {
             set_class(span_2, `status-indicator status-${get(uptodate) ?? ""} svelte-psa061`);
             set_attribute(span_2, "title", get(statusTitle));
@@ -10505,13 +10399,13 @@ function AccountReport($$anchor, $$props) {
       var node_4 = sibling(node_3);
       {
         var consequent_4 = ($$anchor3) => {
-          var span_3 = root_65();
+          var span_3 = root_63();
           var text_2 = child(span_3);
           template_effect(() => set_text(text_2, `(${t4("lastEntry") ?? ""} `));
           var node_5 = sibling(text_2);
           {
             var consequent_3 = ($$anchor4) => {
-              var a_1 = root_74();
+              var a_1 = root_75();
               var text_3 = child(a_1, true);
               reset(a_1);
               template_effect(() => {
@@ -10546,7 +10440,7 @@ function AccountReport($$anchor, $$props) {
       var node_6 = child(h3);
       {
         var consequent_5 = ($$anchor3) => {
-          var a_2 = root_93();
+          var a_2 = root_92();
           template_effect(() => set_attribute(a_2, "href", sectionHref("")));
           var text_5 = child(a_2, true);
           template_effect(() => set_text(text_5, t4("accountBalance")));
@@ -10568,7 +10462,7 @@ function AccountReport($$anchor, $$props) {
       var node_7 = child(h3_1);
       {
         var consequent_6 = ($$anchor3) => {
-          var a_3 = root_114();
+          var a_3 = root_113();
           template_effect(() => set_attribute(a_3, "href", sectionHref("changes")));
           var text_7 = child(a_3);
           template_effect(() => set_text(text_7, `${t4("changes") ?? ""} (${get(intervalLabel) ?? ""})`));
@@ -10590,7 +10484,7 @@ function AccountReport($$anchor, $$props) {
       var node_8 = child(h3_2);
       {
         var consequent_7 = ($$anchor3) => {
-          var a_4 = root_133();
+          var a_4 = root_135();
           template_effect(() => set_attribute(a_4, "href", sectionHref("balances")));
           var text_9 = child(a_4);
           template_effect(() => set_text(text_9, `${t4("balances") ?? ""} (${get(intervalLabel) ?? ""})`));
@@ -10663,7 +10557,7 @@ function AccountReport($$anchor, $$props) {
               var node_13 = sibling(node_12, 2);
               {
                 var consequent_11 = ($$anchor5) => {
-                  var section_1 = root_204();
+                  var section_1 = root_203();
                   template_effect(() => set_attribute(section_1, "aria-label", t4("currentAverageCost")));
                   var h3_3 = child(section_1);
                   var text_11 = child(h3_3, true);
@@ -10763,8 +10657,8 @@ function AccountReport($$anchor, $$props) {
 }
 
 // src/fava/reports/HoldingsReport.svelte
-var root_39 = template(`<a> </a>`);
-var root_115 = template(`<h3><!></h3>`);
+var root_37 = template(`<a> </a>`);
+var root_114 = template(`<h3><!></h3>`);
 var root7 = template(`<div class="headerline"><!> <a class="button"> </a></div> <!>`, 1);
 function HoldingsReport($$anchor, $$props) {
   push($$props, false);
@@ -10827,7 +10721,7 @@ function HoldingsReport($$anchor, $$props) {
   var div = first_child(fragment);
   var node = child(div);
   each(node, 1, () => tabs, (tab) => tab.route, ($$anchor2, tab) => {
-    var h3 = root_115();
+    var h3 = root_114();
     var node_1 = child(h3);
     {
       var consequent = ($$anchor3) => {
@@ -10836,7 +10730,7 @@ function HoldingsReport($$anchor, $$props) {
         append($$anchor3, text2);
       };
       var alternate = ($$anchor3) => {
-        var a = root_39();
+        var a = root_37();
         template_effect(() => set_attribute(a, "href", routeHref(get(tab).route)));
         var text_1 = child(a, true);
         template_effect(() => set_text(text_1, t4(get(tab).key)));
@@ -10875,10 +10769,10 @@ function HoldingsReport($$anchor, $$props) {
 }
 
 // src/fava/reports/ImportReport.svelte
-var root_116 = template(`<option> </option>`);
-var root_310 = template(`<li> </li>`);
-var root_213 = template(`<ul class="diagnostics svelte-1anq1wq"></ul>`);
-var root_56 = template(`<tr><td> </td><td> </td><td> </td><td> </td></tr>`);
+var root_115 = template(`<option> </option>`);
+var root_38 = template(`<li> </li>`);
+var root_214 = template(`<ul class="diagnostics svelte-1anq1wq"></ul>`);
+var root_55 = template(`<tr><td> </td><td> </td><td> </td><td> </td></tr>`);
 var root_46 = template(`<table><thead><tr><th>Date</th><th>Account</th><th>Units</th><th>Currency</th></tr></thead><tbody></tbody></table>`);
 var root8 = template(`<div class="headerline"><h2>Import</h2><span class="muted svelte-1anq1wq">Preview before commit</span></div> <form class="upload-form svelte-1anq1wq"><h2 class="svelte-1anq1wq">Upload files for import</h2> <input type="file" accept=".bean,.beancount,.csv"> <button type="submit">Upload</button></form> <div class="toolbar svelte-1anq1wq"><label>Source path <input></label> <label>Adapter <select><option>Beancount</option><option>CSV</option></select></label> <label>Target <select></select></label></div> <textarea class="import-buffer svelte-1anq1wq" placeholder="Paste Beancount or CSV content, or upload a file above" spellcheck="false"></textarea> <div class="toolbar svelte-1anq1wq"><button type="button">Preview</button> <button type="button">Commit</button> <span class="muted svelte-1anq1wq" role="status"> </span></div> <!> <!>`, 1);
 function ImportReport($$anchor, $$props) {
@@ -11004,7 +10898,7 @@ function ImportReport($$anchor, $$props) {
     });
   });
   each(select_1, 5, () => get(paths), (path2) => path2, ($$anchor2, path2) => {
-    var option_2 = root_116();
+    var option_2 = root_115();
     var option_2_value = {};
     var text2 = child(option_2, true);
     reset(option_2);
@@ -11031,9 +10925,9 @@ function ImportReport($$anchor, $$props) {
   var node = sibling(div_1, 2);
   {
     var consequent = ($$anchor2) => {
-      var ul = root_213();
+      var ul = root_214();
       each(ul, 5, () => get(diagnostics), (diagnostic) => diagnostic.code + diagnostic.line + diagnostic.message, ($$anchor3, diagnostic) => {
-        var li = root_310();
+        var li = root_38();
         var text_2 = child(li);
         reset(li);
         template_effect(() => set_text(text_2, `${get(diagnostic).path ?? ""}:${get(diagnostic).line ?? ""}: ${get(diagnostic).message ?? ""}`));
@@ -11052,7 +10946,7 @@ function ImportReport($$anchor, $$props) {
       var table = root_46();
       var tbody = sibling(child(table));
       each(tbody, 5, () => get(rows), index, ($$anchor3, row) => {
-        var tr = root_56();
+        var tr = root_55();
         var td = child(tr);
         var text_3 = child(td, true);
         template_effect(() => set_text(text_3, String(get(row).date ?? "")));
@@ -11096,9 +10990,9 @@ function ImportReport($$anchor, $$props) {
 }
 
 // src/fava/sort/SortHeader.svelte
-var root_214 = template(`<span aria-hidden="true"> </span>`);
-var root_117 = template(`<th class="svelte-21kpbq"><button type="button" class="sort-toggle svelte-21kpbq"> <!></button></th>`);
-var root_311 = template(`<th class="svelte-21kpbq"> </th>`);
+var root_215 = template(`<span aria-hidden="true"> </span>`);
+var root_116 = template(`<th class="svelte-21kpbq"><button type="button" class="sort-toggle svelte-21kpbq"> <!></button></th>`);
+var root_39 = template(`<th class="svelte-21kpbq"> </th>`);
 function SortHeader($$anchor, $$props) {
   push($$props, false);
   const sortable = mutable_state();
@@ -11124,13 +11018,13 @@ function SortHeader($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent_1 = ($$anchor2) => {
-      var th = root_117();
+      var th = root_116();
       var button = child(th);
       var text2 = child(button, true);
       var node_1 = sibling(text2);
       {
         var consequent = ($$anchor3) => {
-          var span = root_214();
+          var span = root_215();
           var text_1 = child(span, true);
           reset(span);
           template_effect(() => set_text(text_1, sorter().order === "asc" ? " \u25B2" : " \u25BC"));
@@ -11151,7 +11045,7 @@ function SortHeader($$anchor, $$props) {
       append($$anchor2, th);
     };
     var alternate = ($$anchor2) => {
-      var th_1 = root_311();
+      var th_1 = root_39();
       var text_2 = child(th_1, true);
       reset(th_1);
       template_effect(() => {
@@ -11170,11 +11064,11 @@ function SortHeader($$anchor, $$props) {
 }
 
 // src/fava/reports/StatisticsReport.svelte
-var root_118 = template(`<tr><td> </td><td class="num svelte-1hzrq4y"> </td></tr>`);
+var root_117 = template(`<tr><td> </td><td class="num svelte-1hzrq4y"> </td></tr>`);
 var root_47 = template(`<span></span>`);
-var root_57 = template(`<span> </span><br>`, 1);
-var root_313 = template(`<tr><td class="account svelte-1hzrq4y"><a> </a><!></td><td><a> </a></td><td class="num svelte-1hzrq4y"></td></tr>`);
-var root_215 = template(`<div class="left"><h3> </h3> <table class="update-activity svelte-1hzrq4y"><thead><tr><!><!><!></tr></thead><tbody></tbody></table></div>`);
+var root_56 = template(`<span> </span><br>`, 1);
+var root_310 = template(`<tr><td class="account svelte-1hzrq4y"><a> </a><!></td><td><a> </a></td><td class="num svelte-1hzrq4y"></td></tr>`);
+var root_216 = template(`<div class="left"><h3> </h3> <table class="update-activity svelte-1hzrq4y"><thead><tr><!><!><!></tr></thead><tbody></tbody></table></div>`);
 var root9 = template(`<div class="left"><h3> </h3> <!></div> <div class="left"><h3> </h3> <table class="entries-by-type svelte-1hzrq4y"><thead><tr><!><!></tr></thead><tbody></tbody><tfoot class="svelte-1hzrq4y"><tr><td class="svelte-1hzrq4y"> </td><td class="num svelte-1hzrq4y"> </td></tr></tfoot></table></div> <!>`, 1);
 function StatisticsReport($$anchor, $$props) {
   push($$props, false);
@@ -11291,7 +11185,7 @@ function StatisticsReport($$anchor, $$props) {
   each(tbody, 5, () => get(sortedEntries), ([type, count]) => type, ($$anchor2, $$item) => {
     let type = () => get($$item)[0];
     let count = () => get($$item)[1];
-    var tr_1 = root_118();
+    var tr_1 = root_117();
     var td = child(tr_1);
     var text_2 = child(td, true);
     reset(td);
@@ -11322,7 +11216,7 @@ function StatisticsReport($$anchor, $$props) {
   var node_3 = sibling(div_1, 2);
   {
     var consequent_1 = ($$anchor2) => {
-      var div_2 = root_215();
+      var div_2 = root_216();
       var h3_2 = child(div_2);
       var text_6 = child(h3_2, true);
       template_effect(() => set_text(text_6, t4("updateActivity")));
@@ -11373,7 +11267,7 @@ function StatisticsReport($$anchor, $$props) {
       reset(thead_1);
       var tbody_1 = sibling(thead_1);
       each(tbody_1, 5, () => get(sortedActivity), (row) => row.account, ($$anchor3, row) => {
-        var tr_4 = root_313();
+        var tr_4 = root_310();
         var td_4 = child(tr_4);
         var a = child(td_4);
         template_effect(() => set_attribute(a, "href", routeHref("account", { account: get(row).account })));
@@ -11403,7 +11297,7 @@ function StatisticsReport($$anchor, $$props) {
         each(td_6, 5, () => Object.entries(get(row).balances), ([currency, amount]) => currency, ($$anchor4, $$item) => {
           let currency = () => get($$item)[0];
           let amount = () => get($$item)[1];
-          var fragment_1 = root_57();
+          var fragment_1 = root_56();
           var span_1 = first_child(fragment_1);
           var text_9 = child(span_1);
           reset(span_1);
@@ -35077,12 +34971,12 @@ function init_query_editor(value, onDocChanges, placeholder_value, get_submit) {
 }
 
 // src/fava/charts/LineChart.svelte
-var root_216 = ns_template(`<line class="chart-grid svelte-1fixw1l"></line><text class="chart-tick svelte-1fixw1l" text-anchor="end"> </text>`, 1);
-var root_314 = ns_template(`<path class="area-path svelte-1fixw1l"></path>`);
+var root_217 = ns_template(`<line class="chart-grid svelte-1fixw1l"></line><text class="chart-tick svelte-1fixw1l" text-anchor="end"> </text>`, 1);
+var root_311 = ns_template(`<path class="area-path svelte-1fixw1l"></path>`);
 var root_48 = ns_template(`<text y="51" class="chart-tick svelte-1fixw1l" text-anchor="middle"> </text>`);
-var root_119 = template(`<svg class="line-chart svelte-1fixw1l" viewBox="0 0 100 52" role="button" aria-label="Price line chart; click to keep the value visible" tabindex="0"><!><!><path class="line-path svelte-1fixw1l"></path><!></svg>`);
-var root_58 = template(`<p class="chart-empty svelte-1fixw1l">No prices.</p>`);
-var root_66 = template(`<div class="chart-tooltip svelte-1fixw1l" role="status"> </div>`);
+var root_118 = template(`<svg class="line-chart svelte-1fixw1l" viewBox="0 0 100 52" role="button" aria-label="Price line chart; click to keep the value visible" tabindex="0"><!><!><path class="line-path svelte-1fixw1l"></path><!></svg>`);
+var root_57 = template(`<p class="chart-empty svelte-1fixw1l">No prices.</p>`);
+var root_64 = template(`<div class="chart-tooltip svelte-1fixw1l" role="status"> </div>`);
 var root10 = template(`<section class="line-card svelte-1fixw1l"><!> <!></section>`);
 function LineChart($$anchor, $$props) {
   push($$props, false);
@@ -35236,10 +35130,10 @@ function LineChart($$anchor, $$props) {
   var node = child(section);
   {
     var consequent_1 = ($$anchor2) => {
-      var svg_1 = root_119();
+      var svg_1 = root_118();
       var node_1 = child(svg_1);
       each(node_1, 1, () => get(yTicks), (tick2) => tick2, ($$anchor3, tick2) => {
-        var fragment = root_216();
+        var fragment = root_217();
         var line = first_child(fragment);
         set_attribute(line, "x1", X0);
         template_effect(() => set_attribute(line, "y1", y2(get(tick2))));
@@ -35256,7 +35150,7 @@ function LineChart($$anchor, $$props) {
       var node_2 = sibling(node_1);
       {
         var consequent = ($$anchor3) => {
-          var path_1 = root_314();
+          var path_1 = root_311();
           template_effect(() => set_attribute(path_1, "d", get(areaPath)));
           append($$anchor3, path_1);
         };
@@ -35283,7 +35177,7 @@ function LineChart($$anchor, $$props) {
       append($$anchor2, svg_1);
     };
     var alternate = ($$anchor2) => {
-      var p = root_58();
+      var p = root_57();
       append($$anchor2, p);
     };
     if_block(node, ($$render) => {
@@ -35294,7 +35188,7 @@ function LineChart($$anchor, $$props) {
   var node_4 = sibling(node, 2);
   {
     var consequent_2 = ($$anchor2) => {
-      var div = root_66();
+      var div = root_64();
       var text_4 = child(div, true);
       reset(div);
       template_effect(() => {
@@ -35313,9 +35207,9 @@ function LineChart($$anchor, $$props) {
 }
 
 // src/fava/reports/QueryReport.svelte
-var root_120 = template(`<p class="error-panel svelte-1qlrjvy" role="alert"> </p>`);
+var root_119 = template(`<p class="error-panel svelte-1qlrjvy" role="alert"> </p>`);
 var root_49 = template(`<div class="flex-row svelte-1qlrjvy"><span class="spacer svelte-1qlrjvy"></span> <button type="button" class="show-charts"> </button></div> <!>`, 1);
-var root_315 = template(`<p><a class="button">Export CSV</a></p> <!> <!>`, 1);
+var root_313 = template(`<p><a class="button">Export CSV</a></p> <!> <!>`, 1);
 var root11 = template(`<div class="headerline"><h2>Query</h2></div> <form class="query-form svelte-1qlrjvy"><label for="query-editor">BeanQuery</label> <div id="query-editor" aria-label="BeanQuery" class="svelte-1qlrjvy"></div> <button type="submit"> </button></form> <!>`, 1);
 function QueryReport($$anchor, $$props) {
   push($$props, false);
@@ -35434,7 +35328,7 @@ function QueryReport($$anchor, $$props) {
   var node = sibling(form, 2);
   {
     var consequent = ($$anchor2) => {
-      var p = root_120();
+      var p = root_119();
       var text_2 = child(p, true);
       reset(p);
       template_effect(() => set_text(text_2, get(error2)));
@@ -35445,7 +35339,7 @@ function QueryReport($$anchor, $$props) {
       var node_1 = first_child(fragment_1);
       {
         var consequent_3 = ($$anchor3) => {
-          var fragment_2 = root_315();
+          var fragment_2 = root_313();
           var p_1 = first_child(fragment_2);
           var a = child(p_1);
           template_effect(() => set_attribute(a, "href", `/api/v1/query?q=${encodeURIComponent(get(queryText))}&format=csv`));
@@ -40222,7 +40116,7 @@ function AppMenuSubItem($$anchor, $$props) {
 }
 
 // src/fava/reports/editor/Key.svelte
-var root_121 = template(`<kbd> </kbd> `, 1);
+var root_120 = template(`<kbd> </kbd> `, 1);
 function Key($$anchor, $$props) {
   push($$props, false);
   let key = prop($$props, "key", 8);
@@ -40230,7 +40124,7 @@ function Key($$anchor, $$props) {
   var fragment = comment();
   var node = first_child(fragment);
   each(node, 3, key, (part) => part, ($$anchor2, part, index2) => {
-    var fragment_1 = root_121();
+    var fragment_1 = root_120();
     var kbd = first_child(fragment_1);
     var text2 = child(kbd, true);
     reset(kbd);
@@ -40479,9 +40373,9 @@ function toggle_directory(directory, expand, event2) {
 }
 
 // src/fava/reports/editor/Sources.svelte
-var root_126 = template(`<button type="button" class="unset root svelte-1f4d3ah"> </button>`);
-var root_316 = template(`<button type="button" class="unset toggle svelte-1f4d3ah"> </button>`);
-var root_217 = template(`<p class="svelte-1f4d3ah"><!> <button type="button" class="unset leaf svelte-1f4d3ah"> </button></p>`);
+var root_121 = template(`<button type="button" class="unset root svelte-1f4d3ah"> </button>`);
+var root_314 = template(`<button type="button" class="unset toggle svelte-1f4d3ah"> </button>`);
+var root_218 = template(`<p class="svelte-1f4d3ah"><!> <button type="button" class="unset leaf svelte-1f4d3ah"> </button></p>`);
 var root_410 = template(`<ul class="svelte-1f4d3ah"></ul>`);
 var root15 = template(`<li role="menuitem" class="svelte-1f4d3ah"><!> <!></li>`);
 function Sources($$anchor, $$props) {
@@ -40524,7 +40418,7 @@ function Sources($$anchor, $$props) {
   var node_1 = child(li);
   {
     var consequent = ($$anchor2) => {
-      var button = root_126();
+      var button = root_121();
       set_attribute(button, "title", "Beancount data root directory\nShift-Click to expand/collapse immediate directories\nCtrl-/Cmd-/Meta-Click to expand/collapse all directories.");
       var text2 = child(button, true);
       reset(button);
@@ -40533,11 +40427,11 @@ function Sources($$anchor, $$props) {
       append($$anchor2, button);
     };
     var alternate = ($$anchor2) => {
-      var p = root_217();
+      var p = root_218();
       var node_2 = child(p);
       {
         var consequent_1 = ($$anchor3) => {
-          var button_1 = root_316();
+          var button_1 = root_314();
           var text_1 = child(button_1, true);
           reset(button_1);
           template_effect(() => set_text(text_1, get(is_expanded) ? "\u25BE" : "\u25B8"));
@@ -40595,11 +40489,11 @@ function Sources($$anchor, $$props) {
 }
 
 // src/fava/reports/editor/EditorMenu.svelte
-var root_67 = template(`<span slot="right"><!></span>`);
-var root_83 = template(`<span slot="right"><!></span>`);
-var root_104 = template(`<span slot="right"><!></span>`);
+var root_65 = template(`<span slot="right"><!></span>`);
+var root_84 = template(`<span slot="right"><!></span>`);
+var root_105 = template(`<span slot="right"><!></span>`);
 var root_411 = template(`<!> <!> <!>`, 1);
-var root_127 = template(`<!> <!>`, 1);
+var root_126 = template(`<!> <!>`, 1);
 var root16 = template(`<div class="svelte-1b7r65z"><!> <!></div>`);
 function EditorMenu($$anchor, $$props) {
   push($$props, false);
@@ -40612,7 +40506,7 @@ function EditorMenu($$anchor, $$props) {
   var node = child(div);
   AppMenu(node, {
     children: ($$anchor2, $$slotProps) => {
-      var fragment = root_127();
+      var fragment = root_126();
       var node_1 = first_child(fragment);
       AppMenuItem(node_1, {
         name: "File",
@@ -40650,7 +40544,7 @@ function EditorMenu($$anchor, $$props) {
                 $$slots: {
                   default: true,
                   right: ($$anchor5, $$slotProps3) => {
-                    var span = root_67();
+                    var span = root_65();
                     var node_4 = child(span);
                     Key(node_4, { key: [modKey, "/"] });
                     reset(span);
@@ -40669,7 +40563,7 @@ function EditorMenu($$anchor, $$props) {
                 $$slots: {
                   default: true,
                   right: ($$anchor5, $$slotProps3) => {
-                    var span_1 = root_83();
+                    var span_1 = root_84();
                     var node_6 = child(span_1);
                     Key(node_6, { key: ["Ctrl", "Alt", "]"] });
                     reset(span_1);
@@ -40688,7 +40582,7 @@ function EditorMenu($$anchor, $$props) {
                 $$slots: {
                   default: true,
                   right: ($$anchor5, $$slotProps3) => {
-                    var span_2 = root_104();
+                    var span_2 = root_105();
                     var node_8 = child(span_2);
                     Key(node_8, { key: ["Ctrl", "Alt", "["] });
                     reset(span_2);
@@ -40717,10 +40611,10 @@ function EditorMenu($$anchor, $$props) {
 }
 
 // src/fava/reports/EditorReport.svelte
-var root_128 = template(`<button id="editor-validate" type="button">Validate</button> <button id="editor-save" type="button">Save</button> <span class="muted svelte-17jasfg" role="status"> </span>`, 1);
-var root_218 = template(`<option> </option>`);
+var root_127 = template(`<button id="editor-validate" type="button">Validate</button> <button id="editor-save" type="button">Save</button> <span class="muted svelte-17jasfg" role="status"> </span>`, 1);
+var root_219 = template(`<option> </option>`);
 var root_412 = template(`<li> </li>`);
-var root_317 = template(`<ul class="diagnostics svelte-17jasfg"></ul>`);
+var root_315 = template(`<ul class="diagnostics svelte-17jasfg"></ul>`);
 var root17 = template(`<div class="headerline"><h2>Editor</h2><span class="muted svelte-17jasfg">Reviewed writes only</span></div> <!> <div class="editor-layout svelte-17jasfg"><aside class="editor-files svelte-17jasfg"><label for="editor-file">Files</label> <select id="editor-file" class="svelte-17jasfg"></select></aside> <section class="editor-pane svelte-17jasfg"><div id="editor-buffer" aria-label="Ledger source" class="svelte-17jasfg"></div> <!></section></div>`, 1);
 function EditorReport($$anchor, $$props) {
   push($$props, false);
@@ -40853,7 +40747,7 @@ function EditorReport($$anchor, $$props) {
     },
     on_open_file: openFile,
     children: ($$anchor2, $$slotProps) => {
-      var fragment_1 = root_128();
+      var fragment_1 = root_127();
       var button = first_child(fragment_1);
       var button_1 = sibling(button, 2);
       var span = sibling(button_1, 2);
@@ -40883,7 +40777,7 @@ function EditorReport($$anchor, $$props) {
   });
   template_effect(() => set_attribute(select, "size", Math.min(Math.max(get(paths).length, 2), 12)));
   each(select, 5, () => get(paths), (path2) => path2, ($$anchor2, path2) => {
-    var option = root_218();
+    var option = root_219();
     var option_value = {};
     var text_1 = child(option, true);
     reset(option);
@@ -40903,7 +40797,7 @@ function EditorReport($$anchor, $$props) {
   var node_1 = sibling(div_1, 2);
   {
     var consequent = ($$anchor2) => {
-      var ul = root_317();
+      var ul = root_315();
       each(ul, 5, () => get(diagnostics), (diagnostic) => diagnostic.code + diagnostic.line + diagnostic.message, ($$anchor3, diagnostic) => {
         var li = root_412();
         var text_2 = child(li);
@@ -40927,7 +40821,7 @@ function EditorReport($$anchor, $$props) {
 }
 
 // src/fava/reports/PriceTable.svelte
-var root_129 = template(`<tr><td> </td><td class="num svelte-pjz8y6"> </td></tr>`);
+var root_128 = template(`<tr><td> </td><td class="num svelte-pjz8y6"> </td></tr>`);
 var root18 = template(`<table class="prices-table svelte-pjz8y6"><thead><tr><!><!></tr></thead><tbody></tbody></table>`);
 function PriceTable($$anchor, $$props) {
   push($$props, false);
@@ -40997,7 +40891,7 @@ function PriceTable($$anchor, $$props) {
   reset(thead);
   var tbody = sibling(thead);
   each(tbody, 5, () => get(sorted), (price) => price.date, ($$anchor2, price) => {
-    var tr_1 = root_129();
+    var tr_1 = root_128();
     var td = child(tr_1);
     var text2 = child(td, true);
     reset(td);
@@ -41016,11 +40910,11 @@ function PriceTable($$anchor, $$props) {
 }
 
 // src/fava/reports/CommoditiesReport.svelte
-var root_318 = template(`<button type="button" class="unset svelte-1vsdq8j"> </button>`);
-var root_219 = template(`<!> <div class="chart-switcher svelte-1vsdq8j"></div>`, 1);
+var root_316 = template(`<button type="button" class="unset svelte-1vsdq8j"> </button>`);
+var root_220 = template(`<!> <div class="chart-switcher svelte-1vsdq8j"></div>`, 1);
 var root_413 = template(`<div class="left"><h3> </h3> <!></div>`);
-var root_130 = template(`<div class="flex-row svelte-1vsdq8j"><span class="spacer svelte-1vsdq8j"></span> <button type="button" class="chart-mode" title="Toggle line/area"> </button> <button type="button" class="show-charts"> </button></div> <!> <!>`, 1);
-var root_59 = template(`<p> </p>`);
+var root_129 = template(`<div class="flex-row svelte-1vsdq8j"><span class="spacer svelte-1vsdq8j"></span> <button type="button" class="show-charts"> </button></div> <!> <!>`, 1);
+var root_58 = template(`<p> </p>`);
 function CommoditiesReport($$anchor, $$props) {
   push($$props, false);
   const pairs = mutable_state();
@@ -41057,19 +40951,6 @@ ${point3.date}`;
   } catch {
   }
   let showCharts = mutable_state(true);
-  let chartMode = mutable_state("line");
-  try {
-    const stored2 = localStorage.getItem("commodities-chart-mode");
-    if (stored2 === "line" || stored2 === "area") set(chartMode, stored2);
-  } catch {
-  }
-  function toggleMode() {
-    set(chartMode, get(chartMode) === "line" ? "area" : "line");
-    try {
-      localStorage.setItem("commodities-chart-mode", get(chartMode));
-    } catch {
-    }
-  }
   legacy_pre_effect(() => deep_read_state(report()), () => {
     set(pairs, (() => {
       const byPair = /* @__PURE__ */ new Map();
@@ -41102,19 +40983,16 @@ ${point3.date}`;
   var node = first_child(fragment);
   {
     var consequent_1 = ($$anchor2) => {
-      var fragment_1 = root_130();
+      var fragment_1 = root_129();
       var div = first_child(fragment_1);
       var button = sibling(child(div), 2);
       var text2 = child(button, true);
       reset(button);
-      var button_1 = sibling(button, 2);
-      var text_1 = child(button_1, true);
-      reset(button_1);
       reset(div);
       var node_1 = sibling(div, 2);
       {
         var consequent = ($$anchor3) => {
-          var fragment_2 = root_219();
+          var fragment_2 = root_220();
           var node_2 = first_child(fragment_2);
           var points = derived_safe_equal(() => chartPoints(get(active)[1].prices));
           var formatTip = derived_safe_equal(() => tipFor(get(active)[1].base, get(active)[1].quote));
@@ -41124,23 +41002,20 @@ ${point3.date}`;
             },
             get formatTip() {
               return get(formatTip);
-            },
-            get mode() {
-              return get(chartMode);
             }
           });
           var div_1 = sibling(node_2, 2);
           each(div_1, 5, () => get(pairs), ([pair]) => pair, ($$anchor4, $$item) => {
             let pair = () => get($$item)[0];
-            var button_2 = root_318();
-            var text_2 = child(button_2, true);
-            reset(button_2);
+            var button_1 = root_316();
+            var text_1 = child(button_1, true);
+            reset(button_1);
             template_effect(() => {
-              toggle_class(button_2, "selected", get(active) && pair() === get(active)[0]);
-              set_text(text_2, pair());
+              toggle_class(button_1, "selected", get(active) && pair() === get(active)[0]);
+              set_text(text_1, pair());
             });
-            event("click", button_2, () => set(activePair, pair()));
-            append($$anchor4, button_2);
+            event("click", button_1, () => set(activePair, pair()));
+            append($$anchor4, button_1);
           });
           reset(div_1);
           append($$anchor3, fragment_2);
@@ -41155,7 +41030,7 @@ ${point3.date}`;
         let prices = () => get($$item)[1].prices;
         var div_2 = root_413();
         var h3 = child(div_2);
-        var text_3 = child(h3, true);
+        var text_2 = child(h3, true);
         reset(h3);
         var node_4 = sibling(h3, 2);
         PriceTable(node_4, {
@@ -41170,21 +41045,17 @@ ${point3.date}`;
           }
         });
         reset(div_2);
-        template_effect(() => set_text(text_3, pair()));
+        template_effect(() => set_text(text_2, pair()));
         append($$anchor3, div_2);
       });
-      template_effect(() => {
-        set_text(text2, get(chartMode) === "line" ? "Line" : "Area");
-        set_text(text_1, get(showCharts) ? "\u25BC" : "\u25C0");
-      });
-      event("click", button, toggleMode);
-      event("click", button_1, () => set(showCharts, !get(showCharts)));
+      template_effect(() => set_text(text2, get(showCharts) ? "\u25BC" : "\u25C0"));
+      event("click", button, () => set(showCharts, !get(showCharts)));
       append($$anchor2, fragment_1);
     };
     var alternate = ($$anchor2) => {
-      var p = root_59();
-      var text_4 = child(p, true);
-      template_effect(() => set_text(text_4, t4("noPrices")));
+      var p = root_58();
+      var text_3 = child(p, true);
+      template_effect(() => set_text(text_3, t4("noPrices")));
       reset(p);
       append($$anchor2, p);
     };
@@ -41198,10 +41069,10 @@ ${point3.date}`;
 }
 
 // src/fava/reports/DocumentAccounts.svelte
-var root_220 = template(`<button type="button" class="unset toggle svelte-1se7z4w"> </button>`);
-var root_319 = template(`<span class="count svelte-1se7z4w"> </span>`);
-var root_131 = template(`<p class="droptarget svelte-1se7z4w"><!> <button type="button" class="unset leaf svelte-1se7z4w"> </button> <!></p>`);
-var root_510 = template(`<li><!></li>`);
+var root_221 = template(`<button type="button" class="unset toggle svelte-1se7z4w"> </button>`);
+var root_317 = template(`<span class="count svelte-1se7z4w"> </span>`);
+var root_130 = template(`<p class="droptarget svelte-1se7z4w"><!> <button type="button" class="unset leaf svelte-1se7z4w"> </button> <!></p>`);
+var root_59 = template(`<li><!></li>`);
 var root_414 = template(`<ul class="svelte-1se7z4w"></ul>`);
 var root19 = template(`<!> <!>`, 1);
 function DocumentAccounts($$anchor, $$props) {
@@ -41264,11 +41135,11 @@ function DocumentAccounts($$anchor, $$props) {
   var node_1 = first_child(fragment);
   {
     var consequent_2 = ($$anchor2) => {
-      var p = root_131();
+      var p = root_130();
       var node_2 = child(p);
       {
         var consequent = ($$anchor3) => {
-          var button = root_220();
+          var button = root_221();
           var text2 = child(button, true);
           reset(button);
           template_effect(() => set_text(text2, get(isToggled) ? "\u25B8" : "\u25BE"));
@@ -41285,7 +41156,7 @@ function DocumentAccounts($$anchor, $$props) {
       var node_3 = sibling(button_1, 2);
       {
         var consequent_1 = ($$anchor3) => {
-          var span = root_319();
+          var span = root_317();
           var text_2 = child(span, true);
           reset(span);
           template_effect(() => set_text(text_2, node().count));
@@ -41321,7 +41192,7 @@ function DocumentAccounts($$anchor, $$props) {
     var consequent_3 = ($$anchor2) => {
       var ul = root_414();
       each(ul, 5, () => node().children, (child2) => child2.name, ($$anchor3, child2) => {
-        var li = root_510();
+        var li = root_59();
         var node_5 = child(li);
         DocumentAccounts(node_5, {
           get node() {
@@ -41361,9 +41232,9 @@ function DocumentAccounts($$anchor, $$props) {
 }
 
 // src/fava/modals/DocumentMoveModal.svelte
-var root_221 = template(`<p class="error svelte-iwkm6x" role="alert"> </p>`);
-var root_320 = template(`<option></option>`);
-var root_134 = template(`<div class="move-backdrop svelte-iwkm6x" role="presentation"><form class="move-modal svelte-iwkm6x" role="dialog" aria-modal="true"><h3 class="svelte-iwkm6x"> </h3> <p><code class="svelte-iwkm6x"> </code></p> <!> <div class="fields svelte-iwkm6x"><input type="text" list="move-accounts" placeholder="Assets:Cash" required autocomplete="off" class="svelte-iwkm6x"> <input required class="svelte-iwkm6x"> <button type="submit" class="svelte-iwkm6x"> </button></div> <datalist id="move-accounts"></datalist></form></div>`);
+var root_224 = template(`<p class="error svelte-iwkm6x" role="alert"> </p>`);
+var root_318 = template(`<option></option>`);
+var root_131 = template(`<div class="move-backdrop svelte-iwkm6x" role="presentation"><form class="move-modal svelte-iwkm6x" role="dialog" aria-modal="true"><h3 class="svelte-iwkm6x"> </h3> <p><code class="svelte-iwkm6x"> </code></p> <!> <div class="fields svelte-iwkm6x"><input type="text" list="move-accounts" placeholder="Assets:Cash" required autocomplete="off" class="svelte-iwkm6x"> <input required class="svelte-iwkm6x"> <button type="submit" class="svelte-iwkm6x"> </button></div> <datalist id="move-accounts"></datalist></form></div>`);
 function DocumentMoveModal($$anchor, $$props) {
   push($$props, false);
   let locale2 = prop($$props, "locale", 8, "en");
@@ -41423,7 +41294,7 @@ function DocumentMoveModal($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent_1 = ($$anchor2) => {
-      var div = root_134();
+      var div = root_131();
       var form = child(div);
       template_effect(() => set_attribute(form, "aria-label", t4("moveDocument")));
       var h3 = child(form);
@@ -41438,7 +41309,7 @@ function DocumentMoveModal($$anchor, $$props) {
       var node_1 = sibling(p, 2);
       {
         var consequent = ($$anchor3) => {
-          var p_1 = root_221();
+          var p_1 = root_224();
           var text_2 = child(p_1, true);
           reset(p_1);
           template_effect(() => set_text(text_2, get(error2)));
@@ -41461,7 +41332,7 @@ function DocumentMoveModal($$anchor, $$props) {
       reset(div_1);
       var datalist = sibling(div_1, 2);
       each(datalist, 5, accounts, (name3) => name3, ($$anchor3, name3) => {
-        var option = root_320();
+        var option = root_318();
         var option_value = {};
         template_effect(() => {
           if (option_value !== (option_value = get(name3))) {
@@ -41495,11 +41366,11 @@ function DocumentMoveModal($$anchor, $$props) {
 }
 
 // src/fava/reports/DocumentPreview.svelte
-var root_135 = template(`<object class="svelte-1jfq29f"></object>`);
+var root_136 = template(`<object class="svelte-1jfq29f"></object>`);
 var root_415 = template(`<p class="error"> </p>`);
-var root_68 = template(`<pre class="text-preview svelte-1jfq29f"> </pre>`);
-var root_75 = template(`<p>\u2026</p>`);
-var root_94 = template(`<img class="svelte-1jfq29f">`);
+var root_66 = template(`<pre class="text-preview svelte-1jfq29f"> </pre>`);
+var root_76 = template(`<p>\u2026</p>`);
+var root_93 = template(`<img class="svelte-1jfq29f">`);
 var root_1110 = template(`<iframe sandbox="" class="svelte-1jfq29f"></iframe>`);
 var root_1210 = template(`<p> </p>`);
 function DocumentPreview($$anchor, $$props) {
@@ -41563,7 +41434,7 @@ function DocumentPreview($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent = ($$anchor2) => {
-      var object = root_135();
+      var object = root_136();
       template_effect(() => {
         set_attribute(object, "title", filename());
         set_attribute(object, "data", get(url));
@@ -41590,14 +41461,14 @@ function DocumentPreview($$anchor, $$props) {
               var node_3 = first_child(fragment_3);
               {
                 var consequent_2 = ($$anchor5) => {
-                  var pre = root_68();
+                  var pre = root_66();
                   var text_2 = child(pre, true);
                   reset(pre);
                   template_effect(() => set_text(text_2, get(text2)));
                   append($$anchor5, pre);
                 };
                 var alternate = ($$anchor5) => {
-                  var p_1 = root_75();
+                  var p_1 = root_76();
                   append($$anchor5, p_1);
                 };
                 if_block(
@@ -41623,7 +41494,7 @@ function DocumentPreview($$anchor, $$props) {
           var node_4 = first_child(fragment_4);
           {
             var consequent_4 = ($$anchor4) => {
-              var img = root_94();
+              var img = root_93();
               template_effect(() => {
                 set_attribute(img, "src", get(url));
                 set_attribute(img, "alt", filename());
@@ -41692,7 +41563,7 @@ function DocumentPreview($$anchor, $$props) {
 }
 
 // src/fava/reports/DocumentTable.svelte
-var root_224 = template(`<tr class="svelte-16svwjo"><td> </td><td> </td><td draggable="true"> </td></tr>`);
+var root_225 = template(`<tr class="svelte-16svwjo"><td> </td><td> </td><td draggable="true"> </td></tr>`);
 var root20 = template(`<table class="documents-table svelte-16svwjo"><thead><tr></tr></thead><tbody class="svelte-16svwjo"></tbody></table>`);
 function DocumentTable($$anchor, $$props) {
   push($$props, false);
@@ -41751,7 +41622,7 @@ function DocumentTable($$anchor, $$props) {
   reset(thead);
   var tbody = sibling(thead);
   each(tbody, 5, () => get(sorted), (doc2) => doc2.filename, ($$anchor2, doc2) => {
-    var tr_1 = root_224();
+    var tr_1 = root_225();
     var td = child(tr_1);
     var text2 = child(td, true);
     reset(td);
@@ -41784,9 +41655,9 @@ function DocumentTable($$anchor, $$props) {
 
 // src/fava/reports/DocumentsReport.svelte
 var root_416 = template(`<div class="preview"><!></div>`);
-var root_225 = template(`<div class="documents-layout svelte-10uk1r4"><div class="accounts"></div> <div><!></div> <!></div>`);
-var root_511 = template(`<p> </p>`);
-var root_136 = template(`<!> <!>`, 1);
+var root_226 = template(`<div class="documents-layout svelte-10uk1r4"><div class="accounts"></div> <div><!></div> <!></div>`);
+var root_510 = template(`<p> </p>`);
+var root_137 = template(`<!> <!>`, 1);
 function DocumentsReport($$anchor, $$props) {
   push($$props, false);
   const documents = mutable_state();
@@ -41881,7 +41752,7 @@ function DocumentsReport($$anchor, $$props) {
   );
   legacy_pre_effect_reset();
   init2();
-  var fragment = root_136();
+  var fragment = root_137();
   event("keyup", $window, onKeyup);
   var node_1 = first_child(fragment);
   DocumentMoveModal(node_1, {
@@ -41900,7 +41771,7 @@ function DocumentsReport($$anchor, $$props) {
   var node_2 = sibling(node_1, 2);
   {
     var consequent_1 = ($$anchor2) => {
-      var div = root_225();
+      var div = root_226();
       var div_1 = child(div);
       each(div_1, 5, () => get(tree).children, (child2) => child2.name, ($$anchor3, child2) => {
         DocumentAccounts($$anchor3, {
@@ -41964,7 +41835,7 @@ function DocumentsReport($$anchor, $$props) {
       append($$anchor2, div);
     };
     var alternate = ($$anchor2) => {
-      var p = root_511();
+      var p = root_510();
       var text2 = child(p, true);
       template_effect(() => set_text(text2, t4("noDocuments")));
       reset(p);
@@ -41981,18 +41852,18 @@ function DocumentsReport($$anchor, $$props) {
 
 // src/fava/reports/ErrorsReport.svelte
 var on_click3 = (_, toggleSort) => toggleSort("path");
-var root_226 = template(`<span aria-hidden="true"> </span>`);
+var root_227 = template(`<span aria-hidden="true"> </span>`);
 var on_click_12 = (__1, toggleSort) => toggleSort("line");
-var root_321 = template(`<span aria-hidden="true"> </span>`);
+var root_319 = template(`<span aria-hidden="true"> </span>`);
 var on_click_22 = (__2, toggleSort) => toggleSort("message");
 var root_417 = template(`<span aria-hidden="true"> </span>`);
-var root_69 = template(`<td class="svelte-13lbwf2"><a> </a></td> <td class="num svelte-13lbwf2"><a> </a></td>`, 1);
-var root_76 = template(`<td class="svelte-13lbwf2"></td> <td class="num svelte-13lbwf2"></td>`, 1);
-var root_84 = template(`<span class="code svelte-13lbwf2"> </span>`);
-var root_95 = template(`<br><a class="repair-link svelte-13lbwf2"> </a>`, 1);
-var root_512 = template(`<tr><!><td class="pre svelte-13lbwf2"><!> <!></td></tr>`);
-var root_137 = template(`<table class="errors-table svelte-13lbwf2"><thead><tr><th><button type="button" class="sort-toggle svelte-13lbwf2"> <!></button></th><th class="num svelte-13lbwf2"><button type="button" class="sort-toggle svelte-13lbwf2"> <!></button></th><th><button type="button" class="sort-toggle svelte-13lbwf2"> <!></button></th></tr></thead><tbody></tbody></table>`);
-var root_105 = template(`<p> </p>`);
+var root_67 = template(`<td class="svelte-13lbwf2"><a> </a></td> <td class="num svelte-13lbwf2"><a> </a></td>`, 1);
+var root_77 = template(`<td class="svelte-13lbwf2"></td> <td class="num svelte-13lbwf2"></td>`, 1);
+var root_85 = template(`<span class="code svelte-13lbwf2"> </span>`);
+var root_94 = template(`<br><a class="repair-link svelte-13lbwf2"> </a>`, 1);
+var root_511 = template(`<tr><!><td class="pre svelte-13lbwf2"><!> <!></td></tr>`);
+var root_138 = template(`<table class="errors-table svelte-13lbwf2"><thead><tr><th><button type="button" class="sort-toggle svelte-13lbwf2"> <!></button></th><th class="num svelte-13lbwf2"><button type="button" class="sort-toggle svelte-13lbwf2"> <!></button></th><th><button type="button" class="sort-toggle svelte-13lbwf2"> <!></button></th></tr></thead><tbody></tbody></table>`);
+var root_106 = template(`<p> </p>`);
 function ErrorsReport($$anchor, $$props) {
   push($$props, false);
   const errors = mutable_state();
@@ -42048,7 +41919,7 @@ function ErrorsReport($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent_6 = ($$anchor2) => {
-      var table = root_137();
+      var table = root_138();
       var thead = child(table);
       var tr = child(thead);
       var th = child(tr);
@@ -42059,7 +41930,7 @@ function ErrorsReport($$anchor, $$props) {
       var node_1 = sibling(text2);
       {
         var consequent = ($$anchor3) => {
-          var span = root_226();
+          var span = root_227();
           var text_1 = child(span, true);
           reset(span);
           template_effect(() => set_text(text_1, get(sortDirection) === "ascending" ? " \u25B2" : " \u25BC"));
@@ -42079,7 +41950,7 @@ function ErrorsReport($$anchor, $$props) {
       var node_2 = sibling(text_2);
       {
         var consequent_1 = ($$anchor3) => {
-          var span_1 = root_321();
+          var span_1 = root_319();
           var text_3 = child(span_1, true);
           reset(span_1);
           template_effect(() => set_text(text_3, get(sortDirection) === "ascending" ? " \u25B2" : " \u25BC"));
@@ -42115,11 +41986,11 @@ function ErrorsReport($$anchor, $$props) {
       reset(thead);
       var tbody = sibling(thead);
       each(tbody, 5, () => get(sortedRows), index, ($$anchor3, error2) => {
-        var tr_1 = root_512();
+        var tr_1 = root_511();
         var node_4 = child(tr_1);
         {
           var consequent_3 = ($$anchor4) => {
-            var fragment_1 = root_69();
+            var fragment_1 = root_67();
             var td = first_child(fragment_1);
             var a_1 = child(td);
             template_effect(() => set_attribute(a_1, "href", `/source?path=${encodeURIComponent(get(error2).path)}`));
@@ -42139,7 +42010,7 @@ function ErrorsReport($$anchor, $$props) {
             append($$anchor4, fragment_1);
           };
           var alternate = ($$anchor4) => {
-            var fragment_2 = root_76();
+            var fragment_2 = root_77();
             next(2);
             append($$anchor4, fragment_2);
           };
@@ -42152,7 +42023,7 @@ function ErrorsReport($$anchor, $$props) {
         var node_5 = child(td_2);
         {
           var consequent_4 = ($$anchor4) => {
-            var span_3 = root_84();
+            var span_3 = root_85();
             var text_8 = child(span_3, true);
             reset(span_3);
             template_effect(() => set_text(text_8, get(error2).code));
@@ -42166,7 +42037,7 @@ function ErrorsReport($$anchor, $$props) {
         var node_6 = sibling(text_9);
         {
           var consequent_5 = ($$anchor4) => {
-            var fragment_3 = root_95();
+            var fragment_3 = root_94();
             var a_3 = sibling(first_child(fragment_3));
             template_effect(() => set_attribute(a_3, "href", `/help/diagnostics/${encodeURIComponent(get(error2).code)}`));
             var text_10 = child(a_3, true);
@@ -42196,7 +42067,7 @@ function ErrorsReport($$anchor, $$props) {
       append($$anchor2, table);
     };
     var alternate_1 = ($$anchor2) => {
-      var p = root_105();
+      var p = root_106();
       var text_11 = child(p, true);
       template_effect(() => set_text(text_11, t4("noErrors")));
       reset(p);
@@ -42213,12 +42084,12 @@ function ErrorsReport($$anchor, $$props) {
 delegate(["click"]);
 
 // src/fava/charts/ScatterPlot.svelte
-var root_227 = ns_template(`<line class="chart-grid svelte-j8o8u7"></line><text class="chart-tick svelte-j8o8u7" text-anchor="end"> </text>`, 1);
-var root_323 = ns_template(`<text y="51" class="chart-tick svelte-j8o8u7" text-anchor="middle"> </text>`);
+var root_228 = ns_template(`<line class="chart-grid svelte-j8o8u7"></line><text class="chart-tick svelte-j8o8u7" text-anchor="end"> </text>`, 1);
+var root_320 = ns_template(`<text y="51" class="chart-tick svelte-j8o8u7" text-anchor="middle"> </text>`);
 var root_418 = ns_template(`<circle r="1.3" class="svelte-j8o8u7"></circle>`);
-var root_138 = template(`<svg class="scatter-chart svelte-j8o8u7" viewBox="0 0 100 52" role="button" aria-label="Events scatterplot; click to keep the value visible" tabindex="0"><!><!><!></svg>`);
-var root_513 = template(`<p class="chart-empty svelte-j8o8u7">No events.</p>`);
-var root_610 = template(`<div class="chart-tooltip svelte-j8o8u7" role="status"> </div>`);
+var root_139 = template(`<svg class="scatter-chart svelte-j8o8u7" viewBox="0 0 100 52" role="button" aria-label="Events scatterplot; click to keep the value visible" tabindex="0"><!><!><!></svg>`);
+var root_512 = template(`<p class="chart-empty svelte-j8o8u7">No events.</p>`);
+var root_68 = template(`<div class="chart-tooltip svelte-j8o8u7" role="status"> </div>`);
 var root21 = template(`<section class="scatter-card svelte-j8o8u7"><!> <!></section>`);
 function ScatterPlot($$anchor, $$props) {
   push($$props, false);
@@ -42349,10 +42220,10 @@ ${best.date}`);
   var node = child(section);
   {
     var consequent = ($$anchor2) => {
-      var svg_1 = root_138();
+      var svg_1 = root_139();
       var node_1 = child(svg_1);
       each(node_1, 1, () => get(types2), (type) => type, ($$anchor3, type) => {
-        var fragment = root_227();
+        var fragment = root_228();
         var line = first_child(fragment);
         set_attribute(line, "x1", X0);
         template_effect(() => set_attribute(line, "y1", y2(get(type))));
@@ -42368,7 +42239,7 @@ ${best.date}`);
       });
       var node_2 = sibling(node_1);
       each(node_2, 1, () => get(xTicks), (tick2) => tick2.date, ($$anchor3, tick2) => {
-        var text_2 = root_323();
+        var text_2 = root_320();
         template_effect(() => set_attribute(text_2, "x", x2(get(tick2).timestamp)));
         var text_3 = child(text_2, true);
         template_effect(() => set_text(text_3, tickLabel(get(tick2).date)));
@@ -42396,7 +42267,7 @@ ${best.date}`);
       append($$anchor2, svg_1);
     };
     var alternate = ($$anchor2) => {
-      var p = root_513();
+      var p = root_512();
       append($$anchor2, p);
     };
     if_block(node, ($$render) => {
@@ -42407,7 +42278,7 @@ ${best.date}`);
   var node_4 = sibling(node, 2);
   {
     var consequent_1 = ($$anchor2) => {
-      var div = root_610();
+      var div = root_68();
       var text_4 = child(div, true);
       reset(div);
       template_effect(() => {
@@ -42426,7 +42297,7 @@ ${best.date}`);
 }
 
 // src/fava/reports/EventTable.svelte
-var root_228 = template(`<tr><td> </td><td> </td></tr>`);
+var root_229 = template(`<tr><td> </td><td> </td></tr>`);
 var root22 = template(`<table class="events-table svelte-1nok83z"><thead><tr></tr></thead><tbody></tbody></table>`);
 function EventTable($$anchor, $$props) {
   push($$props, false);
@@ -42477,7 +42348,7 @@ function EventTable($$anchor, $$props) {
   reset(thead);
   var tbody = sibling(thead);
   each(tbody, 5, () => get(sorted), (event2) => event2.date + event2.description, ($$anchor2, event2) => {
-    var tr_1 = root_228();
+    var tr_1 = root_229();
     var td = child(tr_1);
     var text2 = child(td, true);
     reset(td);
@@ -42498,9 +42369,9 @@ function EventTable($$anchor, $$props) {
 }
 
 // src/fava/reports/EventsReport.svelte
-var root_229 = template(`<!> <div class="chart-switcher svelte-1cxn66i"><button type="button" class="unset selected svelte-1cxn66i"> </button></div>`, 1);
-var root_324 = template(`<div class="left"><h3> </h3> <!></div>`);
-var root_139 = template(`<div class="flex-row svelte-1cxn66i"><span class="spacer svelte-1cxn66i"></span> <button type="button" class="show-charts"> </button></div> <!> <!>`, 1);
+var root_230 = template(`<!> <div class="chart-switcher svelte-1cxn66i"><button type="button" class="unset selected svelte-1cxn66i"> </button></div>`, 1);
+var root_321 = template(`<div class="left"><h3> </h3> <!></div>`);
+var root_140 = template(`<div class="flex-row svelte-1cxn66i"><span class="spacer svelte-1cxn66i"></span> <button type="button" class="show-charts"> </button></div> <!> <!>`, 1);
 var root_419 = template(`<p> </p>`);
 function EventsReport($$anchor, $$props) {
   push($$props, false);
@@ -42541,7 +42412,7 @@ function EventsReport($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent_1 = ($$anchor2) => {
-      var fragment_1 = root_139();
+      var fragment_1 = root_140();
       var div = first_child(fragment_1);
       var button = sibling(child(div), 2);
       var text2 = child(button, true);
@@ -42550,7 +42421,7 @@ function EventsReport($$anchor, $$props) {
       var node_1 = sibling(div, 2);
       {
         var consequent = ($$anchor3) => {
-          var fragment_2 = root_229();
+          var fragment_2 = root_230();
           var node_2 = first_child(fragment_2);
           ScatterPlot(node_2, {
             get events() {
@@ -42573,7 +42444,7 @@ function EventsReport($$anchor, $$props) {
       each(node_3, 1, () => get(groups), ([type, events]) => type, ($$anchor3, $$item) => {
         let type = () => get($$item)[0];
         let events = () => get($$item)[1];
-        var div_2 = root_324();
+        var div_2 = root_321();
         var h3 = child(div_2);
         var text_2 = child(h3);
         template_effect(() => set_text(text_2, `${t4("eventHeading") ?? ""} ${type() ?? ""}`));
@@ -42612,11 +42483,11 @@ function EventsReport($$anchor, $$props) {
 
 // src/fava/tree-table/TreeTableNode.svelte
 var on_click4 = (_, onToggle, node) => onToggle()(node().account);
-var root_140 = template(`<button type="button" class="unset expander svelte-xjp7mv"> </button>`);
-var root_230 = template(`<span class="num svelte-xjp7mv"> </span>`);
+var root_141 = template(`<button type="button" class="unset expander svelte-xjp7mv"> </button>`);
+var root_231 = template(`<span class="num svelte-xjp7mv"> </span>`);
 var root_420 = template(`<span class="other-line svelte-xjp7mv"> </span>`);
-var root_325 = template(`<span class="other num svelte-xjp7mv"></span>`);
-var root_514 = template(`<ol></ol>`);
+var root_323 = template(`<span class="other num svelte-xjp7mv"></span>`);
+var root_513 = template(`<ol></ol>`);
 var root23 = template(`<li><p><span class="account-cell droptarget svelte-xjp7mv"><!> <a class="account svelte-xjp7mv"> </a></span> <!> <!></p> <!></li>`);
 function TreeTableNode($$anchor, $$props) {
   push($$props, false);
@@ -42664,7 +42535,7 @@ function TreeTableNode($$anchor, $$props) {
   var node_1 = child(span);
   {
     var consequent = ($$anchor2) => {
-      var button = root_140();
+      var button = root_141();
       button.__click = [on_click4, onToggle, node];
       var text2 = child(button, true);
       reset(button);
@@ -42686,7 +42557,7 @@ function TreeTableNode($$anchor, $$props) {
   reset(span);
   var node_2 = sibling(span, 2);
   each(node_2, 1, currencies, (currency) => currency, ($$anchor2, currency) => {
-    var span_1 = root_230();
+    var span_1 = root_231();
     var text_2 = child(span_1, true);
     template_effect(() => set_text(text_2, formatAmount(get(shown)[get(currency)], renderCommas())));
     reset(span_1);
@@ -42699,7 +42570,7 @@ function TreeTableNode($$anchor, $$props) {
   var node_3 = sibling(node_2, 2);
   {
     var consequent_1 = ($$anchor2) => {
-      var span_2 = root_325();
+      var span_2 = root_323();
       each(span_2, 5, () => get(otherAmounts), (amount) => amount, ($$anchor3, amount) => {
         var span_3 = root_420();
         var text_3 = child(span_3, true);
@@ -42718,7 +42589,7 @@ function TreeTableNode($$anchor, $$props) {
   var node_4 = sibling(p, 2);
   {
     var consequent_2 = ($$anchor2) => {
-      var ol = root_514();
+      var ol = root_513();
       each(ol, 5, () => node().children, (child2) => child2.account, ($$anchor3, child2) => {
         var fragment = comment();
         var node_5 = first_child(fragment);
@@ -42767,8 +42638,8 @@ function TreeTableNode($$anchor, $$props) {
 delegate(["click"]);
 
 // src/fava/tree-table/TreeTable.svelte
-var root_141 = template(`<span class="num"> </span>`);
-var root_231 = template(`<span class="other">Other</span>`);
+var root_144 = template(`<span class="num"> </span>`);
+var root_232 = template(`<span class="other">Other</span>`);
 var root24 = template(`<ol class="flex-table tree-table-new" data-tree-table=""><li class="head"><p><span class="account-cell svelte-1xyup19"> </span> <!> <!></p></li> <!></ol>`);
 function TreeTable($$anchor, $$props) {
   push($$props, false);
@@ -42815,7 +42686,7 @@ function TreeTable($$anchor, $$props) {
   reset(span);
   var node_1 = sibling(span, 2);
   each(node_1, 1, () => get(columns3), (currency) => currency, ($$anchor2, currency) => {
-    var span_1 = root_141();
+    var span_1 = root_144();
     var text_1 = child(span_1, true);
     reset(span_1);
     template_effect(() => {
@@ -42827,7 +42698,7 @@ function TreeTable($$anchor, $$props) {
   var node_2 = sibling(node_1, 2);
   {
     var consequent = ($$anchor2) => {
-      var span_2 = root_231();
+      var span_2 = root_232();
       append($$anchor2, span_2);
     };
     if_block(node_2, ($$render) => {
@@ -42867,9 +42738,9 @@ function TreeTable($$anchor, $$props) {
 }
 
 // src/fava/reports/TreeReport.svelte
-var root_326 = template(`<button type="button" class="unset svelte-1dzjfb9"> </button>`);
-var root_232 = template(`<nav class="chart-picker svelte-1dzjfb9"></nav>`);
-var root_144 = template(`<div class="report-charts"><!> <!></div>`);
+var root_324 = template(`<button type="button" class="unset svelte-1dzjfb9"> </button>`);
+var root_233 = template(`<nav class="chart-picker svelte-1dzjfb9"></nav>`);
+var root_145 = template(`<div class="report-charts"><!> <!></div>`);
 var root25 = template(`<!> <div class="row"><div class="column"></div> <div class="column"></div></div>`, 1);
 function TreeReport($$anchor, $$props) {
   push($$props, false);
@@ -42909,7 +42780,7 @@ function TreeReport($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent_1 = ($$anchor2) => {
-      var div = root_144();
+      var div = root_145();
       var node_1 = child(div);
       ChartView(node_1, {
         get chart() {
@@ -42922,9 +42793,9 @@ function TreeReport($$anchor, $$props) {
       var node_2 = sibling(node_1, 2);
       {
         var consequent = ($$anchor3) => {
-          var nav2 = root_232();
+          var nav2 = root_233();
           each(nav2, 7, () => report().charts, (option) => option.title, ($$anchor4, option, index2) => {
-            var button = root_326();
+            var button = root_324();
             button.__click = () => set(selected, get(index2));
             var text2 = child(button, true);
             reset(button);
@@ -42994,25 +42865,25 @@ function TreeReport($$anchor, $$props) {
 delegate(["click"]);
 
 // src/fava/reports/UtilityReport.svelte
-var root_145 = template(`<section class="state-panel" role="status">Loading\u2026</section>`);
-var root_327 = template(`<section class="state-panel error-panel" role="alert"> </section>`);
-var root_515 = template(`<div class="headerline"><h2> </h2></div> <p><a href="/help"> </a></p> <div class="help-body svelte-18lmd9y"> </div>`, 1);
-var root_85 = template(`<li> </li>`);
-var root_96 = template(`<li> </li>`);
-var root_77 = template(`<div class="headerline"><h2> </h2></div> <p><a href="/help"> </a></p> <article class="repair-guide svelte-18lmd9y"><p class="repair-action svelte-18lmd9y"><strong> </strong></p> <h3 class="svelte-18lmd9y"> </h3><p class="svelte-18lmd9y"> </p> <h3 class="svelte-18lmd9y"> </h3><p class="svelte-18lmd9y"> </p> <h3 class="svelte-18lmd9y"> </h3> <ul class="svelte-18lmd9y"></ul> <h3 class="svelte-18lmd9y"> </h3> <ul class="svelte-18lmd9y"></ul> <h3 class="svelte-18lmd9y"> </h3> <div class="example-grid svelte-18lmd9y"><div><h4 class="svelte-18lmd9y"> </h4><pre class="svelte-18lmd9y"> </pre></div><div><h4 class="svelte-18lmd9y"> </h4><pre class="svelte-18lmd9y"> </pre></div></div> <p class="muted svelte-18lmd9y"> </p> <h3 class="svelte-18lmd9y"> </h3><p class="svelte-18lmd9y"> </p></article>`, 1);
+var root_146 = template(`<section class="state-panel" role="status">Loading\u2026</section>`);
+var root_325 = template(`<section class="state-panel error-panel" role="alert"> </section>`);
+var root_514 = template(`<div class="headerline"><h2> </h2></div> <p><a href="/help"> </a></p> <div class="help-body svelte-18lmd9y"> </div>`, 1);
+var root_86 = template(`<li> </li>`);
+var root_95 = template(`<li> </li>`);
+var root_78 = template(`<div class="headerline"><h2> </h2></div> <p><a href="/help"> </a></p> <article class="repair-guide svelte-18lmd9y"><p class="repair-action svelte-18lmd9y"><strong> </strong></p> <h3 class="svelte-18lmd9y"> </h3><p class="svelte-18lmd9y"> </p> <h3 class="svelte-18lmd9y"> </h3><p class="svelte-18lmd9y"> </p> <h3 class="svelte-18lmd9y"> </h3> <ul class="svelte-18lmd9y"></ul> <h3 class="svelte-18lmd9y"> </h3> <ul class="svelte-18lmd9y"></ul> <h3 class="svelte-18lmd9y"> </h3> <div class="example-grid svelte-18lmd9y"><div><h4 class="svelte-18lmd9y"> </h4><pre class="svelte-18lmd9y"> </pre></div><div><h4 class="svelte-18lmd9y"> </h4><pre class="svelte-18lmd9y"> </pre></div></div> <p class="muted svelte-18lmd9y"> </p> <h3 class="svelte-18lmd9y"> </h3><p class="svelte-18lmd9y"> </p></article>`, 1);
 var root_1211 = template(`<li><a> </a></li>`);
 var root_1111 = template(`<div class="headerline"><h2>Help</h2></div> <ul class="help-index svelte-18lmd9y"></ul>`, 1);
-var root_146 = template(`<div class="headerline"><h2> </h2></div> <pre class="source-content svelte-18lmd9y"> </pre>`, 1);
+var root_147 = template(`<div class="headerline"><h2> </h2></div> <pre class="source-content svelte-18lmd9y"> </pre>`, 1);
 var root_173 = template(`<li><a> </a></li>`);
 var root_164 = template(`<div class="headerline"><h2>Source files</h2></div> <ul class="source-list svelte-18lmd9y"></ul>`, 1);
-var root_205 = template(`<label class="button svelte-18lmd9y"><input type="radio" name="color-scheme" class="svelte-18lmd9y"> </label>`);
+var root_204 = template(`<label class="button svelte-18lmd9y"><input type="radio" name="color-scheme" class="svelte-18lmd9y"> </label>`);
 var root_2210 = template(`<select id="fava-option-locale"><option>English</option><option>\u7B80\u4F53\u4E2D\u6587</option></select>`);
-var root_233 = template(`<pre class="svelte-18lmd9y"> </pre>`);
+var root_234 = template(`<pre class="svelte-18lmd9y"> </pre>`);
 var root_2110 = template(`<tr><td class="svelte-18lmd9y"> </td><td class="svelte-18lmd9y"><!></td></tr>`);
 var root_243 = template(`<tr><td class="svelte-18lmd9y"> </td><td class="svelte-18lmd9y"><pre class="svelte-18lmd9y"> </pre></td></tr>`);
 var root_193 = template(`<div class="headerline"><h2> </h2></div> <h3> </h3> <p><span class="mode-switch svelte-18lmd9y" role="radiogroup"></span></p> <h3> <a href="/help/options"> </a></h3> <table class="options-table svelte-18lmd9y"><thead><tr><!><!></tr></thead><tbody></tbody></table> <h3> </h3> <table class="options-table svelte-18lmd9y"><thead><tr><!><!></tr></thead><tbody></tbody></table>`, 1);
 var root_273 = template(`<p> </p>`);
-var root_328 = template(`<button type="button"> </button>`);
+var root_326 = template(`<button type="button"> </button>`);
 var root_342 = template(`<p class="error-panel" role="alert"> </p>`);
 var root_362 = template(`<p class="muted" role="status"> </p>`);
 var root_382 = template(`<p class="svelte-18lmd9y"><a> </a></p>`);
@@ -43224,7 +43095,7 @@ function UtilityReport($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent = ($$anchor2) => {
-      var section_1 = root_145();
+      var section_1 = root_146();
       append($$anchor2, section_1);
     };
     var alternate_13 = ($$anchor2) => {
@@ -43232,7 +43103,7 @@ function UtilityReport($$anchor, $$props) {
       var node_1 = first_child(fragment_1);
       {
         var consequent_1 = ($$anchor3) => {
-          var section_2 = root_327();
+          var section_2 = root_325();
           var text2 = child(section_2, true);
           reset(section_2);
           template_effect(() => set_text(text2, get(error2)));
@@ -43243,7 +43114,7 @@ function UtilityReport($$anchor, $$props) {
           var node_2 = first_child(fragment_2);
           {
             var consequent_2 = ($$anchor4) => {
-              var fragment_3 = root_515();
+              var fragment_3 = root_514();
               var div = first_child(fragment_3);
               var h2 = child(div);
               var text_1 = child(h2, true);
@@ -43269,7 +43140,7 @@ function UtilityReport($$anchor, $$props) {
               var node_3 = first_child(fragment_4);
               {
                 var consequent_3 = ($$anchor5) => {
-                  var fragment_5 = root_77();
+                  var fragment_5 = root_78();
                   var div_2 = first_child(fragment_5);
                   var h2_1 = child(div_2);
                   var text_4 = child(h2_1, true);
@@ -43307,7 +43178,7 @@ function UtilityReport($$anchor, $$props) {
                   reset(h3_2);
                   var ul = sibling(h3_2, 2);
                   each(ul, 5, () => get(data).inspect ?? [], index, ($$anchor6, item) => {
-                    var li = root_85();
+                    var li = root_86();
                     var text_12 = child(li, true);
                     reset(li);
                     template_effect(() => set_text(text_12, get(item)));
@@ -43320,7 +43191,7 @@ function UtilityReport($$anchor, $$props) {
                   reset(h3_3);
                   var ul_1 = sibling(h3_3, 2);
                   each(ul_1, 5, () => get(data).safe_steps ?? [], index, ($$anchor6, item) => {
-                    var li_1 = root_96();
+                    var li_1 = root_95();
                     var text_14 = child(li_1, true);
                     reset(li_1);
                     template_effect(() => set_text(text_14, get(item)));
@@ -43399,7 +43270,7 @@ function UtilityReport($$anchor, $$props) {
                       var node_5 = first_child(fragment_8);
                       {
                         var consequent_5 = ($$anchor7) => {
-                          var fragment_9 = root_146();
+                          var fragment_9 = root_147();
                           var div_6 = first_child(fragment_9);
                           var h2_2 = child(div_6);
                           var text_24 = child(h2_2, true);
@@ -43456,7 +43327,7 @@ function UtilityReport($$anchor, $$props) {
                                   each(span, 5, () => get(colorSchemes), ([value, label]) => value, ($$anchor10, $$item) => {
                                     let value = () => get($$item)[0];
                                     let label = () => get($$item)[1];
-                                    var label_1 = root_205();
+                                    var label_1 = root_204();
                                     var input = child(label_1);
                                     remove_input_defaults(input);
                                     var text_29 = sibling(input);
@@ -43540,7 +43411,7 @@ function UtilityReport($$anchor, $$props) {
                                         append($$anchor11, select);
                                       };
                                       var alternate = ($$anchor11) => {
-                                        var pre_3 = root_233();
+                                        var pre_3 = root_234();
                                         var text_33 = child(pre_3, true);
                                         reset(pre_3);
                                         template_effect(() => set_text(text_33, value()));
@@ -43682,7 +43553,7 @@ function UtilityReport($$anchor, $$props) {
                                                     var node_18 = sibling(header, 2);
                                                     {
                                                       var consequent_10 = ($$anchor15) => {
-                                                        var button = root_328();
+                                                        var button = root_326();
                                                         var text_44 = child(button, true);
                                                         template_effect(() => set_text(text_44, get(expandedDiagnostic) === get(key) ? t4("hideGuidance") : t4("learnHowToFix")));
                                                         reset(button);
@@ -44029,15 +43900,15 @@ function UtilityReport($$anchor, $$props) {
 }
 
 // src/fava/reports/QuickProfileReport.svelte
-var root_147 = template(`<p class="muted"> </p>`);
+var root_148 = template(`<p class="muted"> </p>`);
 var root_421 = template(`<div class="problem svelte-10cxupn" role="alert"><strong> </strong> </div>`);
-var root_329 = template(`<div class="problems svelte-10cxupn"></div>`);
-var root_611 = template(`<tr><td class="svelte-10cxupn"> </td><td class="svelte-10cxupn"> </td><td class="svelte-10cxupn"> </td><td class="svelte-10cxupn"> </td><td class="svelte-10cxupn"> </td><td class="svelte-10cxupn"> </td></tr>`);
-var root_516 = template(`<table class="rules-table svelte-10cxupn"><thead><tr><th class="svelte-10cxupn"> </th><th class="svelte-10cxupn"> </th><th class="svelte-10cxupn"> </th><th class="svelte-10cxupn"> </th><th class="svelte-10cxupn"> </th><th class="svelte-10cxupn"> </th></tr></thead><tbody></tbody></table>`);
-var root_78 = template(`<p class="muted"> </p>`);
-var root_86 = template(`<div class="form-row svelte-10cxupn"><label class="svelte-10cxupn"> <input type="text" placeholder="Assets:WeChat" class="svelte-10cxupn"></label></div>`);
-var root_97 = template(`<div class="form-row svelte-10cxupn"><label class="svelte-10cxupn"> <input type="text" placeholder="\u5FAE\u4FE1" class="svelte-10cxupn"></label> <label class="svelte-10cxupn"> <input type="text" placeholder="Expenses:Food" class="svelte-10cxupn"></label> <label class="svelte-10cxupn"> <input type="text" placeholder="CNY" class="svelte-10cxupn"></label></div>`);
-var root_234 = template(`<div class="profile-section svelte-10cxupn"><!> <!></div> <div class="add-rule-form svelte-10cxupn"><h3 class="svelte-10cxupn"> </h3> <div class="form-row svelte-10cxupn"><label class="svelte-10cxupn"> <input type="date" class="svelte-10cxupn"></label> <label class="svelte-10cxupn"> <select class="svelte-10cxupn"><option> </option><option> </option></select></label> <label class="svelte-10cxupn"> <input type="text" placeholder="\u5FAE\u4FE1" class="svelte-10cxupn"></label></div> <!> <button type="button"> </button></div>`, 1);
+var root_327 = template(`<div class="problems svelte-10cxupn"></div>`);
+var root_69 = template(`<tr><td class="svelte-10cxupn"> </td><td class="svelte-10cxupn"> </td><td class="svelte-10cxupn"> </td><td class="svelte-10cxupn"> </td><td class="svelte-10cxupn"> </td><td class="svelte-10cxupn"> </td></tr>`);
+var root_515 = template(`<table class="rules-table svelte-10cxupn"><thead><tr><th class="svelte-10cxupn"> </th><th class="svelte-10cxupn"> </th><th class="svelte-10cxupn"> </th><th class="svelte-10cxupn"> </th><th class="svelte-10cxupn"> </th><th class="svelte-10cxupn"> </th></tr></thead><tbody></tbody></table>`);
+var root_79 = template(`<p class="muted"> </p>`);
+var root_87 = template(`<div class="form-row svelte-10cxupn"><label class="svelte-10cxupn"> <input type="text" placeholder="Assets:WeChat" class="svelte-10cxupn"></label></div>`);
+var root_96 = template(`<div class="form-row svelte-10cxupn"><label class="svelte-10cxupn"> <input type="text" placeholder="\u5FAE\u4FE1" class="svelte-10cxupn"></label> <label class="svelte-10cxupn"> <input type="text" placeholder="Expenses:Food" class="svelte-10cxupn"></label> <label class="svelte-10cxupn"> <input type="text" placeholder="CNY" class="svelte-10cxupn"></label></div>`);
+var root_235 = template(`<div class="profile-section svelte-10cxupn"><!> <!></div> <div class="add-rule-form svelte-10cxupn"><h3 class="svelte-10cxupn"> </h3> <div class="form-row svelte-10cxupn"><label class="svelte-10cxupn"> <input type="date" class="svelte-10cxupn"></label> <label class="svelte-10cxupn"> <select class="svelte-10cxupn"><option> </option><option> </option></select></label> <label class="svelte-10cxupn"> <input type="text" placeholder="\u5FAE\u4FE1" class="svelte-10cxupn"></label></div> <!> <button type="button"> </button></div>`, 1);
 var root26 = template(`<div class="headerline"><h2> </h2> <span class="muted"> </span></div> <!>`, 1);
 function QuickProfileReport($$anchor, $$props) {
   push($$props, false);
@@ -44122,19 +43993,19 @@ function QuickProfileReport($$anchor, $$props) {
   var node = sibling(div, 2);
   {
     var consequent = ($$anchor2) => {
-      var p = root_147();
+      var p = root_148();
       var text_2 = child(p, true);
       template_effect(() => set_text(text_2, t4("loading")));
       reset(p);
       append($$anchor2, p);
     };
     var alternate_2 = ($$anchor2) => {
-      var fragment_1 = root_234();
+      var fragment_1 = root_235();
       var div_1 = first_child(fragment_1);
       var node_1 = child(div_1);
       {
         var consequent_1 = ($$anchor3) => {
-          var div_2 = root_329();
+          var div_2 = root_327();
           each(div_2, 5, () => get(problems), index, ($$anchor4, problem) => {
             var div_3 = root_421();
             var strong = child(div_3);
@@ -44158,7 +44029,7 @@ function QuickProfileReport($$anchor, $$props) {
       var node_2 = sibling(node_1, 2);
       {
         var consequent_2 = ($$anchor3) => {
-          var table = root_516();
+          var table = root_515();
           var thead = child(table);
           var tr = child(thead);
           var th = child(tr);
@@ -44189,7 +44060,7 @@ function QuickProfileReport($$anchor, $$props) {
           reset(thead);
           var tbody = sibling(thead);
           each(tbody, 5, () => get(rules), index, ($$anchor4, rule) => {
-            var tr_1 = root_611();
+            var tr_1 = root_69();
             var td = child(tr_1);
             var text_11 = child(td, true);
             template_effect(() => set_text(text_11, get(rule).type === "account" ? t4("quickProfileAccount") : t4("quickProfileTemplate")));
@@ -44224,7 +44095,7 @@ function QuickProfileReport($$anchor, $$props) {
           append($$anchor3, table);
         };
         var alternate = ($$anchor3) => {
-          var p_1 = root_78();
+          var p_1 = root_79();
           var text_17 = child(p_1, true);
           template_effect(() => set_text(text_17, t4("empty")));
           reset(p_1);
@@ -44280,7 +44151,7 @@ function QuickProfileReport($$anchor, $$props) {
       var node_3 = sibling(div_5, 2);
       {
         var consequent_3 = ($$anchor3) => {
-          var div_6 = root_86();
+          var div_6 = root_87();
           var label_3 = child(div_6);
           var text_24 = child(label_3);
           template_effect(() => set_text(text_24, `${t4("account") ?? ""} `));
@@ -44292,7 +44163,7 @@ function QuickProfileReport($$anchor, $$props) {
           append($$anchor3, div_6);
         };
         var alternate_1 = ($$anchor3) => {
-          var div_7 = root_97();
+          var div_7 = root_96();
           var label_4 = child(div_7);
           var text_25 = child(label_4);
           template_effect(() => set_text(text_25, `${t4("source") ?? ""} `));
@@ -44344,8 +44215,8 @@ function QuickProfileReport($$anchor, $$props) {
 }
 
 // src/fava/components/ReportOutlet.svelte
-var root_148 = template(`<section class="state-panel" role="status" aria-live="polite">Loading report\u2026</section>`);
-var root_330 = template(`<section class="state-panel error-panel" role="alert"> </section>`);
+var root_149 = template(`<section class="state-panel" role="status" aria-live="polite">Loading report\u2026</section>`);
+var root_328 = template(`<section class="state-panel error-panel" role="alert"> </section>`);
 var root_343 = template(`<section class="route-placeholder"><p class="headerline"><strong>Fava-aligned shell</strong></p> <h2> </h2> <p>This route is staged until its OrangeCount adapter contract is implemented.</p></section>`);
 function ReportOutlet($$anchor, $$props) {
   push($$props, false);
@@ -44371,6 +44242,25 @@ function ReportOutlet($$anchor, $$props) {
   let table = mutable_state(null);
   let journal = mutable_state(null);
   let statistics = mutable_state(null);
+  function reportQuery(name3, value) {
+    if (![
+      "holdings",
+      "holdings_by_account",
+      "holdings_by_currency",
+      "holdings_by_cost_currency",
+      "holdings_by_root_account",
+      "holdings_by_commodity",
+      "commodities",
+      "events",
+      "documents",
+      "statistics"
+    ].includes(name3)) return value;
+    const filtered = { ...value };
+    delete filtered.time;
+    delete filtered.account;
+    delete filtered.filter;
+    return filtered;
+  }
   async function load(key) {
     set(loading, true);
     set(error2, null);
@@ -44409,7 +44299,7 @@ function ReportOutlet($$anchor, $$props) {
       return;
     }
     try {
-      const payload = await adapter().load(route(), query());
+      const payload = await adapter().load(route(), reportQuery(route(), query()));
       if (key !== get(requestKey)) return;
       if ([
         "income_statement",
@@ -44456,7 +44346,7 @@ function ReportOutlet($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent = ($$anchor2) => {
-      var section = root_148();
+      var section = root_149();
       append($$anchor2, section);
     };
     var alternate_16 = ($$anchor2) => {
@@ -44464,7 +44354,7 @@ function ReportOutlet($$anchor, $$props) {
       var node_1 = first_child(fragment_1);
       {
         var consequent_1 = ($$anchor3) => {
-          var section_1 = root_330();
+          var section_1 = root_328();
           var text2 = child(section_1, true);
           reset(section_1);
           template_effect(() => set_text(text2, get(error2)));
@@ -44673,6 +44563,7 @@ function ReportOutlet($$anchor, $$props) {
                                                       var node_13 = first_child(fragment_24);
                                                       {
                                                         var consequent_13 = ($$anchor15) => {
+                                                          var query_1 = derived_safe_equal(() => reportQuery(route(), query()));
                                                           DocumentsReport($$anchor15, {
                                                             get report() {
                                                               return get(table);
@@ -44684,7 +44575,7 @@ function ReportOutlet($$anchor, $$props) {
                                                               return adapter();
                                                             },
                                                             get query() {
-                                                              return query();
+                                                              return get(query_1);
                                                             },
                                                             get accounts() {
                                                               return accounts();
@@ -44942,21 +44833,21 @@ function ReportOutlet($$anchor, $$props) {
 }
 
 // src/fava/components/Sidebar.svelte
-var root_149 = template(`<div class="overlay svelte-e0j49v" aria-hidden="true"></div>`);
-var root_331 = template(`<li class="navigation-heading svelte-e0j49v" aria-hidden="true"> </li>`);
+var root_150 = template(`<div class="overlay svelte-e0j49v" aria-hidden="true"></div>`);
+var root_329 = template(`<li class="navigation-heading svelte-e0j49v" aria-hidden="true"> </li>`);
 var on_click5 = (event2, onNavigate, item) => {
   event2.preventDefault();
   onNavigate()(routeHref(get(item)));
 };
-var root_612 = template(`<a href="#export" class="secondary svelte-e0j49v">&#11015;</a>`);
+var root_610 = template(`<a href="#export" class="secondary svelte-e0j49v">&#11015;</a>`);
 var on_click_13 = (event2, onNavigate, saved) => {
   event2.preventDefault();
   onNavigate()(`/query?query_string=${encodeURIComponent(get(saved).query_string)}`);
 };
-var root_87 = template(`<li class="svelte-e0j49v"><a class="svelte-e0j49v"> </a></li>`);
-var root_79 = template(`<ul class="submenu svelte-e0j49v"></ul>`);
-var root_517 = template(`<li class="svelte-e0j49v"><a class="svelte-e0j49v"> </a> <!> <!></li>`);
-var root_98 = template(`<li class="account-selector svelte-e0j49v"><!></li>`);
+var root_88 = template(`<li class="svelte-e0j49v"><a class="svelte-e0j49v"> </a></li>`);
+var root_710 = template(`<ul class="submenu svelte-e0j49v"></ul>`);
+var root_516 = template(`<li class="svelte-e0j49v"><a class="svelte-e0j49v"> </a> <!> <!></li>`);
+var root_97 = template(`<li class="account-selector svelte-e0j49v"><!></li>`);
 var on_click_23 = (event2, onNavigate) => {
   event2.preventDefault();
   onNavigate()(routeHref("diagnostics"));
@@ -44965,8 +44856,8 @@ var on_click_32 = (event2, onNavigate) => {
   event2.preventDefault();
   onNavigate()(routeHref("errors"));
 };
-var root_106 = template(`<ul class="navigation svelte-e0j49v"><li class="svelte-e0j49v"><a class="svelte-e0j49v"> </a></li> <li class="svelte-e0j49v"><a class="svelte-e0j49v"> </a></li></ul>`);
-var root_235 = template(`<ul class="navigation svelte-e0j49v"><!> <!> <!></ul> <!>`, 1);
+var root_107 = template(`<ul class="navigation svelte-e0j49v"><li class="svelte-e0j49v"><a class="svelte-e0j49v"> </a></li> <li class="svelte-e0j49v"><a class="svelte-e0j49v"> </a></li></ul>`);
+var root_236 = template(`<ul class="navigation svelte-e0j49v"><!> <!> <!></ul> <!>`, 1);
 var root27 = template(`<!> <div class="aside-buttons svelte-e0j49v"><button id="menu-toggle" type="button" aria-controls="sidebar" aria-label="Menu" class="svelte-e0j49v">\u2630</button> <a class="button svelte-e0j49v" href="#add-transaction" aria-label="Add transaction">+</a> <a class="button quick-btn svelte-e0j49v" href="#add-quick" aria-label="Quick entry" title="Quick entry (a q)">\u26A1</a></div> <aside id="sidebar" aria-label="Primary navigation" class="svelte-e0j49v"></aside>`, 1);
 function Sidebar($$anchor, $$props) {
   push($$props, false);
@@ -45067,7 +44958,7 @@ function Sidebar($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent = ($$anchor2) => {
-      var div = root_149();
+      var div = root_150();
       div.__click = function(...$$args) {
         onMenu()?.apply(this, $$args);
       };
@@ -45089,12 +44980,12 @@ function Sidebar($$anchor, $$props) {
   each(aside, 5, () => sections, index, ($$anchor2, $$item, sectionIndex) => {
     let heading2 = () => get($$item)[0];
     let items = () => get($$item)[1];
-    var fragment_1 = root_235();
+    var fragment_1 = root_236();
     var ul = first_child(fragment_1);
     var node_1 = child(ul);
     {
       var consequent_1 = ($$anchor3) => {
-        var li = root_331();
+        var li = root_329();
         var text2 = child(li, true);
         reset(li);
         template_effect(() => set_text(text2, heading2()));
@@ -45110,7 +45001,7 @@ function Sidebar($$anchor, $$props) {
       var node_3 = first_child(fragment_2);
       {
         var consequent_4 = ($$anchor4) => {
-          var li_1 = root_517();
+          var li_1 = root_516();
           var a_1 = child(li_1);
           template_effect(() => set_attribute(a_1, "href", routeHref(get(item))));
           a_1.__click = [on_click5, onNavigate, item];
@@ -45121,7 +45012,7 @@ function Sidebar($$anchor, $$props) {
           var node_4 = sibling(a_1, 2);
           {
             var consequent_2 = ($$anchor5) => {
-              var a_2 = root_612();
+              var a_2 = root_610();
               template_effect(() => set_attribute(a_2, "title", t4("export")));
               template_effect(() => set_attribute(a_2, "aria-label", t4("export")));
               append($$anchor5, a_2);
@@ -45133,9 +45024,9 @@ function Sidebar($$anchor, $$props) {
           var node_5 = sibling(node_4, 2);
           {
             var consequent_3 = ($$anchor5) => {
-              var ul_1 = root_79();
+              var ul_1 = root_710();
               each(ul_1, 5, userQueries, (saved) => saved.query_string, ($$anchor6, saved) => {
-                var li_2 = root_87();
+                var li_2 = root_88();
                 var a_3 = child(li_2);
                 template_effect(() => set_attribute(a_3, "href", `/query?query_string=${encodeURIComponent(get(saved).query_string)}`));
                 a_3.__click = [on_click_13, onNavigate, saved];
@@ -45169,7 +45060,7 @@ function Sidebar($$anchor, $$props) {
     var node_6 = sibling(node_2, 2);
     {
       var consequent_5 = ($$anchor3) => {
-        var li_3 = root_98();
+        var li_3 = root_97();
         var node_7 = child(li_3);
         var placeholder2 = derived_safe_equal(() => t4("goToAccount"));
         AutocompleteInput(node_7, {
@@ -45201,7 +45092,7 @@ function Sidebar($$anchor, $$props) {
     var node_8 = sibling(ul, 2);
     {
       var consequent_6 = ($$anchor3) => {
-        var ul_2 = root_106();
+        var ul_2 = root_107();
         var li_4 = child(ul_2);
         var a_4 = child(li_4);
         template_effect(() => set_attribute(a_4, "href", routeHref("diagnostics")));
@@ -45246,14 +45137,14 @@ function Sidebar($$anchor, $$props) {
 delegate(["click"]);
 
 // src/fava/modals/QuickEntryPanel.svelte
-var root_150 = template(`<p class="error" role="alert"> </p>`);
-var root_236 = template(`<button type="button" class="undo-btn svelte-118jgj0"> </button>`);
-var root_518 = template(`<span class="duplicate-badge svelte-118jgj0">\u26A0</span>`);
-var root_710 = template(`<li> </li>`);
-var root_613 = template(`<ul class="line-errors svelte-118jgj0"></ul>`);
-var root_88 = template(`<pre class="line-preview svelte-118jgj0"> </pre>`);
+var root_151 = template(`<p class="error" role="alert"> </p>`);
+var root_237 = template(`<button type="button" class="undo-btn svelte-118jgj0"> </button>`);
+var root_517 = template(`<span class="duplicate-badge svelte-118jgj0">\u26A0</span>`);
+var root_711 = template(`<li> </li>`);
+var root_611 = template(`<ul class="line-errors svelte-118jgj0"></ul>`);
+var root_89 = template(`<pre class="line-preview svelte-118jgj0"> </pre>`);
 var root_422 = template(`<div class="preview-line svelte-118jgj0"><div class="line-source svelte-118jgj0"><span class="line-number svelte-118jgj0"> </span> <code class="svelte-118jgj0"> </code> <!></div> <!> <!></div>`);
-var root_332 = template(`<div class="preview-area svelte-118jgj0"><h4 class="svelte-118jgj0"> </h4> <!></div>`);
+var root_330 = template(`<div class="preview-area svelte-118jgj0"><h4 class="svelte-118jgj0"> </h4> <!></div>`);
 var root28 = template(`<div class="quick-entry-panel svelte-118jgj0"><!> <div class="field-row svelte-118jgj0"><label class="field svelte-118jgj0"><span class="svelte-118jgj0"> </span> <input type="date"></label> <label class="field narrow svelte-118jgj0"><span class="svelte-118jgj0"> </span> <select><option>*</option><option>!</option></select></label> <!></div> <textarea spellcheck="false" rows="5" class="svelte-118jgj0"></textarea> <div class="actions svelte-118jgj0"><button type="button"> </button> <button type="button" class="primary svelte-118jgj0"> </button> <span class="hint svelte-118jgj0"> </span></div> <!></div>`);
 function QuickEntryPanel($$anchor, $$props) {
   push($$props, false);
@@ -45369,7 +45260,7 @@ function QuickEntryPanel($$anchor, $$props) {
   var node = child(div);
   {
     var consequent = ($$anchor2) => {
-      var p = root_150();
+      var p = root_151();
       var text_1 = child(p, true);
       reset(p);
       template_effect(() => set_text(text_1, get(error2)));
@@ -45408,7 +45299,7 @@ function QuickEntryPanel($$anchor, $$props) {
   var node_1 = sibling(label_1, 2);
   {
     var consequent_1 = ($$anchor2) => {
-      var button = root_236();
+      var button = root_237();
       var text_4 = child(button, true);
       template_effect(() => set_text(text_4, t4("quickEntryUndo")));
       reset(button);
@@ -45443,7 +45334,7 @@ function QuickEntryPanel($$anchor, $$props) {
   var node_2 = sibling(div_2, 2);
   {
     var consequent_5 = ($$anchor2) => {
-      var div_3 = root_332();
+      var div_3 = root_330();
       var h4 = child(div_3);
       var text_8 = child(h4);
       template_effect(() => set_text(text_8, `${t4("preview") ?? ""} \u2192 ${get(preview).target ?? ""}`));
@@ -45461,7 +45352,7 @@ function QuickEntryPanel($$anchor, $$props) {
         var node_4 = sibling(code, 2);
         {
           var consequent_2 = ($$anchor4) => {
-            var span_4 = root_518();
+            var span_4 = root_517();
             template_effect(() => set_attribute(span_4, "title", t4("quickEntryDuplicate")));
             append($$anchor4, span_4);
           };
@@ -45473,9 +45364,9 @@ function QuickEntryPanel($$anchor, $$props) {
         var node_5 = sibling(div_5, 2);
         {
           var consequent_3 = ($$anchor4) => {
-            var ul = root_613();
+            var ul = root_611();
             each(ul, 5, () => get(line).errors, index, ($$anchor5, err2) => {
-              var li = root_710();
+              var li = root_711();
               var text_11 = child(li, true);
               reset(li);
               template_effect(() => set_text(text_11, get(err2).message));
@@ -45491,7 +45382,7 @@ function QuickEntryPanel($$anchor, $$props) {
         var node_6 = sibling(node_5, 2);
         {
           var consequent_4 = ($$anchor4) => {
-            var pre = root_88();
+            var pre = root_89();
             var text_12 = child(pre, true);
             reset(pre);
             template_effect(() => set_text(text_12, get(line).preview));
@@ -45529,12 +45420,12 @@ function QuickEntryPanel($$anchor, $$props) {
 }
 
 // src/fava/modals/AddEntryModal.svelte
-var root_237 = template(`<p class="error svelte-1iw1zty" role="alert"> </p>`);
+var root_238 = template(`<p class="error svelte-1iw1zty" role="alert"> </p>`);
 var root_423 = template(`<tr><td class="svelte-1iw1zty"><input type="text" placeholder="Assets:Cash" autocomplete="off" class="svelte-1iw1zty"></td><td class="svelte-1iw1zty"><input type="text" placeholder="10.00" autocomplete="off" class="svelte-1iw1zty"></td><td class="svelte-1iw1zty"><input type="text" placeholder="USD" autocomplete="off" class="svelte-1iw1zty"></td><td class="svelte-1iw1zty"><button type="button" class="remove svelte-1iw1zty" aria-label="Remove posting">\xD7</button></td></tr>`);
-var root_333 = template(`<div class="row svelte-1iw1zty"><div class="field narrow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <select class="svelte-1iw1zty"><option>*</option><option>!</option></select></div> <div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <!></div> <div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" autocomplete="off" class="svelte-1iw1zty"></div></div> <div class="row svelte-1iw1zty"><div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="tag1 tag2" autocomplete="off" class="svelte-1iw1zty"></div> <div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="link1 link2" autocomplete="off" class="svelte-1iw1zty"></div></div> <table class="postings svelte-1iw1zty"><thead><tr><th class="svelte-1iw1zty"> </th><th class="svelte-1iw1zty"> </th><th class="svelte-1iw1zty"> </th><th class="svelte-1iw1zty"></th></tr></thead><tbody></tbody></table> <button type="button" class="add-posting svelte-1iw1zty"> </button>`, 1);
-var root_614 = template(`<div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="Assets:Cash" required autocomplete="off" class="svelte-1iw1zty"></div> <div class="row svelte-1iw1zty"><div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="100.00" required autocomplete="off" class="svelte-1iw1zty"></div> <div class="field narrow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="USD" required autocomplete="off" class="svelte-1iw1zty"></div></div>`, 1);
-var root_711 = template(`<div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="Assets:Cash" required autocomplete="off" class="svelte-1iw1zty"></div> <div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" required autocomplete="off" class="svelte-1iw1zty"></div>`, 1);
-var root_151 = template(`<div class="add-backdrop svelte-1iw1zty" role="presentation"><form class="add-modal svelte-1iw1zty" role="dialog" aria-modal="true"><h3 class="svelte-1iw1zty"> <button type="button" class="svelte-1iw1zty"> </button> <button type="button" class="svelte-1iw1zty"> </button> <button type="button" class="svelte-1iw1zty"> </button> <button type="button" class="svelte-1iw1zty"> </button></h3> <!> <div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="date" required class="svelte-1iw1zty"></div> <!> <!> <div class="actions svelte-1iw1zty"><span class="spacer svelte-1iw1zty"></span> <label class="continue svelte-1iw1zty"><input type="checkbox"> <span> </span></label> <button type="submit" class="svelte-1iw1zty"> </button></div></form></div>`);
+var root_331 = template(`<div class="row svelte-1iw1zty"><div class="field narrow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <select class="svelte-1iw1zty"><option>*</option><option>!</option></select></div> <div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <!></div> <div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" autocomplete="off" class="svelte-1iw1zty"></div></div> <div class="row svelte-1iw1zty"><div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="tag1 tag2" autocomplete="off" class="svelte-1iw1zty"></div> <div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="link1 link2" autocomplete="off" class="svelte-1iw1zty"></div></div> <table class="postings svelte-1iw1zty"><thead><tr><th class="svelte-1iw1zty"> </th><th class="svelte-1iw1zty"> </th><th class="svelte-1iw1zty"> </th><th class="svelte-1iw1zty"></th></tr></thead><tbody></tbody></table> <button type="button" class="add-posting svelte-1iw1zty"> </button>`, 1);
+var root_612 = template(`<div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="Assets:Cash" required autocomplete="off" class="svelte-1iw1zty"></div> <div class="row svelte-1iw1zty"><div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="100.00" required autocomplete="off" class="svelte-1iw1zty"></div> <div class="field narrow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="USD" required autocomplete="off" class="svelte-1iw1zty"></div></div>`, 1);
+var root_712 = template(`<div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="Assets:Cash" required autocomplete="off" class="svelte-1iw1zty"></div> <div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" required autocomplete="off" class="svelte-1iw1zty"></div>`, 1);
+var root_153 = template(`<div class="add-backdrop svelte-1iw1zty" role="presentation"><form class="add-modal svelte-1iw1zty" role="dialog" aria-modal="true"><h3 class="svelte-1iw1zty"> <button type="button" class="svelte-1iw1zty"> </button> <button type="button" class="svelte-1iw1zty"> </button> <button type="button" class="svelte-1iw1zty"> </button> <button type="button" class="svelte-1iw1zty"> </button></h3> <!> <div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="date" required class="svelte-1iw1zty"></div> <!> <!> <div class="actions svelte-1iw1zty"><span class="spacer svelte-1iw1zty"></span> <label class="continue svelte-1iw1zty"><input type="checkbox"> <span> </span></label> <button type="submit" class="svelte-1iw1zty"> </button></div></form></div>`);
 function AddEntryModal($$anchor, $$props) {
   push($$props, false);
   let locale2 = prop($$props, "locale", 8, "en");
@@ -45695,7 +45586,7 @@ function AddEntryModal($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent_4 = ($$anchor2) => {
-      var div = root_151();
+      var div = root_153();
       var form = child(div);
       template_effect(() => set_attribute(form, "aria-label", t4("add")));
       var h3 = child(form);
@@ -45721,7 +45612,7 @@ function AddEntryModal($$anchor, $$props) {
       var node_1 = sibling(h3, 2);
       {
         var consequent = ($$anchor3) => {
-          var p = root_237();
+          var p = root_238();
           var text_5 = child(p, true);
           reset(p);
           template_effect(() => set_text(text_5, get(error2)));
@@ -45743,7 +45634,7 @@ function AddEntryModal($$anchor, $$props) {
       var node_2 = sibling(div_1, 2);
       {
         var consequent_1 = ($$anchor3) => {
-          var fragment_1 = root_333();
+          var fragment_1 = root_331();
           var div_2 = first_child(fragment_1);
           var div_3 = child(div_2);
           var span_1 = child(div_3);
@@ -45872,7 +45763,7 @@ function AddEntryModal($$anchor, $$props) {
           var node_4 = first_child(fragment_2);
           {
             var consequent_2 = ($$anchor4) => {
-              var fragment_3 = root_614();
+              var fragment_3 = root_612();
               var div_9 = first_child(fragment_3);
               var span_6 = child(div_9);
               var text_16 = child(span_6, true);
@@ -45905,7 +45796,7 @@ function AddEntryModal($$anchor, $$props) {
               append($$anchor4, fragment_3);
             };
             var alternate = ($$anchor4) => {
-              var fragment_4 = root_711();
+              var fragment_4 = root_712();
               var div_13 = first_child(fragment_4);
               var span_9 = child(div_13);
               var text_19 = child(span_9, true);
@@ -46004,9 +45895,9 @@ function AddEntryModal($$anchor, $$props) {
 }
 
 // src/fava/modals/ContextModal.svelte
-var root_238 = template(`<p class="error svelte-kroni5" role="alert"> </p>`);
-var root_519 = template(`<a class="svelte-kroni5"> </a>`);
-var root_615 = template(`<span class="span svelte-kroni5"> </span>`);
+var root_239 = template(`<p class="error svelte-kroni5" role="alert"> </p>`);
+var root_518 = template(`<a class="svelte-kroni5"> </a>`);
+var root_613 = template(`<span class="span svelte-kroni5"> </span>`);
 var root_1310 = template(`<dd class="svelte-kroni5"> </dd>`);
 var root_1212 = template(`<dt class="svelte-kroni5">Balances before</dt> <!>`, 1);
 var root_154 = template(`<dd class="svelte-kroni5"> </dd>`);
@@ -46095,7 +45986,7 @@ function ContextModal($$anchor, $$props) {
       var node_1 = sibling(h3, 2);
       {
         var consequent = ($$anchor3) => {
-          var p = root_238();
+          var p = root_239();
           var text_1 = child(p, true);
           reset(p);
           template_effect(() => set_text(text_1, get(error2)));
@@ -46111,7 +46002,7 @@ function ContextModal($$anchor, $$props) {
               var node_3 = child(p_1);
               {
                 var consequent_1 = ($$anchor5) => {
-                  var a = root_519();
+                  var a = root_518();
                   template_effect(() => set_attribute(a, "href", sourceHref(get(context).entry.file)));
                   var text_2 = child(a, true);
                   reset(a);
@@ -46125,7 +46016,7 @@ function ContextModal($$anchor, $$props) {
               var node_4 = sibling(node_3, 2);
               {
                 var consequent_2 = ($$anchor5) => {
-                  var span = root_615();
+                  var span = root_613();
                   var text_3 = child(span, true);
                   reset(span);
                   template_effect(() => set_text(text_3, get(context).entry.span));
@@ -46279,13 +46170,13 @@ function ContextModal($$anchor, $$props) {
 }
 
 // src/fava/modals/DocumentUploadModal.svelte
-var root_334 = template(`<p class="error svelte-bpl3hy" role="alert"> </p>`);
-var root_520 = template(`<input class="file svelte-bpl3hy" type="text">`);
-var root_712 = template(`<option> </option>`);
-var root_616 = template(`<div class="field svelte-bpl3hy"><span class="svelte-bpl3hy"> </span> <select class="svelte-bpl3hy"></select></div>`);
-var root_89 = template(`<p class="hint svelte-bpl3hy"> </p>`);
-var root_99 = template(`<option></option>`);
-var root_239 = template(`<div class="upload-backdrop svelte-bpl3hy" role="presentation"><form class="upload-modal svelte-bpl3hy" role="dialog" aria-modal="true"><h3 class="svelte-bpl3hy"> </h3> <!> <div class="field svelte-bpl3hy"><span class="svelte-bpl3hy"> </span> <input type="file" multiple></div> <!> <!> <div class="field svelte-bpl3hy"><span class="svelte-bpl3hy"> </span> <input type="text" list="upload-accounts" placeholder="Assets:Cash" required autocomplete="off" class="svelte-bpl3hy"> <datalist id="upload-accounts"></datalist></div> <div class="actions svelte-bpl3hy"><span class="spacer svelte-bpl3hy"></span> <button type="submit" class="svelte-bpl3hy"> </button></div></form></div>`);
+var root_333 = template(`<p class="error svelte-bpl3hy" role="alert"> </p>`);
+var root_519 = template(`<input class="file svelte-bpl3hy" type="text">`);
+var root_713 = template(`<option> </option>`);
+var root_614 = template(`<div class="field svelte-bpl3hy"><span class="svelte-bpl3hy"> </span> <select class="svelte-bpl3hy"></select></div>`);
+var root_810 = template(`<p class="hint svelte-bpl3hy"> </p>`);
+var root_98 = template(`<option></option>`);
+var root_240 = template(`<div class="upload-backdrop svelte-bpl3hy" role="presentation"><form class="upload-modal svelte-bpl3hy" role="dialog" aria-modal="true"><h3 class="svelte-bpl3hy"> </h3> <!> <div class="field svelte-bpl3hy"><span class="svelte-bpl3hy"> </span> <input type="file" multiple></div> <!> <!> <div class="field svelte-bpl3hy"><span class="svelte-bpl3hy"> </span> <input type="text" list="upload-accounts" placeholder="Assets:Cash" required autocomplete="off" class="svelte-bpl3hy"> <datalist id="upload-accounts"></datalist></div> <div class="actions svelte-bpl3hy"><span class="spacer svelte-bpl3hy"></span> <button type="submit" class="svelte-bpl3hy"> </button></div></form></div>`);
 function DocumentUploadModal($$anchor, $$props) {
   push($$props, false);
   const shown = mutable_state();
@@ -46412,7 +46303,7 @@ function DocumentUploadModal($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent_3 = ($$anchor2) => {
-      var div = root_239();
+      var div = root_240();
       var form = child(div);
       template_effect(() => set_attribute(form, "aria-label", t4("uploadFiles")));
       var h3 = child(form);
@@ -46422,7 +46313,7 @@ function DocumentUploadModal($$anchor, $$props) {
       var node_1 = sibling(h3, 2);
       {
         var consequent = ($$anchor3) => {
-          var p = root_334();
+          var p = root_333();
           var text_1 = child(p, true);
           reset(p);
           template_effect(() => set_text(text_1, get(error2)));
@@ -46445,7 +46336,7 @@ function DocumentUploadModal($$anchor, $$props) {
           var fragment_1 = comment();
           var node_3 = first_child(fragment_1);
           each(node_3, 1, () => Array.from(get(files)), index, ($$anchor4, file, index2) => {
-            var input_1 = root_520();
+            var input_1 = root_519();
             remove_input_defaults(input_1);
             template_effect(() => set_value(input_1, getName(get(file), index2)));
             event("input", input_1, (event2) => setOverride(index2, event2.currentTarget.value));
@@ -46460,7 +46351,7 @@ function DocumentUploadModal($$anchor, $$props) {
       var node_4 = sibling(node_2, 2);
       {
         var consequent_2 = ($$anchor3) => {
-          var div_2 = root_616();
+          var div_2 = root_614();
           var span_1 = child(div_2);
           var text_3 = child(span_1, true);
           template_effect(() => set_text(text_3, t4("documentsFolder")));
@@ -46473,7 +46364,7 @@ function DocumentUploadModal($$anchor, $$props) {
             });
           });
           each(select, 5, documentRoots, (root30) => root30, ($$anchor4, root30) => {
-            var option = root_712();
+            var option = root_713();
             var option_value = {};
             var text_4 = child(option, true);
             reset(option);
@@ -46491,7 +46382,7 @@ function DocumentUploadModal($$anchor, $$props) {
           append($$anchor3, div_2);
         };
         var alternate = ($$anchor3) => {
-          var p_1 = root_89();
+          var p_1 = root_810();
           var text_5 = child(p_1, true);
           template_effect(() => set_text(text_5, t4("noDocumentRoot")));
           reset(p_1);
@@ -46511,7 +46402,7 @@ function DocumentUploadModal($$anchor, $$props) {
       remove_input_defaults(input_2);
       var datalist = sibling(input_2, 2);
       each(datalist, 5, accounts, (name3) => name3, ($$anchor3, name3) => {
-        var option_1 = root_99();
+        var option_1 = root_98();
         var option_1_value = {};
         template_effect(() => {
           if (option_1_value !== (option_1_value = get(name3))) {

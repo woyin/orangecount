@@ -35,15 +35,12 @@
   // Bar/line mode is shared with the parity layer via the same localStorage
   // keys, so a choice made in one skin carries across skins and pages.
   let barMode: "stacked" | "single" = "stacked";
-  let lineMode: "line" | "area" = "line";
+  const lineMode = "line";
   try {
     const storedBar = localStorage.getItem("bar-chart-mode");
     if (storedBar === "stacked" || storedBar === "single") barMode = storedBar;
-    const storedLine = localStorage.getItem("line-chart-mode");
-    if (storedLine === "line" || storedLine === "area") lineMode = storedLine;
   } catch { /* storage optional */ }
   function setBarMode(mode: "stacked" | "single") { barMode = mode; try { localStorage.setItem("bar-chart-mode", mode); } catch { /* storage optional */ } }
-  function setLineMode(mode: "line" | "area") { lineMode = mode; try { localStorage.setItem("line-chart-mode", mode); } catch { /* storage optional */ } }
 
   // Currency-dot legend doubles as a per-series on/off selector (same UX as the
   // parity layer and Fava's ChartLegend). Hidden series stay out of the plot
@@ -197,17 +194,6 @@
         <label class="button" class:muted={barMode !== "single"}>
           <input type="radio" name={"modern-bar-" + chart.title} value="single" checked={barMode === "single"} on:change={() => setBarMode("single")} />
           {label("singleBars")}
-        </label>
-      </span>
-    {:else if !isBar && visibleSeries.length}
-      <span class="mode-switch">
-        <label class="button" class:muted={lineMode !== "line"}>
-          <input type="radio" name={"modern-line-" + chart.title} value="line" checked={lineMode === "line"} on:change={() => setLineMode("line")} />
-          {label("lineChart")}
-        </label>
-        <label class="button" class:muted={lineMode !== "area"}>
-          <input type="radio" name={"modern-line-" + chart.title} value="area" checked={lineMode === "area"} on:change={() => setLineMode("area")} />
-          {label("areaChart")}
         </label>
       </span>
     {/if}

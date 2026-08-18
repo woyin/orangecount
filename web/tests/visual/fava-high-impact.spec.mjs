@@ -50,6 +50,13 @@ test.describe("sanitized OrangeCount Fava visual baseline", () => {
     await expect(page).toHaveScreenshot("journal-filtered.png", { fullPage: true });
   });
 
+  test("standalone reports ignore stale global filters", async ({ page }) => {
+    for (const route of ["/holdings", "/commodities", "/events", "/documents", "/statistics"]) {
+      await openRoute(page, `${route}?account=Assets%3AWallet%3APrimary&filter=not-present&time=year`);
+      await expect(page.locator("#report-result tbody tr").first()).toBeVisible();
+    }
+  });
+
   test("balance sheet and trial balance expose tree and hierarchy states", async ({ page }) => {
     for (const route of ["/balance_sheet", "/trial_balance"]) {
       await openRoute(page, route);

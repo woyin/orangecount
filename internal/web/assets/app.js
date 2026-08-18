@@ -1063,6 +1063,13 @@ function wireChartWindow() {
 }
 function reportURL(route) {
   const search = globalQuery();
+  // Holdings and the auxiliary reports are complete, independent views. A
+  // stale top-bar account/text/time filter used to be sent to every endpoint;
+  // rows such as prices and events have no account field, so one old filter
+  // made several otherwise-populated pages look empty at once.
+  if (["holdings", "commodities", "prices", "events", "documents", "statistics"].includes(route)) {
+    ["time", "account", "filter"].forEach((key) => search.delete(key));
+  }
   const apiRoute = route === "commodities" ? "prices" : route;
   if (reportState.period && reportState.period !== "all") search.set("period", reportState.period);
   if (reportState.valuation && reportState.valuation !== "at-cost") search.set("valuation", reportState.valuation);

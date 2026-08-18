@@ -40,6 +40,15 @@
   let journal: JournalReportData | null = null;
   let statistics: { entriesByType: [string, number][]; postings: TableReport; updateActivity: { account: string; last_entry_date: string; entry_hash: string; balances: Record<string, string> }[] } | null = null;
 
+  function reportQuery(name: string, value: Record<string, string>): Record<string, string> {
+    if (!["holdings", "holdings_by_account", "holdings_by_currency", "holdings_by_cost_currency", "holdings_by_root_account", "holdings_by_commodity", "commodities", "events", "documents", "statistics"].includes(name)) return value;
+    const filtered = { ...value };
+    delete filtered.time;
+    delete filtered.account;
+    delete filtered.filter;
+    return filtered;
+  }
+
  $: requestKey = `${route}?${new URLSearchParams(query).toString()}`;
   $: if (requestKey !== loadedKey) {
     loadedKey = requestKey;
@@ -58,7 +67,7 @@
       return;
     }
     try {
-      const payload = await adapter.load(route, query);
+      const payload = await adapter.load(route, reportQuery(route, query));
       if (key !== requestKey) return;
       if (["income_statement", "balance_sheet", "trial_balance"].includes(route)) {
         report = parseTreeReport(payload);
@@ -108,7 +117,7 @@
 {:else if table && route === "events"}
   <EventsReport report={table} {locale} />
 {:else if table && route === "documents"}
-  <DocumentsReport report={table} {locale} adapter={adapter} {query} {accounts} />
+  <DocumentsReport report={table} {locale} adapter={adapter} query={reportQuery(route, query)} {accounts} />
 {:else if table && route === "commodities"}
   <CommoditiesReport report={table} {locale} {renderCommas} />
 {:else if table && route === "errors"}

@@ -55,20 +55,14 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
   // "area", default "line") shown for every line chart. OC keeps the same
   // keys, defaults, and gating so the toggle reads with Fava semantics.
   let barMode: "stacked" | "single" = "stacked";
-  let lineMode: "line" | "area" = "line";
+  const lineMode = "line";
   try {
     const storedBar = localStorage.getItem("bar-chart-mode");
     if (storedBar === "stacked" || storedBar === "single") barMode = storedBar;
-    const storedLine = localStorage.getItem("line-chart-mode");
-    if (storedLine === "line" || storedLine === "area") lineMode = storedLine;
   } catch { /* storage is optional */ }
   function setBarMode(mode: "stacked" | "single") {
     barMode = mode;
     try { localStorage.setItem("bar-chart-mode", mode); } catch { /* storage optional */ }
-  }
-  function setLineMode(mode: "line" | "area") {
-    lineMode = mode;
-    try { localStorage.setItem("line-chart-mode", mode); } catch { /* storage optional */ }
   }
   $: isBarChart = chart.kind === "stacked-bar" || chart.kind === "bar";
   $: isLineChart = chart.kind !== "stacked-bar" && chart.kind !== "bar" && chart.kind !== "hierarchy";
@@ -76,7 +70,7 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
   // i.e. more than one account contributes. OC's bar series are currencies,
   // so the same gate is "more than one visible series".
   $: showBarMode = isBarChart && visibleSeries.length > 1;
-  $: showLineMode = isLineChart && visibleSeries.length > 0;
+  $: showLineMode = false;
 
   function numberValue(value: { display: string }): number {
     if (value.display.includes("/")) {
@@ -424,17 +418,6 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
        <label class="button" class:muted={barMode !== "single"}>
          <input type="radio" name={"bar-mode-" + chart.title} value="single" checked={barMode === "single"} on:change={() => setBarMode("single")} />
          {label("singleBars")}
-       </label>
-     </span>
-   {:else if showLineMode}
-     <span class="mode-switch">
-       <label class="button" class:muted={lineMode !== "line"}>
-         <input type="radio" name={"line-mode-" + chart.title} value="line" checked={lineMode === "line"} on:change={() => setLineMode("line")} />
-         {label("lineChart")}
-       </label>
-       <label class="button" class:muted={lineMode !== "area"}>
-         <input type="radio" name={"line-mode-" + chart.title} value="area" checked={lineMode === "area"} on:change={() => setLineMode("area")} />
-         {label("areaChart")}
        </label>
      </span>
    {/if}
