@@ -128,6 +128,41 @@ No other deviations are currently approved. Existing differences in the prototyp
 ## Entry template
 
 ```markdown
+### FD-0007 — Journal opens on the latest month, not the full ledger
+
+| Field | Value |
+| --- | --- |
+| Status | approved |
+| Route and state | R-JOURNAL (`journal`) |
+| Fava baseline | the journal report lists every filtered entry newest-first in 1000-entry pages (fava/core/__init__.py `journal_page(order="desc", per_page=1000)`); no date window applies by default |
+| OrangeCount behavior | newest-first order matches Fava, but the table additionally opens on the entries of the latest month by default (anchored on the ledger's latest entry date, not today), with a window selector (All / Last week / Last month / Last 3 months / Last year / Custom dates) and an explicit from/to pair overriding it |
+| Category | presentation preference |
+| Reason | a personal ledger's journal is consulted for recent records; opening on years of history makes the first screen unreviewable, and a paused ledger must still open on its most recent month rather than an empty today-anchored screen |
+| Scope | journal route only; "All entries" (or an explicit from/to) restores Fava behavior one click away; CSV export always matches the on-screen window |
+| Tests | browser verification on FinanceBook: default window shows only the latest month newest-first, order toggle and window selector work, CSV href carries the window cutoff |
+| Owner | implementing agent (Francis Chen / OrangeCount maintainer) |
+| Approver | user (product owner) only |
+| Approved evidence | approved by product owner 2026-08-18 in session ("日记账…默认只显示最近一周/一个月的数据即可") |
+| Expiry condition | a Fava upgrade that changes the journal default window or ordering, or the owner withdrawing the preference |
+| Baseline impact | alternate expectation for the journal default view |
+
+### FD-0008 — Statement charts default to the last year of points
+
+| Field | Value |
+| --- | --- |
+| Route and state | R-BALANCE-SHEET (`balance-sheet`), R-INCOME-STATEMENT (`income-statement`), account detail balance chart |
+| Fava baseline | line charts are generated server-side across the entire filtered date range; the range changes only through the global time filter |
+| OrangeCount behavior | time-series chart cards render the last year of points by default (anchored on the report's latest data point), with a time-range selector (3M / 6M / 1Y / 3Y / All) above the charts; "All" restores the full span |
+| Category | presentation preference |
+| Reason | cumulative balance lines over a multi-year ledger compress recent movement into noise; the owner reads statements for the last year and adjusts outward when needed. Slicing is client-side only, so API and CSV payloads stay full-range and authoritative |
+| Scope | time-series chart cards on the two statement routes and the account detail balance chart; hierarchy (treemap/sunburst) charts and every table are unaffected; "All" restores Fava parity |
+| Tests | browser verification on FinanceBook: default 1Y span on both statements, selector re-renders all cards, account detail chart follows the same window |
+| Owner | implementing agent (Francis Chen / OrangeCount maintainer) |
+| Approver | user (product owner) only |
+| Approved evidence | approved by product owner 2026-08-18 in session ("图表默认跨度…应该就是最近1年的数据就可以了，然后可以调节时间轴") |
+| Expiry condition | a Fava upgrade that adds its own default chart window, or the owner withdrawing the preference |
+| Baseline impact | alternate expectation for statement chart cards |
+
 ### FD-0001 — Short name
 
 | Field | Value |

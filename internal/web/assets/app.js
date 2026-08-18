@@ -17,6 +17,11 @@ const translations = {
     pivotRoot2: "Level-2 accounts", pivotRoot3: "Level-3 accounts", pivotSum: "Period totals",
     pivotBalance: "Ending balance", pivotAccount: "Account prefix", pivotApply: "Apply",
     pivotFlat: "Flat table", pivotCross: "Cross-tab", pivotNeedsShape: "Pivot view needs one dimension column plus a value column (or two dimensions plus a value).",
+    windowLabel: "Window", orderNewest: "Newest first", orderOldest: "Oldest first",
+    windowAll: "All entries", windowWeek: "Last week", windowMonth: "Last month",
+    windowQuarter: "Last 3 months", windowYear: "Last year", windowCustom: "Custom dates",
+    chartWindow: "Time range", chartWindow3m: "3M", chartWindow6m: "6M", chartWindow1y: "1Y",
+    chartWindow3y: "3Y", chartWindowAll: "All",
     snapshot: "Snapshot", valid: "Valid", accountsCount: "Accounts", diagnosticsCount: "Diagnostics",
     publishedAt: "Published", yes: "yes", no: "no", loading: "Loading…", unavailable: "No valid snapshot.",
     rows: "rows", columns: "columns", run: "Run query", queryHint: "SELECT account, balance FROM accounts ORDER BY account",
@@ -52,6 +57,11 @@ const translations = {
     pivotRoot2: "二级科目", pivotRoot3: "三级科目", pivotSum: "期间合计", pivotBalance: "期末余额",
     pivotAccount: "账户前缀", pivotApply: "应用", pivotFlat: "平铺表", pivotCross: "交叉表",
     pivotNeedsShape: "透视视图需要一列维度加一列数值（或两列维度加一列数值）。",
+    windowLabel: "范围", orderNewest: "最新在前", orderOldest: "最旧在前",
+    windowAll: "全部记录", windowWeek: "最近一周", windowMonth: "最近一月",
+    windowQuarter: "最近三月", windowYear: "最近一年", windowCustom: "自定义日期",
+    chartWindow: "时间轴", chartWindow3m: "近3月", chartWindow6m: "近6月", chartWindow1y: "近1年",
+    chartWindow3y: "近3年", chartWindowAll: "全部",
     snapshot: "快照", valid: "有效", accountsCount: "账户数", diagnosticsCount: "诊断数", publishedAt: "发布时间",
     yes: "是", no: "否", loading: "加载中…", unavailable: "没有有效快照。", rows: "行", columns: "列",
     run: "运行查询", queryHint: "SELECT account, balance FROM accounts ORDER BY account", empty: "没有数据。",
@@ -139,6 +149,14 @@ let reportState = {
   hierarchyLayout: params.get("hierarchy_layout") || "treemap",
 };
 let journalRange = { from: params.get("from") || "", to: params.get("to") || "" };
+// Fava's journal defaults to newest-first with 1000-entry pages; we keep the
+// newest-first default and slice a recent window client-side (FD-0007).
+let journalOrder = params.get("order") === "asc" ? "asc" : "desc";
+let journalWindow = journalRange.from || journalRange.to ? "custom" : (params.get("window") || "month");
+let journalAnchorDate = "";
+// Statement charts default to the last year of points; Fava draws the full
+// ledger span (FD-0008).
+let chartWindowState = params.get("chart_window") || "1y";
 let journalFilters = {
   flag: params.get("flag") || "",
   tag: params.get("tag") || "",
@@ -999,9 +1017,12 @@ function updateURL() {
       next.searchParams.delete("direction");
     }
     if (journalTableState.page > 0) next.searchParams.set("page", String(journalTableState.page + 1)); else next.searchParams.delete("page");
+    if (journalWindow !== "month") next.searchParams.set("window", journalWindow); else next.searchParams.delete("window");
+    if (journalOrder === "asc") next.searchParams.set("order", "asc"); else next.searchParams.delete("order");
   } else {
-    ["from", "to", "flag", "tag", "link", "payee", "narration", "kind", "sort", "direction", "page"].forEach((key) => next.searchParams.delete(key));
+    ["from", "to", "flag", "tag", "link", "payee", "narration", "kind", "sort", "direction", "page", "window", "order"].forEach((key) => next.searchParams.delete(key));
   }
+  if (chartWindowState !== "1y") next.searchParams.set("chart_window", chartWindowState); else next.searchParams.delete("chart_window");
   window.history.replaceState({}, "", next);
 }
 function globalQuery() {
@@ -1011,6 +1032,33 @@ function globalQuery() {
   if (globalState.filter) search.set("filter", globalState.filter);
   if (globalState.currency) search.set("currency", globalState.currency);
   return search;
+}
+const chartWindowChoices = [["3m", "chartWindow3m"], ["6m", "chartWindow6m"], ["1y", "chartWindow1y"], ["3y", "chartWindow3y"], ["all", "chartWindowAll"]];
+function chartWindowMonths(key) { return { "3m": 3, "6m": 6, "1y": 12, "3y": 36 }[key] || 0; }
+function chartsHaveTimeSeries(charts) {
+  return (charts || []).some((chart) => Array.isArray(chart.series) && chart.series.some((series) => Array.isArray(series.points) && series.points.some((point) => point.date)));
+}
+// sliceChartsByWindow narrows every time series to the selected time range,
+// anchored on the latest point across the report's charts (FD-0008). Balance
+// charts are cumulative, so the first surviving point still reads as a level.
+function sliceChartsByWindow(charts) {
+  const months = chartWindowMonths(chartWindowState);
+  if (!months || !chartsHaveTimeSeries(charts)) return charts;
+  const anchor = (charts || []).flatMap((chart) => chart.series || []).flatMap((series) => series.points || []).map((point) => point.date).filter(Boolean).sort().pop();
+  if (!anchor) return charts;
+  const cutoffDate = new Date(`${anchor}T00:00:00Z`);
+  cutoffDate.setUTCMonth(cutoffDate.getUTCMonth() - months);
+  const cutoff = cutoffDate.toISOString().slice(0, 10);
+  return charts.map((chart) => ({ ...chart, series: (chart.series || []).map((series) => ({ ...series, points: (series.points || []).filter((point) => point.date >= cutoff) })) }));
+}
+function chartWindowBar(show) {
+  if (!show) return "";
+  return `<div class="toolbar chart-window-bar" role="group" aria-label="${escapeHTML(t("chartWindow"))}"><label>${escapeHTML(t("chartWindow"))} <select id="chart-window">${chartWindowChoices.map(([value, key]) => `<option value="${value}" ${chartWindowState === value ? "selected" : ""}>${escapeHTML(t(key))}</option>`).join("")}</select></label></div>`;
+}
+function wireChartWindow() {
+  const select = document.getElementById("chart-window");
+  if (!select) return;
+  select.addEventListener("change", (event) => { chartWindowState = event.target.value; updateURL(); render(); });
 }
 function reportURL(route) {
   const search = globalQuery();
@@ -1065,12 +1113,25 @@ async function renderOverview() {
 const journalEntryBadges = [
   ["kind", "transaction", "Transaction"], ["flag", "*", "*"], ["flag", "!", "!"],
 ];
+const journalWindowOptions = [["all", "windowAll"], ["week", "windowWeek"], ["month", "windowMonth"], ["quarter", "windowQuarter"], ["year", "windowYear"], ["custom", "windowCustom"]];
+// journalWindowFromISO anchors the window on the ledger's latest entry date
+// (not today), so a ledger paused months ago still opens on its most recent
+// month instead of an empty screen. Returns "" when no window applies.
+function journalWindowFromISO() {
+  if (!journalAnchorDate || journalWindow === "custom" || journalWindow === "all") return "";
+  const date = new Date(`${journalAnchorDate}T00:00:00Z`);
+  const days = { week: 7 }[journalWindow];
+  const months = { month: 1, quarter: 3, year: 12 }[journalWindow] || 0;
+  if (days) date.setUTCDate(date.getUTCDate() - days);
+  else date.setUTCMonth(date.getUTCMonth() - months);
+  return date.toISOString().slice(0, 10);
+}
 function journalToolbar() {
   const badges = journalEntryBadges.map(([type, value, label]) => {
     const active = type === "kind" ? journalFilters.kind === value : journalFilters.flag === value;
     return `<button type="button" class="journal-entry-badge${active ? " badge-on" : ""}" data-journal-type="${escapeHTML(type)}" data-journal-value="${escapeHTML(value)}" aria-pressed="${active ? "true" : "false"}">${escapeHTML(t(label))}</button>`;
   }).join("");
-  return `<div class="toolbar journal-toolbar" role="group" aria-label="${escapeHTML(t("journal"))}"><div class="journal-entry-badges" role="group" aria-label="${escapeHTML(t("postings"))}">${badges}</div><label>${escapeHTML(t("from"))} <input id="journal-from" type="date" value="${escapeHTML(journalRange.from)}"></label><label>${escapeHTML(t("to"))} <input id="journal-to" type="date" value="${escapeHTML(journalRange.to)}"></label><label>${escapeHTML(t("flag"))} <input id="journal-flag" type="text" inputmode="text" value="${escapeHTML(journalFilters.flag)}" placeholder="* or !"></label><label>${escapeHTML(t("tag"))} <input id="journal-tag" type="search" value="${escapeHTML(journalFilters.tag)}"></label><label>${escapeHTML(t("link"))} <input id="journal-link" type="search" value="${escapeHTML(journalFilters.link)}"></label><label>${escapeHTML(t("payee"))} <input id="journal-payee" type="search" value="${escapeHTML(journalFilters.payee)}"></label><label>${escapeHTML(t("narration"))} <input id="journal-narration" type="search" value="${escapeHTML(journalFilters.narration)}"></label><button id="journal-apply" type="button">${escapeHTML(t("apply"))}</button><button id="journal-reset" type="button">${escapeHTML(t("reset"))}</button><a class="button" href="${escapeHTML(`${journalURL()}${journalURL().includes("?") ? "&" : "?"}format=csv`)}" download>${escapeHTML(t("exportCSV"))}</a></div>`;
+  return `<div class="toolbar journal-toolbar" role="group" aria-label="${escapeHTML(t("journal"))}"><div class="journal-entry-badges" role="group" aria-label="${escapeHTML(t("postings"))}">${badges}</div><label>${escapeHTML(t("from"))} <input id="journal-from" type="date" value="${escapeHTML(journalRange.from)}"></label><label>${escapeHTML(t("to"))} <input id="journal-to" type="date" value="${escapeHTML(journalRange.to)}"></label><label>${escapeHTML(t("windowLabel"))} <select id="journal-window">${journalWindowOptions.map(([value, key]) => `<option value="${value}" ${journalWindow === value ? "selected" : ""}>${escapeHTML(t(key))}</option>`).join("")}</select></label><button id="journal-order" type="button" aria-pressed="${journalOrder === "desc" ? "true" : "false"}">${escapeHTML(t(journalOrder === "desc" ? "orderNewest" : "orderOldest"))}</button><label>${escapeHTML(t("flag"))} <input id="journal-flag" type="text" inputmode="text" value="${escapeHTML(journalFilters.flag)}" placeholder="* or !"></label><label>${escapeHTML(t("tag"))} <input id="journal-tag" type="search" value="${escapeHTML(journalFilters.tag)}"></label><label>${escapeHTML(t("link"))} <input id="journal-link" type="search" value="${escapeHTML(journalFilters.link)}"></label><label>${escapeHTML(t("payee"))} <input id="journal-payee" type="search" value="${escapeHTML(journalFilters.payee)}"></label><label>${escapeHTML(t("narration"))} <input id="journal-narration" type="search" value="${escapeHTML(journalFilters.narration)}"></label><button id="journal-apply" type="button">${escapeHTML(t("apply"))}</button><button id="journal-reset" type="button">${escapeHTML(t("reset"))}</button><a class="button" id="journal-export" href="${escapeHTML(`${journalURL(true)}${journalURL(true).includes("?") ? "&" : "?"}format=csv`)}" download>${escapeHTML(t("exportCSV"))}</a></div>`;
 }
 function wireJournalEntryBadges() {
   document.querySelectorAll(".journal-entry-badge").forEach((button) => button.addEventListener("click", () => {
@@ -1085,10 +1146,16 @@ function wireJournalEntryBadges() {
     renderReport("journal");
   }));
 }
-function journalURL() {
+function journalURL(forExport = false) {
   const search = globalQuery();
   if (journalRange.from) search.set("from", journalRange.from);
   if (journalRange.to) search.set("to", journalRange.to);
+  // The window slices client-side for the screen; the CSV export carries the
+  // equivalent from date so the downloaded file matches what is on screen.
+  if (forExport && !journalRange.from) {
+    const windowFrom = journalWindowFromISO();
+    if (windowFrom) search.set("from", windowFrom);
+  }
   Object.entries(journalFilters).forEach(([key, value]) => { if (value) search.set(key, value); });
   const suffix = search.toString();
   return `/api/v1/reports/journal${suffix ? `?${suffix}` : ""}`;
@@ -1099,11 +1166,18 @@ function journalURL() {
 // indented posting rows beneath.
 function renderJournal(result) {
   const container = document.getElementById("journal-result");
-  const rows = Array.isArray(result.rows) ? result.rows : [];
+  let rows = Array.isArray(result.rows) ? result.rows : [];
   if (!rows.length) {
     container.innerHTML = `<p class="muted">${escapeHTML(t("empty"))}</p>`;
     return;
   }
+  // The fetch arrives unfiltered (unless the user set explicit dates), so the
+  // latest entry anchors the default window before slicing.
+  journalAnchorDate = rows.reduce((max, row) => (row.date && (!max || row.date > max) ? row.date : max), "");
+  const windowFrom = journalWindowFromISO();
+  if (windowFrom) rows = rows.filter((row) => !row.date || row.date >= windowFrom);
+  const exportLink = document.getElementById("journal-export");
+  if (exportLink) exportLink.href = `${journalURL(true)}${journalURL(true).includes("?") ? "&" : "?"}format=csv`;
   const groups = [];
   const byKey = new Map();
   rows.forEach((row) => {
@@ -1114,6 +1188,7 @@ function renderJournal(result) {
     }
     byKey.get(key).push(row);
   });
+  if (journalOrder === "desc") groups.reverse();
   const html = groups.map((group) => {
     const first = group.rows[0];
     const header = `<tr class="journal-transaction-row" data-journal-group="${escapeHTML(group.key)}"><td colspan="4"><button type="button" class="journal-transaction-toggle" aria-expanded="true" aria-label="${escapeHTML(`${t("details")}: ${first.date || ""}`)}">▾</button><span class="muted">${escapeHTML(first.date || "")}</span>${first.payee ? ` <strong>${escapeHTML(first.payee)}</strong>` : ""}${first.narration ? ` · ${escapeHTML(first.narration)}` : ""}<span class="muted"> · ${group.rows.length} ${escapeHTML(t("postings"))}</span></td></tr>`;
@@ -1155,10 +1230,21 @@ async function renderReport(route) {
       document.getElementById("journal-apply").addEventListener("click", () => {
         journalRange = { from: document.getElementById("journal-from").value, to: document.getElementById("journal-to").value };
         ["flag", "tag", "link", "payee", "narration", "kind"].forEach((key) => { journalFilters[key] = document.getElementById(`journal-${key}`).value.trim(); });
+        if (journalRange.from || journalRange.to) journalWindow = "custom";
+        else if (journalWindow === "custom") journalWindow = "month";
         updateURL();
         renderReport("journal");
       });
-      document.getElementById("journal-reset").addEventListener("click", () => { journalRange = { from: "", to: "" }; journalFilters = { flag: "", tag: "", link: "", payee: "", narration: "", kind: "" }; updateURL(); renderReport("journal"); });
+      document.getElementById("journal-reset").addEventListener("click", () => { journalRange = { from: "", to: "" }; journalFilters = { flag: "", tag: "", link: "", payee: "", narration: "", kind: "" }; journalWindow = "month"; journalOrder = "desc"; updateURL(); renderReport("journal"); });
+      document.getElementById("journal-window").addEventListener("change", (event) => {
+        journalWindow = event.target.value;
+        if (journalWindow !== "custom") journalRange = { from: "", to: "" };
+        updateURL(); renderReport("journal");
+      });
+      document.getElementById("journal-order").addEventListener("click", () => {
+        journalOrder = journalOrder === "desc" ? "asc" : "desc";
+        updateURL(); renderReport("journal");
+      });
       wireJournalEntryBadges();
       renderJournal(result);
       return;
@@ -1177,9 +1263,11 @@ async function renderReport(route) {
     // ledger without FX quotes plots every currency instead of warning.
     const reportLabel = t(navRoutes.find(([name]) => name === route)?.[1] || route);
     const chartList = Array.isArray(result.charts) && result.charts.length ? result.charts : [result.chart];
-    app.innerHTML = `${reportToolbar(route)}${asOfNote}${chartList.map((chart) => renderChart(result, reportLabel, route, chart)).join("")}<div id="report-result"></div>`;
+    const windowed = sliceChartsByWindow(chartList);
+    app.innerHTML = `${reportToolbar(route)}${asOfNote}${chartWindowBar(chartsHaveTimeSeries(chartList))}${windowed.map((chart) => renderChart(result, reportLabel, route, chart)).join("")}<div id="report-result"></div>`;
     wireReportToolbar(route);
-    app.querySelectorAll(".report-chart").forEach((svg, index) => mountChartData(svg, chartList[index]));
+    wireChartWindow();
+    app.querySelectorAll(".report-chart").forEach((svg, index) => mountChartData(svg, windowed[index]));
     wireCharts(app);
     mountTable(document.getElementById("report-result"), result, { tree, leavesOnly: tree && reportState.treeMode === "leaves", pivotCurrency: tree });
   } catch (error) { app.innerHTML = renderError(error); }
@@ -1195,9 +1283,9 @@ async function renderAccountDetail(account) {
       api(`/api/v1/reports/accounts?currency=${encodeURIComponent(displayCurrency)}&account=${encodeURIComponent(account)}&period=${encodeURIComponent(reportState.period || "all")}`),
       api(`/api/v1/reports/journal?account=${encodeURIComponent(account)}`),
     ]);
-    const chart = chartResult.chart;
+    const chart = sliceChartsByWindow([chartResult.chart])[0] || chartResult.chart;
     const head = `<div class="account-detail-head"><a href="?view=accounts">&larr; ${escapeHTML(t("back"))}</a><h3>${escapeHTML(account)}</h3></div>`;
-    const chartHtml = chart && Array.isArray(chart.series) && chart.series.some((series) => Array.isArray(series.points) && series.points.length) ? renderChart(chartResult, t("accountBalance"), "accounts", chart) : `<p class="muted">${escapeHTML(t("empty"))}</p>`;
+    const chartHtml = chart && Array.isArray(chart.series) && chart.series.some((series) => Array.isArray(series.points) && series.points.length) ? `${chartWindowBar(true)}${renderChart(chartResult, t("accountBalance"), "accounts", chart)}` : `<p class="muted">${escapeHTML(t("empty"))}</p>`;
     const rows = Array.isArray(journalResult.rows) ? journalResult.rows : [];
     // Running balance is tracked per currency; summing across currencies would
     // produce a meaningless number for a multi-currency account.
@@ -1217,6 +1305,7 @@ async function renderAccountDetail(account) {
     app.innerHTML = `${head}${chartHtml}<div id="account-journal"></div>`;
     mountChartData(app.querySelector(".report-chart"), chart);
     wireCharts(app);
+    wireChartWindow();
     mountRawTable(document.getElementById("account-journal"), { columns: ["date", "account", "flag", "units", "running"], rows: detailRows }, { runningLabel: t("runningBalance") });
   } catch (error) { app.innerHTML = renderError(error); }
 }
