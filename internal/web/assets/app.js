@@ -689,7 +689,8 @@ function chartHeader(chart, fallbackLabel, unit) {
   const title = String(chart.title || fallbackLabel || t("chart"));
   const valuation = chart.valuation === "market-value" ? t("marketValue") : chart.valuation === "at-cost" ? t("atCost") : "";
   const period = chart.period || chartPeriodLabel();
-  return { title, period, valuation, description: `${title} · ${unit} · ${period}${valuation ? ` · ${valuation}` : ""}` };
+  const description = [title, unit, period, valuation].filter(Boolean).join(" · ");
+  return { title, period, valuation, description };
 }
 function chartAvailabilityNote(chart) {
   if (!chart || !chart.availability) return "";
@@ -705,7 +706,7 @@ function renderTimeSeriesChart(chart, fallbackLabel) {
   const series = chartSeriesPoints(chart);
   if (!series.length) return "";
   if (chart.kind === "bar" || chart.kind === "stacked-bar") return renderTimeSeriesBars(chart, series, fallbackLabel);
-  const unit = chart.currency || chart.unit || t("unavailable");
+  const unit = chart.currency || chart.unit || "";
   const words = chartHeader(chart, fallbackLabel, unit);
   // Sample the series so dense ledgers stay legible while the last point (the
   // current balance) is always present.
@@ -740,11 +741,11 @@ function renderTimeSeriesChart(chart, fallbackLabel) {
     const circles = item.points.map((point, index) => `<circle class="series-${seriesIndex}" data-series-index="${seriesIndex}" data-point-date="${escapeHTML(point.date)}" data-point-value="${escapeHTML(String(point.value))}" cx="${xFor(index).toFixed(2)}" cy="${yFor(point.value).toFixed(2)}" r="1.1" tabindex="0" aria-label="${escapeHTML(`${item.label} ${point.date}: ${point.value}`)}"><title>${escapeHTML(`${item.label} ${point.date}: ${point.value}`)}</title></circle>`).join("");
     return `<polyline class="series-${seriesIndex}" points="${points}" fill="none" stroke-width="1.2"></polyline>${circles}`;
   }).join("");
-  const legend = `<ol class="chart-legend">${sampled.map((item, index) => `<li data-series-toggle="${index}"><span class="series-label series-${index}">${escapeHTML(item.label)}</span><strong>${escapeHTML(`${item.points[item.points.length - 1].date}: ${item.points[item.points.length - 1].value}`)} ${escapeHTML(unit)}</strong></li>`).join("")}</ol>`;
+  const legend = `<ol class="chart-legend">${sampled.map((item, index) => `<li data-series-toggle="${index}"><span class="series-label series-${index}">${escapeHTML(item.label)}</span><strong>${escapeHTML(`${item.points[item.points.length - 1].date}: ${item.points[item.points.length - 1].value}${unit ? ` ${unit}` : ""}`)}</strong></li>`).join("")}</ol>`;
   return `<section class="chart-card" aria-label="${escapeHTML(`${t("chart")}: ${words.description}`)}"><h3>${escapeHTML(words.title)}</h3>${chartAvailabilityNote(chart)}<svg class="report-chart report-line-chart" viewBox="0 0 100 52" role="img" aria-label="${escapeHTML(words.description)}" data-chart-unit="${escapeHTML(unit)}" data-chart-period="${escapeHTML(words.period)}">${gridLines}${zeroLine}${paths}${xLabels}</svg><p class="muted">${escapeHTML(words.description)}</p>${legend}</section>`;
 }
 function renderTimeSeriesBars(chart, series, fallbackLabel) {
-  const unit = chart.currency || chart.unit || t("unavailable");
+  const unit = chart.currency || chart.unit || "";
   const words = chartHeader(chart, fallbackLabel, unit);
   const sampled = series.map((item) => ({ ...item, points: samplePoints(item.points) }));
   const pointCount = Math.max(...sampled.map((item) => item.points.length));
@@ -797,7 +798,7 @@ function renderTimeSeriesBars(chart, series, fallbackLabel) {
     const x = margin.left + index * groupWidth + groupWidth / 2;
     return `<text class="chart-tick chart-tick-x" x="${x.toFixed(2)}" y="${(52 - 1.6).toFixed(2)}" text-anchor="middle">${escapeHTML(date)}</text>`;
   }).join("");
-  const legend = `<ol class="chart-legend">${sampled.map((item, index) => `<li data-series-toggle="${index}"><span class="series-label series-${index}">${escapeHTML(item.label)}</span><strong>${escapeHTML(`${item.points[item.points.length - 1].date}: ${item.points[item.points.length - 1].value}`)} ${escapeHTML(unit)}</strong></li>`).join("")}</ol>`;
+  const legend = `<ol class="chart-legend">${sampled.map((item, index) => `<li data-series-toggle="${index}"><span class="series-label series-${index}">${escapeHTML(item.label)}</span><strong>${escapeHTML(`${item.points[item.points.length - 1].date}: ${item.points[item.points.length - 1].value}${unit ? ` ${unit}` : ""}`)}</strong></li>`).join("")}</ol>`;
   return `<section class="chart-card" aria-label="${escapeHTML(`${t("chart")}: ${words.description}`)}"><h3>${escapeHTML(words.title)}</h3>${chartAvailabilityNote(chart)}<svg class="report-chart report-bar-chart" viewBox="0 0 100 52" role="img" aria-label="${escapeHTML(words.description)}" data-chart-unit="${escapeHTML(unit)}" data-chart-period="${escapeHTML(words.period)}">${gridLines}${zeroLine}${bars}${xLabels}</svg><p class="muted">${escapeHTML(words.description)}</p>${legend}</section>`;
 }
 // hierarchyLayoutSvg builds a treemap, sunburst, or icicle from the flattened
@@ -917,7 +918,7 @@ function renderHierarchyIcicle(chart) {
   }).join("");
 }
 function renderHierarchyChart(chart, fallbackLabel) {
-  const unit = chart.currency || chart.unit || t("unavailable");
+  const unit = chart.currency || chart.unit || "";
   const words = chartHeader(chart, fallbackLabel, unit);
   const layout = reportState.hierarchyLayout === "sunburst" ? renderHierarchySunburst(chart) : reportState.hierarchyLayout === "icicle" ? renderHierarchyIcicle(chart) : renderHierarchyTreemap(chart);
   if (!layout) return `<section class="chart-card" aria-label="${escapeHTML(`${t("chart")}: ${words.description}`)}"><h3>${escapeHTML(words.title)}</h3>${chartAvailabilityNote(chart)}<p class="warning">${escapeHTML(t("noConversionData"))}</p></section>`;
