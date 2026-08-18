@@ -801,39 +801,6 @@ div.svelte-1b7r65z {
   }
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/PriceTable.esbuild-svelte-fake-css */
-.prices-table.svelte-pjz8y6 {
-  max-width: 30rem;
-}
-.prices-table.svelte-pjz8y6 .num:where(.svelte-pjz8y6) {
-  text-align: right;
-}
-
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/CommoditiesReport.esbuild-svelte-fake-css */
-.flex-row.svelte-1vsdq8j {
-  display: flex;
-  gap: var(--flex-gap, 0.5rem);
-  margin-bottom: var(--flex-gap, 0.5rem);
-}
-.spacer.svelte-1vsdq8j {
-  flex: 1;
-}
-.chart-switcher.svelte-1vsdq8j {
-  margin-bottom: 1em;
-  color: var(--text-color-lightest);
-  text-align: center;
-}
-.chart-switcher.svelte-1vsdq8j button:where(.svelte-1vsdq8j) {
-  padding: 0 0.5em;
-}
-.chart-switcher.svelte-1vsdq8j button:where(.svelte-1vsdq8j) + button:where(.svelte-1vsdq8j) {
-  border-left: 1px solid var(--text-color-lighter);
-}
-.chart-switcher.svelte-1vsdq8j button.selected:where(.svelte-1vsdq8j),
-.chart-switcher.svelte-1vsdq8j button:where(.svelte-1vsdq8j):hover {
-  color: var(--text-color-lighter);
-}
-
 /* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/DocumentAccounts.esbuild-svelte-fake-css */
 ul.svelte-1se7z4w {
   padding: 0 0 0 0.5em;

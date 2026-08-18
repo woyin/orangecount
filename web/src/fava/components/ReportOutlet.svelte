@@ -8,7 +8,6 @@
   import StatisticsReport from "../reports/StatisticsReport.svelte";
   import QueryReport from "../reports/QueryReport.svelte";
   import EditorReport from "../reports/EditorReport.svelte";
-  import CommoditiesReport from "../reports/CommoditiesReport.svelte";
   import DocumentsReport from "../reports/DocumentsReport.svelte";
   import ErrorsReport from "../reports/ErrorsReport.svelte";
   import EventsReport from "../reports/EventsReport.svelte";
@@ -118,8 +117,6 @@
   <EventsReport report={table} {locale} />
 {:else if table && route === "documents"}
   <DocumentsReport report={table} {locale} adapter={adapter} query={reportQuery(route, query)} {accounts} />
-{:else if table && route === "commodities"}
-  <CommoditiesReport report={table} {locale} {renderCommas} />
 {:else if table && route === "errors"}
   <ErrorsReport report={table} {locale} />
 {:else if table}

@@ -746,6 +746,33 @@ func Prices(e ledger.Evaluation) query.Result {
 	return evaluate("SELECT date, currency, amount, quote_currency FROM prices ORDER BY date, currency", e)
 }
 
+// Commodities lists declared commodities that currently have a non-zero
+// holding. Unlike Prices, it deliberately does not require a market-price
+// directive: a collection, fund, or other asset remains a commodity even when
+// its only known valuation is its acquisition cost.
+func Commodities(e ledger.Evaluation) query.Result {
+	declared := map[string]bool{}
+	for _, entry := range e.Entries {
+		switch directive := entry.Directive.(type) {
+		case ledger.Commodity:
+			declared[directive.Currency] = true
+		case *ledger.Commodity:
+			if directive != nil {
+				declared[directive.Currency] = true
+			}
+		}
+	}
+	holdings := HoldingsAggregate(Holdings(e), "by_commodity")
+	rows := make([]query.Row, 0, len(holdings.Rows))
+	for _, row := range holdings.Rows {
+		currency, _ := row["currency"].(string)
+		if declared[currency] {
+			rows = append(rows, row)
+		}
+	}
+	return query.Result{Columns: holdings.Columns, Rows: rows}
+}
+
 // Events lists event directives in entry order.
 func Events(e ledger.Evaluation) query.Result {
 	rows := make([]query.Row, 0)

@@ -76,6 +76,33 @@ func TestCoreReportsAreDeterministic(t *testing.T) {
 	}
 }
 
+func TestCommoditiesListsDeclaredHeldCommoditiesWithoutPriceQuotes(t *testing.T) {
+	file, diagnostics := ledger.ParseText("commodities.bean", []byte(`2000-01-01 open Assets:Collection COIN, CNY
+2000-01-01 open Equity:Opening CNY
+2000-01-01 commodity COIN
+2000-01-02 * "buy"
+  Assets:Collection 2 COIN {10 CNY}
+  Equity:Opening -20 CNY
+`))
+	if diagnostics.HasErrors() {
+		t.Fatalf("parse=%+v", diagnostics.All())
+	}
+	evaluation := ledger.EvaluateFiles(map[source.FileID]*ledger.File{1: file}, []source.FileID{1}, ledger.EvalOptions{})
+	if !evaluation.Valid {
+		t.Fatalf("evaluation=%+v", evaluation.Diagnostics)
+	}
+	result := Commodities(*evaluation)
+	if len(result.Rows) != 1 {
+		t.Fatalf("commodities rows=%+v, want one held declared commodity", result.Rows)
+	}
+	if got := result.Rows[0]["currency"]; got != "COIN" {
+		t.Fatalf("commodity currency=%v, want COIN", got)
+	}
+	if got := result.Rows[0]["units"].(ledger.Decimal).String(); got != "2" {
+		t.Fatalf("commodity units=%s, want 2", got)
+	}
+}
+
 func TestJournalBetweenHonorsEachInclusiveRangeBoundary(t *testing.T) {
 	text := `2000-01-01 open Assets:Cash USD
 2000-01-01 open Equity:Opening USD

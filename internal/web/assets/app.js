@@ -1070,7 +1070,7 @@ function reportURL(route) {
   if (["holdings", "commodities", "prices", "events", "documents", "statistics"].includes(route)) {
     ["time", "account", "filter"].forEach((key) => search.delete(key));
   }
-  const apiRoute = route === "commodities" ? "prices" : route;
+  const apiRoute = route;
   if (reportState.period && reportState.period !== "all") search.set("period", reportState.period);
   if (reportState.valuation && reportState.valuation !== "at-cost") search.set("valuation", reportState.valuation);
   if (reportState.asOf && route === "holdings") search.set("as_of", reportState.asOf);

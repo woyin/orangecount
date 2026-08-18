@@ -463,8 +463,10 @@ func reportForRequest(r *http.Request, current *snapshot.Snapshot, name string) 
 			Filters: filters,
 		}
 		return report.PivotTable(evaluation, spec), "", nil
-	case "prices", "price", "commodities", "commodity":
+	case "prices", "price":
 		return report.Prices(evaluation), "", nil
+	case "commodities", "commodity":
+		return report.Commodities(evaluation), "", nil
 	case "events", "event":
 		return report.Events(evaluation), "", nil
 	case "documents", "document":
