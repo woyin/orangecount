@@ -395,6 +395,37 @@ func TestEvaluateNumberOnlyPostingInference(t *testing.T) {
 	}
 }
 
+// TestEvaluateSequentialElisionsAcrossCurrencies pins the fix for elisions
+// on a multi-currency account: when the residual to absorb sits in a
+// different currency than the account's standing-balance currency, the
+// completed units must be denominated in the residual's currency. Before the
+// fix the completion hijacked the balance currency and the transaction never
+// balanced.
+func TestEvaluateSequentialElisionsAcrossCurrencies(t *testing.T) {
+	text := `2000-01-01 open Assets:Cash CNY, USD
+2000-01-01 open Expenses:Food CNY
+2000-01-01 open Expenses:Travel USD
+2000-01-10 * "买菜"
+  Expenses:Food 30 CNY
+  Assets:Cash
+2000-01-20 * "美元零食"
+  Expenses:Travel 3 USD
+  Assets:Cash
+`
+	file, parseDiagnostics := ParseText("elision-currencies.bean", []byte(text))
+	if parseDiagnostics.HasErrors() {
+		t.Fatalf("parse diagnostics=%+v", parseDiagnostics.All())
+	}
+	evaluation := EvaluateFiles(map[source.FileID]*File{1: file}, []source.FileID{1}, EvalOptions{})
+	if !evaluation.Valid {
+		t.Fatalf("evaluation diagnostics=%+v", evaluation.Diagnostics)
+	}
+	account, ok := evaluation.Account("Assets:Cash")
+	if !ok || account.Balances["CNY"].String() != "-30" || account.Balances["USD"].String() != "-3" {
+		t.Fatalf("cash balances=%+v", account.Balances)
+	}
+}
+
 func TestEvaluateTotalPriceAndDeferredBalance(t *testing.T) {
 	dir := t.TempDir()
 	entry := filepath.Join(dir, "main.bean")
