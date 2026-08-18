@@ -1037,7 +1037,7 @@ function globalQuery() {
 const chartWindowChoices = [["3m", "chartWindow3m"], ["6m", "chartWindow6m"], ["1y", "chartWindow1y"], ["3y", "chartWindow3y"], ["all", "chartWindowAll"]];
 function chartWindowMonths(key) { return { "3m": 3, "6m": 6, "1y": 12, "3y": 36 }[key] || 0; }
 function chartsHaveTimeSeries(charts) {
-  return (charts || []).some((chart) => Array.isArray(chart.series) && chart.series.some((series) => Array.isArray(series.points) && series.points.some((point) => point.date)));
+  return (charts || []).some((chart) => chart && Array.isArray(chart.series) && chart.series.some((series) => Array.isArray(series.points) && series.points.some((point) => point.date)));
 }
 // sliceChartsByWindow narrows every time series to the selected time range,
 // anchored on the latest point across the report's charts (FD-0008). Balance
@@ -1050,7 +1050,7 @@ function sliceChartsByWindow(charts) {
   const cutoffDate = new Date(`${anchor}T00:00:00Z`);
   cutoffDate.setUTCMonth(cutoffDate.getUTCMonth() - months);
   const cutoff = cutoffDate.toISOString().slice(0, 10);
-  return charts.map((chart) => ({ ...chart, series: (chart.series || []).map((series) => ({ ...series, points: (series.points || []).filter((point) => point.date >= cutoff) })) }));
+  return charts.filter(Boolean).map((chart) => ({ ...chart, series: (chart.series || []).map((series) => ({ ...series, points: (series.points || []).filter((point) => point.date >= cutoff) })) }));
 }
 function chartWindowBar(show) {
   if (!show) return "";
@@ -1263,7 +1263,10 @@ async function renderReport(route) {
     // chart per measure, one series per currency. Nothing is converted, so a
     // ledger without FX quotes plots every currency instead of warning.
     const reportLabel = t(navRoutes.find(([name]) => name === route)?.[1] || route);
-    const chartList = Array.isArray(result.charts) && result.charts.length ? result.charts : [result.chart];
+    // Chart-less reports (holdings, prices, events, documents, statistics)
+    // carry no chart payload; drop the empty placeholder so the chart window
+    // helpers never see an undefined chart.
+    const chartList = (Array.isArray(result.charts) && result.charts.length ? result.charts : [result.chart]).filter(Boolean);
     const windowed = sliceChartsByWindow(chartList);
     app.innerHTML = `${reportToolbar(route)}${asOfNote}${chartWindowBar(chartsHaveTimeSeries(chartList))}${windowed.map((chart) => renderChart(result, reportLabel, route, chart)).join("")}<div id="report-result"></div>`;
     wireReportToolbar(route);
