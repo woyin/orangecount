@@ -8694,7 +8694,7 @@ var root_152 = ns_template(`<path class="area-fill svelte-1l6ui0a"></path>`);
 var root_142 = ns_template(`<g class="svelte-1l6ui0a"><!><path class="series-line svelte-1l6ui0a"></path></g>`);
 var root_182 = ns_template(`<circle class="hover-dot svelte-1l6ui0a"></circle>`);
 var root_162 = ns_template(`<line class="crosshair svelte-1l6ui0a"></line><!>`, 1);
-var root_42 = template(`<svg class="modern-chart svelte-1l6ui0a" role="img"><g><!><!><line class="zero-baseline svelte-1l6ui0a"></line><!><!></g></svg>`);
+var root_42 = template(`<svg class="modern-chart svelte-1l6ui0a" role="button" tabindex="0"><g><!><!><line class="zero-baseline svelte-1l6ui0a"></line><!><!></g></svg>`);
 var root_202 = template(`<span class="hover-row svelte-1l6ui0a"><i class="svelte-1l6ui0a"></i> </span>`);
 var root_19 = template(`<div class="hover-card svelte-1l6ui0a"><span class="hover-date svelte-1l6ui0a"> </span> <!></div>`);
 var root_21 = template(`<button type="button" class="legend svelte-1l6ui0a"><i class="svelte-1l6ui0a"></i><span class="svelte-1l6ui0a"> </span></button>`);
@@ -8799,6 +8799,7 @@ function ModernChart($$anchor, $$props) {
     return date2.slice(0, 7);
   }
   let hoverIndex = mutable_state(null);
+  let hoverPinned = false;
   let highlighted = mutable_state(null);
   function onMove(event2) {
     const svg2 = event2.currentTarget;
@@ -8812,7 +8813,18 @@ function ModernChart($$anchor, $$props) {
     set(hoverIndex, get(periods).length > 1 ? Math.max(0, Math.min(get(periods).length - 1, Math.round(ratio * (get(periods).length - 1)))) : 0);
   }
   function onLeave() {
+    if (!hoverPinned) set(hoverIndex, null);
+  }
+  function onClick(event2) {
+    onMove(event2);
+    hoverPinned = get(hoverIndex) !== null;
+  }
+  function clearPinnedHover() {
+    hoverPinned = false;
     set(hoverIndex, null);
+  }
+  function onKeydown(event2) {
+    if (event2.key === "Escape") clearPinnedHover();
   }
   function linePath(series) {
     return line_default().x((point3) => (get(xBand)(point3.date) ?? 0) + get(xBand).bandwidth() / 2).y((p) => get(y2)(numberValue(p.value))).curve(monotoneX)(series.points);
@@ -9189,12 +9201,14 @@ function ModernChart($$anchor, $$props) {
       template_effect(() => {
         set_attribute(svg_1, "viewBox", `0 0 ${get(width)} ${height}`);
         set_attribute(svg_1, "width", get(width));
-        set_attribute(svg_1, "aria-label", chart2().title);
+        set_attribute(svg_1, "aria-label", `${chart2().title}; click to keep the value visible`);
         set_attribute(g, "transform", `translate(${margin.left},${margin.top})`);
         set_attribute(line_2, "x2", get(innerWidth));
       });
       event("mousemove", svg_1, onMove);
       event("mouseleave", svg_1, onLeave);
+      event("click", svg_1, onClick);
+      event("keydown", svg_1, onKeydown);
       append($$anchor2, svg_1);
     };
     if_block(node_2, ($$render) => {
@@ -35063,13 +35077,13 @@ function init_query_editor(value, onDocChanges, placeholder_value, get_submit) {
 }
 
 // src/fava/charts/LineChart.svelte
-var root_216 = ns_template(`<line class="chart-grid svelte-14tawjm"></line><text class="chart-tick svelte-14tawjm" text-anchor="end"> </text>`, 1);
-var root_314 = ns_template(`<path class="area-path svelte-14tawjm"></path>`);
-var root_48 = ns_template(`<text y="51" class="chart-tick svelte-14tawjm" text-anchor="middle"> </text>`);
-var root_119 = template(`<svg class="line-chart svelte-14tawjm" viewBox="0 0 100 52" role="img" aria-label="Price line chart"><!><!><path class="line-path svelte-14tawjm"></path><!></svg>`);
-var root_58 = template(`<p class="chart-empty svelte-14tawjm">No prices.</p>`);
-var root_66 = template(`<div class="chart-tooltip svelte-14tawjm" role="status"> </div>`);
-var root10 = template(`<section class="line-card svelte-14tawjm"><!> <!></section>`);
+var root_216 = ns_template(`<line class="chart-grid svelte-1fixw1l"></line><text class="chart-tick svelte-1fixw1l" text-anchor="end"> </text>`, 1);
+var root_314 = ns_template(`<path class="area-path svelte-1fixw1l"></path>`);
+var root_48 = ns_template(`<text y="51" class="chart-tick svelte-1fixw1l" text-anchor="middle"> </text>`);
+var root_119 = template(`<svg class="line-chart svelte-1fixw1l" viewBox="0 0 100 52" role="button" aria-label="Price line chart; click to keep the value visible" tabindex="0"><!><!><path class="line-path svelte-1fixw1l"></path><!></svg>`);
+var root_58 = template(`<p class="chart-empty svelte-1fixw1l">No prices.</p>`);
+var root_66 = template(`<div class="chart-tooltip svelte-1fixw1l" role="status"> </div>`);
+var root10 = template(`<section class="line-card svelte-1fixw1l"><!> <!></section>`);
 function LineChart($$anchor, $$props) {
   push($$props, false);
   const data = mutable_state();
@@ -35104,7 +35118,8 @@ function LineChart($$anchor, $$props) {
     const residual = step0 / magnitude;
     const step = (residual >= 5 ? 5 : residual >= 2 ? 2 : 1) * magnitude;
     const ticks2 = [];
-    for (let value = Math.ceil(lo / step) * step; value <= hi + step / 1e-6; value += step) {
+    const epsilon2 = Math.abs(step) * 1e-9;
+    for (let value = Math.ceil(lo / step) * step; value <= hi + epsilon2; value += step) {
       ticks2.push(value);
     }
     return ticks2;
@@ -35120,8 +35135,10 @@ function LineChart($$anchor, $$props) {
   let tooltipLeft = mutable_state(0);
   let tooltipTop = mutable_state(0);
   let tooltipVisible = mutable_state(false);
-  function showTip(event2) {
-    const svg2 = event2.currentTarget;
+  let tooltipPinned = false;
+  function showTip(event2, pin = false) {
+    const svg2 = event2.currentTarget.closest("svg");
+    if (!svg2) return;
     const box = svg2.getBoundingClientRect();
     if (!box.width || !get(data).length) return;
     const vx = (event2.clientX - box.left) / box.width * 100;
@@ -35131,6 +35148,7 @@ function LineChart($$anchor, $$props) {
     }
     set(tooltipText, formatTip()(best));
     set(tooltipVisible, true);
+    if (pin) tooltipPinned = true;
     const card = svg2.closest(".line-card");
     const cardBox = card?.getBoundingClientRect();
     if (cardBox) {
@@ -35139,7 +35157,14 @@ function LineChart($$anchor, $$props) {
     }
   }
   function hideTip() {
+    if (!tooltipPinned) set(tooltipVisible, false);
+  }
+  function clearPinnedTip() {
+    tooltipPinned = false;
     set(tooltipVisible, false);
+  }
+  function onKeydown(event2) {
+    if (event2.key === "Escape") clearPinnedTip();
   }
   legacy_pre_effect(() => deep_read_state(points()), () => {
     set(data, points().filter((point3) => Number.isFinite(point3.value) && point3.date).map((point3) => ({
@@ -35253,6 +35278,8 @@ function LineChart($$anchor, $$props) {
       template_effect(() => set_attribute(path_2, "d", get(path2)));
       event("mousemove", svg_1, showTip);
       event("mouseleave", svg_1, hideTip);
+      event("click", svg_1, (event2) => showTip(event2, true));
+      event("keydown", svg_1, onKeydown);
       append($$anchor2, svg_1);
     };
     var alternate = ($$anchor2) => {
@@ -42186,13 +42213,13 @@ function ErrorsReport($$anchor, $$props) {
 delegate(["click"]);
 
 // src/fava/charts/ScatterPlot.svelte
-var root_227 = ns_template(`<line class="chart-grid svelte-8kp6hz"></line><text class="chart-tick svelte-8kp6hz" text-anchor="end"> </text>`, 1);
-var root_323 = ns_template(`<text y="51" class="chart-tick svelte-8kp6hz" text-anchor="middle"> </text>`);
-var root_418 = ns_template(`<circle r="1.3" class="svelte-8kp6hz"></circle>`);
-var root_138 = template(`<svg class="scatter-chart svelte-8kp6hz" viewBox="0 0 100 52" role="img" aria-label="Events scatterplot"><!><!><!></svg>`);
-var root_513 = template(`<p class="chart-empty svelte-8kp6hz">No events.</p>`);
-var root_610 = template(`<div class="chart-tooltip svelte-8kp6hz" role="status"> </div>`);
-var root21 = template(`<section class="scatter-card svelte-8kp6hz"><!> <!></section>`);
+var root_227 = ns_template(`<line class="chart-grid svelte-j8o8u7"></line><text class="chart-tick svelte-j8o8u7" text-anchor="end"> </text>`, 1);
+var root_323 = ns_template(`<text y="51" class="chart-tick svelte-j8o8u7" text-anchor="middle"> </text>`);
+var root_418 = ns_template(`<circle r="1.3" class="svelte-j8o8u7"></circle>`);
+var root_138 = template(`<svg class="scatter-chart svelte-j8o8u7" viewBox="0 0 100 52" role="button" aria-label="Events scatterplot; click to keep the value visible" tabindex="0"><!><!><!></svg>`);
+var root_513 = template(`<p class="chart-empty svelte-j8o8u7">No events.</p>`);
+var root_610 = template(`<div class="chart-tooltip svelte-j8o8u7" role="status"> </div>`);
+var root21 = template(`<section class="scatter-card svelte-j8o8u7"><!> <!></section>`);
 function ScatterPlot($$anchor, $$props) {
   push($$props, false);
   const data = mutable_state();
@@ -42234,12 +42261,15 @@ function ScatterPlot($$anchor, $$props) {
   let tooltipLeft = mutable_state(0);
   let tooltipTop = mutable_state(0);
   let tooltipVisible = mutable_state(false);
-  function showTip(event2) {
-    const svg2 = event2.currentTarget;
+  let tooltipPinned = false;
+  function showTip(event2, pin = false) {
+    const svg2 = event2.currentTarget.closest("svg");
+    if (!svg2) return;
     const box = svg2.getBoundingClientRect();
     if (!box.width) return;
-    const vx = (event2.clientX - box.left) / box.width * 100;
-    const vy = (event2.clientY - box.top) / box.height * 52;
+    const scale = Math.min(box.width / 100, box.height / 52);
+    const vx = (event2.clientX - box.left - (box.width - 100 * scale) / 2) / scale;
+    const vy = (event2.clientY - box.top - (box.height - 52 * scale) / 2) / scale;
     let best = null;
     let bestDistance = 3.5;
     for (const datum of get(data)) {
@@ -42256,6 +42286,7 @@ function ScatterPlot($$anchor, $$props) {
     set(tooltipText, `${best.description}
 ${best.date}`);
     set(tooltipVisible, true);
+    if (pin) tooltipPinned = true;
     const card = svg2.closest(".scatter-card");
     const cardBox = card?.getBoundingClientRect();
     if (cardBox) {
@@ -42264,7 +42295,14 @@ ${best.date}`);
     }
   }
   function hideTip() {
+    if (!tooltipPinned) set(tooltipVisible, false);
+  }
+  function clearPinnedTip() {
+    tooltipPinned = false;
     set(tooltipVisible, false);
+  }
+  function onKeydown(event2) {
+    if (event2.key === "Escape") clearPinnedTip();
   }
   legacy_pre_effect(() => deep_read_state(events()), () => {
     set(data, events().map((event2) => ({
@@ -42347,11 +42385,14 @@ ${best.date}`);
           set_attribute(circle, "style", get(style_derived));
           toggle_class(circle, "desaturate", get(dot).date > get(today));
         });
+        event("click", circle, (event2) => showTip(event2, true));
         append($$anchor3, circle);
       });
       reset(svg_1);
       event("mousemove", svg_1, showTip);
       event("mouseleave", svg_1, hideTip);
+      event("click", svg_1, (event2) => showTip(event2, true));
+      event("keydown", svg_1, onKeydown);
       append($$anchor2, svg_1);
     };
     var alternate = ($$anchor2) => {

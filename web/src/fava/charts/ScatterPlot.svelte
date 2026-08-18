@@ -83,12 +83,19 @@
   let tooltipTop = 0;
   let tooltipVisible = false;
 
-  function showTip(event: MouseEvent) {
-    const svg = event.currentTarget as SVGSVGElement;
+  let tooltipPinned = false;
+
+  function showTip(event: MouseEvent, pin = false) {
+    const svg = (event.currentTarget as Element).closest("svg") as SVGSVGElement | null;
+    if (!svg) return;
     const box = svg.getBoundingClientRect();
     if (!box.width) return;
-    const vx = ((event.clientX - box.left) / box.width) * 100;
-    const vy = ((event.clientY - box.top) / box.height) * 52;
+    // SVG preserves the 100×52 viewBox aspect ratio. On a wide card the
+    // drawing is horizontally letterboxed, so CSS-pixel coordinates must be
+    // translated through that rendered viewport before hit-testing a dot.
+    const scale = Math.min(box.width / 100, box.height / 52);
+    const vx = (event.clientX - box.left - (box.width - 100 * scale) / 2) / scale;
+    const vy = (event.clientY - box.top - (box.height - 52 * scale) / 2) / scale;
     let best: Datum | null = null;
     let bestDistance = 3.5;
     for (const datum of data) {
@@ -104,6 +111,7 @@
     }
     tooltipText = `${best.description}\n${best.date}`;
     tooltipVisible = true;
+    if (pin) tooltipPinned = true;
     const card = svg.closest(".scatter-card");
     const cardBox = card?.getBoundingClientRect();
     if (cardBox) {
@@ -112,12 +120,14 @@
     }
   }
 
-  function hideTip() { tooltipVisible = false; }
+  function hideTip() { if (!tooltipPinned) tooltipVisible = false; }
+  function clearPinnedTip() { tooltipPinned = false; tooltipVisible = false; }
+  function onKeydown(event: KeyboardEvent) { if (event.key === "Escape") clearPinnedTip(); }
 </script>
 
 <section class="scatter-card">
   {#if data.length}
-    <svg class="scatter-chart" viewBox="0 0 100 52" role="img" aria-label="Events scatterplot" on:mousemove={showTip} on:mouseleave={hideTip}>
+    <svg class="scatter-chart" viewBox="0 0 100 52" role="button" aria-label="Events scatterplot; click to keep the value visible" tabindex="0" on:mousemove={showTip} on:mouseleave={hideTip} on:click={(event) => showTip(event, true)} on:keydown={onKeydown}>
       {#each types as type (type)}
         <line x1={X0} y1={y(type)} x2={X1} y2={y(type)} class="chart-grid" />
         <text x={X0 - 1} y={y(type) + 1} class="chart-tick" text-anchor="end">{typeLabel(type)}</text>
@@ -132,6 +142,7 @@
           r="1.3"
           style={`fill:${colorForType(types.indexOf(dot.type), types.length)}`}
           class:desaturate={dot.date > today}
+          on:click={(event) => showTip(event, true)}
         />
       {/each}
     </svg>
@@ -145,10 +156,11 @@
 
 <style>
   .scatter-card { position: relative; margin-bottom: 1rem; }
-  .scatter-chart { display: block; width: min(100%, 52rem); height: 14rem; margin-bottom: .5rem; background: var(--background-darker); border: 1px solid var(--border); }
+  .scatter-chart { display: block; width: 100%; height: 11rem; margin-bottom: .5rem; background: var(--background-darker); border: 1px solid var(--border); }
   .chart-grid { stroke: var(--border); stroke-width: .2; vector-effect: non-scaling-stroke; opacity: .5; }
   .chart-tick { font-size: 2.6px; fill: var(--text-color-lighter); }
   .desaturate { filter: saturate(50%); }
+  .scatter-chart circle { cursor: pointer; }
   .chart-empty { color: var(--text-color-lightest); }
   .chart-tooltip { position: absolute; z-index: 10; pointer-events: none; max-width: 20rem; padding: .3rem .5rem; background: var(--background-darker); border: 1px solid var(--border); color: var(--text-color-lighter); font-size: .8rem; line-height: 1.35; white-space: pre-line; box-shadow: 0 1px 3px rgb(0 0 0 / .25); }
 </style>

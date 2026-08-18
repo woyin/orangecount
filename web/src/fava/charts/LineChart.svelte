@@ -69,7 +69,11 @@
     const residual = step0 / magnitude;
     const step = (residual >= 5 ? 5 : residual >= 2 ? 2 : 1) * magnitude;
     const ticks: number[] = [];
-    for (let value = Math.ceil(lo / step) * step; value <= hi + step / 1e-6; value += step) {
+    // Permit only the tiny rounding error accumulated while repeatedly adding
+    // a fractional step. `step / 1e-6` enlarged the upper bound by a million
+    // steps, which rendered an enormous y-axis for a one-point price series.
+    const epsilon = Math.abs(step) * 1e-9;
+    for (let value = Math.ceil(lo / step) * step; value <= hi + epsilon; value += step) {
       ticks.push(value);
     }
     return ticks;
@@ -103,8 +107,11 @@
   let tooltipTop = 0;
   let tooltipVisible = false;
 
-  function showTip(event: MouseEvent) {
-    const svg = event.currentTarget as SVGSVGElement;
+  let tooltipPinned = false;
+
+  function showTip(event: MouseEvent, pin = false) {
+    const svg = (event.currentTarget as Element).closest("svg") as SVGSVGElement | null;
+    if (!svg) return;
     const box = svg.getBoundingClientRect();
     if (!box.width || !data.length) return;
     const vx = ((event.clientX - box.left) / box.width) * 100;
@@ -114,6 +121,7 @@
     }
     tooltipText = formatTip(best);
     tooltipVisible = true;
+    if (pin) tooltipPinned = true;
     const card = svg.closest(".line-card");
     const cardBox = card?.getBoundingClientRect();
     if (cardBox) {
@@ -122,12 +130,14 @@
     }
   }
 
-  function hideTip() { tooltipVisible = false; }
+  function hideTip() { if (!tooltipPinned) tooltipVisible = false; }
+  function clearPinnedTip() { tooltipPinned = false; tooltipVisible = false; }
+  function onKeydown(event: KeyboardEvent) { if (event.key === "Escape") clearPinnedTip(); }
 </script>
 
 <section class="line-card">
   {#if data.length}
-    <svg class="line-chart" viewBox="0 0 100 52" role="img" aria-label="Price line chart" on:mousemove={showTip} on:mouseleave={hideTip}>
+    <svg class="line-chart" viewBox="0 0 100 52" role="button" aria-label="Price line chart; click to keep the value visible" tabindex="0" on:mousemove={showTip} on:mouseleave={hideTip} on:click={(event) => showTip(event, true)} on:keydown={onKeydown}>
       {#each yTicks as tick (tick)}
         <line x1={X0} y1={y(tick)} x2={X1} y2={y(tick)} class="chart-grid" />
         <text x={X0 - 1} y={y(tick) + 1} class="chart-tick" text-anchor="end">{tickLabel(tick)}</text>
@@ -150,7 +160,7 @@
 
 <style>
   .line-card { position: relative; margin-bottom: 1rem; }
-  .line-chart { display: block; width: min(100%, 52rem); height: 14rem; margin-bottom: .5rem; background: var(--background-darker); border: 1px solid var(--border); }
+  .line-chart { display: block; width: 100%; height: 11rem; margin-bottom: .5rem; background: var(--background-darker); border: 1px solid var(--border); }
   .line-path { fill: none; stroke: var(--series-0, #2563eb); stroke-width: .8; vector-effect: non-scaling-stroke; }
   .area-path { fill: var(--series-0, #2563eb); fill-opacity: .18; stroke: none; }
   .chart-grid { stroke: var(--border); stroke-width: .2; vector-effect: non-scaling-stroke; opacity: .5; }

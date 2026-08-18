@@ -154,6 +154,7 @@
   // every visible series, and a card listing each series' value there. Hovering
   // a bar/series dims the others (linked series highlight).
   let hoverIndex: number | null = null;
+  let hoverPinned = false;
   let highlighted: string | null = null;
   function onMove(event: MouseEvent) {
     const svg = event.currentTarget as SVGSVGElement;
@@ -163,7 +164,10 @@
     if (ratio < -0.02 || ratio > 1.02) { hoverIndex = null; return; }
     hoverIndex = periods.length > 1 ? Math.max(0, Math.min(periods.length - 1, Math.round(ratio * (periods.length - 1)))) : 0;
   }
-  function onLeave() { hoverIndex = null; }
+  function onLeave() { if (!hoverPinned) hoverIndex = null; }
+  function onClick(event: MouseEvent) { onMove(event); hoverPinned = hoverIndex !== null; }
+  function clearPinnedHover() { hoverPinned = false; hoverIndex = null; }
+  function onKeydown(event: KeyboardEvent) { if (event.key === "Escape") clearPinnedHover(); }
   $: hoverX = hoverIndex !== null ? (xBand(periods[hoverIndex]) ?? 0) + (isBar ? xBand.bandwidth() / 2 : 0) : 0;
 
   function linePath(series: typeof visibleSeries[number]): string {
@@ -211,7 +215,7 @@
 
   <div class="modern-chart-wrap" bind:this={containerEl}>
     {#if width > 0}
-      <svg class="modern-chart" viewBox={`0 0 ${width} ${height}`} width={width} height={height} role="img" aria-label={chart.title} on:mousemove={onMove} on:mouseleave={onLeave}>
+      <svg class="modern-chart" viewBox={`0 0 ${width} ${height}`} width={width} height={height} role="button" aria-label={`${chart.title}; click to keep the value visible`} tabindex="0" on:mousemove={onMove} on:mouseleave={onLeave} on:click={onClick} on:keydown={onKeydown}>
         <g transform={`translate(${margin.left},${margin.top})`}>
          {#each yTickValues as tick (tick)}
            <line class="grid-line" x1={0} x2={innerWidth} y1={y(tick)} y2={y(tick)} />

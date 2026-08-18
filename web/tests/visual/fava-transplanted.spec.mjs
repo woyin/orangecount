@@ -39,6 +39,28 @@ test.describe("transplanted Fava shell smoke", () => {
     }
   });
 
+  test("data-backed utility reports render their adapter rows", async ({ page }) => {
+    for (const route of ["/holdings", "/commodities", "/documents", "/events", "/statistics"]) {
+      await open(page, route);
+      await expect(page.locator("table tbody tr").first()).toBeVisible();
+    }
+  });
+
+  test("commodity and event chart tooltips stay visible after a click", async ({ page }) => {
+    await open(page, "/commodities");
+    await expect(page.locator(".line-chart .chart-tick")).toHaveCount(6);
+    await page.locator(".line-chart").click();
+    await expect(page.locator(".chart-tooltip")).toBeVisible();
+    await page.mouse.move(0, 0);
+    await expect(page.locator(".chart-tooltip")).toBeVisible();
+
+    await open(page, "/events");
+    await page.locator(".scatter-chart circle").click();
+    await expect(page.locator(".chart-tooltip")).toBeVisible();
+    await page.mouse.move(0, 0);
+    await expect(page.locator(".chart-tooltip")).toBeVisible();
+  });
+
   test("journal groups postings and query executes", async ({ page }) => {
     await open(page, "/journal");
     await expect(page.locator(".journal-transaction-row")).not.toHaveCount(0);
