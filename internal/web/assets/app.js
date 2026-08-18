@@ -12,7 +12,7 @@ const translations = {
     accounts: "Accounts", journal: "Journal", trialBalance: "Trial balance", balanceSheet: "Balance sheet",
     incomeStatement: "Income statement", holdings: "Holdings", prices: "Prices", commodities: "Commodities", events: "Events",
     documents: "Documents", statistics: "Statistics", diagnostics: "Diagnostics", query: "Query", status: "Status",
-    pivot: "Pivot", pivotRows: "Rows", pivotColumns: "Columns", pivotValues: "Values", pivotMonth: "Month",
+    pivot: "Custom analysis", pivotRows: "Rows", pivotColumns: "Columns", pivotValues: "Values", pivotMonth: "Month",
     pivotQuarter: "Quarter", pivotYear: "Year", pivotNone: "Per currency", pivotRoot1: "Level-1 accounts",
     pivotRoot2: "Level-2 accounts", pivotRoot3: "Level-3 accounts", pivotSum: "Period totals",
     pivotBalance: "Ending balance", pivotAccount: "Account prefix", pivotApply: "Apply",
@@ -52,7 +52,7 @@ const translations = {
     subtitle: "只读本地账本视图。", language: "语言", overview: "概览", accounts: "账户", journal: "日记账",
     trialBalance: "试算平衡", balanceSheet: "资产负债表", incomeStatement: "损益表", holdings: "持仓",
     prices: "价格", commodities: "商品", events: "事件", documents: "文档", statistics: "统计", diagnostics: "诊断", query: "查询", status: "状态",
-    pivot: "透视表", pivotRows: "行", pivotColumns: "列", pivotValues: "值", pivotMonth: "按月",
+    pivot: "自定义分析", pivotRows: "行", pivotColumns: "列", pivotValues: "值", pivotMonth: "按月",
     pivotQuarter: "按季", pivotYear: "按年", pivotNone: "按币种", pivotRoot1: "一级科目",
     pivotRoot2: "二级科目", pivotRoot3: "三级科目", pivotSum: "期间合计", pivotBalance: "期末余额",
     pivotAccount: "账户前缀", pivotApply: "应用", pivotFlat: "平铺表", pivotCross: "交叉表",
@@ -473,7 +473,12 @@ function wireTree(root) {
 }
 function mountTable(container, result, options = {}) {
   container.innerHTML = renderTable(result, options);
-  wireTables(container, options);
+  // A report is read as a status view: show the newest period first unless it
+  // is an account tree (tree order is structural, not chronological).
+  const sortColumn = !options.tree && !options.sortColumn && Array.isArray(result?.columns)
+    ? (result.columns.includes("date") ? "date" : result.columns.includes("interval") ? "interval" : "")
+    : options.sortColumn;
+  wireTables(container, { ...options, sortColumn, sortDirection: sortColumn ? "descending" : options.sortDirection });
   wireTree(container);
   if (options.paginate) wirePagination(container, options.pageSize || 50, options);
 }
@@ -1421,7 +1426,8 @@ function addExact(left, right) {
 }
 function mountRawTable(container, result, options = {}) {
   const columns = result.columns.map((column) => column === "running" && options.runningLabel ? options.runningLabel : column);
-  container.innerHTML = `<div class="table-wrap"><table><thead><tr>${columns.map((column) => `<th>${escapeHTML(column)}</th>`).join("")}</tr></thead><tbody>${result.rows.map((row) => `<tr>${result.columns.map((column) => `<td>${escapeHTML(row[column] == null ? "" : String(row[column]))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+  const rows = result.columns.includes("date") ? [...result.rows].reverse() : result.rows;
+  container.innerHTML = `<div class="table-wrap"><table><thead><tr>${columns.map((column) => `<th>${escapeHTML(column)}</th>`).join("")}</tr></thead><tbody>${rows.map((row) => `<tr>${result.columns.map((column) => `<td>${escapeHTML(row[column] == null ? "" : String(row[column]))}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
 }
 function diagnosticPhase(code) {
   if (code.startsWith("E-INCLUDE") || code.startsWith("E-SOURCE")) return "fix-first-source";
@@ -1702,14 +1708,19 @@ async function renderHelp() {
 function renderPivot() {
   const state = pivotState();
   const options = (values, active) => values.map(([value, label]) => `<option value="${value}" ${value === active ? "selected" : ""}>${escapeHTML(label)}</option>`).join("");
-  app.innerHTML = `<div class="toolbar report-toolbar" role="group" aria-label="${escapeHTML(t("pivot"))}">
+  const templates = [
+    { id: "expenses", title: locale === "zh-CN" ? "月度支出分类" : "Monthly expenses", note: locale === "zh-CN" ? "按月查看生活、交通等支出" : "Spending by month and category", state: { rows: "month", columns: "root3", values: "sum", account: "Expenses" } },
+    { id: "income", title: locale === "zh-CN" ? "月度收入来源" : "Monthly income", note: locale === "zh-CN" ? "按月查看工资、分红等收入" : "Income by month and source", state: { rows: "month", columns: "root3", values: "sum", account: "Income" } },
+    { id: "assets", title: locale === "zh-CN" ? "账户资金变化" : "Account movement", note: locale === "zh-CN" ? "按月查看一级账户的资金流" : "Monthly movement by account", state: { rows: "month", columns: "root2", values: "sum", account: "Assets" } },
+  ];
+  app.innerHTML = `<section class="analysis-intro"><h2>${escapeHTML(t("pivot"))}</h2><p class="muted">${escapeHTML(locale === "zh-CN" ? "先选常用模板；需要时再展开自定义交叉表。" : "Start with a common template, then refine the cross-tab if needed.")}</p><div class="analysis-templates">${templates.map((template) => `<button type="button" class="analysis-template" data-analysis-template="${template.id}"><strong>${escapeHTML(template.title)}</strong><span>${escapeHTML(template.note)}</span></button>`).join("")}</div></section><details class="analysis-custom"><summary>${escapeHTML(locale === "zh-CN" ? "自定义交叉表" : "Custom cross-tab")}</summary><div class="toolbar report-toolbar" role="group" aria-label="${escapeHTML(t("pivot"))}">
     <label>${escapeHTML(t("pivotRows"))} <select id="pivot-rows">${options([["month", t("pivotMonth")], ["quarter", t("pivotQuarter")], ["year", t("pivotYear")]], state.rows)}</select></label>
     <label>${escapeHTML(t("pivotColumns"))} <select id="pivot-columns">${options([["", t("pivotNone")], ["root1", t("pivotRoot1")], ["root2", t("pivotRoot2")], ["root3", t("pivotRoot3")]], state.columns)}</select></label>
     <label>${escapeHTML(t("pivotValues"))} <select id="pivot-values">${options([["sum", t("pivotSum")], ["balance", t("pivotBalance")]], state.values)}</select></label>
     <label>${escapeHTML(t("pivotAccount"))} <input id="pivot-account" type="text" value="${escapeHTML(state.account)}" placeholder="Expenses"></label>
     <button id="pivot-apply" type="button">${escapeHTML(t("pivotApply"))}</button>
     <a class="button" id="pivot-export" href="${escapeHTML(pivotURL(state, "csv"))}" download>${escapeHTML(t("exportCSV"))}</a>
-  </div><div id="pivot-result"></div>`;
+  </div></details><div id="pivot-result"></div>`;
   const run = async () => {
     const next = {
       rows: document.getElementById("pivot-rows").value,
@@ -1726,6 +1737,16 @@ function renderPivot() {
   };
   document.getElementById("pivot-apply").addEventListener("click", run);
   ["pivot-rows", "pivot-columns", "pivot-values"].forEach((id) => document.getElementById(id).addEventListener("change", run));
+  app.querySelectorAll("[data-analysis-template]").forEach((button) => button.addEventListener("click", () => {
+    const template = templates.find((item) => item.id === button.dataset.analysisTemplate);
+    if (!template) return;
+    document.getElementById("pivot-rows").value = template.state.rows;
+    document.getElementById("pivot-columns").value = template.state.columns;
+    document.getElementById("pivot-values").value = template.state.values;
+    document.getElementById("pivot-account").value = template.state.account;
+    app.querySelector(".analysis-custom").open = true;
+    run();
+  }));
   run();
 }
 
