@@ -468,7 +468,9 @@ function wireCharts(root) {
     legendItem.setAttribute("tabindex", "0");
     const index = Number(legendItem.dataset.seriesToggle);
     const toggleSeries = () => {
-      const svg = root.querySelector(".report-chart");
+      // Scope to the legend's own card so stacked chart cards toggle
+      // independently.
+      const svg = legendItem.closest(".chart-card")?.querySelector(".report-chart") || root.querySelector(".report-chart");
       if (!svg) return;
       const hidden = legendItem.classList.toggle("series-hidden");
       const chart = svg.__chartData;
@@ -1006,7 +1008,11 @@ function reportURL(route) {
   if (reportState.period && reportState.period !== "all") search.set("period", reportState.period);
   if (reportState.valuation && reportState.valuation !== "at-cost") search.set("valuation", reportState.valuation);
   if (reportState.asOf && route === "holdings") search.set("as_of", reportState.asOf);
-  if (!search.has("currency") && (route === "trial-balance" || route === "balance-sheet" || route === "income-statement" || route === "accounts")) search.set("currency", effectiveCurrency());
+  // The income statement and balance sheet charts plot one series per
+  // currency natively, so they need no display currency; forcing one would
+  // request conversion quotes the ledger may not have. Trial balance and
+  // account drilldowns still convert and keep the default.
+  if (!search.has("currency") && (route === "trial-balance" || route === "accounts")) search.set("currency", effectiveCurrency());
   const suffix = search.toString();
   return `/api/v1/reports/${encodeURIComponent(apiRoute)}${suffix ? `?${suffix}` : ""}`;
 }
@@ -1156,9 +1162,14 @@ async function renderReport(route) {
       return;
     }
     const asOfNote = route === "holdings" && reportState.asOf ? `<p class="muted">${escapeHTML(t("survivingLots"))}</p>` : "";
-    app.innerHTML = `${reportToolbar(route)}${asOfNote}${renderChart(result, t(navRoutes.find(([name]) => name === route)?.[1] || route), route, result.chart)}<div id="report-result"></div>`;
+    // The statement trees carry a per-measure, per-currency chart set: one
+    // chart per measure, one series per currency. Nothing is converted, so a
+    // ledger without FX quotes plots every currency instead of warning.
+    const reportLabel = t(navRoutes.find(([name]) => name === route)?.[1] || route);
+    const chartList = Array.isArray(result.charts) && result.charts.length ? result.charts : [result.chart];
+    app.innerHTML = `${reportToolbar(route)}${asOfNote}${chartList.map((chart) => renderChart(result, reportLabel, route, chart)).join("")}<div id="report-result"></div>`;
     wireReportToolbar(route);
-    mountChartData(app.querySelector(".report-chart"), result.chart);
+    app.querySelectorAll(".report-chart").forEach((svg, index) => mountChartData(svg, chartList[index]));
     wireCharts(app);
     mountTable(document.getElementById("report-result"), result, { tree, leavesOnly: tree && reportState.treeMode === "leaves", pivotCurrency: tree });
   } catch (error) { app.innerHTML = renderError(error); }

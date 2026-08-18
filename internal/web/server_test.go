@@ -1193,6 +1193,97 @@ func TestEditorImportAndOptionsFailureContracts(t *testing.T) {
 	}
 }
 
+// TestIncomeStatementChartsArePerCurrency locks the fix for the "Unavailable:
+// no conversion quote" warning: the statement endpoints carry a per-measure,
+// per-currency chart set that needs no FX quotes, so a multi-currency ledger
+// without price directives still plots every currency. The legacy singular
+// converted chart stays in the payload for compatibility.
+func TestIncomeStatementChartsArePerCurrency(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	content := `option "operating_currency" "CNY"
+2000-01-01 open Income:Salary CNY
+2000-01-01 open Expenses:Tech CNY
+2000-01-01 open Expenses:Tech:USD USD
+2000-01-01 open Assets:Wallet CNY
+2000-01-01 open Assets:WalletUSD USD
+2000-01-01 open Equity:Opening CNY
+2000-02-01 * "工资"
+  Assets:Wallet 100 CNY
+  Income:Salary -100 CNY
+2000-02-02 * "美元订阅"
+  Assets:WalletUSD -3 USD
+  Expenses:Tech:USD 3 USD
+`
+	if err := os.WriteFile(entry, []byte(content), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	built := snapshot.Build(entry)
+	if built.Snapshot == nil {
+		t.Fatalf("build diagnostics=%+v", built.Diagnostics)
+	}
+	server, err := NewServer(Config{Store: snapshot.NewStore(built.Snapshot), Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// currency=CNY forced: the shape that used to warn "no conversion quote"
+	// because the ledger has no USD->CNY price directive.
+	recorder := httptest.NewRecorder()
+	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/api/v1/reports/income-statement?currency=CNY&period=all&valuation=at-cost", nil))
+	if recorder.Code != http.StatusOK {
+		t.Fatalf("status=%d body=%q", recorder.Code, recorder.Body.String())
+	}
+	var payload struct {
+		Chart struct {
+			Title        string `json:"title"`
+			Availability string `json:"availability"`
+		} `json:"chart"`
+		Charts []struct {
+			Title        string `json:"title"`
+			Availability string `json:"availability"`
+			Series       []struct {
+				Label  string `json:"label"`
+				Points []struct {
+					Value struct {
+						Display string `json:"display"`
+					} `json:"value"`
+				} `json:"points"`
+			} `json:"series"`
+		} `json:"charts"`
+	}
+	if err := json.Unmarshal(recorder.Body.Bytes(), &payload); err != nil {
+		t.Fatal(err)
+	}
+	if len(payload.Charts) == 0 {
+		t.Fatal("per-currency chart set missing from income statement payload")
+	}
+	currencies := map[string]bool{}
+	nonZero := map[string]bool{}
+	for _, chart := range payload.Charts {
+		if chart.Availability != "" {
+			t.Errorf("chart %q availability=%q: per-currency charts never warn", chart.Title, chart.Availability)
+		}
+		for _, series := range chart.Series {
+			if len(series.Points) == 0 {
+				continue
+			}
+			currencies[series.Label] = true
+			if series.Points[len(series.Points)-1].Value.Display != "0" {
+				nonZero[series.Label] = true
+			}
+		}
+	}
+	if !currencies["CNY"] || !currencies["USD"] {
+		t.Fatalf("series currencies=%v: both CNY and USD must plot natively", currencies)
+	}
+	if !nonZero["USD"] {
+		t.Fatal("USD series all zero: the USD subscription was dropped instead of plotted")
+	}
+	if payload.Chart.Title == "" {
+		t.Error("legacy singular chart disappeared from the payload")
+	}
+}
+
 func TestReportEndpointMatrixKeepsAllViewsReachable(t *testing.T) {
 	dir := t.TempDir()
 	entry := filepath.Join(dir, "main.bean")

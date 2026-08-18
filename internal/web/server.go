@@ -364,10 +364,20 @@ func (s *Server) handleReport(w http.ResponseWriter, r *http.Request) {
 		valuation = "at-cost"
 	}
 	chart := report.ReportChart(evaluation, chartRoute, period, strings.TrimSpace(r.URL.Query().Get("currency")), valuation, strings.TrimSpace(r.URL.Query().Get("account")))
+	// The statement trees additionally carry the per-measure, per-currency
+	// chart set: one series per currency, no conversion. A single-currency
+	// display needs a quote for every foreign posting, so a ledger without
+	// price directives would blank those series with a "no conversion
+	// quote" warning while the table below shows both currencies fine.
+	charts := []report.PresentedChartSpec{}
+	for _, spec := range report.ReportCharts(evaluation, chartRoute, period, valuation) {
+		charts = append(charts, report.PresentChart(spec))
+	}
 	writeJSON(w, struct {
 		query.Result
-		Chart report.PresentedChartSpec `json:"chart"`
-	}{Result: presented, Chart: report.PresentChart(chart)})
+		Chart  report.PresentedChartSpec   `json:"chart"`
+		Charts []report.PresentedChartSpec `json:"charts,omitempty"`
+	}{Result: presented, Chart: report.PresentChart(chart), Charts: charts})
 }
 
 // buildReport is the shared semantic/report projection used by both the
