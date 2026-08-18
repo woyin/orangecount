@@ -125,15 +125,20 @@
       .table-pagination { justify-content: flex-end; margin: .35rem 0; }
       .chart-card { margin: .6rem 0 1rem; padding: .65rem .8rem; border: 1px solid var(--card-border); border-radius: .4rem; background: var(--card-bg); }
       .chart-card h3 { margin: 0 0 .3rem; font-size: .95rem; color: var(--th-fg); }
-      .report-chart { display: block; width: 100%; height: auto; aspect-ratio: 100 / 52; min-height: 10rem; max-height: 24rem; background: var(--chart-bg); border-radius: .25rem; }
+      .report-chart { display: block; width: 100%; height: auto; aspect-ratio: 100 / 64; min-height: 10rem; max-height: 20rem; background: var(--chart-bg); border-radius: .25rem; }
       .report-chart rect { fill: var(--series-0); opacity: .9; }
       .report-chart rect.negative { fill: var(--negative); }
       .report-chart rect:hover { fill: var(--hover); }
       .report-chart rect.selected { fill: var(--selected); stroke: var(--fg); stroke-width: .6; }
-      .report-chart polyline.series-0, .report-chart circle.series-0 { stroke: var(--series-0); fill: var(--series-0); }
-      .report-chart polyline.series-1, .report-chart circle.series-1 { stroke: var(--series-1); fill: var(--series-1); }
-      .report-chart polyline.series-2, .report-chart circle.series-2 { stroke: var(--series-2); fill: var(--series-2); }
-      .report-chart polyline.series-3, .report-chart circle.series-3 { stroke: var(--series-3); fill: var(--series-3); }
+      .report-chart polyline.series-0, .report-chart path.series-0, .report-chart circle.series-0 { stroke: var(--series-0); fill: var(--series-0); }
+      .report-chart polyline.series-1, .report-chart path.series-1, .report-chart circle.series-1 { stroke: var(--series-1); fill: var(--series-1); }
+      .report-chart polyline.series-2, .report-chart path.series-2, .report-chart circle.series-2 { stroke: var(--series-2); fill: var(--series-2); }
+      .report-chart polyline.series-3, .report-chart path.series-3, .report-chart circle.series-3 { stroke: var(--series-3); fill: var(--series-3); }
+      .report-chart path.chart-line-path { fill: none; stroke-width: .7; stroke-linecap: round; stroke-linejoin: round; }
+      .report-chart .chart-point { stroke: var(--chart-bg); stroke-width: .35; }
+      .report-chart .chart-point:hover, .report-chart .chart-point:focus { stroke: #4b9c75; stroke-width: 1; r: 1.75; }
+      .chart-spectrum { fill: url(#chart-spectrum); }
+      .chart-rail-value { fill: var(--chart-tick); font-size: 2.25px; font-variant-numeric: tabular-nums; }
       .report-chart rect.series-1 { fill: var(--series-1); }
       .report-chart rect.series-2 { fill: var(--series-2); }
       .report-chart rect.series-3 { fill: var(--series-3); }

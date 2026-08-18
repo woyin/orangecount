@@ -531,11 +531,28 @@ function wireCharts(root) {
       document.body.appendChild(box);
       point.__tooltip = box;
     };
-    const hide = () => { if (point.__tooltip) { point.__tooltip.remove(); point.__tooltip = null; } };
+    const hide = () => {
+      if (point.classList.contains("selected")) return;
+      if (point.__tooltip) { point.__tooltip.remove(); point.__tooltip = null; }
+    };
+    const pin = (event) => {
+      const svg = point.closest(".report-chart");
+      svg?.querySelectorAll("[data-point-value].selected").forEach((other) => {
+        if (other !== point) {
+          other.classList.remove("selected");
+          if (other.__tooltip) { other.__tooltip.remove(); other.__tooltip = null; }
+        }
+      });
+      point.classList.toggle("selected");
+      if (point.classList.contains("selected")) show(event);
+      else hide();
+    };
     point.addEventListener("mouseover", show);
     point.addEventListener("focus", show);
     point.addEventListener("mouseout", hide);
     point.addEventListener("blur", hide);
+    point.addEventListener("click", pin);
+    point.addEventListener("keydown", (event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); pin(event); } });
   });
 }
 function mountChartData(svg, chart) {
@@ -716,9 +733,12 @@ function renderTimeSeriesChart(chart, fallbackLabel) {
   const min = Math.min(0, ...allValues);
   const max = Math.max(0, ...allValues);
   const span = max - min || 1;
-  const margin = { top: 4, right: 4, bottom: 8, left: 10 };
+  // The line chart has a compact value rail above the plotting plane. It keeps
+  // the trend readable at a glance while leaving the plot wide rather than
+  // consuming vertical space with a conventional y-axis.
+  const margin = { top: 15, right: 4, bottom: 8, left: 4 };
   const plotW = 100 - margin.left - margin.right;
-  const plotH = 52 - margin.top - margin.bottom;
+  const plotH = 64 - margin.top - margin.bottom;
   const yFor = (value) => margin.top + plotH - ((value - min) / span) * plotH;
   const xFor = (index) => pointCount <= 1 ? margin.left + plotW / 2 : margin.left + (index / (pointCount - 1)) * plotW;
   // Y ticks on the left, horizontal grid lines across the plot.
@@ -734,15 +754,33 @@ function renderTimeSeriesChart(chart, fallbackLabel) {
     const index = sampled[0].points.findIndex((point) => point.date === date);
     if (index < 0) return "";
     const x = xFor(index);
-    return `<text class="chart-tick chart-tick-x" x="${x.toFixed(2)}" y="${(52 - 1.6).toFixed(2)}" text-anchor="middle">${escapeHTML(date)}</text>`;
+    return `<text class="chart-tick chart-tick-x" x="${x.toFixed(2)}" y="${(64 - 1.6).toFixed(2)}" text-anchor="middle">${escapeHTML(date)}</text>`;
   }).join("");
+  const railPoints = sampled[0].points;
+  const railStride = Math.max(1, Math.ceil(railPoints.length / 9));
+  const railLabels = railPoints.map((point, index) => {
+    if (index % railStride !== 0 && index !== railPoints.length - 1) return "";
+    return `<text class="chart-rail-value" x="${xFor(index).toFixed(2)}" y="8.2" text-anchor="middle">${escapeHTML(formatCompact(point.value))}</text>`;
+  }).join("");
+  const rail = `<defs><linearGradient id="chart-spectrum" x1="0" x2="1" y1="0" y2="0"><stop offset="0" stop-color="#7f91c8"/><stop offset=".22" stop-color="#62a5ec"/><stop offset=".43" stop-color="#62ad8e"/><stop offset=".63" stop-color="#d9983a"/><stop offset=".81" stop-color="#d87878"/><stop offset="1" stop-color="#ad75d2"/></linearGradient></defs><rect class="chart-spectrum" x="0" y="10.5" width="100" height=".8" rx=".4"></rect>${railLabels}`;
+  function smoothPath(points) {
+    if (!points.length) return "";
+    if (points.length === 1) return `M${xFor(0).toFixed(2)},${yFor(points[0].value).toFixed(2)}`;
+    let path = `M${xFor(0).toFixed(2)},${yFor(points[0].value).toFixed(2)}`;
+    for (let index = 1; index < points.length - 1; index += 1) {
+      const midX = (xFor(index) + xFor(index + 1)) / 2;
+      const midY = (yFor(points[index].value) + yFor(points[index + 1].value)) / 2;
+      path += ` Q${xFor(index).toFixed(2)},${yFor(points[index].value).toFixed(2)} ${midX.toFixed(2)},${midY.toFixed(2)}`;
+    }
+    const last = points.length - 1;
+    return `${path} Q${xFor(last - 1).toFixed(2)},${yFor(points[last - 1].value).toFixed(2)} ${xFor(last).toFixed(2)},${yFor(points[last].value).toFixed(2)}`;
+  }
   const paths = sampled.map((item, seriesIndex) => {
-    const points = item.points.map((point, index) => `${xFor(index).toFixed(2)},${yFor(point.value).toFixed(2)}`).join(" ");
-    const circles = item.points.map((point, index) => `<circle class="series-${seriesIndex}" data-series-index="${seriesIndex}" data-point-date="${escapeHTML(point.date)}" data-point-value="${escapeHTML(String(point.value))}" cx="${xFor(index).toFixed(2)}" cy="${yFor(point.value).toFixed(2)}" r="1.1" tabindex="0" aria-label="${escapeHTML(`${item.label} ${point.date}: ${point.value}`)}"><title>${escapeHTML(`${item.label} ${point.date}: ${point.value}`)}</title></circle>`).join("");
-    return `<polyline class="series-${seriesIndex}" points="${points}" fill="none" stroke-width="1.2"></polyline>${circles}`;
+    const circles = item.points.map((point, index) => `<circle class="chart-point series-${seriesIndex}" data-series-index="${seriesIndex}" data-point-date="${escapeHTML(point.date)}" data-point-value="${escapeHTML(String(point.value))}" cx="${xFor(index).toFixed(2)}" cy="${yFor(point.value).toFixed(2)}" r="1.15" tabindex="0" aria-label="${escapeHTML(`${item.label} ${point.date}: ${point.value}`)}"><title>${escapeHTML(`${item.label} ${point.date}: ${point.value}`)}</title></circle>`).join("");
+    return `<path class="chart-line-path series-${seriesIndex}" data-series-index="${seriesIndex}" d="${smoothPath(item.points)}"></path>${circles}`;
   }).join("");
   const legend = `<ol class="chart-legend">${sampled.map((item, index) => `<li data-series-toggle="${index}"><span class="series-label series-${index}">${escapeHTML(item.label)}</span><strong>${escapeHTML(`${item.points[item.points.length - 1].date}: ${item.points[item.points.length - 1].value}${unit ? ` ${unit}` : ""}`)}</strong></li>`).join("")}</ol>`;
-  return `<section class="chart-card" aria-label="${escapeHTML(`${t("chart")}: ${words.description}`)}"><h3>${escapeHTML(words.title)}</h3>${chartAvailabilityNote(chart)}<svg class="report-chart report-line-chart" viewBox="0 0 100 52" role="img" aria-label="${escapeHTML(words.description)}" data-chart-unit="${escapeHTML(unit)}" data-chart-period="${escapeHTML(words.period)}">${gridLines}${zeroLine}${paths}${xLabels}</svg><p class="muted">${escapeHTML(words.description)}</p>${legend}</section>`;
+  return `<section class="chart-card chart-card--spectrum" aria-label="${escapeHTML(`${t("chart")}: ${words.description}`)}"><h3>${escapeHTML(words.title)}</h3>${chartAvailabilityNote(chart)}<svg class="report-chart report-line-chart" viewBox="0 0 100 64" role="img" aria-label="${escapeHTML(words.description)}" data-chart-unit="${escapeHTML(unit)}" data-chart-period="${escapeHTML(words.period)}">${rail}${gridLines}${zeroLine}${paths}${xLabels}</svg><p class="muted">${escapeHTML(words.description)}</p>${legend}</section>`;
 }
 function renderTimeSeriesBars(chart, series, fallbackLabel) {
   const unit = chart.currency || chart.unit || "";
