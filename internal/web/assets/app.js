@@ -1347,7 +1347,7 @@ async function renderAccountDetail(account) {
         const current = runningByCurrency.get(currency) || { exact: "0", display: "0" };
         const next = addExact(current.exact, amount.exact);
         runningByCurrency.set(currency, { exact: String(next.exact), display: String(next.display) });
-        running = String(next.display);
+        running = `${next.display} ${currency}`;
       }
       return { date: row.date || "", account: row.account || "", units: postedUnits(row), flag: row.flag || "", running };
     });
@@ -1402,7 +1402,22 @@ function addExact(left, right) {
     }
     return { exact: `${reducedNum}/${reducedDen}`, display: `${sign}${integer}.${digits}` };
   }
-  return { exact: `${reducedNum}/${reducedDen}`, display: `${reducedNum}/${reducedDen}` };
+  // Keep the exact rational for the next addition, but never expose it as the
+  // account-page running balance. A repeating fund-unit quantity such as
+  // 10000000/20999 is an implementation detail; six decimal places match the
+  // ledger's displayed fund units while staying readable.
+  const sign = reducedNum < 0n ? "-" : "";
+  const absNum = reducedNum < 0n ? -reducedNum : reducedNum;
+  const integer = absNum / reducedDen;
+  let remainder = absNum % reducedDen;
+  let digits = "";
+  for (let index = 0; index < 6; index += 1) {
+    remainder *= 10n;
+    digits += String(remainder / reducedDen);
+    remainder %= reducedDen;
+  }
+  digits = digits.replace(/0+$/, "");
+  return { exact: `${reducedNum}/${reducedDen}`, display: digits ? `${sign}${integer}.${digits}` : `${sign}${integer}` };
 }
 function mountRawTable(container, result, options = {}) {
   const columns = result.columns.map((column) => column === "running" && options.runningLabel ? options.runningLabel : column);
