@@ -465,12 +465,18 @@ func collectResolvedPostings(tx *Transaction, addContribution contributionFunc) 
 func (e *evaluator) inferElision(tx *Transaction, index int, totals map[string]Decimal) (resolvedPosting, bool) {
 	posting := tx.Postings[index]
 	currency := e.inferPostingCurrency(posting, totals)
-	balanceCurrency, factor, ok := e.inferenceTarget(posting, currency, totals)
+	balanceCurrency, factor, unitsInBalance, ok := e.inferenceTarget(posting, currency, totals)
 	if !ok || factor.IsZero() {
 		e.add("E-EVAL-INFER", diagnostic.Error, posting.Span(), e.pathFor(posting.Span()))
 		return resolvedPosting{}, false
 	}
 	inferred := divideDecimal(totals[balanceCurrency].Neg(), factor)
+	if unitsInBalance {
+		// The residual being absorbed lives in balanceCurrency, so the
+		// completed units must be denominated there; the account's standing
+		// balance may otherwise suggest a different currency entirely.
+		currency = balanceCurrency
+	}
 	units := Amount{Number: numberFromDecimal(inferred), Currency: currency}
 	tx.Postings[index].Units = &units
 	return resolvedPosting{posting: tx.Postings[index], amount: inferred, currency: currency}, true
@@ -937,14 +943,19 @@ func (e *evaluator) inferPostingCurrency(posting Posting, totals map[string]Deci
 // inferenceTarget picks the currency an amount-less posting converts into
 // and the conversion factor: an explicit price first, then the cost, then the
 // posting's own units currency when it already has a balance, and finally a
-// sole existing total. False means the posting cannot be inferred.
-func (e *evaluator) inferenceTarget(posting Posting, unitsCurrency string, totals map[string]Decimal) (string, Decimal, bool) {
+// sole existing total. unitsInBalance reports that the balancing amount
+// itself is denominated in the target currency (the last two branches), so
+// the completed posting's units carry that currency — not merely the
+// account's standing-balance currency, which a multi-currency account may
+// have picked up from an earlier transaction. False means the posting cannot
+// be inferred.
+func (e *evaluator) inferenceTarget(posting Posting, unitsCurrency string, totals map[string]Decimal) (string, Decimal, bool, bool) {
 	if posting.Price != nil && posting.Price.Amount.Currency != "" && posting.Price.Amount.Number.Raw != "" {
 		factor := DecimalFromNumber(posting.Price.Amount.Number)
 		if posting.Price.Total {
 			factor = NewDecimal(big.NewRat(1, 1))
 		}
-		return posting.Price.Amount.Currency, factor, true
+		return posting.Price.Amount.Currency, factor, false, true
 	}
 	if posting.Cost != nil {
 		if cost, ok := normalizeCost(*posting.Cost); ok && cost.Currency != "" && !cost.Number.IsZero() {
@@ -952,20 +963,20 @@ func (e *evaluator) inferenceTarget(posting Posting, unitsCurrency string, total
 			if posting.Cost.Total {
 				factor = NewDecimal(big.NewRat(1, 1))
 			}
-			return cost.Currency, factor, true
+			return cost.Currency, factor, false, true
 		}
 	}
 	if unitsCurrency != "" {
 		if _, ok := totals[unitsCurrency]; ok {
-			return unitsCurrency, NewDecimal(big.NewRat(1, 1)), true
+			return unitsCurrency, NewDecimal(big.NewRat(1, 1)), true, true
 		}
 	}
 	if len(totals) == 1 {
 		for currency := range totals {
-			return currency, NewDecimal(big.NewRat(1, 1)), true
+			return currency, NewDecimal(big.NewRat(1, 1)), true, true
 		}
 	}
-	return "", Zero(), false
+	return "", Zero(), false, false
 }
 
 // applyPosting folds one fully-interpolated posting into the authoritative
@@ -1002,6 +1013,30 @@ func (e *evaluator) applyPosting(date Date, posting Posting, amount Decimal, cur
 		return
 	}
 	e.applyInventory(date, posting, account, amount, currency, cost)
+}
+
+// PostingWeight values one posting in its quote currency the way BeanQuery's
+// weight column does: units x lot cost when costed, units x price (or the
+// @@ total, signed by the units) when priced, plain units otherwise. It is
+// the honest per-posting value when no conversion quote exists.
+func PostingWeight(posting Posting) Decimal {
+	units := DecimalFromNumber(posting.Units.Number)
+	if posting.Cost != nil {
+		if cost, ok := normalizeCost(*posting.Cost); ok && cost.Currency != "" {
+			return NewDecimal(new(big.Rat).Mul(units.Rat(), cost.Number.Rat()))
+		}
+	}
+	if posting.Price != nil && posting.Price.Amount.Currency != "" {
+		total := DecimalFromNumber(posting.Price.Amount.Number)
+		if posting.Price.Total {
+			if units.Rat().Sign() < 0 {
+				return NewDecimal(new(big.Rat).Neg(total.Rat()))
+			}
+			return total
+		}
+		return NewDecimal(new(big.Rat).Mul(units.Rat(), total.Rat()))
+	}
+	return units
 }
 
 // applyInventory moves the posting's cost-basis inventory: acquisitions

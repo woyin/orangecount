@@ -398,7 +398,11 @@ func (s *Server) buildReport(r *http.Request, current *snapshot.Snapshot, name s
 	if err != nil {
 		return query.Result{}, "", true, err
 	}
-	result = report.Filter(result, filters)
+	// The pivot applies the global filters itself while accumulating (its rows
+	// are intervals, not postings), so the generic row filter must not re-run.
+	if !strings.EqualFold(name, "pivot") {
+		result = report.Filter(result, filters)
+	}
 	if strings.EqualFold(name, "journal") {
 		result = report.FilterJournal(result, journalFiltersFromQuery(r))
 	}
@@ -410,7 +414,8 @@ func reportKnown(name string) bool {
 	switch strings.ToLower(name) {
 	case "accounts", "account", "journal", "trial-balance", "trial_balance", "trialbalance",
 		"balance-sheet", "balance_sheet", "balancesheet", "income-statement", "income_statement", "incomestatement",
-		"holdings", "prices", "price", "commodities", "commodity", "events", "event",
+		"holdings", "pivot",
+		"prices", "price", "commodities", "commodity", "events", "event",
 		"documents", "document", "statistics", "statistic", "stats", "errors", "error":
 		return true
 	default:
@@ -445,6 +450,19 @@ func reportForRequest(r *http.Request, current *snapshot.Snapshot, name string) 
 		return report.IncomeStatement(evaluation), "income-statement", nil
 	case "holdings":
 		return holdingsReport(r, evaluation)
+	case "pivot":
+		filters, err := globalReportFilters(r)
+		if err != nil {
+			return query.Result{}, "", err
+		}
+		spec := report.PivotSpec{
+			Rows:    r.URL.Query().Get("rows"),
+			Columns: r.URL.Query().Get("columns"),
+			Values:  r.URL.Query().Get("values"),
+			Account: r.URL.Query().Get("account"),
+			Filters: filters,
+		}
+		return report.PivotTable(evaluation, spec), "", nil
 	case "prices", "price", "commodities", "commodity":
 		return report.Prices(evaluation), "", nil
 	case "events", "event":

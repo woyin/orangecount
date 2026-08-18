@@ -8,6 +8,14 @@ OrangeCount is a personal, Go-native accounting system that can read and validat
 A Beancount ledger whose accepted syntax and accounting meaning OrangeCount preserves, subject to explicitly documented compatibility boundaries.
 _Avoid_: import format, legacy file
 
+**Pivot report**:
+An Excel-style cross-tab over the ledger — rows, columns, and a value (period totals or ending balance) chosen from pickers — served as a report surface on top of grouped query results. Not a query-language feature.
+_Avoid_: PIVOT syntax, full SQL
+
+**Ending balance**:
+An account's or group's balance as of the end of a reporting interval, computed from interval balances rather than summed from postings, because inventories do not sum across currencies.
+_Avoid_: final balance, sum of balance
+
 **Independent implementation**:
 The Go implementation that parses and evaluates a compatible ledger without delegating execution to Python Beancount.
 _Avoid_: wrapper, binding, port

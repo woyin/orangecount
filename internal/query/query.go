@@ -19,6 +19,8 @@ import (
 	"unicode/utf8"
 
 	"orangecount/internal/ledger"
+	"regexp"
+	"sync"
 )
 
 // Row is one result record keyed by output column name.
@@ -106,6 +108,9 @@ func Evaluate(text string, evaluation ledger.Evaluation) (Result, error) {
 // apply WHERE, group, project the select list, then order and limit. Each
 // stage is a helper so the pipeline stays readable in order.
 func EvaluateQuery(query Query, evaluation ledger.Evaluation) (Result, error) {
+	if err := prepareQuery(&query); err != nil {
+		return Result{}, err
+	}
 	rows, err := rowsForTable(query.From, evaluation)
 	if err != nil {
 		return Result{}, err
@@ -116,7 +121,7 @@ func EvaluateQuery(query Query, evaluation ledger.Evaluation) (Result, error) {
 	}
 	groups := groupRows(rows, query.GroupBy, query.Select)
 	selectItems := expandStarSelect(rows, query.Select)
-	result, err := projectGroups(selectItems, groups)
+	result, err := projectGroups(selectItems, groups, query.OrderBy)
 	if err != nil {
 		return Result{}, err
 	}
@@ -174,17 +179,29 @@ func expandStarSelect(rows []Row, selectItems []SelectItem) []SelectItem {
 
 // projectGroups evaluates the select list once per group, naming each output
 // column by its alias (or expression text when unaliased).
-func projectGroups(selectItems []SelectItem, groups [][]Row) (Result, error) {
+// projectGroups projects each group onto the select list. ORDER BY keys
+// that are not projected columns (upstream bean-query permits ordering by
+// any source expression) ride along under their expression text and are
+// stripped by sortResultRows so they never surface as output.
+func projectGroups(selectItems []SelectItem, groups [][]Row, orderBy []OrderItem) (Result, error) {
 	result := Result{}
+	projected := make(map[string]bool, len(selectItems))
 	for _, item := range selectItems {
 		alias := item.Alias
 		if alias == "" {
 			alias = item.Expr.String()
 		}
 		result.Columns = append(result.Columns, alias)
+		projected[alias] = true
+	}
+	sortKeys := make([]Expr, 0, len(orderBy))
+	for _, item := range orderBy {
+		if !projected[item.Expr.String()] {
+			sortKeys = append(sortKeys, item.Expr)
+		}
 	}
 	for _, group := range groups {
-		projected := Row{}
+		row := Row{}
 		for _, item := range selectItems {
 			alias := item.Alias
 			if alias == "" {
@@ -194,9 +211,16 @@ func projectGroups(selectItems []SelectItem, groups [][]Row) (Result, error) {
 			if err != nil {
 				return Result{}, err
 			}
-			projected[alias] = value
+			row[alias] = value
 		}
-		result.Rows = append(result.Rows, projected)
+		for _, key := range sortKeys {
+			value, err := key.eval(firstRow(group), group)
+			if err != nil {
+				return Result{}, err
+			}
+			row[key.String()] = value
+		}
+		result.Rows = append(result.Rows, row)
 	}
 	return result, nil
 }
@@ -207,6 +231,21 @@ func sortResultRows(result Result, orderBy []OrderItem) {
 	if len(orderBy) == 0 {
 		return
 	}
+	defer func() {
+		// Strip the ORDER BY helper keys that are not declared columns so
+		// they never leak into output rows.
+		columns := make(map[string]bool, len(result.Columns))
+		for _, name := range result.Columns {
+			columns[name] = true
+		}
+		for _, row := range result.Rows {
+			for key := range row {
+				if !columns[key] {
+					delete(row, key)
+				}
+			}
+		}
+	}()
 	sort.SliceStable(result.Rows, func(i, j int) bool {
 		left, right := result.Rows[i], result.Rows[j]
 		for _, item := range orderBy {
@@ -288,9 +327,57 @@ func rowsForTable(table string, evaluation ledger.Evaluation) ([]Row, error) {
 	}
 }
 
+// formatInventory renders a per-currency balance map the way upstream
+// beanquery prints inventories: components sorted by currency and joined
+// with ", " (e.g. "100 CNY, -30 USD"). An empty inventory is the empty
+// string, matching NULL rendering.
+func formatInventory(balances map[string]ledger.Decimal) string {
+	if len(balances) == 0 {
+		return ""
+	}
+	currencies := make([]string, 0, len(balances))
+	for currency := range balances {
+		currencies = append(currencies, currency)
+	}
+	sort.Strings(currencies)
+	parts := make([]string, 0, len(currencies))
+	for _, currency := range currencies {
+		parts = append(parts, balances[currency].String()+" "+currency)
+	}
+	return strings.Join(parts, ", ")
+}
+
+// datePartDecimal extracts the year/month/day of a ledger date as a Decimal
+// so the derived columns group, filter, and order like any number.
+func datePartDecimal(date ledger.Date, part string) ledger.Decimal {
+	switch part {
+	case "year":
+		return ledger.NewDecimal(big.NewRat(int64(date.Year), 1))
+	case "month":
+		return ledger.NewDecimal(big.NewRat(int64(date.Month), 1))
+	default:
+		return ledger.NewDecimal(big.NewRat(int64(date.Day), 1))
+	}
+}
+
 func postingRows(evaluation ledger.Evaluation) []Row {
 	rows := make([]Row, 0)
-	for _, entry := range evaluation.Entries {
+	runningBalances := map[string]map[string]ledger.Decimal{}
+	// Upstream beanquery answers from the loader's chronologically sorted
+	// entry stream, so the balance column must accumulate in date order (a
+	// stable sort keeps source order within one day). Raw source order would
+	// interleave years whenever a multi-year file precedes the year files.
+	ordered := append([]ledger.EntryRecord(nil), evaluation.Entries...)
+	sort.SliceStable(ordered, func(i, j int) bool {
+		if ordered[i].Date.Year != ordered[j].Date.Year {
+			return ordered[i].Date.Year < ordered[j].Date.Year
+		}
+		if ordered[i].Date.Month != ordered[j].Date.Month {
+			return ordered[i].Date.Month < ordered[j].Date.Month
+		}
+		return ordered[i].Date.Day < ordered[j].Date.Day
+	})
+	for _, entry := range ordered {
 		var transaction *ledger.Transaction
 		switch value := entry.Directive.(type) {
 		case *ledger.Transaction:
@@ -307,10 +394,29 @@ func postingRows(evaluation ledger.Evaluation) []Row {
 			// shown in Fava's journal). Preserve a separate posting_flag for
 			// callers that need the lower-level posting marker.
 			row := Row{"date": transaction.Date.Raw, "account": posting.Account, "flag": transaction.Flag, "posting_flag": posting.Flag, "narration": transaction.Narration, "payee": transaction.Payee, "tags": append([]string(nil), transaction.Tags...), "links": append([]string(nil), transaction.Links...), "file": entry.File, "span": entry.Span.String(), "kind": string(transaction.Kind())}
+			// BeanQuery's derived date columns let GROUP BY year, month
+			// partition postings without spelling year(date).
+			row["year"] = datePartDecimal(transaction.Date, "year")
+			row["month"] = datePartDecimal(transaction.Date, "month")
+			row["day"] = datePartDecimal(transaction.Date, "day")
 			if posting.Units != nil {
 				row["currency"] = posting.Units.Currency
 				row["units"] = ledger.DecimalFromNumber(posting.Units.Number)
 				row["number"] = ledger.DecimalFromNumber(posting.Units.Number)
+				row["weight"] = ledger.PostingWeight(posting)
+				// The running per-account balance accumulates Units in
+				// evaluation order; elided legs are already completed in the
+				// entry stream (see inferElision), so this reproduces the
+				// authoritative account state after each posting.
+				running := runningBalances[posting.Account]
+				if running == nil {
+					running = map[string]ledger.Decimal{}
+					runningBalances[posting.Account] = running
+				}
+				running[posting.Units.Currency] = ledger.NewDecimal(new(big.Rat).Add(running[posting.Units.Currency].Rat(), ledger.DecimalFromNumber(posting.Units.Number).Rat()))
+				row["balance"] = formatInventory(running)
+			} else {
+				row["balance"] = formatInventory(runningBalances[posting.Account])
 			}
 			if posting.Cost != nil {
 				row["cost"] = posting.Cost.Raw
@@ -408,7 +514,7 @@ func lex(text string) []queryToken {
 			i += size
 			continue
 		}
-		if strings.ContainsRune("=<>!+-/", r) {
+		if strings.ContainsRune("=<>!+-/~", r) {
 			var token queryToken
 			token, i = lexOperator(text, i, size)
 			tokens = append(tokens, token)
@@ -817,7 +923,7 @@ func operatorPrecedence(token queryToken) int {
 		return -1
 	}
 	switch token.text {
-	case "=", "!=", "<>", "<", "<=", ">", ">=":
+	case "=", "!=", "<>", "<", "<=", ">", ">=", "~":
 		return 3
 	case "+", "-":
 		return 4
@@ -825,6 +931,178 @@ func operatorPrecedence(token queryToken) int {
 		return 5
 	default:
 		return -1
+	}
+}
+
+// targetSchemas lists every column each query table exposes. Column
+// references are validated against this static schema before evaluation so a
+// typo like sum(amount) fails loudly instead of silently returning zeroes.
+var targetSchemas = map[string][]string{
+	"postings": {"account", "balance", "cost", "currency", "date", "day", "file", "flag", "kind", "links", "month", "narration", "number", "payee", "posting_flag", "span", "tags", "units", "weight", "year"},
+	"entries":  {"date", "file", "kind", "span"},
+	"accounts": {"account", "balance", "currency", "opened"},
+	"prices":   {"amount", "currency", "date", "quote_currency"},
+}
+
+// prepareQuery resolves select-list aliases referenced by GROUP BY / ORDER BY
+// (SELECT year(date) AS y ... GROUP BY y) and then rejects unknown column
+// names with the table's valid columns, honoring the honest-filtering
+// principle: an unanswerable query must say so, never return plausible
+// zeroes.
+func prepareQuery(query *Query) error {
+	resolveGroupAliases(query)
+	if err := validateOrderByNames(query); err != nil {
+		return err
+	}
+	return validateColumnNames(query)
+}
+
+// resolveGroupAliases rewrites bare GROUP BY fields that name a select alias
+// into the aliased expression, so GROUP BY y works for SELECT year(date) AS y.
+func resolveGroupAliases(query *Query) {
+	aliases := map[string]Expr{}
+	for _, item := range query.Select {
+		if item.Alias != "" {
+			aliases[strings.ToLower(item.Alias)] = item.Expr
+		}
+	}
+	for i, expr := range query.GroupBy {
+		if field, ok := expr.(fieldExpr); ok {
+			if aliased, ok := aliases[strings.ToLower(field.name)]; ok {
+				query.GroupBy[i] = aliased
+			}
+		}
+	}
+}
+
+// validateOrderByNames accepts ORDER BY fields that name an output column or
+// a source-table column (upstream bean-query lets ORDER BY reference any
+// source expression; projectGroups carries the value), and fails loudly on a
+// name that is neither — a typo would otherwise silently no-op the sort.
+func validateOrderByNames(query *Query) error {
+	if _, isStar := starSelect(query); isStar {
+		return nil // a star select projects every schema column; any name sorts
+	}
+	schema := targetSchemas[canonicalTable(query.From)]
+	for i := range query.OrderBy {
+		field, ok := query.OrderBy[i].Expr.(fieldExpr)
+		if !ok {
+			continue
+		}
+		known := validOutputName(query, field.name)
+		for _, column := range schema {
+			if strings.EqualFold(column, field.name) {
+				known = true
+			}
+		}
+		if !known {
+			return fmt.Errorf("unknown column %q in ORDER BY", field.name)
+		}
+	}
+	return nil
+}
+
+// validateColumnNames rejects SELECT/WHERE/GROUP BY column references the
+// table does not carry, listing the valid columns. ORDER BY is deliberately
+// absent: it references projected output columns, not source-table columns.
+func validateColumnNames(query *Query) error {
+	schema := targetSchemas[canonicalTable(query.From)]
+	if schema == nil {
+		return nil // unknown tables are diagnosed by rowsForTable
+	}
+	valid := make(map[string]bool, len(schema))
+	for _, column := range schema {
+		valid[column] = true
+	}
+	visit := func(expr Expr) error {
+		var problem error
+		walkFields(expr, func(name string) {
+			if !valid[strings.ToLower(name)] && problem == nil {
+				problem = fmt.Errorf("unknown column %q (available: %s)", name, strings.Join(schema, ", "))
+			}
+		})
+		return problem
+	}
+	for _, item := range query.Select {
+		if err := visit(item.Expr); err != nil {
+			return err
+		}
+	}
+	if err := visit(query.Where); err != nil {
+		return err
+	}
+	for _, expr := range query.GroupBy {
+		if err := visit(expr); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// outputNames lists the projected column names of a select list. A star
+// select has no fixed names, so it reports nil and ORDER BY validation is
+// skipped by the caller.
+func outputNames(query *Query) []string {
+	names := make([]string, 0, len(query.Select))
+	for _, item := range query.Select {
+		if item.Alias != "" {
+			names = append(names, item.Alias)
+		} else {
+			names = append(names, item.Expr.String())
+		}
+	}
+	return names
+}
+
+// starSelect reports whether any select item is the bare star.
+func starSelect(query *Query) (SelectItem, bool) {
+	for _, item := range query.Select {
+		if _, ok := item.Expr.(starExpr); ok {
+			return item, true
+		}
+	}
+	return SelectItem{}, false
+}
+
+func validOutputName(query *Query, name string) bool {
+	for _, candidate := range outputNames(query) {
+		if strings.EqualFold(candidate, name) {
+			return true
+		}
+	}
+	return false
+}
+
+// walkFields visits every column reference in an expression tree.
+func walkFields(expr Expr, visit func(string)) {
+	switch node := expr.(type) {
+	case fieldExpr:
+		visit(node.name)
+	case unaryExpr:
+		walkFields(node.inner, visit)
+	case binaryExpr:
+		walkFields(node.left, visit)
+		walkFields(node.right, visit)
+	case functionExpr:
+		for _, arg := range node.args {
+			walkFields(arg, visit)
+		}
+	}
+}
+
+// canonicalTable normalizes a FROM spelling to its schema key.
+func canonicalTable(from string) string {
+	switch strings.ToLower(strings.TrimSpace(from)) {
+	case "postings", "posting":
+		return "postings"
+	case "entries", "entry", "directives":
+		return "entries"
+	case "accounts", "account":
+		return "accounts"
+	case "prices", "price":
+		return "prices"
+	default:
+		return ""
 	}
 }
 
@@ -939,11 +1217,42 @@ func (e binaryExpr) evalComparison(left, right any) (any, error) {
 		return compareValues(left, right) > 0, nil
 	case ">=":
 		return compareValues(left, right) >= 0, nil
+	case "~":
+		return evalRegexMatch(left, right)
 	case "+", "-", "*", "/":
 		return e.evalArithmetic(left, right)
 	default:
 		return nil, fmt.Errorf("unsupported operator %q", e.operator)
 	}
+}
+
+// regexCache memoizes compiled patterns so a WHERE filter never recompiles
+// its regular expression per row. Patterns come from user queries and the
+// set in a session is tiny, so the cache is unbounded by design.
+var regexCache sync.Map
+
+// evalRegexMatch implements the BeanQuery "~" operator: the right operand is
+// a regular expression (Go RE2 syntax, a deliberate subset of Python re)
+// matched against the left operand. NULL never matches.
+func evalRegexMatch(left, right any) (any, error) {
+	pattern, ok := right.(string)
+	if !ok {
+		return false, fmt.Errorf("~ requires a string pattern, got %v", right)
+	}
+	text, ok := left.(string)
+	if !ok {
+		return false, nil
+	}
+	compiled, ok := regexCache.Load(pattern)
+	if !ok {
+		re, err := regexp.Compile(pattern)
+		if err != nil {
+			return false, fmt.Errorf("invalid regular expression %q: %v", pattern, err)
+		}
+		regexCache.Store(pattern, re)
+		compiled = re
+	}
+	return compiled.(*regexp.Regexp).MatchString(text), nil
 }
 
 // evalArithmetic applies +, -, *, / to numeric operands.
@@ -1008,9 +1317,48 @@ func (e functionExpr) eval(row Row, rows []Row) (any, error) {
 		return e.evalDatePart(row, rows)
 	case "has_tag", "has_link":
 		return e.evalMembership(row, rows)
+	case "root":
+		return e.evalRoot(row, rows)
 	default:
 		return nil, fmt.Errorf("unsupported function %q", e.name)
 	}
+}
+
+// evalRoot implements BeanQuery's root(account, n): the first n colon-
+// separated components of an account name. n larger than the depth returns
+// the whole name; n <= 0 returns an empty string.
+func (e functionExpr) evalRoot(row Row, rows []Row) (any, error) {
+	if len(e.args) != 2 {
+		return nil, fmt.Errorf("root requires two arguments")
+	}
+	value, err := e.args[0].eval(row, rows)
+	if err != nil {
+		return nil, err
+	}
+	name, ok := value.(string)
+	if !ok {
+		return nil, fmt.Errorf("root requires an account column, got %v", value)
+	}
+	depth, err := e.args[1].eval(row, rows)
+	if err != nil {
+		return nil, err
+	}
+	parts, ok := decimalValue(depth)
+	if !ok {
+		return nil, fmt.Errorf("root requires a numeric depth, got %v", depth)
+	}
+	if !parts.Rat().IsInt() {
+		return nil, fmt.Errorf("root requires an integer depth, got %v", depth)
+	}
+	n := int(parts.Rat().Num().Int64())
+	if n <= 0 {
+		return "", nil
+	}
+	components := strings.Split(name, ":")
+	if n >= len(components) {
+		return name, nil
+	}
+	return strings.Join(components[:n], ":"), nil
 }
 
 // evalCount implements count() and count(expr): the bare form counts rows,
@@ -1045,9 +1393,14 @@ func (e functionExpr) evalAggregate(row Row, rows []Row) (any, error) {
 		if err != nil {
 			return nil, err
 		}
-		if decimal, ok := decimalValue(value); ok {
-			values = append(values, decimal)
+		if value == nil {
+			continue // NULL rows (e.g. an unpriced posting's cost) stay skipped
 		}
+		decimal, ok := decimalValue(value)
+		if !ok {
+			return nil, fmt.Errorf("%s cannot aggregate %q values; use a numeric column", e.name, e.args[0].String())
+		}
+		values = append(values, decimal)
 	}
 	if len(values) == 0 {
 		return ledger.Zero(), nil

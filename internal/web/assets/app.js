@@ -12,6 +12,11 @@ const translations = {
     accounts: "Accounts", journal: "Journal", trialBalance: "Trial balance", balanceSheet: "Balance sheet",
     incomeStatement: "Income statement", holdings: "Holdings", prices: "Prices", commodities: "Commodities", events: "Events",
     documents: "Documents", statistics: "Statistics", diagnostics: "Diagnostics", query: "Query", status: "Status",
+    pivot: "Pivot", pivotRows: "Rows", pivotColumns: "Columns", pivotValues: "Values", pivotMonth: "Month",
+    pivotQuarter: "Quarter", pivotYear: "Year", pivotNone: "Per currency", pivotRoot1: "Level-1 accounts",
+    pivotRoot2: "Level-2 accounts", pivotRoot3: "Level-3 accounts", pivotSum: "Period totals",
+    pivotBalance: "Ending balance", pivotAccount: "Account prefix", pivotApply: "Apply",
+    pivotFlat: "Flat table", pivotCross: "Cross-tab", pivotNeedsShape: "Pivot view needs one dimension column plus a value column (or two dimensions plus a value).",
     snapshot: "Snapshot", valid: "Valid", accountsCount: "Accounts", diagnosticsCount: "Diagnostics",
     publishedAt: "Published", yes: "yes", no: "no", loading: "Loading…", unavailable: "No valid snapshot.",
     rows: "rows", columns: "columns", run: "Run query", queryHint: "SELECT account, balance FROM accounts ORDER BY account",
@@ -42,6 +47,11 @@ const translations = {
     subtitle: "只读本地账本视图。", language: "语言", overview: "概览", accounts: "账户", journal: "日记账",
     trialBalance: "试算平衡", balanceSheet: "资产负债表", incomeStatement: "损益表", holdings: "持仓",
     prices: "价格", commodities: "商品", events: "事件", documents: "文档", statistics: "统计", diagnostics: "诊断", query: "查询", status: "状态",
+    pivot: "透视表", pivotRows: "行", pivotColumns: "列", pivotValues: "值", pivotMonth: "按月",
+    pivotQuarter: "按季", pivotYear: "按年", pivotNone: "按币种", pivotRoot1: "一级科目",
+    pivotRoot2: "二级科目", pivotRoot3: "三级科目", pivotSum: "期间合计", pivotBalance: "期末余额",
+    pivotAccount: "账户前缀", pivotApply: "应用", pivotFlat: "平铺表", pivotCross: "交叉表",
+    pivotNeedsShape: "透视视图需要一列维度加一列数值（或两列维度加一列数值）。",
     snapshot: "快照", valid: "有效", accountsCount: "账户数", diagnosticsCount: "诊断数", publishedAt: "发布时间",
     yes: "是", no: "否", loading: "加载中…", unavailable: "没有有效快照。", rows: "行", columns: "列",
     run: "运行查询", queryHint: "SELECT account, balance FROM accounts ORDER BY account", empty: "没有数据。",
@@ -75,7 +85,7 @@ const reportRoutes = [
   ["commodities", "commodities"], ["prices", "prices"], ["events", "events"], ["documents", "documents"],
   ["statistics", "statistics"],
 ];
-const navRoutes = [["overview", "overview"], ...reportRoutes, ["source", "source"], ["diagnostics", "diagnostics"], ["query", "query"], ["editor", "editor"], ["import", "import"], ["options", "options"], ["help", "help"]];
+const navRoutes = [["overview", "overview"], ...reportRoutes, ["source", "source"], ["diagnostics", "diagnostics"], ["query", "query"], ["pivot", "pivot"], ["editor", "editor"], ["import", "import"], ["options", "options"], ["help", "help"]];
 const params = new URLSearchParams(window.location.search);
 let locale = params.get("locale") === "zh-CN" ? "zh-CN" : (localStorage.getItem("orangecount-locale") || "en");
 if (!translations[locale]) locale = "en";
@@ -1533,6 +1543,57 @@ async function renderHelp() {
     render();
   } catch (error) { app.innerHTML = renderError(error); }
 }
+// renderPivot is the Excel-style report builder: pick rows (time bucket),
+// columns (currency or account level), and a value (period totals or ending
+// balance), then render the server's cross-tab. No query syntax needed.
+function renderPivot() {
+  const state = pivotState();
+  const options = (values, active) => values.map(([value, label]) => `<option value="${value}" ${value === active ? "selected" : ""}>${escapeHTML(label)}</option>`).join("");
+  app.innerHTML = `<div class="toolbar report-toolbar" role="group" aria-label="${escapeHTML(t("pivot"))}">
+    <label>${escapeHTML(t("pivotRows"))} <select id="pivot-rows">${options([["month", t("pivotMonth")], ["quarter", t("pivotQuarter")], ["year", t("pivotYear")]], state.rows)}</select></label>
+    <label>${escapeHTML(t("pivotColumns"))} <select id="pivot-columns">${options([["", t("pivotNone")], ["root1", t("pivotRoot1")], ["root2", t("pivotRoot2")], ["root3", t("pivotRoot3")]], state.columns)}</select></label>
+    <label>${escapeHTML(t("pivotValues"))} <select id="pivot-values">${options([["sum", t("pivotSum")], ["balance", t("pivotBalance")]], state.values)}</select></label>
+    <label>${escapeHTML(t("pivotAccount"))} <input id="pivot-account" type="text" value="${escapeHTML(state.account)}" placeholder="Expenses"></label>
+    <button id="pivot-apply" type="button">${escapeHTML(t("pivotApply"))}</button>
+    <a class="button" id="pivot-export" href="${escapeHTML(pivotURL(state, "csv"))}" download>${escapeHTML(t("exportCSV"))}</a>
+  </div><div id="pivot-result"></div>`;
+  const run = async () => {
+    const next = {
+      rows: document.getElementById("pivot-rows").value,
+      columns: document.getElementById("pivot-columns").value,
+      values: document.getElementById("pivot-values").value,
+      account: document.getElementById("pivot-account").value.trim(),
+    };
+    localStorage.setItem("orangecount-pivot", JSON.stringify(next));
+    document.getElementById("pivot-export").href = pivotURL(next, "csv");
+    const output = document.getElementById("pivot-result");
+    output.innerHTML = `<p class="muted">${escapeHTML(t("loading"))}</p>`;
+    try { mountTable(output, await api(pivotURL(next))); }
+    catch (error) { output.innerHTML = renderError(error); }
+  };
+  document.getElementById("pivot-apply").addEventListener("click", run);
+  ["pivot-rows", "pivot-columns", "pivot-values"].forEach((id) => document.getElementById(id).addEventListener("change", run));
+  run();
+}
+
+// pivotState loads the remembered pivot selections.
+function pivotState() {
+  try { return { rows: "month", columns: "", values: "sum", account: "", ...JSON.parse(localStorage.getItem("orangecount-pivot") || "{}") }; }
+  catch { return { rows: "month", columns: "", values: "sum", account: "" }; }
+}
+
+// pivotURL builds the pivot report request, carrying the global filters so
+// the pivot respects the same filtered view as the other pages.
+function pivotURL(state, format) {
+  const search = globalQuery();
+  search.set("rows", state.rows);
+  search.set("columns", state.columns);
+  search.set("values", state.values);
+  if (state.account) search.set("account", state.account);
+  if (format) search.set("format", format);
+  return `/api/v1/reports/pivot?${search.toString()}`;
+}
+
 function renderQuery() {
   const saved = JSON.parse(localStorage.getItem("orangecount-saved-queries") || "[]");
   app.innerHTML = `<textarea id="query-text" aria-label="${escapeHTML(t("query"))}">${escapeHTML(params.get("q") || t("queryHint"))}</textarea><div class="toolbar"><button id="run-query" type="button">${escapeHTML(t("run"))}</button><input id="query-name" type="text" placeholder="${escapeHTML(t("queryName"))}"><button id="save-query" type="button">${escapeHTML(t("save"))}</button><label>${escapeHTML(t("saved"))} <select id="saved-queries"><option value="">—</option>${saved.map((entry) => `<option value="${escapeHTML(entry.name)}">${escapeHTML(entry.name)}</option>`).join("")}</select></label><a class="button" id="query-csv" href="#" download>${escapeHTML(t("exportCSV"))}</a></div><div id="query-result"></div>`;
@@ -1560,9 +1621,63 @@ function renderQuery() {
     const output = document.getElementById("query-result");
     const previous = output.innerHTML;
     output.innerHTML = `<p class="muted">${escapeHTML(t("loading"))}</p>`;
-    try { mountTable(output, await api(`/api/v1/query?q=${encodeURIComponent(query)}`)); }
+    try { mountQueryResult(output, await api(`/api/v1/query?q=${encodeURIComponent(query)}`)); }
     catch (error) { output.innerHTML = `${renderError(error)}${previous}`; }
   });
+}
+
+// mountQueryResult renders the workbench result with a flat/cross-tab toggle:
+// two columns pivot into rows+values, three or more pivot on the first two
+// dimension columns with the final column as the value.
+function mountQueryResult(container, result) {
+  const columns = result.columns || [];
+  const pivotable = columns.length >= 2;
+  if (!pivotable) { mountTable(container, result); return; }
+  container.innerHTML = `<div class="toolbar"><button id="query-pivot-toggle" type="button" aria-pressed="false">${escapeHTML(t("pivotCross"))}</button></div><div id="query-pivot-body"></div>`;
+  const body = container.querySelector("#query-pivot-body");
+  let crossed = false;
+  const render = () => {
+    const button = container.querySelector("#query-pivot-toggle");
+    button.setAttribute("aria-pressed", crossed ? "true" : "false");
+    button.textContent = t(crossed ? "pivotFlat" : "pivotCross");
+    if (!crossed) { mountTable(body, result); return; }
+    const cross = crossTab(result);
+    if (!cross) { body.innerHTML = `<p class="muted">${escapeHTML(t("pivotNeedsShape"))}</p>`; return; }
+    body.innerHTML = cross;
+    wireTables(body, {});
+  };
+  container.querySelector("#query-pivot-toggle").addEventListener("click", () => { crossed = !crossed; render(); });
+  render();
+}
+
+// crossTab pivots a flat result client-side: the first column becomes rows,
+// the second becomes columns (when distinct), and the last column supplies
+// the values. Returns HTML or null when the shape does not fit.
+function crossTab(result) {
+  const columns = result.columns || [];
+  const rows = result.rows || [];
+  if (columns.length < 2 || !rows.length) return null;
+  const rowKey = columns[0];
+  const valueKey = columns[columns.length - 1];
+  const columnKey = columns.length >= 3 ? columns[1] : null;
+  const order = [];
+  const columnLabels = [];
+  const seenColumns = new Set();
+  const cells = new Map();
+  for (const row of rows) {
+    const rowLabel = String(row[rowKey] ?? "");
+    const columnLabel = columnKey ? String(row[columnKey] ?? "") : t("pivotSum");
+    if (!seenColumns.has(columnLabel)) { seenColumns.add(columnLabel); columnLabels.push(columnLabel); }
+    if (!cells.has(rowLabel)) { cells.set(rowLabel, new Map()); order.push(rowLabel); }
+    cells.get(rowLabel).set(columnLabel, row[valueKey]);
+  }
+  const head = `<thead><tr><th>${escapeHTML(rowKey)}</th>${columnLabels.map((label) => `<th>${escapeHTML(label)}</th>`).join("")}</tr></thead>`;
+  const body = order.map((rowLabel) => `<tr><th>${escapeHTML(rowLabel)}</th>${columnLabels.map((label) => {
+    const value = cells.get(rowLabel).get(label);
+    const display = value && typeof value === "object" && "display" in value ? value.display : (value ?? "");
+    return `<td>${escapeHTML(String(display))}</td>`;
+  }).join("")}</tr>`).join("");
+  return `<div class="table-wrap"><table class="report-table">${head}<tbody>${body}</tbody></table></div>`;
 }
 function render() {
   document.documentElement.lang = locale;
@@ -1579,6 +1694,7 @@ function render() {
   if (view === "source") return renderSource();
   if (view === "diagnostics") return renderDiagnostics();
   if (view === "query") return renderQuery();
+  if (view === "pivot") return renderPivot();
   if (view === "editor") return renderEditor();
   if (view === "import") return renderImport();
   if (view === "options") return renderOptions();

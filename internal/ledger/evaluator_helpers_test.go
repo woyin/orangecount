@@ -104,10 +104,10 @@ func TestEvaluatorArithmeticInferenceAndOrderingHelpers(t *testing.T) {
 	if got := e.inferPostingCurrency(Posting{}, map[string]Decimal{"EUR": Zero()}); got != "EUR" {
 		t.Fatalf("total inference=%q", got)
 	}
-	if currency, factor, ok := e.inferenceTarget(Posting{Price: &PriceSpec{Amount: Amount{Number: testNumber(t, "2"), Currency: "EUR"}}}, "USD", map[string]Decimal{}); !ok || currency != "EUR" || factor.String() != "2" {
+	if currency, factor, _, ok := e.inferenceTarget(Posting{Price: &PriceSpec{Amount: Amount{Number: testNumber(t, "2"), Currency: "EUR"}}}, "USD", map[string]Decimal{}); !ok || currency != "EUR" || factor.String() != "2" {
 		t.Fatalf("price target currency=%q factor=%s ok=%v", currency, factor, ok)
 	}
-	if currency, _, ok := e.inferenceTarget(Posting{}, "", map[string]Decimal{}); ok || currency != "" {
+	if currency, _, _, ok := e.inferenceTarget(Posting{}, "", map[string]Decimal{}); ok || currency != "" {
 		t.Fatalf("unexpected inference target currency=%q ok=%v", currency, ok)
 	}
 	if !reflect.DeepEqual(sourceOrder(nil, map[source.FileID]*File{2: {}, 1: {}}), []source.FileID{1, 2}) {
