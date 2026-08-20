@@ -6,6 +6,7 @@
 package web
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -1592,6 +1593,64 @@ func TestPrivateAdapterAddEntriesUsesReviewedWriteWorkflow(t *testing.T) {
 	backup, err := os.ReadFile(entry + ".orangecount.bak")
 	if err != nil || string(backup) != initial {
 		t.Fatalf("backup=%q err=%v", backup, err)
+	}
+}
+
+func TestEditorSaveRejectsSourceDrift(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	initial := "2000-01-01 open Assets:Cash USD\n"
+	if err := os.WriteFile(entry, []byte(initial), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	built := snapshot.Build(entry)
+	server, err := NewServer(Config{Store: snapshot.NewStore(built.Snapshot), Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	external := []byte(initial + "2000-01-02 note Assets:Cash \"external\"\n")
+	if err := os.WriteFile(entry, external, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/api/v1/editor/save", strings.NewReader(`{"path":"main.bean","content":"2000-01-01 open Assets:Cash USD\n2000-01-02 note Assets:Cash \"submitted\"\n"}`))
+	request.Header.Set("Content-Type", "application/json")
+	server.Handler().ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusConflict {
+		t.Fatalf("status=%d body=%q", recorder.Code, recorder.Body.String())
+	}
+	got, err := os.ReadFile(entry)
+	if err != nil || !bytes.Equal(got, external) {
+		t.Fatalf("source overwritten: got=%q want=%q err=%v", got, external, err)
+	}
+}
+
+func TestFavaAddEntriesRejectsSourceDrift(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	initial := "2000-01-01 open Assets:Cash USD\n"
+	if err := os.WriteFile(entry, []byte(initial), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	built := snapshot.Build(entry)
+	server, err := NewServer(Config{Store: snapshot.NewStore(built.Snapshot), Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	external := []byte(initial + "2000-01-02 note Assets:Cash \"external\"\n")
+	if err := os.WriteFile(entry, external, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	recorder := httptest.NewRecorder()
+	request := httptest.NewRequest(http.MethodPost, "/__orangecount/fava/add-entries", strings.NewReader(`{"entries":[{"type":"note","date":"2000-01-03","account":"Assets:Cash","comment":"submitted"}]}`))
+	request.Header.Set("Content-Type", "application/json")
+	server.Handler().ServeHTTP(recorder, request)
+	if recorder.Code != http.StatusConflict {
+		t.Fatalf("status=%d body=%q", recorder.Code, recorder.Body.String())
+	}
+	got, err := os.ReadFile(entry)
+	if err != nil || !bytes.Equal(got, external) {
+		t.Fatalf("source overwritten: got=%q want=%q err=%v", got, external, err)
 	}
 }
 

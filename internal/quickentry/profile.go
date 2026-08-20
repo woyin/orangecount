@@ -6,9 +6,9 @@
 // Package quickentry compiles the transient quick-entry shorthand into
 // canonical Beancount transactions. The package is UI-independent: it reads a
 // ledger Evaluation, resolves the effective quick-entry profile for a given
-// transaction date, parses shorthand text, and returns NewEntry values the
-// Add Entry path already serializes. Publication, atomic write, backup,
-// revalidation, and snapshot management stay in the web layer.
+// transaction date, parses shorthand text, and returns authoring entries the
+// authoring module serializes. Publication, atomic write, backup,
+// revalidation, and snapshot management belong to authoring.Writer.
 package quickentry
 
 import (

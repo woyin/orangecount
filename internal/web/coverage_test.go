@@ -6,6 +6,7 @@
 package web
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -17,6 +18,7 @@ import (
 	"time"
 
 	"context"
+	"orangecount/internal/authoring"
 	"orangecount/internal/snapshot"
 	"orangecount/internal/source"
 )
@@ -441,9 +443,6 @@ func TestUploadHelpersDirectly(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(dir, "fail.txt")); !os.IsNotExist(err) {
 		t.Fatal("failed upload should be removed")
 	}
-	if err := atomicWrite(filepath.Join(dir, "missing-child", "f"), []byte("x"), 0o600); err == nil {
-		t.Fatal("write into missing directory should fail")
-	}
 }
 
 func TestCSVImportConversionBranches(t *testing.T) {
@@ -564,7 +563,7 @@ func TestRedactQueryPathsFallbacks(t *testing.T) {
 	}
 }
 
-func TestReplaceGraphFileFailurePaths(t *testing.T) {
+func TestWriterRejectsMissingGraphFile(t *testing.T) {
 	server, dir := newAdapterServer(t, adapterFixture)
 	current := server.store.Current()
 	if current == nil {
@@ -578,7 +577,11 @@ func TestReplaceGraphFileFailurePaths(t *testing.T) {
 	if err := os.Remove(file.Path); err != nil {
 		t.Fatal(err)
 	}
-	if _, _, err := server.replaceGraphFile(current, file.Path, display, []byte("x")); err == nil {
+	change, err := authoring.Replace(display, []byte("x"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := server.authoring.Publish(current.ID, change); err == nil {
 		t.Fatal("missing file should fail")
 	}
 	_ = dir
@@ -717,26 +720,9 @@ func TestQuickEntryCommitErrorBranches(t *testing.T) {
 }
 
 func TestQuickEntryUndoConflictBranches(t *testing.T) {
-	server, _ := newAdapterServer(t, quickFixture)
+	server, dir := newAdapterServer(t, quickFixture)
 	quickRoundTrip(t, server)
-	// Simulate the ledger moving on: patch the recorded snapshot id.
-	server.writeMu.Lock()
-	batch := *server.quickLastBatch
-	batch.SnapshotID = "different"
-	server.quickLastBatch = &batch
-	server.writeMu.Unlock()
-	moved := post(t, server, "/__orangecount/fava/quick-undo", "")
-	if moved.Code != http.StatusConflict {
-		t.Fatalf("moved-on undo status=%d", moved.Code)
-	}
-	// Restore the record, but make the file end differ so the suffix check
-	// conflicts.
-	server.writeMu.Lock()
-	batch = *server.quickLastBatch
-	batch.SnapshotID = server.store.Current().ID
-	server.quickLastBatch = &batch
-	server.writeMu.Unlock()
-	target := batch.TargetFile
+	target := filepath.Join(dir, "main.bean")
 	handle, err := os.OpenFile(target, os.O_APPEND|os.O_WRONLY, 0o600)
 	if err != nil {
 		t.Fatal(err)
@@ -745,27 +731,32 @@ func TestQuickEntryUndoConflictBranches(t *testing.T) {
 		t.Fatal(err)
 	}
 	handle.Close()
-	// The reload from the append makes the snapshot differ again; refresh id.
-	if result := server.store.Reload(server.store.Current().EntryPath, snapshot.BuildOptions{}); result.Snapshot != nil {
-		server.writeMu.Lock()
-		batch.SnapshotID = result.Snapshot.ID
-		server.quickLastBatch = &batch
-		server.writeMu.Unlock()
+	external, err := os.ReadFile(target)
+	if err != nil {
+		t.Fatal(err)
 	}
 	conflict := post(t, server, "/__orangecount/fava/quick-undo", "")
 	if conflict.Code != http.StatusConflict {
-		t.Fatalf("suffix-mismatch undo status=%d body=%q", conflict.Code, conflict.Body.String())
+		t.Fatalf("conditional receipt undo status=%d body=%q", conflict.Code, conflict.Body.String())
 	}
-	// A vanished target file surfaces the read error.
-	server.writeMu.Lock()
-	batch = *server.quickLastBatch
-	previous := batch.TargetFile
-	batch.TargetFile = filepath.Join(filepath.Dir(previous), "gone.bean")
-	server.quickLastBatch = &batch
-	server.writeMu.Unlock()
-	missing := post(t, server, "/__orangecount/fava/quick-undo", "")
-	if missing.Code != http.StatusInternalServerError {
-		t.Fatalf("missing-file undo status=%d", missing.Code)
+	got, err := os.ReadFile(target)
+	if err != nil || !bytes.Equal(got, external) {
+		t.Fatalf("undo overwrote external bytes: got=%q want=%q err=%v", got, external, err)
+	}
+}
+
+func TestQuickEntryUndoDoesNotDiscardNewerBatch(t *testing.T) {
+	server, _ := newAdapterServer(t, quickFixture)
+	older := &quickBatchRecord{}
+	newer := &quickBatchRecord{}
+	server.quickLastBatch = newer
+	server.clearQuickBatchIfCurrent(older)
+	if server.quickLastBatch != newer {
+		t.Fatal("clearing an older undo receipt discarded the latest batch")
+	}
+	server.clearQuickBatchIfCurrent(newer)
+	if server.quickLastBatch != nil {
+		t.Fatal("current undo receipt was not cleared")
 	}
 }
 

@@ -11,7 +11,7 @@ import (
 	"sync"
 	"time"
 
-	"orangecount/internal/web/favaadapter"
+	"orangecount/internal/authoring"
 )
 
 // quickPreview is a compiled-but-not-yet-published quick-entry batch. The
@@ -19,7 +19,7 @@ import (
 // publishing exactly what was previewed, without re-interpreting free text.
 type quickPreview struct {
 	Token   string
-	Entries []favaadapter.NewEntry
+	Entries []authoring.Entry
 	Target  string
 	expires int64
 }
@@ -44,7 +44,7 @@ func newQuickPreviewStore() *quickPreviewStore {
 
 // Store stages a preview batch and returns its single-use token; expired
 // batches drop on write and, at capacity, the oldest is evicted.
-func (s *quickPreviewStore) Store(entries []favaadapter.NewEntry, target string) string {
+func (s *quickPreviewStore) Store(entries []authoring.Entry, target string) string {
 	if s == nil {
 		return ""
 	}

@@ -4,6 +4,8 @@ OrangeCount is a personal, Go-native accounting system that can read and validat
 
 ## Language
 
+### Ledger and compatibility
+
 **Compatible ledger**:
 A Beancount ledger whose accepted syntax and accounting meaning OrangeCount preserves, subject to explicitly documented compatibility boundaries.
 _Avoid_: import format, legacy file
@@ -31,6 +33,8 @@ _Avoid_: v2 parity, best-effort compatibility
 **Semantic change**:
 A behavior difference that alters a ledger's accounting result, including balances, inventories, booking, or query values, rather than merely improving presentation or diagnostics.
 _Avoid_: bug fix, formatting change
+
+### Workbench and Fava parity
 
 **Built-in web interface**:
 The Go-served personal ledger interface that provides the exploration, reporting, and reviewed authoring workflows associated with Fava.
@@ -120,6 +124,8 @@ _Avoid_: mixed primary navigation, OrangeCount default route, hidden route incom
 A built-in web-interface session initiated by the OrangeCount CLI and bound only to the loopback network interface for its owner.
 _Avoid_: hosted account, shared instance
 
+### Authoring and Quick Entry
+
 **Source ledger**:
 The user-maintained `.bean` file set, including its include graph, that remains OrangeCount's authoritative accounting record.
 _Avoid_: application database, managed ledger
@@ -137,8 +143,12 @@ An explicitly configured filesystem root from which OrangeCount may resolve atta
 _Avoid_: arbitrary local path, file browser
 
 **Reviewed write workflow**:
-A local web operation that previews or validates an explicit source-ledger or document change and publishes it only through an atomic, recoverable, revalidated path. Uncommitted editing never changes the source ledger or active snapshot.
-_Avoid_: autosave, direct file mutation, partial snapshot publication
+A source-ledger change that is previewed or validated against an expected ledger snapshot and published only through an atomic, recoverable, full-graph revalidation path. Any failure leaves both the source ledger and the published ledger snapshot unchanged; the workflow is independent of its Web or CLI delivery surface.
+_Avoid_: autosave, direct file mutation, partial snapshot publication, web-only mutation
+
+**Ledger proposal**:
+A complete, validated description of one or more source-ledger directives and their visible target file, prepared for review but not yet published. It has no accounting effect until a reviewed write workflow succeeds.
+_Avoid_: HTTP request model, serialized JSON, active ledger change, quick-entry draft
 
 **Quick-entry notation**:
 A transient, deterministically compiled shorthand for capturing accounting intent through explicit aliases, templates, and defaults. Suggestions may be adaptive, but compilation never makes a probabilistic accounting choice; the reviewed result is canonical Beancount source and the sole editable and auditable record.
@@ -227,6 +237,8 @@ _Avoid_: elided balancing amount, generated private metadata, opaque posting ord
 **Quick-entry undo**:
 The reviewed restoration of the current web session's most recently published quick-entry batch, available only while its resulting ledger snapshot remains current. It previews the exact removal and uses the atomic, backed-up, revalidated write path; later ledger changes require manual correction instead.
 _Avoid_: general history, automatic merge, unconditional rollback
+
+### Diagnostics and repair guidance
 
 **Core-derived report**:
 A report whose result can be obtained solely from the v3 source ledger and its explicitly supported options, without executing a plugin or reading an OrangeCount-specific extension.
@@ -327,6 +339,8 @@ _Avoid_: eager merge, global booking change, display-only average
 **Stat-only change detection**:
 The watch loop's contract for deciding that a ledger changed: stat the entry, every file of the latest attempted include graph, and every path reported by an `E-INCLUDE-READ` diagnostic, and rebuild when any size or modification time differs. File contents are never re-read to detect change (ADR-0044).
 _Avoid_: content-hash patrol, eager re-read, directory notifications
+
+### Dialect language
 
 **Dialect line**:
 The one-line two-posting shorthand accepted inside ledger files as a Beancount v3 superset: `[DATE] [!] AMOUNT [CURRENCY] @source -> @destination ["payee"] [: narration] [#tag] [^link]`, compiled into an ordinary transaction at snapshot build (ADR-0045).

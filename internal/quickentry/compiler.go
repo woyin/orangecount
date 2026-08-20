@@ -10,8 +10,8 @@ import (
 	"regexp"
 	"strings"
 
+	"orangecount/internal/authoring"
 	"orangecount/internal/ledger"
-	"orangecount/internal/web/favaadapter"
 )
 
 // CompileRequest carries the per-batch inputs the compiler needs. The web
@@ -36,7 +36,7 @@ type CompileRequest struct {
 type LineResult struct {
 	Line      int    // 1-based line number in the input text
 	Source    string // the original shorthand text
-	Entry     *favaadapter.NewEntry
+	Entry     *authoring.Entry
 	Preview   string // canonical Beancount block, when compiled
 	Duplicate bool   // equivalent transaction exists in the ledger
 	Errors    []LineError
@@ -92,7 +92,7 @@ func Compile(req CompileRequest) []LineResult {
 		}
 		result := compileLine(line, lineNo, txnDate, flag, req.OperatingCurrency, profile)
 		if len(result.Errors) == 0 && result.Entry != nil {
-			preview, err := favaadapter.SerializeNewEntries([]favaadapter.NewEntry{*result.Entry})
+			preview, err := authoring.SerializeEntries([]authoring.Entry{*result.Entry})
 			if err != nil {
 				result.Errors = append(result.Errors, LineError{Code: "E-QUICK-SERIALIZE", Message: err.Error()})
 				result.Preview = ""
@@ -128,7 +128,7 @@ func DetectDuplicates(results []LineResult, evaluation *ledger.Evaluation) {
 
 // hasEquivalentTransaction returns true when the ledger already contains a
 // transaction with the same date, flag, payee, narration, and postings.
-func hasEquivalentTransaction(entry *favaadapter.NewEntry, entries []ledger.EntryRecord) bool {
+func hasEquivalentTransaction(entry *authoring.Entry, entries []ledger.EntryRecord) bool {
 	for _, record := range entries {
 		var tx ledger.Transaction
 		switch value := record.Directive.(type) {
@@ -438,11 +438,11 @@ func resolveEndpoint(alias string, profile Profile, code, role string) (string, 
 	return "", &LineError{Code: code, Message: fmt.Sprintf("unknown %s account alias %q", role, alias)}
 }
 
-func buildEntry(txnDate ledger.Date, flag, payee, narration, source, dest, amount, currency string, tags, links []string) *favaadapter.NewEntry {
+func buildEntry(txnDate ledger.Date, flag, payee, narration, source, dest, amount, currency string, tags, links []string) *authoring.Entry {
 	// The source posting carries a negative amount (value flows out) and the
 	// destination posting carries the positive amount (value flows in). Both
 	// are always written explicitly per "Explicit quick-entry output".
-	return &favaadapter.NewEntry{
+	return &authoring.Entry{
 		Type:      "transaction",
 		Date:      txnDate.Raw,
 		Flag:      flag,
@@ -450,7 +450,7 @@ func buildEntry(txnDate ledger.Date, flag, payee, narration, source, dest, amoun
 		Narration: narration,
 		Tags:      tags,
 		Links:     links,
-		Postings: []favaadapter.NewPosting{
+		Postings: []authoring.Posting{
 			{Account: source, Amount: "-" + amount, Currency: currency},
 			{Account: dest, Amount: amount, Currency: currency},
 		},

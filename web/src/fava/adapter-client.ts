@@ -100,6 +100,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
+function isDiagnosticContextLine(value: unknown): value is DiagnosticContextLine {
+  return isRecord(value)
+    && Number.isInteger(value.line)
+    && Number(value.line) > 0
+    && typeof value.content === "string";
+}
+
 function requiredString(value: unknown, field: string): string {
   if (typeof value !== "string" || value.trim() === "") throw new Error(`Invalid repair guidance: ${field} is required`);
   return value;
@@ -137,14 +144,29 @@ function parseDiagnosticContext(value: unknown): DiagnosticContext {
   if (!isRecord(value) || typeof value.available !== "boolean") throw new Error("Invalid diagnostic context response");
   if (value.path !== undefined && typeof value.path !== "string") throw new Error("Invalid diagnostic context: path must be a string");
   if (value.focus_line !== undefined && (!Number.isInteger(value.focus_line) || Number(value.focus_line) <= 0)) throw new Error("Invalid diagnostic context: focus_line must be positive");
+  const path = typeof value.path === "string" ? value.path : undefined;
+  const focusLine = value.focus_line === undefined ? undefined : Number(value.focus_line);
   if (!value.available) {
     if (value.reason !== undefined && typeof value.reason !== "string") throw new Error("Invalid diagnostic context: reason must be a string");
-    return value as DiagnosticContext;
+    return {
+      ...value,
+      available: value.available,
+      path,
+      focus_line: focusLine,
+      reason: value.reason,
+    };
   }
-  if (!Array.isArray(value.lines) || !value.lines.every((item) => isRecord(item) && Number.isInteger(item.line) && Number(item.line) > 0 && typeof item.content === "string")) {
+  const lines = value.lines;
+  if (!Array.isArray(lines) || !lines.every(isDiagnosticContextLine)) {
     throw new Error("Invalid diagnostic context: lines are malformed");
   }
-  return value as DiagnosticContext;
+  return {
+    ...value,
+    available: value.available,
+    path,
+    focus_line: focusLine,
+    lines,
+  };
 }
 
 function bootstrapPayload(wire: BootstrapWire, mtime = ""): BootstrapPayload {
@@ -242,6 +264,7 @@ export function createSyntheticAdapter(): AdapterClient {
     user_queries: [],
     document_roots: [],
     errors: [],
+    account_details: {},
   };
   return {
     bootstrap: async () => bootstrap,

@@ -7,8 +7,6 @@ package web
 
 import (
 	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -100,23 +98,5 @@ func TestImportAndAtomicWriteHelpersRejectUnsafeInputAndPreserveContent(t *testi
 		if _, err := csvToBeancount(content, nil); err == nil {
 			t.Errorf("invalid CSV accepted: %q", content)
 		}
-	}
-	dir := t.TempDir()
-	path := filepath.Join(dir, "atomic.txt")
-	if err := atomicWrite(path, []byte("first"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	if err := atomicWrite(path, []byte("second"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	data, err := os.ReadFile(path)
-	if err != nil || string(data) != "second" {
-		t.Fatalf("atomic contents=%q err=%v", data, err)
-	}
-	if err := atomicWrite(filepath.Join(dir, "missing", "file"), []byte("nope"), 0o600); err == nil {
-		t.Fatal("atomic write to missing directory succeeded")
-	}
-	if err := atomicWrite(dir, []byte("nope"), 0o600); err == nil {
-		t.Fatal("atomic write over a directory succeeded")
 	}
 }

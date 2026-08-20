@@ -1,6 +1,8 @@
 # Ship a Beancount v3 superset dialect with bidirectional compilation
 
-OrangeCount will accept a dialect superset of Beancount v3 in ledger source files: every valid v3 file stays valid, and additional dialect lines offer a terse two-posting shorthand. Dialect lines are compiled, never rewritten in place: the dialect file is the canonical source of truth, and a separate `export` command emits a pure v3 snapshot for external tools. This is an experiment on `feature/dialect-superset`; main keeps the strict v3 contract until the experiment graduates.
+**Status:** Accepted. The experiment graduated to `main` on or before 2026-08-20.
+
+OrangeCount accepts a dialect superset of Beancount v3 in ledger source files: every valid v3 file stays valid, and additional dialect lines offer a terse two-posting shorthand. Dialect lines are compiled, never rewritten in place: the dialect file is the canonical source of truth, and a separate `export` command emits a pure v3 snapshot for external tools. The work began as an experiment on the `feature/dialect-superset` branch, with `main` retaining the strict v3 contract until graduation.
 
 ## Grammar and detection
 

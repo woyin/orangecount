@@ -102,7 +102,7 @@ var Registry = [...]Contract{
 	{Route: RouteOptions, Owner: "internal/web (handleOptions) + internal/snapshot.Evaluation.Options", Authority: AuthorityPresentation, Errors: ErrorFull, Request: RequestSpec{Body: true}},
 	{Route: RouteDownload, Owner: "internal/web/favaadapter.ExportEntries + internal/source.Graph", Authority: AuthorityLedger, Errors: ErrorStatusCode, Request: RequestSpec{Params: []string{"from", "to", "account", "filter"}}},
 	{Route: RouteEntryContext, Owner: "internal/web/favaadapter.ProjectEntryContext + internal/source.Graph", Authority: AuthorityLedger, Errors: ErrorStatusCode, Request: RequestSpec{Params: []string{"entry_hash"}}},
-	{Route: RouteAddEntries, Owner: "internal/web/favaadapter.SerializeNewEntries + internal/web (editor write path: atomic replace + backup + revalidate)", Authority: AuthorityLedger, Errors: ErrorStatusCode, Request: RequestSpec{Body: true}},
+	{Route: RouteAddEntries, Owner: "internal/authoring.SerializeEntries + internal/authoring.Writer", Authority: AuthorityLedger, Errors: ErrorStatusCode, Request: RequestSpec{Body: true}},
 	{Route: RouteDocumentUpload, Owner: "internal/web (handleDocumentUpload: same-origin, account/filename validation, no overwrite)", Authority: AuthorityLedger, Errors: ErrorStatusCode, Request: RequestSpec{Body: true}},
 	{Route: RouteDocumentMove, Owner: "internal/web (handleDocumentMove: same-origin, account/filename validation, rename within the source's document root, no overwrite)", Authority: AuthorityLedger, Errors: ErrorStatusCode, Request: RequestSpec{Body: true}},
 }

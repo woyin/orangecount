@@ -4,7 +4,7 @@ NODE ?= node
 NPM ?= npm
 
 .PHONY: all build test race fmt vet license licenses clean \
-	web-test web-check web-build-check web-build-embedded check fixturegen visual-reference \
+	web-test web-typecheck web-check web-build-check web-build-embedded check fixturegen visual-reference \
 	check-route-manifest check-provenance check-reference-output
 
 all: build
@@ -60,8 +60,12 @@ check: check-route-manifest check-provenance
 web-test:
 	$(NPM) --prefix web test
 
-# Frontend unit + Phase 0 checks wrapper.
-web-check: web-test check
+# Frontend static type check.
+web-typecheck:
+	$(NPM) --prefix web run typecheck
+
+# Frontend unit + type + Phase 0 checks wrapper.
+web-check: web-test web-typecheck check
 
 # Deterministic frontend build check (Node + esbuild).
 web-build-check:

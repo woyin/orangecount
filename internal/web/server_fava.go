@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"strings"
 
+	"orangecount/internal/authoring"
 	"orangecount/internal/diagnostic"
 	"orangecount/internal/query"
 	"orangecount/internal/repairguidance"
@@ -327,45 +328,46 @@ func (s *Server) favaAddEntries(w http.ResponseWriter, r *http.Request, current 
 		return
 	}
 	var request struct {
-		Entries []favaadapter.NewEntry `json:"entries"`
+		Entries []authoring.Entry `json:"entries"`
 	}
 	if err := decodeJSONBody(w, r, &request, 1<<20); err != nil {
 		writeAPIError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	serialized, err := favaadapter.SerializeNewEntries(request.Entries)
+	serialized, err := authoring.SerializeEntries(request.Entries)
 	if err != nil {
 		writeAPIError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	file, display, ok := graphFile(graph, graph.DisplayPath(graph.Entry))
+	_, display, ok := graphFile(graph, graph.DisplayPath(graph.Entry))
 	if !ok {
 		writeAPIError(w, http.StatusServiceUnavailable, "entry file unavailable")
 		return
 	}
 	// New entries land at the end of the entry file, separated by one blank
 	// line, the way Fava appends entries it inserts.
-	content := strings.TrimRight(string(file.Data), "\n") + "\n\n" + serialized + "\n"
-	result, backup, err := s.replaceGraphFile(current, file.Path, display, []byte(content))
+	change, err := authoring.Append(display, serialized)
 	if err != nil {
-		status := http.StatusUnprocessableEntity
-		if result.Err != nil {
-			status = http.StatusInternalServerError
-		}
+		writeAPIError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	result, err := s.authoring.Publish(current.ID, change)
+	if err != nil {
+		status := authoringStatus(err)
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(status)
 		writeJSON(w, struct {
 			Published   bool                 `json:"published"`
 			Backup      string               `json:"backup,omitempty"`
 			Diagnostics []diagnosticResponse `json:"diagnostics"`
-		}{Backup: backup, Diagnostics: diagnosticsPayload(result.Diagnostics, current.Graph())})
+		}{Backup: result.Backup, Diagnostics: diagnosticsPayload(result.Build.Diagnostics, current.Graph())})
 		return
 	}
 	writeJSON(w, struct {
 		Published  bool   `json:"published"`
 		SnapshotID string `json:"snapshot_id"`
 		Backup     string `json:"backup"`
-	}{Published: true, SnapshotID: result.Snapshot.ID, Backup: backup})
+	}{Published: true, SnapshotID: result.Build.Snapshot.ID, Backup: result.Backup})
 }
 
 // favaTreeReport projects one of the three statement trees

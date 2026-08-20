@@ -25,11 +25,11 @@ import (
 // (period sums or carried ending balances), and the account subtree plus
 // filters every posting must match.
 type PivotSpec struct {
-	Rows     string // "month" | "quarter" | "year"
-	Columns  string // "" | "root1" | "root2" | "root3"
-	Values   string // "sum" | "balance"
-	Account  string
-	Filters  Filters
+	Rows    string // "month" | "quarter" | "year"
+	Columns string // "" | "root1" | "root2" | "root3"
+	Values  string // "sum" | "balance"
+	Account string
+	Filters Filters
 }
 
 // PivotTable renders the Excel-style cross-tab: one row per interval, one

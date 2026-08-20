@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
+	"orangecount/internal/authoring"
 	"orangecount/internal/ledger"
-	"orangecount/internal/web/favaadapter"
 )
 
 // The tests in this file exercise the compiler's and profile resolver's
@@ -318,7 +318,7 @@ func TestHasEquivalentTransactionMismatchDimensions(t *testing.T) {
 	}
 }
 
-func compiledEntry(t *testing.T) *favaadapter.NewEntry {
+func compiledEntry(t *testing.T) *authoring.Entry {
 	t.Helper()
 	results := Compile(CompileRequest{
 		Text:       "12 CNY @Assets:WeChat -> @Expenses:Food",
@@ -541,4 +541,4 @@ func TestResolveAccountAliasChain(t *testing.T) {
 	}
 }
 
-var _ = favaadapter.NewEntry{}
+var _ = authoring.Entry{}

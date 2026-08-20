@@ -18,6 +18,13 @@ import { beancount_indent } from "./beancount-indent";
 import ts_beancount_wasm from "./tree-sitter-beancount.wasm";
 import { LezerTSParser } from "./tree-sitter-parser";
 
+declare global {
+  /** Minimal ambient contract referenced by web-tree-sitter's bundled types. */
+  interface EmscriptenModule {
+    wasmBinary?: Uint8Array;
+  }
+}
+
 /** Import the tree-sitter and Beancount language WASM files and initialise the parser. */
 function dataUrlBytes(url: string): Uint8Array {
   // The wasm imports below are inlined by esbuild as base64 data URLs. web-tree-sitter's

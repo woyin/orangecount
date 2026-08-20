@@ -11,7 +11,8 @@ http://www.apache.org/licenses/LICENSE-2.0
 OrangeCount is an offline, Go-native reader and validator for compatible
 Beancount v3 ledgers. The source ledger remains a user-owned `.bean` include
 graph; OrangeCount builds an immutable snapshot and exposes read-only reports,
-queries, diagnostics, and a local web workbench.
+queries, and diagnostics alongside explicit reviewed authoring workflows in a
+local web workbench.
 
 ## v0.1 scope
 
@@ -26,10 +27,11 @@ personal ledger, including:
   balance, balance sheet, income statement, holdings, price, event, document,
   and diagnostic reports.
 
-The embedded read-only UI provides overview, account, journal, report,
-holdings, price, document, source, diagnostics, and query views. English (`en`)
-and Simplified Chinese (`zh-CN`) are shipped locales; changing the display
-locale does not change ledger semantics.
+The embedded UI provides read-only overview, account, journal, report,
+holdings, price, document, source, diagnostics, and query views, plus explicit
+reviewed workflows for editing and adding entries. English (`en`) and
+Simplified Chinese (`zh-CN`) are shipped locales; changing the display locale
+does not change ledger semantics.
 
 ## Deliberate boundaries
 
@@ -38,8 +40,8 @@ In particular, v0.1 does not promise:
 
 - Python plugin execution or the Fava plugin ecosystem, HTTP API, or pixel
   parity;
-- bank/broker importers, a budget model, a persistent database, or an editor
-  that writes ledger files; or
+- automated bank/broker ingestion, a budget model, a persistent database, or
+  unrestricted ledger mutation outside the reviewed authoring workflows; or
 - behavior for v2-only syntax or extensions outside the supported v3 core.
 
 Plugin declarations are preserved and reported as migration diagnostics; no
@@ -66,10 +68,9 @@ make fmt vet test race license build
 
 ## Dialect superset (experimental)
 
-On the `feature/dialect-superset` branch, OrangeCount accepts a superset of
-Beancount v3: every valid v3 ledger still works, and dialect shorthand lines
-offer a terse two-posting form compiled into ordinary transactions at build
-time (ADR-0045):
+OrangeCount on `main` accepts a superset of Beancount v3: every valid v3 ledger
+still works, and dialect shorthand lines offer a terse two-posting form
+compiled into ordinary transactions at build time (ADR-0045):
 
 ```text
 2026-08-12 28 CNY @WeChat -> @Food "美团" : 工作午餐 #food   full form
@@ -181,11 +182,12 @@ tab, or the keyboard shortcut `a q`. Manage aliases and templates under
 
 ## Privacy and offline behavior
 
-The runtime reads source files locally, never edits them, makes no outbound
-requests, loads no remote scripts, and binds the web server only to loopback.
-Diagnostics and structured logs redact sensitive fields by default; the
-`serve --sensitive-logs` flag is an explicit local debugging choice. A failed
-reload leaves the last valid snapshot available.
+The runtime reads source files locally and never edits source files without an
+explicit reviewed write action; failed writes restore the prior source and
+snapshot. It makes no outbound requests, loads no remote scripts, and binds the
+web server only to loopback. Diagnostics and structured logs redact sensitive
+fields by default; the `serve --sensitive-logs` flag is an explicit local
+debugging choice. A failed reload leaves the last valid snapshot available.
 
 The optional development differential harness under `tools/reference/` uses
 `uv` and Beancount v3 only as an external oracle. Install `uv`, then set

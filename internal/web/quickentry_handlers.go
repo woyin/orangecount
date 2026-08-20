@@ -8,36 +8,39 @@ package web
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"regexp"
 	"strings"
 
+	"orangecount/internal/authoring"
 	"orangecount/internal/ledger"
 	"orangecount/internal/quickentry"
 	"orangecount/internal/snapshot"
-	"orangecount/internal/web/favaadapter"
 )
 
 // quickBatchRecord remembers the last published quick-entry batch so the
 // session can undo it while the snapshot is still current. It is intentionally
 // minimal: one batch back, not a history system.
 type quickBatchRecord struct {
-	SnapshotID string
-	TargetFile string
 	EntryCount int
-	// Serialized is the exact text appended to the file, so undo can remove
-	// it by string replacement without re-parsing user intent.
-	Serialized string
+	Receipt    *authoring.Receipt
+}
+
+func (s *Server) clearQuickBatchIfCurrent(batch *quickBatchRecord) {
+	s.quickMu.Lock()
+	if s.quickLastBatch == batch {
+		s.quickLastBatch = nil
+	}
+	s.quickMu.Unlock()
 }
 
 // quickLineResponse is the per-line JSON shape returned by preview.
 type quickLineResponse struct {
-	Line      int                   `json:"line"`
-	Source    string                `json:"source"`
-	Preview   string                `json:"preview,omitempty"`
-	Duplicate bool                  `json:"duplicate"`
-	Errors    []quickLineError      `json:"errors,omitempty"`
-	Entry     *favaadapter.NewEntry `json:"entry,omitempty"`
+	Line      int              `json:"line"`
+	Source    string           `json:"source"`
+	Preview   string           `json:"preview,omitempty"`
+	Duplicate bool             `json:"duplicate"`
+	Errors    []quickLineError `json:"errors,omitempty"`
+	Entry     *authoring.Entry `json:"entry,omitempty"`
 }
 
 type quickLineError struct {
@@ -120,7 +123,7 @@ func (s *Server) handleQuickPreview(w http.ResponseWriter, r *http.Request, curr
 	quickentry.DetectDuplicates(results, evaluationPtr)
 	// Build per-line response and collect entries.
 	var lines []quickLineResponse
-	var entries []favaadapter.NewEntry
+	var entries []authoring.Entry
 	hasErrors := false
 	for _, res := range results {
 		line := quickLineResponse{
@@ -178,39 +181,37 @@ func (s *Server) handleQuickCommit(w http.ResponseWriter, r *http.Request, curre
 		writeAPIError(w, http.StatusServiceUnavailable, "no source graph")
 		return
 	}
-	file, display, ok := graphFile(graph, preview.Target)
+	_, display, ok := graphFile(graph, preview.Target)
 	if !ok {
 		writeAPIError(w, http.StatusBadRequest, "target file is no longer in the ledger include graph")
 		return
 	}
-	serialized, err := favaadapter.SerializeNewEntries(preview.Entries)
+	serialized, err := authoring.SerializeEntries(preview.Entries)
 	if err != nil {
 		writeAPIError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	content := strings.TrimRight(string(file.Data), "\n") + "\n\n" + serialized + "\n"
-	result, backup, err := s.replaceGraphFile(current, file.Path, display, []byte(content))
+	change, err := authoring.Append(display, serialized)
 	if err != nil {
-		status := http.StatusUnprocessableEntity
-		if result.Err != nil {
-			status = http.StatusInternalServerError
-		}
+		writeAPIError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	result, err := s.authoring.Publish(current.ID, change)
+	if err != nil {
+		status := authoringStatus(err)
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		w.WriteHeader(status)
 		writeJSON(w, quickCommitResponse{
-			Backup: backup, Diagnostics: diagnosticsPayload(result.Diagnostics, current.Graph()),
+			Backup: result.Backup, Diagnostics: diagnosticsPayload(result.Build.Diagnostics, current.Graph()),
 		})
 		return
 	}
 	// Record the batch as undoable while its resulting snapshot is current.
-	s.quickLastBatch = &quickBatchRecord{
-		SnapshotID: result.Snapshot.ID,
-		TargetFile: file.Path,
-		EntryCount: len(preview.Entries),
-		Serialized: serialized,
-	}
+	s.quickMu.Lock()
+	s.quickLastBatch = &quickBatchRecord{EntryCount: len(preview.Entries), Receipt: result.Receipt}
+	s.quickMu.Unlock()
 	writeJSON(w, quickCommitResponse{
-		Published: true, SnapshotID: result.Snapshot.ID, Backup: backup,
+		Published: true, SnapshotID: result.Build.Snapshot.ID, Backup: result.Backup,
 	})
 }
 
@@ -220,61 +221,26 @@ func (s *Server) handleQuickUndo(w http.ResponseWriter, r *http.Request, current
 	if !requireSameOrigin(w, r) {
 		return
 	}
-	s.writeMu.Lock()
+	s.quickMu.Lock()
 	batch := s.quickLastBatch
-	s.writeMu.Unlock()
+	s.quickMu.Unlock()
 	if batch == nil {
 		writeAPIError(w, http.StatusNotFound, "no quick-entry batch to undo")
 		return
 	}
-	if current.ID != batch.SnapshotID {
-		// Snapshot has moved on; undo is disabled to avoid clobbering later edits.
-		writeAPIError(w, http.StatusConflict, "ledger changed since the batch was published; correct manually in the editor")
-		return
-	}
-	old, err := os.ReadFile(batch.TargetFile)
+	result, err := s.authoring.Revert(current.ID, batch.Receipt)
 	if err != nil {
-		writeAPIError(w, http.StatusInternalServerError, fmt.Sprintf("cannot read target file: %v", err))
-		return
-	}
-	// Remove the serialized block by exact string match. The append format is
-	// "\n\n" + serialized + "\n", so we remove that exact suffix.
-	removed := strings.TrimRight(string(old), "\n")
-	suffix := "\n\n" + batch.Serialized
-	if !strings.HasSuffix(removed, suffix) {
-		writeAPIError(w, http.StatusConflict, "target file no longer ends with the quick-entry batch; correct manually")
-		return
-	}
-	restored := strings.TrimSuffix(removed, suffix) + "\n"
-	info, err := os.Stat(batch.TargetFile)
-	if err != nil {
-		writeAPIError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	backup := batch.TargetFile + ".orangecount.bak"
-	if err := os.WriteFile(backup, old, info.Mode().Perm()); err != nil {
-		writeAPIError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	if err := atomicWrite(batch.TargetFile, []byte(restored), info.Mode().Perm()); err != nil {
-		writeAPIError(w, http.StatusInternalServerError, err.Error())
-		return
-	}
-	result := s.store.Reload(current.EntryPath, snapshot.BuildOptions{})
-	if result.Snapshot == nil {
-		// Restore the previous content on validation failure.
-		_ = atomicWrite(batch.TargetFile, old, info.Mode().Perm())
-		_ = s.store.Reload(current.EntryPath, snapshot.BuildOptions{})
+		status := authoringStatus(err)
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(http.StatusUnprocessableEntity)
+		w.WriteHeader(status)
 		writeJSON(w, quickUndoResponse{
-			Diagnostics: diagnosticsPayload(result.Diagnostics, current.Graph()),
-			Error:       "validation failed after undo; file restored",
+			Diagnostics: diagnosticsPayload(result.Build.Diagnostics, current.Graph()),
+			Error:       err.Error(),
 		})
 		return
 	}
-	s.quickLastBatch = nil
-	writeJSON(w, quickUndoResponse{Undone: true, SnapshotID: result.Snapshot.ID})
+	s.clearQuickBatchIfCurrent(batch)
+	writeJSON(w, quickUndoResponse{Undone: true, SnapshotID: result.Build.Snapshot.ID})
 }
 
 // quickProfileRule is the JSON shape for one effective rule in the profile listing.
@@ -346,24 +312,25 @@ func (s *Server) handleQuickProfileSave(w http.ResponseWriter, r *http.Request, 
 		writeAPIError(w, http.StatusServiceUnavailable, "no source graph")
 		return
 	}
-	file, display, ok := graphFile(graph, graph.DisplayPath(graph.Entry))
+	_, display, ok := graphFile(graph, graph.DisplayPath(graph.Entry))
 	if !ok {
 		writeAPIError(w, http.StatusServiceUnavailable, "entry file unavailable")
 		return
 	}
-	content := strings.TrimRight(string(file.Data), "\n") + "\n\n" + serialized + "\n"
-	result, backup, err := s.replaceGraphFile(current, file.Path, display, []byte(content))
+	change, err := authoring.Append(display, serialized)
 	if err != nil {
-		status := http.StatusUnprocessableEntity
-		if result.Err != nil {
-			status = http.StatusInternalServerError
-		}
-		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.WriteHeader(status)
-		writeJSON(w, quickCommitResponse{Backup: backup, Diagnostics: diagnosticsPayload(result.Diagnostics, current.Graph())})
+		writeAPIError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	writeJSON(w, quickCommitResponse{Published: true, SnapshotID: result.Snapshot.ID, Backup: backup})
+	result, err := s.authoring.Publish(current.ID, change)
+	if err != nil {
+		status := authoringStatus(err)
+		w.Header().Set("Content-Type", "application/json; charset=utf-8")
+		w.WriteHeader(status)
+		writeJSON(w, quickCommitResponse{Backup: result.Backup, Diagnostics: diagnosticsPayload(result.Build.Diagnostics, current.Graph())})
+		return
+	}
+	writeJSON(w, quickCommitResponse{Published: true, SnapshotID: result.Build.Snapshot.ID, Backup: result.Backup})
 }
 
 // serializeQuickProfileDirective renders one quick-profile rule as a ledger
