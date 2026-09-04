@@ -37,8 +37,8 @@ type LineResult struct {
 	Line      int    // 1-based line number in the input text
 	Source    string // the original shorthand text
 	Entry     *favaadapter.NewEntry
-	Preview   string                  // canonical Beancount block, when compiled
-	Duplicate bool                    // equivalent transaction exists in the ledger
+	Preview   string // canonical Beancount block, when compiled
+	Duplicate bool   // equivalent transaction exists in the ledger
 	Errors    []LineError
 }
 

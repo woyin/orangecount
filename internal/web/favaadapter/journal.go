@@ -300,6 +300,7 @@ func fmtBool(value bool) string {
 	}
 	return "False"
 }
+
 // so the account journal can show the per-entry change the way Fava does.
 // Only transactions carry postings; every other directive yields no change.
 func journalChange(record ledger.EntryRecord, account string) []JournalAmount {

@@ -20,9 +20,9 @@ import (
 // The editable CodeMirror slice belongs to a later phase (H1); this is the
 // read-only projection.
 type EntryContext struct {
-	Entry       JournalEntry                 `json:"entry"`
-	SourceSlice string                       `json:"source_slice"`
-	SHA256Sum   string                       `json:"sha256sum"`
+	Entry       JournalEntry `json:"entry"`
+	SourceSlice string       `json:"source_slice"`
+	SHA256Sum   string       `json:"sha256sum"`
 	// BalancesBefore/After are the per-account balances (grouped by currency)
 	// of the accounts the entry touches, immediately before and after the
 	// entry. Only Transaction and Balance entries carry them; other kinds are
