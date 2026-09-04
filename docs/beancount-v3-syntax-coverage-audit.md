@@ -37,6 +37,20 @@ executed; the evaluator emits a migration warning. Constructs that do not
 affect accounting (such as `pushmeta`/`popmeta`) are preserved in the entry
 stream without mutating account state.
 
+The same boundary applies to options. Every `option "key" "value"` is parsed
+and preserved verbatim in the evaluation's option map, but only
+`operating_currency` (account/page valuation currencies) and `tolerance`
+(default transaction-balancing tolerance) currently change evaluator
+behavior. `render_commas` is honored as a display option by both web
+interfaces: displayed amounts group thousands while exact ledger values and
+machine exports stay untouched. Currency-specific tolerance options
+(`inferred_tolerance_default`, `inferred_tolerance_multiplier`) are recorded
+but not yet applied to balance-assertion tolerance; the private reference
+ledger (2,385 transactions, 80 balance assertions) validates with zero
+diagnostics under both OrangeCount and Beancount v3, so the boundary has not
+affected a real ledger. Revisit if a ledger relies on inferred per-currency
+tolerance floors instead of assertion precision.
+
 ## Test evidence and scope
 
 `go test ./...` passes. Parser tests in `internal/ledger/parser_test.go` cover

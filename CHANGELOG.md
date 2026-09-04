@@ -2,6 +2,36 @@
 
 All notable changes to OrangeCount are documented in this file.
 
+## [Unreleased]
+
+### Added
+
+- Financial planning superset feature (merged from `feature/financial-planning`):
+  ledger-embedded planning profiles via versioned `custom` directives
+  (ADR-0047), liquidity planning with safe-to-spend scenarios and timeline
+  (ADR-0048), planning adapter routes with reviewed writes published through
+  the centralized authoring writer, and a transplanted-UI Planning report
+  page.
+- The ledger's `render_commas` option now groups thousands in every displayed
+  amount of the built-in web interface (tables, journal postings, running
+  balances, pivot cells, chart tooltips). Exact ledger values, sorting, CSV
+  exports, and query results are unaffected.
+
+### Changed
+
+- Number-expression parsing merged into the directive dispatch parser while
+  keeping single-literal amounts' source text in `Number.Raw`; `note`
+  directives retain tags and links.
+
+### Validated
+
+- The private reference ledger validates with zero diagnostics under both
+  OrangeCount and Beancount v3 (differential harness: 2,708 entries, no error
+  classes), and every built-in report route was walked against it in both
+  web interfaces. The option-boundary note in the syntax coverage audit
+  documents `inferred_tolerance_default`/`inferred_tolerance_multiplier` as
+  recorded-but-inert.
+
 ## [0.1.3] - 2026-08-10
 
 ### Changed

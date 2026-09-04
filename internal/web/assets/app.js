@@ -180,6 +180,7 @@ const pageTitle = document.getElementById("page-title");
 const brand = document.getElementById("brand");
 let ledgerTitle = "";
 let ledgerOptions = {};
+let renderCommas = false;
 let operatingCurrency = "";
 let diagnosticCount = 0;
 let theme = localStorage.getItem("orangecount-theme") || "dark";
@@ -198,9 +199,21 @@ function presented(value) {
   if (value && typeof value === "object" && typeof value.display === "string" && typeof value.exact === "string") return value;
   return null;
 }
+// groupThousands implements the ledger's `render_commas` option for a wire
+// decimal's already-rounded display string; exact values stay untouched. A
+// non-terminating rational ("a/b") or anything non-numeric stays verbatim.
+function groupThousands(text) {
+  const match = /^(-?)(\d+)(\.\d+)?$/.exec(String(text));
+  if (!match) return String(text);
+  const [, sign, integer, fraction = ""] = match;
+  return `${sign}${integer.replace(/\B(?=(\d{3})+(?!\d))/g, ",")}${fraction}`;
+}
+function grouped(decimal) {
+  return renderCommas ? groupThousands(decimal.display) : decimal.display;
+}
 function display(value) {
   const decimal = presented(value);
-  if (decimal) return decimal.display;
+  if (decimal) return grouped(decimal);
   if (Array.isArray(value)) return value.join(", ");
   if (value && typeof value === "object") return JSON.stringify(value);
   return value == null ? "" : String(value);
@@ -661,7 +674,8 @@ function buildTooltipHtml(label, date, value, unit, valuation) {
   const parts = [];
   if (label) parts.push(`<strong>${escapeHTML(label)}</strong>`);
   if (date) parts.push(escapeHTML(date));
-  parts.push(`<strong>${escapeHTML(String(value))} ${escapeHTML(unit || "")}</strong>`);
+  const shown = renderCommas && Number.isFinite(Number(value)) ? groupThousands(String(value)) : String(value);
+  parts.push(`<strong>${escapeHTML(shown)} ${escapeHTML(unit || "")}</strong>`);
   if (valuation) parts.push(`<span class="muted">${escapeHTML(valuation)}</span>`);
   return `<div class="chart-tooltip">${parts.join("<br>")}</div>`;
 }
@@ -1258,7 +1272,7 @@ function renderJournal(result) {
 function postedUnits(posting) {
   const units = posting.units;
   if (units && typeof units === "object") {
-    const amount = units.display != null ? units.display : units;
+    const amount = units.display != null ? grouped(units) : units;
     const currency = posting.currency || "";
     return `${amount}${currency ? ` ${currency}` : ""}`;
   }
@@ -1267,7 +1281,7 @@ function postedUnits(posting) {
 function postedCost(posting) {
   const cost = posting.cost;
   if (cost && typeof cost === "object") {
-    const amount = cost.display != null ? cost.display : cost;
+    const amount = cost.display != null ? grouped(cost) : cost;
     return `${amount}${posting.cost_currency ? ` ${posting.cost_currency}` : ""}`;
   }
   return "";
@@ -1352,7 +1366,7 @@ async function renderAccountDetail(account) {
         const current = runningByCurrency.get(currency) || { exact: "0", display: "0" };
         const next = addExact(current.exact, amount.exact);
         runningByCurrency.set(currency, { exact: String(next.exact), display: String(next.display) });
-        running = `${next.display} ${currency}`;
+        running = `${grouped(next)} ${currency}`;
       }
       return { date: row.date || "", account: row.account || "", units: postedUnits(row), flag: row.flag || "", running };
     });
@@ -1848,7 +1862,8 @@ function crossTab(result) {
   const head = `<thead><tr><th>${escapeHTML(rowKey)}</th>${columnLabels.map((label) => `<th>${escapeHTML(label)}</th>`).join("")}</tr></thead>`;
   const body = order.map((rowLabel) => `<tr><th>${escapeHTML(rowLabel)}</th>${columnLabels.map((label) => {
     const value = cells.get(rowLabel).get(label);
-    const display = value && typeof value === "object" && "display" in value ? value.display : (value ?? "");
+    const decimal = presented(value);
+    const display = decimal ? grouped(decimal) : value && typeof value === "object" && "display" in value ? value.display : (value ?? "");
     return `<td>${escapeHTML(String(display))}</td>`;
   }).join("")}</tr>`).join("");
   return `<div class="table-wrap"><table class="report-table">${head}<tbody>${body}</tbody></table></div>`;
@@ -1940,6 +1955,9 @@ async function bootstrap() {
     const operatingCurrencies = (values.operating_currency || "").split(/\s+/).filter(Boolean);
     operatingCurrency = operatingCurrencies[0] || "";
     ledgerOptions = values;
+    // render_commas is a Fava display option: group thousands in displayed
+    // amounts. Exact ledger values and machine exports are never regrouped.
+    renderCommas = (values.render_commas || "").toUpperCase() === "TRUE";
     operatingCurrencies.forEach((currency) => {
       if (currencySwitch.querySelector(`button[data-currency="${CSS.escape(currency)}"]`)) return;
       const button = document.createElement("button");
