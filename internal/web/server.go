@@ -43,22 +43,23 @@ type Config struct {
 // with in-memory preview/option state. All handlers run against immutable
 // published snapshots, so a failed edit never corrupts the served view.
 type Server struct {
-	mu             sync.RWMutex
-	authoring      *authoring.Writer
-	quickMu        sync.Mutex
-	store          *snapshot.Store
-	roots          source.DocumentRoots
-	addr           string
-	http           *http.Server
-	bound          string
-	ready          chan struct{}
-	readyOnce      sync.Once
-	readyErr       error
-	optionsMu      sync.RWMutex
-	options        map[string]string
-	previews       *importPreviewStore
-	quickPreviews  *quickPreviewStore
-	quickLastBatch *quickBatchRecord
+	mu               sync.RWMutex
+	authoring        *authoring.Writer
+	quickMu          sync.Mutex
+	store            *snapshot.Store
+	roots            source.DocumentRoots
+	addr             string
+	http             *http.Server
+	bound            string
+	ready            chan struct{}
+	readyOnce        sync.Once
+	readyErr         error
+	optionsMu        sync.RWMutex
+	options          map[string]string
+	previews         *importPreviewStore
+	quickPreviews    *quickPreviewStore
+	quickLastBatch   *quickBatchRecord
+	planningPreviews *planningPreviewStore
 }
 
 // NewServer validates the loopback address and store, then builds the
@@ -78,7 +79,7 @@ func NewServer(config Config) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	server := &Server{store: config.Store, authoring: writer, roots: config.DocumentRoots, addr: addr, ready: make(chan struct{}), options: make(map[string]string), previews: newImportPreviewStore(), quickPreviews: newQuickPreviewStore()}
+	server := &Server{store: config.Store, authoring: writer, roots: config.DocumentRoots, addr: addr, ready: make(chan struct{}), options: make(map[string]string), previews: newImportPreviewStore(), quickPreviews: newQuickPreviewStore(), planningPreviews: newPlanningPreviewStore()}
 	server.http = &http.Server{Handler: server.Handler(), ReadHeaderTimeout: 5 * time.Second}
 	return server, nil
 }

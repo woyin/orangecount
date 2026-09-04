@@ -340,8 +340,13 @@ func TestParserValueAndGraphEdgeContracts(t *testing.T) {
 	if !ok || metadata.Key != "key" || metadata.Value.Kind != ValueString {
 		t.Fatalf("metadata=%+v ok=%v", metadata, ok)
 	}
-	if _, ok := p.parseMetadata(metaTokens[:1]); ok {
-		t.Fatal("incomplete metadata accepted")
+	empty := tokenize(file, splitLines(file)[1])[:1]
+	blankMeta, blankOK := p.parseMetadata(empty)
+	if !blankOK || blankMeta.Key != "key" || blankMeta.Value.Kind != ValueNull {
+		t.Fatalf("empty metadata=%+v ok=%v", blankMeta, blankOK)
+	}
+	if _, ok := p.parseMetadata(empty[:0]); ok {
+		t.Fatal("empty metadata token list accepted")
 	}
 
 	if parsed, bag := ParseGraph(nil); len(parsed) != 0 || bag.Len() != 0 {
@@ -358,6 +363,129 @@ func TestParserValueAndGraphEdgeContracts(t *testing.T) {
 	parsed, bag := ParseGraph(graph)
 	if len(parsed) != 1 || !bagHasCode(bag.All(), "W-GRAPH-WARNING") || !bagHasCode(bag.All(), "E-GRAPH-ERROR") {
 		t.Fatalf("graph parsed=%d diagnostics=%+v", len(parsed), bag.All())
+	}
+}
+
+func TestParserAcceptsV3MetadataStackAndNoneValues(t *testing.T) {
+	text := `pushmeta owner: "alice"
+pushmeta note: None
+2000-01-01 open Assets:Cash USD
+  empty:
+  none: None
+popmeta note:
+popmeta owner:
+`
+	file, diagnostics := ParseText("meta-stack.bean", []byte(text))
+	if diagnostics.HasErrors() {
+		t.Fatalf("diagnostics=%+v", diagnostics.All())
+	}
+	if len(file.Directives) != 5 {
+		t.Fatalf("directives=%d %#v", len(file.Directives), file.Directives)
+	}
+	push, ok := file.Directives[0].(PushMeta)
+	if !ok || push.Key != "owner" || push.Value.Kind != ValueString || push.Value.String != "alice" {
+		t.Fatalf("pushmeta=%#v", file.Directives[0])
+	}
+	pushNone, ok := file.Directives[1].(PushMeta)
+	if !ok || pushNone.Key != "note" || pushNone.Value.Kind != ValueNull {
+		t.Fatalf("pushmeta none=%#v", file.Directives[1])
+	}
+	open, ok := file.Directives[2].(Open)
+	if !ok || len(open.Meta) != 2 || open.Meta[0].Value.Kind != ValueNull || open.Meta[1].Value.Kind != ValueNull {
+		t.Fatalf("open metadata=%#v", file.Directives[2])
+	}
+	popNote, ok := file.Directives[3].(PopMeta)
+	if !ok || popNote.Key != "note" {
+		t.Fatalf("popmeta note=%#v", file.Directives[3])
+	}
+	popOwner, ok := file.Directives[4].(PopMeta)
+	if !ok || popOwner.Key != "owner" {
+		t.Fatalf("popmeta owner=%#v", file.Directives[4])
+	}
+}
+
+func TestParserAcceptsHashFlagAndNoteTagsLinks(t *testing.T) {
+	text := `2000-01-01 # "hash flag"
+  Assets:Cash 1 USD
+  Equity:Opening -1 USD
+2000-01-02 note Assets:Cash "memo" #tag ^link
+`
+	file, diagnostics := ParseText("hash-flag.bean", []byte(text))
+	if diagnostics.HasErrors() {
+		t.Fatalf("diagnostics=%+v", diagnostics.All())
+	}
+	if len(file.Directives) != 2 {
+		t.Fatalf("directives=%d %#v", len(file.Directives), file.Directives)
+	}
+	tx, ok := file.Directives[0].(*Transaction)
+	if !ok || tx.Flag != "#" || tx.Narration != "hash flag" {
+		t.Fatalf("transaction=%#v", file.Directives[0])
+	}
+	note, ok := file.Directives[1].(Note)
+	if !ok || len(note.Tags) != 1 || note.Tags[0] != "tag" || len(note.Links) != 1 || note.Links[0] != "link" {
+		t.Fatalf("note=%#v", file.Directives[1])
+	}
+}
+
+func TestParserEvaluatesNumberExpressions(t *testing.T) {
+	text := `2000-01-01 * "expr"
+  Assets:Cash 1 + 2 USD
+  Equity:Opening -3 USD
+2000-01-02 balance Assets:Cash 1 + 2 USD ~ 1 / 2 USD
+2000-01-03 custom "expr" 1 + 2 USD (1 + 2) * 3
+2000-01-04 custom "expr" -(1 / 3) USD
+`
+	file, diagnostics := ParseText("expr.bean", []byte(text))
+	if diagnostics.HasErrors() {
+		t.Fatalf("diagnostics=%+v", diagnostics.All())
+	}
+	if len(file.Directives) != 4 {
+		t.Fatalf("directives=%d %#v", len(file.Directives), file.Directives)
+	}
+	tx, ok := file.Directives[0].(*Transaction)
+	if !ok || len(tx.Postings) != 2 {
+		t.Fatalf("transaction=%#v", file.Directives[0])
+	}
+	if units := tx.Postings[0].Units; units == nil || units.Number.Raw != "3" || units.Currency != "USD" {
+		t.Fatalf("posting units=%#v", units)
+	}
+	balance, ok := file.Directives[1].(Balance)
+	if !ok || balance.Amount.Number.Raw != "3" || balance.Tolerance == nil || balance.Tolerance.Raw != "0.5" {
+		t.Fatalf("balance=%#v", file.Directives[1])
+	}
+	custom, ok := file.Directives[2].(Custom)
+	if !ok || len(custom.Values) != 2 || custom.Values[0].Kind != ValueAmount || custom.Values[0].Amount.Number.Raw != "3" || custom.Values[1].Kind != ValueNumber || custom.Values[1].Number.Raw != "9" {
+		t.Fatalf("custom=%#v", file.Directives[2])
+	}
+	neg, ok := file.Directives[3].(Custom)
+	if !ok || len(neg.Values) != 1 || neg.Values[0].Kind != ValueAmount || neg.Values[0].Amount.Number.Raw != "-1/3" {
+		t.Fatalf("negative custom=%#v", file.Directives[3])
+	}
+}
+
+func TestParserRejectsLeadingWordsBeforeNumberExpressions(t *testing.T) {
+	text := `2000-01-01 * "bad amount"
+  Assets:Cash Extra 1 USD
+  Equity:Opening -1 USD
+`
+	_, diagnostics := ParseText("leading-word.bean", []byte(text))
+	if !diagnostics.HasErrors() {
+		t.Fatalf("leading non-number word before an amount expression produced no diagnostics: %+v", diagnostics.All())
+	}
+	if !bagHasCode(diagnostics.All(), "E-PARSE-TOKEN") {
+		t.Fatalf("expected E-PARSE-TOKEN diagnostic, got %+v", diagnostics.All())
+	}
+}
+
+func TestParserSplitsJuxtaposedNumberValuesWithoutOperator(t *testing.T) {
+	file, diagnostics := ParseText("custom-values.bean", []byte(`2000-01-01 custom "expr" 1 2 USD
+`))
+	if diagnostics.HasErrors() {
+		t.Fatalf("diagnostics=%+v", diagnostics.All())
+	}
+	custom, ok := file.Directives[0].(Custom)
+	if !ok || len(custom.Values) != 2 || custom.Values[0].Kind != ValueNumber || custom.Values[0].Number.Raw != "1" || custom.Values[1].Kind != ValueAmount || custom.Values[1].Amount.Number.Raw != "2" || custom.Values[1].Amount.Currency != "USD" {
+		t.Fatalf("custom=%#v", file.Directives[0])
 	}
 }
 

@@ -130,6 +130,170 @@ _Avoid_: hosted account, shared instance
 The user-maintained `.bean` file set, including its include graph, that remains OrangeCount's authoritative accounting record.
 _Avoid_: application database, managed ledger
 
+**Complete personal ledger**:
+A personal accounting record intended to represent the owner's real assets, liabilities, income, and expenses completely enough to be checked against independent financial evidence.
+_Avoid_: spending diary, remembered-transactions log, expense tracker
+
+**Safe-to-spend amount**:
+The portion of the owner's liquid funds that can be spent within a stated future period without compromising known obligations or an owner-defined financial reserve.
+_Avoid_: account balance, disposable income, remaining budget
+
+**Safe-to-spend horizon**:
+The future period covered by a safe-to-spend decision, ending by default immediately before the owner's next expected stable income and otherwise on an owner-selected date.
+_Avoid_: calendar month, report period, fixed 30-day window
+
+**Planned cash flow**:
+An owner-confirmed, named future inflow or outflow with an expected date and amount in the planning currency that participates in a safe-to-spend calculation; an outflow also declares whether it is committed or adjustable. Expected accounts and notes may enrich transfer and matching suggestions, but the plan remains an assumption rather than an occurred accounting event.
+_Avoid_: scheduled transaction, forecasted posting, future ledger entry
+
+**Conservative planning amount**:
+The single owner-confirmed amount used for a planned cash flow whose actual value is uncertain, chosen to avoid overstating safe-to-spend capacity. Ranges and probabilities may be noted but do not enter the first-version calculation.
+_Avoid_: expected-value estimate, probabilistic amount, hidden upper bound
+
+**Conservative planning date**:
+The single owner-confirmed date used when timing is uncertain: the earliest credible date for an outflow and the latest credible date for an inflow. Date ranges may be noted but do not enter the first-version timeline.
+_Avoid_: average date, optimistic payday, hidden date range
+
+**Cash-flow candidate**:
+A non-binding suggestion derived from visible ledger-history evidence that may become a planned cash flow only after the owner confirms or edits its expected date, amount, and commitment. It never affects safe-to-spend results by itself.
+_Avoid_: predicted transaction, inferred obligation, automatic plan
+
+**Spendable-funds account**:
+An explicitly owner-designated account whose liquid balance may fund ordinary spending and may be transferred within the planning pool during the safe-to-spend horizon. Valuable but intentionally unavailable assets and newly discovered accounts are excluded unless the owner explicitly changes their designation.
+_Avoid_: every asset account, net worth account, automatically liquid asset
+
+**Current short-term debt**:
+The full ledger balance of an owner-designated short-term liability, including amounts not yet billed or due, that reduces safe-to-spend resources once. A later payment of that debt is a transfer and does not reduce the result again.
+_Avoid_: statement balance, minimum payment, planned expense
+
+**Minimum reserve**:
+An owner-confirmed amount of liquid funds that a safe-to-spend decision must preserve throughout its horizon. Historical spending may inform a suggested value, but cannot change the effective reserve without confirmation.
+_Avoid_: emergency-fund account, predicted reserve, unused balance
+
+**Committed outflow**:
+An owner-confirmed planned cash outflow that must be preserved within the safe-to-spend horizon and is always deducted from safe-to-spend resources.
+_Avoid_: fixed expense, unavoidable transaction, recurring category
+
+**Adjustable outflow**:
+An owner-confirmed planned cash outflow that occupies funds under the current plan but may be reduced or abandoned to make room for another decision.
+_Avoid_: discretionary category, optional posting, ignored expense
+
+**Ledger-embedded planning profile**:
+The versioned OrangeCount planning configuration recorded as standard Beancount `custom` directives, optionally in a dedicated included file. It stores confirmed planning assumptions and reserves without representing occurred transactions or changing accounting balances.
+_Avoid_: future transaction, application preference, private sidecar database
+
+**Planning-profile initialization**:
+A reviewed write that previews and then atomically creates or selects the planning target, adds any required source-ledger include, writes the initial versioned directives, and revalidates the ledger. It never silently restructures the include graph.
+_Avoid_: implicit setup, hidden file creation, unmanaged sidecar
+
+**Plan revision**:
+An append-only, owner-confirmed change to a stable plan identity that supersedes its prior effective state without deleting it. Changes, cancellation, fulfillment, and rescheduling remain historically explainable while only the latest valid revision is effective.
+_Avoid_: in-place plan edit, deleted plan, mutable history
+
+**Recurring cash-flow rule**:
+An owner-confirmed pattern that proposes future cash-flow candidates on an expected cadence. A generated occurrence affects no planning result until the owner confirms or edits it as a planned cash flow.
+_Avoid_: scheduled transaction, automatic obligation, recurring posting
+
+**Current-funded safe-to-spend amount**:
+A safe-to-spend result funded only by liquid resources already held; confirmed but unrealized future inflows cannot increase it.
+_Avoid_: projected balance, expected income balance, available credit
+
+**Expected safe-to-spend amount**:
+A scenario result that may include owner-confirmed future inflows within the horizon and visibly identifies each unrealized inflow assumption.
+_Avoid_: guaranteed amount, current balance, hidden income forecast
+
+**Primary safe-to-spend amount**:
+The default safe-to-spend result that uses only currently held funds and preserves both committed and adjustable planned outflows. Less conservative alternatives are explicit scenarios, never co-equal headline values.
+_Avoid_: maximum affordable amount, expected balance, scenario average
+
+**Planning currency**:
+The single commodity in which a safe-to-spend result is calculated. Other-currency resources and obligations remain visible but are excluded rather than silently converted or assumed available for exchange.
+_Avoid_: display currency, automatic base-currency conversion, net-worth currency
+
+**Planning timezone**:
+The owner-confirmed IANA timezone that determines planning dates, overdue status, financial-cycle boundaries, and whether a ledger-recorded-through date is current. The machine timezone may be suggested during setup but never silently becomes the authority.
+_Avoid_: browser timezone, implicit local time, UTC planning day
+
+**Planning liquidity low point**:
+The lowest projected balance of spendable funds reached at any dated step within a safe-to-spend horizon. Safety is evaluated against the minimum reserve at this point, not merely against the ending balance.
+_Avoid_: ending balance, average balance, current balance
+
+**Planning funding shortfall**:
+The amount by which a planning liquidity low point falls below the minimum reserve. The interface presents zero safe-to-spend capacity plus the shortfall amount, first occurrence date, and contributing assumptions rather than describing a negative amount as spendable.
+_Avoid_: negative spending allowance, overdraft limit, hidden deficit
+
+**Same-day planning order**:
+The conservative daily timeline rule that applies planned outflows before planned inflows sharing a date. First-version planning uses dates rather than assumed intraday timing.
+_Avoid_: netted daily change, income-first ordering, inferred transaction time
+
+**Debt-funded planned outflow**:
+A planned purchase expected to create short-term debt that reserves safe-to-spend resources once on its economic date. Its later repayment affects account-level liquidity and transfer needs but does not reduce aggregate capacity again.
+_Avoid_: repayment-date expense, available credit, double-counted payment
+
+**Planned transfer need**:
+An account-level funding shortfall at a dated planning step when the combined spendable-funds pool remains sufficient. It prompts an explicit transfer action without reducing aggregate safe-to-spend capacity again.
+_Avoid_: overall shortfall, planned expense, automatic transfer
+
+**Affordability scenario**:
+An explanatory what-if evaluation of a proposed amount and date against the planning timeline. It exposes reserve headroom, the low point, displaced adjustable outflows, unrealized-income dependencies, and excluded resources without deciding whether the owner should spend.
+_Avoid_: purchase approval, financial advice, affordability score
+
+**Scenario draft**:
+An ephemeral affordability scenario that never changes a planning result or source-ledger configuration. It becomes a planned cash flow only through an explicit owner-confirmed conversion.
+_Avoid_: draft plan, automatically saved purchase, pending transaction
+
+**Financial-cycle review**:
+A review of the completed period between consecutive stable-income occurrences that compares confirmed plans with actual ledger activity and prepares candidates for the next safe-to-spend horizon. Calendar-month analysis remains a report view rather than the default planning review.
+_Avoid_: monthly report, category dashboard, transaction audit
+
+**Plan-fulfillment match**:
+An owner-confirmed link between a planned cash flow and an occurred source-ledger transaction. Similarity in date, amount, account, or description may produce a visible match suggestion but never fulfills the plan automatically.
+_Avoid_: automatic reconciliation, inferred completion, transaction replacement
+
+**Unresolved overdue plan**:
+A planned outflow whose expected date has passed without a confirmed fulfillment, cancellation, or rescheduling. It continues to reserve funds and remains visible until the owner explicitly resolves it.
+_Avoid_: expired plan, ignored payment, automatically cancelled obligation
+
+**Financial-cycle anchor**:
+The single owner-designated recurring income rule whose confirmed actual occurrence closes one financial-cycle review and anchors the next safe-to-spend horizon. Incidental inflows never become the anchor implicitly; without one, the owner selects a horizon date.
+_Avoid_: any income, largest deposit, automatically detected payday
+
+**Planning variance**:
+An explainable difference between a confirmed plan and actual ledger activity within a financial cycle, including changed amount or timing, non-occurrence, duplication, and displacement of planned headroom. It is the primary subject of a financial-cycle review.
+_Avoid_: category total, generic anomaly, accounting error
+
+**Completed financial-cycle review**:
+An owner-confirmed completion of the guided review workflow after plan matches, unresolved items, material variances, and next-cycle candidates have been addressed. A summary may present it, but a live dashboard alone does not complete it.
+_Avoid_: viewed dashboard, generated report, calendar close
+
+**Review confirmation record**:
+A compact ledger-embedded record of a completed financial cycle, its supporting ledger-snapshot fingerprint, and the owner-confirmed plan revisions and fulfillment matches. Derived charts, variances, and low points are recomputed rather than persisted.
+_Avoid_: saved report snapshot, duplicated analytics, locked accounting period
+
+**Stale financial-cycle review**:
+A previously completed review whose supporting historical ledger activity or confirmed planning assumptions have since changed. It remains visible as a prior conclusion but is no longer current until the owner reopens and confirms it.
+_Avoid_: locked period, silently recomputed review, deleted review
+
+**Variance materiality threshold**:
+An owner-confirmed amount or timing tolerance that determines which ordinary planning variances enter the primary review flow. Missed, duplicated, or overdue committed outflows remain primary regardless of this threshold, and suppressed variances remain inspectable.
+_Avoid_: hidden significance score, automatic threshold, ignored difference
+
+**Explainable cash-flow pattern**:
+A locally derived, deterministic historical pattern whose supporting occurrences, cadence, normalized description, accounts, and amount range are visible. It may generate a cash-flow candidate but never a confirmed plan.
+_Avoid_: AI prediction, opaque recurrence score, automatic categorization
+
+**Planning readiness**:
+The condition in which the owner has confirmed the planning currency, spendable-funds accounts, applicable short-term debts, minimum reserve, horizon anchor or date, and current committed outflows. No safe-to-spend result is presented before this condition is met.
+_Avoid_: inferred setup, partial estimate, account-balance fallback
+
+**Ledger-recorded-through date**:
+The owner-confirmed latest date through which real financial activity is represented in the source ledger for planning purposes. It states the calculation's completeness assumption without claiming external reconciliation.
+_Avoid_: reconciliation date, latest transaction date, verified balance date
+
+**Current planning status**:
+A planning result whose ledger-recorded-through date is today in the owner's display timezone and whose planning-readiness requirements remain satisfied. Older results remain viewable only as explicitly stale estimates and are not presented as safe.
+_Avoid_: recently updated estimate, latest transaction status, reconciled status
+
 **Synthetic reference ledger**:
 A deterministic, non-private ledger designed to reproduce the scale, density, currencies, long labels, unavailable valuations, and interaction states needed for Fava parity evidence.
 _Avoid_: toy fixture, anonymized private ledger, random sample data

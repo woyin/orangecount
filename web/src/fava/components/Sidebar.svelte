@@ -57,7 +57,7 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
     ["", ["income_statement", "balance_sheet", "trial_balance", "journal", "query"]],
     ["", ["holdings", "commodities", "documents", "events", "statistics"]],
     ["", ["editor", "import", "options", "help"]],
-    ["OrangeCount", ["account", "quick-profile"]],
+    ["OrangeCount", ["account", "quick-profile", "planning"]],
   ];
   const known = new Set([...ROUTES, "account"]);
   const shortcuts: Record<string, KeySpec> = {
@@ -76,7 +76,7 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
     options: "g o",
     help: "g H",
   };
-  const keys: Record<string, string> = { income_statement: "incomeStatement", balance_sheet: "balanceSheet", trial_balance: "trialBalance", journal: "journal", query: "query", holdings: "holdings", commodities: "commodities", documents: "documents", events: "events", statistics: "statistics", editor: "editor", import: "import", options: "options", help: "help", diagnostics: "diagnostics", account: "accounts" };
+  const keys: Record<string, string> = { income_statement: "incomeStatement", balance_sheet: "balanceSheet", trial_balance: "trialBalance", journal: "journal", query: "query", holdings: "holdings", commodities: "commodities", documents: "documents", events: "events", statistics: "statistics", editor: "editor", import: "import", options: "options", help: "help", diagnostics: "diagnostics", account: "accounts", planning: "planning" };
   function label(routeName: string): string { const catalog = translations[(locale === "zh-CN" ? "zh-CN" : "en") as Locale]; return catalog[keys[routeName] || ""] || pageLabel(routeName); }
   function t(key: string): string { const catalog = translations[(locale === "zh-CN" ? "zh-CN" : "en") as Locale]; return catalog[key] || key; }
 </script>

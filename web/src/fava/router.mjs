@@ -22,6 +22,7 @@ export const ROUTES = Object.freeze([
   "diagnostics",
   "errors",
   "quick-profile",
+  "planning",
 ]);
 
 const PATHS = Object.freeze({
@@ -48,6 +49,7 @@ const PATHS = Object.freeze({
   diagnostics: "/diagnostics",
   errors: "/errors",
   "quick-profile": "/quick-profile",
+  planning: "/planning",
 });
 
 const QUERY_KEYS = Object.freeze(["time", "account", "filter", "conversion", "interval", "path", "query_string", "r"]);
@@ -139,6 +141,7 @@ export function pageLabel(route) {
     diagnostics: "Diagnostics",
     errors: "Errors",
     "quick-profile": "Quick Profile",
+    planning: "Planning",
     account: "Account",
   };
   return labels[route] || "Journal";

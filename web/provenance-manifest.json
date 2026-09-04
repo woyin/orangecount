@@ -302,6 +302,11 @@
       "upstream": null,
       "notes": "OrangeCount route loader and adapter validation boundary."
     },
+    "web/src/fava/reports/PlanningReport.svelte": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "OrangeCount-authored liquidity planning report (safe-to-spend, scenarios, profile review); page layout modeled on the transplanted Fava report shells, written for the planning adapter routes."
+    },
     "web/src/fava/reports/types.ts": {
       "current_kind": "original",
       "upstream": null,

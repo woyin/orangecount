@@ -57,6 +57,8 @@ const (
 	KindInclude   DirectiveKind = "include"
 	KindPushTag   DirectiveKind = "pushtag"
 	KindPopTag    DirectiveKind = "poptag"
+	KindPushMeta  DirectiveKind = "pushmeta"
+	KindPopMeta   DirectiveKind = "popmeta"
 	KindOpen      DirectiveKind = "open"
 	KindClose     DirectiveKind = "close"
 	KindCommodity DirectiveKind = "commodity"
@@ -144,6 +146,24 @@ func (d TagDirective) Kind() DirectiveKind {
 	}
 	return KindPushTag
 }
+
+// PushMeta pushes a key/value pair onto the active metadata stack. It is a
+// source-level directive in Beancount v3 and does not change account state.
+type PushMeta struct {
+	DirectiveBase
+	Key   string
+	Value Value
+}
+
+func (PushMeta) Kind() DirectiveKind { return KindPushMeta }
+
+// PopMeta pops the most recent value for a key from the active metadata stack.
+type PopMeta struct {
+	DirectiveBase
+	Key string
+}
+
+func (PopMeta) Kind() DirectiveKind { return KindPopMeta }
 
 // Open is an `open` directive starting an account, optionally constraining
 // its currencies and booking method.
@@ -255,6 +275,8 @@ type Note struct {
 	Date    Date
 	Account string
 	Comment string
+	Tags    []string
+	Links   []string
 }
 
 // Kind implements Directive.

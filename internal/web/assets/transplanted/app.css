@@ -1,4 +1,4 @@
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/components/AutocompleteInput.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/components/AutocompleteInput.esbuild-svelte-fake-css */
 span.svelte-qkidfo {
   position: relative;
   display: inline-block;
@@ -45,7 +45,7 @@ li.svelte-qkidfo span:where(.svelte-qkidfo) {
   }
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/components/PageTitle.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/components/PageTitle.esbuild-svelte-fake-css */
 strong.svelte-95cklu::before {
   margin: 0 10px;
   font-weight: normal;
@@ -62,7 +62,7 @@ strong.svelte-95cklu::before {
   opacity: 0.5;
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/components/Header.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/components/Header.esbuild-svelte-fake-css */
 h1.svelte-1m9wvh0 {
   display: inline-block;
   padding: 0.5rem;
@@ -119,7 +119,7 @@ form.svelte-1m9wvh0 > span {
   }
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/charts/ReportChart.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/charts/ReportChart.esbuild-svelte-fake-css */
 .chart-card.svelte-1act09h {
   position: relative;
   margin-bottom: 1rem;
@@ -256,7 +256,7 @@ table.svelte-1act09h {
   min-width: 32rem;
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/charts/ModernChart.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/charts/ModernChart.esbuild-svelte-fake-css */
 .modern-chart-card.svelte-1l6ui0a {
   position: relative;
   margin-bottom: 1rem;
@@ -403,7 +403,7 @@ table.svelte-1act09h {
   filter: grayscale();
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/GenericReport.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/reports/GenericReport.esbuild-svelte-fake-css */
 .muted.svelte-8vbrz2 {
   color: var(--text-color-lightest);
 }
@@ -427,7 +427,7 @@ table.svelte-1act09h {
   border: 0;
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/JournalReport.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/reports/JournalReport.esbuild-svelte-fake-css */
 .journal-chips.svelte-osbwps {
   display: flex;
   flex-wrap: wrap;
@@ -457,7 +457,7 @@ table.svelte-1act09h {
   border: 0;
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/AccountReport.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/reports/AccountReport.esbuild-svelte-fake-css */
 .account-breadcrumb.svelte-psa061 .droptarget:where(.svelte-psa061) {
   padding: 0.35em 0.5em;
   margin: -0.35em -0.5em;
@@ -516,7 +516,7 @@ table.svelte-1act09h {
   list-style: none;
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/ImportReport.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/reports/ImportReport.esbuild-svelte-fake-css */
 .muted.svelte-1anq1wq {
   color: var(--text-color-lightest);
 }
@@ -544,7 +544,7 @@ table.svelte-1act09h {
   border: 1px solid var(--error);
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/sort/SortHeader.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/sort/SortHeader.esbuild-svelte-fake-css */
 .num.svelte-21kpbq {
   text-align: right;
 }
@@ -557,7 +557,7 @@ table.svelte-1act09h {
   border: 0;
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/StatisticsReport.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/reports/StatisticsReport.esbuild-svelte-fake-css */
 .entries-by-type.svelte-1hzrq4y .num:where(.svelte-1hzrq4y),
 .update-activity.svelte-1hzrq4y .num:where(.svelte-1hzrq4y) {
   text-align: right;
@@ -582,7 +582,7 @@ table.svelte-1act09h {
   background: var(--status-yellow, #fbc02d);
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/charts/LineChart.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/charts/LineChart.esbuild-svelte-fake-css */
 .line-card.svelte-1fixw1l {
   position: relative;
   margin-bottom: 1rem;
@@ -634,7 +634,7 @@ table.svelte-1act09h {
   box-shadow: 0 1px 3px rgb(0 0 0 / .25);
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/QueryReport.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/reports/QueryReport.esbuild-svelte-fake-css */
 .query-form.svelte-1qlrjvy {
   display: grid;
   gap: 0.5rem;
@@ -665,7 +665,7 @@ table.svelte-1act09h {
   border: 1px solid var(--error);
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/editor/AppMenu.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/reports/editor/AppMenu.esbuild-svelte-fake-css */
 div.svelte-5ozbeh {
   display: flex;
   gap: 0.5em;
@@ -673,7 +673,7 @@ div.svelte-5ozbeh {
   margin-right: 0.5em;
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/editor/AppMenuItem.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/reports/editor/AppMenuItem.esbuild-svelte-fake-css */
 span.svelte-1dn9mcy {
   padding: 0.7em 0.5em;
   cursor: pointer;
@@ -702,7 +702,7 @@ span.svelte-1dn9mcy:hover > ul:where(.svelte-1dn9mcy) {
   display: block;
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/editor/AppMenuSubItem.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/reports/editor/AppMenuSubItem.esbuild-svelte-fake-css */
 .selected.svelte-rln02u::before {
   content: "\203a";
 }
@@ -717,7 +717,7 @@ li.svelte-rln02u:focus-visible {
   background-color: var(--background-darkest);
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/editor/Sources.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/reports/editor/Sources.esbuild-svelte-fake-css */
 ul.svelte-1f4d3ah {
   padding: 0 0 0 0.5em;
   margin: 0;
@@ -751,7 +751,7 @@ p.svelte-1f4d3ah > :where(.svelte-1f4d3ah) {
   margin: 0 0.25rem;
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/editor/EditorMenu.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/reports/editor/EditorMenu.esbuild-svelte-fake-css */
 div.svelte-1b7r65z {
   display: flex;
   flex-wrap: wrap;
@@ -760,7 +760,7 @@ div.svelte-1b7r65z {
   border-bottom: 1px solid var(--sidebar-border);
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/EditorReport.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/reports/EditorReport.esbuild-svelte-fake-css */
 .muted.svelte-17jasfg {
   color: var(--text-color-lightest);
 }
@@ -801,7 +801,7 @@ div.svelte-1b7r65z {
   }
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/DocumentAccounts.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/reports/DocumentAccounts.esbuild-svelte-fake-css */
 ul.svelte-1se7z4w {
   padding: 0 0 0 0.5em;
   margin: 0;
@@ -836,7 +836,7 @@ p.svelte-1se7z4w > :where(.svelte-1se7z4w) {
   color: var(--treetable-expander);
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/modals/DocumentMoveModal.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/modals/DocumentMoveModal.esbuild-svelte-fake-css */
 .move-backdrop.svelte-iwkm6x {
   position: fixed;
   inset: 0;
@@ -897,7 +897,7 @@ p.svelte-1se7z4w > :where(.svelte-1se7z4w) {
   color: var(--error);
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/DocumentPreview.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/reports/DocumentPreview.esbuild-svelte-fake-css */
 object.svelte-1jfq29f,
 img.svelte-1jfq29f,
 iframe.svelte-1jfq29f,
@@ -912,7 +912,7 @@ img.svelte-1jfq29f {
   overflow: auto;
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/DocumentTable.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/reports/DocumentTable.esbuild-svelte-fake-css */
 .documents-table.svelte-16svwjo {
   max-width: 60rem;
 }
@@ -924,7 +924,7 @@ img.svelte-1jfq29f {
   background-color: var(--table-header-background);
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/DocumentsReport.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/reports/DocumentsReport.esbuild-svelte-fake-css */
 .documents-layout.svelte-10uk1r4 {
   display: grid;
   grid-template-columns: 1fr 2fr;
@@ -941,7 +941,7 @@ img.svelte-1jfq29f {
   padding-left: 0.75rem;
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/ErrorsReport.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/reports/ErrorsReport.esbuild-svelte-fake-css */
 .errors-table.svelte-13lbwf2 {
   min-width: 100%;
 }
@@ -971,7 +971,7 @@ img.svelte-1jfq29f {
   font-size: 0.9em;
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/charts/ScatterPlot.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/charts/ScatterPlot.esbuild-svelte-fake-css */
 .scatter-card.svelte-j8o8u7 {
   position: relative;
   margin-bottom: 1rem;
@@ -1018,12 +1018,12 @@ img.svelte-1jfq29f {
   box-shadow: 0 1px 3px rgb(0 0 0 / .25);
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/EventTable.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/reports/EventTable.esbuild-svelte-fake-css */
 .events-table.svelte-1nok83z {
   max-width: 40rem;
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/EventsReport.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/reports/EventsReport.esbuild-svelte-fake-css */
 .flex-row.svelte-1cxn66i {
   display: flex;
   gap: var(--flex-gap, 0.5rem);
@@ -1045,7 +1045,7 @@ img.svelte-1jfq29f {
   color: var(--text-color-lighter);
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/tree-table/TreeTableNode.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/tree-table/TreeTableNode.esbuild-svelte-fake-css */
 .account-cell.svelte-xjp7mv {
   display: flex;
   flex: 1;
@@ -1072,14 +1072,14 @@ img.svelte-1jfq29f {
   color: var(--text-color-lightest);
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/tree-table/TreeTable.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/tree-table/TreeTable.esbuild-svelte-fake-css */
 .account-cell.svelte-1xyup19 {
   display: block;
   flex: 1;
   min-width: 14em;
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/TreeReport.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/reports/TreeReport.esbuild-svelte-fake-css */
 .chart-picker.svelte-1dzjfb9 {
   display: flex;
   flex-wrap: wrap;
@@ -1097,7 +1097,7 @@ img.svelte-1jfq29f {
   cursor: default;
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/UtilityReport.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/reports/UtilityReport.esbuild-svelte-fake-css */
 .source-list.svelte-18lmd9y,
 .help-index.svelte-18lmd9y,
 .help-body.svelte-18lmd9y,
@@ -1179,7 +1179,7 @@ pre.svelte-18lmd9y {
   background: var(--code-background);
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/reports/QuickProfileReport.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/reports/QuickProfileReport.esbuild-svelte-fake-css */
 .profile-section.svelte-10cxupn {
   margin-bottom: 1.5em;
 }
@@ -1230,7 +1230,7 @@ pre.svelte-18lmd9y {
   min-width: 8em;
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/components/Sidebar.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/components/Sidebar.esbuild-svelte-fake-css */
 aside.svelte-e0j49v {
   grid-area: aside;
   padding-top: 0.5rem;
@@ -1363,7 +1363,7 @@ aside.svelte-e0j49v {
   font-size: 1.2rem;
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/modals/QuickEntryPanel.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/modals/QuickEntryPanel.esbuild-svelte-fake-css */
 .quick-entry-panel.svelte-118jgj0 {
   display: flex;
   flex-direction: column;
@@ -1463,7 +1463,7 @@ button.primary.svelte-118jgj0 {
   white-space: pre-wrap;
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/modals/AddEntryModal.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/modals/AddEntryModal.esbuild-svelte-fake-css */
 .add-backdrop.svelte-1iw1zty {
   position: fixed;
   inset: 0;
@@ -1598,7 +1598,7 @@ button.primary.svelte-118jgj0 {
   color: var(--error);
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/modals/ContextModal.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/modals/ContextModal.esbuild-svelte-fake-css */
 .context-backdrop.svelte-kroni5 {
   position: fixed;
   inset: 0;
@@ -1666,7 +1666,7 @@ button.primary.svelte-118jgj0 {
   color: var(--text-color-lightest);
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/modals/DocumentUploadModal.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/modals/DocumentUploadModal.esbuild-svelte-fake-css */
 .upload-backdrop.svelte-bpl3hy {
   position: fixed;
   inset: 0;
@@ -1748,7 +1748,7 @@ button.primary.svelte-118jgj0 {
   outline-offset: 2px;
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/modals/ExportModal.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/modals/ExportModal.esbuild-svelte-fake-css */
 .export-backdrop.svelte-gn9rfu {
   position: fixed;
   inset: 0;
@@ -1777,7 +1777,7 @@ button.primary.svelte-118jgj0 {
   color: var(--link-color);
 }
 
-/* fakecss:/Users/breestealth/Documents/DevelopmentRepository/OrangeCount/web/src/fava/App.esbuild-svelte-fake-css */
+/* fakecss:/Users/breestealth/Development/OrangeCount/web/src/fava/App.esbuild-svelte-fake-css */
 .route-placeholder {
   max-width: 70rem;
 }

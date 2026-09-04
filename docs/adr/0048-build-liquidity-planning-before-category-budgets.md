@@ -1,0 +1,3 @@
+# Build liquidity planning before category budgets
+
+OrangeCount will add owner-confirmed liquidity planning around a safe-to-spend horizon before introducing category budgets. The planning model answers how much currently held liquid money remains safe to spend after short-term debt, confirmed future outflows, and an owner-defined reserve, and supports explicit affordability scenarios; it does not allocate category limits or treat forecasts as accounting balances. This preserves ADR-0017's deferral of a budget model while choosing a narrower decision tool that can be derived from the complete personal ledger without plugins, external data, probabilistic forecasts, or a proprietary budget syntax.

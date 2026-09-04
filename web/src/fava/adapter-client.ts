@@ -231,7 +231,7 @@ export function createAdapterClient(
     diagnosticContext: getContext,
     load: (route, query = {}) => {
       const treeRoutes = new Set(["income_statement", "balance_sheet", "trial_balance"]);
-      const directRoutes = new Set(["options", "help", "diagnostics", "source", "editor", "import", "journal", "entry-context"]);
+      const directRoutes = new Set(["options", "help", "diagnostics", "source", "editor", "import", "journal", "entry-context", "planning", "planning-review"]);
       const resource = treeRoutes.has(route) || directRoutes.has(route)
         ? route
         : route.startsWith("holdings_by_")

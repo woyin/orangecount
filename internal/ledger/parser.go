@@ -417,7 +417,7 @@ func (p *parser) parseDirective(ln line, ts []token) {
 
 func isNonDateKeyword(k string) bool {
 	switch k {
-	case "option", "plugin", "include", "pushtag", "poptag":
+	case "option", "plugin", "include", "pushtag", "poptag", "pushmeta", "popmeta":
 		return true
 	default:
 		return false
@@ -450,6 +450,23 @@ func (p *parser) parseKeyword(ts []token) {
 		p.parseIncludeKeyword(base, ts)
 	case "pushtag", "poptag":
 		p.parseTagKeyword(base, ts)
+	case "popmeta":
+		if len(ts) != 2 || !strings.HasSuffix(ts[1].text, ":") {
+			p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
+			return
+		}
+		p.appendDirective(PopMeta{DirectiveBase: base, Key: strings.TrimSuffix(ts[1].text, ":")})
+	case "pushmeta":
+		if len(ts) < 2 || !strings.HasSuffix(ts[1].text, ":") {
+			p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
+			return
+		}
+		key := strings.TrimSuffix(ts[1].text, ":")
+		value := Value{Kind: ValueNull, At: base.At}
+		if len(ts) > 2 {
+			value, _ = p.value(ts, 2)
+		}
+		p.appendDirective(PushMeta{DirectiveBase: base, Key: key, Value: value})
 	}
 }
 
@@ -562,7 +579,11 @@ func (p *parser) parseBalanceDirective(base DirectiveBase, date Date, rest []tok
 	}
 	d.Amount = amount
 	if next < len(rest) && rest[next].text == "~" && next+1 < len(rest) {
-		n := p.number(rest[next+1])
+		n, _, ok := parseNumberExpr(rest, next+1)
+		if !ok {
+			p.add("E-PARSE-TOKEN", diagnostic.Error, rest[next+1].span)
+			return
+		}
 		d.Tolerance = &n
 	}
 	p.appendDirective(d)
@@ -634,7 +655,15 @@ func (p *parser) parseNoteDirective(base DirectiveBase, date Date, rest []token)
 		p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
 		return
 	}
-	p.appendDirective(Note{DirectiveBase: base, Date: date, Account: rest[0].text, Comment: rest[1].value})
+	d := Note{DirectiveBase: base, Date: date, Account: rest[0].text, Comment: rest[1].value}
+	for _, t := range rest[2:] {
+		if strings.HasPrefix(t.text, "#") {
+			d.Tags = append(d.Tags, strings.TrimPrefix(t.text, "#"))
+		} else if strings.HasPrefix(t.text, "^") {
+			d.Links = append(d.Links, strings.TrimPrefix(t.text, "^"))
+		}
+	}
+	p.appendDirective(d)
 }
 
 // parseCustomDirective reads typed custom values separated by commas; the
@@ -702,7 +731,7 @@ func (p *parser) parseTransaction(date Date, ts []token) {
 }
 
 func isFlag(s string) bool {
-	if s == "*" || s == "!" {
+	if s == "*" || s == "!" || s == "#" {
 		return true
 	}
 	return len([]rune(s)) == 1 && unicode.IsLetter([]rune(s)[0])
@@ -1219,33 +1248,24 @@ func (p *parser) amount(ts []token, i int) (Amount, int, bool) {
 	}
 	// Beancount's incomplete_amount grammar permits either side to be omitted:
 	// `Account CURRENCY`, `Account 1.00`, or a completely bare posting. A
-	// numeric token before a suffix delimiter is therefore a number-only amount,
-	// while an ordinary word in that position is a currency-only amount. Keep
-	// the distinction so evaluator inference can see which component is absent.
-	if ts[i].kind == tokWord && (i+1 >= len(ts) || isPunctuation(ts[i+1].text)) {
-		if number := tryNumber(ts[i]); number.Raw != "" {
-			return Amount{Number: number, At: ts[i].span}, i + 1, true
+	// number expression in that position is a number-only amount unless a
+	// currency follows; an ordinary non-expression word is a currency-only
+	// amount. Keep the distinction so evaluator inference can see which
+	// component is absent.
+	if number, next, ok := parseNumberExpr(ts, i); ok {
+		amt := Amount{Number: number, At: p.file.Span(ts[i].span.Start, number.At.End)}
+		if next < len(ts) && isCurrencyToken(ts[next]) {
+			amt.Currency = ts[next].text
+			amt.At = p.file.Span(ts[i].span.Start, ts[next].span.End)
+			next++
 		}
+		return amt, next, true
+	}
+	if ts[i].kind == tokWord && (i+1 >= len(ts) || isPunctuation(ts[i+1].text)) {
 		return Amount{Currency: ts[i].text, At: ts[i].span}, i + 1, true
 	}
-	if i+1 >= len(ts) {
-		p.add("E-PARSE-EXPECTED", diagnostic.Error, ts[i].span)
-		return Amount{}, i, false
-	}
-	n := p.number(ts[i])
-	if n.Raw == "" || ts[i+1].kind == tokString || isPunctuation(ts[i+1].text) {
-		p.add("E-PARSE-TOKEN", diagnostic.Error, ts[i].span)
-		return Amount{}, i, false
-	}
-	return Amount{Number: n, Currency: ts[i+1].text, At: p.file.Span(ts[i].span.Start, ts[i+1].span.End)}, i + 2, true
-}
-
-func (p *parser) number(t token) Number {
-	n := tryNumber(t)
-	if n.Raw == "" {
-		p.add("E-PARSE-TOKEN", diagnostic.Error, t.span)
-	}
-	return n
+	p.add("E-PARSE-TOKEN", diagnostic.Error, ts[i].span)
+	return Amount{}, i, false
 }
 
 func tryNumber(t token) Number {
@@ -1260,7 +1280,10 @@ func tryNumber(t token) Number {
 }
 
 func (p *parser) parseMetadata(ts []token) (Metadata, bool) {
-	if len(ts) < 2 {
+	if len(ts) == 0 {
+		return Metadata{}, false
+	}
+	if len(ts) == 1 && !strings.HasSuffix(ts[0].text, ":") {
 		p.add("E-PARSE-EXPECTED", diagnostic.Error, ts[0].span)
 		return Metadata{}, false
 	}
@@ -1274,16 +1297,18 @@ func (p *parser) parseMetadata(ts []token) (Metadata, bool) {
 		idx++
 	}
 	if idx >= len(ts) {
-		p.add("E-PARSE-EXPECTED", diagnostic.Error, ts[0].span)
-		return Metadata{}, false
+		return Metadata{Key: key, Value: Value{Kind: ValueNull, At: ts[0].span}, Span: p.file.Span(ts[0].span.Start, ts[len(ts)-1].span.End)}, true
 	}
 	v, _ := p.value(ts, idx)
 	return Metadata{Key: key, Value: v, Span: p.file.Span(ts[0].span.Start, ts[len(ts)-1].span.End)}, true
 }
 
 func isMetadataLine(ts []token) bool {
-	if len(ts) < 2 {
+	if len(ts) == 0 {
 		return false
+	}
+	if len(ts) == 1 {
+		return strings.HasSuffix(ts[0].text, ":")
 	}
 	return strings.HasSuffix(ts[0].text, ":") || ts[1].text == ":"
 }
@@ -1317,8 +1342,15 @@ func (p *parser) value(ts []token, i int) (Value, int) {
 	if strings.HasPrefix(t.text, "^") {
 		return Value{Kind: ValueLink, Raw: t.text, String: strings.TrimPrefix(t.text, "^"), At: t.span}, i + 1
 	}
-	if n := tryNumber(t); n.Raw != "" {
-		return p.numberValue(ts, i, n)
+	if strings.EqualFold(t.text, "None") {
+		return Value{Kind: ValueNull, Raw: t.text, At: t.span}, i + 1
+	}
+	if n, next, ok := parseNumberExpr(ts, i); ok {
+		if next < len(ts) && isCurrencyToken(ts[next]) {
+			a := Amount{Number: n, Currency: ts[next].text, At: p.file.Span(t.span.Start, ts[next].span.End)}
+			return Value{Kind: ValueAmount, Raw: p.file.Text(a.At), Amount: a, At: a.At}, next + 1
+		}
+		return Value{Kind: ValueNumber, Raw: p.file.Text(p.file.Span(ts[i].span.Start, ts[next-1].span.End)), Number: n, At: p.file.Span(t.span.Start, ts[next-1].span.End)}, next
 	}
 	if isAccount(t.text) {
 		return Value{Kind: ValueAccount, Raw: t.text, String: t.text, At: t.span}, i + 1
@@ -1350,22 +1382,22 @@ func (p *parser) listValue(ts []token, i int) (Value, int) {
 	return v, i
 }
 
-// numberValue classifies a numeric token: followed by a currency word it is
-// an amount, otherwise a bare number.
-func (p *parser) numberValue(ts []token, i int, n Number) (Value, int) {
-	if i+1 < len(ts) && !isPunctuation(ts[i+1].text) {
-		a := Amount{Number: n, Currency: ts[i+1].text, At: p.file.Span(ts[i].span.Start, ts[i+1].span.End)}
-		return Value{Kind: ValueAmount, Raw: p.file.Text(a.At), Amount: a, At: a.At}, i + 2
-	}
-	return Value{Kind: ValueNumber, Raw: ts[i].text, Number: n, At: ts[i].span}, i + 1
-}
-
 func isAccount(s string) bool {
 	if !strings.Contains(s, ":") {
 		return false
 	}
 	first := s[0]
 	return first >= 'A' && first <= 'Z'
+}
+
+func isCurrencyToken(t token) bool {
+	if t.kind != tokWord || isExprDelimiter(t.text) || strings.HasPrefix(t.text, "#") || strings.HasPrefix(t.text, "^") {
+		return false
+	}
+	if tryNumber(t).Raw != "" {
+		return false
+	}
+	return !isAccount(t.text)
 }
 
 // isPunctuation reports whether a token is one of the grammar's structural

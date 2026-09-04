@@ -2474,21 +2474,21 @@ function ns_template(content2, flags2, ns = "svg") {
         /** @type {DocumentFragment} */
         create_fragment_from_html(wrapped)
       );
-      var root29 = (
+      var root30 = (
         /** @type {Element} */
         get_first_child(fragment)
       );
       if (is_fragment) {
         node = document.createDocumentFragment();
-        while (get_first_child(root29)) {
+        while (get_first_child(root30)) {
           node.appendChild(
             /** @type {Node} */
-            get_first_child(root29)
+            get_first_child(root30)
           );
         }
       } else {
         node = /** @type {Element} */
-        get_first_child(root29);
+        get_first_child(root30);
       }
     }
     var clone = (
@@ -4283,6 +4283,9 @@ var PRIVATE_ADAPTER_BASE = "/__orangecount/fava";
 function isRecord(value) {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
+function isDiagnosticContextLine(value) {
+  return isRecord(value) && Number.isInteger(value.line) && Number(value.line) > 0 && typeof value.content === "string";
+}
 function requiredString(value, field) {
   if (typeof value !== "string" || value.trim() === "") throw new Error(`Invalid repair guidance: ${field} is required`);
   return value;
@@ -4317,14 +4320,29 @@ function parseDiagnosticContext(value) {
   if (!isRecord(value) || typeof value.available !== "boolean") throw new Error("Invalid diagnostic context response");
   if (value.path !== void 0 && typeof value.path !== "string") throw new Error("Invalid diagnostic context: path must be a string");
   if (value.focus_line !== void 0 && (!Number.isInteger(value.focus_line) || Number(value.focus_line) <= 0)) throw new Error("Invalid diagnostic context: focus_line must be positive");
+  const path2 = typeof value.path === "string" ? value.path : void 0;
+  const focusLine = value.focus_line === void 0 ? void 0 : Number(value.focus_line);
   if (!value.available) {
     if (value.reason !== void 0 && typeof value.reason !== "string") throw new Error("Invalid diagnostic context: reason must be a string");
-    return value;
+    return {
+      ...value,
+      available: value.available,
+      path: path2,
+      focus_line: focusLine,
+      reason: value.reason
+    };
   }
-  if (!Array.isArray(value.lines) || !value.lines.every((item) => isRecord(item) && Number.isInteger(item.line) && Number(item.line) > 0 && typeof item.content === "string")) {
+  const lines = value.lines;
+  if (!Array.isArray(lines) || !lines.every(isDiagnosticContextLine)) {
     throw new Error("Invalid diagnostic context: lines are malformed");
   }
-  return value;
+  return {
+    ...value,
+    available: value.available,
+    path: path2,
+    focus_line: focusLine,
+    lines
+  };
 }
 function bootstrapPayload(wire, mtime = "") {
   const title = wire.options?.title?.trim() || "OrangeCount";
@@ -4381,7 +4399,7 @@ function createAdapterClient(fetcher = fetch, base2 = PRIVATE_ADAPTER_BASE) {
     diagnosticContext: getContext2,
     load: (route, query = {}) => {
       const treeRoutes = /* @__PURE__ */ new Set(["income_statement", "balance_sheet", "trial_balance"]);
-      const directRoutes = /* @__PURE__ */ new Set(["options", "help", "diagnostics", "source", "editor", "import", "journal", "entry-context"]);
+      const directRoutes = /* @__PURE__ */ new Set(["options", "help", "diagnostics", "source", "editor", "import", "journal", "entry-context", "planning", "planning-review"]);
       const resource = treeRoutes.has(route) || directRoutes.has(route) ? route : route.startsWith("holdings_by_") ? "reports/holdings" : `reports/${route}`;
       const params = route.startsWith("holdings_by_") ? { ...query, aggregation: route.slice("holdings_".length) } : query;
       return get3(resource, params);
@@ -4623,7 +4641,50 @@ var translations = {
     quickProfileTemplate: "Template",
     quickProfileName: "Name",
     quickProfileAdd: "Add profile rule",
-    quickProfileType: "Type"
+    quickProfileType: "Type",
+    planning: "Planning",
+    planningSetup: "Planning setup required",
+    safeToSpend: "Safe to spend",
+    lowPoint: "Lowest point",
+    fundingShortfall: "Funding shortfall",
+    planningStale: "Recorded-through date is not today; this is a stale estimate.",
+    purchaseScenario: "Test a large purchase",
+    purchaseName: "Proposed purchase",
+    includeInflows: "Include future inflows",
+    releaseAdjustable: "Release adjustable outflows",
+    evaluate: "Evaluate",
+    scenarioLowPoint: "Scenario low point",
+    scenarioEphemeral: "This trial is not saved to the ledger.",
+    committed: "Committed",
+    adjustable: "Adjustable",
+    inflows: "Future inflows",
+    cycleReview: "Cycle review",
+    inspectReview: "Inspect review evidence",
+    reviewConfirmation: "Suggestions are evidence only; nothing is fulfilled automatically.",
+    matchSuggestions: "Plan-to-actual suggestions",
+    recurringCandidates: "Recurring candidates",
+    occurrences: "occurrences",
+    reviewStale: "The completed review is stale and needs reconfirmation.",
+    reviewComplete: "This review is completed.",
+    previewReview: "Preview review completion",
+    commitReview: "Save reviewed completion",
+    minimumReserve: "Minimum reserve",
+    spendableAccounts: "Spendable accounts (comma separated)",
+    debtAccounts: "Short-term debt accounts (comma separated)",
+    recordedThrough: "Recorded through",
+    addPlan: "Add a planned flow",
+    planID: "Plan ID",
+    direction: "Direction",
+    outflow: "Outflow",
+    inflow: "Inflow",
+    commitment: "Commitment",
+    reviewedWrite: "Review change",
+    resolvePlan: "Resolve an active plan",
+    resolution: "Resolution",
+    fulfilled: "Fulfilled",
+    cancelled: "Cancelled",
+    reschedule: "Reschedule",
+    useCandidate: "Use as a plan draft"
   },
   "zh-CN": {
     subtitle: "\u53EA\u8BFB\u672C\u5730\u8D26\u672C\u89C6\u56FE\u3002",
@@ -4822,7 +4883,50 @@ var translations = {
     quickProfileTemplate: "\u6A21\u677F",
     quickProfileName: "\u540D\u79F0",
     quickProfileAdd: "\u6DFB\u52A0\u914D\u7F6E\u89C4\u5219",
-    quickProfileType: "\u7C7B\u578B"
+    quickProfileType: "\u7C7B\u578B",
+    planning: "\u89C4\u5212",
+    planningSetup: "\u9700\u8981\u5B8C\u6210\u89C4\u5212\u8BBE\u7F6E",
+    safeToSpend: "\u5B89\u5168\u53EF\u652F\u914D\u91D1\u989D",
+    lowPoint: "\u8D44\u91D1\u6700\u4F4E\u70B9",
+    fundingShortfall: "\u8D44\u91D1\u7F3A\u53E3",
+    planningStale: "\u5DF2\u8BB0\u8D26\u622A\u81F3\u65E5\u671F\u4E0D\u662F\u4ECA\u5929\uFF1B\u8FD9\u662F\u8FC7\u671F\u4F30\u7B97\u3002",
+    purchaseScenario: "\u8BD5\u7B97\u4E00\u7B14\u5927\u989D\u652F\u51FA",
+    purchaseName: "\u62DF\u8D2D\u9879\u76EE",
+    includeInflows: "\u8BA1\u5165\u672A\u6765\u6D41\u5165",
+    releaseAdjustable: "\u91CA\u653E\u53EF\u8C03\u6574\u6D41\u51FA",
+    evaluate: "\u5F00\u59CB\u8BD5\u7B97",
+    scenarioLowPoint: "\u8BD5\u7B97\u6700\u4F4E\u70B9",
+    scenarioEphemeral: "\u672C\u6B21\u8BD5\u7B97\u4E0D\u4F1A\u5199\u5165\u8D26\u672C\u3002",
+    committed: "\u5DF2\u627F\u8BFA",
+    adjustable: "\u53EF\u8C03\u6574",
+    inflows: "\u672A\u6765\u6D41\u5165",
+    cycleReview: "\u5468\u671F\u590D\u76D8",
+    inspectReview: "\u67E5\u770B\u590D\u76D8\u8BC1\u636E",
+    reviewConfirmation: "\u5EFA\u8BAE\u53EA\u63D0\u4F9B\u8BC1\u636E\uFF0C\u4E0D\u4F1A\u81EA\u52A8\u5B8C\u6210\u8BA1\u5212\u3002",
+    matchSuggestions: "\u8BA1\u5212\u4E0E\u5B9E\u9645\u5339\u914D\u5EFA\u8BAE",
+    recurringCandidates: "\u5468\u671F\u6027\u5019\u9009",
+    occurrences: "\u7B14\u53D1\u751F\u8BB0\u5F55",
+    reviewStale: "\u5DF2\u5B8C\u6210\u7684\u590D\u76D8\u5DF2\u8FC7\u671F\uFF0C\u9700\u8981\u91CD\u65B0\u786E\u8BA4\u3002",
+    reviewComplete: "\u672C\u6B21\u590D\u76D8\u5DF2\u5B8C\u6210\u3002",
+    previewReview: "\u9884\u89C8\u590D\u76D8\u5B8C\u6210\u8BB0\u5F55",
+    commitReview: "\u4FDD\u5B58\u5DF2\u5BA1\u9605\u7684\u5B8C\u6210\u8BB0\u5F55",
+    minimumReserve: "\u6700\u4F4E\u4FDD\u7559\u91D1",
+    spendableAccounts: "\u53EF\u652F\u914D\u8D26\u6237\uFF08\u9017\u53F7\u5206\u9694\uFF09",
+    debtAccounts: "\u77ED\u671F\u503A\u52A1\u8D26\u6237\uFF08\u9017\u53F7\u5206\u9694\uFF09",
+    recordedThrough: "\u8BB0\u8D26\u622A\u81F3\u65E5\u671F",
+    addPlan: "\u65B0\u589E\u8BA1\u5212\u73B0\u91D1\u6D41",
+    planID: "\u8BA1\u5212 ID",
+    direction: "\u65B9\u5411",
+    outflow: "\u6D41\u51FA",
+    inflow: "\u6D41\u5165",
+    commitment: "\u627F\u8BFA\u7C7B\u578B",
+    reviewedWrite: "\u5BA1\u9605\u53D8\u66F4",
+    resolvePlan: "\u5904\u7F6E\u6D3B\u52A8\u8BA1\u5212",
+    resolution: "\u5904\u7F6E\u65B9\u5F0F",
+    fulfilled: "\u5DF2\u5C65\u884C",
+    cancelled: "\u5DF2\u53D6\u6D88",
+    reschedule: "\u6539\u671F",
+    useCandidate: "\u4F5C\u4E3A\u8BA1\u5212\u8349\u7A3F\u4F7F\u7528"
   }
 };
 
@@ -5277,7 +5381,8 @@ var ROUTES = Object.freeze([
   "source",
   "diagnostics",
   "errors",
-  "quick-profile"
+  "quick-profile",
+  "planning"
 ]);
 var PATHS = Object.freeze({
   income_statement: "/income_statement",
@@ -5302,7 +5407,8 @@ var PATHS = Object.freeze({
   source: "/source",
   diagnostics: "/diagnostics",
   errors: "/errors",
-  "quick-profile": "/quick-profile"
+  "quick-profile": "/quick-profile",
+  planning: "/planning"
 });
 var QUERY_KEYS = Object.freeze(["time", "account", "filter", "conversion", "interval", "path", "query_string", "r"]);
 function pathWithoutTrailingSlash(pathname) {
@@ -5387,6 +5493,7 @@ function pageLabel(route) {
     diagnostics: "Diagnostics",
     errors: "Errors",
     "quick-profile": "Quick Profile",
+    planning: "Planning",
     account: "Account"
   };
   return labels[route] || "Journal";
@@ -5973,10 +6080,10 @@ function ReportChart($$anchor, $$props) {
     if (chart2().interval === "day") return date2;
     return date2.slice(0, 7);
   }
-  function collectLeaves(nodes, root29 = "") {
+  function collectLeaves(nodes, root30 = "") {
     const out2 = [];
     for (const node of nodes) {
-      const top2 = root29 || node.name.split(":")[0];
+      const top2 = root30 || node.name.split(":")[0];
       if (node.children?.length) {
         out2.push(...collectLeaves(node.children, top2));
       } else {
@@ -6027,14 +6134,14 @@ function ReportChart($$anchor, $$props) {
   function icicleRects(nodes) {
     const rects = [];
     const rowHeight = 6;
-    function walk(list, x0, span, depth, root29) {
+    function walk(list, x0, span, depth, root30) {
       const total = list.reduce((sum, node) => sum + Math.abs(numberValue(node.value)), 0);
       if (!total || span <= 0) return;
       let cursor = x0;
       for (const node of list) {
         const value = Math.abs(numberValue(node.value));
         const width2 = value / total * span;
-        const top2 = root29 || node.name.split(":")[0];
+        const top2 = root30 || node.name.split(":")[0];
         if (value > 0) {
           rects.push({
             name: node.name,
@@ -6065,14 +6172,14 @@ function ReportChart($$anchor, $$props) {
   }
   function sunburstSegments(nodes) {
     const segments = [];
-    function walk(list, a0, span, depth, root29) {
+    function walk(list, a0, span, depth, root30) {
       const total = list.reduce((sum, node) => sum + Math.abs(numberValue(node.value)), 0);
       if (!total || span <= 0) return;
       let cursor = a0;
       for (const node of list) {
         const value = Math.abs(numberValue(node.value));
         const angle = value / total * span;
-        const top2 = root29 || node.name.split(":")[0];
+        const top2 = root30 || node.name.split(":")[0];
         if (value > 0) {
           segments.push({
             name: node.name,
@@ -12220,8 +12327,8 @@ function stackIterator(tree, pos, side) {
     } else {
       let mount2 = MountedTree.get(scan.tree);
       if (mount2 && mount2.overlay && mount2.overlay[0].from <= pos && mount2.overlay[mount2.overlay.length - 1].to >= pos) {
-        let root29 = new TreeNode(mount2.tree, mount2.overlay[0].from + scan.from, -1, scan);
-        (layers || (layers = [inner])).push(resolveNode(root29, pos, side, false));
+        let root30 = new TreeNode(mount2.tree, mount2.overlay[0].from + scan.from, -1, scan);
+        (layers || (layers = [inner])).push(resolveNode(root30, pos, side, false));
       }
     }
   }
@@ -16469,20 +16576,20 @@ var StyleModule = class {
   //
   // If a Content Security Policy nonce is provided, it is added to
   // the `<style>` tag generated by the library.
-  static mount(root29, modules, options) {
-    let set2 = root29[SET], nonce = options && options.nonce;
-    if (!set2) set2 = new StyleSet(root29, nonce);
+  static mount(root30, modules, options) {
+    let set2 = root30[SET], nonce = options && options.nonce;
+    if (!set2) set2 = new StyleSet(root30, nonce);
     else if (nonce) set2.setNonce(nonce);
-    set2.mount(Array.isArray(modules) ? modules : [modules], root29);
+    set2.mount(Array.isArray(modules) ? modules : [modules], root30);
   }
 };
 var adoptedSet = /* @__PURE__ */ new Map();
 var StyleSet = class {
-  constructor(root29, nonce) {
-    let doc2 = root29.ownerDocument || root29, win = doc2.defaultView;
-    if (!root29.head && root29.adoptedStyleSheets && win.CSSStyleSheet) {
+  constructor(root30, nonce) {
+    let doc2 = root30.ownerDocument || root30, win = doc2.defaultView;
+    if (!root30.head && root30.adoptedStyleSheets && win.CSSStyleSheet) {
       let adopted = adoptedSet.get(doc2);
-      if (adopted) return root29[SET] = adopted;
+      if (adopted) return root30[SET] = adopted;
       this.sheet = new win.CSSStyleSheet();
       adoptedSet.set(doc2, this);
     } else {
@@ -16490,9 +16597,9 @@ var StyleSet = class {
       if (nonce) this.styleTag.setAttribute("nonce", nonce);
     }
     this.modules = [];
-    root29[SET] = this;
+    root30[SET] = this;
   }
-  mount(modules, root29) {
+  mount(modules, root30) {
     let sheet = this.sheet;
     let pos = 0, j = 0;
     for (let i2 = 0; i2 < modules.length; i2++) {
@@ -16513,14 +16620,14 @@ var StyleSet = class {
       }
     }
     if (sheet) {
-      if (root29.adoptedStyleSheets.indexOf(this.sheet) < 0)
-        root29.adoptedStyleSheets = [this.sheet, ...root29.adoptedStyleSheets];
+      if (root30.adoptedStyleSheets.indexOf(this.sheet) < 0)
+        root30.adoptedStyleSheets = [this.sheet, ...root30.adoptedStyleSheets];
     } else {
       let text2 = "";
       for (let i2 = 0; i2 < this.modules.length; i2++)
         text2 += this.modules[i2].getRules() + "\n";
       this.styleTag.textContent = text2;
-      let target2 = root29.head || root29;
+      let target2 = root30.head || root30;
       if (this.styleTag.parentNode != target2)
         target2.insertBefore(this.styleTag, target2.firstChild);
     }
@@ -17036,12 +17143,12 @@ var BlockWrapper = class _BlockWrapper extends RangeValue {
   }
 };
 BlockWrapper.prototype.startSide = BlockWrapper.prototype.endSide = -1;
-function getSelection(root29) {
+function getSelection(root30) {
   let target2;
-  if (root29.nodeType == 11) {
-    target2 = root29.getSelection ? root29 : root29.ownerDocument;
+  if (root30.nodeType == 11) {
+    target2 = root30.getSelection ? root30 : root30.ownerDocument;
   } else {
-    target2 = root29;
+    target2 = root30;
   }
   return target2.getSelection();
 }
@@ -18571,11 +18678,11 @@ var WidgetTile = class _WidgetTile extends Tile {
   get overrideDOMText() {
     if (!this.length)
       return Text2.empty;
-    let { root: root29 } = this;
-    if (!root29)
+    let { root: root30 } = this;
+    if (!root30)
       return Text2.empty;
     let start2 = this.posAtStart;
-    return root29.view.state.doc.slice(start2, start2 + this.length);
+    return root30.view.state.doc.slice(start2, start2 + this.length);
   }
   destroy() {
     super.destroy();
@@ -18686,9 +18793,9 @@ var OpenWrapper = class {
   }
 };
 var TileBuilder = class {
-  constructor(cache, root29, blockWrappers2) {
+  constructor(cache, root30, blockWrappers2) {
     this.cache = cache;
-    this.root = root29;
+    this.root = root30;
     this.blockWrappers = blockWrappers2;
     this.curLine = null;
     this.lastBlock = null;
@@ -24623,10 +24730,10 @@ var EditorView = class _EditorView {
   Update the [root](https://codemirror.net/6/docs/ref/##view.EditorViewConfig.root) in which the editor lives. This is only
   necessary when moving the editor's existing DOM to a new window or shadow root.
   */
-  setRoot(root29) {
-    if (this._root != root29) {
-      this._root = root29;
-      this.observer.setWindow((root29.nodeType == 9 ? root29 : root29.ownerDocument).defaultView || window);
+  setRoot(root30) {
+    if (this._root != root30) {
+      this._root = root30;
+      this.observer.setWindow((root30.nodeType == 9 ? root30 : root30.ownerDocument).defaultView || window);
       this.mountStyles();
     }
   }
@@ -27298,7 +27405,7 @@ function styleTags(spec) {
 }
 var ruleNodeProp = new NodeProp({
   combine(a, b) {
-    let cur2, root29, take;
+    let cur2, root30, take;
     while (a || b) {
       if (!a || b && a.depth >= b.depth) {
         take = b;
@@ -27313,10 +27420,10 @@ var ruleNodeProp = new NodeProp({
       if (cur2)
         cur2.next = copy2;
       else
-        root29 = copy2;
+        root30 = copy2;
       cur2 = copy2;
     }
-    return root29;
+    return root30;
   }
 });
 var Rule = class {
@@ -40263,9 +40370,9 @@ function dirnameBasename(path2) {
 
 // src/fava/lib/tree.ts
 function stratify(data, id, init3, parent2) {
-  const root29 = { children: [], ...init3("") };
+  const root30 = { children: [], ...init3("") };
   const map2 = /* @__PURE__ */ new Map();
-  map2.set("", root29);
+  map2.set("", root30);
   function addNode(name3, datum) {
     const existing = map2.get(name3);
     if (existing) {
@@ -40282,13 +40389,13 @@ function stratify(data, id, init3, parent2) {
   [...data].forEach((datum) => {
     addNode(id(datum), datum);
   });
-  return root29;
+  return root30;
 }
-function* all_matching(root29, predicate) {
-  if (predicate(root29)) {
-    yield root29;
+function* all_matching(root30, predicate) {
+  if (predicate(root30)) {
+    yield root30;
   }
-  for (const child2 of root29.children) {
+  for (const child2 of root30.children) {
     for (const match of all_matching(child2, predicate)) {
       yield match;
     }
@@ -40300,13 +40407,13 @@ function is_directory(node) {
   return node.children.length > 0;
 }
 function build_compressed_sources_tree(sources) {
-  const root29 = stratify(
+  const root30 = stratify(
     sources,
     (path2) => path2,
     (path2) => ({ name: basename(path2), path: path2 }),
     (path2) => parent(path2)
   );
-  return compress_tree(root29);
+  return compress_tree(root30);
 }
 function basename(path2) {
   const [_, basename2] = dirnameBasename(path2);
@@ -41427,8 +41534,8 @@ function DocumentsReport($$anchor, $$props) {
   function buildTree2(rows) {
     const counts = /* @__PURE__ */ new Map();
     for (const row of rows) counts.set(row.account, (counts.get(row.account) ?? 0) + 1);
-    const root29 = { name: "", count: 0, children: [] };
-    const map2 = /* @__PURE__ */ new Map([["", root29]]);
+    const root30 = { name: "", count: 0, children: [] };
+    const map2 = /* @__PURE__ */ new Map([["", root30]]);
     const addNode = (name3) => {
       const existing = map2.get(name3);
       if (existing) return existing;
@@ -41444,7 +41551,7 @@ function DocumentsReport($$anchor, $$props) {
       return node;
     };
     [...counts.keys()].sort((a, b) => a.localeCompare(b)).forEach(addNode);
-    return root29;
+    return root30;
   }
   let selected = mutable_state(null);
   let accountFilter = mutable_state("");
@@ -43966,10 +44073,1040 @@ function QuickProfileReport($$anchor, $$props) {
   pop();
 }
 
+// src/fava/reports/PlanningReport.svelte
+async function evaluatePurchase(_, scenarioError, scenario, horizon, purchaseName, purchaseAmount, purchaseDate, includeInflows, releaseAdjustable) {
+  set(scenarioError, "");
+  set(scenario, null);
+  try {
+    const response = await fetch(`${PRIVATE_ADAPTER_BASE}/planning-scenario`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json"
+      },
+      body: JSON.stringify({
+        horizon_end: get(horizon),
+        name: get(purchaseName),
+        amount: get(purchaseAmount),
+        date: get(purchaseDate),
+        include_future_inflows: get(includeInflows),
+        release_adjustable: get(releaseAdjustable)
+      })
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload.result) throw new Error(payload.error || "Scenario could not be evaluated");
+    set(scenario, payload.result);
+  } catch (e) {
+    set(scenarioError, e instanceof Error ? e.message : "Scenario could not be evaluated");
+  }
+}
+async function commitGenerated(__1, generatedPreview, load, error2) {
+  if (!get(generatedPreview)) return;
+  try {
+    const response = await fetch(`${PRIVATE_ADAPTER_BASE}/planning-commit`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json"
+      },
+      body: JSON.stringify({
+        token: get(generatedPreview).token,
+        expected_snapshot_id: get(generatedPreview).snapshot_id
+      })
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload.published) throw new Error(payload.error || "Planning change could not be saved");
+    set(generatedPreview, null);
+    await load();
+  } catch (e) {
+    set(error2, e instanceof Error ? e.message : "Planning change could not be saved");
+  }
+}
+async function previewCompletion(__2, review, selectedMatches, reviewPreview, reviewError) {
+  if (!get(review)) return;
+  try {
+    const matches = get(selectedMatches).map((key) => {
+      const [plan_id, occurrence_id] = key.split("\0");
+      return { plan_id, occurrence_id };
+    });
+    const response = await fetch(`${PRIVATE_ADAPTER_BASE}/planning-review-preview`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json"
+      },
+      body: JSON.stringify({
+        expected_snapshot_id: get(review).snapshot_id,
+        matches
+      })
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload.token || !payload.content || !payload.snapshot_id) throw new Error(payload.error || "Review preview could not be created");
+    set(reviewPreview, {
+      token: payload.token,
+      content: payload.content,
+      snapshot_id: payload.snapshot_id
+    });
+  } catch (e) {
+    set(reviewError, e instanceof Error ? e.message : "Review preview could not be created");
+  }
+}
+async function commitCompletion(__3, reviewPreview, load, loadReview, reviewError) {
+  if (!get(reviewPreview)) return;
+  try {
+    const response = await fetch(`${PRIVATE_ADAPTER_BASE}/planning-commit`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json"
+      },
+      body: JSON.stringify({
+        token: get(reviewPreview).token,
+        expected_snapshot_id: get(reviewPreview).snapshot_id
+      })
+    });
+    const payload = await response.json();
+    if (!response.ok || !payload.published) throw new Error(payload.error || "Review could not be saved");
+    set(reviewPreview, null);
+    await load();
+    await loadReview();
+  } catch (e) {
+    set(reviewError, e instanceof Error ? e.message : "Review could not be saved");
+  }
+}
+var root_147 = template(`<p class="error-panel"> </p>`);
+var root_327 = template(`<p> </p>`);
+var root_610 = template(`<p><code> </code> </p>`);
+var on_click5 = (__4, previewGenerated) => previewGenerated("profile");
+var root_515 = template(`<div class="state-panel"><p> </p> <!> <h3> </h3> <label> <input></label> <label> <input></label> <label> <input inputmode="decimal"></label> <label> <input></label> <label> <input></label> <label> <input type="date"></label> <button type="button"> </button></div>`);
+var root_97 = template(`<p> </p>`);
+var root_107 = template(`<p> </p>`);
+var root_1112 = template(`<label> <select><option> </option><option> </option></select></label>`);
+var on_click_13 = (__5, previewGenerated) => previewGenerated("plan");
+var root_1310 = template(`<option> </option>`);
+var root_148 = template(`<label> <input type="date"></label>`);
+var on_click_23 = (__6, previewGenerated) => previewGenerated("plan");
+var root_1212 = template(`<h3> </h3><div class="state-panel"><label> <select><option> </option><!></select></label><label> <select><option> </option><option> </option><option> </option></select></label><!><button type="button"> </button></div>`, 1);
+var root_153 = template(`<p class="error-panel"> </p>`);
+var root_174 = template(`<p> </p>`);
+var root_165 = template(`<p> </p><!><p> </p>`, 1);
+var root_185 = template(`<tr><td> </td><td> </td><td> </td><td> </td><td> </td></tr>`);
+var root_194 = template(`<p class="error-panel"> </p>`);
+var root_2111 = template(`<p> </p>`);
+var root_2211 = template(`<p> </p>`);
+var on_change = (event2, toggleMatch, match) => toggleMatch(`${get(match).plan_id}\0${get(match).occurrence_id}`, event2.currentTarget.checked);
+var root_244 = template(`<li><label><input type="checkbox"> </label></li>`);
+var root_235 = template(`<ul></ul>`);
+var root_253 = template(`<p> </p>`);
+var on_click_32 = (__7, useCandidate, pattern) => useCandidate(get(pattern).name, get(pattern).maximum_amount);
+var root_274 = template(`<li> <button type="button"> </button></li>`);
+var root_264 = template(`<ul></ul>`);
+var root_284 = template(`<pre> </pre><button type="button"> </button>`, 1);
+var root_205 = template(`<p> </p> <!> <h4> </h4> <!> <h4> </h4> <!> <button type="button"> </button> <!>`, 1);
+var root_88 = template(`<div class="state-panel"><h3> </h3> <p> </p> <!> <!></div> <h3> </h3> <div class="state-panel"><label> <input></label><label> <input></label><label> <input inputmode="decimal"></label><label> <input type="date"></label> <label> <select><option> </option><option> </option></select></label> <!> <label> <input></label><button type="button"> </button></div> <!> <h3> </h3> <div class="state-panel"><label> <input></label> <label> <input inputmode="decimal"></label> <label> <input type="date"></label> <label><input type="checkbox"> </label> <label><input type="checkbox"> </label> <button type="button"> </button> <!> <!></div> <table><thead><tr><th> </th><th> </th><th> </th><th> </th><th> </th></tr></thead><tbody></tbody></table> <h3> </h3> <div class="state-panel"><button type="button"> </button> <!> <!></div>`, 1);
+var root_293 = template(`<div class="state-panel"><h3> </h3><pre> </pre><button type="button"> </button></div>`);
+var root26 = template(`<section class="planning-report"><div class="headerline"><h2> </h2> <label> <input type="date"></label></div> <!> <!></section>`);
+function PlanningReport($$anchor, $$props) {
+  push($$props, false);
+  const t4 = mutable_state();
+  let adapter = prop($$props, "adapter", 8);
+  let locale2 = prop($$props, "locale", 8, "en");
+  let state2 = mutable_state(null);
+  let error2 = mutable_state("");
+  let scenarioError = mutable_state("");
+  let scenario = mutable_state(null);
+  let horizon = mutable_state((/* @__PURE__ */ new Date()).toISOString().slice(0, 10));
+  let purchaseName = mutable_state("");
+  let purchaseAmount = mutable_state("");
+  let purchaseDate = mutable_state(get(horizon));
+  let includeInflows = mutable_state(false);
+  let releaseAdjustable = mutable_state(false);
+  let review = mutable_state(null);
+  let reviewError = mutable_state("");
+  let selectedMatches = mutable_state([]);
+  let reviewPreview = mutable_state(null);
+  let generatedPreview = mutable_state(null);
+  let setupCurrency = mutable_state("CNY");
+  let setupTimezone = mutable_state("Asia/Singapore");
+  let setupReserve = mutable_state("0");
+  let setupFunds = mutable_state("");
+  let setupDebts = mutable_state("");
+  let setupRecorded = mutable_state(get(horizon));
+  let planID = mutable_state("");
+  let planName = mutable_state("");
+  let planAmount = mutable_state("");
+  let planDate = mutable_state(get(horizon));
+  let planDirection = mutable_state("outflow");
+  let planCommitment = mutable_state("committed");
+  let planAccount = mutable_state("");
+  let resolvePlanID = mutable_state("");
+  let resolvePlanStatus = mutable_state("fulfilled");
+  let resolvePlanDate = mutable_state(get(horizon));
+  async function load() {
+    try {
+      set(state2, await adapter().load("planning", { horizon_end: get(horizon) }));
+      set(purchaseDate, get(horizon));
+      set(error2, "");
+      set(scenario, null);
+    } catch (e) {
+      set(error2, e instanceof Error ? e.message : "Planning could not load");
+    }
+  }
+  async function loadReview() {
+    try {
+      set(review, await adapter().load("planning-review"));
+      set(reviewError, "");
+      set(selectedMatches, []);
+      set(reviewPreview, null);
+    } catch (e) {
+      set(reviewError, e instanceof Error ? e.message : "Review evidence could not load");
+    }
+  }
+  async function previewGenerated(kind) {
+    if (!get(state2)) return;
+    try {
+      const profile = {
+        id: "primary",
+        currency: get(setupCurrency),
+        timezone: get(setupTimezone),
+        minimum_reserve: get(setupReserve),
+        recorded_through: get(setupRecorded),
+        spendable_accounts: get(setupFunds).split(","),
+        short_term_debt_accounts: get(setupDebts).split(",")
+      };
+      const existing = get(state2).profile.plans.find((value) => value.id === get(resolvePlanID));
+      const plan = kind === "plan" && existing && get(resolvePlanStatus) ? {
+        id: existing.id,
+        revision: existing.revision + 1,
+        status: get(resolvePlanStatus),
+        name: existing.name,
+        amount: existing.amount,
+        date: get(resolvePlanStatus) === "active" ? get(resolvePlanDate) : existing.date,
+        direction: existing.direction,
+        commitment: existing.commitment,
+        account: existing.account
+      } : {
+        id: get(planID),
+        name: get(planName),
+        amount: get(planAmount),
+        date: get(planDate),
+        direction: get(planDirection),
+        commitment: get(planCommitment),
+        account: get(planAccount)
+      };
+      const response = await fetch(`${PRIVATE_ADAPTER_BASE}/planning-generate-preview`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json"
+        },
+        body: JSON.stringify({
+          kind,
+          expected_snapshot_id: get(state2).snapshot_id,
+          profile,
+          plan
+        })
+      });
+      const payload = await response.json();
+      if (!response.ok || !payload.token || !payload.content || !payload.snapshot_id) throw new Error(payload.error || "Preview could not be created");
+      set(generatedPreview, {
+        token: payload.token,
+        content: payload.content,
+        snapshot_id: payload.snapshot_id
+      });
+      set(error2, "");
+    } catch (e) {
+      set(error2, e instanceof Error ? e.message : "Preview could not be created");
+    }
+  }
+  function toggleMatch(key, checked) {
+    set(selectedMatches, checked ? [...get(selectedMatches), key] : get(selectedMatches).filter((value) => value !== key));
+    set(reviewPreview, null);
+  }
+  function useCandidate(name3, amount) {
+    set(planName, name3);
+    set(planAmount, amount);
+    set(planDirection, "outflow");
+    set(planCommitment, "committed");
+    set(planID, `${name3.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "plan"}-${get(planDate)}`);
+  }
+  onMount(() => {
+    void load();
+  });
+  legacy_pre_effect(
+    () => (translations, deep_read_state(locale2())),
+    () => {
+      set(t4, translations[locale2() === "zh-CN" ? "zh-CN" : "en"]);
+    }
+  );
+  legacy_pre_effect_reset();
+  init2();
+  var section = root26();
+  var div = child(section);
+  var h2 = child(div);
+  var text2 = child(h2, true);
+  reset(h2);
+  var label = sibling(h2, 2);
+  var text_1 = child(label);
+  var input = sibling(text_1);
+  remove_input_defaults(input);
+  input.__change = load;
+  reset(label);
+  reset(div);
+  var node = sibling(div, 2);
+  {
+    var consequent = ($$anchor2) => {
+      var p = root_147();
+      var text_2 = child(p, true);
+      reset(p);
+      template_effect(() => set_text(text_2, get(error2)));
+      append($$anchor2, p);
+    };
+    var alternate_4 = ($$anchor2) => {
+      var fragment = comment();
+      var node_1 = first_child(fragment);
+      {
+        var consequent_1 = ($$anchor3) => {
+          var p_1 = root_327();
+          var text_3 = child(p_1, true);
+          reset(p_1);
+          template_effect(() => set_text(text_3, get(t4).loading || "Loading\u2026"));
+          append($$anchor3, p_1);
+        };
+        var alternate_3 = ($$anchor3) => {
+          var fragment_1 = comment();
+          var node_2 = first_child(fragment_1);
+          {
+            var consequent_2 = ($$anchor4) => {
+              var div_1 = root_515();
+              var p_2 = child(div_1);
+              var text_4 = child(p_2, true);
+              reset(p_2);
+              var node_3 = sibling(p_2, 2);
+              each(node_3, 1, () => get(state2).profile.problems, index, ($$anchor5, problem) => {
+                var p_3 = root_610();
+                var code = child(p_3);
+                var text_5 = child(code, true);
+                reset(code);
+                var text_6 = sibling(code);
+                reset(p_3);
+                template_effect(() => {
+                  set_text(text_5, get(problem).code);
+                  set_text(text_6, ` \u2014 ${get(problem).message ?? ""}`);
+                });
+                append($$anchor5, p_3);
+              });
+              var h3 = sibling(node_3, 2);
+              var text_7 = child(h3, true);
+              reset(h3);
+              var label_1 = sibling(h3, 2);
+              var text_8 = child(label_1);
+              var input_1 = sibling(text_8);
+              remove_input_defaults(input_1);
+              reset(label_1);
+              var label_2 = sibling(label_1, 2);
+              var text_9 = child(label_2);
+              var input_2 = sibling(text_9);
+              remove_input_defaults(input_2);
+              reset(label_2);
+              var label_3 = sibling(label_2, 2);
+              var text_10 = child(label_3);
+              var input_3 = sibling(text_10);
+              remove_input_defaults(input_3);
+              reset(label_3);
+              var label_4 = sibling(label_3, 2);
+              var text_11 = child(label_4);
+              var input_4 = sibling(text_11);
+              remove_input_defaults(input_4);
+              reset(label_4);
+              var label_5 = sibling(label_4, 2);
+              var text_12 = child(label_5);
+              var input_5 = sibling(text_12);
+              remove_input_defaults(input_5);
+              reset(label_5);
+              var label_6 = sibling(label_5, 2);
+              var text_13 = child(label_6);
+              var input_6 = sibling(text_13);
+              remove_input_defaults(input_6);
+              reset(label_6);
+              var button = sibling(label_6, 2);
+              button.__click = [on_click5, previewGenerated];
+              var text_14 = child(button, true);
+              reset(button);
+              reset(div_1);
+              template_effect(() => {
+                set_text(text_4, get(state2).readiness_error);
+                set_text(text_7, get(t4).planningSetup || "Planning setup required");
+                set_text(text_8, `${(get(t4).currency || "Currency") ?? ""} `);
+                set_text(text_9, `${(get(t4).timezone || "Timezone") ?? ""} `);
+                set_text(text_10, `${(get(t4).minimumReserve || "Minimum reserve") ?? ""} `);
+                set_text(text_11, `${(get(t4).spendableAccounts || "Spendable accounts (comma separated)") ?? ""} `);
+                set_text(text_12, `${(get(t4).debtAccounts || "Short-term debt accounts (comma separated)") ?? ""} `);
+                set_text(text_13, `${(get(t4).recordedThrough || "Recorded through") ?? ""} `);
+                set_text(text_14, get(t4).preview || "Preview");
+              });
+              bind_value(input_1, () => get(setupCurrency), ($$value) => set(setupCurrency, $$value));
+              bind_value(input_2, () => get(setupTimezone), ($$value) => set(setupTimezone, $$value));
+              bind_value(input_3, () => get(setupReserve), ($$value) => set(setupReserve, $$value));
+              bind_value(input_4, () => get(setupFunds), ($$value) => set(setupFunds, $$value));
+              bind_value(input_5, () => get(setupDebts), ($$value) => set(setupDebts, $$value));
+              bind_value(input_6, () => get(setupRecorded), ($$value) => set(setupRecorded, $$value));
+              append($$anchor4, div_1);
+            };
+            var alternate_2 = ($$anchor4) => {
+              var fragment_2 = comment();
+              var node_4 = first_child(fragment_2);
+              {
+                var consequent_17 = ($$anchor5) => {
+                  var fragment_3 = root_88();
+                  var div_2 = first_child(fragment_3);
+                  var h3_1 = child(div_2);
+                  var text_15 = child(h3_1);
+                  reset(h3_1);
+                  var p_4 = sibling(h3_1, 2);
+                  var text_16 = child(p_4);
+                  reset(p_4);
+                  var node_5 = sibling(p_4, 2);
+                  {
+                    var consequent_3 = ($$anchor6) => {
+                      var p_5 = root_97();
+                      var text_17 = child(p_5, true);
+                      reset(p_5);
+                      template_effect(() => set_text(text_17, get(t4).planningStale || "Recorded-through date is not today; this is a stale estimate."));
+                      append($$anchor6, p_5);
+                    };
+                    if_block(node_5, ($$render) => {
+                      if (!get(state2).result.current_planning) $$render(consequent_3);
+                    });
+                  }
+                  var node_6 = sibling(node_5, 2);
+                  {
+                    var consequent_4 = ($$anchor6) => {
+                      var p_6 = root_107();
+                      var text_18 = child(p_6);
+                      reset(p_6);
+                      template_effect(() => set_text(text_18, `${(get(t4).fundingShortfall || "Funding shortfall") ?? ""}: ${get(state2).result.funding_shortfall ?? ""} ${get(state2).result.currency ?? ""}`));
+                      append($$anchor6, p_6);
+                    };
+                    if_block(node_6, ($$render) => {
+                      if (get(state2).result.funding_shortfall !== "0") $$render(consequent_4);
+                    });
+                  }
+                  reset(div_2);
+                  var h3_2 = sibling(div_2, 2);
+                  var text_19 = child(h3_2, true);
+                  reset(h3_2);
+                  var div_3 = sibling(h3_2, 2);
+                  var label_7 = child(div_3);
+                  var text_20 = child(label_7);
+                  var input_7 = sibling(text_20);
+                  remove_input_defaults(input_7);
+                  reset(label_7);
+                  var label_8 = sibling(label_7);
+                  var text_21 = child(label_8);
+                  var input_8 = sibling(text_21);
+                  remove_input_defaults(input_8);
+                  reset(label_8);
+                  var label_9 = sibling(label_8);
+                  var text_22 = child(label_9);
+                  var input_9 = sibling(text_22);
+                  remove_input_defaults(input_9);
+                  reset(label_9);
+                  var label_10 = sibling(label_9);
+                  var text_23 = child(label_10);
+                  var input_10 = sibling(text_23);
+                  remove_input_defaults(input_10);
+                  reset(label_10);
+                  var label_11 = sibling(label_10, 2);
+                  var text_24 = child(label_11);
+                  var select = sibling(text_24);
+                  template_effect(() => {
+                    get(planDirection);
+                    invalidate_inner_signals(() => {
+                      get(t4);
+                    });
+                  });
+                  var option = child(select);
+                  option.value = null == (option.__value = "outflow") ? "" : "outflow";
+                  var text_25 = child(option, true);
+                  reset(option);
+                  var option_1 = sibling(option);
+                  option_1.value = null == (option_1.__value = "inflow") ? "" : "inflow";
+                  var text_26 = child(option_1, true);
+                  reset(option_1);
+                  reset(select);
+                  reset(label_11);
+                  var node_7 = sibling(label_11, 2);
+                  {
+                    var consequent_5 = ($$anchor6) => {
+                      var label_12 = root_1112();
+                      var text_27 = child(label_12);
+                      var select_1 = sibling(text_27);
+                      template_effect(() => {
+                        get(planCommitment);
+                        invalidate_inner_signals(() => {
+                          get(t4);
+                        });
+                      });
+                      var option_2 = child(select_1);
+                      option_2.value = null == (option_2.__value = "committed") ? "" : "committed";
+                      var text_28 = child(option_2, true);
+                      reset(option_2);
+                      var option_3 = sibling(option_2);
+                      option_3.value = null == (option_3.__value = "adjustable") ? "" : "adjustable";
+                      var text_29 = child(option_3, true);
+                      reset(option_3);
+                      reset(select_1);
+                      reset(label_12);
+                      template_effect(() => {
+                        set_text(text_27, `${(get(t4).commitment || "Commitment") ?? ""} `);
+                        set_text(text_28, get(t4).committed || "Committed");
+                        set_text(text_29, get(t4).adjustable || "Adjustable");
+                      });
+                      bind_select_value(select_1, () => get(planCommitment), ($$value) => set(planCommitment, $$value));
+                      append($$anchor6, label_12);
+                    };
+                    if_block(node_7, ($$render) => {
+                      if (get(planDirection) === "outflow") $$render(consequent_5);
+                    });
+                  }
+                  var label_13 = sibling(node_7, 2);
+                  var text_30 = child(label_13);
+                  var input_11 = sibling(text_30);
+                  remove_input_defaults(input_11);
+                  reset(label_13);
+                  var button_1 = sibling(label_13);
+                  button_1.__click = [on_click_13, previewGenerated];
+                  var text_31 = child(button_1, true);
+                  reset(button_1);
+                  reset(div_3);
+                  var node_8 = sibling(div_3, 2);
+                  {
+                    var consequent_7 = ($$anchor6) => {
+                      var fragment_4 = root_1212();
+                      var h3_3 = first_child(fragment_4);
+                      var text_32 = child(h3_3, true);
+                      reset(h3_3);
+                      var div_4 = sibling(h3_3);
+                      var label_14 = child(div_4);
+                      var text_33 = child(label_14);
+                      var select_2 = sibling(text_33);
+                      template_effect(() => {
+                        get(resolvePlanID);
+                        invalidate_inner_signals(() => {
+                          get(t4);
+                          get(state2);
+                        });
+                      });
+                      var option_4 = child(select_2);
+                      option_4.value = null == (option_4.__value = "") ? "" : "";
+                      var text_34 = child(option_4, true);
+                      reset(option_4);
+                      var node_9 = sibling(option_4);
+                      each(node_9, 1, () => get(state2).profile.plans, index, ($$anchor7, plan) => {
+                        var option_5 = root_1310();
+                        var option_5_value = {};
+                        var text_35 = child(option_5);
+                        reset(option_5);
+                        template_effect(() => {
+                          if (option_5_value !== (option_5_value = get(plan).id)) {
+                            option_5.value = null == (option_5.__value = get(plan).id) ? "" : get(plan).id;
+                          }
+                          set_text(text_35, `${get(plan).name ?? ""} \u2014 ${get(plan).date ?? ""} (${get(plan).amount ?? ""})`);
+                        });
+                        append($$anchor7, option_5);
+                      });
+                      reset(select_2);
+                      reset(label_14);
+                      var label_15 = sibling(label_14);
+                      var text_36 = child(label_15);
+                      var select_3 = sibling(text_36);
+                      template_effect(() => {
+                        get(resolvePlanStatus);
+                        invalidate_inner_signals(() => {
+                          get(t4);
+                        });
+                      });
+                      var option_6 = child(select_3);
+                      option_6.value = null == (option_6.__value = "fulfilled") ? "" : "fulfilled";
+                      var text_37 = child(option_6, true);
+                      reset(option_6);
+                      var option_7 = sibling(option_6);
+                      option_7.value = null == (option_7.__value = "cancelled") ? "" : "cancelled";
+                      var text_38 = child(option_7, true);
+                      reset(option_7);
+                      var option_8 = sibling(option_7);
+                      option_8.value = null == (option_8.__value = "active") ? "" : "active";
+                      var text_39 = child(option_8, true);
+                      reset(option_8);
+                      reset(select_3);
+                      reset(label_15);
+                      var node_10 = sibling(label_15);
+                      {
+                        var consequent_6 = ($$anchor7) => {
+                          var label_16 = root_148();
+                          var text_40 = child(label_16);
+                          var input_12 = sibling(text_40);
+                          remove_input_defaults(input_12);
+                          reset(label_16);
+                          template_effect(() => set_text(text_40, `${(get(t4).date || "Date") ?? ""} `));
+                          bind_value(input_12, () => get(resolvePlanDate), ($$value) => set(resolvePlanDate, $$value));
+                          append($$anchor7, label_16);
+                        };
+                        if_block(node_10, ($$render) => {
+                          if (get(resolvePlanStatus) === "active") $$render(consequent_6);
+                        });
+                      }
+                      var button_2 = sibling(node_10);
+                      button_2.__click = [on_click_23, previewGenerated];
+                      var text_41 = child(button_2, true);
+                      reset(button_2);
+                      reset(div_4);
+                      template_effect(() => {
+                        set_text(text_32, get(t4).resolvePlan || "Resolve an active plan");
+                        set_text(text_33, `${(get(t4).planID || "Plan ID") ?? ""} `);
+                        set_text(text_34, get(t4).choose || "Choose");
+                        set_text(text_36, `${(get(t4).resolution || "Resolution") ?? ""} `);
+                        set_text(text_37, get(t4).fulfilled || "Fulfilled");
+                        set_text(text_38, get(t4).cancelled || "Cancelled");
+                        set_text(text_39, get(t4).reschedule || "Reschedule");
+                        set_text(text_41, get(t4).preview || "Preview");
+                      });
+                      bind_select_value(select_2, () => get(resolvePlanID), ($$value) => set(resolvePlanID, $$value));
+                      bind_select_value(select_3, () => get(resolvePlanStatus), ($$value) => set(resolvePlanStatus, $$value));
+                      append($$anchor6, fragment_4);
+                    };
+                    if_block(node_8, ($$render) => {
+                      if (get(state2).profile.plans.length > 0) $$render(consequent_7);
+                    });
+                  }
+                  var h3_4 = sibling(node_8, 2);
+                  var text_42 = child(h3_4, true);
+                  reset(h3_4);
+                  var div_5 = sibling(h3_4, 2);
+                  var label_17 = child(div_5);
+                  var text_43 = child(label_17);
+                  var input_13 = sibling(text_43);
+                  remove_input_defaults(input_13);
+                  reset(label_17);
+                  var label_18 = sibling(label_17, 2);
+                  var text_44 = child(label_18);
+                  var input_14 = sibling(text_44);
+                  remove_input_defaults(input_14);
+                  reset(label_18);
+                  var label_19 = sibling(label_18, 2);
+                  var text_45 = child(label_19);
+                  var input_15 = sibling(text_45);
+                  remove_input_defaults(input_15);
+                  reset(label_19);
+                  var label_20 = sibling(label_19, 2);
+                  var input_16 = child(label_20);
+                  remove_input_defaults(input_16);
+                  var text_46 = sibling(input_16);
+                  reset(label_20);
+                  var label_21 = sibling(label_20, 2);
+                  var input_17 = child(label_21);
+                  remove_input_defaults(input_17);
+                  var text_47 = sibling(input_17);
+                  reset(label_21);
+                  var button_3 = sibling(label_21, 2);
+                  button_3.__click = [
+                    evaluatePurchase,
+                    scenarioError,
+                    scenario,
+                    horizon,
+                    purchaseName,
+                    purchaseAmount,
+                    purchaseDate,
+                    includeInflows,
+                    releaseAdjustable
+                  ];
+                  var text_48 = child(button_3, true);
+                  reset(button_3);
+                  var node_11 = sibling(button_3, 2);
+                  {
+                    var consequent_8 = ($$anchor6) => {
+                      var p_7 = root_153();
+                      var text_49 = child(p_7, true);
+                      reset(p_7);
+                      template_effect(() => set_text(text_49, get(scenarioError)));
+                      append($$anchor6, p_7);
+                    };
+                    if_block(node_11, ($$render) => {
+                      if (get(scenarioError)) $$render(consequent_8);
+                    });
+                  }
+                  var node_12 = sibling(node_11, 2);
+                  {
+                    var consequent_10 = ($$anchor6) => {
+                      var fragment_5 = root_165();
+                      var p_8 = first_child(fragment_5);
+                      var text_50 = child(p_8);
+                      reset(p_8);
+                      var node_13 = sibling(p_8);
+                      {
+                        var consequent_9 = ($$anchor7) => {
+                          var p_9 = root_174();
+                          var text_51 = child(p_9);
+                          reset(p_9);
+                          template_effect(() => set_text(text_51, `${(get(t4).fundingShortfall || "Funding shortfall") ?? ""}: ${get(scenario).funding_shortfall ?? ""} ${get(scenario).currency ?? ""}`));
+                          append($$anchor7, p_9);
+                        };
+                        if_block(node_13, ($$render) => {
+                          if (get(scenario).funding_shortfall !== "0") $$render(consequent_9);
+                        });
+                      }
+                      var p_10 = sibling(node_13);
+                      var text_52 = child(p_10, true);
+                      reset(p_10);
+                      template_effect(() => {
+                        set_text(text_50, `${(get(t4).scenarioLowPoint || "Scenario low point") ?? ""}: ${get(scenario).liquidity_low_point.date ?? ""} \u2014 ${get(scenario).liquidity_low_point.headroom ?? ""} ${get(scenario).currency ?? ""}`);
+                        set_text(text_52, get(t4).scenarioEphemeral || "This trial is not saved to the ledger.");
+                      });
+                      append($$anchor6, fragment_5);
+                    };
+                    if_block(node_12, ($$render) => {
+                      if (get(scenario)) $$render(consequent_10);
+                    });
+                  }
+                  reset(div_5);
+                  var table = sibling(div_5, 2);
+                  var thead = child(table);
+                  var tr = child(thead);
+                  var th = child(tr);
+                  var text_53 = child(th, true);
+                  reset(th);
+                  var th_1 = sibling(th);
+                  var text_54 = child(th_1, true);
+                  reset(th_1);
+                  var th_2 = sibling(th_1);
+                  var text_55 = child(th_2, true);
+                  reset(th_2);
+                  var th_3 = sibling(th_2);
+                  var text_56 = child(th_3, true);
+                  reset(th_3);
+                  var th_4 = sibling(th_3);
+                  var text_57 = child(th_4, true);
+                  reset(th_4);
+                  reset(tr);
+                  reset(thead);
+                  var tbody = sibling(thead);
+                  each(tbody, 5, () => get(state2).result.timeline, index, ($$anchor6, point3) => {
+                    var tr_1 = root_185();
+                    var td = child(tr_1);
+                    var text_58 = child(td, true);
+                    reset(td);
+                    var td_1 = sibling(td);
+                    var text_59 = child(td_1, true);
+                    reset(td_1);
+                    var td_2 = sibling(td_1);
+                    var text_60 = child(td_2, true);
+                    reset(td_2);
+                    var td_3 = sibling(td_2);
+                    var text_61 = child(td_3, true);
+                    reset(td_3);
+                    var td_4 = sibling(td_3);
+                    var text_62 = child(td_4, true);
+                    reset(td_4);
+                    reset(tr_1);
+                    template_effect(() => {
+                      set_text(text_58, get(point3).date);
+                      set_text(text_59, get(point3).headroom);
+                      set_text(text_60, get(point3).committed_outflow);
+                      set_text(text_61, get(point3).adjustable_outflow);
+                      set_text(text_62, get(point3).ignored_inflows);
+                    });
+                    append($$anchor6, tr_1);
+                  });
+                  reset(tbody);
+                  reset(table);
+                  var h3_5 = sibling(table, 2);
+                  var text_63 = child(h3_5, true);
+                  reset(h3_5);
+                  var div_6 = sibling(h3_5, 2);
+                  var button_4 = child(div_6);
+                  button_4.__click = loadReview;
+                  var text_64 = child(button_4, true);
+                  reset(button_4);
+                  var node_14 = sibling(button_4, 2);
+                  {
+                    var consequent_11 = ($$anchor6) => {
+                      var p_11 = root_194();
+                      var text_65 = child(p_11, true);
+                      reset(p_11);
+                      template_effect(() => set_text(text_65, get(reviewError)));
+                      append($$anchor6, p_11);
+                    };
+                    if_block(node_14, ($$render) => {
+                      if (get(reviewError)) $$render(consequent_11);
+                    });
+                  }
+                  var node_15 = sibling(node_14, 2);
+                  {
+                    var consequent_16 = ($$anchor6) => {
+                      var fragment_6 = root_205();
+                      var p_12 = first_child(fragment_6);
+                      var text_66 = child(p_12, true);
+                      reset(p_12);
+                      var node_16 = sibling(p_12, 2);
+                      {
+                        var consequent_12 = ($$anchor7) => {
+                          var p_13 = root_2111();
+                          var text_67 = child(p_13, true);
+                          reset(p_13);
+                          template_effect(() => set_text(text_67, get(review).stale ? get(t4).reviewStale || "The completed review is stale and needs reconfirmation." : get(t4).reviewComplete || "This review is completed."));
+                          append($$anchor7, p_13);
+                        };
+                        if_block(node_16, ($$render) => {
+                          if (get(review).completed) $$render(consequent_12);
+                        });
+                      }
+                      var h4 = sibling(node_16, 2);
+                      var text_68 = child(h4, true);
+                      reset(h4);
+                      var node_17 = sibling(h4, 2);
+                      {
+                        var consequent_13 = ($$anchor7) => {
+                          var p_14 = root_2211();
+                          var text_69 = child(p_14, true);
+                          reset(p_14);
+                          template_effect(() => set_text(text_69, get(t4).none || "None"));
+                          append($$anchor7, p_14);
+                        };
+                        var alternate = ($$anchor7) => {
+                          var ul = root_235();
+                          each(ul, 5, () => get(review).matches, index, ($$anchor8, match) => {
+                            var li = root_244();
+                            var label_22 = child(li);
+                            var input_18 = child(label_22);
+                            remove_input_defaults(input_18);
+                            template_effect(() => set_checked(input_18, get(selectedMatches).includes(`${get(match).plan_id}\0${get(match).occurrence_id}`)));
+                            input_18.__change = [on_change, toggleMatch, match];
+                            var text_70 = sibling(input_18);
+                            reset(label_22);
+                            reset(li);
+                            template_effect(() => set_text(text_70, ` ${get(match).plan_id ?? ""} \u2194 ${get(match).occurrence_id ?? ""} (${get(match).date_distance ?? ""}d; ${(get(match).same_name ? get(t4).name || "name" : "") ?? ""} ${(get(match).same_account ? get(t4).account || "account" : "") ?? ""} ${(get(match).same_amount ? get(t4).amount || "amount" : "") ?? ""})`));
+                            append($$anchor8, li);
+                          });
+                          reset(ul);
+                          append($$anchor7, ul);
+                        };
+                        if_block(node_17, ($$render) => {
+                          if (get(review).matches.length === 0) $$render(consequent_13);
+                          else $$render(alternate, false);
+                        });
+                      }
+                      var h4_1 = sibling(node_17, 2);
+                      var text_71 = child(h4_1, true);
+                      reset(h4_1);
+                      var node_18 = sibling(h4_1, 2);
+                      {
+                        var consequent_14 = ($$anchor7) => {
+                          var p_15 = root_253();
+                          var text_72 = child(p_15, true);
+                          reset(p_15);
+                          template_effect(() => set_text(text_72, get(t4).none || "None"));
+                          append($$anchor7, p_15);
+                        };
+                        var alternate_1 = ($$anchor7) => {
+                          var ul_1 = root_264();
+                          each(ul_1, 5, () => get(review).patterns, index, ($$anchor8, pattern) => {
+                            var li_1 = root_274();
+                            var text_73 = child(li_1);
+                            var button_5 = sibling(text_73);
+                            button_5.__click = [on_click_32, useCandidate, pattern];
+                            var text_74 = child(button_5, true);
+                            reset(button_5);
+                            reset(li_1);
+                            template_effect(() => {
+                              set_text(text_73, `${get(pattern).name ?? ""} \u2014 ${get(pattern).account ?? ""}; ${get(pattern).cadence_days ?? ""}d; ${get(pattern).minimum_amount ?? ""}\u2013${get(pattern).maximum_amount ?? ""}; ${get(pattern).occurrences.length ?? ""} ${(get(t4).occurrences || "occurrences") ?? ""} `);
+                              set_text(text_74, get(t4).useCandidate || "Use as a plan draft");
+                            });
+                            append($$anchor8, li_1);
+                          });
+                          reset(ul_1);
+                          append($$anchor7, ul_1);
+                        };
+                        if_block(node_18, ($$render) => {
+                          if (get(review).patterns.length === 0) $$render(consequent_14);
+                          else $$render(alternate_1, false);
+                        });
+                      }
+                      var button_6 = sibling(node_18, 2);
+                      button_6.__click = [
+                        previewCompletion,
+                        review,
+                        selectedMatches,
+                        reviewPreview,
+                        reviewError
+                      ];
+                      var text_75 = child(button_6, true);
+                      reset(button_6);
+                      var node_19 = sibling(button_6, 2);
+                      {
+                        var consequent_15 = ($$anchor7) => {
+                          var fragment_7 = root_284();
+                          var pre = first_child(fragment_7);
+                          var text_76 = child(pre, true);
+                          reset(pre);
+                          var button_7 = sibling(pre);
+                          button_7.__click = [
+                            commitCompletion,
+                            reviewPreview,
+                            load,
+                            loadReview,
+                            reviewError
+                          ];
+                          var text_77 = child(button_7, true);
+                          reset(button_7);
+                          template_effect(() => {
+                            set_text(text_76, get(reviewPreview).content);
+                            set_text(text_77, get(t4).commitReview || "Save reviewed completion");
+                          });
+                          append($$anchor7, fragment_7);
+                        };
+                        if_block(node_19, ($$render) => {
+                          if (get(reviewPreview)) $$render(consequent_15);
+                        });
+                      }
+                      template_effect(() => {
+                        set_text(text_66, get(t4).reviewConfirmation || "Suggestions are evidence only; nothing is fulfilled automatically.");
+                        set_text(text_68, get(t4).matchSuggestions || "Plan-to-actual suggestions");
+                        set_text(text_71, get(t4).recurringCandidates || "Recurring candidates");
+                        set_text(text_75, get(t4).previewReview || "Preview review completion");
+                      });
+                      append($$anchor6, fragment_6);
+                    };
+                    if_block(node_15, ($$render) => {
+                      if (get(review)) $$render(consequent_16);
+                    });
+                  }
+                  reset(div_6);
+                  template_effect(() => {
+                    set_text(text_15, `${(get(t4).safeToSpend || "Safe to spend") ?? ""}: ${get(state2).result.primary_safe_to_spend ?? ""} ${get(state2).result.currency ?? ""}`);
+                    set_text(text_16, `${(get(t4).lowPoint || "Lowest point") ?? ""}: ${get(state2).result.liquidity_low_point.date ?? ""} \u2014 ${get(state2).result.liquidity_low_point.headroom ?? ""}`);
+                    set_text(text_19, get(t4).addPlan || "Add a planned flow");
+                    set_text(text_20, `${(get(t4).planID || "Plan ID") ?? ""} `);
+                    set_text(text_21, `${(get(t4).name || "Name") ?? ""} `);
+                    set_text(text_22, `${(get(t4).amount || "Amount") ?? ""} `);
+                    set_text(text_23, `${(get(t4).date || "Date") ?? ""} `);
+                    set_text(text_24, `${(get(t4).direction || "Direction") ?? ""} `);
+                    set_text(text_25, get(t4).outflow || "Outflow");
+                    set_text(text_26, get(t4).inflow || "Inflow");
+                    set_text(text_30, `${(get(t4).account || "Account") ?? ""} `);
+                    set_text(text_31, get(t4).preview || "Preview");
+                    set_text(text_42, get(t4).purchaseScenario || "Test a large purchase");
+                    set_text(text_43, `${(get(t4).name || "Name") ?? ""} `);
+                    set_attribute(input_13, "placeholder", get(t4).purchaseName || "Proposed purchase");
+                    set_text(text_44, `${(get(t4).amount || "Amount") ?? ""} `);
+                    set_text(text_45, `${(get(t4).date || "Date") ?? ""} `);
+                    set_text(text_46, ` ${(get(t4).includeInflows || "Include future inflows") ?? ""}`);
+                    set_text(text_47, ` ${(get(t4).releaseAdjustable || "Release adjustable outflows") ?? ""}`);
+                    set_text(text_48, get(t4).evaluate || "Evaluate");
+                    set_text(text_53, get(t4).date || "Date");
+                    set_text(text_54, get(t4).safeToSpend || "Headroom");
+                    set_text(text_55, get(t4).committed || "Committed");
+                    set_text(text_56, get(t4).adjustable || "Adjustable");
+                    set_text(text_57, get(t4).inflows || "Future inflows");
+                    set_text(text_63, get(t4).cycleReview || "Cycle review");
+                    set_text(text_64, get(t4).inspectReview || "Inspect review evidence");
+                  });
+                  bind_value(input_7, () => get(planID), ($$value) => set(planID, $$value));
+                  bind_value(input_8, () => get(planName), ($$value) => set(planName, $$value));
+                  bind_value(input_9, () => get(planAmount), ($$value) => set(planAmount, $$value));
+                  bind_value(input_10, () => get(planDate), ($$value) => set(planDate, $$value));
+                  bind_select_value(select, () => get(planDirection), ($$value) => set(planDirection, $$value));
+                  bind_value(input_11, () => get(planAccount), ($$value) => set(planAccount, $$value));
+                  bind_value(input_13, () => get(purchaseName), ($$value) => set(purchaseName, $$value));
+                  bind_value(input_14, () => get(purchaseAmount), ($$value) => set(purchaseAmount, $$value));
+                  bind_value(input_15, () => get(purchaseDate), ($$value) => set(purchaseDate, $$value));
+                  bind_checked(input_16, () => get(includeInflows), ($$value) => set(includeInflows, $$value));
+                  bind_checked(input_17, () => get(releaseAdjustable), ($$value) => set(releaseAdjustable, $$value));
+                  append($$anchor5, fragment_3);
+                };
+                if_block(
+                  node_4,
+                  ($$render) => {
+                    if (get(state2).result) $$render(consequent_17);
+                  },
+                  true
+                );
+              }
+              append($$anchor4, fragment_2);
+            };
+            if_block(
+              node_2,
+              ($$render) => {
+                if (get(state2).readiness_error) $$render(consequent_2);
+                else $$render(alternate_2, false);
+              },
+              true
+            );
+          }
+          append($$anchor3, fragment_1);
+        };
+        if_block(
+          node_1,
+          ($$render) => {
+            if (!get(state2)) $$render(consequent_1);
+            else $$render(alternate_3, false);
+          },
+          true
+        );
+      }
+      append($$anchor2, fragment);
+    };
+    if_block(node, ($$render) => {
+      if (get(error2)) $$render(consequent);
+      else $$render(alternate_4, false);
+    });
+  }
+  var node_20 = sibling(node, 2);
+  {
+    var consequent_18 = ($$anchor2) => {
+      var div_7 = root_293();
+      var h3_6 = child(div_7);
+      var text_78 = child(h3_6, true);
+      reset(h3_6);
+      var pre_1 = sibling(h3_6);
+      var text_79 = child(pre_1, true);
+      reset(pre_1);
+      var button_8 = sibling(pre_1);
+      button_8.__click = [
+        commitGenerated,
+        generatedPreview,
+        load,
+        error2
+      ];
+      var text_80 = child(button_8, true);
+      reset(button_8);
+      reset(div_7);
+      template_effect(() => {
+        set_text(text_78, get(t4).reviewedWrite || "Review change");
+        set_text(text_79, get(generatedPreview).content);
+        set_text(text_80, get(t4).commit || "Commit");
+      });
+      append($$anchor2, div_7);
+    };
+    if_block(node_20, ($$render) => {
+      if (get(generatedPreview)) $$render(consequent_18);
+    });
+  }
+  reset(section);
+  template_effect(() => {
+    set_text(text2, get(t4).planning || "Planning");
+    set_text(text_1, `${(get(t4).to || "To") ?? ""} `);
+  });
+  bind_value(input, () => get(horizon), ($$value) => set(horizon, $$value));
+  append($$anchor, section);
+  pop();
+}
+delegate(["change", "click"]);
+
 // src/fava/components/ReportOutlet.svelte
-var root_147 = template(`<section class="state-panel" role="status" aria-live="polite">Loading report\u2026</section>`);
-var root_327 = template(`<section class="state-panel error-panel" role="alert"> </section>`);
-var root_328 = template(`<section class="route-placeholder"><p class="headerline"><strong>Fava-aligned shell</strong></p> <h2> </h2> <p>This route is staged until its OrangeCount adapter contract is implemented.</p></section>`);
+var root_149 = template(`<section class="state-panel" role="status" aria-live="polite">Loading report\u2026</section>`);
+var root_328 = template(`<section class="state-panel error-panel" role="alert"> </section>`);
+var root_343 = template(`<section class="route-placeholder"><p class="headerline"><strong>Fava-aligned shell</strong></p> <h2> </h2> <p>This route is staged until its OrangeCount adapter contract is implemented.</p></section>`);
 function ReportOutlet($$anchor, $$props) {
   push($$props, false);
   const requestKey = mutable_state();
@@ -44028,7 +45165,8 @@ function ReportOutlet($$anchor, $$props) {
       "source",
       "editor",
       "import",
-      "quick-profile"
+      "quick-profile",
+      "planning"
     ].includes(route()) || ![
       "income_statement",
       "balance_sheet",
@@ -44098,21 +45236,21 @@ function ReportOutlet($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent = ($$anchor2) => {
-      var section = root_147();
+      var section = root_149();
       append($$anchor2, section);
     };
-    var alternate_15 = ($$anchor2) => {
+    var alternate_16 = ($$anchor2) => {
       var fragment_1 = comment();
       var node_1 = first_child(fragment_1);
       {
         var consequent_1 = ($$anchor3) => {
-          var section_1 = root_327();
+          var section_1 = root_328();
           var text2 = child(section_1, true);
           reset(section_1);
           template_effect(() => set_text(text2, get(error2)));
           append($$anchor3, section_1);
         };
-        var alternate_14 = ($$anchor3) => {
+        var alternate_15 = ($$anchor3) => {
           var fragment_2 = comment();
           var node_2 = first_child(fragment_2);
           {
@@ -44126,7 +45264,7 @@ function ReportOutlet($$anchor, $$props) {
                 }
               });
             };
-            var alternate_13 = ($$anchor4) => {
+            var alternate_14 = ($$anchor4) => {
               var fragment_4 = comment();
               var node_3 = first_child(fragment_4);
               {
@@ -44149,7 +45287,7 @@ function ReportOutlet($$anchor, $$props) {
                     }
                   });
                 };
-                var alternate_12 = ($$anchor5) => {
+                var alternate_13 = ($$anchor5) => {
                   var fragment_6 = comment();
                   var node_4 = first_child(fragment_6);
                   {
@@ -44163,7 +45301,7 @@ function ReportOutlet($$anchor, $$props) {
                         }
                       });
                     };
-                    var alternate_11 = ($$anchor6) => {
+                    var alternate_12 = ($$anchor6) => {
                       var fragment_8 = comment();
                       var node_5 = first_child(fragment_8);
                       {
@@ -44174,7 +45312,7 @@ function ReportOutlet($$anchor, $$props) {
                             }
                           });
                         };
-                        var alternate_10 = ($$anchor7) => {
+                        var alternate_11 = ($$anchor7) => {
                           var fragment_10 = comment();
                           var node_6 = first_child(fragment_10);
                           {
@@ -44206,7 +45344,7 @@ function ReportOutlet($$anchor, $$props) {
                                 }
                               });
                             };
-                            var alternate_9 = ($$anchor8) => {
+                            var alternate_10 = ($$anchor8) => {
                               var fragment_12 = comment();
                               var node_7 = first_child(fragment_12);
                               {
@@ -44219,74 +45357,68 @@ function ReportOutlet($$anchor, $$props) {
                                     }
                                   });
                                 };
-                                var alternate_8 = ($$anchor9) => {
+                                var alternate_9 = ($$anchor9) => {
                                   var fragment_14 = comment();
                                   var node_8 = first_child(fragment_14);
                                   {
                                     var consequent_8 = ($$anchor10) => {
-                                      TreeReport($$anchor10, {
-                                        get report() {
-                                          return get(report);
+                                      PlanningReport($$anchor10, {
+                                        get adapter() {
+                                          return adapter();
                                         },
                                         get locale() {
                                           return locale2();
-                                        },
-                                        get operatingCurrencies() {
-                                          return operatingCurrencies();
-                                        },
-                                        get renderCommas() {
-                                          return renderCommas();
                                         }
                                       });
                                     };
-                                    var alternate_7 = ($$anchor10) => {
+                                    var alternate_8 = ($$anchor10) => {
                                       var fragment_16 = comment();
                                       var node_9 = first_child(fragment_16);
                                       {
                                         var consequent_9 = ($$anchor11) => {
-                                          JournalReport($$anchor11, {
+                                          TreeReport($$anchor11, {
                                             get report() {
-                                              return get(journal);
+                                              return get(report);
+                                            },
+                                            get locale() {
+                                              return locale2();
+                                            },
+                                            get operatingCurrencies() {
+                                              return operatingCurrencies();
                                             },
                                             get renderCommas() {
                                               return renderCommas();
                                             }
                                           });
                                         };
-                                        var alternate_6 = ($$anchor11) => {
+                                        var alternate_7 = ($$anchor11) => {
                                           var fragment_18 = comment();
                                           var node_10 = first_child(fragment_18);
                                           {
                                             var consequent_10 = ($$anchor12) => {
-                                              StatisticsReport($$anchor12, {
-                                                get entriesByType() {
-                                                  return get(statistics).entriesByType;
-                                                },
-                                                get postings() {
-                                                  return get(statistics).postings;
-                                                },
-                                                get updateActivity() {
-                                                  return get(statistics).updateActivity;
-                                                },
-                                                get locale() {
-                                                  return locale2();
+                                              JournalReport($$anchor12, {
+                                                get report() {
+                                                  return get(journal);
                                                 },
                                                 get renderCommas() {
                                                   return renderCommas();
                                                 }
                                               });
                                             };
-                                            var alternate_5 = ($$anchor12) => {
+                                            var alternate_6 = ($$anchor12) => {
                                               var fragment_20 = comment();
                                               var node_11 = first_child(fragment_20);
                                               {
                                                 var consequent_11 = ($$anchor13) => {
-                                                  HoldingsReport($$anchor13, {
-                                                    get report() {
-                                                      return get(table);
+                                                  StatisticsReport($$anchor13, {
+                                                    get entriesByType() {
+                                                      return get(statistics).entriesByType;
                                                     },
-                                                    get route() {
-                                                      return route();
+                                                    get postings() {
+                                                      return get(statistics).postings;
+                                                    },
+                                                    get updateActivity() {
+                                                      return get(statistics).updateActivity;
                                                     },
                                                     get locale() {
                                                       return locale2();
@@ -44296,97 +45428,128 @@ function ReportOutlet($$anchor, $$props) {
                                                     }
                                                   });
                                                 };
-                                                var alternate_4 = ($$anchor13) => {
+                                                var alternate_5 = ($$anchor13) => {
                                                   var fragment_22 = comment();
                                                   var node_12 = first_child(fragment_22);
                                                   {
                                                     var consequent_12 = ($$anchor14) => {
-                                                      EventsReport($$anchor14, {
+                                                      HoldingsReport($$anchor14, {
                                                         get report() {
                                                           return get(table);
                                                         },
+                                                        get route() {
+                                                          return route();
+                                                        },
                                                         get locale() {
                                                           return locale2();
+                                                        },
+                                                        get renderCommas() {
+                                                          return renderCommas();
                                                         }
                                                       });
                                                     };
-                                                    var alternate_3 = ($$anchor14) => {
+                                                    var alternate_4 = ($$anchor14) => {
                                                       var fragment_24 = comment();
                                                       var node_13 = first_child(fragment_24);
                                                       {
                                                         var consequent_13 = ($$anchor15) => {
-                                                          var query_1 = derived_safe_equal(() => reportQuery(route(), query()));
-                                                          DocumentsReport($$anchor15, {
+                                                          EventsReport($$anchor15, {
                                                             get report() {
                                                               return get(table);
                                                             },
                                                             get locale() {
                                                               return locale2();
-                                                            },
-                                                            get adapter() {
-                                                              return adapter();
-                                                            },
-                                                            get query() {
-                                                              return get(query_1);
-                                                            },
-                                                            get accounts() {
-                                                              return accounts();
                                                             }
                                                           });
                                                         };
-                                                        var alternate_2 = ($$anchor15) => {
+                                                        var alternate_3 = ($$anchor15) => {
                                                           var fragment_26 = comment();
                                                           var node_14 = first_child(fragment_26);
                                                           {
                                                             var consequent_14 = ($$anchor16) => {
-                                                              ErrorsReport($$anchor16, {
+                                                              var query_1 = derived_safe_equal(() => reportQuery(route(), query()));
+                                                              DocumentsReport($$anchor16, {
                                                                 get report() {
                                                                   return get(table);
                                                                 },
                                                                 get locale() {
                                                                   return locale2();
+                                                                },
+                                                                get adapter() {
+                                                                  return adapter();
+                                                                },
+                                                                get query() {
+                                                                  return get(query_1);
+                                                                },
+                                                                get accounts() {
+                                                                  return accounts();
                                                                 }
                                                               });
                                                             };
-                                                            var alternate_1 = ($$anchor16) => {
+                                                            var alternate_2 = ($$anchor16) => {
                                                               var fragment_28 = comment();
                                                               var node_15 = first_child(fragment_28);
                                                               {
                                                                 var consequent_15 = ($$anchor17) => {
-                                                                  var title = derived_safe_equal(() => pageLabel(route()));
-                                                                  GenericReport($$anchor17, {
+                                                                  ErrorsReport($$anchor17, {
                                                                     get report() {
                                                                       return get(table);
                                                                     },
-                                                                    get title() {
-                                                                      return get(title);
-                                                                    },
-                                                                    get route() {
-                                                                      return route();
-                                                                    },
                                                                     get locale() {
                                                                       return locale2();
-                                                                    },
-                                                                    get renderCommas() {
-                                                                      return renderCommas();
                                                                     }
                                                                   });
                                                                 };
-                                                                var alternate = ($$anchor17) => {
-                                                                  var section_2 = root_328();
-                                                                  var h2 = sibling(child(section_2), 2);
-                                                                  var text_1 = child(h2, true);
-                                                                  reset(h2);
-                                                                  next(2);
-                                                                  reset(section_2);
-                                                                  template_effect(() => set_text(text_1, route()));
-                                                                  append($$anchor17, section_2);
+                                                                var alternate_1 = ($$anchor17) => {
+                                                                  var fragment_30 = comment();
+                                                                  var node_16 = first_child(fragment_30);
+                                                                  {
+                                                                    var consequent_16 = ($$anchor18) => {
+                                                                      var title = derived_safe_equal(() => pageLabel(route()));
+                                                                      GenericReport($$anchor18, {
+                                                                        get report() {
+                                                                          return get(table);
+                                                                        },
+                                                                        get title() {
+                                                                          return get(title);
+                                                                        },
+                                                                        get route() {
+                                                                          return route();
+                                                                        },
+                                                                        get locale() {
+                                                                          return locale2();
+                                                                        },
+                                                                        get renderCommas() {
+                                                                          return renderCommas();
+                                                                        }
+                                                                      });
+                                                                    };
+                                                                    var alternate = ($$anchor18) => {
+                                                                      var section_2 = root_343();
+                                                                      var h2 = sibling(child(section_2), 2);
+                                                                      var text_1 = child(h2, true);
+                                                                      reset(h2);
+                                                                      next(2);
+                                                                      reset(section_2);
+                                                                      template_effect(() => set_text(text_1, route()));
+                                                                      append($$anchor18, section_2);
+                                                                    };
+                                                                    if_block(
+                                                                      node_16,
+                                                                      ($$render) => {
+                                                                        if (get(table)) $$render(consequent_16);
+                                                                        else $$render(alternate, false);
+                                                                      },
+                                                                      true
+                                                                    );
+                                                                  }
+                                                                  append($$anchor17, fragment_30);
                                                                 };
                                                                 if_block(
                                                                   node_15,
                                                                   ($$render) => {
-                                                                    if (get(table)) $$render(consequent_15);
-                                                                    else $$render(alternate, false);
+                                                                    if (get(table) && route() === "errors") $$render(consequent_15);
+                                                                    else $$render(alternate_1, false);
                                                                   },
                                                                   true
                                                                 );
@@ -44396,8 +45559,8 @@ function ReportOutlet($$anchor, $$props) {
                                                             if_block(
                                                               node_14,
                                                               ($$render) => {
-                                                                if (get(table) && route() === "errors") $$render(consequent_14);
-                                                                else $$render(alternate_1, false);
+                                                                if (get(table) && route() === "documents") $$render(consequent_14);
+                                                                else $$render(alternate_2, false);
                                                               },
                                                               true
                                                             );
@@ -44407,8 +45570,8 @@ function ReportOutlet($$anchor, $$props) {
                                                         if_block(
                                                           node_13,
                                                           ($$render) => {
-                                                            if (get(table) && route() === "documents") $$render(consequent_13);
-                                                            else $$render(alternate_2, false);
+                                                            if (get(table) && route() === "events") $$render(consequent_13);
+                                                            else $$render(alternate_3, false);
                                                           },
                                                           true
                                                         );
@@ -44418,8 +45581,8 @@ function ReportOutlet($$anchor, $$props) {
                                                     if_block(
                                                       node_12,
                                                       ($$render) => {
-                                                        if (get(table) && route() === "events") $$render(consequent_12);
-                                                        else $$render(alternate_3, false);
+                                                        if (get(table) && (route() === "holdings" || route().startsWith("holdings_by_"))) $$render(consequent_12);
+                                                        else $$render(alternate_4, false);
                                                       },
                                                       true
                                                     );
@@ -44429,8 +45592,8 @@ function ReportOutlet($$anchor, $$props) {
                                                 if_block(
                                                   node_11,
                                                   ($$render) => {
-                                                    if (get(table) && (route() === "holdings" || route().startsWith("holdings_by_"))) $$render(consequent_11);
-                                                    else $$render(alternate_4, false);
+                                                    if (get(statistics)) $$render(consequent_11);
+                                                    else $$render(alternate_5, false);
                                                   },
                                                   true
                                                 );
@@ -44440,8 +45603,8 @@ function ReportOutlet($$anchor, $$props) {
                                             if_block(
                                               node_10,
                                               ($$render) => {
-                                                if (get(statistics)) $$render(consequent_10);
-                                                else $$render(alternate_5, false);
+                                                if (get(journal)) $$render(consequent_10);
+                                                else $$render(alternate_6, false);
                                               },
                                               true
                                             );
@@ -44451,8 +45614,8 @@ function ReportOutlet($$anchor, $$props) {
                                         if_block(
                                           node_9,
                                           ($$render) => {
-                                            if (get(journal)) $$render(consequent_9);
-                                            else $$render(alternate_6, false);
+                                            if (get(report)) $$render(consequent_9);
+                                            else $$render(alternate_7, false);
                                           },
                                           true
                                         );
@@ -44462,8 +45625,8 @@ function ReportOutlet($$anchor, $$props) {
                                     if_block(
                                       node_8,
                                       ($$render) => {
-                                        if (get(report)) $$render(consequent_8);
-                                        else $$render(alternate_7, false);
+                                        if (route() === "planning") $$render(consequent_8);
+                                        else $$render(alternate_8, false);
                                       },
                                       true
                                     );
@@ -44474,7 +45637,7 @@ function ReportOutlet($$anchor, $$props) {
                                   node_7,
                                   ($$render) => {
                                     if (route() === "quick-profile") $$render(consequent_7);
-                                    else $$render(alternate_8, false);
+                                    else $$render(alternate_9, false);
                                   },
                                   true
                                 );
@@ -44485,7 +45648,7 @@ function ReportOutlet($$anchor, $$props) {
                               node_6,
                               ($$render) => {
                                 if (["options", "help", "diagnostics", "source"].includes(route())) $$render(consequent_6);
-                                else $$render(alternate_9, false);
+                                else $$render(alternate_10, false);
                               },
                               true
                             );
@@ -44496,7 +45659,7 @@ function ReportOutlet($$anchor, $$props) {
                           node_5,
                           ($$render) => {
                             if (route() === "import") $$render(consequent_5);
-                            else $$render(alternate_10, false);
+                            else $$render(alternate_11, false);
                           },
                           true
                         );
@@ -44507,7 +45670,7 @@ function ReportOutlet($$anchor, $$props) {
                       node_4,
                       ($$render) => {
                         if (route() === "editor") $$render(consequent_4);
-                        else $$render(alternate_11, false);
+                        else $$render(alternate_12, false);
                       },
                       true
                     );
@@ -44518,7 +45681,7 @@ function ReportOutlet($$anchor, $$props) {
                   node_3,
                   ($$render) => {
                     if (route() === "account") $$render(consequent_3);
-                    else $$render(alternate_12, false);
+                    else $$render(alternate_13, false);
                   },
                   true
                 );
@@ -44529,7 +45692,7 @@ function ReportOutlet($$anchor, $$props) {
               node_2,
               ($$render) => {
                 if (route() === "query") $$render(consequent_2);
-                else $$render(alternate_13, false);
+                else $$render(alternate_14, false);
               },
               true
             );
@@ -44540,7 +45703,7 @@ function ReportOutlet($$anchor, $$props) {
           node_1,
           ($$render) => {
             if (get(error2)) $$render(consequent_1);
-            else $$render(alternate_14, false);
+            else $$render(alternate_15, false);
           },
           true
         );
@@ -44549,7 +45712,7 @@ function ReportOutlet($$anchor, $$props) {
     };
     if_block(node, ($$render) => {
       if (get(loading)) $$render(consequent);
-      else $$render(alternate_15, false);
+      else $$render(alternate_16, false);
     });
   }
   append($$anchor, fragment);
@@ -44557,32 +45720,32 @@ function ReportOutlet($$anchor, $$props) {
 }
 
 // src/fava/components/Sidebar.svelte
-var root_148 = template(`<div class="overlay svelte-e0j49v" aria-hidden="true"></div>`);
+var root_150 = template(`<div class="overlay svelte-e0j49v" aria-hidden="true"></div>`);
 var root_329 = template(`<li class="navigation-heading svelte-e0j49v" aria-hidden="true"> </li>`);
-var on_click5 = (event2, onNavigate, item) => {
+var on_click6 = (event2, onNavigate, item) => {
   event2.preventDefault();
   onNavigate()(routeHref(get(item)));
 };
-var root_610 = template(`<a href="#export" class="secondary svelte-e0j49v">&#11015;</a>`);
-var on_click_13 = (event2, onNavigate, saved) => {
+var root_611 = template(`<a href="#export" class="secondary svelte-e0j49v">&#11015;</a>`);
+var on_click_14 = (event2, onNavigate, saved) => {
   event2.preventDefault();
   onNavigate()(`/query?query_string=${encodeURIComponent(get(saved).query_string)}`);
 };
-var root_88 = template(`<li class="svelte-e0j49v"><a class="svelte-e0j49v"> </a></li>`);
+var root_89 = template(`<li class="svelte-e0j49v"><a class="svelte-e0j49v"> </a></li>`);
 var root_710 = template(`<ul class="submenu svelte-e0j49v"></ul>`);
-var root_515 = template(`<li class="svelte-e0j49v"><a class="svelte-e0j49v"> </a> <!> <!></li>`);
-var root_97 = template(`<li class="account-selector svelte-e0j49v"><!></li>`);
-var on_click_23 = (event2, onNavigate) => {
+var root_516 = template(`<li class="svelte-e0j49v"><a class="svelte-e0j49v"> </a> <!> <!></li>`);
+var root_98 = template(`<li class="account-selector svelte-e0j49v"><!></li>`);
+var on_click_24 = (event2, onNavigate) => {
   event2.preventDefault();
   onNavigate()(routeHref("diagnostics"));
 };
-var on_click_32 = (event2, onNavigate) => {
+var on_click_33 = (event2, onNavigate) => {
   event2.preventDefault();
   onNavigate()(routeHref("errors"));
 };
-var root_107 = template(`<ul class="navigation svelte-e0j49v"><li class="svelte-e0j49v"><a class="svelte-e0j49v"> </a></li> <li class="svelte-e0j49v"><a class="svelte-e0j49v"> </a></li></ul>`);
-var root_235 = template(`<ul class="navigation svelte-e0j49v"><!> <!> <!></ul> <!>`, 1);
-var root26 = template(`<!> <div class="aside-buttons svelte-e0j49v"><button id="menu-toggle" type="button" aria-controls="sidebar" aria-label="Menu" class="svelte-e0j49v">\u2630</button> <a class="button svelte-e0j49v" href="#add-transaction" aria-label="Add transaction">+</a> <a class="button quick-btn svelte-e0j49v" href="#add-quick" aria-label="Quick entry" title="Quick entry (a q)">\u26A1</a></div> <aside id="sidebar" aria-label="Primary navigation" class="svelte-e0j49v"></aside>`, 1);
+var root_108 = template(`<ul class="navigation svelte-e0j49v"><li class="svelte-e0j49v"><a class="svelte-e0j49v"> </a></li> <li class="svelte-e0j49v"><a class="svelte-e0j49v"> </a></li></ul>`);
+var root_236 = template(`<ul class="navigation svelte-e0j49v"><!> <!> <!></ul> <!>`, 1);
+var root27 = template(`<!> <div class="aside-buttons svelte-e0j49v"><button id="menu-toggle" type="button" aria-controls="sidebar" aria-label="Menu" class="svelte-e0j49v">\u2630</button> <a class="button svelte-e0j49v" href="#add-transaction" aria-label="Add transaction">+</a> <a class="button quick-btn svelte-e0j49v" href="#add-quick" aria-label="Quick entry" title="Quick entry (a q)">\u26A1</a></div> <aside id="sidebar" aria-label="Primary navigation" class="svelte-e0j49v"></aside>`, 1);
 function Sidebar($$anchor, $$props) {
   push($$props, false);
   let route = prop($$props, "route", 8);
@@ -44631,7 +45794,7 @@ function Sidebar($$anchor, $$props) {
     ],
     [
       "OrangeCount",
-      ["account", "quick-profile"]
+      ["account", "quick-profile", "planning"]
     ]
   ];
   const known = /* @__PURE__ */ new Set([...ROUTES, "account"]);
@@ -44667,7 +45830,8 @@ function Sidebar($$anchor, $$props) {
     options: "options",
     help: "help",
     diagnostics: "diagnostics",
-    account: "accounts"
+    account: "accounts",
+    planning: "planning"
   };
   function label(routeName) {
     const catalog = translations[locale2() === "zh-CN" ? "zh-CN" : "en"];
@@ -44678,11 +45842,11 @@ function Sidebar($$anchor, $$props) {
     return catalog[key] || key;
   }
   init2();
-  var fragment = root26();
+  var fragment = root27();
   var node = first_child(fragment);
   {
     var consequent = ($$anchor2) => {
-      var div = root_148();
+      var div = root_150();
       div.__click = function(...$$args) {
         onMenu()?.apply(this, $$args);
       };
@@ -44704,7 +45868,7 @@ function Sidebar($$anchor, $$props) {
   each(aside, 5, () => sections, index, ($$anchor2, $$item, sectionIndex) => {
     let heading2 = () => get($$item)[0];
     let items = () => get($$item)[1];
-    var fragment_1 = root_235();
+    var fragment_1 = root_236();
     var ul = first_child(fragment_1);
     var node_1 = child(ul);
     {
@@ -44725,10 +45889,10 @@ function Sidebar($$anchor, $$props) {
       var node_3 = first_child(fragment_2);
       {
         var consequent_4 = ($$anchor4) => {
-          var li_1 = root_515();
+          var li_1 = root_516();
           var a_1 = child(li_1);
           template_effect(() => set_attribute(a_1, "href", routeHref(get(item))));
-          a_1.__click = [on_click5, onNavigate, item];
+          a_1.__click = [on_click6, onNavigate, item];
           var text_1 = child(a_1, true);
           template_effect(() => set_text(text_1, label(get(item))));
           reset(a_1);
@@ -44736,7 +45900,7 @@ function Sidebar($$anchor, $$props) {
           var node_4 = sibling(a_1, 2);
           {
             var consequent_2 = ($$anchor5) => {
-              var a_2 = root_610();
+              var a_2 = root_611();
               template_effect(() => set_attribute(a_2, "title", t4("export")));
               template_effect(() => set_attribute(a_2, "aria-label", t4("export")));
               append($$anchor5, a_2);
@@ -44750,10 +45914,10 @@ function Sidebar($$anchor, $$props) {
             var consequent_3 = ($$anchor5) => {
               var ul_1 = root_710();
               each(ul_1, 5, userQueries, (saved) => saved.query_string, ($$anchor6, saved) => {
-                var li_2 = root_88();
+                var li_2 = root_89();
                 var a_3 = child(li_2);
                 template_effect(() => set_attribute(a_3, "href", `/query?query_string=${encodeURIComponent(get(saved).query_string)}`));
-                a_3.__click = [on_click_13, onNavigate, saved];
+                a_3.__click = [on_click_14, onNavigate, saved];
                 var text_2 = child(a_3, true);
                 template_effect(() => set_text(text_2, truncateQueryName(get(saved).name)));
                 reset(a_3);
@@ -44784,7 +45948,7 @@ function Sidebar($$anchor, $$props) {
     var node_6 = sibling(node_2, 2);
     {
       var consequent_5 = ($$anchor3) => {
-        var li_3 = root_97();
+        var li_3 = root_98();
         var node_7 = child(li_3);
         var placeholder2 = derived_safe_equal(() => t4("goToAccount"));
         AutocompleteInput(node_7, {
@@ -44816,11 +45980,11 @@ function Sidebar($$anchor, $$props) {
     var node_8 = sibling(ul, 2);
     {
       var consequent_6 = ($$anchor3) => {
-        var ul_2 = root_107();
+        var ul_2 = root_108();
         var li_4 = child(ul_2);
         var a_4 = child(li_4);
         template_effect(() => set_attribute(a_4, "href", routeHref("diagnostics")));
-        a_4.__click = [on_click_23, onNavigate];
+        a_4.__click = [on_click_24, onNavigate];
         var text_3 = child(a_4);
         template_effect(() => set_text(text_3, `${label("diagnostics") ?? ""} (${errors().length ?? ""})`));
         reset(a_4);
@@ -44828,7 +45992,7 @@ function Sidebar($$anchor, $$props) {
         var li_5 = sibling(li_4, 2);
         var a_5 = child(li_5);
         template_effect(() => set_attribute(a_5, "href", routeHref("errors")));
-        a_5.__click = [on_click_32, onNavigate];
+        a_5.__click = [on_click_33, onNavigate];
         var text_4 = child(a_5);
         reset(a_5);
         reset(li_5);
@@ -44861,15 +46025,15 @@ function Sidebar($$anchor, $$props) {
 delegate(["click"]);
 
 // src/fava/modals/QuickEntryPanel.svelte
-var root_149 = template(`<p class="error" role="alert"> </p>`);
-var root_236 = template(`<button type="button" class="undo-btn svelte-118jgj0"> </button>`);
-var root_516 = template(`<span class="duplicate-badge svelte-118jgj0">\u26A0</span>`);
+var root_151 = template(`<p class="error" role="alert"> </p>`);
+var root_237 = template(`<button type="button" class="undo-btn svelte-118jgj0"> </button>`);
+var root_517 = template(`<span class="duplicate-badge svelte-118jgj0">\u26A0</span>`);
 var root_711 = template(`<li> </li>`);
-var root_611 = template(`<ul class="line-errors svelte-118jgj0"></ul>`);
-var root_89 = template(`<pre class="line-preview svelte-118jgj0"> </pre>`);
+var root_612 = template(`<ul class="line-errors svelte-118jgj0"></ul>`);
+var root_810 = template(`<pre class="line-preview svelte-118jgj0"> </pre>`);
 var root_421 = template(`<div class="preview-line svelte-118jgj0"><div class="line-source svelte-118jgj0"><span class="line-number svelte-118jgj0"> </span> <code class="svelte-118jgj0"> </code> <!></div> <!> <!></div>`);
 var root_330 = template(`<div class="preview-area svelte-118jgj0"><h4 class="svelte-118jgj0"> </h4> <!></div>`);
-var root27 = template(`<div class="quick-entry-panel svelte-118jgj0"><!> <div class="field-row svelte-118jgj0"><label class="field svelte-118jgj0"><span class="svelte-118jgj0"> </span> <input type="date"></label> <label class="field narrow svelte-118jgj0"><span class="svelte-118jgj0"> </span> <select><option>*</option><option>!</option></select></label> <!></div> <textarea spellcheck="false" rows="5" class="svelte-118jgj0"></textarea> <div class="actions svelte-118jgj0"><button type="button"> </button> <button type="button" class="primary svelte-118jgj0"> </button> <span class="hint svelte-118jgj0"> </span></div> <!></div>`);
+var root28 = template(`<div class="quick-entry-panel svelte-118jgj0"><!> <div class="field-row svelte-118jgj0"><label class="field svelte-118jgj0"><span class="svelte-118jgj0"> </span> <input type="date"></label> <label class="field narrow svelte-118jgj0"><span class="svelte-118jgj0"> </span> <select><option>*</option><option>!</option></select></label> <!></div> <textarea spellcheck="false" rows="5" class="svelte-118jgj0"></textarea> <div class="actions svelte-118jgj0"><button type="button"> </button> <button type="button" class="primary svelte-118jgj0"> </button> <span class="hint svelte-118jgj0"> </span></div> <!></div>`);
 function QuickEntryPanel($$anchor, $$props) {
   push($$props, false);
   const hasErrors = mutable_state();
@@ -44980,11 +46144,11 @@ function QuickEntryPanel($$anchor, $$props) {
   });
   legacy_pre_effect_reset();
   init2();
-  var div = root27();
+  var div = root28();
   var node = child(div);
   {
     var consequent = ($$anchor2) => {
-      var p = root_149();
+      var p = root_151();
       var text_1 = child(p, true);
       reset(p);
       template_effect(() => set_text(text_1, get(error2)));
@@ -45023,7 +46187,7 @@ function QuickEntryPanel($$anchor, $$props) {
   var node_1 = sibling(label_1, 2);
   {
     var consequent_1 = ($$anchor2) => {
-      var button = root_236();
+      var button = root_237();
       var text_4 = child(button, true);
       template_effect(() => set_text(text_4, t4("quickEntryUndo")));
       reset(button);
@@ -45076,7 +46240,7 @@ function QuickEntryPanel($$anchor, $$props) {
         var node_4 = sibling(code, 2);
         {
           var consequent_2 = ($$anchor4) => {
-            var span_4 = root_516();
+            var span_4 = root_517();
             template_effect(() => set_attribute(span_4, "title", t4("quickEntryDuplicate")));
             append($$anchor4, span_4);
           };
@@ -45088,7 +46252,7 @@ function QuickEntryPanel($$anchor, $$props) {
         var node_5 = sibling(div_5, 2);
         {
           var consequent_3 = ($$anchor4) => {
-            var ul = root_611();
+            var ul = root_612();
             each(ul, 5, () => get(line).errors, index, ($$anchor5, err2) => {
               var li = root_711();
               var text_11 = child(li, true);
@@ -45106,7 +46270,7 @@ function QuickEntryPanel($$anchor, $$props) {
         var node_6 = sibling(node_5, 2);
         {
           var consequent_4 = ($$anchor4) => {
-            var pre = root_89();
+            var pre = root_810();
             var text_12 = child(pre, true);
             reset(pre);
             template_effect(() => set_text(text_12, get(line).preview));
@@ -45144,12 +46308,12 @@ function QuickEntryPanel($$anchor, $$props) {
 }
 
 // src/fava/modals/AddEntryModal.svelte
-var root_237 = template(`<p class="error svelte-1iw1zty" role="alert"> </p>`);
+var root_238 = template(`<p class="error svelte-1iw1zty" role="alert"> </p>`);
 var root_422 = template(`<tr><td class="svelte-1iw1zty"><input type="text" placeholder="Assets:Cash" autocomplete="off" class="svelte-1iw1zty"></td><td class="svelte-1iw1zty"><input type="text" placeholder="10.00" autocomplete="off" class="svelte-1iw1zty"></td><td class="svelte-1iw1zty"><input type="text" placeholder="USD" autocomplete="off" class="svelte-1iw1zty"></td><td class="svelte-1iw1zty"><button type="button" class="remove svelte-1iw1zty" aria-label="Remove posting">\xD7</button></td></tr>`);
 var root_331 = template(`<div class="row svelte-1iw1zty"><div class="field narrow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <select class="svelte-1iw1zty"><option>*</option><option>!</option></select></div> <div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <!></div> <div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" autocomplete="off" class="svelte-1iw1zty"></div></div> <div class="row svelte-1iw1zty"><div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="tag1 tag2" autocomplete="off" class="svelte-1iw1zty"></div> <div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="link1 link2" autocomplete="off" class="svelte-1iw1zty"></div></div> <table class="postings svelte-1iw1zty"><thead><tr><th class="svelte-1iw1zty"> </th><th class="svelte-1iw1zty"> </th><th class="svelte-1iw1zty"> </th><th class="svelte-1iw1zty"></th></tr></thead><tbody></tbody></table> <button type="button" class="add-posting svelte-1iw1zty"> </button>`, 1);
-var root_612 = template(`<div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="Assets:Cash" required autocomplete="off" class="svelte-1iw1zty"></div> <div class="row svelte-1iw1zty"><div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="100.00" required autocomplete="off" class="svelte-1iw1zty"></div> <div class="field narrow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="USD" required autocomplete="off" class="svelte-1iw1zty"></div></div>`, 1);
+var root_613 = template(`<div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="Assets:Cash" required autocomplete="off" class="svelte-1iw1zty"></div> <div class="row svelte-1iw1zty"><div class="field grow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="100.00" required autocomplete="off" class="svelte-1iw1zty"></div> <div class="field narrow svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="USD" required autocomplete="off" class="svelte-1iw1zty"></div></div>`, 1);
 var root_712 = template(`<div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" placeholder="Assets:Cash" required autocomplete="off" class="svelte-1iw1zty"></div> <div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="text" required autocomplete="off" class="svelte-1iw1zty"></div>`, 1);
-var root_150 = template(`<div class="add-backdrop svelte-1iw1zty" role="presentation"><form class="add-modal svelte-1iw1zty" role="dialog" aria-modal="true"><h3 class="svelte-1iw1zty"> <button type="button" class="svelte-1iw1zty"> </button> <button type="button" class="svelte-1iw1zty"> </button> <button type="button" class="svelte-1iw1zty"> </button> <button type="button" class="svelte-1iw1zty"> </button></h3> <!> <div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="date" required class="svelte-1iw1zty"></div> <!> <!> <div class="actions svelte-1iw1zty"><span class="spacer svelte-1iw1zty"></span> <label class="continue svelte-1iw1zty"><input type="checkbox"> <span> </span></label> <button type="submit" class="svelte-1iw1zty"> </button></div></form></div>`);
+var root_154 = template(`<div class="add-backdrop svelte-1iw1zty" role="presentation"><form class="add-modal svelte-1iw1zty" role="dialog" aria-modal="true"><h3 class="svelte-1iw1zty"> <button type="button" class="svelte-1iw1zty"> </button> <button type="button" class="svelte-1iw1zty"> </button> <button type="button" class="svelte-1iw1zty"> </button> <button type="button" class="svelte-1iw1zty"> </button></h3> <!> <div class="field svelte-1iw1zty"><span class="svelte-1iw1zty"> </span> <input type="date" required class="svelte-1iw1zty"></div> <!> <!> <div class="actions svelte-1iw1zty"><span class="spacer svelte-1iw1zty"></span> <label class="continue svelte-1iw1zty"><input type="checkbox"> <span> </span></label> <button type="submit" class="svelte-1iw1zty"> </button></div></form></div>`);
 function AddEntryModal($$anchor, $$props) {
   push($$props, false);
   let locale2 = prop($$props, "locale", 8, "en");
@@ -45310,7 +46474,7 @@ function AddEntryModal($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent_4 = ($$anchor2) => {
-      var div = root_150();
+      var div = root_154();
       var form = child(div);
       template_effect(() => set_attribute(form, "aria-label", t4("add")));
       var h3 = child(form);
@@ -45336,7 +46500,7 @@ function AddEntryModal($$anchor, $$props) {
       var node_1 = sibling(h3, 2);
       {
         var consequent = ($$anchor3) => {
-          var p = root_237();
+          var p = root_238();
           var text_5 = child(p, true);
           reset(p);
           template_effect(() => set_text(text_5, get(error2)));
@@ -45487,7 +46651,7 @@ function AddEntryModal($$anchor, $$props) {
           var node_4 = first_child(fragment_2);
           {
             var consequent_2 = ($$anchor4) => {
-              var fragment_3 = root_612();
+              var fragment_3 = root_613();
               var div_9 = first_child(fragment_3);
               var span_6 = child(div_9);
               var text_16 = child(span_6, true);
@@ -45619,17 +46783,17 @@ function AddEntryModal($$anchor, $$props) {
 }
 
 // src/fava/modals/ContextModal.svelte
-var root_238 = template(`<p class="error svelte-kroni5" role="alert"> </p>`);
-var root_517 = template(`<a class="svelte-kroni5"> </a>`);
-var root_613 = template(`<span class="span svelte-kroni5"> </span>`);
-var root_1310 = template(`<dd class="svelte-kroni5"> </dd>`);
-var root_1212 = template(`<dt class="svelte-kroni5">Balances before</dt> <!>`, 1);
-var root_153 = template(`<dd class="svelte-kroni5"> </dd>`);
+var root_239 = template(`<p class="error svelte-kroni5" role="alert"> </p>`);
+var root_518 = template(`<a class="svelte-kroni5"> </a>`);
+var root_614 = template(`<span class="span svelte-kroni5"> </span>`);
+var root_1311 = template(`<dd class="svelte-kroni5"> </dd>`);
+var root_1213 = template(`<dt class="svelte-kroni5">Balances before</dt> <!>`, 1);
+var root_155 = template(`<dd class="svelte-kroni5"> </dd>`);
 var root_1410 = template(`<dt class="svelte-kroni5">Balances after</dt> <!>`, 1);
-var root_1112 = template(`<dl class="balances svelte-kroni5"><!> <!></dl>`);
+var root_1113 = template(`<dl class="balances svelte-kroni5"><!> <!></dl>`);
 var root_423 = template(`<p class="location svelte-kroni5"><!> <!></p> <p class="summary svelte-kroni5"> <!> <!> <!> <!></p> <!> <pre class="source svelte-kroni5"> </pre>`, 1);
-var root_165 = template(`<p class="loading svelte-kroni5"> </p>`);
-var root_151 = template(`<div class="context-backdrop svelte-kroni5" role="presentation"><div class="context-modal svelte-kroni5" role="dialog" aria-modal="true"><h3 class="svelte-kroni5"> </h3> <!></div></div>`);
+var root_166 = template(`<p class="loading svelte-kroni5"> </p>`);
+var root_156 = template(`<div class="context-backdrop svelte-kroni5" role="presentation"><div class="context-modal svelte-kroni5" role="dialog" aria-modal="true"><h3 class="svelte-kroni5"> </h3> <!></div></div>`);
 function ContextModal($$anchor, $$props) {
   push($$props, false);
   let adapter = prop($$props, "adapter", 8);
@@ -45700,7 +46864,7 @@ function ContextModal($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent_11 = ($$anchor2) => {
-      var div = root_151();
+      var div = root_156();
       var div_1 = child(div);
       template_effect(() => set_attribute(div_1, "aria-label", t4("context")));
       var h3 = child(div_1);
@@ -45710,7 +46874,7 @@ function ContextModal($$anchor, $$props) {
       var node_1 = sibling(h3, 2);
       {
         var consequent = ($$anchor3) => {
-          var p = root_238();
+          var p = root_239();
           var text_1 = child(p, true);
           reset(p);
           template_effect(() => set_text(text_1, get(error2)));
@@ -45726,7 +46890,7 @@ function ContextModal($$anchor, $$props) {
               var node_3 = child(p_1);
               {
                 var consequent_1 = ($$anchor5) => {
-                  var a = root_517();
+                  var a = root_518();
                   template_effect(() => set_attribute(a, "href", sourceHref(get(context).entry.file)));
                   var text_2 = child(a, true);
                   reset(a);
@@ -45740,7 +46904,7 @@ function ContextModal($$anchor, $$props) {
               var node_4 = sibling(node_3, 2);
               {
                 var consequent_2 = ($$anchor5) => {
-                  var span = root_613();
+                  var span = root_614();
                   var text_3 = child(span, true);
                   reset(span);
                   template_effect(() => set_text(text_3, get(context).entry.span));
@@ -45801,14 +46965,14 @@ function ContextModal($$anchor, $$props) {
               var node_9 = sibling(p_2, 2);
               {
                 var consequent_9 = ($$anchor5) => {
-                  var dl = root_1112();
+                  var dl = root_1113();
                   var node_10 = child(dl);
                   {
                     var consequent_7 = ($$anchor6) => {
-                      var fragment_7 = root_1212();
+                      var fragment_7 = root_1213();
                       var node_11 = sibling(first_child(fragment_7), 2);
                       each(node_11, 1, () => balanceLines(get(context).balances_before), (line) => line, ($$anchor7, line) => {
-                        var dd = root_1310();
+                        var dd = root_1311();
                         var text_9 = child(dd, true);
                         reset(dd);
                         template_effect(() => set_text(text_9, get(line)));
@@ -45826,7 +46990,7 @@ function ContextModal($$anchor, $$props) {
                       var fragment_8 = root_1410();
                       var node_13 = sibling(first_child(fragment_8), 2);
                       each(node_13, 1, () => balanceLines(get(context).balances_after), (line) => line, ($$anchor7, line) => {
-                        var dd_1 = root_153();
+                        var dd_1 = root_155();
                         var text_10 = child(dd_1, true);
                         reset(dd_1);
                         template_effect(() => set_text(text_10, get(line)));
@@ -45855,7 +47019,7 @@ function ContextModal($$anchor, $$props) {
               append($$anchor4, fragment_2);
             };
             var alternate = ($$anchor4) => {
-              var p_3 = root_165();
+              var p_3 = root_166();
               var text_12 = child(p_3, true);
               template_effect(() => set_text(text_12, t4("loading")));
               reset(p_3);
@@ -45895,12 +47059,12 @@ function ContextModal($$anchor, $$props) {
 
 // src/fava/modals/DocumentUploadModal.svelte
 var root_333 = template(`<p class="error svelte-bpl3hy" role="alert"> </p>`);
-var root_518 = template(`<input class="file svelte-bpl3hy" type="text">`);
+var root_519 = template(`<input class="file svelte-bpl3hy" type="text">`);
 var root_713 = template(`<option> </option>`);
-var root_614 = template(`<div class="field svelte-bpl3hy"><span class="svelte-bpl3hy"> </span> <select class="svelte-bpl3hy"></select></div>`);
-var root_810 = template(`<p class="hint svelte-bpl3hy"> </p>`);
-var root_98 = template(`<option></option>`);
-var root_239 = template(`<div class="upload-backdrop svelte-bpl3hy" role="presentation"><form class="upload-modal svelte-bpl3hy" role="dialog" aria-modal="true"><h3 class="svelte-bpl3hy"> </h3> <!> <div class="field svelte-bpl3hy"><span class="svelte-bpl3hy"> </span> <input type="file" multiple></div> <!> <!> <div class="field svelte-bpl3hy"><span class="svelte-bpl3hy"> </span> <input type="text" list="upload-accounts" placeholder="Assets:Cash" required autocomplete="off" class="svelte-bpl3hy"> <datalist id="upload-accounts"></datalist></div> <div class="actions svelte-bpl3hy"><span class="spacer svelte-bpl3hy"></span> <button type="submit" class="svelte-bpl3hy"> </button></div></form></div>`);
+var root_615 = template(`<div class="field svelte-bpl3hy"><span class="svelte-bpl3hy"> </span> <select class="svelte-bpl3hy"></select></div>`);
+var root_811 = template(`<p class="hint svelte-bpl3hy"> </p>`);
+var root_99 = template(`<option></option>`);
+var root_240 = template(`<div class="upload-backdrop svelte-bpl3hy" role="presentation"><form class="upload-modal svelte-bpl3hy" role="dialog" aria-modal="true"><h3 class="svelte-bpl3hy"> </h3> <!> <div class="field svelte-bpl3hy"><span class="svelte-bpl3hy"> </span> <input type="file" multiple></div> <!> <!> <div class="field svelte-bpl3hy"><span class="svelte-bpl3hy"> </span> <input type="text" list="upload-accounts" placeholder="Assets:Cash" required autocomplete="off" class="svelte-bpl3hy"> <datalist id="upload-accounts"></datalist></div> <div class="actions svelte-bpl3hy"><span class="spacer svelte-bpl3hy"></span> <button type="submit" class="svelte-bpl3hy"> </button></div></form></div>`);
 function DocumentUploadModal($$anchor, $$props) {
   push($$props, false);
   const shown = mutable_state();
@@ -46027,7 +47191,7 @@ function DocumentUploadModal($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent_3 = ($$anchor2) => {
-      var div = root_239();
+      var div = root_240();
       var form = child(div);
       template_effect(() => set_attribute(form, "aria-label", t4("uploadFiles")));
       var h3 = child(form);
@@ -46060,7 +47224,7 @@ function DocumentUploadModal($$anchor, $$props) {
           var fragment_1 = comment();
           var node_3 = first_child(fragment_1);
           each(node_3, 1, () => Array.from(get(files)), index, ($$anchor4, file, index2) => {
-            var input_1 = root_518();
+            var input_1 = root_519();
             remove_input_defaults(input_1);
             template_effect(() => set_value(input_1, getName(get(file), index2)));
             event("input", input_1, (event2) => setOverride(index2, event2.currentTarget.value));
@@ -46075,7 +47239,7 @@ function DocumentUploadModal($$anchor, $$props) {
       var node_4 = sibling(node_2, 2);
       {
         var consequent_2 = ($$anchor3) => {
-          var div_2 = root_614();
+          var div_2 = root_615();
           var span_1 = child(div_2);
           var text_3 = child(span_1, true);
           template_effect(() => set_text(text_3, t4("documentsFolder")));
@@ -46087,16 +47251,16 @@ function DocumentUploadModal($$anchor, $$props) {
               documentRoots();
             });
           });
-          each(select, 5, documentRoots, (root29) => root29, ($$anchor4, root29) => {
+          each(select, 5, documentRoots, (root30) => root30, ($$anchor4, root30) => {
             var option = root_713();
             var option_value = {};
             var text_4 = child(option, true);
             reset(option);
             template_effect(() => {
-              if (option_value !== (option_value = get(root29))) {
-                option.value = null == (option.__value = get(root29)) ? "" : get(root29);
+              if (option_value !== (option_value = get(root30))) {
+                option.value = null == (option.__value = get(root30)) ? "" : get(root30);
               }
-              set_text(text_4, get(root29));
+              set_text(text_4, get(root30));
             });
             append($$anchor4, option);
           });
@@ -46106,7 +47270,7 @@ function DocumentUploadModal($$anchor, $$props) {
           append($$anchor3, div_2);
         };
         var alternate = ($$anchor3) => {
-          var p_1 = root_810();
+          var p_1 = root_811();
           var text_5 = child(p_1, true);
           template_effect(() => set_text(text_5, t4("noDocumentRoot")));
           reset(p_1);
@@ -46126,7 +47290,7 @@ function DocumentUploadModal($$anchor, $$props) {
       remove_input_defaults(input_2);
       var datalist = sibling(input_2, 2);
       each(datalist, 5, accounts, (name3) => name3, ($$anchor3, name3) => {
-        var option_1 = root_98();
+        var option_1 = root_99();
         var option_1_value = {};
         template_effect(() => {
           if (option_1_value !== (option_1_value = get(name3))) {
@@ -46164,7 +47328,7 @@ function DocumentUploadModal($$anchor, $$props) {
 }
 
 // src/fava/modals/ExportModal.svelte
-var root_154 = template(`<div class="export-backdrop svelte-gn9rfu" role="presentation"><div class="export-modal svelte-gn9rfu" role="dialog" aria-modal="true"><h3 class="svelte-gn9rfu"> </h3> <a download="journal.bean" class="svelte-gn9rfu"> </a></div></div>`);
+var root_157 = template(`<div class="export-backdrop svelte-gn9rfu" role="presentation"><div class="export-modal svelte-gn9rfu" role="dialog" aria-modal="true"><h3 class="svelte-gn9rfu"> </h3> <a download="journal.bean" class="svelte-gn9rfu"> </a></div></div>`);
 function ExportModal($$anchor, $$props) {
   push($$props, false);
   const href = mutable_state();
@@ -46204,7 +47368,7 @@ function ExportModal($$anchor, $$props) {
   var node = first_child(fragment);
   {
     var consequent = ($$anchor2) => {
-      var div = root_154();
+      var div = root_157();
       var div_1 = child(div);
       template_effect(() => set_attribute(div_1, "aria-label", t4("export")));
       var h3 = child(div_1);
@@ -46324,8 +47488,8 @@ function createShellStore(initial) {
 }
 
 // src/fava/App.svelte
-var root_155 = template(`<meta name="description" content="OrangeCount local ledger interface">`);
-var root28 = template(`<!> <!> <article id="main-content" tabindex="-1"><!></article> <!> <!> <!> <!>`, 1);
+var root_158 = template(`<meta name="description" content="OrangeCount local ledger interface">`);
+var root29 = template(`<!> <!> <article id="main-content" tabindex="-1"><!></article> <!> <!> <!> <!>`, 1);
 function App($$anchor, $$props) {
   push($$props, false);
   const $$stores = setup_stores();
@@ -46475,9 +47639,9 @@ function App($$anchor, $$props) {
   });
   legacy_pre_effect_reset();
   init2();
-  var fragment = root28();
+  var fragment = root29();
   head(($$anchor2) => {
-    var meta2 = root_155();
+    var meta2 = root_158();
     template_effect(() => $document.title = `${get(current).ledgerTitle ?? ""} \u203A ${(get(current).account || get(current).route) ?? ""}`);
     append($$anchor2, meta2);
   });
