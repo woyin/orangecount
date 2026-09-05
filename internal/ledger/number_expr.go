@@ -39,38 +39,43 @@ type exprToken struct {
 	span source.Span
 }
 
+// numberExprSplitter accumulates expression sub-tokens while tracking whether
+// the grammar expects an operand next. Its append method is the single gate
+// that rejects malformed token sequences.
+type numberExprSplitter struct {
+	out           []exprToken
+	expectOperand bool
+}
+
+func (s *numberExprSplitter) appendSub(sub exprToken) bool {
+	if isExprDelimiter(sub.text) {
+		s.out = append(s.out, sub)
+		switch sub.text {
+		case "(", "+", "-", "*", "/":
+			s.expectOperand = true
+		case ")":
+			s.expectOperand = false
+		}
+		return true
+	}
+	if !s.expectOperand || !looksLikeNumberStart(sub.text) {
+		return false
+	}
+	s.out = append(s.out, sub)
+	s.expectOperand = false
+	return true
+}
+
 func splitNumberExpr(ts []token, from int) ([]exprToken, int, bool) {
 	if from >= len(ts) {
 		return nil, from, false
 	}
-	var out []exprToken
+	splitter := numberExprSplitter{expectOperand: true}
 	i := from
-	expectOperand := true
-	appendSub := func(sub exprToken) bool {
-		if isExprDelimiter(sub.text) {
-			out = append(out, sub)
-			switch sub.text {
-			case "(", "+", "-", "*", "/":
-				expectOperand = true
-			case ")":
-				expectOperand = false
-			}
-			return true
-		}
-		if !looksLikeNumberStart(sub.text) {
-			return false
-		}
-		if !expectOperand {
-			return false
-		}
-		out = append(out, sub)
-		expectOperand = false
-		return true
-	}
 	for i < len(ts) {
 		t := ts[i]
 		if isExprDelimiter(t.text) {
-			if !appendSub(exprToken{t.text, t.span}) {
+			if !splitter.appendSub(exprToken{t.text, t.span}) {
 				break
 			}
 			i++
@@ -85,7 +90,7 @@ func splitNumberExpr(ts []token, from int) ([]exprToken, int, bool) {
 		}
 		keepWord := true
 		for _, sub := range subs {
-			if !appendSub(sub) {
+			if !splitter.appendSub(sub) {
 				keepWord = false
 				break
 			}
@@ -95,10 +100,10 @@ func splitNumberExpr(ts []token, from int) ([]exprToken, int, bool) {
 		}
 		i++
 	}
-	if len(out) == 0 {
+	if len(splitter.out) == 0 {
 		return nil, from, false
 	}
-	return out, i, true
+	return splitter.out, i, true
 }
 
 func isExprDelimiter(s string) bool {
@@ -139,14 +144,6 @@ func splitExprWord(t token) []exprToken {
 
 func subSpan(s source.Span, start, end int) source.Span {
 	return source.Span{File: s.File, Start: s.Start + start, End: s.Start + end, StartLine: s.StartLine, StartColumn: s.StartColumn + start, EndLine: s.EndLine, EndColumn: s.StartColumn + end}
-}
-
-func sourceText(toks []exprToken) string {
-	var b strings.Builder
-	for _, t := range toks {
-		b.WriteString(t.text)
-	}
-	return b.String()
 }
 
 func looksLikeNumberStart(s string) bool {

@@ -135,25 +135,22 @@ type planningMatchView struct {
 	DateDistance int    `json:"date_distance"`
 }
 
+// planningOccurrences extracts the planning-currency expense postings a
+// recurring-flow detector can compare: positive Expenses postings funded by a
+// same-currency Assets/Liabilities counterpart in the same transaction.
 func planningOccurrences(evaluation ledger.Evaluation, currency string) []planning.Occurrence {
 	var occurrences []planning.Occurrence
 	for entryIndex, entry := range evaluation.Entries {
-		transaction, ok := entry.Directive.(ledger.Transaction)
+		transaction, ok := entryTransaction(entry)
 		if !ok {
 			continue
 		}
 		name := strings.TrimSpace(strings.TrimSpace(transaction.Payee) + " " + strings.TrimSpace(transaction.Narration))
 		for postingIndex, posting := range transaction.Postings {
-			if posting.Units == nil || posting.Units.Currency != currency || posting.Units.Number.Rat == nil || posting.Units.Number.Rat.Sign() <= 0 || !strings.HasPrefix(posting.Account, "Expenses:") {
+			if !isExpenseOccurrence(posting, currency) {
 				continue
 			}
-			account := ""
-			for _, counterpart := range transaction.Postings {
-				if counterpart.Units != nil && counterpart.Units.Currency == currency && counterpart.Units.Number.Rat != nil && counterpart.Units.Number.Rat.Sign() < 0 && (strings.HasPrefix(counterpart.Account, "Assets:") || strings.HasPrefix(counterpart.Account, "Liabilities:")) {
-					account = counterpart.Account
-					break
-				}
-			}
+			account := fundingAccount(transaction.Postings, currency)
 			if account == "" {
 				continue
 			}
@@ -161,6 +158,36 @@ func planningOccurrences(evaluation ledger.Evaluation, currency string) []planni
 		}
 	}
 	return occurrences
+}
+
+// entryTransaction returns the entry's directive as a transaction value. The
+// parser and the dialect compiler append *Transaction while other paths store
+// the value form, so occurrence scanning must accept both.
+func entryTransaction(entry ledger.EntryRecord) (ledger.Transaction, bool) {
+	if transaction, ok := entry.Directive.(ledger.Transaction); ok {
+		return transaction, true
+	}
+	if pointer, ok := entry.Directive.(*ledger.Transaction); ok && pointer != nil {
+		return *pointer, true
+	}
+	return ledger.Transaction{}, false
+}
+
+// isExpenseOccurrence reports whether a posting is a positive expense in the
+// planning currency (the outflow side of a recurring payment).
+func isExpenseOccurrence(posting ledger.Posting, currency string) bool {
+	return posting.Units != nil && posting.Units.Currency == currency && posting.Units.Number.Rat != nil && posting.Units.Number.Rat.Sign() > 0 && strings.HasPrefix(posting.Account, "Expenses:")
+}
+
+// fundingAccount returns the transaction's negative planning-currency posting
+// out of an asset or liability account — the source the expense was paid from.
+func fundingAccount(postings []ledger.Posting, currency string) string {
+	for _, counterpart := range postings {
+		if counterpart.Units != nil && counterpart.Units.Currency == currency && counterpart.Units.Number.Rat != nil && counterpart.Units.Number.Rat.Sign() < 0 && (strings.HasPrefix(counterpart.Account, "Assets:") || strings.HasPrefix(counterpart.Account, "Liabilities:")) {
+			return counterpart.Account
+		}
+	}
+	return ""
 }
 
 func planningOccurrencesResponse(values []planning.Occurrence) []planningOccurrenceView {

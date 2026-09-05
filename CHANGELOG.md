@@ -4,6 +4,20 @@ All notable changes to OrangeCount are documented in this file.
 
 ## [Unreleased]
 
+### Quality
+
+- Reduced the repository's worst cyclomatic complexity from 26 to 16
+  (planning profile/timeline/generate handlers, report dispatch, number
+  expression splitter), preserving behavior under the full test suite.
+- Raised statement coverage from 89.0% to 92.3% with new branch tests across
+  web handlers, planning, ledger parsing/evaluation, query errors, dialect
+  round trips, authoring writes, reports/charts, and the benchmark tools.
+- Fixed a merged planning bug: expense-occurrence scanning now accepts both
+  transaction entry forms, so the review page finds occurrences again.
+- Planning preview retention now evicts deterministically (oldest insertion)
+  with insertion-order tiebreaking, matching the quick-entry preview store's
+  contract.
+
 ### Added
 
 - Financial planning superset feature (merged from `feature/financial-planning`):

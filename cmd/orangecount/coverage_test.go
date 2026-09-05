@@ -7,11 +7,17 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
+
+	"orangecount/internal/diagnostic"
+	"orangecount/internal/logging"
+	"orangecount/internal/snapshot"
 )
 
 // The tests in this file exercise the CLI's dispatch, help, query, and serve
@@ -242,4 +248,52 @@ func TestParsePortOwnersRecords(t *testing.T) {
 	if len(blank) != 1 || blank[0].Command != "unknown process" {
 		t.Fatalf("blank=%+v", blank)
 	}
+}
+
+func TestRenderBagWritesDiagnosticLines(t *testing.T) {
+	var bag diagnostic.Bag
+	bag.Add(diagnostic.Diagnostic{Code: "E-TEST-ONE", Message: "first problem"})
+	bag.Add(diagnostic.Diagnostic{Code: "E-TEST-TWO", Message: "second problem"})
+	var out bytes.Buffer
+	renderBag(&out, &bag, "check")
+	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
+	if len(lines) != 2 || !strings.HasPrefix(lines[0], "orangecount check: E-TEST-ONE ") {
+		t.Fatalf("rendered=%q", out.String())
+	}
+	// An empty bag renders nothing at all.
+	out.Reset()
+	renderBag(&out, &diagnostic.Bag{}, "check")
+	if out.Len() != 0 {
+		t.Fatalf("empty bag rendered=%q", out.String())
+	}
+}
+
+func TestWatchLedgerReloadsChangedLedger(t *testing.T) {
+	entry := writeLedger(t, "2000-01-01 open Assets:Cash USD\n")
+	store := snapshot.NewStore(nil)
+	built := snapshot.Build(entry)
+	if built.Snapshot == nil {
+		t.Fatalf("build diagnostics=%+v", built.Diagnostics)
+	}
+	store.Publish(built.Snapshot, built.Diagnostics)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	var events bytes.Buffer
+	logger := logging.New(&events, logging.Options{})
+	watchLedger(ctx, store, entry, 5*time.Millisecond, time.Millisecond, logger)
+	// Let the first patrol tick seed the old signature before touching the
+	// file, otherwise the change lands inside the seeding read.
+	time.Sleep(100 * time.Millisecond)
+	// Touch the file (size change) so the stat-only patrol sees a difference.
+	if err := os.WriteFile(entry, []byte("2000-01-01 open Assets:Cash USD\n2000-01-01 open Expenses:Food USD\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) {
+		if strings.Contains(events.String(), "reload") {
+			return
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	t.Fatalf("no reload event observed: %q", events.String())
 }

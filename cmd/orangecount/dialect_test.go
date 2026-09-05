@@ -11,6 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"orangecount/internal/ledger"
 )
 
 const dialectLedger = `2000-01-01 open Assets:WeChat USD
@@ -95,4 +97,43 @@ func readFileText(t *testing.T, path string) string {
 		t.Fatal(err)
 	}
 	return string(data)
+}
+
+func TestExportMultiFileLedgerWritesDirectoryTree(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	included := filepath.Join(dir, "2026", "jan.bean")
+	if err := os.MkdirAll(filepath.Dir(included), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	main := "include \"2026/jan.bean\"\n2000-01-01 open Assets:Cash USD\n"
+	if err := os.WriteFile(entry, []byte(main), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(included, []byte("2000-01-01 open Equity:Opening USD\n2000-01-02 5 USD @Cash -> @Equity:Opening \"工资\"\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	var out bytes.Buffer
+	outputDir := filepath.Join(dir, "exported")
+	if code := runExport([]string{"-out", outputDir, entry}, &out, &out); code != 0 {
+		t.Fatalf("multi-file export failed: %s", out.String())
+	}
+	for _, name := range []string{"main.bean", filepath.Join("2026", "jan.bean")} {
+		if _, err := os.Stat(filepath.Join(outputDir, name)); err != nil {
+			t.Fatalf("missing %s: %v", name, err)
+		}
+	}
+}
+
+func TestDialectDirectiveKindIsPreserved(t *testing.T) {
+	file, bag := ledger.ParseText("d.bean", []byte("2026-08-12 28 USD @WeChat -> @Food : 工作午餐\n"))
+	if bag.HasErrors() {
+		t.Fatalf("bag=%+v", bag.All())
+	}
+	if len(file.Directives) != 1 {
+		t.Fatalf("directives=%d", len(file.Directives))
+	}
+	if directive, ok := file.Directives[0].(ledger.Directive); !ok || directive.Kind() != ledger.KindDialect {
+		t.Fatalf("kind=%+v", file.Directives[0])
+	}
 }

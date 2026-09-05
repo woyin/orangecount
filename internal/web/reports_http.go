@@ -109,73 +109,108 @@ func (s *Server) buildReport(r *http.Request, current *snapshot.Snapshot, name s
 
 // reportKnown reports whether name maps to a report this server serves.
 func reportKnown(name string) bool {
-	switch strings.ToLower(name) {
-	case "accounts", "account", "journal", "trial-balance", "trial_balance", "trialbalance",
-		"balance-sheet", "balance_sheet", "balancesheet", "income-statement", "income_statement", "incomestatement",
-		"holdings", "pivot",
-		"prices", "price", "commodities", "commodity", "events", "event",
-		"documents", "document", "statistics", "statistic", "stats", "errors", "error":
-		return true
-	default:
-		return false
-	}
+	_, ok := lookupReportRoute(name)
+	return ok
 }
 
-// reportForRequest computes the unfiltered result and chart route for one
-// report name. A nil result with empty columns and nil error means the name
-// is unknown to the caller only when reportKnown disagrees.
-// reportForRequest dispatches to the named report builder, applying the
-// request's filter parameters (date ranges, accounts, interval).
-func reportForRequest(r *http.Request, current *snapshot.Snapshot, name string) (query.Result, string, error) {
-	evaluation := current.Evaluation()
-	switch strings.ToLower(name) {
-	case "accounts", "account":
+// reportRoute binds one report name to its builder and optional chart route.
+// The builder receives the raw request (for its filter parameters), the
+// evaluation, and the snapshot (for graph-backed reports).
+type reportRoute struct {
+	aliases []string
+	chart   string
+	build   func(*http.Request, ledger.Evaluation, *snapshot.Snapshot) (query.Result, string, error)
+}
+
+// reportRoutes is the single name table behind both reportKnown and
+// reportForRequest, so the served set and the alias spellings cannot drift.
+var reportRoutes = []reportRoute{
+	{aliases: []string{"accounts", "account"}, chart: "accounts", build: func(r *http.Request, evaluation ledger.Evaluation, _ *snapshot.Snapshot) (query.Result, string, error) {
 		return accountReport(r, evaluation)
-	case "journal":
+	}},
+	{aliases: []string{"journal"}, build: func(r *http.Request, evaluation ledger.Evaluation, _ *snapshot.Snapshot) (query.Result, string, error) {
 		from, to, err := journalDateRange(r)
 		if err != nil {
 			return query.Result{}, "", err
 		}
 		return report.JournalBetween(evaluation, from, to), "", nil
-	case "trial-balance", "trial_balance", "trialbalance":
-		// The web report needs explicit ancestors for Fava-style hierarchy
-		// rendering. Keep report.TrialBalance flat for query-compatible
-		// consumers and use its tree variant only at this presentation boundary.
+	}},
+	// The web trial-balance report needs explicit ancestors for Fava-style
+	// hierarchy rendering. Keep report.TrialBalance flat for query-compatible
+	// consumers and use its tree variant only at this presentation boundary.
+	{aliases: []string{"trial-balance", "trial_balance", "trialbalance"}, chart: "trial-balance", build: func(_ *http.Request, evaluation ledger.Evaluation, _ *snapshot.Snapshot) (query.Result, string, error) {
 		return report.TrialBalanceTree(evaluation), "trial-balance", nil
-	case "balance-sheet", "balance_sheet", "balancesheet":
+	}},
+	{aliases: []string{"balance-sheet", "balance_sheet", "balancesheet"}, chart: "balance-sheet", build: func(_ *http.Request, evaluation ledger.Evaluation, _ *snapshot.Snapshot) (query.Result, string, error) {
 		return report.BalanceSheet(evaluation), "balance-sheet", nil
-	case "income-statement", "income_statement", "incomestatement":
+	}},
+	{aliases: []string{"income-statement", "income_statement", "incomestatement"}, chart: "income-statement", build: func(_ *http.Request, evaluation ledger.Evaluation, _ *snapshot.Snapshot) (query.Result, string, error) {
 		return report.IncomeStatement(evaluation), "income-statement", nil
-	case "holdings":
+	}},
+	{aliases: []string{"holdings"}, build: func(r *http.Request, evaluation ledger.Evaluation, _ *snapshot.Snapshot) (query.Result, string, error) {
 		return holdingsReport(r, evaluation)
-	case "pivot":
-		filters, err := globalReportFilters(r)
-		if err != nil {
-			return query.Result{}, "", err
-		}
-		spec := report.PivotSpec{
-			Rows:    r.URL.Query().Get("rows"),
-			Columns: r.URL.Query().Get("columns"),
-			Values:  r.URL.Query().Get("values"),
-			Account: r.URL.Query().Get("account"),
-			Filters: filters,
-		}
-		return report.PivotTable(evaluation, spec), "", nil
-	case "prices", "price":
+	}},
+	{aliases: []string{"pivot"}, build: reportPivot},
+	{aliases: []string{"prices", "price"}, build: func(_ *http.Request, evaluation ledger.Evaluation, _ *snapshot.Snapshot) (query.Result, string, error) {
 		return report.Prices(evaluation), "", nil
-	case "commodities", "commodity":
+	}},
+	{aliases: []string{"commodities", "commodity"}, build: func(_ *http.Request, evaluation ledger.Evaluation, _ *snapshot.Snapshot) (query.Result, string, error) {
 		return report.Commodities(evaluation), "", nil
-	case "events", "event":
+	}},
+	{aliases: []string{"events", "event"}, build: func(_ *http.Request, evaluation ledger.Evaluation, _ *snapshot.Snapshot) (query.Result, string, error) {
 		return report.Events(evaluation), "", nil
-	case "documents", "document":
+	}},
+	{aliases: []string{"documents", "document"}, build: func(_ *http.Request, evaluation ledger.Evaluation, _ *snapshot.Snapshot) (query.Result, string, error) {
 		return report.Documents(evaluation), "", nil
-	case "statistics", "statistic", "stats":
+	}},
+	{aliases: []string{"statistics", "statistic", "stats"}, build: func(_ *http.Request, evaluation ledger.Evaluation, _ *snapshot.Snapshot) (query.Result, string, error) {
 		return report.Statistics(evaluation), "", nil
-	case "errors", "error":
+	}},
+	{aliases: []string{"errors", "error"}, build: func(_ *http.Request, evaluation ledger.Evaluation, current *snapshot.Snapshot) (query.Result, string, error) {
 		return report.ErrorsWithGraph(evaluation, current.Graph()), "", nil
-	default:
+	}},
+}
+
+// lookupReportRoute resolves a request's report name (any alias, any case) to
+// its route.
+func lookupReportRoute(name string) (reportRoute, bool) {
+	requested := strings.ToLower(name)
+	for _, route := range reportRoutes {
+		for _, alias := range route.aliases {
+			if alias == requested {
+				return route, true
+			}
+		}
+	}
+	return reportRoute{}, false
+}
+
+// reportForRequest computes the unfiltered result and chart route for one
+// report name. A nil result with empty columns and nil error means the name
+// was unknown.
+func reportForRequest(r *http.Request, current *snapshot.Snapshot, name string) (query.Result, string, error) {
+	route, ok := lookupReportRoute(name)
+	if !ok {
 		return query.Result{}, "", nil
 	}
+	return route.build(r, current.Evaluation(), current)
+}
+
+// reportPivot builds the Excel-style cross-tab from the request's row,
+// column, value, and filter parameters.
+func reportPivot(r *http.Request, evaluation ledger.Evaluation, _ *snapshot.Snapshot) (query.Result, string, error) {
+	filters, err := globalReportFilters(r)
+	if err != nil {
+		return query.Result{}, "", err
+	}
+	spec := report.PivotSpec{
+		Rows:    r.URL.Query().Get("rows"),
+		Columns: r.URL.Query().Get("columns"),
+		Values:  r.URL.Query().Get("values"),
+		Account: r.URL.Query().Get("account"),
+		Filters: filters,
+	}
+	return report.PivotTable(evaluation, spec), "", nil
 }
 
 // accountReport computes the accounts result. Fava's account page switches

@@ -54,35 +54,14 @@ func EffectiveProfile(evaluation *ledger.Evaluation) Profile {
 	if evaluation == nil {
 		return result
 	}
-	var profileCandidates []ledger.Custom
-	plansByID := map[string][]planRevision{}
-	for _, entry := range evaluation.Entries {
-		custom, ok := entry.Directive.(ledger.Custom)
-		if !ok {
-			continue
-		}
-		switch custom.Type {
-		case profileCustomType:
-			profileCandidates = append(profileCandidates, custom)
-		case planCustomType:
-			revision, problem, ok := parsePlanCustom(custom)
-			if problem != nil {
-				result.Problems = append(result.Problems, *problem)
-			}
-			if ok {
-				plansByID[revision.plan.ID] = append(plansByID[revision.plan.ID], revision)
-			}
-		default:
-			if strings.HasPrefix(custom.Type, "orangecount.planning-profile.") || strings.HasPrefix(custom.Type, "orangecount.planned-flow.") {
-				result.Problems = append(result.Problems, Problem{Code: "W-PLANNING-SCHEMA-UNSUPPORTED", Message: fmt.Sprintf("unsupported planning schema %q; directive ignored", custom.Type), Source: custom.Type})
-			}
-		}
-	}
-	if len(profileCandidates) == 0 {
+	profileCandidates, plansByID, collectionProblems := collectPlanningDirectives(evaluation.Entries)
+	result.Problems = append(result.Problems, collectionProblems...)
+	switch {
+	case len(profileCandidates) == 0:
 		result.Problems = append(result.Problems, Problem{Code: "W-PLANNING-PROFILE-MISSING", Message: "no planning profile is configured", Source: profileCustomType})
-	} else if len(profileCandidates) > 1 {
+	case len(profileCandidates) > 1:
 		result.Problems = append(result.Problems, Problem{Code: "W-PLANNING-PROFILE-AMBIGUOUS", Message: "multiple planning profiles are configured; planning is disabled", Source: profileCustomType})
-	} else {
+	default:
 		profile, problems := parseProfileCustom(profileCandidates[0])
 		result.ID, result.Currency, result.Timezone = profile.ID, profile.Currency, profile.Timezone
 		result.MinimumReserve, result.SpendableAccounts, result.ShortTermDebtAccounts, result.RecordedThrough = profile.MinimumReserve, profile.SpendableAccounts, profile.ShortTermDebtAccounts, profile.RecordedThrough
@@ -104,6 +83,38 @@ func EffectiveProfile(evaluation *ledger.Evaluation) Profile {
 		return compareDate(result.Plans[i].Date, result.Plans[j].Date) < 0
 	})
 	return result
+}
+
+// collectPlanningDirectives partitions planning-relevant custom directives:
+// the single profile candidate, plan revisions grouped by plan ID, and the
+// problems raised by unsupported planning schema versions.
+func collectPlanningDirectives(entries []ledger.EntryRecord) ([]ledger.Custom, map[string][]planRevision, []Problem) {
+	var profileCandidates []ledger.Custom
+	var problems []Problem
+	plansByID := map[string][]planRevision{}
+	for _, entry := range entries {
+		custom, ok := entry.Directive.(ledger.Custom)
+		if !ok {
+			continue
+		}
+		switch custom.Type {
+		case profileCustomType:
+			profileCandidates = append(profileCandidates, custom)
+		case planCustomType:
+			revision, problem, ok := parsePlanCustom(custom)
+			if problem != nil {
+				problems = append(problems, *problem)
+			}
+			if ok {
+				plansByID[revision.plan.ID] = append(plansByID[revision.plan.ID], revision)
+			}
+		default:
+			if strings.HasPrefix(custom.Type, "orangecount.planning-profile.") || strings.HasPrefix(custom.Type, "orangecount.planned-flow.") {
+				problems = append(problems, Problem{Code: "W-PLANNING-SCHEMA-UNSUPPORTED", Message: fmt.Sprintf("unsupported planning schema %q; directive ignored", custom.Type), Source: custom.Type})
+			}
+		}
+	}
+	return profileCandidates, plansByID, problems
 }
 
 // BuildInput resolves the effective profile's selected ledger accounts into a
@@ -157,49 +168,68 @@ type profileData struct {
 
 func parseProfileCustom(custom ledger.Custom) (profileData, []Problem) {
 	var profile profileData
-	var problems []Problem
-	var reserveCurrency string
 	if len(custom.Values) != 1 || custom.Values[0].Kind != ledger.ValueString || strings.TrimSpace(custom.Values[0].String) == "" {
 		return profile, []Problem{{Code: "W-PLANNING-PROFILE-ID", Message: "planning profile requires one non-empty string ID", Source: custom.Type}}
 	}
 	profile.ID = strings.TrimSpace(custom.Values[0].String)
+	reserveCurrency := ""
+	var problems []Problem
 	for _, meta := range custom.Meta {
-		switch meta.Key {
-		case "currency":
-			profile.Currency = stringValue(meta.Value)
-		case "timezone":
-			profile.Timezone = stringValue(meta.Value)
-		case "minimum_reserve":
-			amount, ok := amountValue(meta.Value)
-			if !ok || amount.Currency == "" || amount.Number.Raw == "" {
-				problems = append(problems, problem("W-PLANNING-RESERVE", "minimum_reserve must be an amount", custom))
-				continue
-			}
-			profile.MinimumReserve = ledger.DecimalFromNumber(amount.Number)
-			reserveCurrency = amount.Currency
-			if profile.MinimumReserve.Sign() < 0 {
-				problems = append(problems, problem("W-PLANNING-RESERVE", "minimum_reserve cannot be negative", custom))
-			}
-		case "spendable_account":
-			if account := accountValue(meta.Value); account != "" {
-				profile.SpendableAccounts = append(profile.SpendableAccounts, account)
-			} else {
-				problems = append(problems, problem("W-PLANNING-SPENDABLE-ACCOUNT", "spendable_account must be an account", custom))
-			}
-		case "short_term_debt_account":
-			if account := accountValue(meta.Value); account != "" {
-				profile.ShortTermDebtAccounts = append(profile.ShortTermDebtAccounts, account)
-			} else {
-				problems = append(problems, problem("W-PLANNING-DEBT-ACCOUNT", "short_term_debt_account must be an account", custom))
-			}
-		case "recorded_through":
-			if meta.Value.Kind == ledger.ValueDate && meta.Value.Date.Valid() {
-				profile.RecordedThrough = meta.Value.Date
-			} else {
-				problems = append(problems, problem("W-PLANNING-RECORDED-THROUGH", "recorded_through must be a date", custom))
-			}
+		problems = append(problems, applyProfileMeta(&profile, meta, custom, &reserveCurrency)...)
+	}
+	return profile, append(problems, profileRequiredFieldProblems(profile, reserveCurrency, custom)...)
+}
+
+// applyProfileMeta applies one profile metadata key, appending configuration
+// problems. The reserve currency is returned through the out-parameter so the
+// currency-match check can compare it after the currency key is also known.
+func applyProfileMeta(profile *profileData, meta ledger.Metadata, custom ledger.Custom, reserveCurrency *string) []Problem {
+	switch meta.Key {
+	case "currency":
+		profile.Currency = stringValue(meta.Value)
+	case "timezone":
+		profile.Timezone = stringValue(meta.Value)
+	case "minimum_reserve":
+		return applyMinimumReserve(profile, meta, custom, reserveCurrency)
+	case "spendable_account":
+		if account := accountValue(meta.Value); account != "" {
+			profile.SpendableAccounts = append(profile.SpendableAccounts, account)
+		} else {
+			return []Problem{problem("W-PLANNING-SPENDABLE-ACCOUNT", "spendable_account must be an account", custom)}
+		}
+	case "short_term_debt_account":
+		if account := accountValue(meta.Value); account != "" {
+			profile.ShortTermDebtAccounts = append(profile.ShortTermDebtAccounts, account)
+		} else {
+			return []Problem{problem("W-PLANNING-DEBT-ACCOUNT", "short_term_debt_account must be an account", custom)}
+		}
+	case "recorded_through":
+		if meta.Value.Kind == ledger.ValueDate && meta.Value.Date.Valid() {
+			profile.RecordedThrough = meta.Value.Date
+		} else {
+			return []Problem{problem("W-PLANNING-RECORDED-THROUGH", "recorded_through must be a date", custom)}
 		}
 	}
+	return nil
+}
+
+func applyMinimumReserve(profile *profileData, meta ledger.Metadata, custom ledger.Custom, reserveCurrency *string) []Problem {
+	amount, ok := amountValue(meta.Value)
+	if !ok || amount.Currency == "" || amount.Number.Raw == "" {
+		return []Problem{problem("W-PLANNING-RESERVE", "minimum_reserve must be an amount", custom)}
+	}
+	profile.MinimumReserve = ledger.DecimalFromNumber(amount.Number)
+	*reserveCurrency = amount.Currency
+	if profile.MinimumReserve.Sign() < 0 {
+		return []Problem{problem("W-PLANNING-RESERVE", "minimum_reserve cannot be negative", custom)}
+	}
+	return nil
+}
+
+// profileRequiredFieldProblems validates the cross-field requirements after
+// every metadata key has been applied.
+func profileRequiredFieldProblems(profile profileData, reserveCurrency string, custom ledger.Custom) []Problem {
+	var problems []Problem
 	if profile.Currency == "" {
 		problems = append(problems, problem("W-PLANNING-CURRENCY", "planning profile requires currency", custom))
 	} else if reserveCurrency != "" && reserveCurrency != profile.Currency {
@@ -214,7 +244,7 @@ func parseProfileCustom(custom ledger.Custom) (profileData, []Problem) {
 	if len(profile.SpendableAccounts) == 0 {
 		problems = append(problems, problem("W-PLANNING-SPENDABLE-ACCOUNT", "planning profile requires at least one spendable account", custom))
 	}
-	return profile, problems
+	return problems
 }
 
 type planRevision struct {
@@ -228,29 +258,38 @@ func parsePlanCustom(custom ledger.Custom) (planRevision, *Problem, bool) {
 		return planRevision{}, ptr(problem("W-PLANNING-PLAN-ID", "planned flow requires one non-empty string ID", custom)), false
 	}
 	revision := planRevision{plan: Plan{ID: strings.TrimSpace(custom.Values[0].String)}, revision: 1, status: "active"}
+	if problem := applyPlanMeta(&revision, custom); problem != nil {
+		return planRevision{}, problem, false
+	}
+	revision.plan.Revision = revision.revision
+	return finalizePlanRevision(revision, custom)
+}
+
+// applyPlanMeta applies one plan metadata key, stopping at the first invalid
+// value because a malformed revision never contributes to the plan.
+func applyPlanMeta(revision *planRevision, custom ledger.Custom) *Problem {
 	for _, meta := range custom.Meta {
 		switch meta.Key {
 		case "revision":
 			if meta.Value.Kind != ledger.ValueNumber {
-				return planRevision{}, ptr(problem("W-PLANNING-PLAN-REVISION", "revision must be a positive integer", custom)), false
+				return ptr(problem("W-PLANNING-PLAN-REVISION", "revision must be a positive integer", custom))
 			}
 			value, err := strconv.Atoi(meta.Value.Number.Raw)
 			if err != nil || value < 1 {
-				return planRevision{}, ptr(problem("W-PLANNING-PLAN-REVISION", "revision must be a positive integer", custom)), false
+				return ptr(problem("W-PLANNING-PLAN-REVISION", "revision must be a positive integer", custom))
 			}
 			revision.revision = value
 		case "name":
 			revision.plan.Name = stringValue(meta.Value)
 		case "expected_date":
-			if meta.Value.Kind == ledger.ValueDate && meta.Value.Date.Valid() {
-				revision.plan.Date = meta.Value.Date
-			} else {
-				return planRevision{}, ptr(problem("W-PLANNING-PLAN-DATE", "expected_date must be a date", custom)), false
+			if meta.Value.Kind != ledger.ValueDate || !meta.Value.Date.Valid() {
+				return ptr(problem("W-PLANNING-PLAN-DATE", "expected_date must be a date", custom))
 			}
+			revision.plan.Date = meta.Value.Date
 		case "amount":
 			amount, ok := amountValue(meta.Value)
 			if !ok {
-				return planRevision{}, ptr(problem("W-PLANNING-PLAN-AMOUNT", "amount must be an amount", custom)), false
+				return ptr(problem("W-PLANNING-PLAN-AMOUNT", "amount must be an amount", custom))
 			}
 			revision.plan.Amount = ledger.DecimalFromNumber(amount.Number)
 			revision.plan.Currency = amount.Currency
@@ -264,7 +303,12 @@ func parsePlanCustom(custom ledger.Custom) (planRevision, *Problem, bool) {
 			revision.status = stringValue(meta.Value)
 		}
 	}
-	revision.plan.Revision = revision.revision
+	return nil
+}
+
+// finalizePlanRevision validates the assembled revision. Cancelled and
+// fulfilled revisions are terminal states that skip the active-plan checks.
+func finalizePlanRevision(revision planRevision, custom ledger.Custom) (planRevision, *Problem, bool) {
 	if revision.status == "cancelled" || revision.status == "fulfilled" {
 		return revision, nil, true
 	}

@@ -108,7 +108,6 @@ func calculate(input Input, includeFutureInflows bool) (Result, error) {
 	if err := validateInput(input); err != nil {
 		return Result{}, err
 	}
-
 	funds, err := sumBalances("spendable funds", input.SpendableFunds, true)
 	if err != nil {
 		return Result{}, err
@@ -117,17 +116,36 @@ func calculate(input Input, includeFutureInflows bool) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
+	byDate, err := bucketPlansByDate(input)
+	if err != nil {
+		return Result{}, err
+	}
+	dates := timelineDates(input.Today, byDate)
+	base := funds.Sub(debts).Sub(input.MinimumReserve)
+	result := Result{
+		Currency:             strings.TrimSpace(input.Currency),
+		CurrentFunds:         funds,
+		CurrentShortTermDebt: debts,
+		MinimumReserve:       input.MinimumReserve,
+		CurrentPlanning:      compareDate(input.RecordedThrough, input.Today) == 0,
+		Timeline:             buildTimeline(byDate, dates, base, includeFutureInflows),
+	}
+	return concludeTimeline(result), nil
+}
 
+// bucketPlansByDate groups each plan under its due date. An overdue outflow
+// continues to reserve funds until it is explicitly resolved (fulfilled,
+// rescheduled, or cancelled), so it is treated as due today and cannot
+// overstate headroom; overdue inflows are dropped and beyond-horizon plans
+// fall outside the calculation entirely.
+func bucketPlansByDate(input Input) (map[string][]Plan, error) {
 	byDate := map[string][]Plan{}
 	for _, plan := range input.Plans {
 		if err := validatePlan(plan); err != nil {
-			return Result{}, err
+			return nil, err
 		}
 		date := plan.Date
 		if compareDate(date, input.Today) < 0 {
-			// An overdue outflow continues to reserve funds until it is
-			// explicitly resolved (fulfilled, rescheduled, or cancelled).
-			// Treat it as due today so it cannot overstate headroom.
 			if plan.Direction != Outflow {
 				continue
 			}
@@ -139,8 +157,13 @@ func calculate(input Input, includeFutureInflows bool) (Result, error) {
 		plan.Date = date
 		byDate[date.Raw] = append(byDate[date.Raw], plan)
 	}
+	return byDate, nil
+}
 
-	datesByRaw := map[string]ledger.Date{input.Today.Raw: input.Today}
+// timelineDates returns every distinct timeline step, sorted ascending: today
+// plus one step per dated plan bucket.
+func timelineDates(today ledger.Date, byDate map[string][]Plan) []ledger.Date {
+	datesByRaw := map[string]ledger.Date{today.Raw: today}
 	for _, plans := range byDate {
 		datesByRaw[plans[0].Date.Raw] = plans[0].Date
 	}
@@ -149,20 +172,17 @@ func calculate(input Input, includeFutureInflows bool) (Result, error) {
 		dates = append(dates, date)
 	}
 	sort.Slice(dates, func(i, j int) bool { return compareDate(dates[i], dates[j]) < 0 })
+	return dates
+}
 
+// buildTimeline accumulates the running outflow totals per dated step.
+// Outflows always precede inflows conceptually. Primary headroom ignores
+// inflows entirely, but keeping their sum makes the conservative choice
+// visible to callers and future scenario evaluation.
+func buildTimeline(byDate map[string][]Plan, dates []ledger.Date, base ledger.Decimal, includeFutureInflows bool) []Point {
 	committed, adjustable, ignoredInflows := ledger.Zero(), ledger.Zero(), ledger.Zero()
-	base := funds.Sub(debts).Sub(input.MinimumReserve)
-	result := Result{
-		Currency:             strings.TrimSpace(input.Currency),
-		CurrentFunds:         funds,
-		CurrentShortTermDebt: debts,
-		MinimumReserve:       input.MinimumReserve,
-		CurrentPlanning:      compareDate(input.RecordedThrough, input.Today) == 0,
-	}
+	timeline := make([]Point, 0, len(dates))
 	for _, date := range dates {
-		// Outflows always precede inflows conceptually. Primary headroom ignores
-		// inflows entirely, but keeping their sum makes the conservative choice
-		// visible to callers and future scenario evaluation.
 		for _, plan := range byDate[date.Raw] {
 			switch plan.Direction {
 			case Outflow:
@@ -185,9 +205,14 @@ func calculate(input Input, includeFutureInflows bool) (Result, error) {
 		if includeFutureInflows {
 			point.Headroom = point.Headroom.Add(ignoredInflows)
 		}
-		result.Timeline = append(result.Timeline, point)
+		timeline = append(timeline, point)
 	}
+	return timeline
+}
 
+// concludeTimeline reads the primary result off the timeline: the lowest
+// headroom point decides between safe-to-spend and a funding shortfall.
+func concludeTimeline(result Result) Result {
 	result.LiquidityLowPoint = result.Timeline[0]
 	for _, point := range result.Timeline[1:] {
 		if point.Headroom.Cmp(result.LiquidityLowPoint.Headroom) < 0 {
@@ -201,7 +226,7 @@ func calculate(input Input, includeFutureInflows bool) (Result, error) {
 		result.PrimarySafeToSpend = result.LiquidityLowPoint.Headroom
 		result.FundingShortfall = ledger.Zero()
 	}
-	return result, nil
+	return result
 }
 
 func validateInput(input Input) error {

@@ -106,3 +106,25 @@ func TestRedactMessageNormalizesWhitespaceAndSensitiveFragments(t *testing.T) {
 		t.Fatalf("redacted=%q", got)
 	}
 }
+
+func TestReleasedErrorCodesAreSortedErrorPrefixed(t *testing.T) {
+	codes := ReleasedErrorCodes()
+	if len(codes) == 0 {
+		t.Fatal("catalogue is empty")
+	}
+	for index, code := range codes {
+		if !strings.HasPrefix(code, "E-") {
+			t.Fatalf("code %q is not error-severity", code)
+		}
+		if index > 0 && codes[index-1] > code {
+			t.Fatalf("codes not sorted: %q > %q", codes[index-1], code)
+		}
+	}
+	// The slice is a copy: callers cannot mutate the catalogue.
+	if len(codes) > 0 {
+		codes[0] = "MUTATED"
+		if ReleasedErrorCodes()[0] == "MUTATED" {
+			t.Fatal("ReleasedErrorCodes must return a copy")
+		}
+	}
+}

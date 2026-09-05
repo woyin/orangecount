@@ -31,7 +31,13 @@ func main() {
 	outPath := flag.String("out", "", "keep the generated ledger at this path instead of a temp dir")
 	flag.Parse()
 
-	entry, cleanup, err := prepareLedger(*ledgerPath, *transactions, *outPath)
+	run(*ledgerPath, *transactions, *skipCompare, *pythonBin, *outPath)
+}
+
+// run executes one benchmark session; main delegates here so the flow stays
+// testable without a subprocess harness.
+func run(ledgerPath string, transactions int, skipCompare bool, pythonBin, outPath string) {
+	entry, cleanup, err := prepareLedger(ledgerPath, transactions, outPath)
 	if err != nil {
 		fatal(err)
 	}
@@ -41,16 +47,16 @@ func main() {
 	fmt.Printf("OrangeCount  %s  cold=%s  warm=%s\n",
 		runtime.Version(), ocCold.Round(time.Millisecond), ocWarm.Round(time.Millisecond))
 
-	if *skipCompare {
+	if skipCompare {
 		fmt.Println("Beancount    skipped (-skip-compare)")
 		return
 	}
-	version, ok := detectBeancount(*pythonBin)
+	version, ok := detectBeancount(pythonBin)
 	if !ok {
-		fmt.Printf("Beancount    skipped (no importable beancount for %s; try -python)\n", *pythonBin)
+		fmt.Printf("Beancount    skipped (no importable beancount for %s; try -python)\n", pythonBin)
 		return
 	}
-	bcCold, bcWarm, err := runBeancount(*pythonBin, entry)
+	bcCold, bcWarm, err := runBeancount(pythonBin, entry)
 	if err != nil {
 		fatal(err)
 	}
