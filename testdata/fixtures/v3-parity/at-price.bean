@@ -1,0 +1,14 @@
+option "operating_currency" "USD"
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Assets:Bank
+2000-01-01 open Equity:Opening EUR
+2000-01-02 * "fx" "postings with price annotations"
+  Assets:Cash 100 USD @ 0.9 EUR
+  Equity:Opening -90 EUR
+2000-01-03 * "fx-total" "total price spelling"
+  Assets:Bank 200 USD @@ 180 EUR
+  Equity:Opening -180 EUR
+2000-01-04 * "fx-half" "fractional price"
+  Assets:Cash 10 USD @ 0.5 EUR
+  Equity:Opening -5 EUR
+2000-01-05 balance Assets:Cash 110 USD

@@ -1,0 +1,8 @@
+option "operating_currency" "USD"
+include "child/child.bean"
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Equity:Opening USD
+2000-01-02 * "parent" "parent txn"
+  Assets:Cash 11 USD
+  Equity:Opening -11 USD
+2000-01-03 balance Assets:Cash 33 USD

@@ -1,0 +1,76 @@
+{
+ "balances": {
+  "Assets:Bank": {
+   "currencies": {
+    "USD": "200"
+   },
+   "lots": []
+  },
+  "Assets:Cash": {
+   "currencies": {
+    "USD": "110"
+   },
+   "lots": []
+  },
+  "Equity:Opening": {
+   "currencies": {
+    "EUR": "-275"
+   },
+   "lots": []
+  }
+ },
+ "entries": [
+  "{\"account\":\"Assets:Bank\",\"booking\":null,\"currencies\":[],\"date\":\"2000-01-01\",\"kind\":\"open\"}",
+  "{\"account\":\"Assets:Cash\",\"amount\":\"110 USD\",\"date\":\"2000-01-05\",\"kind\":\"balance\",\"tolerance\":null}",
+  "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\"}",
+  "{\"account\":\"Equity:Opening\",\"booking\":null,\"currencies\":[\"EUR\"],\"date\":\"2000-01-01\",\"kind\":\"open\"}",
+  "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"narration\":\"postings with price annotations\",\"payee\":\"fx\",\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"price\":\"0.9 EUR\",\"units\":\"100 USD\"},{\"account\":\"Equity:Opening\",\"cost\":null,\"price\":null,\"units\":\"-90 EUR\"}],\"tags\":[]}",
+  "{\"date\":\"2000-01-03\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"narration\":\"total price spelling\",\"payee\":\"fx-total\",\"postings\":[{\"account\":\"Assets:Bank\",\"cost\":null,\"price\":\"0.9 EUR\",\"units\":\"200 USD\"},{\"account\":\"Equity:Opening\",\"cost\":null,\"price\":null,\"units\":\"-180 EUR\"}],\"tags\":[]}",
+  "{\"date\":\"2000-01-04\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"narration\":\"fractional price\",\"payee\":\"fx-half\",\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"price\":\"0.5 EUR\",\"units\":\"10 USD\"},{\"account\":\"Equity:Opening\",\"cost\":null,\"price\":null,\"units\":\"-5 EUR\"}],\"tags\":[]}"
+ ],
+ "errors": [],
+ "fixture": "at-price.bean",
+ "oracle_engine": "beancount-python-3.2.3",
+ "queries": {
+  "account_totals": [
+   [
+    "Assets:Bank",
+    {
+     "currencies": {
+      "USD": "200"
+     },
+     "lots": []
+    }
+   ],
+   [
+    "Assets:Cash",
+    {
+     "currencies": {
+      "USD": "110"
+     },
+     "lots": []
+    }
+   ],
+   [
+    "Equity:Opening",
+    {
+     "currencies": {
+      "EUR": "-275"
+     },
+     "lots": []
+    }
+   ]
+  ],
+  "cash_entries": [
+   [
+    "2000-01-02",
+    "postings with price annotations"
+   ],
+   [
+    "2000-01-04",
+    "fractional price"
+   ]
+  ]
+ },
+ "valid": true
+}

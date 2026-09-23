@@ -406,7 +406,7 @@ func (p *parser) parseDirective(ln line, ts []token) {
 		p.parseDateDirective(keyword, date, ts[2:], ts[0].span)
 		return
 	}
-	if !isFlag(ts[1].text) && ts[1].kind != tokString && !strings.HasPrefix(ts[1].text, "#") && !strings.HasPrefix(ts[1].text, "^") {
+	if !isFlag(ts[1].text) && ts[1].text != "txn" && ts[1].kind != tokString && !strings.HasPrefix(ts[1].text, "#") && !strings.HasPrefix(ts[1].text, "^") {
 		p.add("E-PARSE-DIRECTIVE", diagnostic.Error, ts[1].span)
 		return
 	}
@@ -567,6 +567,7 @@ func (p *parser) parseCommodityDirective(base DirectiveBase, date Date, rest []t
 
 // parseBalanceDirective reads "account amount [~ tolerance]"; the optional
 // tolerance becomes a pointer so its absence stays distinguishable.
+// Beancount v3 also supports "account number ~ tolerance currency".
 func (p *parser) parseBalanceDirective(base DirectiveBase, date Date, rest []token) {
 	if len(rest) < 3 {
 		p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
@@ -579,12 +580,22 @@ func (p *parser) parseBalanceDirective(base DirectiveBase, date Date, rest []tok
 	}
 	d.Amount = amount
 	if next < len(rest) && rest[next].text == "~" && next+1 < len(rest) {
-		n, _, ok := parseNumberExpr(rest, next+1)
+		n, afterTol, ok := parseNumberExpr(rest, next+1)
 		if !ok {
 			p.add("E-PARSE-TOKEN", diagnostic.Error, rest[next+1].span)
 			return
 		}
 		d.Tolerance = &n
+		next = afterTol
+		if d.Amount.Currency == "" && next < len(rest) && isCurrencyToken(rest[next]) {
+			d.Amount.Currency = rest[next].text
+			d.Amount.At = p.file.Span(d.Amount.At.Start, rest[next].span.End)
+			next++
+		}
+	}
+	if d.Amount.Currency == "" {
+		p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
+		return
 	}
 	p.appendDirective(d)
 }
@@ -700,9 +711,14 @@ func (p *parser) parseTransaction(date Date, ts []token) {
 	base := p.base(ts)
 	tx := Transaction{DirectiveBase: base, Date: date}
 	idx := 1
-	if idx < len(ts) && isFlag(ts[idx].text) {
-		tx.Flag = ts[idx].text
-		idx++
+	if idx < len(ts) {
+		if ts[idx].text == "txn" {
+			tx.Flag = "*"
+			idx++
+		} else if isFlag(ts[idx].text) {
+			tx.Flag = ts[idx].text
+			idx++
+		}
 	}
 	var stringsFound []string
 	for ; idx < len(ts); idx++ {

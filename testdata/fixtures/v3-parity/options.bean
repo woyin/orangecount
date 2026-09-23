@@ -1,0 +1,11 @@
+option "title" "Sanitized Parity Ledger"
+option "operating_currency" "USD"
+option "operating_currency" "EUR"
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Assets:Bank EUR
+2000-01-01 open Equity:Opening
+2000-01-02 * "ops" "multi currency with elided balancing leg"
+  Assets:Cash 1 USD
+  Assets:Bank 2 EUR
+  Equity:Opening
+2000-01-03 balance Assets:Bank 2 EUR

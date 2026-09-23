@@ -13,11 +13,19 @@ vendor/
 .reference/
 .private/
 testdata/private/
+testdata/golden/**/differences*.json
 
 # Local editor and OS files
 .DS_Store
 .idea/
 .vscode/
+.zcode/
+
+# Secrets and local environment
+.env
+.env.*
+__pycache__/
+*.pyc
 *.swp
 
 # Pi coding agent runtime artifacts

@@ -1,0 +1,72 @@
+{
+ "balances": {
+  "Assets:Bank": {
+   "currencies": {
+    "EUR": "2"
+   },
+   "lots": []
+  },
+  "Assets:Cash": {
+   "currencies": {
+    "USD": "1"
+   },
+   "lots": []
+  },
+  "Equity:Opening": {
+   "currencies": {
+    "EUR": "-2",
+    "USD": "-1"
+   },
+   "lots": []
+  }
+ },
+ "entries": [
+  "{\"account\":\"Assets:Bank\",\"amount\":\"2 EUR\",\"date\":\"2000-01-03\",\"kind\":\"balance\",\"tolerance\":null}",
+  "{\"account\":\"Assets:Bank\",\"booking\":null,\"currencies\":[\"EUR\"],\"date\":\"2000-01-01\",\"kind\":\"open\"}",
+  "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\"}",
+  "{\"account\":\"Equity:Opening\",\"booking\":null,\"currencies\":[],\"date\":\"2000-01-01\",\"kind\":\"open\"}",
+  "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"narration\":\"multi currency with elided balancing leg\",\"payee\":\"ops\",\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"price\":null,\"units\":\"1 USD\"},{\"account\":\"Equity:Opening\",\"cost\":null,\"price\":null,\"units\":\"-1 USD\"},{\"account\":\"Assets:Bank\",\"cost\":null,\"price\":null,\"units\":\"2 EUR\"},{\"account\":\"Equity:Opening\",\"cost\":null,\"price\":null,\"units\":\"-2 EUR\"}],\"tags\":[]}"
+ ],
+ "errors": [],
+ "fixture": "options.bean",
+ "oracle_engine": "beancount-python-3.2.3",
+ "queries": {
+  "account_totals": [
+   [
+    "Assets:Bank",
+    {
+     "currencies": {
+      "EUR": "2"
+     },
+     "lots": []
+    }
+   ],
+   [
+    "Assets:Cash",
+    {
+     "currencies": {
+      "USD": "1"
+     },
+     "lots": []
+    }
+   ],
+   [
+    "Equity:Opening",
+    {
+     "currencies": {
+      "EUR": "-2",
+      "USD": "-1"
+     },
+     "lots": []
+    }
+   ]
+  ],
+  "cash_entries": [
+   [
+    "2000-01-02",
+    "multi currency with elided balancing leg"
+   ]
+  ]
+ },
+ "valid": true
+}

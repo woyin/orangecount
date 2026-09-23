@@ -1,0 +1,14 @@
+{
+ "balances": {},
+ "entries": [],
+ "errors": [
+  {
+   "line": 7,
+   "type": "BalanceError"
+  }
+ ],
+ "fixture": "balance-fail.bean",
+ "oracle_engine": "beancount-python-3.2.3",
+ "queries": {},
+ "valid": false
+}

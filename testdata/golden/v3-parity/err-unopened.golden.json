@@ -1,0 +1,18 @@
+{
+ "balances": {},
+ "entries": [],
+ "errors": [
+  {
+   "line": 1,
+   "type": "ValidationError"
+  },
+  {
+   "line": 1,
+   "type": "ValidationError"
+  }
+ ],
+ "fixture": "err-unopened.bean",
+ "oracle_engine": "beancount-python-3.2.3",
+ "queries": {},
+ "valid": false
+}

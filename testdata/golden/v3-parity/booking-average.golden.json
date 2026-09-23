@@ -1,0 +1,62 @@
+{
+ "balances": {
+  "Assets:Cash": {
+   "currencies": {
+    "USD": "-40"
+   },
+   "lots": []
+  },
+  "Assets:Shares": {
+   "currencies": {},
+   "lots": [
+    "10 SH {1 USD}",
+    "10 SH {3 USD}"
+   ]
+  }
+ },
+ "entries": [
+  "{\"account\":\"Assets:Cash\",\"amount\":\"-40 USD\",\"date\":\"2000-01-04\",\"kind\":\"balance\",\"tolerance\":null}",
+  "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\"}",
+  "{\"account\":\"Assets:Shares\",\"amount\":\"20 SH\",\"date\":\"2000-01-04\",\"kind\":\"balance\",\"tolerance\":null}",
+  "{\"account\":\"Assets:Shares\",\"booking\":null,\"currencies\":[\"SH\"],\"date\":\"2000-01-01\",\"kind\":\"open\"}",
+  "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"narration\":\"average booking\",\"payee\":\"buy\",\"postings\":[{\"account\":\"Assets:Shares\",\"cost\":\"1 USD\",\"price\":null,\"units\":\"10 SH\"},{\"account\":\"Assets:Cash\",\"cost\":null,\"price\":null,\"units\":\"-10 USD\"}],\"tags\":[]}",
+  "{\"date\":\"2000-01-03\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"narration\":\"more at different price\",\"payee\":\"add\",\"postings\":[{\"account\":\"Assets:Shares\",\"cost\":\"3 USD\",\"price\":null,\"units\":\"10 SH\"},{\"account\":\"Assets:Cash\",\"cost\":null,\"price\":null,\"units\":\"-30 USD\"}],\"tags\":[]}"
+ ],
+ "errors": [],
+ "fixture": "booking-average.bean",
+ "oracle_engine": "beancount-python-3.2.3",
+ "queries": {
+  "account_totals": [
+   [
+    "Assets:Cash",
+    {
+     "currencies": {
+      "USD": "-40"
+     },
+     "lots": []
+    }
+   ],
+   [
+    "Assets:Shares",
+    {
+     "currencies": {},
+     "lots": [
+      "10 SH {1 USD}",
+      "10 SH {3 USD}"
+     ]
+    }
+   ]
+  ],
+  "cash_entries": [
+   [
+    "2000-01-02",
+    "average booking"
+   ],
+   [
+    "2000-01-03",
+    "more at different price"
+   ]
+  ]
+ },
+ "valid": true
+}

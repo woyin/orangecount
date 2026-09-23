@@ -95,6 +95,50 @@ func Evaluate(graph *source.Graph, parsed map[source.FileID]*File, options EvalO
 	return evaluateOrder(graph, parsed, options, sourceOrder(graph, parsed))
 }
 
+type directiveItem struct {
+	file      *File
+	directive Directive
+	seq       int
+}
+
+func directiveSortOrder(d Directive) int {
+	switch d.(type) {
+	case Open, *Open:
+		return -2
+	case Balance, *Balance:
+		return -1
+	case Document, *Document:
+		return 1
+	case Close, *Close:
+		return 2
+	default:
+		return 0
+	}
+}
+
+func (e *evaluator) collectDirectives(fileID source.FileID, parsed map[source.FileID]*File, out *[]directiveItem) {
+	if e.visited[fileID] {
+		return
+	}
+	file := parsed[fileID]
+	if file == nil {
+		return
+	}
+	e.visited[fileID] = true
+	for _, directive := range file.Directives {
+		if include, ok := directive.(Include); ok && e.graph != nil {
+			for _, edge := range e.graph.Edges[fileID] {
+				if edge.Literal == include.Path {
+					e.collectDirectives(edge.To, parsed, out)
+					break
+				}
+			}
+			continue
+		}
+		*out = append(*out, directiveItem{file: file, directive: directive, seq: len(*out)})
+	}
+}
+
 func evaluateOrder(graph *source.Graph, parsed map[source.FileID]*File, options EvalOptions, order []source.FileID) *Evaluation {
 	e := &evaluator{
 		graph:    graph,
@@ -104,12 +148,38 @@ func evaluateOrder(graph *source.Graph, parsed map[source.FileID]*File, options 
 		pads:     make(map[string]Pad),
 		visited:  make(map[source.FileID]bool),
 	}
+	var items []directiveItem
 	if graph != nil && graph.Entry != 0 {
-		e.evaluateFile(graph.Entry, parsed)
+		e.collectDirectives(graph.Entry, parsed, &items)
 	} else {
 		for _, fileID := range order {
-			e.evaluateFile(fileID, parsed)
+			e.collectDirectives(fileID, parsed, &items)
 		}
+	}
+
+	sort.SliceStable(items, func(i, j int) bool {
+		d1, d2 := items[i].directive, items[j].directive
+		dt1, dt2 := directiveDate(d1), directiveDate(d2)
+		hasDate1, hasDate2 := dt1.Valid(), dt2.Valid()
+		if !hasDate1 || !hasDate2 {
+			if !hasDate1 && !hasDate2 {
+				return items[i].seq < items[j].seq
+			}
+			return !hasDate1
+		}
+		k1, k2 := dateKey(dt1), dateKey(dt2)
+		if k1 != k2 {
+			return k1 < k2
+		}
+		o1, o2 := directiveSortOrder(d1), directiveSortOrder(d2)
+		if o1 != o2 {
+			return o1 < o2
+		}
+		return items[i].seq < items[j].seq
+	})
+
+	for _, item := range items {
+		e.evaluateDirective(item.file, item.directive)
 	}
 	for account, pad := range e.pads {
 		e.add("W-EVAL-PAD-UNUSED", diagnostic.Warning, pad.Span(), e.pathFor(pad.Span()))
@@ -415,9 +485,44 @@ func (e *evaluator) transaction(tx *Transaction) {
 			e.add("E-EVAL-INFER", diagnostic.Error, posting.Span(), e.pathFor(posting.Span()))
 		}
 	} else if len(missing) == 1 {
-		if resolved, ok := e.inferElision(tx, missing[0], totals); ok {
-			known = append(known, resolved)
-			e.addContribution(totals, resolved.posting, resolved.amount, resolved.currency)
+		posting := tx.Postings[missing[0]]
+		var unbalanced []string
+		for _, p := range tx.Postings {
+			if p.Units != nil && p.Units.Currency != "" {
+				cur := p.Units.Currency
+				if tot, ok := totals[cur]; ok && tot.Rat().Sign() != 0 && !contains(unbalanced, cur) {
+					unbalanced = append(unbalanced, cur)
+				}
+			}
+		}
+		if len(unbalanced) > 1 && (posting.Units == nil || posting.Units.Currency == "") && posting.Cost == nil && posting.Price == nil {
+			var newPostings []Posting
+			known = nil
+			totals = make(map[string]Decimal)
+			for _, cur := range unbalanced {
+				for _, p := range tx.Postings {
+					if p.Units != nil && p.Units.Currency == cur {
+						newPostings = append(newPostings, p)
+						amt := DecimalFromNumber(p.Units.Number)
+						known = append(known, resolvedPosting{posting: p, amount: amt, currency: cur})
+						e.addContribution(totals, p, amt, cur)
+					}
+				}
+				tot := totals[cur]
+				inferred := tot.Neg()
+				balPosting := posting
+				u := Amount{Number: numberFromDecimal(inferred), Currency: cur}
+				balPosting.Units = &u
+				newPostings = append(newPostings, balPosting)
+				known = append(known, resolvedPosting{posting: balPosting, amount: inferred, currency: cur})
+				e.addContribution(totals, balPosting, inferred, cur)
+			}
+			tx.Postings = newPostings
+		} else {
+			if resolved, ok := e.inferElision(tx, missing[0], totals); ok {
+				known = append(known, resolved)
+				e.addContribution(totals, resolved.posting, resolved.amount, resolved.currency)
+			}
 		}
 	}
 	tolerance := e.options.DefaultTolerance
@@ -1134,6 +1239,37 @@ func (e *evaluator) applyPad(balance Balance, pad Pad, target *accountWork) {
 		balanceEvent{account: balance.Account, currency: currency, date: pad.Date, amount: difference, span: pad.Span()},
 		balanceEvent{account: pad.SourceAccount, currency: currency, date: pad.Date, amount: difference.Neg(), span: pad.Span()},
 	)
+	diffAmt := numberFromDecimal(difference)
+	negDiffAmt := numberFromDecimal(difference.Neg())
+	narration := fmt.Sprintf("(Padding inserted for Balance of %s %s for difference %s %s)",
+		balance.Amount.Number.Raw, currency, diffAmt.Raw, currency)
+	syntheticTx := &Transaction{
+		DirectiveBase: DirectiveBase{At: pad.Span()},
+		Date:          pad.Date,
+		Flag:          "P",
+		Narration:     narration,
+		Postings: []Posting{
+			{Account: balance.Account, Units: &Amount{Number: diffAmt, Currency: currency, At: pad.Span()}, At: pad.Span()},
+			{Account: pad.SourceAccount, Units: &Amount{Number: negDiffAmt, Currency: currency, At: pad.Span()}, At: pad.Span()},
+		},
+	}
+	syntheticRec := EntryRecord{
+		Span:      pad.Span(),
+		Directive: syntheticTx,
+		File:      e.pathFor(pad.Span()),
+		Date:      pad.Date,
+	}
+	inserted := false
+	for i, rec := range e.result.Entries {
+		if p, ok := rec.Directive.(Pad); ok && p.Account == pad.Account && p.SourceAccount == pad.SourceAccount && dateKey(p.Date) == dateKey(pad.Date) {
+			e.result.Entries = append(e.result.Entries[:i+1], append([]EntryRecord{syntheticRec}, e.result.Entries[i+1:]...)...)
+			inserted = true
+			break
+		}
+	}
+	if !inserted {
+		e.result.Entries = append(e.result.Entries, syntheticRec)
+	}
 }
 
 // finish closes out evaluation: each deferred balance assertion is replayed

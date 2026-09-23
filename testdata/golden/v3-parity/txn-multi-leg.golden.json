@@ -1,0 +1,88 @@
+{
+ "balances": {
+  "Assets:Bank": {
+   "currencies": {
+    "USD": "-30"
+   },
+   "lots": []
+  },
+  "Assets:Cash": {
+   "currencies": {
+    "USD": "10"
+   },
+   "lots": []
+  },
+  "Equity:Opening": {
+   "currencies": {
+    "USD": "-20"
+   },
+   "lots": []
+  },
+  "Expenses:Food": {
+   "currencies": {
+    "USD": "40"
+   },
+   "lots": []
+  }
+ },
+ "entries": [
+  "{\"account\":\"Assets:Bank\",\"amount\":\"-30 USD\",\"date\":\"2000-01-04\",\"kind\":\"balance\",\"tolerance\":null}",
+  "{\"account\":\"Assets:Bank\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\"}",
+  "{\"account\":\"Assets:Cash\",\"amount\":\"10 USD\",\"date\":\"2000-01-04\",\"kind\":\"balance\",\"tolerance\":null}",
+  "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\"}",
+  "{\"account\":\"Equity:Opening\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\"}",
+  "{\"account\":\"Expenses:Food\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\"}",
+  "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"narration\":\"split across accounts\",\"payee\":\"grocery\",\"postings\":[{\"account\":\"Expenses:Food\",\"cost\":null,\"price\":null,\"units\":\"40 USD\"},{\"account\":\"Assets:Bank\",\"cost\":null,\"price\":null,\"units\":\"-30 USD\"},{\"account\":\"Equity:Opening\",\"cost\":null,\"price\":null,\"units\":\"-10 USD\"}],\"tags\":[]}",
+  "{\"date\":\"2000-01-03\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"narration\":\"two legs with elided last\",\"payee\":\"cash\",\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"price\":null,\"units\":\"10 USD\"},{\"account\":\"Equity:Opening\",\"cost\":null,\"price\":null,\"units\":\"-10 USD\"}],\"tags\":[]}"
+ ],
+ "errors": [],
+ "fixture": "txn-multi-leg.bean",
+ "oracle_engine": "beancount-python-3.2.3",
+ "queries": {
+  "account_totals": [
+   [
+    "Assets:Bank",
+    {
+     "currencies": {
+      "USD": "-30"
+     },
+     "lots": []
+    }
+   ],
+   [
+    "Assets:Cash",
+    {
+     "currencies": {
+      "USD": "10"
+     },
+     "lots": []
+    }
+   ],
+   [
+    "Equity:Opening",
+    {
+     "currencies": {
+      "USD": "-20"
+     },
+     "lots": []
+    }
+   ],
+   [
+    "Expenses:Food",
+    {
+     "currencies": {
+      "USD": "40"
+     },
+     "lots": []
+    }
+   ]
+  ],
+  "cash_entries": [
+   [
+    "2000-01-03",
+    "two legs with elided last"
+   ]
+  ]
+ },
+ "valid": true
+}

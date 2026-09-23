@@ -1,0 +1,8 @@
+option "operating_currency" "USD"
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Equity:Opening USD
+2000-01-02 * "seed" "seed cash"
+  Assets:Cash 50 USD
+  Equity:Opening -50 USD
+2000-01-03 document Assets:Cash "docs/receipt.txt"
+2000-01-04 balance Assets:Cash 50 USD

@@ -1,0 +1,14 @@
+{
+ "balances": {},
+ "entries": [],
+ "errors": [
+  {
+   "line": 1,
+   "type": "LexerError"
+  }
+ ],
+ "fixture": "err-syntax.bean",
+ "oracle_engine": "beancount-python-3.2.3",
+ "queries": {},
+ "valid": false
+}

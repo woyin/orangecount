@@ -1,0 +1,6 @@
+option "operating_currency" "USD"
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Expenses:Misc USD
+2000-01-02 * "bad" "does not balance"
+  Expenses:Misc 10 USD
+  Assets:Cash -9 USD

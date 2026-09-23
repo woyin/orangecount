@@ -1,0 +1,12 @@
+option "operating_currency" "USD"
+option "booking_method" "AVERAGE"
+2000-01-01 open Assets:Shares SH
+2000-01-01 open Assets:Cash USD
+2000-01-02 * "buy" "average booking"
+  Assets:Shares 10 SH {1.0 USD}
+  Assets:Cash -10 USD
+2000-01-03 * "add" "more at different price"
+  Assets:Shares 10 SH {3.0 USD}
+  Assets:Cash -30 USD
+2000-01-04 balance Assets:Cash -40 USD
+2000-01-04 balance Assets:Shares 20 SH

@@ -1,0 +1,68 @@
+{
+ "balances": {
+  "Assets:Cash": {
+   "currencies": {
+    "USD": "45"
+   },
+   "lots": []
+  },
+  "Equity:Opening": {
+   "currencies": {
+    "USD": "-45"
+   },
+   "lots": []
+  }
+ },
+ "entries": [
+  "{\"account\":\"Assets:Cash\",\"amount\":\"25 USD\",\"date\":\"2000-01-06\",\"kind\":\"balance\",\"tolerance\":null}",
+  "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\"}",
+  "{\"account\":\"Assets:Cash\",\"comment\":\"a sanitized note\",\"date\":\"2000-01-03\",\"kind\":\"note\"}",
+  "{\"account\":\"Assets:Cash\",\"date\":\"2000-01-05\",\"kind\":\"pad\",\"source_account\":\"Equity:Opening\"}",
+  "{\"account\":\"Assets:Shares\",\"booking\":null,\"currencies\":[],\"date\":\"2000-01-01\",\"kind\":\"open\"}",
+  "{\"account\":\"Assets:Shares\",\"date\":\"2000-01-10\",\"kind\":\"close\"}",
+  "{\"account\":\"Equity:Opening\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\"}",
+  "{\"amount\":\"10.5 USD\",\"currency\":\"SH\",\"date\":\"2000-01-04\",\"kind\":\"price\"}",
+  "{\"currency\":\"SH\",\"date\":\"2000-01-01\",\"kind\":\"commodity\"}",
+  "{\"custom_type\":\"budget\",\"date\":\"2000-01-09\",\"kind\":\"custom\",\"values\":[\"monthly\",\"100 USD\",\"true\"]}",
+  "{\"date\":\"2000-01-02\",\"event_type\":\"location\",\"kind\":\"event\",\"value\":\"office\"}",
+  "{\"date\":\"2000-01-05\",\"flag\":\"P\",\"kind\":\"transaction\",\"links\":[],\"narration\":\"(Padding inserted for Balance of 25 USD for difference 25 USD)\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"price\":null,\"units\":\"25 USD\"},{\"account\":\"Equity:Opening\",\"cost\":null,\"price\":null,\"units\":\"-25 USD\"}],\"tags\":[]}",
+  "{\"date\":\"2000-01-07\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"narration\":\"pad filler\",\"payee\":\"seed\",\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"price\":null,\"units\":\"20 USD\"},{\"account\":\"Equity:Opening\",\"cost\":null,\"price\":null,\"units\":\"-20 USD\"}],\"tags\":[]}",
+  "{\"date\":\"2000-01-08\",\"kind\":\"query\",\"name\":\"sample\",\"query\":\"SELECT account FROM postings\"}"
+ ],
+ "errors": [],
+ "fixture": "directives-mix.bean",
+ "oracle_engine": "beancount-python-3.2.3",
+ "queries": {
+  "account_totals": [
+   [
+    "Assets:Cash",
+    {
+     "currencies": {
+      "USD": "45"
+     },
+     "lots": []
+    }
+   ],
+   [
+    "Equity:Opening",
+    {
+     "currencies": {
+      "USD": "-45"
+     },
+     "lots": []
+    }
+   ]
+  ],
+  "cash_entries": [
+   [
+    "2000-01-05",
+    "(Padding inserted for Balance of 25 USD for difference 25 USD)"
+   ],
+   [
+    "2000-01-07",
+    "pad filler"
+   ]
+  ]
+ },
+ "valid": true
+}

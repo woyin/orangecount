@@ -1,0 +1,55 @@
+{
+ "balances": {
+  "Assets:Cash": {
+   "currencies": {
+    "USD": "50"
+   },
+   "lots": []
+  },
+  "Equity:Opening": {
+   "currencies": {
+    "USD": "-50"
+   },
+   "lots": []
+  }
+ },
+ "entries": [
+  "{\"account\":\"Assets:Cash\",\"amount\":\"50 USD\",\"date\":\"2000-01-04\",\"kind\":\"balance\",\"tolerance\":null}",
+  "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\"}",
+  "{\"account\":\"Assets:Cash\",\"date\":\"2000-01-03\",\"filename\":\"receipt.txt\",\"kind\":\"document\",\"links\":[],\"tags\":[]}",
+  "{\"account\":\"Equity:Opening\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\"}",
+  "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"narration\":\"seed cash\",\"payee\":\"seed\",\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"price\":null,\"units\":\"50 USD\"},{\"account\":\"Equity:Opening\",\"cost\":null,\"price\":null,\"units\":\"-50 USD\"}],\"tags\":[]}"
+ ],
+ "errors": [],
+ "fixture": "document.bean",
+ "oracle_engine": "beancount-python-3.2.3",
+ "queries": {
+  "account_totals": [
+   [
+    "Assets:Cash",
+    {
+     "currencies": {
+      "USD": "50"
+     },
+     "lots": []
+    }
+   ],
+   [
+    "Equity:Opening",
+    {
+     "currencies": {
+      "USD": "-50"
+     },
+     "lots": []
+    }
+   ]
+  ],
+  "cash_entries": [
+   [
+    "2000-01-02",
+    "seed cash"
+   ]
+  ]
+ },
+ "valid": true
+}

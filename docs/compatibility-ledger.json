@@ -26,6 +26,14 @@
       "orangecount": "Exact decimals and non-terminating rationals are serialized as canonical strings.",
       "rationale": "Avoid silent floating-point rounding in a local API.",
       "status": "intentional-display-only"
+    },
+    {
+      "id": "posting-level-diagnostic-span",
+      "area": "diagnostics",
+      "reference": "Beancount attributes validation errors (such as unopened or closed accounts) to the transaction header line.",
+      "orangecount": "OrangeCount attributes posting lifecycle errors directly to the offending posting line for precise editor and LSP diagnostics.",
+      "rationale": "Precise span attribution improves error location for users without altering accounting semantics.",
+      "status": "intentional-boundary"
     }
   ],
   "sanitized_fixtures": [

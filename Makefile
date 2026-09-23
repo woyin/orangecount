@@ -5,7 +5,8 @@ NPM ?= npm
 
 .PHONY: all build test race fmt vet license licenses clean \
 	web-test web-typecheck web-check web-build-check web-build-embedded check fixturegen visual-reference \
-	check-route-manifest check-provenance check-reference-output
+	check-route-manifest check-provenance check-reference-output \
+	golden-regen parity-diff parity-triage parity-report
 
 all: build
 
@@ -85,3 +86,21 @@ fixturegen:
 # Candidate-only Fava reference capture in the controlled OCI environment.
 visual-reference: fixturegen
 	$(NPM) --prefix web run visual:reference
+
+## Beancount v3 reference and differential testing (ADR-0008 / Parity Plan)
+golden-regen:
+	uv run --project tools/reference python tools/reference/generate_golden.py
+
+parity-diff:
+	$(GO) run ./tools/parity \
+		-fixtures testdata/fixtures/v3-parity \
+		-golden testdata/golden/v3-parity \
+		-out testdata/golden/v3-parity/differences.json
+
+parity-triage: parity-diff
+	uv run --project tools/reference python tools/reference/jev_triage.py \
+		--in testdata/golden/v3-parity/differences.json \
+		--out testdata/golden/v3-parity/differences-triaged.json
+
+parity-report:
+	./tools/reference/differential-corpus.sh

@@ -1,0 +1,54 @@
+{
+ "balances": {
+  "Assets:Cash": {
+   "currencies": {
+    "USD": "7"
+   },
+   "lots": []
+  },
+  "Equity:Opening": {
+   "currencies": {
+    "USD": "-7"
+   },
+   "lots": []
+  }
+ },
+ "entries": [
+  "{\"account\":\"Assets:Cash\",\"amount\":\"7 USD\",\"date\":\"2000-01-03\",\"kind\":\"balance\",\"tolerance\":null}",
+  "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\"}",
+  "{\"account\":\"Equity:Opening\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\"}",
+  "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"narration\":\"unicode narration \u2014 na\u00efve \u4e2d\u6587 payee text\",\"payee\":\"caf\u00e9\",\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"price\":null,\"units\":\"7 USD\"},{\"account\":\"Equity:Opening\",\"cost\":null,\"price\":null,\"units\":\"-7 USD\"}],\"tags\":[]}"
+ ],
+ "errors": [],
+ "fixture": "unicode.bean",
+ "oracle_engine": "beancount-python-3.2.3",
+ "queries": {
+  "account_totals": [
+   [
+    "Assets:Cash",
+    {
+     "currencies": {
+      "USD": "7"
+     },
+     "lots": []
+    }
+   ],
+   [
+    "Equity:Opening",
+    {
+     "currencies": {
+      "USD": "-7"
+     },
+     "lots": []
+    }
+   ]
+  ],
+  "cash_entries": [
+   [
+    "2000-01-02",
+    "unicode narration \u2014 na\u00efve \u4e2d\u6587 payee text"
+   ]
+  ]
+ },
+ "valid": true
+}

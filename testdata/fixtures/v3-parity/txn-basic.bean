@@ -1,0 +1,7 @@
+option "operating_currency" "USD"
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Equity:Opening USD
+2000-01-02 * "payee" "narration"
+  Assets:Cash 100.00 USD
+  Equity:Opening -100.00 USD
+2000-01-03 balance Assets:Cash 100 USD

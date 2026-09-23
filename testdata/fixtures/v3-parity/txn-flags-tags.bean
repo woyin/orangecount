@@ -1,0 +1,14 @@
+option "operating_currency" "USD"
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Expenses:Misc USD
+2000-01-01 open Equity:Opening USD
+pushtag #trip
+2000-01-02 ! "late" "pending entry" ^link-a ^link-b #trip
+  Expenses:Misc 5 USD
+  Equity:Opening -5 USD
+poptag #trip
+2000-01-03 txn "plain txn keyword"
+  Assets:Cash 1 USD
+  Expenses:Misc -1 USD
+2000-01-04 balance Assets:Cash 1 USD
+2000-01-04 balance Expenses:Misc 4 USD

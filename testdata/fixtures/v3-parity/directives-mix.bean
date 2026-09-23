@@ -1,0 +1,16 @@
+option "operating_currency" "USD"
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Assets:Shares
+2000-01-01 open Equity:Opening USD
+2000-01-01 commodity SH
+2000-01-02 event "location" "office"
+2000-01-03 note Assets:Cash "a sanitized note"
+2000-01-04 price SH 10.5 USD
+2000-01-05 pad Assets:Cash Equity:Opening
+2000-01-06 balance Assets:Cash 25 USD
+2000-01-07 * "seed" "pad filler"
+  Assets:Cash 20 USD
+  Equity:Opening -20 USD
+2000-01-08 query "sample" "SELECT account FROM postings"
+2000-01-09 custom "budget" "monthly" 100 USD TRUE
+2000-01-10 close Assets:Shares

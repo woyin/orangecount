@@ -1,0 +1,6 @@
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Equity:Opening USD
+2000-01-02 close Assets:Cash
+2000-01-03 * "after close" "posting to closed account"
+  Assets:Cash 10 USD
+  Equity:Opening -10 USD

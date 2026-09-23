@@ -1,0 +1,60 @@
+{
+ "balances": {
+  "Assets:Cash": {
+   "currencies": {
+    "USD": "-12"
+   },
+   "lots": []
+  },
+  "Assets:Shares": {
+   "currencies": {},
+   "lots": [
+    "6 SH {2 USD}"
+   ]
+  }
+ },
+ "entries": [
+  "{\"account\":\"Assets:Cash\",\"amount\":\"-12 USD\",\"date\":\"2000-01-04\",\"kind\":\"balance\",\"tolerance\":null}",
+  "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\"}",
+  "{\"account\":\"Assets:Shares\",\"amount\":\"6 SH\",\"date\":\"2000-01-04\",\"kind\":\"balance\",\"tolerance\":null}",
+  "{\"account\":\"Assets:Shares\",\"booking\":null,\"currencies\":[\"SH\"],\"date\":\"2000-01-01\",\"kind\":\"open\"}",
+  "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"narration\":\"initial lot\",\"payee\":\"buy\",\"postings\":[{\"account\":\"Assets:Shares\",\"cost\":\"2 USD\",\"price\":null,\"units\":\"10 SH\"},{\"account\":\"Assets:Cash\",\"cost\":null,\"price\":null,\"units\":\"-20 USD\"}],\"tags\":[]}",
+  "{\"date\":\"2000-01-03\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"narration\":\"sell at cost\",\"payee\":\"sell\",\"postings\":[{\"account\":\"Assets:Shares\",\"cost\":\"2 USD\",\"price\":null,\"units\":\"-4 SH\"},{\"account\":\"Assets:Cash\",\"cost\":null,\"price\":null,\"units\":\"8 USD\"}],\"tags\":[]}"
+ ],
+ "errors": [],
+ "fixture": "cost-basis.bean",
+ "oracle_engine": "beancount-python-3.2.3",
+ "queries": {
+  "account_totals": [
+   [
+    "Assets:Cash",
+    {
+     "currencies": {
+      "USD": "-12"
+     },
+     "lots": []
+    }
+   ],
+   [
+    "Assets:Shares",
+    {
+     "currencies": {},
+     "lots": [
+      "6 SH {2 USD}"
+     ]
+    }
+   ]
+  ],
+  "cash_entries": [
+   [
+    "2000-01-02",
+    "initial lot"
+   ],
+   [
+    "2000-01-03",
+    "sell at cost"
+   ]
+  ]
+ },
+ "valid": true
+}

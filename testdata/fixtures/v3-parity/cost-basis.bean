@@ -1,0 +1,11 @@
+option "operating_currency" "USD"
+2000-01-01 open Assets:Shares SH
+2000-01-01 open Assets:Cash USD
+2000-01-02 * "buy" "initial lot"
+  Assets:Shares 10 SH {2.0 USD}
+  Assets:Cash -20 USD
+2000-01-03 * "sell" "sell at cost"
+  Assets:Shares -4 SH {2.0 USD}
+  Assets:Cash 8 USD
+2000-01-04 balance Assets:Cash -12 USD
+2000-01-04 balance Assets:Shares 6 SH
