@@ -3,10 +3,10 @@ BIN ?= bin/orangecount
 NODE ?= node
 NPM ?= npm
 
-.PHONY: all build test race fmt vet license licenses clean \
+.PHONY: all build test race fmt vet license licenses clean app \
 	web-test web-typecheck web-check web-build-check web-build-embedded check fixturegen visual-reference \
 	check-route-manifest check-provenance check-reference-output \
-	golden-regen parity-diff parity-triage parity-report
+	golden-regen parity-diff parity-triage parity-report verify-native-equivalence
 
 all: build
 
@@ -54,8 +54,8 @@ check-provenance:
 check-reference-output:
 	$(NODE) web/scripts/check-reference-output.mjs
 
-# Both Phase 0 static checks together.
-check: check-route-manifest check-provenance
+# Both Phase 0 static checks together with native equivalence & parity gates.
+check: check-route-manifest check-provenance verify-native-equivalence
 
 # Frontend unit tests (node:test, no browser).
 web-test:
@@ -86,6 +86,13 @@ fixturegen:
 # Candidate-only Fava reference capture in the controlled OCI environment.
 visual-reference: fixturegen
 	$(NPM) --prefix web run visual:reference
+
+## Native macOS Desktop App (SwiftUI + Go C-Archive Bridge)
+app:
+	@./apps/macos/build.sh
+
+verify-native-equivalence:
+	@./tools/parity/verify_native_equivalence.sh
 
 ## Beancount v3 reference and differential testing (ADR-0008 / Parity Plan)
 golden-regen:

@@ -413,6 +413,78 @@ func TrialBalanceTree(e ledger.Evaluation) query.Result {
 	return accountRootReport(e)
 }
 
+// AccountTreeNode is an explicit hierarchical tree node suitable for native UI
+// rendering (such as SwiftUI OutlineGroup or desktop tree tables).
+type AccountTreeNode struct {
+	Name            string            `json:"name"`
+	FullName        string            `json:"full_name"`
+	Depth           int               `json:"depth"`
+	IsLeaf          bool              `json:"is_leaf"`
+	Explicit        bool              `json:"explicit"`
+	DirectBalances  map[string]string `json:"direct_balances"`
+	SubtreeBalances map[string]string `json:"subtree_balances"`
+	Children        []AccountTreeNode `json:"children"`
+}
+
+// BuildAccountTree builds a hierarchical forest of account tree nodes for the
+// requested account roots (e.g. "Assets", "Liabilities", "Equity" for balance
+// sheet, or "Income", "Expenses" for income statement).
+func BuildAccountTree(e ledger.Evaluation, roots ...string) []AccountTreeNode {
+	index := buildAccountTreeIndex(e, roots)
+	var rootNodes []AccountTreeNode
+	for _, root := range roots {
+		if !index.nodes[root] {
+			continue
+		}
+		rootNodes = append(rootNodes, buildSubtree(root, 0, index))
+	}
+	return rootNodes
+}
+
+func buildSubtree(name string, depth int, index accountTreeIndex) AccountTreeNode {
+	shortName := name
+	if idx := strings.LastIndexByte(name, ':'); idx >= 0 {
+		shortName = name[idx+1:]
+	}
+	childMap := index.children[name]
+	children := make([]AccountTreeNode, 0, len(childMap))
+	if len(childMap) > 0 {
+		var childNames []string
+		for child := range childMap {
+			childNames = append(childNames, child)
+		}
+		sort.Strings(childNames)
+		for _, child := range childNames {
+			children = append(children, buildSubtree(child, depth+1, index))
+		}
+	}
+
+	direct := map[string]string{}
+	for cur, dec := range index.ownTotals[name] {
+		if !dec.IsZero() {
+			direct[cur] = dec.String()
+		}
+	}
+
+	subtree := map[string]string{}
+	for cur, dec := range index.totals[name] {
+		if !dec.IsZero() {
+			subtree[cur] = dec.String()
+		}
+	}
+
+	return AccountTreeNode{
+		Name:            shortName,
+		FullName:        name,
+		Depth:           depth,
+		IsLeaf:          len(children) == 0,
+		Explicit:        index.explicit[name],
+		DirectBalances:  direct,
+		SubtreeBalances: subtree,
+		Children:        children,
+	}
+}
+
 // BalanceSheet returns the Assets/Liabilities/Equity hierarchy report.
 func BalanceSheet(e ledger.Evaluation) query.Result {
 	return accountRootReport(e, "Assets", "Liabilities", "Equity")

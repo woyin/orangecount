@@ -163,6 +163,24 @@ No other deviations are currently approved. Existing differences in the prototyp
 | Expiry condition | a Fava upgrade that adds its own default chart window, or the owner withdrawing the preference |
 | Baseline impact | alternate expectation for statement chart cards |
 
+### FD-0009 — Native macOS Desktop App design deviations
+
+| Field | Value |
+| --- | --- |
+| Status | approved |
+| Route and state | ALL-DESKTOP (`apps/macos`) |
+| Fava baseline | Fava renders using standard Web browser DOM/CSS with proportional sans-serif fonts, flat background colors, and D3.js SVG chart elements |
+| OrangeCount behavior | The Native macOS desktop client (SwiftUI 5.0) renders using macOS Human Interface Guidelines: `.ultraThinMaterial` frosted glass sidebar, Apple-native Swift Charts with Metal hardware acceleration, and `.monospacedDigit()` aligned financial table columns |
+| Category | presentation preference |
+| Reason | The desktop app is a pure native macOS client (ADR-0002 / native-desktop-app-plan.md). Adopting native macOS window materials and Swift Charts delivers 120 FPS fluid animations, instant responsiveness, and prevents decimal column misalignment common in proportional web fonts, while preserving 100% accounting and structural semantic parity with Fava. |
+| Scope | apps/macos (Native desktop client only; the embedded web server UI retains Fava CSS parity) |
+| Tests | verified by internal/bridge/equivalence_test.go and make verify-native-equivalence |
+| Owner | implementing agent |
+| Approver | user (product owner) |
+| Approved evidence | approved under native-desktop-app-plan.md |
+| Expiry condition | none |
+| Baseline impact | native macOS first-class desktop user experience |
+
 ### FD-0001 — Short name
 
 | Field | Value |

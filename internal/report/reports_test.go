@@ -1112,3 +1112,39 @@ func TestAccountAverageCostChartReplaysBookedLots(t *testing.T) {
 		t.Fatalf("average-cost points=%+v, want 10, 34/3, 34/3", series.Points)
 	}
 }
+
+func TestBuildAccountTreeStructure(t *testing.T) {
+	d100, _ := ledger.ParseDecimal("100")
+	d50, _ := ledger.ParseDecimal("50")
+	eval := ledger.Evaluation{
+		Accounts: map[string]ledger.AccountState{
+			"Assets:Cash:Checking": {
+				Balances: map[string]ledger.Decimal{"USD": d100},
+			},
+			"Assets:Cash:Savings": {
+				Balances: map[string]ledger.Decimal{"USD": d50},
+			},
+			"Liabilities:CreditCard": {
+				Balances: map[string]ledger.Decimal{"USD": d50.Neg()},
+			},
+		},
+	}
+	tree := BuildAccountTree(eval, "Assets", "Liabilities")
+	if len(tree) != 2 {
+		t.Fatalf("expected 2 roots, got %d", len(tree))
+	}
+	assets := tree[0]
+	if assets.Name != "Assets" || assets.SubtreeBalances["USD"] != "150" {
+		t.Fatalf("unexpected assets root: %+v", assets)
+	}
+	if len(assets.Children) != 1 || assets.Children[0].Name != "Cash" {
+		t.Fatalf("expected Cash child, got: %+v", assets.Children)
+	}
+	cash := assets.Children[0]
+	if len(cash.Children) != 2 {
+		t.Fatalf("expected 2 leaf children under Cash, got %d", len(cash.Children))
+	}
+	if cash.Children[0].Name != "Checking" || cash.Children[0].DirectBalances["USD"] != "100" {
+		t.Fatalf("unexpected Checking node: %+v", cash.Children[0])
+	}
+}
