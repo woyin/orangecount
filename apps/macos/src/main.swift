@@ -53,9 +53,18 @@ class LedgerStore: ObservableObject {
         pingMessage = BridgeClient.shared.ping()
         recentPaths = UserDefaults.standard.stringArray(forKey: recentsKey) ?? []
 
-        let defaultFixture = locateDefaultFixture()
-        if !defaultFixture.isEmpty {
-            loadLedger(at: defaultFixture)
+        // 1. Check CLI arguments (e.g. open -a OrangeCount --args /path/to/ledger.bean)
+        if let argPath = CommandLine.arguments.dropFirst().first(where: { !$0.hasPrefix("-") && !$0.isEmpty }) {
+            loadLedger(at: argPath)
+        } else if let firstRecent = recentPaths.first, FileManager.default.fileExists(atPath: firstRecent) {
+            // 2. Open most recent ledger if available
+            loadLedger(at: firstRecent)
+        } else {
+            // 3. Fallback to repository sample fixture
+            let defaultFixture = locateDefaultFixture()
+            if !defaultFixture.isEmpty {
+                loadLedger(at: defaultFixture)
+            }
         }
         startWatcher()
     }
@@ -76,6 +85,7 @@ class LedgerStore: ObservableObject {
         currentPath = entryPath
         recordRecent(entryPath)
         lastRevision = BridgeClient.shared.getLedgerRevision(path: entryPath)
+        print("[OrangeCount Native] Opening ledger: \(entryPath)")
 
         Task.detached(priority: .userInitiated) {
             do {
@@ -90,10 +100,12 @@ class LedgerStore: ObservableObject {
                     self.trendsPayload = tr
                     self.reportType = "balance_sheet"
                     self.errorMessage = nil
+                    print("[OrangeCount Native] Successfully evaluated! Accounts: \(s.accounts.count), Entries: \(s.entries_count), Valid: \(s.valid)")
                 }
             } catch {
                 await MainActor.run {
                     self.errorMessage = error.localizedDescription
+                    print("[OrangeCount Native] Evaluation error: \(error)")
                 }
             }
         }
@@ -172,11 +184,21 @@ class LedgerStore: ObservableObject {
     }
 
     private func locateDefaultFixture() -> String {
+        var candidates: [String] = []
+
+        // Resolve relative to App Bundle location (e.g. repo/build/OrangeCount.app -> repo)
+        let bundleURL = Bundle.main.bundleURL
+        let repoRoot = bundleURL.deletingLastPathComponent().deletingLastPathComponent()
+        candidates.append(repoRoot.appendingPathComponent("testdata/fixtures/v3-parity/directives-mix.bean").path)
+        candidates.append(repoRoot.appendingPathComponent("testdata/fixtures/v3-parity/txn-basic.bean").path)
+
+        // Resolve relative to current working directory
         let cwd = FileManager.default.currentDirectoryPath
-        let candidates = [
-            "\(cwd)/testdata/fixtures/v3-parity/txn-basic.bean",
-            "\(cwd)/../../testdata/fixtures/v3-parity/txn-basic.bean"
-        ]
+        candidates.append("\(cwd)/testdata/fixtures/v3-parity/directives-mix.bean")
+        candidates.append("\(cwd)/testdata/fixtures/v3-parity/txn-basic.bean")
+        candidates.append("\(cwd)/../../testdata/fixtures/v3-parity/directives-mix.bean")
+        candidates.append("\(cwd)/../../testdata/fixtures/v3-parity/txn-basic.bean")
+
         for p in candidates {
             if FileManager.default.fileExists(atPath: p) {
                 return (p as NSString).standardizingPath

@@ -139,7 +139,9 @@ func loadJournal(path, filterJSON string) JournalPayload {
 	res := snapshot.Build(path)
 	if res.Snapshot == nil {
 		return JournalPayload{
-			Error: "snapshot unavailable or invalid ledger",
+			TotalCount:   0,
+			Transactions: []JournalTransactionDTO{},
+			Error:        firstErrorMessage(res.Diagnostics),
 		}
 	}
 
@@ -232,8 +234,10 @@ func loadTreeReport(path, reportType string) TreeReportPayload {
 	res := snapshot.Build(path)
 	if res.Snapshot == nil {
 		return TreeReportPayload{
-			ReportType: reportType,
-			Error:      "snapshot unavailable or invalid ledger",
+			ReportType:          reportType,
+			OperatingCurrencies: []string{},
+			RootNodes:           []report.AccountTreeNode{},
+			Error:               firstErrorMessage(res.Diagnostics),
 		}
 	}
 
@@ -300,7 +304,12 @@ func OC_GetHistoricalTrends(cPath *C.char) *C.char {
 func loadHistoricalTrends(path string) HistoricalTrendsPayload {
 	res := snapshot.Build(path)
 	if res.Snapshot == nil {
-		return HistoricalTrendsPayload{Error: "snapshot unavailable or invalid ledger"}
+		return HistoricalTrendsPayload{
+			OperatingCurrency: "USD",
+			NetWorthPoints:    []TrendPointDTO{},
+			MonthlyCashFlows:  []CashFlowBarDTO{},
+			Error:             firstErrorMessage(res.Diagnostics),
+		}
 	}
 	eval := res.Snapshot.Evaluation()
 	cur := "USD"
@@ -390,6 +399,18 @@ func getLedgerRevision(path string) string {
 		}
 	}
 	return fmt.Sprintf("rev:%x:%d", totalMtime, len(res.Diagnostics))
+}
+
+func firstErrorMessage(diags []diagnostic.Diagnostic) string {
+	for _, d := range diags {
+		if d.Severity == diagnostic.Error {
+			if d.Span.StartLine > 0 {
+				return fmt.Sprintf("line %d: %s", d.Span.StartLine, d.Message)
+			}
+			return d.Message
+		}
+	}
+	return "ledger snapshot unavailable"
 }
 
 //export OC_FreeString

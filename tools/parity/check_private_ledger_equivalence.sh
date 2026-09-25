@@ -33,14 +33,22 @@ entries, errors, _ = loader.load_file(ledger_path)
 if errors:
     print(f"Warning: Beancount reported {len(errors)} error diagnostics", file=sys.stderr)
 
+def norm_num(s):
+    s = str(s)
+    if "." in s:
+        s = s.rstrip("0").rstrip(".")
+    if s in ("", "-0"):
+        s = "0"
+    return s
+
 balances = defaultdict(lambda: defaultdict(Decimal))
 for e in entries:
     if hasattr(e, "postings") and e.postings:
         for p in e.postings:
-            if p.units and p.units.number is not None and p.cost is None:
+            if p.units and p.units.number is not None:
                 balances[p.account][p.units.currency] += p.units.number
 
-out = {acct: {cur: format(val, 'f').rstrip('0').rstrip('.') or '0' for cur, val in curs.items() if val != 0}
+out = {acct: {cur: norm_num(val) for cur, val in curs.items() if val != 0}
        for acct, curs in balances.items()}
 
 with open(out_file, "w", encoding="utf-8") as f:
@@ -75,12 +83,20 @@ if res.returncode != 0:
     print(f"Error querying ledger via OrangeCount:\n{res.stderr}", file=sys.stderr)
     sys.exit(1)
 
+def norm_num(s):
+    s = str(s)
+    if "." in s:
+        s = s.rstrip("0").rstrip(".")
+    if s in ("", "-0"):
+        s = "0"
+    return s
+
 native_rows = json.loads(res.stdout).get("rows", [])
 native_balances = {}
 for r in native_rows:
     acct = r["account"]
     cur = r["currency"]
-    tot = str(r["total"]).rstrip('0').rstrip('.') or '0'
+    tot = norm_num(r["total"])
     if tot != '0':
         native_balances.setdefault(acct, {})[cur] = tot
 

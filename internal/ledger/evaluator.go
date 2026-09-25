@@ -141,13 +141,15 @@ func (e *evaluator) collectDirectives(fileID source.FileID, parsed map[source.Fi
 
 func evaluateOrder(graph *source.Graph, parsed map[source.FileID]*File, options EvalOptions, order []source.FileID) *Evaluation {
 	e := &evaluator{
-		graph:    graph,
-		result:   &Evaluation{Accounts: make(map[string]AccountState), Prices: make(map[string][]PriceQuote), Options: make(map[string]string)},
-		options:  options,
-		accounts: make(map[string]*accountWork),
-		pads:     make(map[string]Pad),
-		visited:  make(map[source.FileID]bool),
+		graph:                    graph,
+		result:                   &Evaluation{Accounts: make(map[string]AccountState), Prices: make(map[string][]PriceQuote), Options: make(map[string]string)},
+		options:                  options,
+		accounts:                 make(map[string]*accountWork),
+		pads:                     make(map[string]Pad),
+		visited:                  make(map[source.FileID]bool),
+		inferredToleranceDefault: make(map[string]Decimal),
 	}
+	e.options.InferDecimalTolerance = true
 	var items []directiveItem
 	if graph != nil && graph.Entry != 0 {
 		e.collectDirectives(graph.Entry, parsed, &items)
@@ -213,14 +215,15 @@ type accountWork struct {
 }
 
 type evaluator struct {
-	graph    *source.Graph
-	result   *Evaluation
-	options  EvalOptions
-	accounts map[string]*accountWork
-	pads     map[string]Pad
-	visited  map[source.FileID]bool
-	events   []balanceEvent
-	pending  []pendingBalance
+	graph                    *source.Graph
+	result                   *Evaluation
+	options                  EvalOptions
+	accounts                 map[string]*accountWork
+	pads                     map[string]Pad
+	visited                  map[source.FileID]bool
+	events                   []balanceEvent
+	pending                  []pendingBalance
+	inferredToleranceDefault map[string]Decimal
 }
 
 type balanceEvent struct {
@@ -336,6 +339,17 @@ func (e *evaluator) applyOption(d Option) {
 		e.result.Options[d.Key] = appendOperatingCurrency(e.result.Options[d.Key], d.Value)
 	} else {
 		e.result.Options[d.Key] = d.Value
+	}
+	if strings.EqualFold(d.Key, "inferred_tolerance_default") {
+		parts := strings.Split(d.Value, ":")
+		if len(parts) == 2 {
+			cur := strings.TrimSpace(parts[0])
+			tolStr := strings.TrimSpace(parts[1])
+			if tol, err := ParseDecimal(tolStr); err == nil && tol.Sign() >= 0 {
+				e.inferredToleranceDefault[cur] = tol
+			}
+		}
+		return
 	}
 	if !strings.EqualFold(d.Key, "tolerance") {
 		return
@@ -525,12 +539,21 @@ func (e *evaluator) transaction(tx *Transaction) {
 			}
 		}
 	}
-	tolerance := e.options.DefaultTolerance
-	if tolerance.IsZero() && e.options.InferDecimalTolerance {
-		tolerance = inferredTolerance(tx.Postings)
-	}
-	for _, total := range totals {
-		if !within(total, tolerance) {
+	for cur, total := range totals {
+		tol := e.options.DefaultTolerance
+		if defTol, ok := e.inferredToleranceDefault[cur]; ok {
+			if tol.IsZero() || defTol.Cmp(tol) > 0 {
+				tol = defTol
+			}
+		} else if defTol, ok := e.inferredToleranceDefault["*"]; ok {
+			if tol.IsZero() || defTol.Cmp(tol) > 0 {
+				tol = defTol
+			}
+		}
+		if tol.IsZero() && e.options.InferDecimalTolerance {
+			tol = inferredToleranceForCurrency(tx.Postings, cur)
+		}
+		if !within(total, tol) {
 			e.add("E-EVAL-UNBALANCED", diagnostic.Error, tx.Span(), e.pathFor(tx.Span()))
 			break
 		}
@@ -1208,9 +1231,19 @@ func (e *evaluator) balance(d Balance) {
 			e.add("E-EVAL-TOLERANCE", diagnostic.Error, d.Span(), e.pathFor(d.Span()))
 			return
 		}
+	} else {
+		if defTol, ok := e.inferredToleranceDefault[currency]; ok {
+			if tolerance.IsZero() || defTol.Cmp(tolerance) > 0 {
+				tolerance = defTol
+			}
+		} else if defTol, ok := e.inferredToleranceDefault["*"]; ok {
+			if tolerance.IsZero() || defTol.Cmp(tolerance) > 0 {
+				tolerance = defTol
+			}
+		}
 	}
 	if tolerance.IsZero() && e.options.InferDecimalTolerance {
-		tolerance = inferredTolerance([]Posting{{Units: &d.Amount}})
+		tolerance = inferredToleranceForCurrency([]Posting{{Units: &d.Amount}}, currency)
 	}
 	e.pending = append(e.pending, pendingBalance{account: d.Account, currency: currency, date: d.Date, expected: DecimalFromNumber(d.Amount.Number), tolerance: tolerance, span: d.Span(), path: e.pathFor(d.Span())})
 }
@@ -1375,6 +1408,46 @@ func normalizeCost(spec CostSpec) (Cost, bool) {
 		return Cost{}, false
 	}
 	return cost, true
+}
+
+func inferredToleranceForCurrency(postings []Posting, cur string) Decimal {
+	maxScale := 0
+	for _, posting := range postings {
+		if posting.Units != nil && (cur == "" || posting.Units.Currency == cur) {
+			raw := posting.Units.Number.Raw
+			if dot := strings.IndexByte(raw, '.'); dot >= 0 {
+				scale := len(raw) - dot - 1
+				if scale > maxScale {
+					maxScale = scale
+				}
+			}
+		}
+		if posting.Cost != nil {
+			if cost, ok := normalizeCost(*posting.Cost); ok && (cur == "" || cost.Currency == cur) {
+				raw := cost.Number.String()
+				if dot := strings.IndexByte(raw, '.'); dot >= 0 {
+					scale := len(raw) - dot - 1
+					if scale > maxScale {
+						maxScale = scale
+					}
+				}
+			}
+		}
+		if posting.Price != nil && (cur == "" || posting.Price.Amount.Currency == cur) {
+			raw := posting.Price.Amount.Number.Raw
+			if dot := strings.IndexByte(raw, '.'); dot >= 0 {
+				scale := len(raw) - dot - 1
+				if scale > maxScale {
+					maxScale = scale
+				}
+			}
+		}
+	}
+	if maxScale == 0 {
+		return Zero()
+	}
+	denom := new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(maxScale)), nil)
+	return NewDecimal(new(big.Rat).SetFrac(big.NewInt(1), new(big.Int).Mul(denom, big.NewInt(2))))
 }
 
 func inferredTolerance(postings []Posting) Decimal {
