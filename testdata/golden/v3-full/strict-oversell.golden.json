@@ -1,0 +1,16 @@
+{
+  "errors": [
+    {
+      "line": 11,
+      "type": "AmbiguousMatchError"
+    }
+  ],
+  "fixture": "strict-oversell.bean",
+  "oracle_engine": "beancount-python-3.2.3",
+  "schema_version": 2,
+  "state": {
+    "balances": {},
+    "entries": []
+  },
+  "valid": false
+}

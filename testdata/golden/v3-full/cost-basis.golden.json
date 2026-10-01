@@ -1,0 +1,31 @@
+{
+  "errors": [],
+  "fixture": "cost-basis.bean",
+  "oracle_engine": "beancount-python-3.2.3",
+  "schema_version": 2,
+  "state": {
+    "balances": {
+      "Assets:Cash": {
+        "currencies": {
+          "USD": "-12"
+        },
+        "lots": []
+      },
+      "Assets:Shares": {
+        "currencies": {},
+        "lots": [
+          "{\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-02\",\"label\":null,\"number\":\"2\"},\"currency\":\"SH\",\"number\":\"6\"}"
+        ]
+      }
+    },
+    "entries": [
+      "{\"account\":\"Assets:Cash\",\"amount\":\"-12 USD\",\"date\":\"2000-01-04\",\"kind\":\"balance\",\"metadata\":{},\"source\":{\"file\":\"cost-basis.bean\",\"line\":10},\"tolerance\":null}",
+      "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"cost-basis.bean\",\"line\":3}}",
+      "{\"account\":\"Assets:Shares\",\"amount\":\"6 SH\",\"date\":\"2000-01-04\",\"kind\":\"balance\",\"metadata\":{},\"source\":{\"file\":\"cost-basis.bean\",\"line\":11},\"tolerance\":null}",
+      "{\"account\":\"Assets:Shares\",\"booking\":null,\"currencies\":[\"SH\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"cost-basis.bean\",\"line\":2}}",
+      "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"initial lot\",\"payee\":\"buy\",\"postings\":[{\"account\":\"Assets:Shares\",\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-02\",\"label\":null,\"number\":\"2\"},\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"SH\",\"number\":\"10\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-20\"}}],\"source\":{\"file\":\"cost-basis.bean\",\"line\":4},\"tags\":[]}",
+      "{\"date\":\"2000-01-03\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"sell at cost\",\"payee\":\"sell\",\"postings\":[{\"account\":\"Assets:Shares\",\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-02\",\"label\":null,\"number\":\"2\"},\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"SH\",\"number\":\"-4\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"8\"}}],\"source\":{\"file\":\"cost-basis.bean\",\"line\":7},\"tags\":[]}"
+    ]
+  },
+  "valid": true
+}

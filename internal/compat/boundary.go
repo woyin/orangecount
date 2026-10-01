@@ -10,10 +10,6 @@ package compat
 // unregistered evidence and must be triaged (tools/reference/jev_triage.py).
 func approvedBoundary(kind string) string {
 	switch kind {
-	case "query-unsupported":
-		// The BeanQuery-shaped workbench intentionally covers a subset of
-		// BeanQuery SQL; see ADR-0007 (workflows, not internals).
-		return "query-subset"
 	case "diagnostic-lines":
 		// OrangeCount points errors directly to the offending posting line
 		// rather than the transaction header line (docs/compatibility-ledger.json).

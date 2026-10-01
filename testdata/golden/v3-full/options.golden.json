@@ -1,0 +1,37 @@
+{
+  "errors": [],
+  "fixture": "options.bean",
+  "oracle_engine": "beancount-python-3.2.3",
+  "schema_version": 2,
+  "state": {
+    "balances": {
+      "Assets:Bank": {
+        "currencies": {
+          "EUR": "2"
+        },
+        "lots": []
+      },
+      "Assets:Cash": {
+        "currencies": {
+          "USD": "1"
+        },
+        "lots": []
+      },
+      "Equity:Opening": {
+        "currencies": {
+          "EUR": "-2",
+          "USD": "-1"
+        },
+        "lots": []
+      }
+    },
+    "entries": [
+      "{\"account\":\"Assets:Bank\",\"amount\":\"2 EUR\",\"date\":\"2000-01-03\",\"kind\":\"balance\",\"metadata\":{},\"source\":{\"file\":\"options.bean\",\"line\":11},\"tolerance\":null}",
+      "{\"account\":\"Assets:Bank\",\"booking\":null,\"currencies\":[\"EUR\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"options.bean\",\"line\":5}}",
+      "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"options.bean\",\"line\":4}}",
+      "{\"account\":\"Equity:Opening\",\"booking\":null,\"currencies\":[],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"options.bean\",\"line\":6}}",
+      "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"multi currency with elided balancing leg\",\"payee\":\"ops\",\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"1\"}},{\"account\":\"Equity:Opening\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-1\"}},{\"account\":\"Assets:Bank\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"EUR\",\"number\":\"2\"}},{\"account\":\"Equity:Opening\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"EUR\",\"number\":\"-2\"}}],\"source\":{\"file\":\"options.bean\",\"line\":7},\"tags\":[]}"
+    ]
+  },
+  "valid": true
+}

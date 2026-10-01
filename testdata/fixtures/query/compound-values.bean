@@ -1,0 +1,36 @@
+2000-01-01 open Assets:Cash USD, EUR
+2000-01-01 open Assets:Stock STK "FIFO"
+2000-01-01 open Assets:Foreign ABC "FIFO"
+2000-01-01 open Assets:Plain STK
+2000-01-01 open Income:Gains USD
+
+2000-01-02 * "first identical lot"
+  budget: 1.25 USD
+  Assets:Stock 2 STK {10 USD, "alpha"}
+    budget: 2 USD
+  Assets:Cash -20 USD
+2000-01-02 * "second identical lot"
+  Assets:Stock 2 STK {10 USD, "alpha"}
+  Assets:Cash -20 USD
+2000-01-02 * "foreign cost"
+  Assets:Foreign 1 ABC {3 EUR, "fx"}
+  Assets:Cash -3 EUR
+2000-01-02 * "plain priced units"
+  Assets:Plain 7 STK @ 2 USD
+  Assets:Cash -14 USD
+2000-01-03 * "empty label"
+  Assets:Stock 3 STK {10 USD, ""}
+  Assets:Cash -30 USD
+2000-01-03 * "plain clear"
+  Assets:Plain -7 STK @@ 14 USD
+  Assets:Cash 14 USD
+2000-01-04 * "zero cost"
+  Assets:Stock 4 STK {0 USD}
+  Assets:Cash 0 USD
+2000-01-05 * "absent label"
+  Assets:Stock 5 STK {10 USD}
+  Assets:Cash -50 USD
+2000-01-06 * "booked FIFO sale"
+  Assets:Stock -1 STK {} @ 20 USD
+  Assets:Cash 20 USD
+  Income:Gains

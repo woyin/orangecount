@@ -1,0 +1,32 @@
+{
+  "errors": [],
+  "fixture": "booking-average.bean",
+  "oracle_engine": "beancount-python-3.2.3",
+  "schema_version": 2,
+  "state": {
+    "balances": {
+      "Assets:Cash": {
+        "currencies": {
+          "USD": "-40"
+        },
+        "lots": []
+      },
+      "Assets:Shares": {
+        "currencies": {},
+        "lots": [
+          "{\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-02\",\"label\":null,\"number\":\"1\"},\"currency\":\"SH\",\"number\":\"10\"}",
+          "{\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-03\",\"label\":null,\"number\":\"3\"},\"currency\":\"SH\",\"number\":\"10\"}"
+        ]
+      }
+    },
+    "entries": [
+      "{\"account\":\"Assets:Cash\",\"amount\":\"-40 USD\",\"date\":\"2000-01-04\",\"kind\":\"balance\",\"metadata\":{},\"source\":{\"file\":\"booking-average.bean\",\"line\":11},\"tolerance\":null}",
+      "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"booking-average.bean\",\"line\":4}}",
+      "{\"account\":\"Assets:Shares\",\"amount\":\"20 SH\",\"date\":\"2000-01-04\",\"kind\":\"balance\",\"metadata\":{},\"source\":{\"file\":\"booking-average.bean\",\"line\":12},\"tolerance\":null}",
+      "{\"account\":\"Assets:Shares\",\"booking\":null,\"currencies\":[\"SH\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"booking-average.bean\",\"line\":3}}",
+      "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"average booking\",\"payee\":\"buy\",\"postings\":[{\"account\":\"Assets:Shares\",\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-02\",\"label\":null,\"number\":\"1\"},\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"SH\",\"number\":\"10\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-10\"}}],\"source\":{\"file\":\"booking-average.bean\",\"line\":5},\"tags\":[]}",
+      "{\"date\":\"2000-01-03\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"more at different price\",\"payee\":\"add\",\"postings\":[{\"account\":\"Assets:Shares\",\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-03\",\"label\":null,\"number\":\"3\"},\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"SH\",\"number\":\"10\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-30\"}}],\"source\":{\"file\":\"booking-average.bean\",\"line\":8},\"tags\":[]}"
+    ]
+  },
+  "valid": true
+}

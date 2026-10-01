@@ -1,0 +1,28 @@
+{
+  "errors": [],
+  "fixture": "tolerance-1.bean",
+  "oracle_engine": "beancount-python-3.2.3",
+  "schema_version": 2,
+  "state": {
+    "balances": {
+      "Assets:Cash": {
+        "currencies": {
+          "USD": "-1"
+        },
+        "lots": []
+      },
+      "Expenses:Food": {
+        "currencies": {
+          "USD": "1.01"
+        },
+        "lots": []
+      }
+    },
+    "entries": [
+      "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"tolerance-1.bean\",\"line\":2}}",
+      "{\"account\":\"Expenses:Food\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"tolerance-1.bean\",\"line\":3}}",
+      "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"rounding\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-1\"}},{\"account\":\"Expenses:Food\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"1.01\"}}],\"source\":{\"file\":\"tolerance-1.bean\",\"line\":4},\"tags\":[]}"
+    ]
+  },
+  "valid": true
+}

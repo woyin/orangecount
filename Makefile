@@ -91,10 +91,46 @@ visual-reference: fixturegen
 app:
 	@./apps/macos/build.sh
 
+.PHONY: mac-test mac-check mac-package mac-benchmark
+mac-test:
+	@sh ./apps/macos/test.sh
+
+mac-check: mac-test app
+	@sh ./apps/macos/check-bundle.sh
+
+mac-package: app
+	@sh ./apps/macos/package.sh
+
+mac-benchmark:
+	@sh ./apps/macos/benchmark.sh
+
 verify-native-equivalence:
 	@./tools/parity/verify_native_equivalence.sh
 
 ## Beancount v3 reference and differential testing (ADR-0008 / Parity Plan)
+.PHONY: golden-full-regen parity-full
+.PHONY: verify-private-ledger
+verify-private-ledger:
+	sh apps/macos/private-read.sh
+
+golden-full-regen:
+	uv run --project tools/reference python tools/reference/generate_full_golden.py
+
+.PHONY: query-parity query-oracle-check query-golden-regen
+query-parity:
+	$(GO) run ./tools/queryparity
+
+query-oracle-check:
+	uv run --offline --project tools/reference python tools/reference/generate_query_golden.py --check
+
+query-golden-regen:
+	uv run --offline --project tools/reference python tools/reference/generate_query_golden.py
+
+# Deterministic checked-in oracle; no Python or network required in CI.
+parity-full:
+	$(GO) run ./tools/parity -full
+	$(GO) test ./internal/snapshot -run 'TestV3Average|TestV3GlobalBooking' -count=1
+
 golden-regen:
 	uv run --project tools/reference python tools/reference/generate_golden.py
 

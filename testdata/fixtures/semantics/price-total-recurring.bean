@@ -1,0 +1,5 @@
+2000-01-01 open Assets:Stock STK
+2000-01-01 open Assets:Cash USD
+2000-01-02 * "total quote"
+  Assets:Stock -3 STK @@ 2 USD
+  Assets:Cash 2 USD

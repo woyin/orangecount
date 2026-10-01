@@ -1,0 +1,18 @@
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Equity:Opening USD
+2000-01-02 * "first"
+  Assets:Cash -2.00 USD
+    sample:
+  Equity:Opening 2.00 USD
+2000-01-03 * "middle"
+  Assets:Cash 1.0 USD
+    sample: "middle"
+  Equity:Opening -1.0 USD
+2000-01-04 * "last"
+  Assets:Cash 3.000 USD
+    sample:
+  Equity:Opening -3.000 USD
+2000-01-05 * "equal value with another precision"
+  Assets:Cash 1.00 USD
+    sample:
+  Equity:Opening -1.00 USD

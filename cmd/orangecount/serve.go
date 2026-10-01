@@ -23,6 +23,7 @@ import (
 func runServe(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("serve", flag.ContinueOnError)
 	fs.SetOutput(stderr)
+	buildOptions := semanticsFlag(fs)
 	locale := fs.String("locale", "en", "display locale (en or zh-CN)")
 	addr := fs.String("addr", defaultServeAddr, "loopback listen address")
 	sensitiveLogs := fs.Bool("sensitive-logs", false, "temporarily include sensitive diagnostic fields in local logs")
@@ -41,7 +42,7 @@ func runServe(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "orangecount serve: expected exactly one entry ledger path")
 		return 2
 	}
-	entry, initial, code := serveInitialSnapshot(fs.Arg(0), *locale, stdout, stderr)
+	entry, initial, code := serveInitialSnapshot(fs.Arg(0), *locale, stdout, stderr, *buildOptions)
 	if initial == nil {
 		return code
 	}
@@ -69,8 +70,12 @@ func runServe(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	return 0
 }
 
-func serveInitialSnapshot(entry, locale string, stdout, stderr io.Writer) (string, *snapshot.BuildResult, int) {
-	initial := snapshot.Build(entry)
+func serveInitialSnapshot(entry, locale string, stdout, stderr io.Writer, options ...snapshot.BuildOptions) (string, *snapshot.BuildResult, int) {
+	var selected snapshot.BuildOptions
+	if len(options) > 0 {
+		selected = options[0]
+	}
+	initial := snapshot.BuildWithOptions(entry, selected)
 	if err := renderDiagnostics(stdout, locale, false, initial.Diagnostics); err != nil {
 		fmt.Fprintln(stderr, err)
 		return entry, nil, 1

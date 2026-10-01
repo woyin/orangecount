@@ -1,0 +1,26 @@
+[
+  {
+    "id": "precision-acquisition",
+    "query": "SELECT str(position), str(units(position)), str(number(units(position))), str(cost(position)), str(weight), str(number(weight)) WHERE narration = 'precision acquisition'"
+  },
+  {
+    "id": "precision-reduction-and-inferred-leg",
+    "query": "SELECT str(position), str(number), str(cost(position)), str(weight) WHERE narration = 'precision reduction'"
+  },
+  {
+    "id": "precision-inventory-addition",
+    "query": "SELECT str(sum(position)), str(units(sum(position))), str(cost(sum(position))) WHERE account = 'Assets:Precision'"
+  },
+  {
+    "id": "cost-weight-context-and-unrounded-position",
+    "query": "SELECT position, number(units(position)), cost(position), weight, str(cost(position)), str(weight) WHERE account = 'Assets:PreciseCost'"
+  },
+  {
+    "id": "split-lot-quantity-precision",
+    "query": "SELECT str(number), str(position), str(cost(position)), str(weight) WHERE narration = 'split sale'"
+  },
+  {
+    "id": "total-cost-unit-precision",
+    "query": "SELECT str(position), str(cost(position)), str(weight) WHERE narration = 'total cost precision'"
+  }
+]

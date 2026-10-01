@@ -1,0 +1,5 @@
+[
+  {"id":"generated-user-meta-scopes","query":"SELECT meta('origin'), entry_meta('origin'), any_meta('origin'), meta('budget'), meta('lineno'), entry_meta('lineno')"},
+  {"id":"generated-filename-scopes","query":"SELECT filename, meta('filename'), entry_meta('filename'), any_meta('filename')","source_columns":[0,1,2,3]},
+  {"id":"absent-generated-tolerances","query":"SELECT meta('__tolerances__'), entry_meta('__tolerances__')"}
+]

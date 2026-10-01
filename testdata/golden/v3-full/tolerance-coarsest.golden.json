@@ -1,0 +1,29 @@
+{
+  "errors": [],
+  "fixture": "tolerance-coarsest.bean",
+  "oracle_engine": "beancount-python-3.2.3",
+  "schema_version": 2,
+  "state": {
+    "balances": {
+      "Assets:Cash": {
+        "currencies": {
+          "USD": "1"
+        },
+        "lots": []
+      },
+      "Equity:Opening": {
+        "currencies": {
+          "USD": "-1.04"
+        },
+        "lots": []
+      }
+    },
+    "entries": [
+      "{\"account\":\"Assets:Cash\",\"amount\":\"1.01 USD\",\"date\":\"2000-01-03\",\"kind\":\"balance\",\"metadata\":{},\"source\":{\"file\":\"tolerance-coarsest.bean\",\"line\":6},\"tolerance\":null}",
+      "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"tolerance-coarsest.bean\",\"line\":1}}",
+      "{\"account\":\"Equity:Opening\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"tolerance-coarsest.bean\",\"line\":2}}",
+      "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"mixed precision\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"1\"}},{\"account\":\"Equity:Opening\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-1.04\"}}],\"source\":{\"file\":\"tolerance-coarsest.bean\",\"line\":3},\"tags\":[]}"
+    ]
+  },
+  "valid": true
+}

@@ -1,0 +1,28 @@
+{
+  "errors": [],
+  "fixture": "price-total-recurring.bean",
+  "oracle_engine": "beancount-python-3.2.3",
+  "schema_version": 2,
+  "state": {
+    "balances": {
+      "Assets:Cash": {
+        "currencies": {
+          "USD": "2"
+        },
+        "lots": []
+      },
+      "Assets:Stock": {
+        "currencies": {
+          "STK": "-3"
+        },
+        "lots": []
+      }
+    },
+    "entries": [
+      "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"price-total-recurring.bean\",\"line\":2}}",
+      "{\"account\":\"Assets:Stock\",\"booking\":null,\"currencies\":[\"STK\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"price-total-recurring.bean\",\"line\":1}}",
+      "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"total quote\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Stock\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":{\"currency\":\"USD\",\"number\":\"0.6666666666666666666666666667\"},\"units\":{\"currency\":\"STK\",\"number\":\"-3\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"2\"}}],\"source\":{\"file\":\"price-total-recurring.bean\",\"line\":3},\"tags\":[]}"
+    ]
+  },
+  "valid": true
+}

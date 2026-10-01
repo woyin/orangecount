@@ -1165,8 +1165,18 @@ func (p *parser) parsePosting(ts []token) (Posting, bool) {
 		return Posting{}, false
 	}
 	base := p.base(ts)
-	post := Posting{At: base.At, Raw: base.Raw, Account: ts[0].text}
-	i := 1
+	post := Posting{At: base.At, Raw: base.Raw}
+	i := 0
+	if isFlag(ts[i].text) {
+		post.Flag = ts[i].text
+		i++
+		if i >= len(ts) {
+			p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
+			return post, false
+		}
+	}
+	post.Account = ts[i].text
+	i++
 	if i < len(ts) && isFlag(ts[i].text) {
 		post.Flag = ts[i].text
 		i++

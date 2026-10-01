@@ -1,0 +1,30 @@
+{
+  "errors": [],
+  "fixture": "metadata-pad.bean",
+  "oracle_engine": "beancount-python-3.2.3",
+  "schema_version": 2,
+  "state": {
+    "balances": {
+      "Assets:Padded": {
+        "currencies": {
+          "USD": "1"
+        },
+        "lots": []
+      },
+      "Equity:Padding": {
+        "currencies": {
+          "USD": "-1"
+        },
+        "lots": []
+      }
+    },
+    "entries": [
+      "{\"account\":\"Assets:Padded\",\"amount\":\"1 USD\",\"date\":\"2000-01-03\",\"kind\":\"balance\",\"metadata\":{\"budget\":{\"type\":\"amount\",\"value\":{\"currency\":\"USD\",\"number\":\"2\"}},\"origin\":{\"type\":\"string\",\"value\":\"balance posting\"}},\"source\":{\"file\":\"metadata-pad.bean\",\"line\":5},\"tolerance\":null}",
+      "{\"account\":\"Assets:Padded\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"metadata-pad.bean\",\"line\":1}}",
+      "{\"account\":\"Assets:Padded\",\"date\":\"2000-01-02\",\"kind\":\"pad\",\"metadata\":{\"origin\":{\"type\":\"string\",\"value\":\"pad entry\"}},\"source\":{\"file\":\"metadata-pad.bean\",\"line\":3},\"source_account\":\"Equity:Padding\"}",
+      "{\"account\":\"Equity:Padding\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"metadata-pad.bean\",\"line\":2}}",
+      "{\"date\":\"2000-01-02\",\"flag\":\"P\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{\"origin\":{\"type\":\"string\",\"value\":\"pad entry\"}},\"narration\":\"(Padding inserted for Balance of 1 USD for difference 1 USD)\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Padded\",\"cost\":null,\"flag\":null,\"metadata\":{\"budget\":{\"type\":\"amount\",\"value\":{\"currency\":\"USD\",\"number\":\"2\"}},\"origin\":{\"type\":\"string\",\"value\":\"balance posting\"}},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"1\"}},{\"account\":\"Equity:Padding\",\"cost\":null,\"flag\":null,\"metadata\":{\"budget\":{\"type\":\"amount\",\"value\":{\"currency\":\"USD\",\"number\":\"2\"}},\"origin\":{\"type\":\"string\",\"value\":\"balance posting\"}},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-1\"}}],\"source\":{\"file\":\"metadata-pad.bean\",\"line\":3},\"tags\":[]}"
+    ]
+  },
+  "valid": true
+}

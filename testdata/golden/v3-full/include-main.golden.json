@@ -1,0 +1,30 @@
+{
+  "errors": [],
+  "fixture": "include-main.bean",
+  "oracle_engine": "beancount-python-3.2.3",
+  "schema_version": 2,
+  "state": {
+    "balances": {
+      "Assets:Cash": {
+        "currencies": {
+          "USD": "33"
+        },
+        "lots": []
+      },
+      "Equity:Opening": {
+        "currencies": {
+          "USD": "-33"
+        },
+        "lots": []
+      }
+    },
+    "entries": [
+      "{\"account\":\"Assets:Cash\",\"amount\":\"33 USD\",\"date\":\"2000-01-03\",\"kind\":\"balance\",\"metadata\":{},\"source\":{\"file\":\"include-main.bean\",\"line\":8},\"tolerance\":null}",
+      "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"include-main.bean\",\"line\":3}}",
+      "{\"account\":\"Equity:Opening\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"include-main.bean\",\"line\":4}}",
+      "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"child txn\",\"payee\":\"child\",\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"22\"}},{\"account\":\"Equity:Opening\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-22\"}}],\"source\":{\"file\":\"child.bean\",\"line\":1},\"tags\":[]}",
+      "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"parent txn\",\"payee\":\"parent\",\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"11\"}},{\"account\":\"Equity:Opening\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-11\"}}],\"source\":{\"file\":\"include-main.bean\",\"line\":5},\"tags\":[]}"
+    ]
+  },
+  "valid": true
+}

@@ -218,6 +218,30 @@ type Graph struct {
 	Order       []FileID
 	Edges       map[FileID][]IncludeEdge
 	Diagnostics []GraphIssue
+	readStamps  map[string]os.FileInfo
+}
+
+// ChangedOnDisk checks the attributes captured before each source read,
+// including failed reads. Embedders use it at build completion to avoid
+// absorbing edits to newly discovered includes into a fresh watch baseline.
+// It performs stat calls only; it never rereads source contents.
+func (g *Graph) ChangedOnDisk() bool {
+	if g == nil {
+		return false
+	}
+	for path, before := range g.readStamps {
+		after, _ := os.Stat(path)
+		if before == nil || after == nil {
+			if (before == nil) != (after == nil) {
+				return true
+			}
+			continue
+		}
+		if !os.SameFile(before, after) || before.Size() != after.Size() || !before.ModTime().Equal(after.ModTime()) {
+			return true
+		}
+	}
+	return false
 }
 
 // File returns the source file for id.
@@ -334,9 +358,10 @@ func LoadGraph(entry string) (*Graph, error) {
 		return nil, err
 	}
 	g := &Graph{
-		Files:  make(map[FileID]*SourceFile),
-		ByPath: make(map[string]FileID),
-		Edges:  make(map[FileID][]IncludeEdge),
+		Files:      make(map[FileID]*SourceFile),
+		ByPath:     make(map[string]FileID),
+		Edges:      make(map[FileID][]IncludeEdge),
+		readStamps: make(map[string]os.FileInfo),
 	}
 	state := make(map[string]visitState)
 	stack := make([]FileID, 0, 8)
@@ -352,6 +377,7 @@ func LoadGraph(entry string) (*Graph, error) {
 			}
 			return id
 		}
+		g.readStamps[path], _ = os.Stat(path)
 		data, readErr := os.ReadFile(path)
 		id := FileID(len(g.Files) + 1)
 		g.ByPath[path] = id

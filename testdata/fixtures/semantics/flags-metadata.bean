@@ -1,0 +1,11 @@
+2000-01-01 open Assets:Stock STK "FIFO"
+  category: "synthetic"
+2000-01-01 open Assets:Cash USD
+2000-01-02 * "buy" #tag ^link
+  memo: "transaction metadata"
+  ! Assets:Stock 1 STK {10 USD, "tag"}
+    origin: "synthetic"
+    score: 1.25
+    active: TRUE
+    recorded: 2000-01-01
+  Assets:Cash -10 USD

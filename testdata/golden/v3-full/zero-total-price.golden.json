@@ -1,0 +1,25 @@
+{
+  "errors": [],
+  "fixture": "zero-total-price.bean",
+  "oracle_engine": "beancount-python-3.2.3",
+  "schema_version": 2,
+  "state": {
+    "balances": {
+      "Assets:Cash": {
+        "currencies": {},
+        "lots": []
+      },
+      "Assets:Stock": {
+        "currencies": {},
+        "lots": []
+      }
+    },
+    "entries": [
+      "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"zero-total-price.bean\",\"line\":2}}",
+      "{\"account\":\"Assets:Stock\",\"booking\":null,\"currencies\":[\"STK\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"zero-total-price.bean\",\"line\":1}}",
+      "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"zero quantity nonzero total quote\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Stock\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":{\"currency\":\"USD\",\"number\":\"0\"},\"units\":{\"currency\":\"STK\",\"number\":\"0\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"0\"}}],\"source\":{\"file\":\"zero-total-price.bean\",\"line\":3},\"tags\":[]}",
+      "{\"date\":\"2000-01-03\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"zero quantity zero total quote\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Stock\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":{\"currency\":\"USD\",\"number\":\"0\"},\"units\":{\"currency\":\"STK\",\"number\":\"0\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"0\"}}],\"source\":{\"file\":\"zero-total-price.bean\",\"line\":6},\"tags\":[]}"
+    ]
+  },
+  "valid": true
+}

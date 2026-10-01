@@ -9,12 +9,14 @@ package query
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"io"
 	"math/big"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
 
@@ -61,6 +63,8 @@ type Query struct {
 	GroupBy []Expr
 	OrderBy []OrderItem
 	Limit   int
+	// LimitSpecified distinguishes LIMIT 0 from an absent limit for typed reads.
+	LimitSpecified bool
 }
 
 // SelectItem is one projected expression with an optional output alias.
@@ -115,19 +119,63 @@ func EvaluateQuery(query Query, evaluation ledger.Evaluation) (Result, error) {
 	if err != nil {
 		return Result{}, err
 	}
-	rows, err = applyWhere(query.Where, rows)
+	return evaluateRows(query, rows)
+}
+
+// evaluateRows is the common execution pipeline. Typed compilation binds
+// expressions before crossing it; legacy callers retain their existing AST.
+func evaluateRows(query Query, rows []Row) (Result, error) {
+	return evaluateRowsWithCompare(query, rows, legacyComparison)
+}
+
+type rowComparison func(any, any) (int, error)
+
+func legacyComparison(left, right any) (int, error) { return compareValues(left, right), nil }
+
+func evaluateRowsWithCompare(query Query, rows []Row, compare rowComparison) (Result, error) {
+	return evaluateRowsBounded(query, rows, compare, nil)
+}
+
+func evaluateRowsBounded(query Query, rows []Row, compare rowComparison, budget *executionBudget) (Result, error) {
+	if err := budget.step("where"); err != nil {
+		return Result{}, err
+	}
+	rows, err := applyWhere(query.Where, rows)
 	if err != nil {
 		return Result{}, err
 	}
-	groups := groupRows(rows, query.GroupBy, query.Select)
+	if err := budget.step("group"); err != nil {
+		return Result{}, err
+	}
+	groups, err := groupRows(rows, query.GroupBy, query.Select)
+	if err != nil {
+		return Result{}, err
+	}
 	selectItems := expandStarSelect(rows, query.Select)
+	if err := budget.step("project"); err != nil {
+		return Result{}, err
+	}
 	result, err := projectGroups(selectItems, groups, query.OrderBy)
 	if err != nil {
 		return Result{}, err
 	}
-	sortResultRows(result, query.OrderBy)
+	if err := budget.step("sort"); err != nil {
+		return Result{}, err
+	}
+	boundedCompare := func(left, right any) (int, error) {
+		if err := budget.step(""); err != nil {
+			return 0, err
+		}
+		return compare(left, right)
+	}
+	if err := sortResultRowsBy(result, query.OrderBy, boundedCompare); err != nil {
+		return Result{}, err
+	}
 	if query.Limit > 0 && len(result.Rows) > query.Limit {
 		result.Rows = result.Rows[:query.Limit]
+	}
+	if err := budget.step(""); err != nil {
+		return Result{}, err
 	}
 	return result, nil
 }
@@ -191,6 +239,9 @@ func projectGroups(selectItems []SelectItem, groups [][]Row, orderBy []OrderItem
 		if alias == "" {
 			alias = item.Expr.String()
 		}
+		if projected[alias] {
+			return Result{}, fmt.Errorf("duplicate output title %q cannot be represented by legacy JSON/CSV; use typed-json", alias)
+		}
 		result.Columns = append(result.Columns, alias)
 		projected[alias] = true
 	}
@@ -228,8 +279,12 @@ func projectGroups(selectItems []SelectItem, groups [][]Row, orderBy []OrderItem
 // sortResultRows applies the ORDER BY list; ties keep their prior (stable)
 // order, and rows missing the sort key compare via formatValue.
 func sortResultRows(result Result, orderBy []OrderItem) {
+	_ = sortResultRowsBy(result, orderBy, legacyComparison)
+}
+
+func sortResultRowsBy(result Result, orderBy []OrderItem, compare rowComparison) error {
 	if len(orderBy) == 0 {
-		return
+		return nil
 	}
 	defer func() {
 		// Strip the ORDER BY helper keys that are not declared columns so
@@ -246,12 +301,20 @@ func sortResultRows(result Result, orderBy []OrderItem) {
 			}
 		}
 	}()
+	var sortErr error
 	sort.SliceStable(result.Rows, func(i, j int) bool {
+		if sortErr != nil {
+			return false
+		}
 		left, right := result.Rows[i], result.Rows[j]
 		for _, item := range orderBy {
 			lv := left[item.Expr.String()]
 			rv := right[item.Expr.String()]
-			comparison := compareValues(lv, rv)
+			comparison, err := compare(lv, rv)
+			if err != nil {
+				sortErr = err
+				return false
+			}
 			if comparison == 0 {
 				continue
 			}
@@ -262,12 +325,13 @@ func sortResultRows(result Result, orderBy []OrderItem) {
 		}
 		return false
 	})
+	return sortErr
 }
 
 // groupRows partitions the joined rows for aggregation: no GROUP BY and no
 // aggregate keeps every row its own group, no GROUP BY with aggregates makes
-// one group, and otherwise rows group by their formatted key values.
-func groupRows(rows []Row, groupBy []Expr, selectItems []SelectItem) [][]Row {
+// one group, and otherwise rows group by canonical typed key values.
+func groupRows(rows []Row, groupBy []Expr, selectItems []SelectItem) ([][]Row, error) {
 	aggregate := false
 	for _, item := range selectItems {
 		aggregate = aggregate || item.Expr.aggregate()
@@ -275,25 +339,41 @@ func groupRows(rows []Row, groupBy []Expr, selectItems []SelectItem) [][]Row {
 	if len(groupBy) == 0 && !aggregate {
 		groups := make([][]Row, 0, len(rows))
 		for _, row := range rows {
+			if err := rowBudget(row, nil).step(""); err != nil {
+				return nil, err
+			}
 			groups = append(groups, []Row{row})
 		}
-		return groups
+		return groups, nil
 	}
 	if len(groupBy) == 0 {
 		if len(rows) == 0 {
-			return nil
+			return nil, nil
 		}
-		return [][]Row{rows}
+		return [][]Row{rows}, nil
 	}
 	groups := make([][]Row, 0)
 	indexes := make(map[string]int)
 	for _, row := range rows {
-		parts := make([]string, len(groupBy))
-		for i, expr := range groupBy {
-			value, _ := expr.eval(row, []Row{row})
-			parts[i] = formatValue(value)
+		if err := rowBudget(row, nil).step(""); err != nil {
+			return nil, err
 		}
-		key := strings.Join(parts, "\x00")
+		parts := make([]struct {
+			Type  string `json:"type"`
+			Value any    `json:"value"`
+		}, len(groupBy))
+		for i, expr := range groupBy {
+			value, err := expr.eval(row, []Row{row})
+			if err != nil {
+				return nil, err
+			}
+			parts[i].Type, parts[i].Value = fmt.Sprintf("%T", value), value
+		}
+		encoded, err := json.Marshal(parts)
+		if err != nil {
+			return nil, err
+		}
+		key := string(encoded)
 		index, ok := indexes[key]
 		if !ok {
 			index = len(groups)
@@ -302,7 +382,7 @@ func groupRows(rows []Row, groupBy []Expr, selectItems []SelectItem) [][]Row {
 		}
 		groups[index] = append(groups[index], row)
 	}
-	return groups
+	return groups, nil
 }
 
 func firstRow(rows []Row) Row {
@@ -361,6 +441,15 @@ func datePartDecimal(date ledger.Date, part string) ledger.Decimal {
 }
 
 func postingRows(evaluation ledger.Evaluation) []Row {
+	return postingRowsWithSchema(evaluation, false)
+}
+
+func postingRowsWithSchema(evaluation ledger.Evaluation, standard bool) []Row {
+	rows, _ := postingRowsWithBudget(evaluation, standard, nil)
+	return rows
+}
+
+func postingRowsWithBudget(evaluation ledger.Evaluation, standard bool, budget *executionBudget) ([]Row, error) {
 	rows := make([]Row, 0)
 	runningBalances := map[string]map[string]ledger.Decimal{}
 	// Upstream beanquery answers from the loader's chronologically sorted
@@ -368,7 +457,14 @@ func postingRows(evaluation ledger.Evaluation) []Row {
 	// stable sort keeps source order within one day). Raw source order would
 	// interleave years whenever a multi-year file precedes the year files.
 	ordered := append([]ledger.EntryRecord(nil), evaluation.Entries...)
+	var sortErr error
 	sort.SliceStable(ordered, func(i, j int) bool {
+		if sortErr != nil {
+			return false
+		}
+		if sortErr = budget.step("source"); sortErr != nil {
+			return false
+		}
 		if ordered[i].Date.Year != ordered[j].Date.Year {
 			return ordered[i].Date.Year < ordered[j].Date.Year
 		}
@@ -377,7 +473,13 @@ func postingRows(evaluation ledger.Evaluation) []Row {
 		}
 		return ordered[i].Date.Day < ordered[j].Date.Day
 	})
+	if sortErr != nil {
+		return nil, sortErr
+	}
 	for _, entry := range ordered {
+		if err := budget.step("source"); err != nil {
+			return nil, err
+		}
 		var transaction *ledger.Transaction
 		switch value := entry.Directive.(type) {
 		case *ledger.Transaction:
@@ -390,10 +492,38 @@ func postingRows(evaluation ledger.Evaluation) []Row {
 			continue
 		}
 		for _, posting := range transaction.Postings {
+			if err := budget.step("source"); err != nil {
+				return nil, err
+			}
+			if budget != nil && posting.Units != nil {
+				if err := budget.numericValue(ledger.NewDecimal(posting.Units.Number.Rat)); err != nil {
+					return nil, err
+				}
+				if err := budget.decimalText(posting.Units.Number.Raw); err != nil {
+					return nil, err
+				}
+				if posting.Price != nil {
+					if err := budget.decimalText(posting.Price.Amount.Number.Raw); err != nil {
+						return nil, err
+					}
+				}
+				if posting.Cost != nil {
+					for _, component := range posting.Cost.Components {
+						if component.Kind == ledger.ValueAmount {
+							if err := budget.decimalText(component.Amount.Number.Raw); err != nil {
+								return nil, err
+							}
+						}
+					}
+				}
+			}
 			// Journal directive filters use the transaction flag (the same flag
 			// shown in Fava's journal). Preserve a separate posting_flag for
 			// callers that need the lower-level posting marker.
 			row := Row{"date": transaction.Date.Raw, "account": posting.Account, "flag": transaction.Flag, "posting_flag": posting.Flag, "narration": transaction.Narration, "payee": transaction.Payee, "tags": append([]string(nil), transaction.Tags...), "links": append([]string(nil), transaction.Links...), "file": entry.File, "span": entry.Span.String(), "kind": string(transaction.Kind())}
+			if budget != nil {
+				row["_query_execution"] = budget
+			}
 			// BeanQuery's derived date columns let GROUP BY year, month
 			// partition postings without spelling year(date).
 			row["year"] = datePartDecimal(transaction.Date, "year")
@@ -421,10 +551,38 @@ func postingRows(evaluation ledger.Evaluation) []Row {
 			if posting.Cost != nil {
 				row["cost"] = posting.Cost.Raw
 			}
+			if standard {
+				if posting.Units != nil {
+					row["_number_source"] = posting.Units.Number
+					position := queryPosition(posting)
+					row["position"] = position
+					if position.Cost != nil || posting.Price == nil {
+						row["weight"] = positionCost(position)
+					} else {
+						row["weight"] = queryPriceWeight(posting)
+					}
+				}
+				row["filename"] = entry.File
+				row["lineno"] = ledger.NewDecimal(new(big.Rat).SetInt64(int64(posting.At.StartLine)))
+				line := posting.At.StartLine
+				if posting.SourceMetadata.Present {
+					row["filename"] = posting.SourceMetadata.File
+					line = posting.SourceMetadata.Line
+					row["lineno"] = ledger.NewDecimal(new(big.Rat).SetInt64(int64(line)))
+				}
+				if line <= 0 || row["filename"] == "" {
+					row["filename"], row["lineno"] = nil, nil
+				}
+				postingFile, _ := row["filename"].(string)
+				row["_posting_meta"] = queryMetadata{Values: posting.Meta, Filename: postingFile, Line: line}
+				// Pad-generated entries use balance source metadata on their
+				// postings and do not carry the ordinary transaction tolerance map.
+				row["_entry_meta"] = queryMetadata{Values: transaction.Meta, Filename: entry.File, Line: entry.Span.StartLine, HasTolerances: !posting.SourceMetadata.Present}
+			}
 			rows = append(rows, row)
 		}
 	}
-	return rows
+	return rows, nil
 }
 
 func entryRows(evaluation ledger.Evaluation) []Row {
@@ -485,6 +643,7 @@ const (
 	tokenLParen
 	tokenRParen
 	tokenStar
+	tokenDate
 )
 
 type queryToken struct {
@@ -496,11 +655,20 @@ type queryToken struct {
 // delimiters. Each token family has its own scanner; the loop only routes on
 // the leading rune.
 func lex(text string) []queryToken {
+	return lexQuery(text, false)
+}
+
+func lexQuery(text string, dates bool) []queryToken {
 	tokens := make([]queryToken, 0)
 	for i := 0; i < len(text); {
 		r, size := utf8.DecodeRuneInString(text[i:])
 		if unicode.IsSpace(r) {
 			i += size
+			continue
+		}
+		if dates && dateTokenAt(text, i) {
+			tokens = append(tokens, queryToken{kind: tokenDate, text: text[i : i+10]})
+			i += 10
 			continue
 		}
 		if r == '\'' || r == '"' {
@@ -525,6 +693,27 @@ func lex(text string) []queryToken {
 		tokens = append(tokens, token)
 	}
 	return tokens
+}
+
+func dateTokenAt(text string, offset int) bool {
+	if len(text)-offset < 10 {
+		return false
+	}
+	value := text[offset : offset+10]
+	for i := 0; i < 10; i++ {
+		if i == 4 || i == 7 {
+			if value[i] != '-' {
+				return false
+			}
+		} else if value[i] < '0' || value[i] > '9' {
+			return false
+		}
+	}
+	if len(text) == offset+10 {
+		return true
+	}
+	r, _ := utf8.DecodeRuneInString(text[offset+10:])
+	return unicode.IsSpace(r) || strings.ContainsRune(",()*<>=!+-/", r)
 }
 
 // delimiterKind maps one-rune delimiters to their token kinds.
@@ -592,8 +781,9 @@ func lexWord(text string, i int) (queryToken, int) {
 }
 
 type queryParser struct {
-	tokens []queryToken
-	index  int
+	tokens          []queryToken
+	index           int
+	defaultPostings bool
 }
 
 // parse reads one SELECT statement clause by clause. Each clause parser
@@ -610,14 +800,17 @@ func (p *queryParser) parse() (Query, error) {
 	if len(query.Select) == 0 {
 		return query, p.errorf("SELECT requires at least one expression")
 	}
-	if !p.acceptWord("from") {
+	if p.acceptWord("from") {
+		from, err := p.expectWord("table name")
+		if err != nil {
+			return query, err
+		}
+		query.From = from
+	} else if p.defaultPostings {
+		query.From = "postings"
+	} else {
 		return query, p.errorf("query requires FROM")
 	}
-	from, err := p.expectWord("table name")
-	if err != nil {
-		return query, err
-	}
-	query.From = from
 	if err := p.parseWhere(&query); err != nil {
 		return query, err
 	}
@@ -734,6 +927,7 @@ func (p *queryParser) parseLimit(query *Query) error {
 		return p.errorf("invalid LIMIT")
 	}
 	query.Limit = limit
+	query.LimitSpecified = true
 	return nil
 }
 
@@ -745,10 +939,25 @@ func (p *queryParser) expression(minPrecedence int) (Expr, error) {
 	for {
 		token := p.peek()
 		precedence := operatorPrecedence(token)
+		isNull := p.defaultPostings && token.kind == tokenWord && strings.EqualFold(token.text, "is")
+		if isNull {
+			precedence = 3
+		}
 		if precedence < minPrecedence {
 			break
 		}
 		p.next()
+		if isNull {
+			operator := "is null"
+			if p.acceptWord("not") {
+				operator = "is not null"
+			}
+			if !p.acceptWord("null") {
+				return nil, p.errorf("IS requires NULL or NOT NULL")
+			}
+			left = unaryExpr{operator: operator, inner: left}
+			continue
+		}
 		right, rightErr := p.expression(precedence + 1)
 		if rightErr != nil {
 			return nil, rightErr
@@ -761,6 +970,9 @@ func (p *queryParser) expression(minPrecedence int) (Expr, error) {
 // primary parses one primary expression: literals, parenthesized groups,
 // unary operators, function calls, and field references.
 func (p *queryParser) primary() (Expr, error) {
+	if p.defaultPostings && p.index >= len(p.tokens) {
+		return nil, p.errorf("unexpected end of expression")
+	}
 	token := p.next()
 	switch token.kind {
 	case tokenString:
@@ -771,9 +983,18 @@ func (p *queryParser) primary() (Expr, error) {
 			return nil, p.errorf("invalid number %q", token.text)
 		}
 		return literalExpr{value: decimal, display: token.text}, nil
+	case tokenDate:
+		parsed, err := time.Parse("2006-01-02", token.text)
+		if err != nil || parsed.Year() < 1 {
+			return nil, p.errorf("invalid date %q", token.text)
+		}
+		return literalExpr{value: parseDate(token.text), display: token.text}, nil
 	case tokenLParen:
 		return p.parenthesized()
 	case tokenOperator:
+		if p.defaultPostings && token.text == "+" {
+			return p.primary()
+		}
 		if token.text == "-" {
 			inner, err := p.primary()
 			if err != nil {
@@ -800,13 +1021,30 @@ func (p *queryParser) parenthesized() (Expr, error) {
 	if !p.accept(tokenRParen) {
 		return nil, p.errorf("missing closing parenthesis")
 	}
+	if p.defaultPostings {
+		return parenExpr{inner: expr}, nil
+	}
 	return expr, nil
 }
 
 // wordPrimary parses a leading word: NOT, a function call, or a field name.
 func (p *queryParser) wordPrimary(token queryToken) (Expr, error) {
+	if p.defaultPostings {
+		switch strings.ToLower(token.text) {
+		case "null":
+			return literalExpr{value: nil, display: "NULL"}, nil
+		case "true", "false":
+			return literalExpr{value: strings.EqualFold(token.text, "true"), display: strings.ToUpper(token.text)}, nil
+		}
+	}
 	if strings.EqualFold(token.text, "not") {
-		inner, err := p.primary()
+		var inner Expr
+		var err error
+		if p.defaultPostings {
+			inner, err = p.expression(3)
+		} else {
+			inner, err = p.primary()
+		}
 		if err != nil {
 			return nil, err
 		}
@@ -1080,6 +1318,8 @@ func walkFields(expr Expr, visit func(string)) {
 		visit(node.name)
 	case unaryExpr:
 		walkFields(node.inner, visit)
+	case parenExpr:
+		walkFields(node.inner, visit)
 	case binaryExpr:
 		walkFields(node.left, visit)
 		walkFields(node.right, visit)
@@ -1150,6 +1390,12 @@ type unaryExpr struct {
 	operator string
 	inner    Expr
 }
+
+type parenExpr struct{ inner Expr }
+
+func (e parenExpr) String() string                        { return "(" + e.inner.String() + ")" }
+func (e parenExpr) aggregate() bool                       { return e.inner.aggregate() }
+func (e parenExpr) eval(row Row, rows []Row) (any, error) { return e.inner.eval(row, rows) }
 
 func (e unaryExpr) String() string  { return e.operator + " " + e.inner.String() }
 func (e unaryExpr) aggregate() bool { return e.inner.aggregate() }

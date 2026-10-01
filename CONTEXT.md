@@ -34,6 +34,26 @@ _Avoid_: v2 parity, best-effort compatibility
 A behavior difference that alters a ledger's accounting result, including balances, inventories, booking, or query values, rather than merely improving presentation or diagnostics.
 _Avoid_: bug fix, formatting change
 
+**Semantics profile**:
+An explicitly selected set of accounting interpretation rules under which a ledger is evaluated and its results are compared. Results produced under different profiles must not be presented as the same accounting view.
+_Avoid_: display mode, locale, implicit migration
+
+**Effective booking method**:
+The lot-selection rule that actually governs an account after resolving its explicit declaration, ledger-wide configuration, and the selected semantics profile's default.
+_Avoid_: raw booking string, account label, display-only average
+
+**Valuation completeness**:
+Whether every relevant amount can be valued under the selected date, currency, and valuation method. A valued portion remains distinguishable from a complete total; unavailable valuation is distinguishable from a real zero.
+_Avoid_: estimated total, silent currency exclusion, zero fallback
+
+**Account scope**:
+Whether an analysis includes postings directly owned by an account or all postings in that account and its descendant accounts. Scope does not change the meaning of a cutoff balance or remove opening inventory from a period analysis.
+_Avoid_: search filter, account-name substring, implicit subtotal
+
+**Account directory**:
+A hierarchy prefix used to browse descendant accounts even when that prefix has no account-opening declaration. Its subtree can have activity while its direct balance and booking method remain absent.
+_Avoid_: opened account, fabricated account lifecycle
+
 ### Workbench and Fava parity
 
 **Built-in web interface**:
@@ -497,7 +517,7 @@ A display locale shipped with the product's complete interface and diagnostic tr
 _Avoid_: partial translation, fallback-only language
 
 **Average cost booking**:
-OrangeCount's first implementation of Beancount's `Booking.AVERAGE` (an enum Beancount v3 defines but leaves disabled, returning "AVERAGE method is not supported"). It is per-account opt-in via the standard `booking "AVERAGE"` open directive; the default booking (FIFO) is unchanged. Lots are merged lazily at reduction time into a single weighted-average lot whose date is the earliest contributing lot's date; reductions with an explicit cost and cross-cost-currency merges are rejected with diagnostics. It never rewrites the source ledger and produces no intermediate files.
+OrangeCount's extension implementing `Booking.AVERAGE` (an enum Beancount v3 defines but leaves disabled, returning "AVERAGE method is not supported"). It is explicitly selected by an account open directive or ledger-wide booking declaration; an account declaration takes precedence. It represents a cost basis rule, not a display preference. Lots are merged lazily at reduction time into a single weighted-average lot whose date is the earliest contributing lot's date; reductions with an explicit cost and cross-cost-currency merges are rejected with diagnostics. It never rewrites the source ledger and produces no intermediate files.
 _Avoid_: eager merge, global booking change, display-only average
 
 **Stat-only change detection**:

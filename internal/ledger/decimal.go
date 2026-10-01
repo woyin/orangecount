@@ -16,7 +16,10 @@ import (
 // numbers are decimal, but rational storage avoids floating-point rounding at
 // every intermediate step; String preserves a terminating decimal whenever
 // one exists and otherwise emits a deterministic fraction.
-type Decimal struct{ rat *big.Rat }
+type Decimal struct {
+	rat         *big.Rat
+	decimalText string // representation only; excluded from equality and JSON
+}
 
 // Zero returns the additive identity, safe to use without construction.
 func Zero() Decimal { return Decimal{rat: new(big.Rat)} }
@@ -30,7 +33,16 @@ func NewDecimal(r *big.Rat) Decimal {
 }
 
 // DecimalFromNumber converts a parsed Number literal into a Decimal.
-func DecimalFromNumber(number Number) Decimal { return NewDecimal(number.Rat) }
+func DecimalFromNumber(number Number) Decimal {
+	value := NewDecimal(number.Rat)
+	value.decimalText = number.Raw
+	if number.DecimalText != "" {
+		if represented, err := ParseDecimal(number.DecimalText); err == nil && represented.Equal(value) {
+			value.decimalText = number.DecimalText
+		}
+	}
+	return value
+}
 
 // ParseDecimal parses source text (commas allowed) into an exact Decimal.
 func ParseDecimal(raw string) (Decimal, error) {
@@ -66,26 +78,53 @@ func (d Decimal) Sign() int {
 
 // Add returns the exact sum; receivers are never mutated.
 func (d Decimal) Add(other Decimal) Decimal {
-	return Decimal{rat: new(big.Rat).Add(d.Rat(), other.Rat())}
+	return decimalWithPrecision(new(big.Rat).Add(d.Rat(), other.Rat()), max(d.representationScale(), other.representationScale()))
 }
 
 // Sub returns the exact difference.
 func (d Decimal) Sub(other Decimal) Decimal {
-	return Decimal{rat: new(big.Rat).Sub(d.Rat(), other.Rat())}
+	return decimalWithPrecision(new(big.Rat).Sub(d.Rat(), other.Rat()), max(d.representationScale(), other.representationScale()))
 }
 
 // Mul returns the exact product.
 func (d Decimal) Mul(other Decimal) Decimal {
-	return Decimal{rat: new(big.Rat).Mul(d.Rat(), other.Rat())}
+	return decimalWithPrecision(new(big.Rat).Mul(d.Rat(), other.Rat()), d.representationScale()+other.representationScale())
 }
 
 // Quo returns the exact quotient; division by zero follows big.Rat semantics.
 func (d Decimal) Quo(other Decimal) Decimal {
-	return Decimal{rat: new(big.Rat).Quo(d.Rat(), other.Rat())}
+	return decimalWithPrecision(new(big.Rat).Quo(d.Rat(), other.Rat()), max(0, d.representationScale()-other.representationScale()))
 }
 
 // Neg returns the additive inverse.
-func (d Decimal) Neg() Decimal { return Decimal{rat: new(big.Rat).Neg(d.Rat())} }
+func (d Decimal) Neg() Decimal {
+	return decimalWithPrecision(new(big.Rat).Neg(d.Rat()), d.representationScale())
+}
+
+func (d Decimal) representationScale() int {
+	text := d.decimalText
+	if text == "" {
+		return 0
+	}
+	if strings.ContainsAny(text, "/eE") {
+		return 0
+	}
+	if at := strings.IndexByte(text, '.'); at >= 0 {
+		return len(text) - at - 1
+	}
+	return 0
+}
+
+// Precision is carried only when the spelling exactly represents the result.
+// This never rounds a balance, cost, residual or AVERAGE rational.
+func decimalWithPrecision(rational *big.Rat, scale int) Decimal {
+	value := Decimal{rat: rational}
+	text := rational.FloatString(scale)
+	if represented, ok := new(big.Rat).SetString(text); ok && represented.Cmp(rational) == 0 {
+		value.decimalText = text
+	}
+	return value
+}
 
 // Cmp compares magnitudes: -1, 0, or +1.
 func (d Decimal) Cmp(other Decimal) int { return d.Rat().Cmp(other.Rat()) }

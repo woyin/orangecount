@@ -2,6 +2,8 @@
 
 Beancount v3 defines `Booking.AVERAGE` (in `core/data.py`) but its implementation in `parser/booking_method.py` is **disabled** — `booking_method_AVERAGE` returns the error "AVERAGE method is not supported" and the real algorithm lives behind an `if False:` block marked "FIXME: Future implementation here." OrangeCount will implement it, so stock accounts that declare `booking "AVERAGE"` get a self-consistent average cost basis (the displayed average equals the ledger's realized cost and remaining basis, unlike a display-only average over a FIFO ledger).
 
+2026-10-01 amendment: [ADR-0049](0049-stage-accounting-corrections-with-explicit-semantics-profiles.md) scopes the original FIFO default to legacy and permits explicit account or global AVERAGE under v3, whose default is STRICT. The lazy merge and exact arithmetic contract below remains applicable.
+
 ## Decision
 
 Implement AVERAGE as a per-account opt-in booking method in `internal/ledger/evaluator.go`. The default booking (FIFO) is unchanged; only accounts whose `open` directive sets `booking "AVERAGE"` use it.
@@ -13,7 +15,7 @@ Semantics, fixed by grilling consensus (D3):
 - **Explicit-cost reductions rejected**: a reduction that names its own cost (`{price}`) is diagnosed and not booked, because AVERAGE's contract is that the engine owns the cost. (FIFO accounts remain free to use explicit costs.)
 - **Cross-cost-currency merge rejected**: lots held in different cost currencies cannot be averaged together; the reduction is diagnosed and not merged. (Split by cost currency — use separate accounts.)
 - **Partial fills / negative positions**: reuse OrangeCount's existing `E-EVAL-INVENTORY` diagnostic, consistent with FIFO.
-- **Zero-cost lots** (plain currency balances): do not participate in averaging; they flow through normal balance handling.
+- **Costless amounts** (plain currency balances): do not participate in averaging. Actual costed lots with a unit cost of zero do participate in same-cost-currency averaging.
 - **Balance assertions**: assert against the post-booking inventory, as with every booking method.
 
 ## Why not the alternatives
@@ -24,6 +26,6 @@ Semantics, fixed by grilling consensus (D3):
 
 ## Consequences
 
-- OrangeCount is the first working implementation of Beancount's AVERAGE booking. Acceptance is therefore against Beancount's documented intent (the disabled sketch + the Booking enum), not against Beancount output (which errors out). This is recorded honestly as an OC-first extension of a Beancount-envisioned feature, not as v3 coverage completion.
+- OrangeCount implements AVERAGE as a declared extension. Acceptance is therefore against Beancount's documented intent (the disabled sketch + the Booking enum), not against Beancount output (which errors out). This is recorded honestly as an OC-first extension of a Beancount-envisioned feature, not as v3 coverage completion.
 - This is a real ledger-semantics change for opt-in accounts (it changes their balances, costs, and realized P&L vs FIFO). It is gated behind an explicit per-account directive, so ledgers that do not opt in are byte-for-byte unaffected.
 - A new report path computes a per-period average-cost time series for the account page by replaying lot history with the same booking predicates, so the series' last point reconciles with the holdings average.

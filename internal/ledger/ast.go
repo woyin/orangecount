@@ -361,10 +361,21 @@ type Posting struct {
 	Cost    *CostSpec
 	Price   *PriceSpec
 	Meta    []Metadata
+	// SourceMetadata is the effective filename/line inherited by generated
+	// postings. At remains the location used for ledger navigation/diagnostics.
+	// A value copy avoids mutable aliases in snapshots; Present distinguishes
+	// an explicit missing source from the normal source-posting fallback.
+	SourceMetadata PostingSourceMetadata
 	// averageRejected is evaluator-only booking state. It is never parsed from
 	// or emitted to source/report consumers; applyPosting uses it to diagnose a
 	// disallowed AVERAGE reduction without changing inventory or balances.
 	averageRejected bool
+}
+
+type PostingSourceMetadata struct {
+	Present bool
+	File    string
+	Line    int
 }
 
 // Span returns the posting's source span for navigation and diagnostics.
@@ -388,6 +399,9 @@ type PriceSpec struct {
 	At     source.Span
 	Total  bool
 	Amount Amount
+	// PerUnit is the evaluated v3 representation; Total/Amount retain the
+	// original source quote for exact weights and source/journal navigation.
+	PerUnit *Amount
 }
 
 // Number is an exact decimal backed by a big.Rat plus the source text.
@@ -395,6 +409,9 @@ type Number struct {
 	Raw string
 	Rat *big.Rat
 	At  source.Span
+	// DecimalText retains numeric representation after booking without
+	// changing Raw, which remains the accounting/tolerance source spelling.
+	DecimalText string `json:"-"`
 }
 
 // String returns the original source spelling of the number.

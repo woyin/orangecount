@@ -99,7 +99,7 @@ def norm_entry(e) -> dict:
         base.update(
             account=e.account,
             currencies=sorted(e.currencies or []),
-            booking=e.booking,
+            booking=e.booking.name if e.booking else None,
         )
     elif isinstance(e, data.Close):
         base.update(account=e.account)

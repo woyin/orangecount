@@ -1,0 +1,5 @@
+[
+  {"id":"lexical-before-date-order","query":"SELECT narration, entry_meta('scope') AS entry, any_meta('scope') AS any_scope, meta('scope') AS posting"},
+  {"id":"amount-stack","query":"SELECT narration, entry_meta('budget') AS budget"},
+  {"id":"include-sources-and-scopes","query":"SELECT narration, meta('filename') AS posting_file, entry_meta('filename') AS entry_file, meta('lineno') AS posting_line, entry_meta('lineno') AS entry_line","source_columns":[1,2]}
+]

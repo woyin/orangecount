@@ -1,0 +1,158 @@
+[
+  {
+    "id": "position-full-cost",
+    "query": "SELECT account, position"
+  },
+  {
+    "id": "units-position",
+    "query": "SELECT units(position) AS amount"
+  },
+  {
+    "id": "cost-position",
+    "query": "SELECT cost(position) AS amount"
+  },
+  {
+    "id": "cost-bad-type-empty",
+    "query": "SELECT cost(number) WHERE account = 'NO'",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  },
+  {
+    "id": "posting-weight",
+    "query": "SELECT weight"
+  },
+  {
+    "id": "amount-components",
+    "query": "SELECT number(cost(position)) AS number, currency(cost(position)) AS currency"
+  },
+  {
+    "id": "number-bad-type-empty",
+    "query": "SELECT number(position) WHERE account = 'NO'",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  },
+  {
+    "id": "currency-bad-type-empty",
+    "query": "SELECT currency(number) WHERE account = 'NO'",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  },
+  {
+    "id": "sum-position-full-keys",
+    "query": "SELECT sum(position) AS inventory WHERE account = 'Assets:Stock'"
+  },
+  {
+    "id": "sum-position-multicurrency",
+    "query": "SELECT sum(position) AS inventory"
+  },
+  {
+    "id": "sum-position-cancelled",
+    "query": "SELECT sum(position) AS inventory WHERE account = 'Assets:Plain'"
+  },
+  {
+    "id": "position-group-identity",
+    "query": "SELECT position, count(*) AS copies WHERE account = 'Assets:Stock' GROUP BY position ORDER BY copies DESC"
+  },
+  {
+    "id": "empty-inventory-aggregate",
+    "query": "SELECT sum(position) AS inventory WHERE account = 'NO'"
+  },
+  {
+    "id": "inventory-units-and-cost",
+    "query": "SELECT units(sum(position)) AS units, cost(sum(position)) AS cost WHERE account = 'Assets:Stock'"
+  },
+  {
+    "id": "inventory-cost-cancelled",
+    "query": "SELECT cost(sum(position)) AS inventory"
+  },
+  {
+    "id": "inventory-empty-reduction",
+    "query": "SELECT units(sum(position)) AS units, cost(sum(position)) AS cost WHERE account = 'Assets:Plain'"
+  },
+  {
+    "id": "units-bad-type-empty",
+    "query": "SELECT units(number) WHERE account = 'NO'",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  },
+  {
+    "id": "sum-amount-units",
+    "query": "SELECT account, sum(units(position)) AS units GROUP BY account ORDER BY account"
+  },
+  {
+    "id": "sum-amount-balanced-weight",
+    "query": "SELECT sum(weight) AS balanced"
+  },
+  {
+    "id": "sum-amount-cost",
+    "query": "SELECT sum(cost(position)) AS cost WHERE account = 'Assets:Stock'"
+  },
+  {
+    "id": "compound-zero-limit",
+    "query": "SELECT position, units(position), cost(position), weight, sum(position) LIMIT 0"
+  },
+  {
+    "id": "amount-metadata-scopes",
+    "query": "SELECT meta('budget') AS posting, entry_meta('budget') AS entry, any_meta('budget') AS effective WHERE narration = 'first identical lot'"
+  },
+  {
+    "id": "position-comparison-rejected",
+    "query": "SELECT position = position",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  },
+  {
+    "id": "amount-comparison-rejected",
+    "query": "SELECT units(position) = units(position)",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  },
+  {
+    "id": "inventory-comparison-rejected",
+    "query": "SELECT sum(position) = sum(position)",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  },
+  {
+    "id": "amount-order",
+    "query": "SELECT units(position) AS amount ORDER BY amount"
+  },
+  {
+    "id": "position-order",
+    "query": "SELECT position ORDER BY position"
+  },
+  {
+    "id": "inventory-order",
+    "query": "SELECT account, sum(position) AS inventory GROUP BY account ORDER BY inventory"
+  },
+  {
+    "id": "string-position-and-amount-costs",
+    "query": "SELECT str(position), str(units(position)), str(cost(position)), str(weight)"
+  },
+  {
+    "id": "string-inventory-order-and-reductions",
+    "query": "SELECT str(sum(position)), str(units(sum(position))), str(cost(sum(position)))"
+  },
+  {
+    "id": "string-empty-inventory",
+    "query": "SELECT str(sum(position)) WHERE account = 'Assets:Plain'"
+  },
+  {
+    "id": "automatic-mixed-target-grouping",
+    "query": "SELECT account, sum(number), count(*) ORDER BY account"
+  }
+]

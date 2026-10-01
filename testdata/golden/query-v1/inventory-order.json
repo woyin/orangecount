@@ -1,0 +1,115 @@
+{
+  "schema_version": 2,
+  "oracle": {
+    "beancount": "3.2.3",
+    "beanquery": "0.2.0"
+  },
+  "fixture": "testdata/fixtures/query/inventory-order.bean",
+  "input_sha256": "ff88d0ddda8ad4d3e42172032cff5cb3811a4012544a0e5c22d7fe3f2b18117d",
+  "queries_sha256": "89874abfea1741de7bf350b3aedf809104ea9c41e06d4b6902eeb0341b6f3b13",
+  "sources_sha256": {
+    "testdata/fixtures/query/inventory-order.bean": "ff88d0ddda8ad4d3e42172032cff5cb3811a4012544a0e5c22d7fe3f2b18117d"
+  },
+  "cases": [
+    {
+      "id": "inventory-source-order-ties",
+      "query": "SELECT account, sum(position) AS inventory WHERE account ~ 'Assets:[AB]$' GROUP BY account ORDER BY inventory",
+      "result": {
+        "columns": [
+          {
+            "name": "account",
+            "type": "string"
+          },
+          {
+            "name": "inventory",
+            "type": "inventory"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "Assets:B"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "1",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "1",
+                    "currency": "USD",
+                    "date": "1999-01-03",
+                    "label": "X"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "1",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "1",
+                    "currency": "USD",
+                    "date": "1999-01-04",
+                    "label": "Z"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "2",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "1",
+                    "currency": "USD",
+                    "date": "1999-01-05",
+                    "label": "extra"
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Assets:A"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "1",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "1",
+                    "currency": "USD",
+                    "date": "1999-01-03",
+                    "label": "X"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "1",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "1",
+                    "currency": "USD",
+                    "date": "1999-01-04",
+                    "label": "Z"
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      }
+    }
+  ]
+}

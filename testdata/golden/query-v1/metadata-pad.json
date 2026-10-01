@@ -1,0 +1,209 @@
+{
+  "schema_version": 2,
+  "oracle": {
+    "beancount": "3.2.3",
+    "beanquery": "0.2.0"
+  },
+  "fixture": "testdata/fixtures/query/metadata-pad.bean",
+  "input_sha256": "3f689afddce02faa7ba77680f5064cb8eeaca20511ec9500e9a5e8b4ce606f76",
+  "queries_sha256": "bb14cb35b0854b41d5a5d99f85c948bfb92a40ed247450cea73dcd57e914c3da",
+  "sources_sha256": {
+    "testdata/fixtures/query/metadata-pad.bean": "3f689afddce02faa7ba77680f5064cb8eeaca20511ec9500e9a5e8b4ce606f76"
+  },
+  "cases": [
+    {
+      "id": "generated-user-meta-scopes",
+      "query": "SELECT meta('origin'), entry_meta('origin'), any_meta('origin'), meta('budget'), meta('lineno'), entry_meta('lineno')",
+      "result": {
+        "columns": [
+          {
+            "name": "meta('origin')",
+            "type": "object"
+          },
+          {
+            "name": "entry_meta('origin')",
+            "type": "object"
+          },
+          {
+            "name": "any_meta('origin')",
+            "type": "object"
+          },
+          {
+            "name": "meta('budget')",
+            "type": "object"
+          },
+          {
+            "name": "meta('lineno')",
+            "type": "object"
+          },
+          {
+            "name": "entry_meta('lineno')",
+            "type": "object"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "balance posting"
+            },
+            {
+              "type": "string",
+              "value": "pad entry"
+            },
+            {
+              "type": "string",
+              "value": "balance posting"
+            },
+            {
+              "type": "amount",
+              "value": {
+                "number": "2",
+                "currency": "USD"
+              }
+            },
+            {
+              "type": "integer",
+              "value": "5"
+            },
+            {
+              "type": "integer",
+              "value": "3"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "balance posting"
+            },
+            {
+              "type": "string",
+              "value": "pad entry"
+            },
+            {
+              "type": "string",
+              "value": "balance posting"
+            },
+            {
+              "type": "amount",
+              "value": {
+                "number": "2",
+                "currency": "USD"
+              }
+            },
+            {
+              "type": "integer",
+              "value": "5"
+            },
+            {
+              "type": "integer",
+              "value": "3"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "generated-filename-scopes",
+      "query": "SELECT filename, meta('filename'), entry_meta('filename'), any_meta('filename')",
+      "source_columns": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "result": {
+        "columns": [
+          {
+            "name": "filename",
+            "type": "string"
+          },
+          {
+            "name": "meta('filename')",
+            "type": "object"
+          },
+          {
+            "name": "entry_meta('filename')",
+            "type": "object"
+          },
+          {
+            "name": "any_meta('filename')",
+            "type": "object"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "metadata-pad.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-pad.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-pad.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-pad.bean"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "metadata-pad.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-pad.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-pad.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-pad.bean"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "absent-generated-tolerances",
+      "query": "SELECT meta('__tolerances__'), entry_meta('__tolerances__')",
+      "result": {
+        "columns": [
+          {
+            "name": "meta('__tolerances__')",
+            "type": "object"
+          },
+          {
+            "name": "entry_meta('__tolerances__')",
+            "type": "object"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "errors": [],
+  "fixture": "sized-unlabeled.bean",
+  "oracle_engine": "beancount-python-3.2.3",
+  "schema_version": 2,
+  "state": {
+    "balances": {
+      "Assets:Cash": {
+        "currencies": {
+          "USD": "-20"
+        },
+        "lots": []
+      },
+      "Assets:Stock": {
+        "currencies": {},
+        "lots": [
+          "{\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-02\",\"label\":\"a\",\"number\":\"10\"},\"currency\":\"STK\",\"number\":\"2\"}"
+        ]
+      }
+    },
+    "entries": [
+      "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"sized-unlabeled.bean\",\"line\":2}}",
+      "{\"account\":\"Assets:Stock\",\"booking\":\"STRICT_WITH_SIZE\",\"currencies\":[\"STK\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"sized-unlabeled.bean\",\"line\":1}}",
+      "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"buy\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Stock\",\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-02\",\"label\":\"a\",\"number\":\"10\"},\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"STK\",\"number\":\"2\"}},{\"account\":\"Assets:Stock\",\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-02\",\"label\":\"\",\"number\":\"10\"},\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"STK\",\"number\":\"3\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-50\"}}],\"source\":{\"file\":\"sized-unlabeled.bean\",\"line\":3},\"tags\":[]}",
+      "{\"date\":\"2000-01-03\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"sized reduction\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Stock\",\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-02\",\"label\":\"\",\"number\":\"10\"},\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"STK\",\"number\":\"-3\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"30\"}}],\"source\":{\"file\":\"sized-unlabeled.bean\",\"line\":7},\"tags\":[]}"
+    ]
+  },
+  "valid": true
+}

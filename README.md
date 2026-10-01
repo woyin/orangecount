@@ -14,6 +14,15 @@ graph; OrangeCount builds an immutable snapshot and exposes read-only reports,
 queries, and diagnostics alongside explicit reviewed authoring workflows in a
 local web workbench.
 
+Start with the [development roadmap](docs/go-beancount-native-roadmap.md).
+The development baseline is documented in the
+[Go/native design](docs/go-beancount-native-design-2026-09-30.md),
+[milestone plan](docs/go-beancount-native-plan-2026-09-30.md), and
+[implementation steps](docs/go-beancount-native-implementation-2026-09-30.md).
+These define the accounting and native analysis target. See the
+[current implementation evidence](docs/go-beancount-native-progress.md) for
+implemented behavior, automated checks and remaining acceptance work.
+
 ## v0.1 scope
 
 The v0.1 implementation covers the v3 core syntax and accounting needed for a
@@ -32,6 +41,36 @@ holdings, price, document, source, diagnostics, and query views, plus explicit
 reviewed workflows for editing and adding entries. English (`en`) and
 Simplified Chinese (`zh-CN`) are shipped locales; changing the display locale
 does not change ledger semantics.
+
+## Native macOS reader
+
+The Apple Silicon SwiftUI app reads local ledgers through an in-process Go
+C archive, without a local HTTP server. It provides dated balance sheets,
+period income statements, filtered and paginated transactions, exact amount
+labels, trends, account details, historical holdings with lot and reduction
+details, local commodity/price history with cutoff quote selection, and
+structured diagnostics with source-file actions. External
+edits reload the session; an invalid edit retains the last valid report and
+shows the new diagnostics. The native app is read-only.
+
+On macOS with Swift 6 / Command Line Tools and Go installed:
+
+```sh
+make mac-check       # actual Go/C/Swift contracts, Swift state tests, app and metadata
+make mac-package     # ad hoc signed development zip, licenses and SHA-256
+open build/OrangeCount.app
+```
+
+The build target is macOS 13.0, arm64. Current local evidence is from macOS
+27.0.1; older-system runtime compatibility, full GUI acceptance and notarized
+distribution are not yet verified. See [support matrix](docs/native-macos-support.md)
+and [native verification record](docs/native-fava-equivalence-report.md).
+Account details, holdings and prices have current Go/C/Swift and navigation checks; their GUI
+acceptance remains pending in the [implementation progress](docs/go-beancount-native-progress.md).
+The [holdings evidence](docs/evidence/a02-native-holdings-2026-10-01.md)
+records exact AVERAGE values, private cutoff checks and full client timing samples.
+The [price evidence](docs/evidence/a03-native-prices-2026-10-01.md) records direct,
+inverse, zero and missing quotes, source multiplicity and client timings.
 
 ## Deliberate boundaries
 
@@ -146,6 +185,27 @@ to `http://127.0.0.1:5000`; use `--addr` to choose another loopback address.
 When the requested port already has a listener, OrangeCount identifies its
 PID and command, then asks before sending it a termination signal. Non-loopback
 addresses are rejected. Stop the local session with Ctrl-C.
+
+The explicit `--format typed-json` query format uses ordered columns and
+positional typed cells, supports the default postings source, and preserves
+duplicate titles, exact decimals, integer strings and NULL. Legacy JSON/CSV
+now reject duplicate output titles instead of discarding a value. The typed
+format also carries Amount, Position and Inventory values with full cost keys,
+supports their declared units/cost/sum overloads, and preserves empty inventories.
+The explicit v3 profile also expands file-local metadata stacks before date
+evaluation; typed metadata distinguishes posting and entry sources, including
+pad-generated values. The typed query subset also supports declared object inference, NULL tests,
+unary expressions and ordered short-circuit boolean evaluation. Remaining
+query signatures, numeric-context and native-workbench work are
+listed in the [query capability matrix](docs/query-capability-matrix.md).
+
+```sh
+go run ./cmd/orangecount query --format typed-json --semantics v3 \
+  testdata/fixtures/query/default-source.bean \
+  'SELECT account, sum(number) AS total GROUP BY account ORDER BY total DESC'
+make query-parity        # reviewed public golden, no Python or writes
+make query-oracle-check  # fixed local Python oracle, read-only comparison
+```
 
 The web UI has an English/Simplified Chinese selector (or `?locale=zh-CN`),
 and the CLI accepts `--locale en|zh-CN` for rendered diagnostics.

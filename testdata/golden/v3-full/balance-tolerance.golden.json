@@ -1,0 +1,29 @@
+{
+  "errors": [],
+  "fixture": "balance-tolerance.bean",
+  "oracle_engine": "beancount-python-3.2.3",
+  "schema_version": 2,
+  "state": {
+    "balances": {
+      "Assets:Cash": {
+        "currencies": {
+          "USD": "100.004"
+        },
+        "lots": []
+      },
+      "Equity:Opening": {
+        "currencies": {
+          "USD": "-100.004"
+        },
+        "lots": []
+      }
+    },
+    "entries": [
+      "{\"account\":\"Assets:Cash\",\"amount\":\"100 USD\",\"date\":\"2000-01-03\",\"kind\":\"balance\",\"metadata\":{},\"source\":{\"file\":\"balance-tolerance.bean\",\"line\":7},\"tolerance\":\"0.01\"}",
+      "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"balance-tolerance.bean\",\"line\":2}}",
+      "{\"account\":\"Equity:Opening\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"balance-tolerance.bean\",\"line\":3}}",
+      "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"seed cash\",\"payee\":\"seed\",\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"100.004\"}},{\"account\":\"Equity:Opening\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-100.004\"}}],\"source\":{\"file\":\"balance-tolerance.bean\",\"line\":4},\"tags\":[]}"
+    ]
+  },
+  "valid": true
+}

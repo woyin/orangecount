@@ -1,0 +1,7 @@
+2000-01-01 open Assets:Padded USD
+2000-01-01 open Equity:Padding USD
+2000-01-02 pad Assets:Padded Equity:Padding
+  origin: "pad entry"
+2000-01-03 balance Assets:Padded 1 USD
+  origin: "balance posting"
+  budget: 2 USD

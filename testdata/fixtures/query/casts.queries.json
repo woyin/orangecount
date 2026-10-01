@@ -1,0 +1,186 @@
+[
+  {
+    "id": "string-object-cast",
+    "query": "SELECT narration, str(meta('value')), str(meta('padded')), str(meta('precise_amount')), str(meta('switch')), str(meta('day')), str(meta('nothing')), str(meta('missing')) WHERE account = 'Assets:Cash'"
+  },
+  {
+    "id": "string-scalar-cast",
+    "query": "SELECT str(NULL), str(TRUE), str(FALSE), str(1), str(1.00), str(2000-01-02), str(number) LIMIT 1"
+  },
+  {
+    "id": "explicit-decimal-cast",
+    "query": "SELECT decimal(NULL), decimal(TRUE), decimal(1), decimal(1.50), decimal('\u0661\u0660.\u0665'), decimal('1e3'), decimal('bad'), decimal(meta('padded')), decimal(meta('precise_amount')) LIMIT 1"
+  },
+  {
+    "id": "decimal-string-spelling",
+    "query": "SELECT str(0.0000001), str(-0.0000001), str(-0.00), str(decimal('1e3')), str(decimal('-0.00')), str(decimal('1.0e3')), str(decimal(meta('padded'))) LIMIT 1"
+  },
+  {
+    "id": "explicit-date-cast",
+    "query": "SELECT narration, date(meta('day')), date(meta('day_text')), date(meta('value')), date('2000-1-2'), date(2000-01-02), date(NULL), str(date(meta('day'))) WHERE account = 'Assets:Cash'"
+  },
+  {
+    "id": "date-constructor",
+    "query": "SELECT date(2000, 2, 29), date(2001, 2, 29), date(0, 1, 1), date(10000, 1, 1), date(2000, 13, 1), date(2000, 1, 0), date(year, month, day) LIMIT 1"
+  },
+  {
+    "id": "date-constructor-null-has-no-signature",
+    "query": "SELECT date(2000, NULL, 1) LIMIT 0",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  },
+  {
+    "id": "explicit-bool-cast",
+    "query": "SELECT bool(NULL), bool(0), bool(''), bool('x'), bool(meta('switch')), bool(meta('amount')), bool(meta('value')), bool(meta('missing')) WHERE account = 'Assets:Cash'"
+  },
+  {
+    "id": "explicit-integer-cast",
+    "query": "SELECT int(NULL), int(TRUE), int(1.9), int(-1.9), int('2.5'), int('1e3'), int('\u0661\u0660'), int('1_0'), int('1__0'), int('1/2'), int(meta('value')), int(meta('amount')), date(2000, int('bad'), 1) LIMIT 1"
+  },
+  {
+    "id": "arithmetic-decimal-string",
+    "query": "SELECT str(1.00 + 2), str(decimal('1.0e3') + 1), str(decimal('-0.00') * 2), str(meta('padded') + 1) LIMIT 1"
+  },
+  {
+    "id": "decimal-cast-preserves-arithmetic-quantum",
+    "query": "SELECT str(decimal(1.00 + 2)), str(decimal(1.0 * 2.00)), str(meta('padded') + 1.00) LIMIT 1"
+  },
+  {
+    "id": "date-constructor-bool-parameters",
+    "query": "SELECT date(2000, TRUE, 1), date(TRUE, 1, 1), date(2000, 1, TRUE), date(TRUE, TRUE, TRUE), date(FALSE, 1, 1), date(2000, FALSE, 1), date(2000, 1, FALSE) LIMIT 1"
+  },
+  {
+    "id": "decimal-context-arithmetic",
+    "query": "SELECT str(1.2345678901234567890123456785 + 0), str(1.2345678901234567890123456795 + 0), str(9.9999999999999999999999999995 + 0), str(12345678901234567890123456789.00 - 0), str(1.2345678901234567890123456789 * 1.00), 12345678901234567890123456789.00 + 0 LIMIT 1"
+  },
+  {
+    "id": "decimal-context-division",
+    "query": "SELECT str(1.00 / 2), str(1.0 / 3), str(2.00 / 1), str(decimal('1e3') / decimal('1e3')), str(decimal('-0.00') / 2.0), str((1.0 / 3) * 3), 1.0 / 3, str(decimal('1e3') / 2), str(0.00 / 0) LIMIT 1"
+  },
+  {
+    "id": "decimal-context-unary-absolute",
+    "query": "SELECT str(-12345678901234567890123456789.00), -12345678901234567890123456789.00, str(abs(decimal('12345678901234567890123456789.00'))), str(abs(decimal('-0.00'))), str(-decimal('-0.00')), str(-(1.00 + 2)), str(abs(-1.00)) LIMIT 1"
+  },
+  {
+    "id": "decimal-context-sum",
+    "query": "SELECT str(sum(1.00)), str(sum(decimal(meta('padded')))), str(sum(decimal(meta('invalid')))), str(sum(decimal('-0.00'))), str(sum(12345678901234567890123456789.00)), sum(12345678901234567890123456789.00)"
+  },
+  {
+    "id": "date-decimal-parameter-no-signature",
+    "query": "SELECT date(2000, 1.0, 1) LIMIT 0",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  },
+  {
+    "id": "decimal-date-no-signature",
+    "query": "SELECT decimal(2000-01-01) LIMIT 0",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  },
+  {
+    "id": "integer-position-no-signature",
+    "query": "SELECT int(position) LIMIT 0",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  },
+  {
+    "id": "string-wrong-arity",
+    "query": "SELECT str() LIMIT 0",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  },
+  {
+    "id": "date-positive-constructor-overflow",
+    "query": "SELECT date(2147483648, 1, 1) LIMIT 1",
+    "error": {
+      "class": "OverflowError",
+      "code": "unsupported-capability"
+    }
+  },
+  {
+    "id": "date-negative-constructor-overflow",
+    "query": "SELECT date(-2147483649, 1, 1) LIMIT 1",
+    "error": {
+      "class": "OverflowError",
+      "code": "unsupported-capability"
+    }
+  },
+  {
+    "id": "inventory-boolean-explicitly-unsupported",
+    "query": "SELECT bool(sum(position))",
+    "error": {
+      "class": "NotImplementedError",
+      "code": "unsupported-capability"
+    }
+  },
+  {
+    "id": "cast-whitespace-underscore-position-bool",
+    "query": "SELECT bool(position), decimal(' 1_0.0 '), int(' +1_0 ') LIMIT 1"
+  },
+  {
+    "id": "decimal-sum-rounds-each-source-ordered-step",
+    "query": "SELECT str(sum(decimal(account ~ 'Assets:Cash') * (decimal(narration ~ 'text') - decimal(narration ~ 'number')) * decimal('1e28') + decimal(account ~ 'Equity:Opening') * decimal(narration ~ 'text'))), sum(decimal(account ~ 'Assets:Cash') * (decimal(narration ~ 'text') - decimal(narration ~ 'number')) * decimal('1e28') + decimal(account ~ 'Equity:Opening') * decimal(narration ~ 'text'))"
+  },
+  {
+    "id": "string-compound-values",
+    "query": "SELECT str(position), str(weight), str(sum(position))"
+  },
+  {
+    "id": "date-components",
+    "query": "SELECT year(date), month(date), day(date) WHERE account = 'Assets:Cash'"
+  },
+  {
+    "id": "date-component-boundaries",
+    "query": "SELECT year(date('0001-01-01')), month(date('9999-12-31')), day(date('2000-02-29')) LIMIT 1"
+  },
+  {
+    "id": "date-component-null",
+    "query": "SELECT year(date('bad')), month(date('bad')), day(date('bad')) LIMIT 1"
+  },
+  {
+    "id": "date-component-aggregate",
+    "query": "SELECT year(first(date)), month(last(date)), day(min(date)) WHERE account = 'Assets:Cash'"
+  },
+  {
+    "id": "date-component-integer-error",
+    "query": "SELECT year(2000) LIMIT 0",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  },
+  {
+    "id": "date-component-null-literal-error",
+    "query": "SELECT month(NULL) LIMIT 0",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  },
+  {
+    "id": "date-component-object-error",
+    "query": "SELECT day(meta('day')) LIMIT 0",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  },
+  {
+    "id": "date-component-arity-error",
+    "query": "SELECT year(date, date) LIMIT 0",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  }
+]

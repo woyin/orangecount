@@ -1,0 +1,30 @@
+{
+  "errors": [],
+  "fixture": "posting-currency-groups.bean",
+  "oracle_engine": "beancount-python-3.2.3",
+  "schema_version": 2,
+  "state": {
+    "balances": {
+      "Assets:Cash": {
+        "currencies": {
+          "EUR": "2",
+          "USD": "1"
+        },
+        "lots": []
+      },
+      "Equity:Opening": {
+        "currencies": {
+          "EUR": "-2",
+          "USD": "-1"
+        },
+        "lots": []
+      }
+    },
+    "entries": [
+      "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"EUR\",\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"posting-currency-groups.bean\",\"line\":1}}",
+      "{\"account\":\"Equity:Opening\",\"booking\":null,\"currencies\":[\"EUR\",\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"posting-currency-groups.bean\",\"line\":2}}",
+      "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"interleaved currencies\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"1\"}},{\"account\":\"Equity:Opening\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-1\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"EUR\",\"number\":\"2\"}},{\"account\":\"Equity:Opening\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"EUR\",\"number\":\"-2\"}}],\"source\":{\"file\":\"posting-currency-groups.bean\",\"line\":3},\"tags\":[]}"
+    ]
+  },
+  "valid": true
+}

@@ -1,0 +1,6 @@
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Equity:Opening USD
+2000-01-02 * "mixed precision"
+  Assets:Cash 1.0 USD
+  Equity:Opening -1.04 USD
+2000-01-03 balance Assets:Cash 1.01 USD

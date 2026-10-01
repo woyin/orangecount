@@ -1,0 +1,38 @@
+{
+  "errors": [],
+  "fixture": "txn-flags-tags.bean",
+  "oracle_engine": "beancount-python-3.2.3",
+  "schema_version": 2,
+  "state": {
+    "balances": {
+      "Assets:Cash": {
+        "currencies": {
+          "USD": "1"
+        },
+        "lots": []
+      },
+      "Equity:Opening": {
+        "currencies": {
+          "USD": "-5"
+        },
+        "lots": []
+      },
+      "Expenses:Misc": {
+        "currencies": {
+          "USD": "4"
+        },
+        "lots": []
+      }
+    },
+    "entries": [
+      "{\"account\":\"Assets:Cash\",\"amount\":\"1 USD\",\"date\":\"2000-01-04\",\"kind\":\"balance\",\"metadata\":{},\"source\":{\"file\":\"txn-flags-tags.bean\",\"line\":13},\"tolerance\":null}",
+      "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"txn-flags-tags.bean\",\"line\":2}}",
+      "{\"account\":\"Equity:Opening\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"txn-flags-tags.bean\",\"line\":4}}",
+      "{\"account\":\"Expenses:Misc\",\"amount\":\"4 USD\",\"date\":\"2000-01-04\",\"kind\":\"balance\",\"metadata\":{},\"source\":{\"file\":\"txn-flags-tags.bean\",\"line\":14},\"tolerance\":null}",
+      "{\"account\":\"Expenses:Misc\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"txn-flags-tags.bean\",\"line\":3}}",
+      "{\"date\":\"2000-01-02\",\"flag\":\"!\",\"kind\":\"transaction\",\"links\":[\"link-a\",\"link-b\"],\"metadata\":{},\"narration\":\"pending entry\",\"payee\":\"late\",\"postings\":[{\"account\":\"Expenses:Misc\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"5\"}},{\"account\":\"Equity:Opening\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-5\"}}],\"source\":{\"file\":\"txn-flags-tags.bean\",\"line\":6},\"tags\":[\"trip\"]}",
+      "{\"date\":\"2000-01-03\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"plain txn keyword\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"1\"}},{\"account\":\"Expenses:Misc\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-1\"}}],\"source\":{\"file\":\"txn-flags-tags.bean\",\"line\":10},\"tags\":[]}"
+    ]
+  },
+  "valid": true
+}

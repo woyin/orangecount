@@ -1,78 +1,38 @@
-# OrangeCount Native macOS App ↔ Fava 等效性验证验收报告 (Equivalence Report)
+**原生 macOS 客户端验证记录**
 
-- **生成时间**：2026-09-23
-- **验证版本**：Native macOS Desktop App (SwiftUI 5.0 + Go C-Archive Bridge)
-- **对照基准**：Beancount v3.2.3 & Fava 1.30.12 Official Reference
-- **验证命令**：`make verify-native-equivalence`
-- **最终结论**：**100% 通过（All 4 Layers Verified, Zero Equivalence Divergence）**
+更新日期：2026-09-27。原有“100% Fava 等价”结论已撤回：旧测试没有覆盖真实 Swift 解码、完整 UI 操作、热重载时序或目标系统安装，不能支持该结论。
 
----
+当前开发基线及后续交付要求见 `native-macos-development-plan-2026-09-26.md`，逐步执行证据见 `native-macos-development-progress.md`。
 
-## 一、验证结果总览 (Executive Summary)
+已验证的范围：
 
-| 验证维度 | 覆盖测试用例 | 验证方式 | 通过率 | 结论 |
-| :--- | :--- | :--- | :--- | :--- |
-| **L1 会计数据绝对等价** | 18 个 v3-parity 核心语法与业务语料 | 逐账户比对 Direct Balances 与 Beancount 黄金数据 | **18/18 (100%)** | 绝对吻合，无精度损失或汇率漂移 |
-| **L2 树形报表与聚合等价** | 全部有效账本层级树 | 校验 4 项树不变量（层级、叶子判定、前缀命名空间、子树汇总） | **100%** | 数学证明子树余额恒等于子节点之和 |
-| **L3 金融时间序列等价** | 历史净资产与月度现金流 | 比对 `ReportChart` 采样点与时间轴区间 | **100%** | 净资产走势与月度收支精准对齐 |
-| **L4 工作流与交互等价** | 错误拦截、热重载感知、流水借贷平衡 | 运行态自动化无头探针（Headless Probe） | **100%** | 非法账本严格拦截，修改纳秒级感知 |
-| **可执行分发包构建** | macOS arm64 架构 | `swiftc` + `liborangecount.a` 静态编译打包 | **PASS** | 4.8MB 独立应用包，零 Xcode.app 依赖 |
+- Go 树报表对仓库既有 Beancount golden 的余额检查及树汇总不变量；这仅覆盖测试语料。
+- `make mac-test` 链接真实 C-Archive，验证空树/流水、收支符号、本位币拆分、缺汇率状态、成本字段、诊断位置和精确图表值。
+- 原生会话多个视图共用快照，读取/轮询不会重建；有效账本变为连续错误再修复时保留上次有效快照并更新诊断；include 文件删除和补齐可恢复。
+- Go 会话并发读取、刷新、关闭的 race 测试，以及 20 次重复生命周期检查。
+- Swift 可控时序测试覆盖打开 A 后切换 B、报表响应乱序、关闭时尚有打开请求；过期结果不能发布，最终句柄会释放。
+- 日期范围、截至日余额、期间收支、退款/冲销、快照绑定分页和交易身份恢复均有固定期望值测试。只包含交易及其分录，不是全部 Beancount 指令 Journal。
+- Swift 双窗口状态隔离和 Store 释放会话测试通过；协议版本在载荷解码前校验。
+- 默认本位币/原币选择、账本最新指令日期、Equity 外币活动不干扰可计算净资产均有固定期望值测试。真实 Swift Store 的连续两种源文件错误、恢复及另一本非法账本隔离已通过临时文件集成测试。
+- 已取消的客户端排队请求在进入 C 调用前退出。100 轮真实客户端打开/读取/关闭检查均能确认关闭句柄失效；内存采样与证据适用版本见进展文档，不由此推断 GUI 或长期无泄漏。
+- `make mac-check` 已通过；Swift/cgo 与最终 Mach-O、plist 的最低版本均为 13.0，arm64。ad hoc 签名和许可证检查通过。这不能证明 macOS 13 实机运行兼容性。
 
----
+60 秒会话空闲检查已通过，无额外快照重建；它不是 OS 级 I/O 或长期内存测量。
 
-## 二、逐层详细验证凭据与测试明细
+固定 52,500 笔合成账本的分段测量：打开并读首树 1,106 ms，20 次读取 p95：资产负债表 115 ms、损益表 113 ms、仪表盘 171 ms、100 笔流水首页 8 ms。JSON 字节量及分段耗时见进展文档。这是客户端调用的测量，不是 GUI 首帧/滚动帧率。
 
-### 1. L1 底层数据绝对等价性（Ground Truth Parity）
-针对 `testdata/fixtures/v3-parity/` 的 18 个测试用例，`internal/bridge/equivalence_test.go` 将 `loadTreeReport` 导出的叶子账户与直属余额，与官方 Beancount v3 生成的 `testdata/golden/v3-parity/*.golden.json` 进行了全字段无损比对：
-- `at-price.bean` (外汇折算): PASS
-- `balance-fail.bean` (断言失败拦截): PASS
-- `balance-tolerance.bean` (容差断言): PASS
-- `booking-average.bean` (AVERAGE 成本结转): PASS
-- `cost-basis.bean` (成本持仓): PASS
-- `cost-price-sale.bean` (跨 Lot 结转与投资损益): PASS
-- `directives-mix.bean` (Pad/Note/Query 混合): PASS
-- `document.bean` (凭证关联): PASS
-- `err-closed.bean` (已关闭账户记账拦截): PASS
-- `err-syntax.bean` (语法错误拦截): PASS
-- `err-unbalanced.bean` (借贷不平衡拦截): PASS
-- `err-unopened.bean` (未开户记账拦截): PASS
-- `include-main.bean` (跨文件全局时间线): PASS
-- `options.bean` (多币种单腿插值推断): PASS
-- `txn-basic.bean` (标准两腿记账): PASS
-- `txn-flags-tags.bean` (txn 关键字与标签链接): PASS
-- `txn-multi-leg.bean` (多腿拆分与插值): PASS
-- `unicode.bean` (中文/特殊字符描述): PASS
+上述混合币种输入的仪表盘是不可折算空态。后续另用同等交易/成本数量的 USD 现金变体验证有数据的图表：36 个净资产点、12 个月收支，打开及首树 909 ms；资产树/损益树/仪表盘/流水 p95 为 79/87/148/4 ms，读取期间一次构建。两类输入与历次波动均保留，不混作同一个基准。
 
-### 2. L2 树结构与聚合不变量（Tree Invariants）
-在原生 `AccountTreeView` 使用的树节点中，机器严格证明了以下 4 项树代数不变量（Tree Algebra Invariants）：
-1. **深度严格递增**：对于任意父子节点 $(P, C)$，$\text{depth}(C) = \text{depth}(P) + 1$；
-2. **叶子节点充要性**：$\text{is\_leaf}(N) \iff \text{len}(N.\text{children}) == 0$；
-3. **命名空间前缀守恒**：$C.\text{full\_name}$ 必须以 $P.\text{full\_name} + ":"$ 开头；
-4. **自底向上递归汇总守恒**：
-   $$\text{subtree\_balance}(P) = \text{direct\_balance}(P) + \sum_{C \in \text{children}(P)} \text{subtree\_balance}(C)$$
-   对所有 18 个语料的所有货币（USD, EUR, CNY, SH 等）全量校验通过。
+补充的常用过滤测量：流水文本/账户/日期/组合过滤及翻页 p95 为 2–4 ms，期间损益表 35 ms、期间仪表盘 72 ms，均未重建。Go 执行跟踪分开记录检测、防抖、构建和发布；五次大账本自动重载的发布阶段 54–75 ms，包含 Evaluation 复制及索引。具体配置、输入、全部样本及 UI 边界见进展文档。
 
-### 3. L3 时间序列与金融图表等价性（Charts Equivalence）
-- `loadHistoricalTrends` 导出的 `net_worth_points` 历史采样点，与 Fava `ReportChart("balance-sheet", "month", ...)` 完全对齐；
-- 月度收支 `monthly_cash_flows`（`income`, `expenses`, `net`）与 Fava 损益表月度分组合计完全一致。
+2026-09-27 GUI 捕获恢复。本轮实际操作已覆盖四页固定金额、日期口径、空账本、多币种、成本和价格注释、52,500 笔流水过滤/分页/排序、连续错误与修复、include 缺失与连续保存、来源操作、键盘及双窗口隔离。发现并修复了图表辅助功能重复合计、可选文本辅助功能值滞留、账户键盘焦点和来源默认关联自身的问题，均有真实窗口复验。
 
-### 4. L4 交互行为与生命周期等价性（Lifecycle & Error Guard）
-- **非法账本阻断**：当账本包含语法错误、借贷不平衡或未开户分录时，Native App 的 `loadSnapshot` 立即返回 `valid == false`，并导出精确行号与错误代码，状态栏显示红色警告并弹出诊断 Sheet，行为与 Fava 保持一致；
-- **外部改动热感知**：`OC_GetLedgerRevision` 通过扫描包含图文件修改时间戳（mtime）和大小，实现纳秒级灵敏感知；800ms 内自动平滑淡入重绘，保留展开与滚动状态。
+20 次独立窗口创建、加载 cashflow、关闭后，原大账本窗口状态保持一致，RSS 约 558–560 MiB；这是有界窗口观察，不是长期无泄漏或内部活跃会话计数证明。900 像素宽度的中英文与深浅色已有观察；具体已通过范围和未覆盖项见验收清单。
 
----
+尚未完成：拖入、大字体及精确最小高度、GUI 首帧/交互 p95、长期内存、另一目标机器及 macOS 13 实机验收。macOS CI 已加入但尚无远端执行结果；Developer ID/公证未执行，Intel/universal 不在当前支持声明内。
 
-## 三、经批准的设计偏差 (Approved Deviations)
+`make verify-native-equivalence` 保留为兼容命令名，现执行 Go 会话/桥接测试、真实 Swift 测试与 app 构建。它不再启动未指定的最近账本，也不把进程存活检查描述为完整 UI 或 Fava 等价验收。GUI 与目标机器验证需另有具体场景和结果记录；待执行步骤见 [原生 GUI 验收清单](native-macos-acceptance-checklist.md)。
 
-依据 `CLAUDE.md`，因采用 macOS 原生技术栈带来的非网页特有特性，已在 `docs/fava-approved-deviations.md` 正式登记为批准项：
+2026-09-27 最新 app 构建通过后，已更新开发包、验证 SHA-256，并在独立解压目录实际完成打开→查看→外部修改→报错→修复→正常退出。本机通过不代表其他系统兼容；这是 ad hoc 开发包，不是已公证的对外发布。失效最近路径也在隔离偏好域中通过真实启动验证。最后一轮当前代码测量见进展文档，页面读取仍满足本机记录的 200 ms 目标。
 
-- **FD-0009**:
-  - `DEV-DESKTOP-MATERIAL`：侧边栏与工具栏采用 macOS 原生 `.ultraThinMaterial` 磨砂毛玻璃，契合 Apple HIG；
-  - `DEV-SWIFT-CHARTS`：图表采用 Apple 原生 Metal 硬件加速的 Swift Charts 框架，避免庞大 JS 引擎，达到 120 FPS 满帧交互与悬浮刻度探针；
-  - `DEV-MONOSPACE-TABLE`：金额列严格采用 `.monospacedDigit()` 等宽字体，彻底解决网页排版多位数字与负号容易错位的问题。
-
----
-
-## 四、验证结论
-
-通过运行 `make verify-native-equivalence`，OrangeCount macOS 原生桌面版在底层数据真实性、账户报表结构、流水明细、时间序列走势、错误拦截及热重载能力上，**完全等价于 Fava 官方核心规范**，且具备更轻盈的单进程内存直连架构与更顶级的 macOS 桌面交互体验。
+后续进程观察补充：新增关闭后不轮询断言正常实现 20 次通过、负向副本 3 次检出。完整 QA app 在 52,500 笔账本上经历 10 分钟 / 60 次外部文件变更，RSS 峰值约 953 MiB、末次约 773 MiB，期间反复回落；泄漏工具的约 19 KiB 引用环主体也在空白 SwiftUI 程序中出现。不能据此宣称长期无泄漏或每次 GUI 已刷新。本轮原生捕获再次失败，且本机无 xctrace；未完成项没有被消除。详细输入、界限和原始记录见进展文档。

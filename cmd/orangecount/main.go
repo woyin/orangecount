@@ -23,6 +23,8 @@ func run(args []string, stdout, stderr io.Writer) int { return runWithInput(args
 func runWithInput(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	if len(args) == 0 || args[0] == "-h" || args[0] == "--help" || (args[0] == "help" && len(args) == 1) {
 		fmt.Fprintln(stdout, "orangecount check [--locale en|zh-CN] [--json] <entry.bean>")
+		fmt.Fprintln(stdout, "check, query, serve and export support --semantics legacy|v3 (default legacy)")
+		fmt.Fprintln(stdout, "orangecount compare-semantics [--details] [--fail-on-change] <entry.bean>")
 		fmt.Fprintf(stdout, "orangecount serve [--addr %s] [--document-root DIR] <entry.bean>\n", defaultServeAddr)
 		fmt.Fprintln(stdout, "orangecount query [--locale en|zh-CN] [--format json|csv] <entry.bean> <query>")
 		fmt.Fprintln(stdout, "orangecount export -out FILE|DIR <entry.bean>")
@@ -35,6 +37,8 @@ func runWithInput(args []string, stdin io.Reader, stdout, stderr io.Writer) int 
 		return 0
 	}
 	switch args[0] {
+	case "compare-semantics":
+		return runCompareSemantics(args[1:], stdout, stderr)
 	case "help":
 		return runHelp(args[1:], stdout, stderr)
 	case "check":

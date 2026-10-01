@@ -1,0 +1,154 @@
+[
+  {
+    "id": "reject-object-comparison",
+    "query": "SELECT meta('value') < meta('other') WHERE account = 'Assets:Cash'",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  },
+  {
+    "id": "implicit-string-cast",
+    "query": "SELECT narration, meta('value') = '10', meta('padded') = '10.00', meta('nothing') = '', meta('missing') = 'x', meta('amount') = '2 USD', meta('switch') = 'FALSE', meta('day') = '2000-01-02' WHERE account = 'Assets:Cash'"
+  },
+  {
+    "id": "implicit-decimal-cast",
+    "query": "SELECT narration, meta('value') = 10, 10 = meta('value'), meta('value') + 1, meta('padded') * 0.5, meta('invalid') = 1, meta('amount') = 2, meta('nothing') = 0, meta('missing') + 1, meta('switch') + 1 WHERE account = 'Assets:Cash'"
+  },
+  {
+    "id": "implicit-date-cast",
+    "query": "SELECT narration, meta('day') = 2000-01-02, meta('day_text') = 2000-01-02, 2000-01-03 > meta('day'), meta('value') = 2000-01-02 WHERE account = 'Assets:Cash'"
+  },
+  {
+    "id": "unary-numeric-and-truth",
+    "query": "SELECT narration, -number, NOT number = 1, NOT meta('switch'), NOT meta('empty'), NOT meta('missing'), NOT meta('amount'), NOT meta('padded') WHERE account = 'Assets:Cash'"
+  },
+  {
+    "id": "null-and-bool-literals",
+    "query": "SELECT NULL, TRUE, FALSE, NOT NULL LIMIT 1"
+  },
+  {
+    "id": "ordered-null-boolean-logic",
+    "query": "SELECT NULL AND FALSE, NULL OR TRUE, FALSE AND NULL, TRUE OR NULL, NULL OR FALSE, FALSE OR NULL, TRUE AND NULL, NULL AND TRUE, 1 AND 2, 0 OR 2, NOT NULL AND TRUE LIMIT 1"
+  },
+  {
+    "id": "short-circuit-unrepresented-object",
+    "query": "SELECT FALSE AND entry_meta('__tolerances__'), TRUE OR entry_meta('__tolerances__') LIMIT 1"
+  },
+  {
+    "id": "reject-bool-equality-on-empty",
+    "query": "SELECT TRUE = FALSE LIMIT 0",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  },
+  {
+    "id": "reject-null-equality",
+    "query": "SELECT NULL = NULL LIMIT 1",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  },
+  {
+    "id": "null-predicates",
+    "query": "SELECT account IS NULL, meta('nothing') IS NULL, meta('missing') IS NOT NULL, meta('empty') IS NULL, NULL IS NULL, FALSE IS NULL WHERE account = 'Assets:Cash'"
+  },
+  {
+    "id": "where-dynamic-truth",
+    "query": "SELECT narration WHERE meta('amount')"
+  },
+  {
+    "id": "parentheses-and-unary-plus",
+    "query": "SELECT +1, -(1 + 2), NOT (number = 1), (number + 1) * 2, (NULL OR TRUE) AND FALSE LIMIT 1"
+  },
+  {
+    "id": "amount-cast-preserves-decimal-text",
+    "query": "SELECT narration, meta('precise_amount') = '2.00 USD', meta('precise_amount') = '-0.00 USD', meta('precise_amount'), NOT meta('precise_amount') WHERE account = 'Assets:Cash'"
+  },
+  {
+    "id": "inventory-truth-is-unsupported",
+    "query": "SELECT NOT sum(position)",
+    "error": {
+      "class": "NotImplementedError",
+      "code": "unsupported-capability"
+    }
+  },
+  {
+    "id": "string-order-after-inference",
+    "query": "SELECT narration, meta('value') < '2', meta('amount') ~ '^2' WHERE account = 'Assets:Cash'"
+  },
+  {
+    "id": "system-integer-promoted-to-decimal",
+    "query": "SELECT meta('lineno') < 10, 1 + meta('lineno') LIMIT 1"
+  },
+  {
+    "id": "dynamic-group-preserves-type",
+    "query": "SELECT meta('padded'), count(*) GROUP BY meta('padded')"
+  },
+  {
+    "id": "reject-mixed-object-order",
+    "query": "SELECT narration, meta('value') ORDER BY meta('value')",
+    "error": {
+      "class": "TypeError",
+      "code": "type-mismatch"
+    }
+  },
+  {
+    "id": "reject-object-equality-even-empty",
+    "query": "SELECT meta('value') = meta('other') LIMIT 0",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  },
+  {
+    "id": "reject-object-unary-minus",
+    "query": "SELECT -meta('value') WHERE account = 'NO'",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  },
+  {
+    "id": "short-circuit-still-compiles-column",
+    "query": "SELECT NULL AND missing_column LIMIT 0",
+    "error": {
+      "class": "CompilationError",
+      "code": "unknown-column"
+    }
+  },
+  {
+    "id": "short-circuit-still-compiles-function",
+    "query": "SELECT TRUE OR unknown(number) LIMIT 0",
+    "error": {
+      "class": "CompilationError",
+      "code": "unknown-function"
+    }
+  },
+  {
+    "id": "null-where-returns-empty-schema",
+    "query": "SELECT account WHERE NULL"
+  },
+  {
+    "id": "null-predicate-empty-aggregate",
+    "query": "SELECT sum(number) IS NULL WHERE account = 'NO'"
+  },
+  {
+    "id": "decimal-text-input-grammar",
+    "query": "SELECT narration, meta('unicode_number') + 1, meta('exponent') + 1, meta('fraction') + 1, meta('comma_number') + 1 WHERE account = 'Assets:Cash'"
+  },
+  {
+    "id": "numeric-metadata-group-ignores-source-scale",
+    "query": "SELECT meta('same_number'), count(*) GROUP BY meta('same_number')"
+  },
+  {
+    "id": "reject-undeclared-abs-integer-signature",
+    "query": "SELECT abs(1) LIMIT 0",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  }
+]

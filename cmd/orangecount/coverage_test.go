@@ -268,6 +268,16 @@ func TestRenderBagWritesDiagnosticLines(t *testing.T) {
 	}
 }
 
+type eventSink chan string
+
+func (s eventSink) Write(data []byte) (int, error) {
+	select {
+	case s <- string(data):
+	default:
+	}
+	return len(data), nil
+}
+
 func TestWatchLedgerReloadsChangedLedger(t *testing.T) {
 	entry := writeLedger(t, "2000-01-01 open Assets:Cash USD\n")
 	store := snapshot.NewStore(nil)
@@ -278,8 +288,8 @@ func TestWatchLedgerReloadsChangedLedger(t *testing.T) {
 	store.Publish(built.Snapshot, built.Diagnostics)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	var events bytes.Buffer
-	logger := logging.New(&events, logging.Options{})
+	events := make(eventSink, 1)
+	logger := logging.New(events, logging.Options{})
 	watchLedger(ctx, store, entry, 5*time.Millisecond, time.Millisecond, logger)
 	// Let the first patrol tick seed the old signature before touching the
 	// file, otherwise the change lands inside the seeding read.
@@ -288,12 +298,12 @@ func TestWatchLedgerReloadsChangedLedger(t *testing.T) {
 	if err := os.WriteFile(entry, []byte("2000-01-01 open Assets:Cash USD\n2000-01-01 open Expenses:Food USD\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	deadline := time.Now().Add(2 * time.Second)
-	for time.Now().Before(deadline) {
-		if strings.Contains(events.String(), "reload") {
-			return
+	select {
+	case event := <-events:
+		if !strings.Contains(event, "reload") {
+			t.Fatalf("unexpected event: %q", event)
 		}
-		time.Sleep(10 * time.Millisecond)
+	case <-time.After(2 * time.Second):
+		t.Fatal("no reload event observed")
 	}
-	t.Fatalf("no reload event observed: %q", events.String())
 }

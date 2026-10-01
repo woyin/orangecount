@@ -1,0 +1,39 @@
+{
+  "errors": [],
+  "fixture": "directives-mix.bean",
+  "oracle_engine": "beancount-python-3.2.3",
+  "schema_version": 2,
+  "state": {
+    "balances": {
+      "Assets:Cash": {
+        "currencies": {
+          "USD": "45"
+        },
+        "lots": []
+      },
+      "Equity:Opening": {
+        "currencies": {
+          "USD": "-45"
+        },
+        "lots": []
+      }
+    },
+    "entries": [
+      "{\"account\":\"Assets:Cash\",\"amount\":\"25 USD\",\"date\":\"2000-01-06\",\"kind\":\"balance\",\"metadata\":{},\"source\":{\"file\":\"directives-mix.bean\",\"line\":10},\"tolerance\":null}",
+      "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"directives-mix.bean\",\"line\":2}}",
+      "{\"account\":\"Assets:Cash\",\"comment\":\"a sanitized note\",\"date\":\"2000-01-03\",\"kind\":\"note\",\"metadata\":{},\"source\":{\"file\":\"directives-mix.bean\",\"line\":7}}",
+      "{\"account\":\"Assets:Cash\",\"date\":\"2000-01-05\",\"kind\":\"pad\",\"metadata\":{},\"source\":{\"file\":\"directives-mix.bean\",\"line\":9},\"source_account\":\"Equity:Opening\"}",
+      "{\"account\":\"Assets:Shares\",\"booking\":null,\"currencies\":[],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"directives-mix.bean\",\"line\":3}}",
+      "{\"account\":\"Assets:Shares\",\"date\":\"2000-01-10\",\"kind\":\"close\",\"metadata\":{},\"source\":{\"file\":\"directives-mix.bean\",\"line\":16}}",
+      "{\"account\":\"Equity:Opening\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"directives-mix.bean\",\"line\":4}}",
+      "{\"amount\":\"10.5 USD\",\"currency\":\"SH\",\"date\":\"2000-01-04\",\"kind\":\"price\",\"metadata\":{},\"source\":{\"file\":\"directives-mix.bean\",\"line\":8}}",
+      "{\"currency\":\"SH\",\"date\":\"2000-01-01\",\"kind\":\"commodity\",\"metadata\":{},\"source\":{\"file\":\"directives-mix.bean\",\"line\":5}}",
+      "{\"custom_type\":\"budget\",\"date\":\"2000-01-09\",\"kind\":\"custom\",\"metadata\":{},\"source\":{\"file\":\"directives-mix.bean\",\"line\":15},\"values\":[{\"type\":\"string\",\"value\":\"monthly\"},{\"type\":\"amount\",\"value\":{\"currency\":\"USD\",\"number\":\"100\"}},{\"type\":\"bool\",\"value\":true}]}",
+      "{\"date\":\"2000-01-02\",\"event_type\":\"location\",\"kind\":\"event\",\"metadata\":{},\"source\":{\"file\":\"directives-mix.bean\",\"line\":6},\"value\":\"office\"}",
+      "{\"date\":\"2000-01-05\",\"flag\":\"P\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"(Padding inserted for Balance of 25 USD for difference 25 USD)\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"25\"}},{\"account\":\"Equity:Opening\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-25\"}}],\"source\":{\"file\":\"directives-mix.bean\",\"line\":9},\"tags\":[]}",
+      "{\"date\":\"2000-01-07\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"pad filler\",\"payee\":\"seed\",\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"20\"}},{\"account\":\"Equity:Opening\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-20\"}}],\"source\":{\"file\":\"directives-mix.bean\",\"line\":11},\"tags\":[]}",
+      "{\"date\":\"2000-01-08\",\"kind\":\"query\",\"metadata\":{},\"name\":\"sample\",\"query\":\"SELECT account FROM postings\",\"source\":{\"file\":\"directives-mix.bean\",\"line\":14}}"
+    ]
+  },
+  "valid": true
+}

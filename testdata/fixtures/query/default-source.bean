@@ -1,0 +1,7 @@
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Expenses:Food USD
+2000-01-02 * "public test"
+  txmeta: "foo"
+  Assets:Cash -2 USD
+    pmeta: "bar"
+  Expenses:Food 2 USD

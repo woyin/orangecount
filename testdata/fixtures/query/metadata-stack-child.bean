@@ -1,0 +1,8 @@
+pushmeta scope: "child-local"
+2000-01-03 * "child own scope"
+  Assets:Cash -1 USD
+  Expenses:Food 1 USD
+popmeta scope:
+2000-01-05 * "child outside scope"
+  Assets:Cash -1 USD
+  Expenses:Food 1 USD

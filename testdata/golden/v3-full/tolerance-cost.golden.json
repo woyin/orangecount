@@ -1,0 +1,28 @@
+{
+  "errors": [],
+  "fixture": "tolerance-cost.bean",
+  "oracle_engine": "beancount-python-3.2.3",
+  "schema_version": 2,
+  "state": {
+    "balances": {
+      "Assets:Cash": {
+        "currencies": {
+          "USD": "-10.04"
+        },
+        "lots": []
+      },
+      "Assets:Stock": {
+        "currencies": {},
+        "lots": [
+          "{\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-02\",\"label\":null,\"number\":\"10\"},\"currency\":\"STK\",\"number\":\"1\"}"
+        ]
+      }
+    },
+    "entries": [
+      "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"tolerance-cost.bean\",\"line\":2}}",
+      "{\"account\":\"Assets:Stock\",\"booking\":\"FIFO\",\"currencies\":[\"STK\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"tolerance-cost.bean\",\"line\":3}}",
+      "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"cost rounding\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Stock\",\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-02\",\"label\":null,\"number\":\"10\"},\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"STK\",\"number\":\"1\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-10.04\"}}],\"source\":{\"file\":\"tolerance-cost.bean\",\"line\":4},\"tags\":[]}"
+    ]
+  },
+  "valid": true
+}

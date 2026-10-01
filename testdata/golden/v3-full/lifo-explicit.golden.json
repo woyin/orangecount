@@ -1,0 +1,38 @@
+{
+  "errors": [],
+  "fixture": "lifo-explicit.bean",
+  "oracle_engine": "beancount-python-3.2.3",
+  "schema_version": 2,
+  "state": {
+    "balances": {
+      "Assets:Cash": {
+        "currencies": {
+          "USD": "-200"
+        },
+        "lots": []
+      },
+      "Assets:Stock": {
+        "currencies": {},
+        "lots": [
+          "{\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-02\",\"label\":null,\"number\":\"10\"},\"currency\":\"STK\",\"number\":\"10\"}",
+          "{\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-03\",\"label\":null,\"number\":\"20\"},\"currency\":\"STK\",\"number\":\"10\"}"
+        ]
+      },
+      "Income:Gains": {
+        "currencies": {
+          "USD": "-100"
+        },
+        "lots": []
+      }
+    },
+    "entries": [
+      "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"lifo-explicit.bean\",\"line\":2}}",
+      "{\"account\":\"Assets:Stock\",\"booking\":\"LIFO\",\"currencies\":[\"STK\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"lifo-explicit.bean\",\"line\":3}}",
+      "{\"account\":\"Income:Gains\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"lifo-explicit.bean\",\"line\":4}}",
+      "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"first purchase\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Stock\",\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-02\",\"label\":null,\"number\":\"10\"},\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"STK\",\"number\":\"10\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-100\"}}],\"source\":{\"file\":\"lifo-explicit.bean\",\"line\":5},\"tags\":[]}",
+      "{\"date\":\"2000-01-03\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"second purchase\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Stock\",\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-03\",\"label\":null,\"number\":\"20\"},\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"STK\",\"number\":\"20\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-400\"}}],\"source\":{\"file\":\"lifo-explicit.bean\",\"line\":8},\"tags\":[]}",
+      "{\"date\":\"2000-01-04\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"sale\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Stock\",\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-03\",\"label\":null,\"number\":\"20\"},\"flag\":null,\"metadata\":{},\"price\":{\"currency\":\"USD\",\"number\":\"30\"},\"units\":{\"currency\":\"STK\",\"number\":\"-10\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"300\"}},{\"account\":\"Income:Gains\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-100\"}}],\"source\":{\"file\":\"lifo-explicit.bean\",\"line\":11},\"tags\":[]}"
+    ]
+  },
+  "valid": true
+}

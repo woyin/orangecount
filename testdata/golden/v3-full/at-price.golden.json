@@ -1,0 +1,38 @@
+{
+  "errors": [],
+  "fixture": "at-price.bean",
+  "oracle_engine": "beancount-python-3.2.3",
+  "schema_version": 2,
+  "state": {
+    "balances": {
+      "Assets:Bank": {
+        "currencies": {
+          "USD": "200"
+        },
+        "lots": []
+      },
+      "Assets:Cash": {
+        "currencies": {
+          "USD": "110"
+        },
+        "lots": []
+      },
+      "Equity:Opening": {
+        "currencies": {
+          "EUR": "-275"
+        },
+        "lots": []
+      }
+    },
+    "entries": [
+      "{\"account\":\"Assets:Bank\",\"booking\":null,\"currencies\":[],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"at-price.bean\",\"line\":3}}",
+      "{\"account\":\"Assets:Cash\",\"amount\":\"110 USD\",\"date\":\"2000-01-05\",\"kind\":\"balance\",\"metadata\":{},\"source\":{\"file\":\"at-price.bean\",\"line\":14},\"tolerance\":null}",
+      "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"at-price.bean\",\"line\":2}}",
+      "{\"account\":\"Equity:Opening\",\"booking\":null,\"currencies\":[\"EUR\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"at-price.bean\",\"line\":4}}",
+      "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"postings with price annotations\",\"payee\":\"fx\",\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":{\"currency\":\"EUR\",\"number\":\"0.9\"},\"units\":{\"currency\":\"USD\",\"number\":\"100\"}},{\"account\":\"Equity:Opening\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"EUR\",\"number\":\"-90\"}}],\"source\":{\"file\":\"at-price.bean\",\"line\":5},\"tags\":[]}",
+      "{\"date\":\"2000-01-03\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"total price spelling\",\"payee\":\"fx-total\",\"postings\":[{\"account\":\"Assets:Bank\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":{\"currency\":\"EUR\",\"number\":\"0.9\"},\"units\":{\"currency\":\"USD\",\"number\":\"200\"}},{\"account\":\"Equity:Opening\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"EUR\",\"number\":\"-180\"}}],\"source\":{\"file\":\"at-price.bean\",\"line\":8},\"tags\":[]}",
+      "{\"date\":\"2000-01-04\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"fractional price\",\"payee\":\"fx-half\",\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":{\"currency\":\"EUR\",\"number\":\"0.5\"},\"units\":{\"currency\":\"USD\",\"number\":\"10\"}},{\"account\":\"Equity:Opening\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"EUR\",\"number\":\"-5\"}}],\"source\":{\"file\":\"at-price.bean\",\"line\":11},\"tags\":[]}"
+    ]
+  },
+  "valid": true
+}

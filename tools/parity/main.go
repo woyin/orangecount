@@ -28,10 +28,24 @@ type report struct {
 }
 
 func main() {
+	full := flag.Bool("full", false, "strict schema-2 v3 comparison (full lots, metadata and multiplicity)")
+	fullFixtures := flag.String("full-fixtures", "testdata/fixtures/v3-parity,testdata/fixtures/semantics", "comma-separated schema-2 fixture directories")
 	fixturesDir := flag.String("fixtures", "testdata/fixtures/v3-parity", "fixture directory")
 	goldenDir := flag.String("golden", "testdata/golden/v3-parity", "golden snapshot directory")
 	out := flag.String("out", "", "write the report JSON here instead of stdout")
 	flag.Parse()
+	if *full {
+		dir := *goldenDir
+		if dir == "testdata/golden/v3-parity" {
+			dir = "testdata/golden/v3-full"
+		}
+		result := buildFullReport(strings.Split(*fullFixtures, ","), dir)
+		writeReport(result, *out)
+		if result.FailedCount > 0 {
+			os.Exit(1)
+		}
+		return
+	}
 
 	paths, err := filepath.Glob(filepath.Join(*fixturesDir, "*.bean"))
 	if err != nil || len(paths) == 0 {
@@ -74,13 +88,15 @@ func main() {
 	}
 	if *out == "" {
 		os.Stdout.Write(append(encoded, '\n'))
-		return
+	} else {
+		if err := os.WriteFile(*out, append(encoded, '\n'), 0o644); err != nil {
+			fail("write %s: %v", *out, err)
+		}
+		fmt.Printf("parity: %d fixtures, %d clean, %d difference records -> %s\n", result.FixtureCount, result.CleanCount, len(result.Records), *out)
 	}
-	if err := os.WriteFile(*out, append(encoded, '\n'), 0o644); err != nil {
-		fail("write %s: %v", *out, err)
+	if result.FixtureCount != result.CleanCount {
+		os.Exit(1)
 	}
-	fmt.Printf("parity: %d fixtures, %d clean, %d difference records -> %s\n",
-		result.FixtureCount, result.CleanCount, len(result.Records), *out)
 }
 
 func fail(format string, args ...any) {

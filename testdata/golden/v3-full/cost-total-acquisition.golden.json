@@ -1,0 +1,28 @@
+{
+  "errors": [],
+  "fixture": "cost-total-acquisition.bean",
+  "oracle_engine": "beancount-python-3.2.3",
+  "schema_version": 2,
+  "state": {
+    "balances": {
+      "Assets:Cash": {
+        "currencies": {
+          "USD": "-100"
+        },
+        "lots": []
+      },
+      "Assets:Stock": {
+        "currencies": {},
+        "lots": [
+          "{\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-02\",\"label\":null,\"number\":\"10\"},\"currency\":\"STK\",\"number\":\"10\"}"
+        ]
+      }
+    },
+    "entries": [
+      "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"cost-total-acquisition.bean\",\"line\":1}}",
+      "{\"account\":\"Assets:Stock\",\"booking\":\"FIFO\",\"currencies\":[\"STK\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"cost-total-acquisition.bean\",\"line\":2}}",
+      "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"total cost purchase\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Stock\",\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-02\",\"label\":null,\"number\":\"10\"},\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"STK\",\"number\":\"10\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-100\"}}],\"source\":{\"file\":\"cost-total-acquisition.bean\",\"line\":3},\"tags\":[]}"
+    ]
+  },
+  "valid": true
+}

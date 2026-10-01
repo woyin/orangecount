@@ -1,0 +1,6 @@
+[
+  {"id":"source-filename-scopes","query":"SELECT filename, meta('filename') AS posting, entry_meta('filename') AS entry, any_meta('filename') AS any_source","source_columns":[0,1,2,3]},
+  {"id":"source-line-scopes","query":"SELECT lineno, meta('lineno') AS posting, entry_meta('lineno') AS entry, any_meta('lineno') AS any_source"},
+  {"id":"explicit-null-precedence","query":"SELECT meta('common'), entry_meta('common'), any_meta('common')"},
+  {"id":"empty-and-false-precedence","query":"SELECT meta('empty'), any_meta('empty'), meta('switch'), any_meta('switch')"}
+]

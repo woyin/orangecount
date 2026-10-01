@@ -106,6 +106,9 @@ func perUnitPrice(p ledger.Posting, unitCount string) string {
 	if !ok || units.Sign() == 0 {
 		return canonicalAmountNumber(p.Price.Amount.Number)
 	}
+	if units.Sign() < 0 {
+		units.Neg(units)
+	}
 	total := p.Price.Amount.Number.Rat
 	if total == nil {
 		return canonicalAmountNumber(p.Price.Amount.Number)
@@ -116,12 +119,7 @@ func perUnitPrice(p ledger.Posting, unitCount string) string {
 
 // canonicalRat renders an exact rational with trailing zeros trimmed.
 func canonicalRat(r *big.Rat) string {
-	s := r.FloatString(12)
-	if strings.Contains(s, ".") {
-		s = strings.TrimRight(s, "0")
-		s = strings.TrimSuffix(s, ".")
-	}
-	return s
+	return ledger.NewDecimal(r).String()
 }
 
 func formatDate(d ledger.Date) string {

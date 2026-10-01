@@ -1,0 +1,866 @@
+{
+  "schema_version": 2,
+  "oracle": {
+    "beancount": "3.2.3",
+    "beanquery": "0.2.0"
+  },
+  "fixture": "testdata/fixtures/query/metadata-stack.bean",
+  "input_sha256": "79e45de1b371109825357bca5ea3d92de76349fd384e7b756b6ae42f7dd0e86d",
+  "queries_sha256": "a711337b04204148908996802cbecb0fa25bdbeb8d9d72dfd1b4762bdf4d2f05",
+  "sources_sha256": {
+    "testdata/fixtures/query/metadata-stack-child.bean": "08d6e6e217ea0bece8f2a4bb1ce053f65cf25c40d6821e623717f426233669eb",
+    "testdata/fixtures/query/metadata-stack.bean": "79e45de1b371109825357bca5ea3d92de76349fd384e7b756b6ae42f7dd0e86d"
+  },
+  "cases": [
+    {
+      "id": "lexical-before-date-order",
+      "query": "SELECT narration, entry_meta('scope') AS entry, any_meta('scope') AS any_scope, meta('scope') AS posting",
+      "result": {
+        "columns": [
+          {
+            "name": "narration",
+            "type": "string"
+          },
+          {
+            "name": "entry",
+            "type": "object"
+          },
+          {
+            "name": "any_scope",
+            "type": "object"
+          },
+          {
+            "name": "posting",
+            "type": "object"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "early inner"
+            },
+            {
+              "type": "string",
+              "value": "inner"
+            },
+            {
+              "type": "string",
+              "value": "inner"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "early inner"
+            },
+            {
+              "type": "string",
+              "value": "inner"
+            },
+            {
+              "type": "string",
+              "value": "inner"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "early explicit"
+            },
+            {
+              "type": "string",
+              "value": "explicit"
+            },
+            {
+              "type": "string",
+              "value": "explicit"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "early explicit"
+            },
+            {
+              "type": "string",
+              "value": "explicit"
+            },
+            {
+              "type": "string",
+              "value": "explicit"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "child own scope"
+            },
+            {
+              "type": "string",
+              "value": "child-local"
+            },
+            {
+              "type": "string",
+              "value": "child-local"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "child own scope"
+            },
+            {
+              "type": "string",
+              "value": "child-local"
+            },
+            {
+              "type": "string",
+              "value": "child-local"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "restored outer"
+            },
+            {
+              "type": "string",
+              "value": "outer"
+            },
+            {
+              "type": "string",
+              "value": "outer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "restored outer"
+            },
+            {
+              "type": "string",
+              "value": "outer"
+            },
+            {
+              "type": "string",
+              "value": "outer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "late outer"
+            },
+            {
+              "type": "string",
+              "value": "outer"
+            },
+            {
+              "type": "string",
+              "value": "outer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "late outer"
+            },
+            {
+              "type": "string",
+              "value": "outer"
+            },
+            {
+              "type": "string",
+              "value": "outer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "child outside scope"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "child outside scope"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "pushed null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "pushed null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "outside"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "outside"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "amount-stack",
+      "query": "SELECT narration, entry_meta('budget') AS budget",
+      "result": {
+        "columns": [
+          {
+            "name": "narration",
+            "type": "string"
+          },
+          {
+            "name": "budget",
+            "type": "object"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "early inner"
+            },
+            {
+              "type": "amount",
+              "value": {
+                "number": "2.5",
+                "currency": "USD"
+              }
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "early inner"
+            },
+            {
+              "type": "amount",
+              "value": {
+                "number": "2.5",
+                "currency": "USD"
+              }
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "early explicit"
+            },
+            {
+              "type": "amount",
+              "value": {
+                "number": "2.5",
+                "currency": "USD"
+              }
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "early explicit"
+            },
+            {
+              "type": "amount",
+              "value": {
+                "number": "2.5",
+                "currency": "USD"
+              }
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "child own scope"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "child own scope"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "restored outer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "restored outer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "late outer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "late outer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "child outside scope"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "child outside scope"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "pushed null"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "pushed null"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "outside"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "outside"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "include-sources-and-scopes",
+      "query": "SELECT narration, meta('filename') AS posting_file, entry_meta('filename') AS entry_file, meta('lineno') AS posting_line, entry_meta('lineno') AS entry_line",
+      "source_columns": [
+        1,
+        2
+      ],
+      "result": {
+        "columns": [
+          {
+            "name": "narration",
+            "type": "string"
+          },
+          {
+            "name": "posting_file",
+            "type": "object"
+          },
+          {
+            "name": "entry_file",
+            "type": "object"
+          },
+          {
+            "name": "posting_line",
+            "type": "object"
+          },
+          {
+            "name": "entry_line",
+            "type": "object"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "early inner"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack.bean"
+            },
+            {
+              "type": "integer",
+              "value": "11"
+            },
+            {
+              "type": "integer",
+              "value": "10"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "early inner"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack.bean"
+            },
+            {
+              "type": "integer",
+              "value": "12"
+            },
+            {
+              "type": "integer",
+              "value": "10"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "early explicit"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack.bean"
+            },
+            {
+              "type": "integer",
+              "value": "15"
+            },
+            {
+              "type": "integer",
+              "value": "13"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "early explicit"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack.bean"
+            },
+            {
+              "type": "integer",
+              "value": "16"
+            },
+            {
+              "type": "integer",
+              "value": "13"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "child own scope"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack-child.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack-child.bean"
+            },
+            {
+              "type": "integer",
+              "value": "3"
+            },
+            {
+              "type": "integer",
+              "value": "2"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "child own scope"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack-child.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack-child.bean"
+            },
+            {
+              "type": "integer",
+              "value": "4"
+            },
+            {
+              "type": "integer",
+              "value": "2"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "restored outer"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack.bean"
+            },
+            {
+              "type": "integer",
+              "value": "21"
+            },
+            {
+              "type": "integer",
+              "value": "20"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "restored outer"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack.bean"
+            },
+            {
+              "type": "integer",
+              "value": "22"
+            },
+            {
+              "type": "integer",
+              "value": "20"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "late outer"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack.bean"
+            },
+            {
+              "type": "integer",
+              "value": "6"
+            },
+            {
+              "type": "integer",
+              "value": "5"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "late outer"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack.bean"
+            },
+            {
+              "type": "integer",
+              "value": "7"
+            },
+            {
+              "type": "integer",
+              "value": "5"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "child outside scope"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack-child.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack-child.bean"
+            },
+            {
+              "type": "integer",
+              "value": "7"
+            },
+            {
+              "type": "integer",
+              "value": "6"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "child outside scope"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack-child.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack-child.bean"
+            },
+            {
+              "type": "integer",
+              "value": "8"
+            },
+            {
+              "type": "integer",
+              "value": "6"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "pushed null"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack.bean"
+            },
+            {
+              "type": "integer",
+              "value": "25"
+            },
+            {
+              "type": "integer",
+              "value": "24"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "pushed null"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack.bean"
+            },
+            {
+              "type": "integer",
+              "value": "26"
+            },
+            {
+              "type": "integer",
+              "value": "24"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "outside"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack.bean"
+            },
+            {
+              "type": "integer",
+              "value": "30"
+            },
+            {
+              "type": "integer",
+              "value": "29"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "outside"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-stack.bean"
+            },
+            {
+              "type": "integer",
+              "value": "31"
+            },
+            {
+              "type": "integer",
+              "value": "29"
+            }
+          ]
+        ]
+      }
+    }
+  ]
+}

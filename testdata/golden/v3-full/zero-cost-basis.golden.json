@@ -1,0 +1,36 @@
+{
+  "errors": [],
+  "fixture": "zero-cost-basis.bean",
+  "oracle_engine": "beancount-python-3.2.3",
+  "schema_version": 2,
+  "state": {
+    "balances": {
+      "Assets:Cash": {
+        "currencies": {
+          "USD": "150"
+        },
+        "lots": []
+      },
+      "Assets:Stock": {
+        "currencies": {},
+        "lots": [
+          "{\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-02\",\"label\":null,\"number\":\"0\"},\"currency\":\"STK\",\"number\":\"5\"}"
+        ]
+      },
+      "Income:Gains": {
+        "currencies": {
+          "USD": "-150"
+        },
+        "lots": []
+      }
+    },
+    "entries": [
+      "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"zero-cost-basis.bean\",\"line\":2}}",
+      "{\"account\":\"Assets:Stock\",\"booking\":\"FIFO\",\"currencies\":[\"STK\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"zero-cost-basis.bean\",\"line\":1}}",
+      "{\"account\":\"Income:Gains\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"zero-cost-basis.bean\",\"line\":3}}",
+      "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"zero cost acquisition\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Stock\",\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-02\",\"label\":null,\"number\":\"0\"},\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"STK\",\"number\":\"10\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"0\"}}],\"source\":{\"file\":\"zero-cost-basis.bean\",\"line\":4},\"tags\":[]}",
+      "{\"date\":\"2000-01-03\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"sale\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Stock\",\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-02\",\"label\":null,\"number\":\"0\"},\"flag\":null,\"metadata\":{},\"price\":{\"currency\":\"USD\",\"number\":\"30\"},\"units\":{\"currency\":\"STK\",\"number\":\"-5\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"150\"}},{\"account\":\"Income:Gains\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-150\"}}],\"source\":{\"file\":\"zero-cost-basis.bean\",\"line\":7},\"tags\":[]}"
+    ]
+  },
+  "valid": true
+}

@@ -1,0 +1,14 @@
+[
+  {
+    "id": "normalized-price-weight",
+    "query": "SELECT weight"
+  },
+  {
+    "id": "normalized-price-components",
+    "query": "SELECT number(weight) AS value, currency(weight) AS currency"
+  },
+  {
+    "id": "quote-weight-text",
+    "query": "SELECT str(weight), str(number(weight)) WHERE account = 'Assets:Plain' ORDER BY date"
+  }
+]

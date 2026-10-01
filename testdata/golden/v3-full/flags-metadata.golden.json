@@ -1,0 +1,28 @@
+{
+  "errors": [],
+  "fixture": "flags-metadata.bean",
+  "oracle_engine": "beancount-python-3.2.3",
+  "schema_version": 2,
+  "state": {
+    "balances": {
+      "Assets:Cash": {
+        "currencies": {
+          "USD": "-10"
+        },
+        "lots": []
+      },
+      "Assets:Stock": {
+        "currencies": {},
+        "lots": [
+          "{\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-02\",\"label\":\"tag\",\"number\":\"10\"},\"currency\":\"STK\",\"number\":\"1\"}"
+        ]
+      }
+    },
+    "entries": [
+      "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"flags-metadata.bean\",\"line\":3}}",
+      "{\"account\":\"Assets:Stock\",\"booking\":\"FIFO\",\"currencies\":[\"STK\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{\"category\":{\"type\":\"string\",\"value\":\"synthetic\"}},\"source\":{\"file\":\"flags-metadata.bean\",\"line\":1}}",
+      "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[\"link\"],\"metadata\":{\"memo\":{\"type\":\"string\",\"value\":\"transaction metadata\"}},\"narration\":\"buy\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Stock\",\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-02\",\"label\":\"tag\",\"number\":\"10\"},\"flag\":\"!\",\"metadata\":{\"active\":{\"type\":\"bool\",\"value\":true},\"origin\":{\"type\":\"string\",\"value\":\"synthetic\"},\"recorded\":{\"type\":\"date\",\"value\":\"2000-01-01\"},\"score\":{\"type\":\"number\",\"value\":\"1.25\"}},\"price\":null,\"units\":{\"currency\":\"STK\",\"number\":\"1\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-10\"}}],\"source\":{\"file\":\"flags-metadata.bean\",\"line\":4},\"tags\":[\"tag\"]}"
+    ]
+  },
+  "valid": true
+}

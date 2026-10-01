@@ -1,0 +1,605 @@
+{
+  "schema_version": 2,
+  "oracle": {
+    "beancount": "3.2.3",
+    "beanquery": "0.2.0"
+  },
+  "fixture": "testdata/fixtures/query/aggregates.bean",
+  "input_sha256": "cfc8210832a1aa1b59e46213225a8b8680b70df84707be4b8ef836aea9240915",
+  "queries_sha256": "b2d6d8a38521addf4c1a653afda00ef59320b7f68214c31da571abd5aee76c5e",
+  "sources_sha256": {
+    "testdata/fixtures/query/aggregates.bean": "cfc8210832a1aa1b59e46213225a8b8680b70df84707be4b8ef836aea9240915"
+  },
+  "cases": [
+    {
+      "id": "scalar-extrema-and-endpoints",
+      "query": "SELECT first(number), last(number), min(number), max(number), str(first(number)), str(last(number)), str(min(number)), str(max(number)) WHERE account = 'Assets:Cash'",
+      "result": {
+        "columns": [
+          {
+            "name": "first(number)",
+            "type": "decimal"
+          },
+          {
+            "name": "last(number)",
+            "type": "decimal"
+          },
+          {
+            "name": "min(number)",
+            "type": "decimal"
+          },
+          {
+            "name": "max(number)",
+            "type": "decimal"
+          },
+          {
+            "name": "str(first(number))",
+            "type": "string"
+          },
+          {
+            "name": "str(last(number))",
+            "type": "string"
+          },
+          {
+            "name": "str(min(number))",
+            "type": "string"
+          },
+          {
+            "name": "str(max(number))",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "decimal",
+              "value": "-2"
+            },
+            {
+              "type": "decimal",
+              "value": "1"
+            },
+            {
+              "type": "decimal",
+              "value": "-2"
+            },
+            {
+              "type": "decimal",
+              "value": "3"
+            },
+            {
+              "type": "string",
+              "value": "-2.00"
+            },
+            {
+              "type": "string",
+              "value": "1.00"
+            },
+            {
+              "type": "string",
+              "value": "-2.00"
+            },
+            {
+              "type": "string",
+              "value": "3.000"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "scalar-types",
+      "query": "SELECT first(date), last(date), min(date), max(date), min(narration), max(narration), min(year), max(year), min(number > 0), max(number > 0) WHERE account = 'Assets:Cash'",
+      "result": {
+        "columns": [
+          {
+            "name": "first(date)",
+            "type": "date"
+          },
+          {
+            "name": "last(date)",
+            "type": "date"
+          },
+          {
+            "name": "min(date)",
+            "type": "date"
+          },
+          {
+            "name": "max(date)",
+            "type": "date"
+          },
+          {
+            "name": "min(narration)",
+            "type": "string"
+          },
+          {
+            "name": "max(narration)",
+            "type": "string"
+          },
+          {
+            "name": "min(year)",
+            "type": "integer"
+          },
+          {
+            "name": "max(year)",
+            "type": "integer"
+          },
+          {
+            "name": "min(number > 0)",
+            "type": "bool"
+          },
+          {
+            "name": "max(number > 0)",
+            "type": "bool"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "date",
+              "value": "2000-01-02"
+            },
+            {
+              "type": "date",
+              "value": "2000-01-05"
+            },
+            {
+              "type": "date",
+              "value": "2000-01-02"
+            },
+            {
+              "type": "date",
+              "value": "2000-01-05"
+            },
+            {
+              "type": "string",
+              "value": "equal value with another precision"
+            },
+            {
+              "type": "string",
+              "value": "middle"
+            },
+            {
+              "type": "integer",
+              "value": "2000"
+            },
+            {
+              "type": "integer",
+              "value": "2000"
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "bool",
+              "value": true
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "metadata-null-endpoints",
+      "query": "SELECT first(meta('sample')), last(meta('sample')), min(meta('sample')), max(meta('sample')) WHERE account = 'Assets:Cash'",
+      "result": {
+        "columns": [
+          {
+            "name": "first(meta('sample'))",
+            "type": "object"
+          },
+          {
+            "name": "last(meta('sample'))",
+            "type": "object"
+          },
+          {
+            "name": "min(meta('sample'))",
+            "type": "object"
+          },
+          {
+            "name": "max(meta('sample'))",
+            "type": "object"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "middle"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "middle"
+            },
+            {
+              "type": "string",
+              "value": "middle"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "null-aggregates",
+      "query": "SELECT first(NULL), last(NULL), min(NULL), max(NULL), first(number / 0), last(number / 0), min(number / 0), max(number / 0)",
+      "result": {
+        "columns": [
+          {
+            "name": "first(NULL)",
+            "type": "null"
+          },
+          {
+            "name": "last(NULL)",
+            "type": "null"
+          },
+          {
+            "name": "min(NULL)",
+            "type": "null"
+          },
+          {
+            "name": "max(NULL)",
+            "type": "null"
+          },
+          {
+            "name": "first(number / 0)",
+            "type": "decimal"
+          },
+          {
+            "name": "last(number / 0)",
+            "type": "decimal"
+          },
+          {
+            "name": "min(number / 0)",
+            "type": "decimal"
+          },
+          {
+            "name": "max(number / 0)",
+            "type": "decimal"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "grouped-endpoints",
+      "query": "SELECT account, first(number), last(number), min(number), max(number) ORDER BY account",
+      "result": {
+        "columns": [
+          {
+            "name": "account",
+            "type": "string"
+          },
+          {
+            "name": "first(number)",
+            "type": "decimal"
+          },
+          {
+            "name": "last(number)",
+            "type": "decimal"
+          },
+          {
+            "name": "min(number)",
+            "type": "decimal"
+          },
+          {
+            "name": "max(number)",
+            "type": "decimal"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "Assets:Cash"
+            },
+            {
+              "type": "decimal",
+              "value": "-2"
+            },
+            {
+              "type": "decimal",
+              "value": "1"
+            },
+            {
+              "type": "decimal",
+              "value": "-2"
+            },
+            {
+              "type": "decimal",
+              "value": "3"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Equity:Opening"
+            },
+            {
+              "type": "decimal",
+              "value": "2"
+            },
+            {
+              "type": "decimal",
+              "value": "-1"
+            },
+            {
+              "type": "decimal",
+              "value": "-3"
+            },
+            {
+              "type": "decimal",
+              "value": "2"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "compound-extrema-and-endpoints",
+      "query": "SELECT first(position), last(position), min(position), max(position), first(weight), last(weight), min(weight), max(weight), str(first(position)), str(last(weight)) WHERE account = 'Assets:Cash'",
+      "result": {
+        "columns": [
+          {
+            "name": "first(position)",
+            "type": "position"
+          },
+          {
+            "name": "last(position)",
+            "type": "position"
+          },
+          {
+            "name": "min(position)",
+            "type": "position"
+          },
+          {
+            "name": "max(position)",
+            "type": "position"
+          },
+          {
+            "name": "first(weight)",
+            "type": "amount"
+          },
+          {
+            "name": "last(weight)",
+            "type": "amount"
+          },
+          {
+            "name": "min(weight)",
+            "type": "amount"
+          },
+          {
+            "name": "max(weight)",
+            "type": "amount"
+          },
+          {
+            "name": "str(first(position))",
+            "type": "string"
+          },
+          {
+            "name": "str(last(weight))",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "position",
+              "value": {
+                "units": {
+                  "number": "-2",
+                  "currency": "USD"
+                },
+                "cost": null
+              }
+            },
+            {
+              "type": "position",
+              "value": {
+                "units": {
+                  "number": "1",
+                  "currency": "USD"
+                },
+                "cost": null
+              }
+            },
+            {
+              "type": "position",
+              "value": {
+                "units": {
+                  "number": "-2",
+                  "currency": "USD"
+                },
+                "cost": null
+              }
+            },
+            {
+              "type": "position",
+              "value": {
+                "units": {
+                  "number": "3",
+                  "currency": "USD"
+                },
+                "cost": null
+              }
+            },
+            {
+              "type": "amount",
+              "value": {
+                "number": "-2",
+                "currency": "USD"
+              }
+            },
+            {
+              "type": "amount",
+              "value": {
+                "number": "1",
+                "currency": "USD"
+              }
+            },
+            {
+              "type": "amount",
+              "value": {
+                "number": "-2",
+                "currency": "USD"
+              }
+            },
+            {
+              "type": "amount",
+              "value": {
+                "number": "3",
+                "currency": "USD"
+              }
+            },
+            {
+              "type": "string",
+              "value": "-2.00 USD"
+            },
+            {
+              "type": "string",
+              "value": "1.00 USD"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "decimal-tie-precision",
+      "query": "SELECT str(first(number)), str(last(number)), str(min(number)), str(max(number)), str(min(number + 0.000)), str(max(number + 0.000)) WHERE account = 'Assets:Cash' AND number > 0",
+      "result": {
+        "columns": [
+          {
+            "name": "str(first(number))",
+            "type": "string"
+          },
+          {
+            "name": "str(last(number))",
+            "type": "string"
+          },
+          {
+            "name": "str(min(number))",
+            "type": "string"
+          },
+          {
+            "name": "str(max(number))",
+            "type": "string"
+          },
+          {
+            "name": "str(min(number + 0.000))",
+            "type": "string"
+          },
+          {
+            "name": "str(max(number + 0.000))",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "1.0"
+            },
+            {
+              "type": "string",
+              "value": "1.00"
+            },
+            {
+              "type": "string",
+              "value": "1.0"
+            },
+            {
+              "type": "string",
+              "value": "3.000"
+            },
+            {
+              "type": "string",
+              "value": "1.000"
+            },
+            {
+              "type": "string",
+              "value": "3.000"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "empty-aggregate-schema",
+      "query": "SELECT first(number), last(date), min(position), max(weight) WHERE account = 'missing'",
+      "result": {
+        "columns": [
+          {
+            "name": "first(number)",
+            "type": "decimal"
+          },
+          {
+            "name": "last(date)",
+            "type": "date"
+          },
+          {
+            "name": "min(position)",
+            "type": "position"
+          },
+          {
+            "name": "max(weight)",
+            "type": "amount"
+          }
+        ],
+        "rows": []
+      }
+    },
+    {
+      "id": "first-arity",
+      "query": "SELECT first()",
+      "error": {
+        "class": "CompilationError",
+        "code": "type-mismatch"
+      }
+    },
+    {
+      "id": "extrema-arity-empty",
+      "query": "SELECT min(1,2) LIMIT 0",
+      "error": {
+        "class": "CompilationError",
+        "code": "type-mismatch"
+      }
+    },
+    {
+      "id": "nested-aggregate-empty",
+      "query": "SELECT first(sum(number)) LIMIT 0",
+      "error": {
+        "class": "CompilationError",
+        "code": "type-mismatch"
+      }
+    }
+  ]
+}

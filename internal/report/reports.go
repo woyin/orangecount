@@ -416,21 +416,30 @@ func TrialBalanceTree(e ledger.Evaluation) query.Result {
 // AccountTreeNode is an explicit hierarchical tree node suitable for native UI
 // rendering (such as SwiftUI OutlineGroup or desktop tree tables).
 type AccountTreeNode struct {
-	Name            string            `json:"name"`
-	FullName        string            `json:"full_name"`
-	Depth           int               `json:"depth"`
-	IsLeaf          bool              `json:"is_leaf"`
-	Explicit        bool              `json:"explicit"`
-	DirectBalances  map[string]string `json:"direct_balances"`
-	SubtreeBalances map[string]string `json:"subtree_balances"`
-	Children        []AccountTreeNode `json:"children"`
+	DirectValuation  *AccountValuation           `json:"direct_valuation,omitempty"`
+	SubtreeValuation *AccountValuation           `json:"subtree_valuation,omitempty"`
+	Name             string                      `json:"name"`
+	FullName         string                      `json:"full_name"`
+	Depth            int                         `json:"depth"`
+	IsLeaf           bool                        `json:"is_leaf"`
+	Explicit         bool                        `json:"explicit"`
+	DirectAmounts    map[string]PresentedDecimal `json:"direct_amounts"`
+	SubtreeAmounts   map[string]PresentedDecimal `json:"subtree_amounts"`
+	DirectBalances   map[string]string           `json:"direct_balances"`
+	SubtreeBalances  map[string]string           `json:"subtree_balances"`
+	Children         []AccountTreeNode           `json:"children"`
 }
 
 // BuildAccountTree builds a hierarchical forest of account tree nodes for the
 // requested account roots (e.g. "Assets", "Liabilities", "Equity" for balance
 // sheet, or "Income", "Expenses" for income statement).
 func BuildAccountTree(e ledger.Evaluation, roots ...string) []AccountTreeNode {
+	return accountTree(e, roots, false)
+}
+
+func accountTree(e ledger.Evaluation, roots []string, retainZero bool) []AccountTreeNode {
 	index := buildAccountTreeIndex(e, roots)
+	index.retainZero = retainZero
 	var rootNodes []AccountTreeNode
 	for _, root := range roots {
 		if !index.nodes[root] {
@@ -460,21 +469,26 @@ func buildSubtree(name string, depth int, index accountTreeIndex) AccountTreeNod
 	}
 
 	direct := map[string]string{}
+	directAmounts := map[string]PresentedDecimal{}
+	subtreeAmounts := map[string]PresentedDecimal{}
 	for cur, dec := range index.ownTotals[name] {
-		if !dec.IsZero() {
+		if index.retainZero || !dec.IsZero() {
 			direct[cur] = dec.String()
+			directAmounts[cur] = FormatDecimal(dec)
 		}
 	}
 
 	subtree := map[string]string{}
 	for cur, dec := range index.totals[name] {
-		if !dec.IsZero() {
+		if index.retainZero || !dec.IsZero() {
 			subtree[cur] = dec.String()
+			subtreeAmounts[cur] = FormatDecimal(dec)
 		}
 	}
 
 	return AccountTreeNode{
-		Name:            shortName,
+		Name:          shortName,
+		DirectAmounts: directAmounts, SubtreeAmounts: subtreeAmounts,
 		FullName:        name,
 		Depth:           depth,
 		IsLeaf:          len(children) == 0,
@@ -930,12 +944,13 @@ func accountRootReport(e ledger.Evaluation, roots ...string) query.Result {
 // from its leaf children and the parent's own balance is never re-counted as
 // a separate ordinary balance.
 type accountTreeIndex struct {
-	totals    map[string]map[string]ledger.Decimal
-	ownTotals map[string]map[string]ledger.Decimal
-	explicit  map[string]bool
-	direct    map[string]bool
-	nodes     map[string]bool
-	children  map[string]map[string]bool
+	retainZero bool
+	totals     map[string]map[string]ledger.Decimal
+	ownTotals  map[string]map[string]ledger.Decimal
+	explicit   map[string]bool
+	direct     map[string]bool
+	nodes      map[string]bool
+	children   map[string]map[string]bool
 }
 
 // buildAccountTreeIndex builds the subtree index for the accounts whose root is

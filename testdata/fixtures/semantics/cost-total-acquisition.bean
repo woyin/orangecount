@@ -1,0 +1,5 @@
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Assets:Stock STK "FIFO"
+2000-01-02 * "total cost purchase"
+  Assets:Stock 10 STK {{100 USD}}
+  Assets:Cash -100 USD

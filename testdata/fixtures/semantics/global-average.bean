@@ -1,0 +1,15 @@
+option "booking_method" "AVERAGE"
+option "operating_currency" "USD"
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Assets:Stock STK 
+2000-01-01 open Income:Gains USD
+2000-01-02 * "first purchase"
+  Assets:Stock 10 STK {10 USD}
+  Assets:Cash -100 USD
+2000-01-03 * "second purchase"
+  Assets:Stock 20 STK {20 USD}
+  Assets:Cash -400 USD
+2000-01-04 * "sale"
+  Assets:Stock -10 STK {} @ 30 USD
+  Assets:Cash 300 USD
+  Income:Gains

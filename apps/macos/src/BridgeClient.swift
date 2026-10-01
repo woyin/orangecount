@@ -4,6 +4,8 @@ import OrangeCountBridge
 enum BridgeError: Error, LocalizedError {
     case nullPointerFromGo
     case jsonDecodeError(String)
+    case protocolMismatch(Int)
+    case remote(String, String)
 
     var errorDescription: String? {
         switch self {
@@ -11,73 +13,125 @@ enum BridgeError: Error, LocalizedError {
             return "Go runtime returned a null pointer"
         case .jsonDecodeError(let detail):
             return "Failed to decode JSON from Go core: \(detail)"
+        case .protocolMismatch(let version):
+            return "Unsupported ledger protocol version: \(version)"
+        case .remote(_, let message):
+            return message
         }
     }
+    func message(locale: String) -> String {
+        guard locale == "zh-CN" else { return errorDescription ?? "Unable to read ledger" }
+        switch self {
+        case .nullPointerFromGo: return "账本引擎未返回响应，请重新打开账本。"
+        case .jsonDecodeError: return "账本响应格式不正确，请重新加载或更新应用。"
+        case .protocolMismatch(let version): return "账本协议版本不兼容（\(version)），请使用同一构建版本的应用。"
+        case .remote(let code, let message):
+            switch code {
+            case "invalid-request": return "请求无效，请检查日期范围等筛选条件。"
+            case "session-closed": return "账本会话已关闭，请重新打开账本。"
+            case "snapshot-changed": return "账本已更新，请刷新当前页面。"
+            case "no-snapshot": return "尚无有效账本快照，请先修复账本错误。"
+            case "text-budget-exceeded": return "查询文本超过64 KiB，请缩短查询。"
+            case "account-not-found": return "当前快照中没有此账户，可返回并重新选择。"
+            case "commodity-not-found": return "当前快照中没有此商品，可返回价格目录并重新选择。"
+            case "result-budget-exceeded": return "结果超出大小限制，请减少每页数量或缩小账户、日期范围。"
+            case "ambiguous-directory": return "目录中没有唯一账本入口，请选择具体文件。"
+            case "encoding", "internal": return "账本引擎无法完成请求，请重新加载。"
+            default: return message
+            }
+        }
+    }
+
 }
 
 // Memory-safe C-ABI wrapper implementing the RAII protocol specified in native-desktop-app-plan.md
-final class BridgeClient {
+final class BridgeClient: @unchecked Sendable {
     static let shared = BridgeClient()
     private init() {}
 
-    func ping() -> String {
-        guard let ptr = OC_Ping() else { return "Ping failed: null pointer" }
-        defer { OC_FreeString(ptr) }
-        return String(cString: ptr)
-    }
-
-    func loadSnapshot(path: String) throws -> LedgerSummary {
-        try path.withCString { cPath in
-            try withGoResponse {
-                OC_LoadSnapshot(UnsafeMutablePointer(mutating: cPath))
-            } decode: { data in
-                try JSONDecoder().decode(LedgerSummary.self, from: data)
+    func openLedger(path: String, semantics: String = "legacy", inputIdentity: String = "") throws -> OpenLedgerResult {
+        let data = try JSONEncoder().encode(["semantics_profile": semantics, "input_identity": inputIdentity])
+        let options = String(decoding: data, as: UTF8.self)
+        return try path.withCString { ptr in
+            try options.withCString { optionsPtr in
+                try sessionResponse { OC_OpenLedgerWithOptions(UnsafeMutablePointer(mutating: ptr), UnsafeMutablePointer(mutating: optionsPtr)) }
             }
         }
     }
 
-    func getTreeReport(path: String, reportType: String) throws -> TreeReportPayload {
-        try path.withCString { cPath in
-            try reportType.withCString { cReport in
-                try withGoResponse {
-                    OC_GetTreeReport(UnsafeMutablePointer(mutating: cPath), UnsafeMutablePointer(mutating: cReport))
-                } decode: { data in
-                    try JSONDecoder().decode(TreeReportPayload.self, from: data)
-                }
-            }
+    func pollState(handle: UInt64, after: UInt64) throws -> PollResult {
+        try sessionResponse { OC_PollState(handle, after) }
+    }
+
+    func readView(handle: UInt64, request: ViewRequest) throws -> LedgerView {
+        let data = try JSONEncoder().encode(request)
+        let json = String(decoding: data, as: UTF8.self)
+        return try json.withCString { ptr in
+            try sessionResponse { OC_ReadView(handle, UnsafeMutablePointer(mutating: ptr)) }
         }
     }
 
-    func getJournal(path: String, filterJSON: String = "") throws -> JournalPayload {
-        try path.withCString { cPath in
-            try filterJSON.withCString { cFilter in
-                try withGoResponse {
-                    OC_GetJournal(UnsafeMutablePointer(mutating: cPath), UnsafeMutablePointer(mutating: cFilter))
-                } decode: { data in
-                    try JSONDecoder().decode(JournalPayload.self, from: data)
-                }
-            }
+    func reloadLedger(handle: UInt64) throws -> LedgerState {
+        try sessionResponse { OC_ReloadLedger(handle) }
+    }
+
+    func executeQuery(handle: UInt64, request: QueryRequest) throws -> QueryResponse {
+        guard request.text.utf8.count <= 64 * 1024 else { throw BridgeError.remote("text-budget-exceeded", "Query text exceeds 64 KiB") }
+        let data = try JSONEncoder().encode(request)
+        let json = String(decoding: data, as: UTF8.self)
+        let response: QueryResponse = try json.withCString { ptr in
+            try sessionResponse { OC_ExecuteQuery(handle, UnsafeMutablePointer(mutating: ptr)) }
+        }
+        guard response.context.request_id == request.request_id, response.context.snapshot_id == request.snapshot_id,
+              response.context.text == request.text else { throw BridgeError.jsonDecodeError("Query response does not match its captured request") }
+        return response
+    }
+
+    func cancelQuery(handle: UInt64, requestID: UInt64) throws {
+        struct Accepted: Decodable { let accepted: Bool }
+        let result: Accepted = try sessionResponse { OC_CancelQuery(handle, requestID) }
+        guard result.accepted else { throw BridgeError.jsonDecodeError("Query cancellation was not accepted") }
+    }
+
+    func closeLedger(handle: UInt64) throws {
+        struct Closed: Decodable { let closed: Bool }
+        let _: Closed = try sessionResponse { OC_CloseLedger(handle) }
+    }
+
+    private struct ResponseError: Decodable {
+        let code: String
+        let message: String
+    }
+
+    private struct Response<Value: Decodable>: Decodable {
+        let protocol_version: Int
+        let data: Value?
+        let error: ResponseError?
+        enum CodingKeys: CodingKey { case protocol_version, data, error }
+        init(from decoder: Decoder) throws {
+            let values = try decoder.container(keyedBy: CodingKeys.self)
+            protocol_version = try values.decode(Int.self, forKey: .protocol_version)
+            guard protocol_version == 2 else { throw BridgeError.protocolMismatch(protocol_version) }
+            error = try values.decodeIfPresent(ResponseError.self, forKey: .error)
+            data = try values.decodeIfPresent(Value.self, forKey: .data)
         }
     }
 
-    func getHistoricalTrends(path: String) throws -> HistoricalTrendsPayload {
-        try path.withCString { cPath in
-            try withGoResponse {
-                OC_GetHistoricalTrends(UnsafeMutablePointer(mutating: cPath))
-            } decode: { data in
-                try JSONDecoder().decode(HistoricalTrendsPayload.self, from: data)
-            }
+    // Shared by live C calls and protocol/decoder probes. It does not log data.
+    static func decodeResponse<Value: Decodable>(_ data: Data, as type: Value.Type) throws -> Value {
+        do {
+            let response = try JSONDecoder().decode(Response<Value>.self, from: data)
+            if let error = response.error { throw BridgeError.remote(error.code, error.message) }
+            guard let value = response.data else { throw BridgeError.jsonDecodeError("Missing response data") }
+            return value
+        } catch {
+            if let error = error as? BridgeError { throw error }
+            throw BridgeError.jsonDecodeError(error.localizedDescription)
         }
     }
 
-    func getLedgerRevision(path: String) -> String {
-        path.withCString { cPath in
-            guard let ptr = OC_GetLedgerRevision(UnsafeMutablePointer(mutating: cPath)) else {
-                return "rev:0"
-            }
-            defer { OC_FreeString(ptr) }
-            return String(cString: ptr)
-        }
+    private func sessionResponse<Value: Decodable>(_ call: () -> UnsafeMutablePointer<CChar>?) throws -> Value {
+        try withGoResponse(call) { try Self.decodeResponse($0, as: Value.self) }
     }
 
     private func withGoResponse<T>(_ call: () -> UnsafeMutablePointer<CChar>?, decode: (Data) throws -> T) throws -> T {
@@ -89,8 +143,9 @@ final class BridgeClient {
         do {
             return try decode(data)
         } catch {
-            let rawStr = String(data: data, encoding: .utf8) ?? "<invalid utf8>"
-            throw BridgeError.jsonDecodeError("\(error.localizedDescription)\nRaw JSON: \(rawStr)")
+            if let error = error as? BridgeError { throw error }
+            // Raw responses contain private ledger data. Report only the decode category.
+            throw BridgeError.jsonDecodeError(error.localizedDescription)
         }
     }
 }

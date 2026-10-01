@@ -13,12 +13,14 @@ import (
 	"orangecount/internal/diagnostic"
 	"orangecount/internal/dialect"
 	"orangecount/internal/ledger"
+	"orangecount/internal/snapshot"
 	"orangecount/internal/source"
 )
 
 func runExport(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("export", flag.ContinueOnError)
 	fs.SetOutput(stderr)
+	buildOptions := semanticsFlag(fs)
 	out := fs.String("out", "", "output file (single-file ledger) or directory (include graph)")
 	if err := fs.Parse(args); err != nil {
 		return 2
@@ -31,7 +33,7 @@ func runExport(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "orangecount export: -out is required")
 		return 2
 	}
-	return writeConverted(fs.Arg(0), *out, "export", stdout, stderr, false)
+	return writeConverted(fs.Arg(0), *out, "export", stdout, stderr, false, *buildOptions)
 }
 
 func runDialectize(args []string, stdout, stderr io.Writer) int {
@@ -52,7 +54,7 @@ func runDialectize(args []string, stdout, stderr io.Writer) int {
 	return writeConverted(fs.Arg(0), *out, "dialectize", stdout, stderr, true)
 }
 
-func writeConverted(entry, out, label string, stdout, stderr io.Writer, reverse bool) int {
+func writeConverted(entry, out, label string, stdout, stderr io.Writer, reverse bool, options ...snapshot.BuildOptions) int {
 	graph, err := source.LoadGraph(entry)
 	if err != nil {
 		fmt.Fprintf(stderr, "orangecount %s: %v\n", label, err)
@@ -62,6 +64,13 @@ func writeConverted(entry, out, label string, stdout, stderr io.Writer, reverse 
 	if bag.HasErrors() {
 		renderBag(stderr, bag, label)
 		return 1
+	}
+	if len(options) > 0 && options[0].Evaluation.SemanticsProfile != "" {
+		result := snapshot.BuildGraphWithOptions(graph, options[0])
+		if result.Snapshot == nil {
+			_ = diagnostic.RenderHuman(stderr, result.Diagnostics, "en")
+			return 1
+		}
 	}
 	outputs := make(map[source.FileID][]byte)
 	if reverse {

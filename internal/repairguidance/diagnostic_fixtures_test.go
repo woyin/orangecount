@@ -21,8 +21,9 @@ import (
 // repeat.
 func TestEveryGuidanceCodeHasARepresentativeTrigger(t *testing.T) {
 	tests := []struct {
-		code string
-		text string
+		code    string
+		text    string
+		profile ledger.SemanticsProfile
 	}{
 		{code: "E-SOURCE-UTF8"},
 		{code: "E-PARSE-DATE", text: "2000-02-30 open Assets:Cash USD\n"},
@@ -30,6 +31,7 @@ func TestEveryGuidanceCodeHasARepresentativeTrigger(t *testing.T) {
 		{code: "E-PARSE-EXPECTED", text: "2000-01-01 open\n"},
 		{code: "E-PARSE-TOKEN", text: "2000-01-01 * \"x\" ???\n"},
 		{code: "E-PARSE-STRING", text: "2000-01-01 * \"x\n"},
+		{code: "E-PARSE-METADATA-STACK", text: "popmeta missing:\n", profile: ledger.V3},
 		{code: "E-EVAL-OPEN", text: "2000-01-01 open Assets:Cash USD\n2000-01-02 open Assets:Cash USD\n"},
 		{code: "E-EVAL-REOPEN", text: "2000-01-01 open Assets:Cash USD\n2000-01-02 close Assets:Cash\n2000-01-03 open Assets:Cash USD\n"},
 		{code: "E-EVAL-CLOSE", text: "2000-01-01 close Assets:Cash\n"},
@@ -54,7 +56,7 @@ func TestEveryGuidanceCodeHasARepresentativeTrigger(t *testing.T) {
 				file, bag := ledger.ParseText("fixture.bean", []byte(fixture.text))
 				diagnostics = append(diagnostics, bag.All()...)
 				if !bag.HasErrors() {
-					evaluation := ledger.EvaluateFiles(map[source.FileID]*ledger.File{1: file}, []source.FileID{1}, ledger.EvalOptions{})
+					evaluation := ledger.EvaluateFiles(map[source.FileID]*ledger.File{1: file}, []source.FileID{1}, ledger.EvalOptions{SemanticsProfile: fixture.profile})
 					diagnostics = append(diagnostics, evaluation.Diagnostics...)
 				}
 			}

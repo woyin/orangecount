@@ -1,0 +1,12 @@
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Assets:A STK
+2000-01-01 open Assets:B STK
+2000-01-02 * "B has a sorting tie before its extra lot"
+  Assets:B 1 STK {1 USD, 1999-01-03, "X"}
+  Assets:B 1 STK {1 USD, 1999-01-04, "Z"}
+  Assets:B 2 STK {1 USD, 1999-01-05, "extra"}
+  Assets:Cash -4 USD
+2000-01-03 * "A encounters the tied lots in reverse order"
+  Assets:A 1 STK {1 USD, 1999-01-04, "Z"}
+  Assets:A 1 STK {1 USD, 1999-01-03, "X"}
+  Assets:Cash -2 USD

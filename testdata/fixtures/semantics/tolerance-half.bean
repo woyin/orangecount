@@ -1,0 +1,6 @@
+option "tolerance_multiplier" "0.5"
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Expenses:Food USD
+2000-01-02 * "rounding"
+  Assets:Cash -1.00 USD
+  Expenses:Food 1.01 USD

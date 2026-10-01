@@ -1,0 +1,4 @@
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Equity:Opening USD
+2000-01-01 pad Assets:Cash Equity:Opening
+2000-01-02 balance Assets:Cash 10 USD

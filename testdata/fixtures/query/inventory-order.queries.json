@@ -1,0 +1,3 @@
+[
+  {"id":"inventory-source-order-ties","query":"SELECT account, sum(position) AS inventory WHERE account ~ 'Assets:[AB]$' GROUP BY account ORDER BY inventory"}
+]

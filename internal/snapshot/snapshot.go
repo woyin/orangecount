@@ -11,8 +11,10 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"os"
+	"reflect"
 	"sort"
 	"strings"
 	"sync"
@@ -41,6 +43,7 @@ type Snapshot struct {
 	parsed      map[source.FileID]*ledger.File
 	evaluation  *ledger.Evaluation
 	diagnostics []diagnostic.Diagnostic
+	options     BuildOptions
 }
 
 // BuildResult is the outcome of one build attempt.
@@ -52,6 +55,9 @@ type BuildResult struct {
 	Graph       *source.Graph
 	Diagnostics []diagnostic.Diagnostic
 	Err         error
+	// Evaluation may be partial on an invalid build; only Snapshot is safe
+	// for publication. Migration diagnostics can inspect this attempt locally.
+	evaluation *ledger.Evaluation
 }
 
 // Build reads, parses, evaluates, and validates an include graph. Snapshot is
@@ -69,12 +75,33 @@ func BuildWithOptions(entry string, options BuildOptions) BuildResult {
 		// context even though no accounting snapshot may be published.
 		return BuildResult{Graph: graph, Diagnostics: bag.All(), Err: err}
 	}
+	return BuildGraphWithOptions(graph, options)
+}
+
+// BuildGraphWithOptions evaluates an already loaded graph. Migration callers
+// use the same immutable bytes for both profiles, even if files change on disk.
+func BuildGraphWithOptions(graph *source.Graph, options BuildOptions) BuildResult {
+	if graph == nil {
+		return BuildResult{Err: fmt.Errorf("nil source graph")}
+	}
+	normalized, err := options.Evaluation.Normalized()
+	if err != nil {
+		return BuildResult{Graph: graph, Err: err, Diagnostics: []diagnostic.Diagnostic{diagnostic.New("E-EVAL-OPTION", diagnostic.Error, source.Span{})}}
+	}
+	options.Evaluation = normalized
 	parsed, parseBag := ledger.ParseGraph(graph)
 	// Dialect shorthand lines are compiled into ordinary transactions before
 	// evaluation so every downstream view behaves exactly as on a standard
 	// ledger (ADR-0045 E3).
 	parsed, _, dialectBag := dialect.Expand(graph, parsed)
-	evaluation := ledger.Evaluate(graph, parsed, options.Evaluation)
+	var evaluation *ledger.Evaluation
+	if options.Evaluation.SemanticsProfile == ledger.V3 && parseBag.HasErrors() {
+		// A malformed declaration must not also configure the evaluator and
+		// manufacture secondary semantic errors from incomplete syntax.
+		evaluation = &ledger.Evaluation{SemanticsProfile: ledger.V3, EvaluationRevision: ledger.V3.EvaluationRevision(), ActiveExtensions: []string{}}
+	} else {
+		evaluation = ledger.Evaluate(graph, parsed, options.Evaluation)
+	}
 	bag := diagnostic.Bag{}
 	bag.Extend(parseBag.All()...)
 	bag.Extend(dialectBag...)
@@ -83,13 +110,18 @@ func BuildWithOptions(entry string, options BuildOptions) BuildResult {
 	}
 	diagnostics := bag.All()
 	if bag.HasErrors() || !evaluation.Valid {
-		return BuildResult{Graph: graph, Diagnostics: diagnostics}
+		return BuildResult{Graph: graph, Diagnostics: diagnostics, evaluation: evaluation}
 	}
-	id := snapshotID(graph)
-	return BuildResult{Snapshot: &Snapshot{ID: id, BuiltAt: time.Now().UTC(), EntryPath: graph.Path(graph.Entry), graph: graph, parsed: parsed, evaluation: evaluation, diagnostics: append([]diagnostic.Diagnostic(nil), diagnostics...)}, Graph: graph, Diagnostics: diagnostics}
+	id := snapshotIDWithOptions(graph, options)
+	return BuildResult{Snapshot: &Snapshot{ID: id, BuiltAt: time.Now().UTC(), EntryPath: graph.Path(graph.Entry), graph: graph, parsed: parsed, evaluation: evaluation, diagnostics: append([]diagnostic.Diagnostic(nil), diagnostics...), options: options}, Graph: graph, Diagnostics: diagnostics, evaluation: evaluation}
 }
 
 func snapshotID(graph *source.Graph) string {
+	options, _ := (ledger.EvalOptions{}).Normalized()
+	return snapshotIDWithOptions(graph, BuildOptions{Evaluation: options})
+}
+
+func snapshotIDWithOptions(graph *source.Graph, options BuildOptions) string {
 	hash := sha256.New()
 	if graph == nil {
 		return ""
@@ -104,6 +136,13 @@ func snapshotID(graph *source.Graph) string {
 		hash.Write(file.Data)
 		hash.Write([]byte{0})
 	}
+	identity, _ := json.Marshal(struct {
+		Profile        ledger.SemanticsProfile
+		Revision       string
+		Tolerance      string
+		InferTolerance bool
+	}{options.Evaluation.SemanticsProfile, options.Evaluation.SemanticsProfile.EvaluationRevision(), options.Evaluation.DefaultTolerance.String(), options.Evaluation.InferDecimalTolerance})
+	hash.Write(identity)
 	return hex.EncodeToString(hash.Sum(nil))[:16]
 }
 
@@ -145,37 +184,13 @@ func (s *Snapshot) Diagnostics() []diagnostic.Diagnostic {
 func cloneParsed(parsed map[source.FileID]*ledger.File) map[source.FileID]*ledger.File {
 	copyFiles := make(map[source.FileID]*ledger.File, len(parsed))
 	for id, file := range parsed {
-		copyFiles[id] = file
+		copyFiles[id] = cloneValue(reflect.ValueOf(file)).Interface().(*ledger.File)
 	}
 	return copyFiles
 }
 
 func cloneEvaluation(value ledger.Evaluation) ledger.Evaluation {
-	accounts := value.Accounts
-	value.Accounts = make(map[string]ledger.AccountState, len(accounts))
-	for name, account := range accounts {
-		balances := account.Balances
-		account.Balances = make(map[string]ledger.Decimal, len(account.Balances))
-		for currency, amount := range balances {
-			account.Balances[currency] = ledger.NewDecimal(amount.Rat())
-		}
-		account.Currencies = append([]string(nil), account.Currencies...)
-		account.Positions = append([]ledger.Position(nil), account.Positions...)
-		value.Accounts[name] = account
-	}
-	prices := value.Prices
-	value.Prices = make(map[string][]ledger.PriceQuote, len(prices))
-	for base, quotes := range prices {
-		value.Prices[base] = append([]ledger.PriceQuote(nil), quotes...)
-	}
-	value.Entries = append([]ledger.EntryRecord(nil), value.Entries...)
-	options := value.Options
-	value.Options = make(map[string]string, len(options))
-	for key, option := range options {
-		value.Options[key] = option
-	}
-	value.Diagnostics = append([]diagnostic.Diagnostic(nil), value.Diagnostics...)
-	return value
+	return cloneValue(reflect.ValueOf(value)).Interface().(ledger.Evaluation)
 }
 
 // Store atomically retains the most recently valid snapshot and separately
@@ -185,6 +200,8 @@ type Store struct {
 	current     *Snapshot
 	attempted   *source.Graph
 	diagnostics []diagnostic.Diagnostic
+	options     BuildOptions
+	bound       bool
 }
 
 // NewStore creates a store seeded with an optional initial snapshot.
@@ -192,6 +209,7 @@ func NewStore(initial *Snapshot) *Store {
 	store := &Store{current: initial}
 	if initial != nil {
 		store.attempted = initial.Graph()
+		store.options, store.bound = initial.options, true
 	}
 	return store
 }
@@ -236,6 +254,10 @@ func (s *Store) Publish(candidate *Snapshot, diagnostics []diagnostic.Diagnostic
 	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	if s.bound && candidate.options.Evaluation.SemanticsProfile != s.options.Evaluation.SemanticsProfile {
+		return false
+	}
+	s.options, s.bound = candidate.options, true
 	s.current = candidate
 	s.attempted = candidate.Graph()
 	s.diagnostics = append([]diagnostic.Diagnostic(nil), diagnostics...)
@@ -245,6 +267,24 @@ func (s *Store) Publish(candidate *Snapshot, diagnostics []diagnostic.Diagnostic
 // Reload rebuilds from entry, keeps the attempted graph and diagnostics, and
 // publishes the snapshot only when the build succeeded.
 func (s *Store) Reload(entry string, options BuildOptions) BuildResult {
+	if s == nil {
+		return BuildResult{Err: fmt.Errorf("nil snapshot store")}
+	}
+	s.mu.Lock()
+	if s.bound && options.Evaluation.SemanticsProfile == "" {
+		options = s.options
+	}
+	normalized, err := options.Evaluation.Normalized()
+	if err == nil && s.bound && normalized.SemanticsProfile != s.options.Evaluation.SemanticsProfile {
+		err = fmt.Errorf("changing semantics requires a new snapshot store")
+	}
+	if err != nil {
+		s.mu.Unlock()
+		return BuildResult{Err: err, Diagnostics: []diagnostic.Diagnostic{diagnostic.New("E-EVAL-OPTION", diagnostic.Error, source.Span{})}}
+	}
+	options.Evaluation = normalized
+	s.options, s.bound = options, true
+	s.mu.Unlock()
 	result := BuildWithOptions(entry, options)
 	s.mu.Lock()
 	s.attempted = result.Graph
@@ -327,6 +367,17 @@ func (s *Store) Watch(ctx context.Context, entry string, options BuildOptions, w
 type graphPatrol struct {
 	paths []string // sorted: entry, graph files, and recorded missing targets
 }
+
+// ChangeDetector shares the Store watcher's stat-only rules with embedders
+// that own their reload queue. Constructing it from an attempted graph reads
+// no files; Signature only stats the known files and missing include targets.
+type ChangeDetector struct{ patrol *graphPatrol }
+
+func NewChangeDetector(entry string, graph *source.Graph) *ChangeDetector {
+	return &ChangeDetector{patrol: patrolFromGraph(entry, graph)}
+}
+
+func (d *ChangeDetector) Signature() string { return d.patrol.signature() }
 
 // newGraphPatrol seeds the watched paths with one full graph load. A missing
 // entry still yields a patrol that stats the entry itself, so the ledger

@@ -1,0 +1,252 @@
+{
+  "schema_version": 2,
+  "oracle": {
+    "beancount": "3.2.3",
+    "beanquery": "0.2.0"
+  },
+  "fixture": "testdata/fixtures/query/metadata-source.bean",
+  "input_sha256": "74a389d978ffbc5fc49887920ab3d621e68f16db9ee4865e0e9ca83a4e90814b",
+  "queries_sha256": "7aa32cceac47caa4640e8aa68bfd263b3f59a9106900d73b0897118112cbbe3e",
+  "sources_sha256": {
+    "testdata/fixtures/query/metadata-source.bean": "74a389d978ffbc5fc49887920ab3d621e68f16db9ee4865e0e9ca83a4e90814b"
+  },
+  "cases": [
+    {
+      "id": "source-filename-scopes",
+      "query": "SELECT filename, meta('filename') AS posting, entry_meta('filename') AS entry, any_meta('filename') AS any_source",
+      "source_columns": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "result": {
+        "columns": [
+          {
+            "name": "filename",
+            "type": "string"
+          },
+          {
+            "name": "posting",
+            "type": "object"
+          },
+          {
+            "name": "entry",
+            "type": "object"
+          },
+          {
+            "name": "any_source",
+            "type": "object"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "metadata-source.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-source.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-source.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-source.bean"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "metadata-source.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-source.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-source.bean"
+            },
+            {
+              "type": "string",
+              "value": "metadata-source.bean"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "source-line-scopes",
+      "query": "SELECT lineno, meta('lineno') AS posting, entry_meta('lineno') AS entry, any_meta('lineno') AS any_source",
+      "result": {
+        "columns": [
+          {
+            "name": "lineno",
+            "type": "integer"
+          },
+          {
+            "name": "posting",
+            "type": "object"
+          },
+          {
+            "name": "entry",
+            "type": "object"
+          },
+          {
+            "name": "any_source",
+            "type": "object"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "integer",
+              "value": "7"
+            },
+            {
+              "type": "integer",
+              "value": "7"
+            },
+            {
+              "type": "integer",
+              "value": "3"
+            },
+            {
+              "type": "integer",
+              "value": "7"
+            }
+          ],
+          [
+            {
+              "type": "integer",
+              "value": "11"
+            },
+            {
+              "type": "integer",
+              "value": "11"
+            },
+            {
+              "type": "integer",
+              "value": "3"
+            },
+            {
+              "type": "integer",
+              "value": "11"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "explicit-null-precedence",
+      "query": "SELECT meta('common'), entry_meta('common'), any_meta('common')",
+      "result": {
+        "columns": [
+          {
+            "name": "meta('common')",
+            "type": "object"
+          },
+          {
+            "name": "entry_meta('common')",
+            "type": "object"
+          },
+          {
+            "name": "any_meta('common')",
+            "type": "object"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "entry"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "entry"
+            },
+            {
+              "type": "string",
+              "value": "entry"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "empty-and-false-precedence",
+      "query": "SELECT meta('empty'), any_meta('empty'), meta('switch'), any_meta('switch')",
+      "result": {
+        "columns": [
+          {
+            "name": "meta('empty')",
+            "type": "object"
+          },
+          {
+            "name": "any_meta('empty')",
+            "type": "object"
+          },
+          {
+            "name": "meta('switch')",
+            "type": "object"
+          },
+          {
+            "name": "any_meta('switch')",
+            "type": "object"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": ""
+            },
+            {
+              "type": "string",
+              "value": ""
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "bool",
+              "value": false
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "entry fallback"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "bool",
+              "value": true
+            }
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+option "operating_currency" "USD"
+2026-01-01 open Assets:Bank USD
+2026-01-01 open Income:Salary USD
+2026-01-01 open Expenses:Food USD
+2026-01-02 * "Salary"
+  Assets:Bank 1000 USD
+  Income:Salary -1000 USD
+2026-01-03 * "Food"
+  Expenses:Food 300 USD
+  Assets:Bank -300 USD

@@ -70,7 +70,7 @@ func TestBridgeGetJournal(t *testing.T) {
 	}
 }
 
-func TestBridgeGetHistoricalTrendsAndRevision(t *testing.T) {
+func TestBridgeGetHistoricalTrends(t *testing.T) {
 	fixture := testFixturePath("txn-basic.bean")
 	trends := loadHistoricalTrends(fixture)
 	if trends.Error != "" {
@@ -80,8 +80,4 @@ func TestBridgeGetHistoricalTrendsAndRevision(t *testing.T) {
 		t.Fatalf("expected USD operating currency, got %s", trends.OperatingCurrency)
 	}
 
-	rev := getLedgerRevision(fixture)
-	if len(rev) < 5 || rev[:4] != "rev:" {
-		t.Fatalf("expected valid revision string, got %s", rev)
-	}
 }

@@ -1,0 +1,36 @@
+{
+  "errors": [],
+  "fixture": "metadata-stack.bean",
+  "oracle_engine": "beancount-python-3.2.3",
+  "schema_version": 2,
+  "state": {
+    "balances": {
+      "Assets:Cash": {
+        "currencies": {
+          "USD": "-8"
+        },
+        "lots": []
+      },
+      "Expenses:Food": {
+        "currencies": {
+          "USD": "8"
+        },
+        "lots": []
+      }
+    },
+    "entries": [
+      "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"metadata-stack.bean\",\"line\":1}}",
+      "{\"account\":\"Assets:Cash\",\"comment\":\"not a transaction\",\"date\":\"2000-01-03\",\"kind\":\"note\",\"metadata\":{},\"source\":{\"file\":\"metadata-stack.bean\",\"line\":19}}",
+      "{\"account\":\"Expenses:Food\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"metadata-stack.bean\",\"line\":2}}",
+      "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{\"budget\":{\"type\":\"amount\",\"value\":{\"currency\":\"USD\",\"number\":\"2.5\"}},\"scope\":{\"type\":\"string\",\"value\":\"explicit\"}},\"narration\":\"early explicit\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-1\"}},{\"account\":\"Expenses:Food\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"1\"}}],\"source\":{\"file\":\"metadata-stack.bean\",\"line\":13},\"tags\":[]}",
+      "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{\"budget\":{\"type\":\"amount\",\"value\":{\"currency\":\"USD\",\"number\":\"2.5\"}},\"scope\":{\"type\":\"string\",\"value\":\"inner\"}},\"narration\":\"early inner\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-1\"}},{\"account\":\"Expenses:Food\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"1\"}}],\"source\":{\"file\":\"metadata-stack.bean\",\"line\":10},\"tags\":[]}",
+      "{\"date\":\"2000-01-03\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{\"scope\":{\"type\":\"string\",\"value\":\"child-local\"}},\"narration\":\"child own scope\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-1\"}},{\"account\":\"Expenses:Food\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"1\"}}],\"source\":{\"file\":\"metadata-stack-child.bean\",\"line\":2},\"tags\":[]}",
+      "{\"date\":\"2000-01-03\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{\"scope\":{\"type\":\"string\",\"value\":\"outer\"}},\"narration\":\"restored outer\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-1\"}},{\"account\":\"Expenses:Food\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"1\"}}],\"source\":{\"file\":\"metadata-stack.bean\",\"line\":20},\"tags\":[]}",
+      "{\"date\":\"2000-01-04\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{\"scope\":{\"type\":\"string\",\"value\":\"outer\"}},\"narration\":\"late outer\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-1\"}},{\"account\":\"Expenses:Food\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"1\"}}],\"source\":{\"file\":\"metadata-stack.bean\",\"line\":5},\"tags\":[]}",
+      "{\"date\":\"2000-01-05\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"child outside scope\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-1\"}},{\"account\":\"Expenses:Food\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"1\"}}],\"source\":{\"file\":\"metadata-stack-child.bean\",\"line\":6},\"tags\":[]}",
+      "{\"date\":\"2000-01-06\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{\"scope\":{\"type\":\"null\",\"value\":null}},\"narration\":\"pushed null\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-1\"}},{\"account\":\"Expenses:Food\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"1\"}}],\"source\":{\"file\":\"metadata-stack.bean\",\"line\":24},\"tags\":[]}",
+      "{\"date\":\"2000-01-07\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"outside\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-1\"}},{\"account\":\"Expenses:Food\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"1\"}}],\"source\":{\"file\":\"metadata-stack.bean\",\"line\":29},\"tags\":[]}"
+    ]
+  },
+  "valid": true
+}

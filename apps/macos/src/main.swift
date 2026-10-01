@@ -3,384 +3,155 @@ import Foundation
 import SwiftUI
 import UniformTypeIdentifiers
 
-enum NavItem: String, CaseIterable, Identifiable {
-    case balanceSheet = "balance_sheet"
-    case incomeStatement = "income_statement"
-    case journal = "journal"
-    case dashboard = "dashboard"
-
-    var id: String { rawValue }
-    var title: String {
-        switch self {
-        case .dashboard: return "财务仪表盘"
-        case .balanceSheet: return "资产负债表"
-        case .incomeStatement: return "损益表"
-        case .journal: return "日记账流水"
-        }
-    }
-    var icon: String {
-        switch self {
-        case .dashboard: return "chart.pie.fill"
-        case .balanceSheet: return "chart.bar.doc.horizontal"
-        case .incomeStatement: return "chart.line.uptrend.xyaxis"
-        case .journal: return "list.bullet.rectangle"
+private enum NativeLaunch {
+    // The QA bundle stays isolated even if a UI tool relaunches it without
+    // preserving the original process environment.
+    static let isTestMode = ProcessInfo.processInfo.environment["ORANGECOUNT_TEST_MODE"] == "1"
+        || Bundle.main.object(forInfoDictionaryKey: "OrangeCountTestMode") as? Bool == true
+    static var colorScheme: ColorScheme? {
+        guard isTestMode else { return nil }
+        switch Bundle.main.object(forInfoDictionaryKey: "OrangeCountTestAppearance") as? String {
+        case "light": return .light
+        case "dark": return .dark
+        default: return nil
         }
     }
 }
 
-class LedgerStore: ObservableObject {
-    @Published var pingMessage: String = ""
-    @Published var summary: LedgerSummary?
-    @Published var currentPath: String = ""
-    @Published var errorMessage: String?
-    @Published var selectedNav: NavItem = .balanceSheet
-    @Published var treeReport: TreeReportPayload?
-    @Published var journalPayload: JournalPayload?
-    @Published var trendsPayload: HistoricalTrendsPayload?
-    @Published var recentPaths: [String] = []
-    @Published var showDiagnosticsSheet: Bool = false
-    @Published var reportType: String = "balance_sheet" {
-        didSet {
-            loadTreeReport()
-        }
-    }
-
-    private var watchTimer: Timer?
-    private var lastRevision: String = ""
-    private let recentsKey = "org.orangecount.recent_ledgers"
-
-    init() {
-        pingMessage = BridgeClient.shared.ping()
-        recentPaths = UserDefaults.standard.stringArray(forKey: recentsKey) ?? []
-
-        // 1. Check CLI arguments (e.g. open -a OrangeCount --args /path/to/ledger.bean)
-        if let argPath = CommandLine.arguments.dropFirst().first(where: { !$0.hasPrefix("-") && !$0.isEmpty }) {
-            loadLedger(at: argPath)
-        } else if let firstRecent = recentPaths.first, FileManager.default.fileExists(atPath: firstRecent) {
-            // 2. Open most recent ledger if available
-            loadLedger(at: firstRecent)
-        } else {
-            // 3. Fallback to repository sample fixture
-            let defaultFixture = locateDefaultFixture()
-            if !defaultFixture.isEmpty {
-                loadLedger(at: defaultFixture)
-            }
-        }
-        startWatcher()
-    }
-
-    private func startWatcher() {
-        watchTimer = Timer.scheduledTimer(withTimeInterval: 0.8, repeats: true) { [weak self] _ in
-            guard let self = self, !self.currentPath.isEmpty else { return }
-            let rev = BridgeClient.shared.getLedgerRevision(path: self.currentPath)
-            if !self.lastRevision.isEmpty && rev != self.lastRevision {
-                self.lastRevision = rev
-                self.reloadSilently()
-            }
-        }
-    }
-
-    func loadLedger(at rawPath: String) {
-        let entryPath = resolveLedgerEntry(from: rawPath)
-        currentPath = entryPath
-        recordRecent(entryPath)
-        lastRevision = BridgeClient.shared.getLedgerRevision(path: entryPath)
-        print("[OrangeCount Native] Opening ledger: \(entryPath)")
-
-        Task.detached(priority: .userInitiated) {
-            do {
-                let s = try BridgeClient.shared.loadSnapshot(path: entryPath)
-                let t = try BridgeClient.shared.getTreeReport(path: entryPath, reportType: "balance_sheet")
-                let j = try BridgeClient.shared.getJournal(path: entryPath)
-                let tr = try BridgeClient.shared.getHistoricalTrends(path: entryPath)
-                await MainActor.run {
-                    self.summary = s
-                    self.treeReport = t
-                    self.journalPayload = j
-                    self.trendsPayload = tr
-                    self.reportType = "balance_sheet"
-                    self.errorMessage = nil
-                    print("[OrangeCount Native] Successfully evaluated! Accounts: \(s.accounts.count), Entries: \(s.entries_count), Valid: \(s.valid)")
-                }
-            } catch {
-                await MainActor.run {
-                    self.errorMessage = error.localizedDescription
-                    print("[OrangeCount Native] Evaluation error: \(error)")
-                }
-            }
-        }
-    }
-
-    func reloadSilently() {
-        guard !currentPath.isEmpty else { return }
-        Task.detached(priority: .userInitiated) {
-            do {
-                let s = try BridgeClient.shared.loadSnapshot(path: self.currentPath)
-                let t = try BridgeClient.shared.getTreeReport(path: self.currentPath, reportType: self.reportType)
-                let j = try BridgeClient.shared.getJournal(path: self.currentPath)
-                let tr = try BridgeClient.shared.getHistoricalTrends(path: self.currentPath)
-                await MainActor.run {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        self.summary = s
-                        self.treeReport = t
-                        self.journalPayload = j
-                        self.trendsPayload = tr
-                        self.errorMessage = nil
-                    }
-                }
-            } catch {
-                await MainActor.run {
-                    self.errorMessage = error.localizedDescription
-                }
-            }
-        }
-    }
-
-    func loadTreeReport() {
-        guard !currentPath.isEmpty else { return }
-        Task.detached(priority: .userInitiated) {
-            do {
-                let t = try BridgeClient.shared.getTreeReport(path: self.currentPath, reportType: self.reportType)
-                await MainActor.run {
-                    self.treeReport = t
-                    self.errorMessage = nil
-                }
-            } catch {
-                await MainActor.run {
-                    self.errorMessage = error.localizedDescription
-                }
-            }
-        }
-    }
-
-    private func recordRecent(_ path: String) {
-        var recents = recentPaths.filter { $0 != path }
-        recents.insert(path, at: 0)
-        if recents.count > 5 {
-            recents = Array(recents.prefix(5))
-        }
-        recentPaths = recents
-        UserDefaults.standard.set(recents, forKey: recentsKey)
-    }
-
-    private func resolveLedgerEntry(from path: String) -> String {
-        var isDir: ObjCBool = false
-        if FileManager.default.fileExists(atPath: path, isDirectory: &isDir), isDir.boolValue {
-            let candidates = ["main.bean", "index.bean", "ledger.bean"]
-            for c in candidates {
-                let candidatePath = (path as NSString).appendingPathComponent(c)
-                if FileManager.default.fileExists(atPath: candidatePath) {
-                    return candidatePath
-                }
-            }
-            if let contents = try? FileManager.default.contentsOfDirectory(atPath: path) {
-                let beans = contents.filter { $0.hasSuffix(".bean") }
-                if beans.count == 1 {
-                    return (path as NSString).appendingPathComponent(beans[0])
-                }
-            }
-        }
-        return path
-    }
-
-    private func locateDefaultFixture() -> String {
-        var candidates: [String] = []
-
-        // Resolve relative to App Bundle location (e.g. repo/build/OrangeCount.app -> repo)
-        let bundleURL = Bundle.main.bundleURL
-        let repoRoot = bundleURL.deletingLastPathComponent().deletingLastPathComponent()
-        candidates.append(repoRoot.appendingPathComponent("testdata/fixtures/v3-parity/directives-mix.bean").path)
-        candidates.append(repoRoot.appendingPathComponent("testdata/fixtures/v3-parity/txn-basic.bean").path)
-
-        // Resolve relative to current working directory
-        let cwd = FileManager.default.currentDirectoryPath
-        candidates.append("\(cwd)/testdata/fixtures/v3-parity/directives-mix.bean")
-        candidates.append("\(cwd)/testdata/fixtures/v3-parity/txn-basic.bean")
-        candidates.append("\(cwd)/../../testdata/fixtures/v3-parity/directives-mix.bean")
-        candidates.append("\(cwd)/../../testdata/fixtures/v3-parity/txn-basic.bean")
-
-        for p in candidates {
-            if FileManager.default.fileExists(atPath: p) {
-                return (p as NSString).standardizingPath
-            }
-        }
-        return ""
+struct LedgerCommands {
+    let open: () -> Void
+    let reload: () -> Void
+    let language: LedgerLanguage
+    let canReload: Bool
+}
+private struct LedgerCommandsKey: FocusedValueKey { typealias Value = LedgerCommands }
+extension FocusedValues {
+    var ledgerCommands: LedgerCommands? {
+        get { self[LedgerCommandsKey.self] }
+        set { self[LedgerCommandsKey.self] = newValue }
     }
 }
 
+@MainActor
 struct ContentView: View {
-    @StateObject private var store = LedgerStore()
+    @StateObject private var store = LedgerStore(preferences: NativeLaunch.isTestMode ? nil : .standard)
+    @StateObject private var journalState = JournalViewState()
+    @StateObject private var treeState = AccountTreeState()
+    @StateObject private var holdingsState = HoldingsViewState()
+    private var language: LedgerLanguage { LedgerLanguage(rawValue: store.request.locale) ?? .chinese }
 
     var body: some View {
         NavigationSplitView {
             List(selection: $store.selectedNav) {
-                Section("报表分析") {
-                    NavigationLink(value: NavItem.balanceSheet) {
-                        Label(NavItem.balanceSheet.title, systemImage: NavItem.balanceSheet.icon)
-                    }
-                    NavigationLink(value: NavItem.incomeStatement) {
-                        Label(NavItem.incomeStatement.title, systemImage: NavItem.incomeStatement.icon)
+                Section(language.text("报表与流水", "Reports and transactions")) {
+                    ForEach(NavItem.allCases.filter { $0 != .account }) { item in
+                        NavigationLink(value: item) { Label(language.text(item.title, item.englishTitle), systemImage: item.icon) }
                     }
                 }
-
-                Section("交易明细") {
-                    NavigationLink(value: NavItem.journal) {
-                        Label(NavItem.journal.title, systemImage: NavItem.journal.icon)
-                    }
-                    NavigationLink(value: NavItem.dashboard) {
-                        Label(NavItem.dashboard.title, systemImage: NavItem.dashboard.icon)
-                    }
-                }
-
                 if !store.recentPaths.isEmpty {
-                    Section("最近打开") {
-                        ForEach(store.recentPaths, id: \.self) { p in
-                            Button(action: { store.loadLedger(at: p) }) {
-                                HStack {
-                                    Image(systemName: "clock.arrow.circlepath")
-                                        .foregroundColor(.secondary)
-                                    Text((p as NSString).lastPathComponent)
-                                        .font(.caption)
-                                        .lineLimit(1)
-                                }
-                            }
-                            .buttonStyle(.plain)
+                    Section(language.text("最近打开", "Recent ledgers")) {
+                        ForEach(store.recentPaths, id: \.self) { path in
+                            Button { store.loadLedger(at: path) } label: {
+                                Label((path as NSString).lastPathComponent, systemImage: "clock.arrow.circlepath").lineLimit(1)
+                            }.buttonStyle(.plain)
                         }
                     }
                 }
-
-                Section("系统连接") {
-                    HStack {
-                        Circle()
-                            .fill(.green)
-                            .frame(width: 8, height: 8)
-                        Text("Go Core 内存直连正常")
-                            .font(.caption)
-                    }
-                    Text(store.pingMessage)
-                        .font(.system(size: 10, design: .monospaced))
-                        .foregroundColor(.secondary)
-                }
-            }
-            .listStyle(.sidebar)
-            .navigationSplitViewColumnWidth(min: 200, ideal: 230)
+            }.listStyle(.sidebar).navigationSplitViewColumnWidth(min: 190, ideal: 210)
         } detail: {
             VStack(alignment: .leading, spacing: 0) {
-                // Top Global Bar
                 HStack {
-                    VStack(alignment: .leading, spacing: 3) {
-                        HStack(spacing: 8) {
-                            Text(store.summary?.title?.isEmpty == false ? store.summary!.title! : "OrangeCount 原生 macOS 桌面版")
-                                .font(.title3)
-                                .bold()
-                            if let s = store.summary {
-                                Button(action: {
-                                    if s.error_count > 0 {
-                                        store.showDiagnosticsSheet = true
-                                    }
-                                }) {
-                                    HStack(spacing: 4) {
-                                        Circle()
-                                            .fill(s.valid ? Color.green : Color.red)
-                                            .frame(width: 6, height: 6)
-                                        Text(s.valid ? "VALID" : "\(s.error_count) 处错误")
-                                            .font(.system(size: 10, weight: .bold))
-                                    }
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 3)
-                                    .background(Capsule().fill(s.valid ? Color.green.opacity(0.15) : Color.red.opacity(0.15)))
-                                    .foregroundColor(s.valid ? .green : .red)
-                                }
-                                .buttonStyle(.plain)
-                                .help(s.valid ? "账本校验完全通过" : "点击查看错误诊断详情")
-                            }
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(store.summary?.title?.isEmpty == false ? store.summary!.title! : "OrangeCount").font(LedgerFonts.font(.title3)).bold()
+                        if !store.currentPath.isEmpty {
+                            Text((store.currentPath as NSString).lastPathComponent).font(LedgerFonts.font(.caption)).foregroundColor(.secondary)
+                                .help(store.currentPath)
                         }
-                        Text("入口：\(store.currentPath.isEmpty ? "未选择" : store.currentPath)")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
-                            .lineLimit(1)
-                            .truncationMode(.middle)
                     }
                     Spacer()
-
-                    Button(action: { store.reloadSilently() }) {
-                        Image(systemName: "arrow.clockwise")
+                    if let summary = store.summary {
+                        Button { store.showDiagnosticsSheet = true } label: {
+                            Label(summary.valid ? language.text("校验通过", "Valid") : language.text("\(summary.error_count) 处错误", "\(summary.error_count) errors"), systemImage: summary.valid ? "checkmark.circle" : "exclamationmark.triangle")
+                        }.tint(summary.valid ? .green : .orange)
+                        .help(language.text("查看错误与警告", "View errors and warnings"))
                     }
-                    .buttonStyle(.bordered)
-                    .help("重新加载当前账本 (Cmd+R)")
-                    .keyboardShortcut("r", modifiers: .command)
-
-                    Button(action: selectFile) {
-                        Label("打开...", systemImage: "folder.badge.plus")
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .help("打开账本文件或目录 (Cmd+O)")
-                    .keyboardShortcut("o", modifiers: .command)
-                }
-                .padding(.horizontal, 20)
-                .padding(.vertical, 12)
-                .background(.ultraThinMaterial)
-
+                    Picker("Language", selection: $store.request.locale) { Text("中文").tag("zh-CN"); Text("English").tag("en") }.labelsHidden().frame(width: 95)
+                    Button(action: store.reloadSilently) { Image(systemName: "arrow.clockwise") }
+                        .disabled(store.state == nil).help(language.text("重新校验 (⌘R)", "Reload (⌘R)"))
+                    Button(action: selectFile) { Label(language.text("打开…", "Open…"), systemImage: "folder.badge.plus") }.buttonStyle(.borderedProminent)
+                }.padding(.horizontal, 20).padding(.vertical, 12).background(.ultraThinMaterial)
                 Divider()
-
-                if let err = store.errorMessage {
-                    HStack {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundColor(.red)
-                        Text("错误：\(err)")
-                            .font(.caption)
-                            .foregroundColor(.red)
-                        Spacer()
-                    }
-                    .padding(10)
-                    .background(Color.red.opacity(0.1))
+                if let error = store.errorMessage {
+                    Label(error, systemImage: "exclamationmark.triangle.fill").font(LedgerFonts.font(.callout)).foregroundColor(.red).padding(10).textSelection(.enabled)
                 }
-
-                // Main Content View based on Route
-                switch store.selectedNav {
-                case .balanceSheet:
-                    AccountTreeView(
-                        rootNodes: store.treeReport?.root_nodes ?? [],
-                        operatingCurrencies: store.treeReport?.operating_currencies ?? [],
-                        reportType: $store.reportType
-                    )
-                case .incomeStatement:
-                    AccountTreeView(
-                        rootNodes: store.treeReport?.root_nodes ?? [],
-                        operatingCurrencies: store.treeReport?.operating_currencies ?? [],
-                        reportType: $store.reportType
-                    )
-                case .journal:
-                    JournalView(transactions: store.journalPayload?.transactions ?? [])
-                case .dashboard:
-                    DashboardView(trends: store.trendsPayload, summary: store.summary)
+                if store.phase == .stale {
+                    Label(language.text("显示上次有效数据；请修复最新账本错误", "Showing the last valid data; repair the latest ledger errors"), systemImage: "exclamationmark.triangle").foregroundColor(.orange).padding(10)
+                }
+                if store.phase == .opening || store.phase == .loadingView || store.phase == .reloading {
+                    ProgressView(language.text("正在读取账本…", "Reading ledger…")).controlSize(.small).padding(8)
+                }
+                if store.state?.has_snapshot == true {
+                    ReadingControls(store: store)
+                    if let tree = store.treeReport, let status = tree.valuation_status, status.completeness == "partial" || status.completeness == "unavailable" {
+                        Text(language.text("原币余额完整保留；缺少报价，已折算部分不代表完整总计。", "Native balances are retained. Missing quotes mean valued portions are not complete totals.")).foregroundColor(.orange).padding()
+                    }
+                    switch store.selectedNav {
+                    case .balanceSheet, .incomeStatement:
+                        AccountTreeView(rootNodes: store.treeReport?.root_nodes ?? [], operatingCurrencies: store.treeReport?.operating_currencies ?? [], reportType: $store.reportType, treeState: treeState, openAccount: store.showAccount)
+                    case .journal:
+                        JournalView(store: store, viewState: journalState)
+                    case .dashboard:
+                        DashboardView(trends: store.trendsPayload, summary: store.summary)
+                    case .account:
+                        AccountDetailView(store: store, viewState: journalState)
+                    case .holdings:
+                        HoldingsView(store: store, viewState: holdingsState)
+                    case .prices:
+                        PricesView(store: store)
+                    }
+                } else if store.phase == .invalid {
+                    VStack(spacing: 12) {
+                        Text(language.text("账本尚无有效数据，请先查看并修复诊断。", "No valid snapshot yet. Review and repair the diagnostics."))
+                        Button(language.text("查看诊断", "View diagnostics")) { store.showDiagnosticsSheet = true }
+                    }.frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    VStack(spacing: 12) {
+                        Image(systemName: "book.closed").font(LedgerFonts.font(.largeTitle))
+                        Text(language.text("打开本地账本，查看报表与交易流水", "Open a local ledger to read reports and transactions"))
+                        Button(language.text("打开账本…", "Open ledger…"), action: selectFile)
+                    }.frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
         }
-        .frame(minWidth: 880, minHeight: 580)
+        .environment(\.ledgerLanguage, language)
+        .preferredColorScheme(NativeLaunch.colorScheme)
+        .navigationTitle(store.currentPath.isEmpty ? "OrangeCount" : (store.currentPath as NSString).lastPathComponent)
+        .focusedSceneValue(\.ledgerCommands, LedgerCommands(open: selectFile, reload: store.reloadSilently, language: language, canReload: store.state != nil))
+        .onChange(of: store.currentPath) { _ in
+            journalState.expandedTxIDs = []
+            treeState.collapsedNodes = []
+            treeState.selectedAccount = nil
+            treeState.searchText = ""
+            holdingsState.expanded = []
+        }
+        .frame(minWidth: 900, minHeight: 600)
+        .font(LedgerFonts.font(.body))
         .sheet(isPresented: $store.showDiagnosticsSheet) {
-            if let s = store.summary {
-                DiagnosticsSheetView(summary: s)
-            }
+            if let summary = store.summary { DiagnosticsSheetView(summary: summary, retry: store.reloadSilently).environment(\.ledgerLanguage, language) }
         }
         .onDrop(of: [UTType.fileURL], isTargeted: nil) { providers in
             guard let provider = providers.first else { return false }
             _ = provider.loadObject(ofClass: URL.self) { url, _ in
-                if let url = url {
-                    DispatchQueue.main.async {
-                        store.loadLedger(at: url.path)
-                    }
-                }
+                if let url { DispatchQueue.main.async { store.loadLedger(at: url.path) } }
             }
             return true
         }
-        .onChange(of: store.selectedNav) { _, newNav in
-            if newNav == .balanceSheet && store.reportType != "balance_sheet" {
-                store.reportType = "balance_sheet"
-            } else if newNav == .incomeStatement && store.reportType != "income_statement" {
-                store.reportType = "income_statement"
-            }
+        .onAppear {
+            let path = CommandLine.arguments.dropFirst().first { !$0.hasPrefix("-") }
+            store.start(path: path, restoreRecent: !NativeLaunch.isTestMode)
         }
+        .onOpenURL { store.loadLedger(at: $0.path) }
+        .onDisappear { store.close() }
     }
 
     private func selectFile() {
@@ -388,9 +159,16 @@ struct ContentView: View {
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = true
         panel.canChooseFiles = true
-        panel.allowedContentTypes = []
-        if panel.runModal() == .OK, let url = panel.url {
-            store.loadLedger(at: url.path)
+        if panel.runModal() == .OK, let url = panel.url { store.loadLedger(at: url.path) }
+    }
+}
+
+struct LedgerMenu: Commands {
+    @FocusedValue(\.ledgerCommands) private var actions
+    var body: some Commands {
+        CommandGroup(after: .newItem) {
+            Button(actions?.language.text("打开账本…", "Open ledger…") ?? "打开账本… / Open ledger…") { actions?.open() }.keyboardShortcut("o", modifiers: .command)
+            Button(actions?.language.text("重新校验", "Reload ledger") ?? "重新校验 / Reload ledger") { actions?.reload() }.keyboardShortcut("r", modifiers: .command).disabled(actions?.canReload != true)
         }
     }
 }
@@ -398,10 +176,8 @@ struct ContentView: View {
 @main
 struct OrangeCountNativeApp: App {
     var body: some Scene {
-        WindowGroup {
-            ContentView()
-        }
-        .windowStyle(.titleBar)
-        .windowToolbarStyle(.unified)
+        WindowGroup { ContentView() }
+            .windowStyle(.titleBar).windowToolbarStyle(.unified)
+            .commands { LedgerMenu() }
     }
 }

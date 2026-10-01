@@ -1,0 +1,32 @@
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Assets:Plain TOK
+2000-01-02 * "repeating positive quote"
+  Assets:Plain 3 TOK @@ 10 USD
+  Assets:Cash -10.00 USD
+2000-01-03 * "repeating negative quote"
+  Assets:Plain -3 TOK @@ 11 USD
+  Assets:Cash 11.00 USD
+2000-01-04 * "unit quote precision"
+  Assets:Plain 2.00 TOK @ 3.000 USD
+  Assets:Cash -6.00000 USD
+2000-01-05 * "total quote precision"
+  Assets:Plain 2 TOK @@ 1.00 USD
+  Assets:Cash -1.00 USD
+2000-01-06 * "zero quantity quote"
+  Assets:Plain 0.00 TOK @ 2.00 USD
+  Assets:Cash 0.0000 USD
+2000-01-07 * "negative quantity precision"
+  Assets:Plain -2.00 TOK @ 3.0 USD
+  Assets:Cash 6.000 USD
+2000-01-08 * "zero quantity total quote"
+  Assets:Plain 0.00 TOK @@ 1.00 USD
+  Assets:Cash 0 USD
+2000-01-09 * "zero quantity zero total quote"
+  Assets:Plain 0.00 TOK @@ 0.00 USD
+  Assets:Cash 0 USD
+2000-01-10 * "high precision unit quote"
+  Assets:Plain 1.2345678901234567890123456789 TOK @ 2.00 USD
+  Assets:Cash -2.469135780246913578024691358 USD
+2000-01-11 * "nonzero quantity zero total quote"
+  Assets:Plain 2.00 TOK @@ 0.00 USD
+  Assets:Cash 0 USD

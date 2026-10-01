@@ -9,17 +9,14 @@ import (
 	"strings"
 
 	"orangecount/internal/ledger"
+	"orangecount/internal/presentation"
 	"orangecount/internal/query"
 )
 
 // PresentedDecimal is the display-safe representation used by normal report
 // views. Exact remains the canonical ledger value; Display is rounded only
 // when the exact value has a non-terminating decimal expansion.
-type PresentedDecimal struct {
-	Display     string `json:"display"`
-	Exact       string `json:"exact"`
-	Approximate bool   `json:"approximate"`
-}
+type PresentedDecimal = presentation.Decimal
 
 // Present converts a machine-exact report result into a UI/API presentation
 // result. Query results and CSV exports continue to use the original exact
@@ -54,14 +51,7 @@ func presentValue(value any) any {
 // FormatDecimal keeps terminating decimals unchanged and rounds only
 // non-terminating values to six fractional digits for human display.
 func FormatDecimal(value ledger.Decimal) PresentedDecimal {
-	exact := value.String()
-	presented := PresentedDecimal{Display: exact, Exact: exact}
-	if !isRationalString(exact) {
-		return presented
-	}
-	presented.Display = value.Rat().FloatString(6)
-	presented.Approximate = true
-	return presented
+	return presentation.FormatDecimal(value)
 }
 
 func isRationalString(value string) bool {

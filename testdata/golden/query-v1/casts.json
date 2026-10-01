@@ -1,0 +1,1502 @@
+{
+  "schema_version": 2,
+  "oracle": {
+    "beancount": "3.2.3",
+    "beanquery": "0.2.0"
+  },
+  "fixture": "testdata/fixtures/query/casts.bean",
+  "input_sha256": "c0e689ac4a2b72052306673849d7dfdc2283c8766e4351fc446f2c939d6a38f0",
+  "queries_sha256": "53ee09a0fcaa69b3443df5c11e297305b37eb4b0fc773374749d1a3b73046335",
+  "sources_sha256": {
+    "testdata/fixtures/query/casts.bean": "c0e689ac4a2b72052306673849d7dfdc2283c8766e4351fc446f2c939d6a38f0",
+    "testdata/fixtures/query/dynamic-values.bean": "a7136be9a2979dc6f9c31a1baaf8a6c59b9817260359b1f931f74828eb323f8b"
+  },
+  "cases": [
+    {
+      "id": "string-object-cast",
+      "query": "SELECT narration, str(meta('value')), str(meta('padded')), str(meta('precise_amount')), str(meta('switch')), str(meta('day')), str(meta('nothing')), str(meta('missing')) WHERE account = 'Assets:Cash'",
+      "result": {
+        "columns": [
+          {
+            "name": "narration",
+            "type": "string"
+          },
+          {
+            "name": "str(meta('value'))",
+            "type": "string"
+          },
+          {
+            "name": "str(meta('padded'))",
+            "type": "string"
+          },
+          {
+            "name": "str(meta('precise_amount'))",
+            "type": "string"
+          },
+          {
+            "name": "str(meta('switch'))",
+            "type": "string"
+          },
+          {
+            "name": "str(meta('day'))",
+            "type": "string"
+          },
+          {
+            "name": "str(meta('nothing'))",
+            "type": "string"
+          },
+          {
+            "name": "str(meta('missing'))",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "text"
+            },
+            {
+              "type": "string",
+              "value": "10"
+            },
+            {
+              "type": "string",
+              "value": "010"
+            },
+            {
+              "type": "string",
+              "value": "2.00 USD"
+            },
+            {
+              "type": "string",
+              "value": "FALSE"
+            },
+            {
+              "type": "string",
+              "value": "2000-01-02"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "number"
+            },
+            {
+              "type": "string",
+              "value": "10"
+            },
+            {
+              "type": "string",
+              "value": "10.00"
+            },
+            {
+              "type": "string",
+              "value": "0.00 USD"
+            },
+            {
+              "type": "string",
+              "value": "TRUE"
+            },
+            {
+              "type": "string",
+              "value": "2000-01-03"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "string-scalar-cast",
+      "query": "SELECT str(NULL), str(TRUE), str(FALSE), str(1), str(1.00), str(2000-01-02), str(number) LIMIT 1",
+      "result": {
+        "columns": [
+          {
+            "name": "str(NULL)",
+            "type": "string"
+          },
+          {
+            "name": "str(TRUE)",
+            "type": "string"
+          },
+          {
+            "name": "str(FALSE)",
+            "type": "string"
+          },
+          {
+            "name": "str(1)",
+            "type": "string"
+          },
+          {
+            "name": "str(1.00)",
+            "type": "string"
+          },
+          {
+            "name": "str(2000-01-02)",
+            "type": "string"
+          },
+          {
+            "name": "str(number)",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "TRUE"
+            },
+            {
+              "type": "string",
+              "value": "FALSE"
+            },
+            {
+              "type": "string",
+              "value": "1"
+            },
+            {
+              "type": "string",
+              "value": "1.00"
+            },
+            {
+              "type": "string",
+              "value": "2000-01-02"
+            },
+            {
+              "type": "string",
+              "value": "1"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "explicit-decimal-cast",
+      "query": "SELECT decimal(NULL), decimal(TRUE), decimal(1), decimal(1.50), decimal('١٠.٥'), decimal('1e3'), decimal('bad'), decimal(meta('padded')), decimal(meta('precise_amount')) LIMIT 1",
+      "result": {
+        "columns": [
+          {
+            "name": "decimal(NULL)",
+            "type": "decimal"
+          },
+          {
+            "name": "decimal(TRUE)",
+            "type": "decimal"
+          },
+          {
+            "name": "decimal(1)",
+            "type": "decimal"
+          },
+          {
+            "name": "decimal(1.50)",
+            "type": "decimal"
+          },
+          {
+            "name": "decimal('١٠.٥')",
+            "type": "decimal"
+          },
+          {
+            "name": "decimal('1e3')",
+            "type": "decimal"
+          },
+          {
+            "name": "decimal('bad')",
+            "type": "decimal"
+          },
+          {
+            "name": "decimal(meta('padded'))",
+            "type": "decimal"
+          },
+          {
+            "name": "decimal(meta('precise_amount'))",
+            "type": "decimal"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "decimal",
+              "value": "1"
+            },
+            {
+              "type": "decimal",
+              "value": "1"
+            },
+            {
+              "type": "decimal",
+              "value": "1.5"
+            },
+            {
+              "type": "decimal",
+              "value": "10.5"
+            },
+            {
+              "type": "decimal",
+              "value": "1000"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "decimal",
+              "value": "10"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "decimal-string-spelling",
+      "query": "SELECT str(0.0000001), str(-0.0000001), str(-0.00), str(decimal('1e3')), str(decimal('-0.00')), str(decimal('1.0e3')), str(decimal(meta('padded'))) LIMIT 1",
+      "result": {
+        "columns": [
+          {
+            "name": "str(0.0000001)",
+            "type": "string"
+          },
+          {
+            "name": "str(-0.0000001)",
+            "type": "string"
+          },
+          {
+            "name": "str(-0.00)",
+            "type": "string"
+          },
+          {
+            "name": "str(decimal('1e3'))",
+            "type": "string"
+          },
+          {
+            "name": "str(decimal('-0.00'))",
+            "type": "string"
+          },
+          {
+            "name": "str(decimal('1.0e3'))",
+            "type": "string"
+          },
+          {
+            "name": "str(decimal(meta('padded')))",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "1E-7"
+            },
+            {
+              "type": "string",
+              "value": "-1E-7"
+            },
+            {
+              "type": "string",
+              "value": "0.00"
+            },
+            {
+              "type": "string",
+              "value": "1E+3"
+            },
+            {
+              "type": "string",
+              "value": "-0.00"
+            },
+            {
+              "type": "string",
+              "value": "1.0E+3"
+            },
+            {
+              "type": "string",
+              "value": "10"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "explicit-date-cast",
+      "query": "SELECT narration, date(meta('day')), date(meta('day_text')), date(meta('value')), date('2000-1-2'), date(2000-01-02), date(NULL), str(date(meta('day'))) WHERE account = 'Assets:Cash'",
+      "result": {
+        "columns": [
+          {
+            "name": "narration",
+            "type": "string"
+          },
+          {
+            "name": "date(meta('day'))",
+            "type": "date"
+          },
+          {
+            "name": "date(meta('day_text'))",
+            "type": "date"
+          },
+          {
+            "name": "date(meta('value'))",
+            "type": "date"
+          },
+          {
+            "name": "date('2000-1-2')",
+            "type": "date"
+          },
+          {
+            "name": "date(2000-01-02)",
+            "type": "date"
+          },
+          {
+            "name": "date(NULL)",
+            "type": "date"
+          },
+          {
+            "name": "str(date(meta('day')))",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "text"
+            },
+            {
+              "type": "date",
+              "value": "2000-01-02"
+            },
+            {
+              "type": "date",
+              "value": "2000-01-02"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "date",
+              "value": "2000-01-02"
+            },
+            {
+              "type": "date",
+              "value": "2000-01-02"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "2000-01-02"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "number"
+            },
+            {
+              "type": "date",
+              "value": "2000-01-03"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "date",
+              "value": "2000-01-02"
+            },
+            {
+              "type": "date",
+              "value": "2000-01-02"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "2000-01-03"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "date-constructor",
+      "query": "SELECT date(2000, 2, 29), date(2001, 2, 29), date(0, 1, 1), date(10000, 1, 1), date(2000, 13, 1), date(2000, 1, 0), date(year, month, day) LIMIT 1",
+      "result": {
+        "columns": [
+          {
+            "name": "date(2000, 2, 29)",
+            "type": "date"
+          },
+          {
+            "name": "date(2001, 2, 29)",
+            "type": "date"
+          },
+          {
+            "name": "date(0, 1, 1)",
+            "type": "date"
+          },
+          {
+            "name": "date(10000, 1, 1)",
+            "type": "date"
+          },
+          {
+            "name": "date(2000, 13, 1)",
+            "type": "date"
+          },
+          {
+            "name": "date(2000, 1, 0)",
+            "type": "date"
+          },
+          {
+            "name": "date(year, month, day)",
+            "type": "date"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "date",
+              "value": "2000-02-29"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "date",
+              "value": "2000-01-02"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "date-constructor-null-has-no-signature",
+      "query": "SELECT date(2000, NULL, 1) LIMIT 0",
+      "error": {
+        "class": "CompilationError",
+        "code": "type-mismatch"
+      }
+    },
+    {
+      "id": "explicit-bool-cast",
+      "query": "SELECT bool(NULL), bool(0), bool(''), bool('x'), bool(meta('switch')), bool(meta('amount')), bool(meta('value')), bool(meta('missing')) WHERE account = 'Assets:Cash'",
+      "result": {
+        "columns": [
+          {
+            "name": "bool(NULL)",
+            "type": "bool"
+          },
+          {
+            "name": "bool(0)",
+            "type": "bool"
+          },
+          {
+            "name": "bool('')",
+            "type": "bool"
+          },
+          {
+            "name": "bool('x')",
+            "type": "bool"
+          },
+          {
+            "name": "bool(meta('switch'))",
+            "type": "bool"
+          },
+          {
+            "name": "bool(meta('amount'))",
+            "type": "bool"
+          },
+          {
+            "name": "bool(meta('value'))",
+            "type": "bool"
+          },
+          {
+            "name": "bool(meta('missing'))",
+            "type": "bool"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "null"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "explicit-integer-cast",
+      "query": "SELECT int(NULL), int(TRUE), int(1.9), int(-1.9), int('2.5'), int('1e3'), int('١٠'), int('1_0'), int('1__0'), int('1/2'), int(meta('value')), int(meta('amount')), date(2000, int('bad'), 1) LIMIT 1",
+      "result": {
+        "columns": [
+          {
+            "name": "int(NULL)",
+            "type": "integer"
+          },
+          {
+            "name": "int(TRUE)",
+            "type": "integer"
+          },
+          {
+            "name": "int(1.9)",
+            "type": "integer"
+          },
+          {
+            "name": "int(-1.9)",
+            "type": "integer"
+          },
+          {
+            "name": "int('2.5')",
+            "type": "integer"
+          },
+          {
+            "name": "int('1e3')",
+            "type": "integer"
+          },
+          {
+            "name": "int('١٠')",
+            "type": "integer"
+          },
+          {
+            "name": "int('1_0')",
+            "type": "integer"
+          },
+          {
+            "name": "int('1__0')",
+            "type": "integer"
+          },
+          {
+            "name": "int('1/2')",
+            "type": "integer"
+          },
+          {
+            "name": "int(meta('value'))",
+            "type": "integer"
+          },
+          {
+            "name": "int(meta('amount'))",
+            "type": "integer"
+          },
+          {
+            "name": "date(2000, int('bad'), 1)",
+            "type": "date"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "value": "1"
+            },
+            {
+              "type": "integer",
+              "value": "1"
+            },
+            {
+              "type": "integer",
+              "value": "-1"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "value": "10"
+            },
+            {
+              "type": "integer",
+              "value": "10"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "value": "10"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "arithmetic-decimal-string",
+      "query": "SELECT str(1.00 + 2), str(decimal('1.0e3') + 1), str(decimal('-0.00') * 2), str(meta('padded') + 1) LIMIT 1",
+      "result": {
+        "columns": [
+          {
+            "name": "str(1.00 + 2)",
+            "type": "string"
+          },
+          {
+            "name": "str(decimal('1.0e3') + 1)",
+            "type": "string"
+          },
+          {
+            "name": "str(decimal('-0.00') * 2)",
+            "type": "string"
+          },
+          {
+            "name": "str(meta('padded') + 1)",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "3.00"
+            },
+            {
+              "type": "string",
+              "value": "1001"
+            },
+            {
+              "type": "string",
+              "value": "-0.00"
+            },
+            {
+              "type": "string",
+              "value": "11"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "decimal-cast-preserves-arithmetic-quantum",
+      "query": "SELECT str(decimal(1.00 + 2)), str(decimal(1.0 * 2.00)), str(meta('padded') + 1.00) LIMIT 1",
+      "result": {
+        "columns": [
+          {
+            "name": "str(decimal(1.00 + 2))",
+            "type": "string"
+          },
+          {
+            "name": "str(decimal(1.0 * 2.00))",
+            "type": "string"
+          },
+          {
+            "name": "str(meta('padded') + 1.00)",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "3.00"
+            },
+            {
+              "type": "string",
+              "value": "2.000"
+            },
+            {
+              "type": "string",
+              "value": "11.00"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "date-constructor-bool-parameters",
+      "query": "SELECT date(2000, TRUE, 1), date(TRUE, 1, 1), date(2000, 1, TRUE), date(TRUE, TRUE, TRUE), date(FALSE, 1, 1), date(2000, FALSE, 1), date(2000, 1, FALSE) LIMIT 1",
+      "result": {
+        "columns": [
+          {
+            "name": "date(2000, TRUE, 1)",
+            "type": "date"
+          },
+          {
+            "name": "date(TRUE, 1, 1)",
+            "type": "date"
+          },
+          {
+            "name": "date(2000, 1, TRUE)",
+            "type": "date"
+          },
+          {
+            "name": "date(TRUE, TRUE, TRUE)",
+            "type": "date"
+          },
+          {
+            "name": "date(FALSE, 1, 1)",
+            "type": "date"
+          },
+          {
+            "name": "date(2000, FALSE, 1)",
+            "type": "date"
+          },
+          {
+            "name": "date(2000, 1, FALSE)",
+            "type": "date"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "date",
+              "value": "2000-01-01"
+            },
+            {
+              "type": "date",
+              "value": "0001-01-01"
+            },
+            {
+              "type": "date",
+              "value": "2000-01-01"
+            },
+            {
+              "type": "date",
+              "value": "0001-01-01"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "decimal-context-arithmetic",
+      "query": "SELECT str(1.2345678901234567890123456785 + 0), str(1.2345678901234567890123456795 + 0), str(9.9999999999999999999999999995 + 0), str(12345678901234567890123456789.00 - 0), str(1.2345678901234567890123456789 * 1.00), 12345678901234567890123456789.00 + 0 LIMIT 1",
+      "result": {
+        "columns": [
+          {
+            "name": "str(1.2345678901234567890123456785 + 0)",
+            "type": "string"
+          },
+          {
+            "name": "str(1.2345678901234567890123456795 + 0)",
+            "type": "string"
+          },
+          {
+            "name": "str(9.9999999999999999999999999995 + 0)",
+            "type": "string"
+          },
+          {
+            "name": "str(12345678901234567890123456789.00 - 0)",
+            "type": "string"
+          },
+          {
+            "name": "str(1.2345678901234567890123456789 * 1.00)",
+            "type": "string"
+          },
+          {
+            "name": "12345678901234567890123456789.00 + 0",
+            "type": "decimal"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "1.234567890123456789012345678"
+            },
+            {
+              "type": "string",
+              "value": "1.234567890123456789012345680"
+            },
+            {
+              "type": "string",
+              "value": "10.00000000000000000000000000"
+            },
+            {
+              "type": "string",
+              "value": "1.234567890123456789012345679E+28"
+            },
+            {
+              "type": "string",
+              "value": "1.234567890123456789012345679"
+            },
+            {
+              "type": "decimal",
+              "value": "12345678901234567890123456790"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "decimal-context-division",
+      "query": "SELECT str(1.00 / 2), str(1.0 / 3), str(2.00 / 1), str(decimal('1e3') / decimal('1e3')), str(decimal('-0.00') / 2.0), str((1.0 / 3) * 3), 1.0 / 3, str(decimal('1e3') / 2), str(0.00 / 0) LIMIT 1",
+      "result": {
+        "columns": [
+          {
+            "name": "str(1.00 / 2)",
+            "type": "string"
+          },
+          {
+            "name": "str(1.0 / 3)",
+            "type": "string"
+          },
+          {
+            "name": "str(2.00 / 1)",
+            "type": "string"
+          },
+          {
+            "name": "str(decimal('1e3') / decimal('1e3'))",
+            "type": "string"
+          },
+          {
+            "name": "str(decimal('-0.00') / 2.0)",
+            "type": "string"
+          },
+          {
+            "name": "str((1.0 / 3) * 3)",
+            "type": "string"
+          },
+          {
+            "name": "1.0 / 3",
+            "type": "decimal"
+          },
+          {
+            "name": "str(decimal('1e3') / 2)",
+            "type": "string"
+          },
+          {
+            "name": "str(0.00 / 0)",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "0.50"
+            },
+            {
+              "type": "string",
+              "value": "0.3333333333333333333333333333"
+            },
+            {
+              "type": "string",
+              "value": "2.00"
+            },
+            {
+              "type": "string",
+              "value": "1"
+            },
+            {
+              "type": "string",
+              "value": "-0.0"
+            },
+            {
+              "type": "string",
+              "value": "0.9999999999999999999999999999"
+            },
+            {
+              "type": "decimal",
+              "value": "0.3333333333333333333333333333"
+            },
+            {
+              "type": "string",
+              "value": "5E+2"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "decimal-context-unary-absolute",
+      "query": "SELECT str(-12345678901234567890123456789.00), -12345678901234567890123456789.00, str(abs(decimal('12345678901234567890123456789.00'))), str(abs(decimal('-0.00'))), str(-decimal('-0.00')), str(-(1.00 + 2)), str(abs(-1.00)) LIMIT 1",
+      "result": {
+        "columns": [
+          {
+            "name": "str(-12345678901234567890123456789.00)",
+            "type": "string"
+          },
+          {
+            "name": "-12345678901234567890123456789.00",
+            "type": "decimal"
+          },
+          {
+            "name": "str(abs(decimal('12345678901234567890123456789.00')))",
+            "type": "string"
+          },
+          {
+            "name": "str(abs(decimal('-0.00')))",
+            "type": "string"
+          },
+          {
+            "name": "str(-decimal('-0.00'))",
+            "type": "string"
+          },
+          {
+            "name": "str(-(1.00 + 2))",
+            "type": "string"
+          },
+          {
+            "name": "str(abs(-1.00))",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "-1.234567890123456789012345679E+28"
+            },
+            {
+              "type": "decimal",
+              "value": "-12345678901234567890123456790"
+            },
+            {
+              "type": "string",
+              "value": "1.234567890123456789012345679E+28"
+            },
+            {
+              "type": "string",
+              "value": "0.00"
+            },
+            {
+              "type": "string",
+              "value": "0.00"
+            },
+            {
+              "type": "string",
+              "value": "-3.00"
+            },
+            {
+              "type": "string",
+              "value": "1.00"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "decimal-context-sum",
+      "query": "SELECT str(sum(1.00)), str(sum(decimal(meta('padded')))), str(sum(decimal(meta('invalid')))), str(sum(decimal('-0.00'))), str(sum(12345678901234567890123456789.00)), sum(12345678901234567890123456789.00)",
+      "result": {
+        "columns": [
+          {
+            "name": "str(sum(1.00))",
+            "type": "string"
+          },
+          {
+            "name": "str(sum(decimal(meta('padded'))))",
+            "type": "string"
+          },
+          {
+            "name": "str(sum(decimal(meta('invalid'))))",
+            "type": "string"
+          },
+          {
+            "name": "str(sum(decimal('-0.00')))",
+            "type": "string"
+          },
+          {
+            "name": "str(sum(12345678901234567890123456789.00))",
+            "type": "string"
+          },
+          {
+            "name": "sum(12345678901234567890123456789.00)",
+            "type": "decimal"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "4.00"
+            },
+            {
+              "type": "string",
+              "value": "20.00"
+            },
+            {
+              "type": "string",
+              "value": "0"
+            },
+            {
+              "type": "string",
+              "value": "0.00"
+            },
+            {
+              "type": "string",
+              "value": "4.938271560493827156049382716E+28"
+            },
+            {
+              "type": "decimal",
+              "value": "49382715604938271560493827160"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "date-decimal-parameter-no-signature",
+      "query": "SELECT date(2000, 1.0, 1) LIMIT 0",
+      "error": {
+        "class": "CompilationError",
+        "code": "type-mismatch"
+      }
+    },
+    {
+      "id": "decimal-date-no-signature",
+      "query": "SELECT decimal(2000-01-01) LIMIT 0",
+      "error": {
+        "class": "CompilationError",
+        "code": "type-mismatch"
+      }
+    },
+    {
+      "id": "integer-position-no-signature",
+      "query": "SELECT int(position) LIMIT 0",
+      "error": {
+        "class": "CompilationError",
+        "code": "type-mismatch"
+      }
+    },
+    {
+      "id": "string-wrong-arity",
+      "query": "SELECT str() LIMIT 0",
+      "error": {
+        "class": "CompilationError",
+        "code": "type-mismatch"
+      }
+    },
+    {
+      "id": "date-positive-constructor-overflow",
+      "query": "SELECT date(2147483648, 1, 1) LIMIT 1",
+      "error": {
+        "class": "OverflowError",
+        "code": "unsupported-capability"
+      }
+    },
+    {
+      "id": "date-negative-constructor-overflow",
+      "query": "SELECT date(-2147483649, 1, 1) LIMIT 1",
+      "error": {
+        "class": "OverflowError",
+        "code": "unsupported-capability"
+      }
+    },
+    {
+      "id": "inventory-boolean-explicitly-unsupported",
+      "query": "SELECT bool(sum(position))",
+      "error": {
+        "class": "NotImplementedError",
+        "code": "unsupported-capability"
+      }
+    },
+    {
+      "id": "cast-whitespace-underscore-position-bool",
+      "query": "SELECT bool(position), decimal(' 1_0.0 '), int(' +1_0 ') LIMIT 1",
+      "result": {
+        "columns": [
+          {
+            "name": "bool(position)",
+            "type": "bool"
+          },
+          {
+            "name": "decimal(' 1_0.0 ')",
+            "type": "decimal"
+          },
+          {
+            "name": "int(' +1_0 ')",
+            "type": "integer"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "decimal",
+              "value": "10"
+            },
+            {
+              "type": "integer",
+              "value": "10"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "decimal-sum-rounds-each-source-ordered-step",
+      "query": "SELECT str(sum(decimal(account ~ 'Assets:Cash') * (decimal(narration ~ 'text') - decimal(narration ~ 'number')) * decimal('1e28') + decimal(account ~ 'Equity:Opening') * decimal(narration ~ 'text'))), sum(decimal(account ~ 'Assets:Cash') * (decimal(narration ~ 'text') - decimal(narration ~ 'number')) * decimal('1e28') + decimal(account ~ 'Equity:Opening') * decimal(narration ~ 'text'))",
+      "result": {
+        "columns": [
+          {
+            "name": "str(sum(decimal(account ~ 'Assets:Cash') * (decimal(narration ~ 'text') - decimal(narration ~ 'number')) * decimal('1e28') + decimal(account ~ 'Equity:Opening') * decimal(narration ~ 'text')))",
+            "type": "string"
+          },
+          {
+            "name": "sum(decimal(account ~ 'Assets:Cash') * (decimal(narration ~ 'text') - decimal(narration ~ 'number')) * decimal('1e28') + decimal(account ~ 'Equity:Opening') * decimal(narration ~ 'text'))",
+            "type": "decimal"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "0"
+            },
+            {
+              "type": "decimal",
+              "value": "0"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "string-compound-values",
+      "query": "SELECT str(position), str(weight), str(sum(position))",
+      "result": {
+        "columns": [
+          {
+            "name": "str(position)",
+            "type": "string"
+          },
+          {
+            "name": "str(weight)",
+            "type": "string"
+          },
+          {
+            "name": "str(sum(position))",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "1 USD"
+            },
+            {
+              "type": "string",
+              "value": "1 USD"
+            },
+            {
+              "type": "string",
+              "value": "(2 USD)"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "-1 USD"
+            },
+            {
+              "type": "string",
+              "value": "-1 USD"
+            },
+            {
+              "type": "string",
+              "value": "(-2 USD)"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "date-components",
+      "query": "SELECT year(date), month(date), day(date) WHERE account = 'Assets:Cash'",
+      "result": {
+        "columns": [
+          {
+            "name": "year(date)",
+            "type": "integer"
+          },
+          {
+            "name": "month(date)",
+            "type": "integer"
+          },
+          {
+            "name": "day(date)",
+            "type": "integer"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "integer",
+              "value": "2000"
+            },
+            {
+              "type": "integer",
+              "value": "1"
+            },
+            {
+              "type": "integer",
+              "value": "2"
+            }
+          ],
+          [
+            {
+              "type": "integer",
+              "value": "2000"
+            },
+            {
+              "type": "integer",
+              "value": "1"
+            },
+            {
+              "type": "integer",
+              "value": "3"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "date-component-boundaries",
+      "query": "SELECT year(date('0001-01-01')), month(date('9999-12-31')), day(date('2000-02-29')) LIMIT 1",
+      "result": {
+        "columns": [
+          {
+            "name": "year(date('0001-01-01'))",
+            "type": "integer"
+          },
+          {
+            "name": "month(date('9999-12-31'))",
+            "type": "integer"
+          },
+          {
+            "name": "day(date('2000-02-29'))",
+            "type": "integer"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "integer",
+              "value": "1"
+            },
+            {
+              "type": "integer",
+              "value": "12"
+            },
+            {
+              "type": "integer",
+              "value": "29"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "date-component-null",
+      "query": "SELECT year(date('bad')), month(date('bad')), day(date('bad')) LIMIT 1",
+      "result": {
+        "columns": [
+          {
+            "name": "year(date('bad'))",
+            "type": "integer"
+          },
+          {
+            "name": "month(date('bad'))",
+            "type": "integer"
+          },
+          {
+            "name": "day(date('bad'))",
+            "type": "integer"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "date-component-aggregate",
+      "query": "SELECT year(first(date)), month(last(date)), day(min(date)) WHERE account = 'Assets:Cash'",
+      "result": {
+        "columns": [
+          {
+            "name": "year(first(date))",
+            "type": "integer"
+          },
+          {
+            "name": "month(last(date))",
+            "type": "integer"
+          },
+          {
+            "name": "day(min(date))",
+            "type": "integer"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "integer",
+              "value": "2000"
+            },
+            {
+              "type": "integer",
+              "value": "1"
+            },
+            {
+              "type": "integer",
+              "value": "2"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "date-component-integer-error",
+      "query": "SELECT year(2000) LIMIT 0",
+      "error": {
+        "class": "CompilationError",
+        "code": "type-mismatch"
+      }
+    },
+    {
+      "id": "date-component-null-literal-error",
+      "query": "SELECT month(NULL) LIMIT 0",
+      "error": {
+        "class": "CompilationError",
+        "code": "type-mismatch"
+      }
+    },
+    {
+      "id": "date-component-object-error",
+      "query": "SELECT day(meta('day')) LIMIT 0",
+      "error": {
+        "class": "CompilationError",
+        "code": "type-mismatch"
+      }
+    },
+    {
+      "id": "date-component-arity-error",
+      "query": "SELECT year(date, date) LIMIT 0",
+      "error": {
+        "class": "CompilationError",
+        "code": "type-mismatch"
+      }
+    }
+  ]
+}

@@ -1,0 +1,1168 @@
+{
+  "schema_version": 2,
+  "oracle": {
+    "beancount": "3.2.3",
+    "beanquery": "0.2.0"
+  },
+  "fixture": "testdata/fixtures/query/dynamic-values.bean",
+  "input_sha256": "a7136be9a2979dc6f9c31a1baaf8a6c59b9817260359b1f931f74828eb323f8b",
+  "queries_sha256": "21a32cba18eb2eeefe9693546586ea3c911e721f974dea9f1dbaead3111ab0fb",
+  "sources_sha256": {
+    "testdata/fixtures/query/dynamic-values.bean": "a7136be9a2979dc6f9c31a1baaf8a6c59b9817260359b1f931f74828eb323f8b"
+  },
+  "cases": [
+    {
+      "id": "reject-object-comparison",
+      "query": "SELECT meta('value') < meta('other') WHERE account = 'Assets:Cash'",
+      "error": {
+        "class": "CompilationError",
+        "code": "type-mismatch"
+      }
+    },
+    {
+      "id": "implicit-string-cast",
+      "query": "SELECT narration, meta('value') = '10', meta('padded') = '10.00', meta('nothing') = '', meta('missing') = 'x', meta('amount') = '2 USD', meta('switch') = 'FALSE', meta('day') = '2000-01-02' WHERE account = 'Assets:Cash'",
+      "result": {
+        "columns": [
+          {
+            "name": "narration",
+            "type": "string"
+          },
+          {
+            "name": "meta('value') = '10'",
+            "type": "bool"
+          },
+          {
+            "name": "meta('padded') = '10.00'",
+            "type": "bool"
+          },
+          {
+            "name": "meta('nothing') = ''",
+            "type": "bool"
+          },
+          {
+            "name": "meta('missing') = 'x'",
+            "type": "bool"
+          },
+          {
+            "name": "meta('amount') = '2 USD'",
+            "type": "bool"
+          },
+          {
+            "name": "meta('switch') = 'FALSE'",
+            "type": "bool"
+          },
+          {
+            "name": "meta('day') = '2000-01-02'",
+            "type": "bool"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "text"
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": true
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "number"
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "bool",
+              "value": false
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "implicit-decimal-cast",
+      "query": "SELECT narration, meta('value') = 10, 10 = meta('value'), meta('value') + 1, meta('padded') * 0.5, meta('invalid') = 1, meta('amount') = 2, meta('nothing') = 0, meta('missing') + 1, meta('switch') + 1 WHERE account = 'Assets:Cash'",
+      "result": {
+        "columns": [
+          {
+            "name": "narration",
+            "type": "string"
+          },
+          {
+            "name": "meta('value') = 10",
+            "type": "bool"
+          },
+          {
+            "name": "10 = meta('value')",
+            "type": "bool"
+          },
+          {
+            "name": "meta('value') + 1",
+            "type": "decimal"
+          },
+          {
+            "name": "meta('padded') * 0.5",
+            "type": "decimal"
+          },
+          {
+            "name": "meta('invalid') = 1",
+            "type": "bool"
+          },
+          {
+            "name": "meta('amount') = 2",
+            "type": "bool"
+          },
+          {
+            "name": "meta('nothing') = 0",
+            "type": "bool"
+          },
+          {
+            "name": "meta('missing') + 1",
+            "type": "decimal"
+          },
+          {
+            "name": "meta('switch') + 1",
+            "type": "decimal"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "text"
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "decimal",
+              "value": "11"
+            },
+            {
+              "type": "decimal",
+              "value": "5"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "decimal",
+              "value": "1"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "number"
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "decimal",
+              "value": "11"
+            },
+            {
+              "type": "decimal",
+              "value": "5"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "decimal",
+              "value": "2"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "implicit-date-cast",
+      "query": "SELECT narration, meta('day') = 2000-01-02, meta('day_text') = 2000-01-02, 2000-01-03 > meta('day'), meta('value') = 2000-01-02 WHERE account = 'Assets:Cash'",
+      "result": {
+        "columns": [
+          {
+            "name": "narration",
+            "type": "string"
+          },
+          {
+            "name": "meta('day') = 2000-01-02",
+            "type": "bool"
+          },
+          {
+            "name": "meta('day_text') = 2000-01-02",
+            "type": "bool"
+          },
+          {
+            "name": "2000-01-03 > meta('day')",
+            "type": "bool"
+          },
+          {
+            "name": "meta('value') = 2000-01-02",
+            "type": "bool"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "text"
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "number"
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "null"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "unary-numeric-and-truth",
+      "query": "SELECT narration, -number, NOT number = 1, NOT meta('switch'), NOT meta('empty'), NOT meta('missing'), NOT meta('amount'), NOT meta('padded') WHERE account = 'Assets:Cash'",
+      "result": {
+        "columns": [
+          {
+            "name": "narration",
+            "type": "string"
+          },
+          {
+            "name": "-number",
+            "type": "decimal"
+          },
+          {
+            "name": "NOT number = 1",
+            "type": "bool"
+          },
+          {
+            "name": "NOT meta('switch')",
+            "type": "bool"
+          },
+          {
+            "name": "NOT meta('empty')",
+            "type": "bool"
+          },
+          {
+            "name": "NOT meta('missing')",
+            "type": "bool"
+          },
+          {
+            "name": "NOT meta('amount')",
+            "type": "bool"
+          },
+          {
+            "name": "NOT meta('padded')",
+            "type": "bool"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "text"
+            },
+            {
+              "type": "decimal",
+              "value": "-1"
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "bool",
+              "value": false
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "number"
+            },
+            {
+              "type": "decimal",
+              "value": "-1"
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": false
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "null-and-bool-literals",
+      "query": "SELECT NULL, TRUE, FALSE, NOT NULL LIMIT 1",
+      "result": {
+        "columns": [
+          {
+            "name": "NULL",
+            "type": "null"
+          },
+          {
+            "name": "TRUE",
+            "type": "bool"
+          },
+          {
+            "name": "FALSE",
+            "type": "bool"
+          },
+          {
+            "name": "NOT NULL",
+            "type": "bool"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "bool",
+              "value": true
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "ordered-null-boolean-logic",
+      "query": "SELECT NULL AND FALSE, NULL OR TRUE, FALSE AND NULL, TRUE OR NULL, NULL OR FALSE, FALSE OR NULL, TRUE AND NULL, NULL AND TRUE, 1 AND 2, 0 OR 2, NOT NULL AND TRUE LIMIT 1",
+      "result": {
+        "columns": [
+          {
+            "name": "NULL AND FALSE",
+            "type": "bool"
+          },
+          {
+            "name": "NULL OR TRUE",
+            "type": "bool"
+          },
+          {
+            "name": "FALSE AND NULL",
+            "type": "bool"
+          },
+          {
+            "name": "TRUE OR NULL",
+            "type": "bool"
+          },
+          {
+            "name": "NULL OR FALSE",
+            "type": "bool"
+          },
+          {
+            "name": "FALSE OR NULL",
+            "type": "bool"
+          },
+          {
+            "name": "TRUE AND NULL",
+            "type": "bool"
+          },
+          {
+            "name": "NULL AND TRUE",
+            "type": "bool"
+          },
+          {
+            "name": "1 AND 2",
+            "type": "bool"
+          },
+          {
+            "name": "0 OR 2",
+            "type": "bool"
+          },
+          {
+            "name": "NOT NULL AND TRUE",
+            "type": "bool"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": true
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "short-circuit-unrepresented-object",
+      "query": "SELECT FALSE AND entry_meta('__tolerances__'), TRUE OR entry_meta('__tolerances__') LIMIT 1",
+      "result": {
+        "columns": [
+          {
+            "name": "FALSE AND entry_meta('__tolerances__')",
+            "type": "bool"
+          },
+          {
+            "name": "TRUE OR entry_meta('__tolerances__')",
+            "type": "bool"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "bool",
+              "value": true
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "reject-bool-equality-on-empty",
+      "query": "SELECT TRUE = FALSE LIMIT 0",
+      "error": {
+        "class": "CompilationError",
+        "code": "type-mismatch"
+      }
+    },
+    {
+      "id": "reject-null-equality",
+      "query": "SELECT NULL = NULL LIMIT 1",
+      "error": {
+        "class": "CompilationError",
+        "code": "type-mismatch"
+      }
+    },
+    {
+      "id": "null-predicates",
+      "query": "SELECT account IS NULL, meta('nothing') IS NULL, meta('missing') IS NOT NULL, meta('empty') IS NULL, NULL IS NULL, FALSE IS NULL WHERE account = 'Assets:Cash'",
+      "result": {
+        "columns": [
+          {
+            "name": "account IS NULL",
+            "type": "bool"
+          },
+          {
+            "name": "meta('nothing') IS NULL",
+            "type": "bool"
+          },
+          {
+            "name": "meta('missing') IS NOT NULL",
+            "type": "bool"
+          },
+          {
+            "name": "meta('empty') IS NULL",
+            "type": "bool"
+          },
+          {
+            "name": "NULL IS NULL",
+            "type": "bool"
+          },
+          {
+            "name": "FALSE IS NULL",
+            "type": "bool"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": false
+            }
+          ],
+          [
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": false
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "where-dynamic-truth",
+      "query": "SELECT narration WHERE meta('amount')",
+      "result": {
+        "columns": [
+          {
+            "name": "narration",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "text"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "parentheses-and-unary-plus",
+      "query": "SELECT +1, -(1 + 2), NOT (number = 1), (number + 1) * 2, (NULL OR TRUE) AND FALSE LIMIT 1",
+      "result": {
+        "columns": [
+          {
+            "name": "1",
+            "type": "integer"
+          },
+          {
+            "name": "-(1 + 2)",
+            "type": "integer"
+          },
+          {
+            "name": "NOT (number = 1)",
+            "type": "bool"
+          },
+          {
+            "name": "(number + 1) * 2",
+            "type": "decimal"
+          },
+          {
+            "name": "(NULL OR TRUE) AND FALSE",
+            "type": "bool"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "integer",
+              "value": "1"
+            },
+            {
+              "type": "integer",
+              "value": "-3"
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "decimal",
+              "value": "4"
+            },
+            {
+              "type": "bool",
+              "value": false
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "amount-cast-preserves-decimal-text",
+      "query": "SELECT narration, meta('precise_amount') = '2.00 USD', meta('precise_amount') = '-0.00 USD', meta('precise_amount'), NOT meta('precise_amount') WHERE account = 'Assets:Cash'",
+      "result": {
+        "columns": [
+          {
+            "name": "narration",
+            "type": "string"
+          },
+          {
+            "name": "meta('precise_amount') = '2.00 USD'",
+            "type": "bool"
+          },
+          {
+            "name": "meta('precise_amount') = '-0.00 USD'",
+            "type": "bool"
+          },
+          {
+            "name": "meta('precise_amount')",
+            "type": "object"
+          },
+          {
+            "name": "NOT meta('precise_amount')",
+            "type": "bool"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "text"
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "amount",
+              "value": {
+                "number": "2",
+                "currency": "USD"
+              }
+            },
+            {
+              "type": "bool",
+              "value": false
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "number"
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "bool",
+              "value": false
+            },
+            {
+              "type": "amount",
+              "value": {
+                "number": "0",
+                "currency": "USD"
+              }
+            },
+            {
+              "type": "bool",
+              "value": true
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "inventory-truth-is-unsupported",
+      "query": "SELECT NOT sum(position)",
+      "error": {
+        "class": "NotImplementedError",
+        "code": "unsupported-capability"
+      }
+    },
+    {
+      "id": "string-order-after-inference",
+      "query": "SELECT narration, meta('value') < '2', meta('amount') ~ '^2' WHERE account = 'Assets:Cash'",
+      "result": {
+        "columns": [
+          {
+            "name": "narration",
+            "type": "string"
+          },
+          {
+            "name": "meta('value') < '2'",
+            "type": "bool"
+          },
+          {
+            "name": "meta('amount') ~ '^2'",
+            "type": "bool"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "text"
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": true
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "number"
+            },
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "bool",
+              "value": false
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "system-integer-promoted-to-decimal",
+      "query": "SELECT meta('lineno') < 10, 1 + meta('lineno') LIMIT 1",
+      "result": {
+        "columns": [
+          {
+            "name": "meta('lineno') < 10",
+            "type": "bool"
+          },
+          {
+            "name": "1 + meta('lineno')",
+            "type": "decimal"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "bool",
+              "value": true
+            },
+            {
+              "type": "decimal",
+              "value": "5"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "dynamic-group-preserves-type",
+      "query": "SELECT meta('padded'), count(*) GROUP BY meta('padded')",
+      "result": {
+        "columns": [
+          {
+            "name": "meta('padded')",
+            "type": "object"
+          },
+          {
+            "name": "count(*)",
+            "type": "integer"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "010"
+            },
+            {
+              "type": "integer",
+              "value": "1"
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "value": "2"
+            }
+          ],
+          [
+            {
+              "type": "decimal",
+              "value": "10"
+            },
+            {
+              "type": "integer",
+              "value": "1"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "reject-mixed-object-order",
+      "query": "SELECT narration, meta('value') ORDER BY meta('value')",
+      "error": {
+        "class": "TypeError",
+        "code": "type-mismatch"
+      }
+    },
+    {
+      "id": "reject-object-equality-even-empty",
+      "query": "SELECT meta('value') = meta('other') LIMIT 0",
+      "error": {
+        "class": "CompilationError",
+        "code": "type-mismatch"
+      }
+    },
+    {
+      "id": "reject-object-unary-minus",
+      "query": "SELECT -meta('value') WHERE account = 'NO'",
+      "error": {
+        "class": "CompilationError",
+        "code": "type-mismatch"
+      }
+    },
+    {
+      "id": "short-circuit-still-compiles-column",
+      "query": "SELECT NULL AND missing_column LIMIT 0",
+      "error": {
+        "class": "CompilationError",
+        "code": "unknown-column"
+      }
+    },
+    {
+      "id": "short-circuit-still-compiles-function",
+      "query": "SELECT TRUE OR unknown(number) LIMIT 0",
+      "error": {
+        "class": "CompilationError",
+        "code": "unknown-function"
+      }
+    },
+    {
+      "id": "null-where-returns-empty-schema",
+      "query": "SELECT account WHERE NULL",
+      "result": {
+        "columns": [
+          {
+            "name": "account",
+            "type": "string"
+          }
+        ],
+        "rows": []
+      }
+    },
+    {
+      "id": "null-predicate-empty-aggregate",
+      "query": "SELECT sum(number) IS NULL WHERE account = 'NO'",
+      "result": {
+        "columns": [
+          {
+            "name": "sum(number) IS NULL",
+            "type": "bool"
+          }
+        ],
+        "rows": []
+      }
+    },
+    {
+      "id": "decimal-text-input-grammar",
+      "query": "SELECT narration, meta('unicode_number') + 1, meta('exponent') + 1, meta('fraction') + 1, meta('comma_number') + 1 WHERE account = 'Assets:Cash'",
+      "result": {
+        "columns": [
+          {
+            "name": "narration",
+            "type": "string"
+          },
+          {
+            "name": "meta('unicode_number') + 1",
+            "type": "decimal"
+          },
+          {
+            "name": "meta('exponent') + 1",
+            "type": "decimal"
+          },
+          {
+            "name": "meta('fraction') + 1",
+            "type": "decimal"
+          },
+          {
+            "name": "meta('comma_number') + 1",
+            "type": "decimal"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "text"
+            },
+            {
+              "type": "decimal",
+              "value": "11.5"
+            },
+            {
+              "type": "decimal",
+              "value": "1001"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "number"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "numeric-metadata-group-ignores-source-scale",
+      "query": "SELECT meta('same_number'), count(*) GROUP BY meta('same_number')",
+      "result": {
+        "columns": [
+          {
+            "name": "meta('same_number')",
+            "type": "object"
+          },
+          {
+            "name": "count(*)",
+            "type": "integer"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "decimal",
+              "value": "10"
+            },
+            {
+              "type": "integer",
+              "value": "2"
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "value": "2"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "reject-undeclared-abs-integer-signature",
+      "query": "SELECT abs(1) LIMIT 0",
+      "error": {
+        "class": "CompilationError",
+        "code": "type-mismatch"
+      }
+    }
+  ]
+}

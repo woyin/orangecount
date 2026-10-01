@@ -16,6 +16,7 @@ import (
 func runCheck(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("check", flag.ContinueOnError)
 	fs.SetOutput(stderr)
+	buildOptions := semanticsFlag(fs)
 	locale := fs.String("locale", "en", "diagnostic display locale (en or zh-CN)")
 	jsonOutput := fs.Bool("json", false, "render diagnostics as JSON")
 	if err := fs.Parse(args); err != nil {
@@ -29,7 +30,7 @@ func runCheck(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "orangecount check: expected exactly one entry ledger path")
 		return 2
 	}
-	result := snapshot.Build(fs.Arg(0))
+	result := snapshot.BuildWithOptions(fs.Arg(0), *buildOptions)
 	ds := result.Diagnostics
 	if *jsonOutput {
 		if err := diagnostic.RenderJSON(stdout, ds, *locale); err != nil {

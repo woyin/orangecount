@@ -1,0 +1,19 @@
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Assets:Tagged STK "FIFO"
+2000-01-01 open Assets:Zero STK "FIFO"
+2000-01-01 open Assets:Plain STK
+2000-01-01 open Assets:Short STK "NONE"
+2000-01-01 open Equity:Opening STK
+2000-01-02 * "absent and empty labels"
+  Assets:Tagged 2 STK {10 USD}
+  Assets:Tagged 2 STK {10 USD, ""}
+  Assets:Cash -40 USD
+2000-01-02 * "zero cost"
+  Assets:Zero 5 STK {0 USD}
+  Assets:Cash 0 USD
+2000-01-02 * "plain commodity"
+  Assets:Plain 7 STK
+  Equity:Opening -7 STK
+2000-01-02 * "open short"
+  Assets:Short -3 STK {5 USD}
+  Assets:Cash 15 USD

@@ -1,0 +1,58 @@
+[
+  {
+    "id": "scalar-extrema-and-endpoints",
+    "query": "SELECT first(number), last(number), min(number), max(number), str(first(number)), str(last(number)), str(min(number)), str(max(number)) WHERE account = 'Assets:Cash'"
+  },
+  {
+    "id": "scalar-types",
+    "query": "SELECT first(date), last(date), min(date), max(date), min(narration), max(narration), min(year), max(year), min(number > 0), max(number > 0) WHERE account = 'Assets:Cash'"
+  },
+  {
+    "id": "metadata-null-endpoints",
+    "query": "SELECT first(meta('sample')), last(meta('sample')), min(meta('sample')), max(meta('sample')) WHERE account = 'Assets:Cash'"
+  },
+  {
+    "id": "null-aggregates",
+    "query": "SELECT first(NULL), last(NULL), min(NULL), max(NULL), first(number / 0), last(number / 0), min(number / 0), max(number / 0)"
+  },
+  {
+    "id": "grouped-endpoints",
+    "query": "SELECT account, first(number), last(number), min(number), max(number) ORDER BY account"
+  },
+  {
+    "id": "compound-extrema-and-endpoints",
+    "query": "SELECT first(position), last(position), min(position), max(position), first(weight), last(weight), min(weight), max(weight), str(first(position)), str(last(weight)) WHERE account = 'Assets:Cash'"
+  },
+  {
+    "id": "decimal-tie-precision",
+    "query": "SELECT str(first(number)), str(last(number)), str(min(number)), str(max(number)), str(min(number + 0.000)), str(max(number + 0.000)) WHERE account = 'Assets:Cash' AND number > 0"
+  },
+  {
+    "id": "empty-aggregate-schema",
+    "query": "SELECT first(number), last(date), min(position), max(weight) WHERE account = 'missing'"
+  },
+  {
+    "id": "first-arity",
+    "query": "SELECT first()",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  },
+  {
+    "id": "extrema-arity-empty",
+    "query": "SELECT min(1,2) LIMIT 0",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  },
+  {
+    "id": "nested-aggregate-empty",
+    "query": "SELECT first(sum(number)) LIMIT 0",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  }
+]

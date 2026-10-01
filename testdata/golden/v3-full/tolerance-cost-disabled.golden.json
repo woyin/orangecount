@@ -1,0 +1,16 @@
+{
+  "errors": [
+    {
+      "line": 3,
+      "type": "ValidationError"
+    }
+  ],
+  "fixture": "tolerance-cost-disabled.bean",
+  "oracle_engine": "beancount-python-3.2.3",
+  "schema_version": 2,
+  "state": {
+    "balances": {},
+    "entries": []
+  },
+  "valid": false
+}

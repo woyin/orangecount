@@ -1,0 +1,38 @@
+{
+  "errors": [],
+  "fixture": "cost-price-sale.bean",
+  "oracle_engine": "beancount-python-3.2.3",
+  "schema_version": 2,
+  "state": {
+    "balances": {
+      "Assets:Cash": {
+        "currencies": {
+          "USD": "1"
+        },
+        "lots": []
+      },
+      "Assets:Shares": {
+        "currencies": {},
+        "lots": [
+          "{\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-02\",\"label\":null,\"number\":\"2\"},\"currency\":\"SH\",\"number\":\"2\"}"
+        ]
+      },
+      "Income:Gains": {
+        "currencies": {
+          "USD": "-5"
+        },
+        "lots": []
+      }
+    },
+    "entries": [
+      "{\"account\":\"Assets:Cash\",\"amount\":\"1 USD\",\"date\":\"2000-01-04\",\"kind\":\"balance\",\"metadata\":{},\"source\":{\"file\":\"cost-price-sale.bean\",\"line\":14},\"tolerance\":null}",
+      "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"cost-price-sale.bean\",\"line\":3}}",
+      "{\"account\":\"Assets:Shares\",\"amount\":\"2 SH\",\"date\":\"2000-01-04\",\"kind\":\"balance\",\"metadata\":{},\"source\":{\"file\":\"cost-price-sale.bean\",\"line\":15},\"tolerance\":null}",
+      "{\"account\":\"Assets:Shares\",\"booking\":null,\"currencies\":[\"SH\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"cost-price-sale.bean\",\"line\":2}}",
+      "{\"account\":\"Income:Gains\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"cost-price-sale.bean\",\"line\":4}}",
+      "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"two lots\",\"payee\":\"buy\",\"postings\":[{\"account\":\"Assets:Shares\",\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-02\",\"label\":null,\"number\":\"1\"},\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"SH\",\"number\":\"5\"}},{\"account\":\"Assets:Shares\",\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-02\",\"label\":null,\"number\":\"2\"},\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"SH\",\"number\":\"5\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-15\"}}],\"source\":{\"file\":\"cost-price-sale.bean\",\"line\":5},\"tags\":[]}",
+      "{\"date\":\"2000-01-03\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"explicit lot reductions with price and gain leg\",\"payee\":\"sell\",\"postings\":[{\"account\":\"Assets:Shares\",\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-02\",\"label\":null,\"number\":\"1\"},\"flag\":null,\"metadata\":{},\"price\":{\"currency\":\"USD\",\"number\":\"2\"},\"units\":{\"currency\":\"SH\",\"number\":\"-5\"}},{\"account\":\"Assets:Shares\",\"cost\":{\"currency\":\"USD\",\"date\":\"2000-01-02\",\"label\":null,\"number\":\"2\"},\"flag\":null,\"metadata\":{},\"price\":{\"currency\":\"USD\",\"number\":\"2\"},\"units\":{\"currency\":\"SH\",\"number\":\"-3\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"16\"}},{\"account\":\"Income:Gains\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-5\"}}],\"source\":{\"file\":\"cost-price-sale.bean\",\"line\":9},\"tags\":[]}"
+    ]
+  },
+  "valid": true
+}

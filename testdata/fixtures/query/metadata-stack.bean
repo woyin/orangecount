@@ -1,0 +1,31 @@
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Expenses:Food USD
+pushmeta scope: "outer"
+include "metadata-stack-child.bean"
+2000-01-04 * "late outer"
+  Assets:Cash -1 USD
+  Expenses:Food 1 USD
+pushmeta scope: "inner"
+pushmeta budget: 2.5 USD
+2000-01-02 * "early inner"
+  Assets:Cash -1 USD
+  Expenses:Food 1 USD
+2000-01-02 * "early explicit"
+  scope: "explicit"
+  Assets:Cash -1 USD
+  Expenses:Food 1 USD
+popmeta budget:
+popmeta scope:
+2000-01-03 note Assets:Cash "not a transaction"
+2000-01-03 * "restored outer"
+  Assets:Cash -1 USD
+  Expenses:Food 1 USD
+pushmeta scope:
+2000-01-06 * "pushed null"
+  Assets:Cash -1 USD
+  Expenses:Food 1 USD
+popmeta scope:
+popmeta scope:
+2000-01-07 * "outside"
+  Assets:Cash -1 USD
+  Expenses:Food 1 USD

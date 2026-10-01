@@ -1,0 +1,36 @@
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Equity:Opening USD
+2000-01-02 * "text"
+  Assets:Cash 1 USD
+    value: "10"
+    unicode_number: "١٠.٥"
+    exponent: "1e3"
+    fraction: "1/2"
+    comma_number: "1,000"
+    same_number: 10.0
+    other: "2"
+    padded: "010"
+    invalid: "bad"
+    switch: FALSE
+    empty: ""
+    nothing:
+    amount: 2 USD
+    precise_amount: 2.00 USD
+    day: 2000-01-02
+    day_text: "2000-01-02"
+  Equity:Opening -1 USD
+2000-01-03 * "number"
+  Assets:Cash 1 USD
+    value: 10
+    same_number: 10.00
+    other: 2
+    padded: 10.00
+    invalid: "bad"
+    switch: TRUE
+    empty: ""
+    nothing:
+    amount: 0 USD
+    precise_amount: -0.00 USD
+    day: 2000-01-03
+    day_text: "bad"
+  Equity:Opening -1 USD

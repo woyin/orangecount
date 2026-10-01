@@ -26,6 +26,7 @@ const (
 // requests exact balancing; when InferDecimalTolerance is true, transaction
 // tolerances are inferred from the decimal places present in their postings.
 type EvalOptions struct {
+	SemanticsProfile      SemanticsProfile
 	DefaultTolerance      Decimal
 	InferDecimalTolerance bool
 }
@@ -45,10 +46,12 @@ type AccountState struct {
 // can use for FIFO inventory matching. Additional cost components remain in
 // the source AST and are never silently discarded from source navigation.
 type Cost struct {
-	Number   Decimal
-	Currency string
-	Date     *Date
-	Label    string
+	Number       Decimal
+	Currency     string
+	Date         *Date
+	Label        string
+	LabelPresent bool
+	DecimalText  string `json:"-"`
 }
 
 // Position tracks units and their optional lot cost.
@@ -81,12 +84,15 @@ type EntryRecord struct {
 // partial when diagnostics contain errors; snapshot builders publish only
 // error-free evaluations.
 type Evaluation struct {
-	Accounts    map[string]AccountState
-	Prices      map[string][]PriceQuote
-	Entries     []EntryRecord
-	Options     map[string]string
-	Diagnostics []diagnostic.Diagnostic
-	Valid       bool
+	SemanticsProfile   SemanticsProfile `json:"semantics_profile"`
+	EvaluationRevision string           `json:"evaluation_revision"`
+	ActiveExtensions   []string         `json:"active_extensions"`
+	Accounts           map[string]AccountState
+	Prices             map[string][]PriceQuote
+	Entries            []EntryRecord
+	Options            map[string]string
+	Diagnostics        []diagnostic.Diagnostic
+	Valid              bool
 }
 
 // Evaluate evaluates parsed files in include traversal order. It is pure with
@@ -125,7 +131,17 @@ func (e *evaluator) collectDirectives(fileID source.FileID, parsed map[source.Fi
 		return
 	}
 	e.visited[fileID] = true
-	for _, directive := range file.Directives {
+	directives := file.Directives
+	if e.options.SemanticsProfile == V3 {
+		directives = e.effectiveMetadata(file)
+	}
+	for _, directive := range directives {
+		if e.options.SemanticsProfile == V3 {
+			switch directive.(type) {
+			case PushMeta, PopMeta:
+				continue
+			}
+		}
 		if include, ok := directive.(Include); ok && e.graph != nil {
 			for _, edge := range e.graph.Edges[fileID] {
 				if edge.Literal == include.Path {
@@ -140,6 +156,11 @@ func (e *evaluator) collectDirectives(fileID source.FileID, parsed map[source.Fi
 }
 
 func evaluateOrder(graph *source.Graph, parsed map[source.FileID]*File, options EvalOptions, order []source.FileID) *Evaluation {
+	normalized, err := options.Normalized()
+	if err != nil {
+		return &Evaluation{Diagnostics: []diagnostic.Diagnostic{diagnostic.New("E-EVAL-OPTION", diagnostic.Error, source.Span{})}}
+	}
+	options = normalized
 	e := &evaluator{
 		graph:                    graph,
 		result:                   &Evaluation{Accounts: make(map[string]AccountState), Prices: make(map[string][]PriceQuote), Options: make(map[string]string)},
@@ -150,6 +171,10 @@ func evaluateOrder(graph *source.Graph, parsed map[source.FileID]*File, options 
 		inferredToleranceDefault: make(map[string]Decimal),
 	}
 	e.options.InferDecimalTolerance = true
+	e.toleranceMultiplier, _ = ParseDecimal("0.5")
+	e.result.SemanticsProfile = options.SemanticsProfile
+	e.result.EvaluationRevision = options.SemanticsProfile.EvaluationRevision()
+	e.result.ActiveExtensions = []string{}
 	var items []directiveItem
 	if graph != nil && graph.Entry != 0 {
 		e.collectDirectives(graph.Entry, parsed, &items)
@@ -159,6 +184,10 @@ func evaluateOrder(graph *source.Graph, parsed map[source.FileID]*File, options 
 		}
 	}
 
+	if e.hasErrorsSince(0) {
+		e.finish()
+		return e.result
+	}
 	sort.SliceStable(items, func(i, j int) bool {
 		d1, d2 := items[i].directive, items[j].directive
 		dt1, dt2 := directiveDate(d1), directiveDate(d2)
@@ -224,6 +253,9 @@ type evaluator struct {
 	events                   []balanceEvent
 	pending                  []pendingBalance
 	inferredToleranceDefault map[string]Decimal
+	toleranceMultiplier      Decimal
+	inferToleranceFromCost   bool
+	bookingSpan              source.Span
 }
 
 type balanceEvent struct {
@@ -317,9 +349,42 @@ func (e *evaluator) evaluateDirective(file *File, directive Directive) {
 
 // evaluateTransaction books a transaction and folds its postings in.
 func (e *evaluator) evaluateTransaction(tx *Transaction) {
+	start := len(e.result.Diagnostics)
+	var saved map[string]*accountWork
+	eventCount := len(e.events)
+	if e.options.SemanticsProfile == V3 {
+		saved = make(map[string]*accountWork, len(e.accounts))
+		for name, account := range e.accounts {
+			copy := *account
+			copy.state.Positions = append([]Position(nil), account.state.Positions...)
+			copy.state.Balances = make(map[string]Decimal, len(account.state.Balances))
+			for cur, amount := range account.state.Balances {
+				copy.state.Balances[cur] = amount
+			}
+			saved[name] = &copy
+		}
+	}
 	booked := e.bookTransaction(tx)
+	if e.options.SemanticsProfile == V3 && e.hasErrorsSince(start) {
+		return
+	}
 	e.replaceLastEntry(booked)
-	e.transaction(booked)
+	e.transaction(booked, tx.Postings)
+	if e.options.SemanticsProfile == V3 && e.hasErrorsSince(start) {
+		e.accounts = saved
+		e.events = e.events[:eventCount]
+	} else if e.options.SemanticsProfile == V3 {
+		booked.Postings = groupBookedPostings(booked.Postings)
+	}
+}
+
+func (e *evaluator) hasErrorsSince(index int) bool {
+	for _, d := range e.result.Diagnostics[index:] {
+		if d.Severity == diagnostic.Error {
+			return true
+		}
+	}
+	return false
 }
 
 // sourcePath returns the display path of the file a directive came from.
@@ -340,14 +405,44 @@ func (e *evaluator) applyOption(d Option) {
 	} else {
 		e.result.Options[d.Key] = d.Value
 	}
+	if e.options.SemanticsProfile == V3 && d.Key == "booking_method" {
+		if !validBooking(d.Value) {
+			e.add("E-EVAL-OPTION", diagnostic.Error, d.Span(), e.pathFor(d.Span()))
+		}
+		if d.Value == "AVERAGE" {
+			e.activateAverage()
+		}
+	}
+	if e.options.SemanticsProfile == V3 {
+		switch d.Key {
+		case "tolerance_multiplier", "inferred_tolerance_multiplier":
+			multiplier, err := ParseDecimal(d.Value)
+			if err != nil {
+				e.add("E-EVAL-OPTION", diagnostic.Error, d.Span(), e.pathFor(d.Span()))
+			} else {
+				e.toleranceMultiplier = multiplier
+			}
+			if d.Key == "inferred_tolerance_multiplier" {
+				e.result.Diagnostics = append(e.result.Diagnostics, diagnostic.New("E-EVAL-OPTION", diagnostic.Error, d.Span(), "inferred_tolerance_multiplier was renamed to tolerance_multiplier").WithPath(e.pathFor(d.Span())))
+			}
+			return
+		case "infer_tolerance_from_cost":
+			e.inferToleranceFromCost = strings.EqualFold(d.Value, "true")
+			return
+		}
+	}
 	if strings.EqualFold(d.Key, "inferred_tolerance_default") {
 		parts := strings.Split(d.Value, ":")
 		if len(parts) == 2 {
 			cur := strings.TrimSpace(parts[0])
 			tolStr := strings.TrimSpace(parts[1])
-			if tol, err := ParseDecimal(tolStr); err == nil && tol.Sign() >= 0 {
+			if tol, err := ParseDecimal(tolStr); err == nil && tol.Sign() >= 0 && cur != "" {
 				e.inferredToleranceDefault[cur] = tol
+				return
 			}
+		}
+		if e.options.SemanticsProfile == V3 {
+			e.add("E-EVAL-OPTION", diagnostic.Error, d.Span(), e.pathFor(d.Span()))
 		}
 		return
 	}
@@ -448,7 +543,23 @@ func (e *evaluator) open(d Open) {
 		}
 		return
 	}
-	e.accounts[d.Account] = &accountWork{state: AccountState{Name: d.Account, Opened: d.Date, Currencies: append([]string(nil), d.Currencies...), Booking: d.Booking, Balances: make(map[string]Decimal)}}
+	booking := d.Booking
+	if e.options.SemanticsProfile == V3 {
+		if booking == "" {
+			booking = e.result.Options["booking_method"]
+		}
+		if booking == "" {
+			booking = "STRICT"
+		}
+		if !validBooking(booking) {
+			e.add("E-EVAL-OPTION", diagnostic.Error, d.Span(), e.pathFor(d.Span()))
+			return
+		}
+	}
+	if booking == "AVERAGE" {
+		e.activateAverage()
+	}
+	e.accounts[d.Account] = &accountWork{state: AccountState{Name: d.Account, Opened: d.Date, Currencies: append([]string(nil), d.Currencies...), Booking: booking, Balances: make(map[string]Decimal)}}
 }
 
 func (e *evaluator) close(d Close) {
@@ -485,7 +596,7 @@ type resolvedPosting struct {
 // in the entry stream itself (see inferElision), and every known leg is then
 // applied. A residual imbalance beyond the configured tolerance is reported
 // once per transaction.
-func (e *evaluator) transaction(tx *Transaction) {
+func (e *evaluator) transaction(tx *Transaction, sourcePostings ...[]Posting) {
 	if tx == nil || len(tx.Postings) == 0 {
 		if tx != nil {
 			e.add("E-EVAL-UNBALANCED", diagnostic.Error, tx.Span(), e.pathFor(tx.Span()))
@@ -540,6 +651,25 @@ func (e *evaluator) transaction(tx *Transaction) {
 		}
 	}
 	for cur, total := range totals {
+		if e.options.SemanticsProfile == V3 {
+			postings := tx.Postings
+			if len(sourcePostings) > 0 {
+				postings = sourcePostings[0]
+			}
+			tolerances := e.transactionTolerances(postings)
+			tol, ok := tolerances[cur]
+			if !ok {
+				tol = tolerances["*"]
+			}
+			if !e.options.DefaultTolerance.IsZero() && e.options.DefaultTolerance.Cmp(tol) > 0 {
+				tol = e.options.DefaultTolerance
+			}
+			if !within(total, tol) {
+				e.add("E-EVAL-UNBALANCED", diagnostic.Error, tx.Span(), e.pathFor(tx.Span()))
+				break
+			}
+			continue
+		}
 		tol := e.options.DefaultTolerance
 		if defTol, ok := e.inferredToleranceDefault[cur]; ok {
 			if tol.IsZero() || defTol.Cmp(tol) > 0 {
@@ -606,6 +736,9 @@ func (e *evaluator) inferElision(tx *Transaction, index int, totals map[string]D
 		currency = balanceCurrency
 	}
 	units := Amount{Number: numberFromDecimal(inferred), Currency: currency}
+	if e.options.SemanticsProfile == V3 {
+		units.Number.DecimalText = inferredNumberText(inferred, currency, tx.Postings)
+	}
 	tx.Postings[index].Units = &units
 	return resolvedPosting{posting: tx.Postings[index], amount: inferred, currency: currency}, true
 }
@@ -620,16 +753,27 @@ func (e *evaluator) bookTransaction(tx *Transaction) *Transaction {
 		return tx
 	}
 	booked := *tx
+	e.bookingSpan = tx.Span()
 	booked.Postings = make([]Posting, 0, len(tx.Postings))
 	working := make(map[string][]Position)
 	for account, state := range e.accounts {
 		working[account] = append([]Position(nil), state.state.Positions...)
 	}
 	for _, posting := range tx.Postings {
+		none := e.options.SemanticsProfile == V3 && e.accounts[posting.Account] != nil && e.accounts[posting.Account].state.Booking == "NONE"
+		if e.options.SemanticsProfile == V3 {
+			posting = bookedPrice(posting)
+			if none && posting.Cost != nil && !completeCost(*posting.Cost) {
+				e.add("E-EVAL-INFER", diagnostic.Error, posting.Span(), e.pathFor(posting.Span()))
+				booked.Postings = append(booked.Postings, posting)
+				continue
+			}
+			posting = acquisitionPosting(posting, tx.Date, none)
+		}
 		resolved := e.bookPosting(posting, working)
 		booked.Postings = append(booked.Postings, resolved...)
 		for _, item := range resolved {
-			updateWorkingPositions(working, item)
+			updateWorkingPositions(working, item, e.options.SemanticsProfile == V3, none)
 		}
 	}
 	return &booked
@@ -656,6 +800,9 @@ func (e *evaluator) bookPosting(posting Posting, working map[string][]Position) 
 	constraints := deriveCostConstraints(*posting.Cost)
 	ordered := orderBookingMatches(bookingMatches(working[posting.Account], posting.Units.Currency, constraints), account.state.Booking)
 	if len(ordered) == 0 {
+		if e.options.SemanticsProfile == V3 {
+			e.bookingFailure("E-EVAL-INVENTORY", "", posting.Span())
+		}
 		return []Posting{posting}
 	}
 	requested := amount.Neg()
@@ -664,14 +811,57 @@ func (e *evaluator) bookPosting(posting Posting, working map[string][]Position) 
 	case isOrderedBooking(account.state.Booking):
 		allocations = allocateOrderedReduction(ordered, requested)
 	case strings.EqualFold(account.state.Booking, "AVERAGE"):
-		return e.bookAverageReduction(posting, ordered, requested, constraints)
+		result := e.bookAverageReduction(posting, ordered, requested, constraints)
+		if e.options.SemanticsProfile == V3 {
+			total := Zero()
+			for _, lot := range ordered {
+				total = total.Add(lot.Units)
+			}
+			if total.Cmp(requested) < 0 || result[0].averageRejected {
+				e.bookingFailure("E-EVAL-INVENTORY", "", posting.Span())
+			}
+		}
+		return result
+	case e.options.SemanticsProfile == V3 && account.state.Booking == "STRICT_WITH_SIZE":
+		allocations = allocateExactReduction(ordered, requested)
+		if allocations == nil {
+			for _, lot := range orderBookingMatches(ordered, "FIFO") {
+				if lot.Units.Equal(requested) {
+					allocations = []Position{lot}
+					break
+				}
+			}
+		}
 	default:
 		allocations = allocateExactReduction(ordered, requested)
 	}
 	if allocations == nil {
+		if e.options.SemanticsProfile == V3 {
+			total := Zero()
+			for _, lot := range ordered {
+				total = total.Add(lot.Units)
+			}
+			if total.Cmp(requested) >= 0 || ((account.state.Booking == "STRICT" || account.state.Booking == "STRICT_WITH_SIZE") && len(ordered) > 1) {
+				e.bookingFailure("E-EVAL-INVENTORY", "cost reduction is ambiguous; select a lot or declare an explicit booking method", posting.Span())
+			} else {
+				e.bookingFailure("E-EVAL-INVENTORY", "", posting.Span())
+			}
+		}
 		return []Posting{posting}
 	}
 	return allocationPostings(posting, allocations)
+}
+
+func (e *evaluator) bookingFailure(code, message string, posting source.Span) {
+	span := e.bookingSpan
+	if span.StartLine == 0 {
+		span = posting
+	}
+	d := diagnostic.New(code, diagnostic.Error, span, message).WithPath(e.pathFor(span))
+	if span != posting {
+		d.Related = []diagnostic.Related{{Span: posting, Message: "inventory posting"}}
+	}
+	e.result.Diagnostics = append(e.result.Diagnostics, d)
 }
 
 // isReducingPosting reports whether the posting is a negative-amount posting
@@ -759,6 +949,7 @@ func allocationPostings(posting Posting, allocations []Position) []Posting {
 		item := posting
 		units := *posting.Units
 		units.Number = numberFromDecimal(allocation.Units.Neg())
+
 		item.Units = &units
 		cost := costSpecFromCost(*allocation.Cost, posting.Cost)
 		item.Cost = &cost
@@ -856,10 +1047,12 @@ func rejectAverageReduction(posting Posting) Posting {
 }
 
 type costConstraints struct {
-	number   *Decimal
-	currency string
-	date     *Date
-	label    string
+	number       *Decimal
+	currency     string
+	date         *Date
+	label        string
+	labelExact   bool
+	labelPresent bool
 }
 
 func deriveCostConstraints(spec CostSpec) costConstraints {
@@ -897,7 +1090,10 @@ func costMatchesPosition(constraints costConstraints, cost Cost) bool {
 	if constraints.date != nil && (cost.Date == nil || dateKey(*cost.Date) != dateKey(*constraints.date)) {
 		return false
 	}
-	if constraints.label != "" && cost.Label != constraints.label {
+	if (constraints.label != "" || constraints.labelExact) && cost.Label != constraints.label {
+		return false
+	}
+	if constraints.labelExact && constraints.labelPresent != cost.LabelPresent {
 		return false
 	}
 	return true
@@ -928,7 +1124,7 @@ func orderBookingMatches(matches []Position, booking string) []Position {
 func numberFromDecimal(value Decimal) Number {
 	raw := value.String()
 	rat := value.Rat()
-	return Number{Raw: raw, Rat: rat}
+	return Number{Raw: raw, Rat: rat, DecimalText: value.decimalText}
 }
 
 func costSpecFromCost(cost Cost, original *CostSpec) CostSpec {
@@ -939,11 +1135,14 @@ func costSpecFromCost(cost Cost, original *CostSpec) CostSpec {
 		spec.Components = nil
 	}
 	amount := Amount{Number: numberFromDecimal(cost.Number), Currency: cost.Currency}
+	if text, err := ParseDecimal(cost.DecimalText); err == nil && text.Equal(cost.Number) {
+		amount.Number.DecimalText = cost.DecimalText
+	}
 	spec.Components = append(spec.Components, Value{Kind: ValueAmount, Raw: amount.Number.Raw + " " + amount.Currency, Amount: amount})
 	if cost.Date != nil {
 		spec.Components = append(spec.Components, Value{Kind: ValueDate, Raw: cost.Date.Raw, Date: *cost.Date})
 	}
-	if cost.Label != "" {
+	if cost.Label != "" || cost.LabelPresent {
 		spec.Components = append(spec.Components, Value{Kind: ValueString, Raw: cost.Label, String: cost.Label})
 	}
 	return spec
@@ -954,7 +1153,7 @@ func costSpecFromCost(cost Cost, original *CostSpec) CostSpec {
 // recorded cost; reductions consume matching lots in order without going
 // negative — the booking step has already decided the authoritative
 // matching, so this only tracks quantities.
-func updateWorkingPositions(working map[string][]Position, posting Posting) {
+func updateWorkingPositions(working map[string][]Position, posting Posting, merge ...bool) {
 	if posting.averageRejected {
 		return
 	}
@@ -967,14 +1166,19 @@ func updateWorkingPositions(working map[string][]Position, posting Posting) {
 	}
 	amount := DecimalFromNumber(posting.Units.Number)
 	positions := working[posting.Account]
-	if amount.Sign() > 0 {
-		working[posting.Account] = append(positions, Position{Units: amount, Currency: posting.Units.Currency, Cost: &cost})
+	if amount.Sign() > 0 || (len(merge) > 1 && merge[1]) {
+		added := Position{Units: amount, Currency: posting.Units.Currency, Cost: &cost}
+		if len(merge) > 0 && merge[0] {
+			working[posting.Account] = appendOrMergeLot(positions, added)
+		} else {
+			working[posting.Account] = append(positions, added)
+		}
 		return
 	}
 	remaining := amount.Neg()
 	for index := 0; index < len(positions) && remaining.Sign() > 0; {
 		position := &positions[index]
-		if position.Currency != posting.Units.Currency || position.Cost == nil || !costMatchesPosition(costConstraints{number: &cost.Number, currency: cost.Currency, date: cost.Date, label: cost.Label}, *position.Cost) {
+		if position.Currency != posting.Units.Currency || position.Cost == nil || !costMatchesPosition(costConstraints{number: &cost.Number, currency: cost.Currency, date: cost.Date, label: cost.Label, labelExact: len(merge) > 0 && merge[0], labelPresent: cost.LabelPresent}, *position.Cost) {
 			index++
 			continue
 		}
@@ -998,6 +1202,16 @@ func updateWorkingPositions(working map[string][]Position, posting Posting) {
 // currency; the lot's unit currency remains in account state but is not a
 // second unconvertible balancing leg.
 func (e *evaluator) addContribution(totals map[string]Decimal, posting Posting, amount Decimal, unitsCurrency string) {
+	if e.options.SemanticsProfile == V3 && posting.Cost != nil && completeCost(*posting.Cost) {
+		if cost, ok := normalizeCost(*posting.Cost); ok {
+			value := amount.Mul(cost.Number)
+			if posting.Cost.Total {
+				value = signedTotal(amount, cost.Number)
+			}
+			totals[cost.Currency] = decimalAdd(totals[cost.Currency], value)
+			return
+		}
+	}
 	currency, value, ok := balancingContribution(posting, amount, unitsCurrency)
 	if !ok || currency == "" {
 		currency, value = unitsCurrency, amount
@@ -1023,6 +1237,9 @@ func balancingContribution(posting Posting, amount Decimal, unitsCurrency string
 	if posting.Price != nil && posting.Price.Amount.Currency != "" && posting.Price.Amount.Number.Raw != "" {
 		price := DecimalFromNumber(posting.Price.Amount.Number)
 		if posting.Price.Total {
+			if amount.IsZero() && posting.Price.PerUnit != nil {
+				return posting.Price.Amount.Currency, amount, true
+			}
 			return posting.Price.Amount.Currency, signedTotal(amount, price), true
 		}
 		return posting.Price.Amount.Currency, amount.Mul(price), true
@@ -1157,6 +1374,9 @@ func PostingWeight(posting Posting) Decimal {
 	if posting.Price != nil && posting.Price.Amount.Currency != "" {
 		total := DecimalFromNumber(posting.Price.Amount.Number)
 		if posting.Price.Total {
+			if units.IsZero() && posting.Price.PerUnit != nil {
+				return units
+			}
 			if units.Rat().Sign() < 0 {
 				return NewDecimal(new(big.Rat).Neg(total.Rat()))
 			}
@@ -1171,11 +1391,16 @@ func PostingWeight(posting Posting) Decimal {
 // append a lot; reductions consume matching lots and report E-EVAL-INVENTORY
 // when the inventory cannot cover the full amount.
 func (e *evaluator) applyInventory(date Date, posting Posting, account *accountWork, amount Decimal, currency string, cost Cost) {
-	if amount.Sign() >= 0 {
-		account.state.Positions = append(account.state.Positions, Position{Units: amount, Currency: currency, Cost: &cost, Span: posting.Span()})
+	if amount.Sign() >= 0 || (e.options.SemanticsProfile == V3 && account.state.Booking == "NONE") {
+		added := Position{Units: amount, Currency: currency, Cost: &cost, Span: posting.Span()}
+		if e.options.SemanticsProfile == V3 {
+			account.state.Positions = appendOrMergeLot(account.state.Positions, added)
+		} else {
+			account.state.Positions = append(account.state.Positions, added)
+		}
 		return
 	}
-	remaining := consumePositions(&account.state.Positions, amount.Neg(), currency, costConstraints{number: &cost.Number, currency: cost.Currency, date: cost.Date, label: cost.Label})
+	remaining := consumePositions(&account.state.Positions, amount.Neg(), currency, costConstraints{number: &cost.Number, currency: cost.Currency, date: cost.Date, label: cost.Label, labelExact: e.options.SemanticsProfile == V3, labelPresent: cost.LabelPresent})
 	if remaining.Sign() > 0 {
 		e.add("E-EVAL-INVENTORY", diagnostic.Error, posting.Span(), e.pathFor(posting.Span()))
 	}
@@ -1225,6 +1450,18 @@ func (e *evaluator) balance(d Balance) {
 		}
 	}
 	tolerance := e.options.DefaultTolerance
+	if e.options.SemanticsProfile == V3 {
+		tolerance = decimalQuantum(d.Amount.Number).Mul(e.toleranceMultiplier).Mul(NewDecimal(big.NewRat(2, 1)))
+		if d.Tolerance != nil {
+			tolerance = DecimalFromNumber(*d.Tolerance)
+		}
+		if tolerance.Sign() < 0 {
+			e.add("E-EVAL-TOLERANCE", diagnostic.Error, d.Span(), e.pathFor(d.Span()))
+			return
+		}
+		e.pending = append(e.pending, pendingBalance{account: d.Account, currency: currency, date: d.Date, expected: DecimalFromNumber(d.Amount.Number), tolerance: tolerance, span: d.Span(), path: e.pathFor(d.Span())})
+		return
+	}
 	if d.Tolerance != nil {
 		tolerance = DecimalFromNumber(*d.Tolerance)
 		if tolerance.Sign() < 0 {
@@ -1282,9 +1519,15 @@ func (e *evaluator) applyPad(balance Balance, pad Pad, target *accountWork) {
 		Flag:          "P",
 		Narration:     narration,
 		Postings: []Posting{
-			{Account: balance.Account, Units: &Amount{Number: diffAmt, Currency: currency, At: pad.Span()}, At: pad.Span()},
-			{Account: pad.SourceAccount, Units: &Amount{Number: negDiffAmt, Currency: currency, At: pad.Span()}, At: pad.Span()},
+			{Account: balance.Account, Units: &Amount{Number: diffAmt, Currency: currency, At: pad.Span()}, At: pad.Span(), SourceMetadata: PostingSourceMetadata{Present: true, File: e.pathFor(balance.Span()), Line: balance.Span().StartLine}},
+			{Account: pad.SourceAccount, Units: &Amount{Number: negDiffAmt, Currency: currency, At: pad.Span()}, At: pad.Span(), SourceMetadata: PostingSourceMetadata{Present: true, File: e.pathFor(balance.Span()), Line: balance.Span().StartLine}},
 		},
+	}
+	if e.options.SemanticsProfile == V3 {
+		syntheticTx.Meta = append([]Metadata(nil), pad.Meta...)
+		for i := range syntheticTx.Postings {
+			syntheticTx.Postings[i].Meta = append([]Metadata(nil), balance.Meta...)
+		}
 	}
 	syntheticRec := EntryRecord{
 		Span:      pad.Span(),
@@ -1390,6 +1633,10 @@ func normalizeCost(spec CostSpec) (Cost, bool) {
 			if cost.Currency == "" {
 				cost.Number = DecimalFromNumber(value.Amount.Number)
 				cost.Currency = value.Amount.Currency
+				cost.DecimalText = value.Amount.Number.DecimalText
+				if cost.DecimalText == "" {
+					cost.DecimalText = value.Amount.Number.Raw
+				}
 			}
 		case ValueCurrency:
 			if cost.Currency == "" {
@@ -1399,8 +1646,9 @@ func normalizeCost(spec CostSpec) (Cost, bool) {
 			date := value.Date
 			cost.Date = &date
 		case ValueString:
-			if cost.Label == "" {
+			if !cost.LabelPresent {
 				cost.Label = value.String
+				cost.LabelPresent = true
 			}
 		}
 	}

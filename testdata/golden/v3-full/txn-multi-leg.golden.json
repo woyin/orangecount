@@ -1,0 +1,45 @@
+{
+  "errors": [],
+  "fixture": "txn-multi-leg.bean",
+  "oracle_engine": "beancount-python-3.2.3",
+  "schema_version": 2,
+  "state": {
+    "balances": {
+      "Assets:Bank": {
+        "currencies": {
+          "USD": "-30"
+        },
+        "lots": []
+      },
+      "Assets:Cash": {
+        "currencies": {
+          "USD": "10"
+        },
+        "lots": []
+      },
+      "Equity:Opening": {
+        "currencies": {
+          "USD": "-20"
+        },
+        "lots": []
+      },
+      "Expenses:Food": {
+        "currencies": {
+          "USD": "40"
+        },
+        "lots": []
+      }
+    },
+    "entries": [
+      "{\"account\":\"Assets:Bank\",\"amount\":\"-30 USD\",\"date\":\"2000-01-04\",\"kind\":\"balance\",\"metadata\":{},\"source\":{\"file\":\"txn-multi-leg.bean\",\"line\":14},\"tolerance\":null}",
+      "{\"account\":\"Assets:Bank\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"txn-multi-leg.bean\",\"line\":3}}",
+      "{\"account\":\"Assets:Cash\",\"amount\":\"10 USD\",\"date\":\"2000-01-04\",\"kind\":\"balance\",\"metadata\":{},\"source\":{\"file\":\"txn-multi-leg.bean\",\"line\":13},\"tolerance\":null}",
+      "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"txn-multi-leg.bean\",\"line\":2}}",
+      "{\"account\":\"Equity:Opening\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"txn-multi-leg.bean\",\"line\":5}}",
+      "{\"account\":\"Expenses:Food\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2000-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"txn-multi-leg.bean\",\"line\":4}}",
+      "{\"date\":\"2000-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"split across accounts\",\"payee\":\"grocery\",\"postings\":[{\"account\":\"Expenses:Food\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"40\"}},{\"account\":\"Assets:Bank\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-30\"}},{\"account\":\"Equity:Opening\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-10\"}}],\"source\":{\"file\":\"txn-multi-leg.bean\",\"line\":6},\"tags\":[]}",
+      "{\"date\":\"2000-01-03\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"two legs with elided last\",\"payee\":\"cash\",\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"10\"}},{\"account\":\"Equity:Opening\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-10\"}}],\"source\":{\"file\":\"txn-multi-leg.bean\",\"line\":10},\"tags\":[]}"
+    ]
+  },
+  "valid": true
+}
