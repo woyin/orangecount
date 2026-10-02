@@ -1,0 +1,27 @@
+{
+  "row_unit": "account",
+  "page_unit": "account",
+  "columns": [
+    {
+      "id": "account",
+      "name": "account",
+      "type": "string",
+      "nullable": false,
+      "fields": null
+    },
+    {
+      "id": "valued_portion",
+      "name": "valued_portion",
+      "type": "decimal",
+      "nullable": true,
+      "fields": null
+    },
+    {
+      "id": "complete_total",
+      "name": "complete_total",
+      "type": "decimal",
+      "nullable": true,
+      "fields": null
+    }
+  ]
+}

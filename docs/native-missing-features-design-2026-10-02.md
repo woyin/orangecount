@@ -213,3 +213,16 @@ Python plugin声明和外部工具依赖可能改变账本含义；未纳入声�
 | AVERAGE账本请求源导出 | 写前明确拒绝；查询/报表分析文件仍可保存exact扩展值 |
 
 发布风险按实际证据记录。设计存在不等于功能完成，Passing自动化不等于GUI已验，开发包不等于正式发行。
+
+## F01 实施修订：嵌套集合与投影上下文
+
+本节记录本轮实现对第3节拟议格式的具体化；查询v1不变。
+
+- 报表v2增加 `list<record>`：schema.fields是每个元素固定record的字段；cell.value是由位置typed cells数组组成的数组。声明、历史、批次和归约贡献列表保持原顺序。仍受record深度8、每个列表10000项及文件预算约束，不支持任意Python对象。
+- context必填 `valuation_details`，按稳定记录键保存完整ValuationStatus（包括缺价与使用的报价），避免仅保存行上的计数而丢失原因。可选 `supplement` 包含columns/cells，用于当前价格选择、批次所属组和归约事件等非主列表信息；由同一typed schema校验，零行也保留。
+- 树报表与趋势保留平面列；账户概览、商品/价格、持仓组/事件使用根据已声明Go DTO类型生成的record列。不是根据第一行推断；浮点坐标和绝对路径在Adapter排除，exact、nullable、嵌套page完整保留。持仓选定组的历史导出主行是point，lots主行是lot，所属信息在supplement；未选择组的历史主行是series，含其points_page。
+- 交易日记账按posting展平，原posting信息用record列；units_number转为PresentedDecimal，交易ID/index/date/tag/link独立列。账户概览导出包含已交付history，账户关联流水通过日记账交易入口另存，不把两种捕获范围混成一份完整流水。
+- compound/record CSV的规范JSON按声明类型字段顺序输出；Decimal字段顺序为display/exact/approximate，record/set/list用已声明位置/集合次序。JSON对象输入字段顺序不决定读取后输出。公开样例在testdata/fixtures/analysis-v2。
+- 原生协议升级3；菜单明确区分完整投影与当前页，面板显示捕获期间、会计语义、记录数和估值状态。源/附件保护仍在最终保存前刷新。
+
+报表捕获增加独立capture_id与OC_CancelReportExport控制；序列化遍历/实际输出检查Go Context，原生取消不排队在捕获后。提前取消记录有32项上限，活跃捕获最多16，关闭取消活跃工作。接口调用的尝试身份与可重复使用的projection_id分开。

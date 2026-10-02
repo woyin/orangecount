@@ -1,0 +1,2 @@
+# Analysis CSV fixtures intentionally preserve RFC CSV CRLF bytes.
+testdata/fixtures/analysis-v2/**/data.csv -text whitespace=cr-at-eol

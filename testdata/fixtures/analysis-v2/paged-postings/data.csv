@@ -1,0 +1,4 @@
+transaction_id,posting_index,units
+public-tx-2,0,"{""number"":{""display"":""2"",""exact"":""2"",""approximate"":false},""currency"":""USD""}"
+public-tx-2,1,"{""number"":{""display"":""3"",""exact"":""3"",""approximate"":false},""currency"":""USD""}"
+public-tx-2,2,"{""number"":{""display"":""-5"",""exact"":""-5"",""approximate"":false},""currency"":""USD""}"

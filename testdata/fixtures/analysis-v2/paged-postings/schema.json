@@ -1,0 +1,27 @@
+{
+  "row_unit": "posting",
+  "page_unit": "transaction",
+  "columns": [
+    {
+      "id": "transaction_id",
+      "name": "transaction_id",
+      "type": "string",
+      "nullable": false,
+      "fields": null
+    },
+    {
+      "id": "posting_index",
+      "name": "posting_index",
+      "type": "integer",
+      "nullable": false,
+      "fields": null
+    },
+    {
+      "id": "units",
+      "name": "units",
+      "type": "amount",
+      "nullable": false,
+      "fields": null
+    }
+  ]
+}

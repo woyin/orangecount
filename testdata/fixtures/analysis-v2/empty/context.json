@@ -1,0 +1,22 @@
+{
+  "format_version": 2,
+  "producer": "OrangeCount",
+  "contract": "native-report-analysis-v1",
+  "view": "income_statement",
+  "section": "tree",
+  "snapshot_id": "public-sample",
+  "projection_id": "public-empty",
+  "semantics_profile": "v3",
+  "evaluation_revision": "v3-core-3",
+  "normalized_request": {
+    "date_to": "2024-01-31"
+  },
+  "capture_scope": "complete-projection",
+  "returned_rows": 0,
+  "source_record_count": 0,
+  "truncated": false,
+  "completeness": "empty",
+  "page": null,
+  "valuation_status": null,
+  "valuation_details": {}
+}

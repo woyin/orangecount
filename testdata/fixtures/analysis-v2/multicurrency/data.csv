@@ -1,0 +1,2 @@
+account,inventory
+Assets:Cash,"[{""units"":{""number"":{""display"":""0.333333"",""exact"":""1/3"",""approximate"":true},""currency"":""USD""},""cost"":null},{""units"":{""number"":{""display"":""2"",""exact"":""2"",""approximate"":false},""currency"":""EUR""},""cost"":{""number"":{""display"":""0"",""exact"":""0"",""approximate"":false},""currency"":""USD"",""date"":null,""label"":""""}}]"

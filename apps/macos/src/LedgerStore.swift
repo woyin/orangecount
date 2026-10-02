@@ -76,6 +76,10 @@ protocol LedgerQueryExportClient: Sendable {
     func captureQueryExport(handle: UInt64, request: QueryExportRequest) async throws -> QueryExportCapture
 }
 
+protocol LedgerReportExportClient: Sendable {
+    func captureReportExport(handle: UInt64, request: ReportExportRequest) async throws -> ReportExportCapture
+}
+
 protocol LedgerExportProtectionClient: Sendable {
     func exportProtection(handle: UInt64) async throws -> ExportProtection
 }
@@ -96,7 +100,7 @@ struct PreparedQueryExport: Sendable {
 // on entry, so superseded queued reads never start. A synchronous C call that
 // already began may finish; LedgerStore still checks generation before publish.
 // Queries additionally use Go budget checkpoints and an independent cancel path.
-actor NativeLedgerClient: LedgerSessionClient, LedgerQueryClient, LedgerQueryExportClient, LedgerExportProtectionClient {
+actor NativeLedgerClient: LedgerSessionClient, LedgerQueryClient, LedgerQueryExportClient, LedgerExportProtectionClient, LedgerReportExportClient {
     func open(path: String, semantics: String, inputIdentity: String) async throws -> OpenLedgerResult {
         try Task.checkCancellation()
         return try BridgeClient.shared.openLedger(path: Self.resolveEntry(path), semantics: semantics, inputIdentity: inputIdentity)
@@ -131,6 +135,22 @@ actor NativeLedgerClient: LedgerSessionClient, LedgerQueryClient, LedgerQueryExp
         let capture = try BridgeClient.shared.captureQueryExport(handle: handle, request: request)
         try Task.checkCancellation()
         return capture
+    }
+
+    func captureReportExport(handle: UInt64, request: ReportExportRequest) async throws -> ReportExportCapture {
+        try Task.checkCancellation()
+        return try await withTaskCancellationHandler {
+            do {
+                let capture = try BridgeClient.shared.captureReportExport(handle: handle, request: request)
+                try Task.checkCancellation()
+                return capture
+            } catch {
+                if Task.isCancelled { throw CancellationError() }
+                throw error
+            }
+        } onCancel: {
+            try? BridgeClient.shared.cancelReportExport(handle: handle, captureID: request.capture_id)
+        }
     }
 
     func exportProtection(handle: UInt64) async throws -> ExportProtection {
@@ -303,6 +323,31 @@ final class LedgerStore: ObservableObject {
         }
     }
 
+    var reportExportIdentity: ReportExportIdentity? {
+        guard let view = visibleView, view.state.snapshot_id == state?.snapshot_id else { return nil }
+        return view.report_export
+    }
+
+    func prepareReportExport(format: String) async throws -> PreparedReportExport {
+        guard format == "analysis" || format == "csv" else { throw QueryExportError.invalidFormat }
+        guard let identity = reportExportIdentity, let handle,
+              let exportClient = client as? any LedgerReportExportClient else { throw QueryExportError.unavailable }
+        let expectedGeneration = generation
+        let capture = try await exportClient.captureReportExport(handle: handle,
+            request: ReportExportRequest(projection_id: identity.projection_id, snapshot_id: identity.snapshot_id,
+                format: format, capture_scope: identity.capture_scope))
+        try Task.checkCancellation()
+        guard generation == expectedGeneration, self.handle == handle,
+              reportExportIdentity == identity, capture.identity == identity else { throw QueryExportError.changedExecution }
+        let file = try AnalysisFileExport(content: capture.content, protectedPaths: capture.protected_paths)
+        return PreparedReportExport(identity: identity, format: format, file: file,
+            generation: expectedGeneration, handle: handle)
+    }
+
+    func saveReportExport(_ prepared: PreparedReportExport, to target: URL) async throws {
+        try await saveCapturedFile(prepared.file, generation: prepared.generation, handle: prepared.handle, to: target)
+    }
+
     var queryDraftChanged: Bool {
         queryResponse.map { $0.context.text != queryDraft } ?? false
     }
@@ -359,20 +404,21 @@ final class LedgerStore: ObservableObject {
     }
 
     func saveQueryExport(_ prepared: PreparedQueryExport, to target: URL) async throws {
-        guard generation == prepared.generation, handle == prepared.handle else { throw QueryExportError.changedExecution }
+        try await saveCapturedFile(prepared.file, generation: prepared.generation, handle: prepared.handle, to: target)
+    }
+
+    private func saveCapturedFile(_ capturedFile: AnalysisFileExport, generation expectedGeneration: UInt64,
+                                  handle expectedHandle: UInt64, to target: URL) async throws {
+        guard generation == expectedGeneration, handle == expectedHandle else { throw QueryExportError.changedExecution }
         let protection = try await refreshExportProtection()
         try Task.checkCancellation()
-        guard generation == prepared.generation, handle == prepared.handle else { throw QueryExportError.changedExecution }
-        let file = try prepared.file.addingProtectedPaths(protection.protected_paths)
+        guard generation == expectedGeneration, handle == expectedHandle else { throw QueryExportError.changedExecution }
+        let file = try capturedFile.addingProtectedPaths(protection.protected_paths)
         let writer = Task.detached { try file.save(to: target) }
         let writerID = UUID()
         exportWriters[writerID] = writer
         defer { exportWriters.removeValue(forKey: writerID) }
-        try await withTaskCancellationHandler {
-            try await writer.value
-        } onCancel: {
-            writer.cancel()
-        }
+        try await withTaskCancellationHandler { try await writer.value } onCancel: { writer.cancel() }
     }
 
     @discardableResult
@@ -931,4 +977,12 @@ final class LedgerStore: ObservableObject {
         if state.valid { return .ready }
         return state.has_snapshot ? .stale : .invalid
     }
+}
+
+struct PreparedReportExport: Sendable {
+    let identity: ReportExportIdentity
+    let format: String
+    fileprivate let file: AnalysisFileExport
+    fileprivate let generation: UInt64
+    fileprivate let handle: UInt64
 }

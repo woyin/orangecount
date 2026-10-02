@@ -13,6 +13,66 @@ func expect(_ condition: @autoclosure () -> Bool, _ message: String) throws {
 
 @main
 struct ContractTests {
+    static func verifyReportExports() throws {
+        let root = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: root) }
+        let path = root.appendingPathComponent("main.bean")
+        try "2024-01-01 open Assets:Cash USD\n2024-01-01 open Equity:Opening USD\n2024-01-02 * \"public\"\n  Assets:Cash  12.34 USD\n  Equity:Opening\n".write(to: path, atomically: true, encoding: .utf8)
+        let client = BridgeClient.shared
+        let opened = try client.openLedger(path: path.path, semantics: "v3")
+        defer { try? client.closeLedger(handle: opened.handle) }
+        let view = try client.readView(handle: opened.handle, request: ViewRequest(view: "balance_sheet", currency: "USD"))
+        guard let identity = view.report_export else { throw TestFailure(description: "Missing report identity") }
+        let request = ReportExportRequest(projection_id: identity.projection_id, snapshot_id: identity.snapshot_id, format: "csv", capture_scope: identity.capture_scope)
+        var cancelledRequest = request
+        cancelledRequest.capture_id = UUID().uuidString
+        try client.cancelReportExport(handle: opened.handle, captureID: cancelledRequest.capture_id)
+        do {
+            _ = try client.captureReportExport(handle: opened.handle, request: cancelledRequest)
+            throw TestFailure(description: "Cancelled report capture succeeded")
+        } catch BridgeError.remote(let code, _) {
+            try expect(code == "cancelled", "Report cancellation crosses real control ABI")
+        }
+        let csv = try client.captureReportExport(handle: opened.handle, request: request)
+        try expect(csv.identity == identity && String(decoding: csv.content, as: UTF8.self).contains("12.34"), "Report exact values and identity cross real ABI")
+        let archive = try client.captureReportExport(handle: opened.handle, request: ReportExportRequest(projection_id: identity.projection_id, snapshot_id: identity.snapshot_id, format: "analysis", capture_scope: identity.capture_scope))
+        try expect(archive.content.starts(with: [0x50,0x4b]), "Report analysis is an actual ZIP")
+        let destination = root.appendingPathComponent("report.ocanalysis")
+        try AnalysisFileExport(content: archive.content, protectedPaths: archive.protected_paths).save(to: destination)
+        let saved = try Data(contentsOf: destination)
+        try expect(saved == archive.content, "Native save retains report bytes")
+        do {
+            _ = try client.captureReportExport(handle: opened.handle, request: ReportExportRequest(projection_id: "expired", snapshot_id: identity.snapshot_id, format: "csv", capture_scope: identity.capture_scope))
+            throw TestFailure(description: "Unknown report identity accepted")
+        } catch BridgeError.remote(let code, _) {
+            try expect(code == "expired-capture", "Expired capture has typed error")
+        }
+        print("PASS: report capture identity, exact CSV, ZIP and native save cross real Swift/C")
+    }
+
+    static func verifyReportSections(root: String) throws {
+        let cases: [(String, ViewRequest)] = [
+            ("cashflow.bean", ViewRequest(view: "income_statement")),
+            ("history.bean", ViewRequest(view: "dashboard")),
+            ("cashflow.bean", ViewRequest(view: "journal")),
+            ("account-detail.bean", ViewRequest(view: "account", account: "Assets:Test")),
+            ("prices.bean", ViewRequest(view: "prices")),
+            ("holdings-trades.bean", ViewRequest(view: "holdings"))
+        ]
+        for (file, request) in cases {
+            let opened = try BridgeClient.shared.openLedger(path: root + "/testdata/fixtures/native/" + file, semantics: "v3")
+            defer { try? BridgeClient.shared.closeLedger(handle: opened.handle) }
+            let view = try BridgeClient.shared.readView(handle: opened.handle, request: request)
+            guard let identity = view.report_export else { throw TestFailure(description: "Missing report section " + request.view) }
+            let capture = try BridgeClient.shared.captureReportExport(handle: opened.handle,
+                request: ReportExportRequest(projection_id: identity.projection_id, snapshot_id: identity.snapshot_id,
+                    format: "analysis", capture_scope: identity.capture_scope))
+            try expect(capture.identity == identity && capture.content.starts(with: [0x50,0x4b]), "Report section capture must cross actual ABI")
+        }
+        print("PASS: statement, trends, posting pages, account, prices and holdings captures cross real Swift/C")
+    }
+
     static func main() {
         do { try run() }
         catch {
@@ -29,10 +89,11 @@ struct ContractTests {
         } catch BridgeError.protocolMismatch(let version) {
             try expect(version == 999, "Protocol mismatch must retain the received version")
         }
+        try verifyReportExports()
         print("PASS: protocol mismatch is distinguishable from malformed ledger data")
         for raw in [
-            #"{"protocol_version":2,"data":{"mode":"converted","target_currency":"USD","as_of":"2000-01-02","completeness":"partial","covered_item_count":1,"missing_item_count":1,"missing":[{"commodity":"EUR","reason":"missing-local-quote"}],"quotes":[],"valued_portion":{"exact":"100","display":"100","approximate":false}}}"#,
-            #"{"protocol_version":2,"data":{"mode":"converted","target_currency":"USD","as_of":"2000-01-02","completeness":"partial","covered_item_count":1,"missing_item_count":1,"missing":[{"commodity":"EUR","reason":"missing-local-quote"}],"quotes":[],"valued_portion":{"exact":"100","display":"100","approximate":false},"complete_total":{"exact":"100","display":"100","approximate":false}}}"#
+            #"{"protocol_version":3,"data":{"mode":"converted","target_currency":"USD","as_of":"2000-01-02","completeness":"partial","covered_item_count":1,"missing_item_count":1,"missing":[{"commodity":"EUR","reason":"missing-local-quote"}],"quotes":[],"valued_portion":{"exact":"100","display":"100","approximate":false}}}"#,
+            #"{"protocol_version":3,"data":{"mode":"converted","target_currency":"USD","as_of":"2000-01-02","completeness":"partial","covered_item_count":1,"missing_item_count":1,"missing":[{"commodity":"EUR","reason":"missing-local-quote"}],"quotes":[],"valued_portion":{"exact":"100","display":"100","approximate":false},"complete_total":{"exact":"100","display":"100","approximate":false}}}"#
         ] {
             do {
                 let _: AccountValuation = try BridgeClient.decodeResponse(Data(raw.utf8), as: AccountValuation.self)
@@ -42,6 +103,7 @@ struct ContractTests {
         print("PASS: required nullable fields and valuation invariants reject malformed payloads")
 
         let root = CommandLine.arguments[1]
+        try verifyReportSections(root: root)
         let bridge = BridgeClient.shared
         let priceSession = try bridge.openLedger(path: root + "/testdata/fixtures/native/prices.bean", semantics: "v3")
         defer { try? bridge.closeLedger(handle: priceSession.handle) }
@@ -84,7 +146,7 @@ struct ContractTests {
             default:
                 var page = damaged["records_page"] as! [String: Any]; page["returned_count"] = 2; damaged["records_page"] = page
             }
-            let envelope = try JSONSerialization.data(withJSONObject: ["protocol_version": 2, "data": damaged])
+            let envelope = try JSONSerialization.data(withJSONObject: ["protocol_version": 3, "data": damaged])
             do {
                 let _: PricesPayload = try BridgeClient.decodeResponse(envelope, as: PricesPayload.self)
                 throw TestFailure(description: "Malformed price contract accepted mutation \(mutation)")
@@ -110,7 +172,7 @@ struct ContractTests {
             if mutation == 1 { groups[0]["inventory_kind"] = "unsupported-kind" }
             if mutation == 2 { groups[0]["cost_currency"] = NSNull() }
             broken["groups"] = groups
-            let envelope = try JSONSerialization.data(withJSONObject: ["protocol_version": 2, "data": broken])
+            let envelope = try JSONSerialization.data(withJSONObject: ["protocol_version": 3, "data": broken])
             do {
                 let _: HoldingsPayload = try BridgeClient.decodeResponse(envelope, as: HoldingsPayload.self)
                 throw TestFailure(description: "Required nullable keys, inventory kind and cost invariants must reject malformed holdings")
@@ -407,7 +469,7 @@ struct ContractTests {
                 }
                 result["columns"] = columns; result["rows"] = rows; data["result"] = result; altered["execution"] = data
             }
-            let raw: [String: Any] = ["protocol_version": 2, "data": altered]
+            let raw: [String: Any] = ["protocol_version": 3, "data": altered]
             do {
                 let _: QueryResponse = try BridgeClient.decodeResponse(JSONSerialization.data(withJSONObject: raw), as: QueryResponse.self)
                 throw TestFailure(description: "Malformed query \(fault) accepted")
@@ -430,7 +492,7 @@ struct ContractTests {
         malformed = try JSONSerialization.jsonObject(with: JSONEncoder().encode(failed)) as! [String: Any]
         var failure = malformed["error"] as! [String: Any]; failure.removeValue(forKey: "range"); malformed["error"] = failure
         do {
-            let _: QueryResponse = try BridgeClient.decodeResponse(JSONSerialization.data(withJSONObject: ["protocol_version": 2, "data": malformed]), as: QueryResponse.self)
+            let _: QueryResponse = try BridgeClient.decodeResponse(JSONSerialization.data(withJSONObject: ["protocol_version": 3, "data": malformed]), as: QueryResponse.self)
             throw TestFailure(description: "Missing nullable query error range accepted")
         } catch BridgeError.jsonDecodeError { }
         let unicodeText = "SELECT '💰 unknown_fn', unknown_fn(number) LIMIT 0"
@@ -441,7 +503,7 @@ struct ContractTests {
         unicodeFailure["range"] = ["start_byte": 9, "end_byte": 12]
         unicodeRaw["error"] = unicodeFailure
         do {
-            let _: QueryResponse = try BridgeClient.decodeResponse(JSONSerialization.data(withJSONObject: ["protocol_version": 2, "data": unicodeRaw]), as: QueryResponse.self)
+            let _: QueryResponse = try BridgeClient.decodeResponse(JSONSerialization.data(withJSONObject: ["protocol_version": 3, "data": unicodeRaw]), as: QueryResponse.self)
             throw TestFailure(description: "Error range splitting UTF-8 code point accepted")
         } catch BridgeError.jsonDecodeError { }
         try bridge.cancelQuery(handle: session.handle, requestID: 4)

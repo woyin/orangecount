@@ -13,7 +13,7 @@ cd "$REPO_ROOT"
 cp apps/macos/src/Bridge.h apps/macos/src/module.modulemap "$BUILD_DIR/"
 "$OC_SWIFT" -O -parse-as-library -swift-version 6 -target "$OC_TARGET" -sdk "$SDKROOT" -I "$BUILD_DIR" -L "$BUILD_DIR" -lorangecount \
     apps/macos/src/Models.swift apps/macos/src/BridgeClient.swift \
-    apps/macos/tests/ContractTests.swift -o "$BUILD_DIR/ContractTests"
+    apps/macos/src/AnalysisFileExport.swift apps/macos/tests/ContractTests.swift -o "$BUILD_DIR/ContractTests"
 "$BUILD_DIR/ContractTests" "$REPO_ROOT"
 "$OC_SWIFT" -O -parse-as-library -swift-version 6 -target "$OC_TARGET" -sdk "$SDKROOT" -I "$BUILD_DIR" -L "$BUILD_DIR" -lorangecount \
     apps/macos/src/Models.swift apps/macos/src/BridgeClient.swift \

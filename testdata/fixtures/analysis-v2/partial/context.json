@@ -1,0 +1,36 @@
+{
+  "format_version": 2,
+  "producer": "OrangeCount",
+  "contract": "native-report-analysis-v1",
+  "view": "balance_sheet",
+  "section": "tree",
+  "snapshot_id": "public-sample",
+  "projection_id": "public-partial",
+  "semantics_profile": "v3",
+  "evaluation_revision": "v3-core-3",
+  "normalized_request": {
+    "date_to": "2024-01-31"
+  },
+  "capture_scope": "complete-projection",
+  "returned_rows": 1,
+  "source_record_count": 1,
+  "truncated": false,
+  "completeness": "partial",
+  "page": null,
+  "valuation_status": {
+    "mode": "converted",
+    "target_currency": "USD",
+    "as_of": "2024-01-31",
+    "completeness": "partial",
+    "covered_item_count": 1,
+    "missing_item_count": 1,
+    "missing": [
+      {
+        "commodity": "EUR",
+        "reason": "missing-local-quote"
+      }
+    ],
+    "quotes": []
+  },
+  "valuation_details": {}
+}

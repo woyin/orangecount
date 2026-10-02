@@ -13,12 +13,13 @@ import (
 	"errors"
 	"sync"
 
+	"orangecount/internal/analysis"
 	"orangecount/internal/desktop"
 	"orangecount/internal/query"
 	"orangecount/internal/report"
 )
 
-const protocolVersion = 2
+const protocolVersion = 3
 
 var sessions = struct {
 	sync.Mutex
@@ -43,6 +44,12 @@ func sessionResponse(data any, err error) *C.char {
 		var typed query.TypedError
 		code, message := "internal", "Unable to complete the ledger request"
 		switch {
+		case errors.Is(err, context.Canceled):
+			code, message = "cancelled", "Report capture cancelled"
+		case errors.Is(err, desktop.ErrExpiredCapture):
+			code, message = "expired-capture", err.Error()
+		case errors.Is(err, analysis.ErrBudget):
+			code, message = "result-budget-exceeded", err.Error()
 		case errors.Is(err, desktop.ErrClosed):
 			code, message = "session-closed", err.Error()
 		case errors.Is(err, desktop.ErrRequest):
@@ -64,7 +71,7 @@ func sessionResponse(data any, err error) *C.char {
 	}
 	encoded, encodeErr := json.Marshal(response)
 	if encodeErr != nil {
-		encoded = []byte(`{"protocol_version":2,"error":{"code":"encoding","message":"Unable to encode ledger response"}}`)
+		encoded = []byte(`{"protocol_version":3,"error":{"code":"encoding","message":"Unable to encode ledger response"}}`)
 	}
 	return C.CString(string(encoded))
 }
@@ -235,4 +242,35 @@ func OC_CloseLedger(handle C.ulonglong) *C.char {
 	return sessionResponse(struct {
 		Closed bool `json:"closed"`
 	}{true}, nil)
+}
+
+//export OC_CaptureReportExport
+func OC_CaptureReportExport(handle C.ulonglong, requestJSON *C.char) *C.char {
+	session, err := sessionFor(uint64(handle))
+	if err != nil {
+		return sessionResponse(nil, err)
+	}
+	if requestJSON == nil {
+		return sessionResponse(nil, desktop.ErrRequest)
+	}
+	var request desktop.ReportExportRequest
+	if err := json.Unmarshal([]byte(C.GoString(requestJSON)), &request); err != nil {
+		return sessionResponse(nil, desktop.ErrRequest)
+	}
+	result, err := session.CaptureReportExport(request)
+	return sessionResponse(result, err)
+}
+
+//export OC_CancelReportExport
+func OC_CancelReportExport(handle C.ulonglong, captureID *C.char) *C.char {
+	session, err := sessionFor(uint64(handle))
+	if err != nil {
+		return sessionResponse(nil, err)
+	}
+	if captureID == nil {
+		return sessionResponse(nil, desktop.ErrRequest)
+	}
+	return sessionResponse(struct {
+		Cancelled bool `json:"cancelled"`
+	}{true}, session.CancelReportExport(C.GoString(captureID)))
 }

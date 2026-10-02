@@ -16,6 +16,35 @@ struct NativeClientTests {
         throw NativeClientFailure(message: "Timed out: \(description)")
     }
 
+    @MainActor static func verifyReportSave(root: String) async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let entry = directory.appendingPathComponent("main.bean")
+        let text = try String(contentsOfFile: root + "/testdata/fixtures/native/cashflow.bean", encoding: .utf8)
+        try text.write(to: entry, atomically: true, encoding: .utf8)
+        let store = LedgerStore(preferences: nil, pollNanoseconds: 10_000_000)
+        defer { store.close() }
+        store.start(path: entry.path, restoreRecent: false)
+        try await waitUntil("report capture ready") { store.phase == .ready && store.reportExportIdentity != nil }
+        let prepared = try await store.prepareReportExport(format: "analysis")
+        let first = directory.appendingPathComponent("before.ocanalysis")
+        try await store.saveReportExport(prepared, to: first)
+        let expected = try Data(contentsOf: first)
+        let oldSnapshot = store.state?.snapshot_id
+        try (text + "\n; public report reload\n").write(to: entry, atomically: true, encoding: .utf8)
+        try await waitUntil("report source reloaded") { store.phase == .ready && store.state?.snapshot_id != oldSnapshot }
+        let second = directory.appendingPathComponent("after.ocanalysis")
+        try await store.saveReportExport(prepared, to: second)
+        guard try Data(contentsOf: second) == expected else { throw NativeClientFailure(message: "Reload changed frozen report bytes") }
+        do { try await store.saveReportExport(prepared, to: entry); throw NativeClientFailure(message: "Report overwrote ledger") }
+        catch AnalysisFileExportError.protectedTarget { }
+        store.close()
+        do { try await store.saveReportExport(prepared, to: second); throw NativeClientFailure(message: "Closed store saved late report") }
+        catch QueryExportError.changedExecution { }
+        print("PASS: real report preparation/save freezes bytes across reload and protects sources/closed windows")
+    }
+
     @MainActor static func verifyStoreRecovery(root: String) async throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent("orangecount-store-\(UUID().uuidString)")
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -80,6 +109,7 @@ struct NativeClientTests {
             try await verifySavedQueries(root: root)
             try await verifyQueryPresets(root: root)
             try await verifyDirectiveNavigation(root: root)
+            try await verifyReportSave(root: root)
             try await verifyStoreRecovery(root: root)
             try await verifyHoldingNavigation(root: root)
             try await verifyPriceNavigation(root: root)

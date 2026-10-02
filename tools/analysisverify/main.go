@@ -7,6 +7,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"orangecount/internal/analysis"
 	"orangecount/internal/desktop"
 	"os"
 )
@@ -27,7 +28,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, "cannot inspect analysis")
 		os.Exit(1)
 	}
-	document, err := desktop.ReadQueryAnalysis(file, info.Size())
+	version, err := analysis.Version(file, info.Size())
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
@@ -38,7 +39,23 @@ func main() {
 		Rows      int    `json:"rows"`
 		Columns   int    `json:"columns"`
 		Truncated bool   `json:"truncated"`
-	}{document.Context.FormatVersion, document.Context.View, len(document.Result.Rows), len(document.Result.Columns), document.Context.Truncated}
+	}{}
+	switch version {
+	case 1:
+		document, readErr := desktop.ReadQueryAnalysis(file, info.Size())
+		err = readErr
+		summary.Version, summary.View, summary.Rows, summary.Columns, summary.Truncated = document.Context.FormatVersion, document.Context.View, len(document.Result.Rows), len(document.Result.Columns), document.Context.Truncated
+	case 2:
+		document, readErr := analysis.ReadReport(file, info.Size())
+		err = readErr
+		summary.Version, summary.View, summary.Rows, summary.Columns, summary.Truncated = document.Context.FormatVersion, document.Context.View, len(document.Rows), len(document.Schema.Columns), document.Context.Truncated
+	default:
+		err = fmt.Errorf("unsupported analysis format version")
+	}
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
+		os.Exit(1)
+	}
 	if json.NewEncoder(os.Stdout).Encode(summary) != nil {
 		os.Exit(1)
 	}

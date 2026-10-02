@@ -1,0 +1,1 @@
+[{"type":"string","value":"Assets:Cash"},{"type":"inventory","value":[{"units":{"number":{"exact":"1/3","display":"0.333333","approximate":true},"currency":"USD"},"cost":null},{"units":{"number":{"exact":"2","display":"2","approximate":false},"currency":"EUR"},"cost":{"number":{"exact":"0","display":"0","approximate":false},"currency":"USD","date":null,"label":""}}]}]

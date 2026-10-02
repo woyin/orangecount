@@ -69,6 +69,15 @@ final class BridgeClient: @unchecked Sendable {
         let response: LedgerView = try json.withCString { ptr in
             try sessionResponse { OC_ReadView(handle, UnsafeMutablePointer(mutating: ptr)) }
         }
+        if let identity = response.report_export {
+            guard identity.snapshot_id == response.state.snapshot_id, !identity.projection_id.isEmpty,
+                  !identity.section.isEmpty, ["complete-projection", "current-page"].contains(identity.capture_scope),
+                  identity.returned_rows >= 0, identity.returned_rows <= 10000,
+                  identity.source_record_count >= 0, identity.source_record_count <= 10000,
+                  identity.capture_scope != "complete-projection" || !identity.truncated else {
+                throw BridgeError.jsonDecodeError("Report export identity does not match view")
+            }
+        }
         if request.view == "query", response.state.has_snapshot {
             guard response.query_catalogue?.snapshot_id == response.state.snapshot_id else {
                 throw BridgeError.jsonDecodeError("Saved query catalogue does not match view snapshot")
@@ -127,6 +136,29 @@ final class BridgeClient: @unchecked Sendable {
         return response
     }
 
+    func cancelReportExport(handle: UInt64, captureID: String) throws {
+        struct Cancelled: Decodable { let cancelled: Bool }
+        let _: Cancelled = try captureID.withCString { ptr in
+            try sessionResponse { OC_CancelReportExport(handle, UnsafeMutablePointer(mutating: ptr)) }
+        }
+    }
+
+    func captureReportExport(handle: UInt64, request: ReportExportRequest) throws -> ReportExportCapture {
+        let encoded = try JSONEncoder().encode(request)
+        let json = String(decoding: encoded, as: UTF8.self)
+        let capture: ReportExportCapture = try sessionResponse { json.withCString { OC_CaptureReportExport(handle, UnsafeMutablePointer(mutating: $0)) } }
+        guard capture.identity.projection_id == request.projection_id,
+              capture.identity.snapshot_id == request.snapshot_id,
+              capture.identity.capture_scope == request.capture_scope,
+              capture.format == request.format, !capture.content.isEmpty,
+              capture.content.count <= 16 * 1024 * 1024,
+              !capture.protected_paths.isEmpty,
+              capture.protected_paths.allSatisfy({ $0.hasPrefix("/") }) else {
+            throw BridgeError.jsonDecodeError("Invalid report export capture")
+        }
+        return capture
+    }
+
     func exportProtection(handle: UInt64) throws -> ExportProtection {
         let response: ExportProtection = try sessionResponse { OC_ExportProtection(handle) }
         guard !response.protected_paths.isEmpty,
@@ -155,7 +187,7 @@ final class BridgeClient: @unchecked Sendable {
         init(from decoder: Decoder) throws {
             let values = try decoder.container(keyedBy: CodingKeys.self)
             protocol_version = try values.decode(Int.self, forKey: .protocol_version)
-            guard protocol_version == 2 else { throw BridgeError.protocolMismatch(protocol_version) }
+            guard protocol_version == 3 else { throw BridgeError.protocolMismatch(protocol_version) }
             error = try values.decodeIfPresent(ResponseError.self, forKey: .error)
             data = try values.decodeIfPresent(Value.self, forKey: .data)
         }

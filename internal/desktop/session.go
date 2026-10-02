@@ -72,6 +72,7 @@ type Request struct {
 }
 
 type ViewResponse struct {
+	ReportExport   *ReportExportIdentity         `json:"report_export,omitempty"`
 	DocumentAction *DocumentAction               `json:"document_action,omitempty"`
 	Directives     *DirectivesPayload            `json:"directives,omitempty"`
 	QueryCatalogue *QueryCatalogue               `json:"query_catalogue,omitempty"`
@@ -99,6 +100,12 @@ type publication struct {
 }
 
 type Session struct {
+	reportWork                map[string]context.CancelFunc
+	cancelledReports          map[string]bool
+	cancelledReportOrder      []string
+	reportCaptures            map[string]cachedReport
+	reportCaptureOrder        []string
+	reportCaptureBytes        int
 	mu                        sync.RWMutex
 	closed                    bool
 	store                     *snapshot.Store
@@ -200,6 +207,9 @@ func (s *Session) publish(result snapshot.BuildResult) {
 			s.queryCancel()
 		}
 		if result.Snapshot.ID != s.state.SnapshotID {
+			s.reportCaptures = nil
+			s.reportCaptureOrder = nil
+			s.reportCaptureBytes = 0
 			s.queryExport = nil
 			s.queryExportProtectedPaths = nil
 		}
@@ -355,6 +365,9 @@ func (s *Session) Read(request Request) (ViewResponse, error) {
 			return ViewResponse{}, ErrResultBudget
 		}
 	}
+	if err := s.retainReport(&result); err != nil {
+		return ViewResponse{}, err
+	}
 	return result, nil
 }
 
@@ -363,6 +376,12 @@ func (s *Session) Close() {
 	s.closeOnce.Do(func() {
 		s.mu.Lock()
 		s.closed = true
+		for _, cancel := range s.reportWork {
+			cancel()
+		}
+		s.reportCaptures = nil
+		s.reportCaptureOrder = nil
+		s.reportCaptureBytes = 0
 		s.queryExport = nil
 		s.queryExportProtectedPaths = nil
 		if s.queryCancel != nil {

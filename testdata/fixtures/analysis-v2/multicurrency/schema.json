@@ -1,0 +1,20 @@
+{
+  "row_unit": "account",
+  "page_unit": "account",
+  "columns": [
+    {
+      "id": "account",
+      "name": "account",
+      "type": "string",
+      "nullable": false,
+      "fields": null
+    },
+    {
+      "id": "inventory",
+      "name": "inventory",
+      "type": "inventory",
+      "nullable": false,
+      "fields": null
+    }
+  ]
+}

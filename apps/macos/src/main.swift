@@ -92,6 +92,7 @@ struct ContentView: View {
                 }
                 if store.state?.has_snapshot == true {
                     if store.selectedNav != .query { ReadingControls(store: store) }
+                    if store.reportExportIdentity != nil { ReportExportControls(store: store) }
                     if let tree = store.treeReport, let status = tree.valuation_status, status.completeness == "partial" || status.completeness == "unavailable" {
                         Text(language.text("原币余额完整保留；缺少报价，已折算部分不代表完整总计。", "Native balances are retained. Missing quotes mean valued portions are not complete totals.")).foregroundColor(.orange).padding()
                     }

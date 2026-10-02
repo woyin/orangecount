@@ -43,6 +43,7 @@ struct ViewRequest: Codable, Sendable, Equatable {
 }
 
 struct LedgerView: Codable, Sendable {
+    var report_export: ReportExportIdentity? = nil
     let state: LedgerState
     let request: ViewRequest
     let summary: LedgerSummary
@@ -1336,4 +1337,31 @@ private extension DirectiveRecord {
         }
         return true
     }
+}
+
+struct ReportExportIdentity: Codable, Sendable, Equatable {
+    let returned_rows: Int
+    let source_record_count: Int
+    let truncated: Bool
+    let date_from: String
+    let date_to: String
+    let semantics_profile: String
+    let completeness: String
+    let projection_id: String
+    let snapshot_id: String
+    let section: String
+    let capture_scope: String
+}
+struct ReportExportRequest: Codable, Sendable {
+    var capture_id: String = UUID().uuidString
+    let projection_id: String
+    let snapshot_id: String
+    let format: String
+    let capture_scope: String
+}
+struct ReportExportCapture: Codable, Sendable {
+    let identity: ReportExportIdentity
+    let format: String
+    let content: Data
+    let protected_paths: [String]
 }
