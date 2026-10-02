@@ -545,3 +545,21 @@ _Avoid_: synchronized copy, mirror file, second ledger
 **Dialectize**:
 `orangecount dialectize`: the reverse filter that rewrites a v3 ledger's trivially-representable transactions into dialect lines and preserves every other entry byte-for-byte, with round-trip balance and fixpoint guaranteed by property tests.
 _Avoid_: full translation, lossy conversion, normalization
+
+### Native analysis and attachment permissions
+
+**Analysis capture**:
+An immutable selection of evaluated ledger results together with the accounting interpretation, reporting scope, and completeness facts under which those results were obtained.
+_Avoid_: live export, editor contents
+
+**Capture scope**:
+The part of a report represented by an analysis capture: its current page, a captured result, or an explicitly captured complete projection. It is independent of valuation completeness.
+_Avoid_: complete valuation, all visible data
+
+**Attachment root permission**:
+An explicit local permission for resolving and opening ledger-declared attachments within a particular directory. It grants no additional permission to read ledger includes or change accounting meaning.
+_Avoid_: ledger root, include permission
+
+**Source-export representability**:
+The ability to express a ledger's accounting interpretation in an exported Beancount source without changing its declared accounting meaning.
+_Avoid_: successful serialization, matching final balance
