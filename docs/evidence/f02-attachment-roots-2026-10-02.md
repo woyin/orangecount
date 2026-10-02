@@ -9,3 +9,5 @@ Go全量通过；documents/desktop/bridge race通过；fmt/vet/license通过。�
 公开GUI独立rootsqa：外部receipt初始outside-root，Open/Finder禁用；显式选择receipts目录后available，两动作启用；实际Open后TextEdit显示公开测试内容。切换外部应用后计算机观测返回SCStream -3812；未将失败观测记通过。另一独立rootsrevokeqa完成相同授权后移除，随后outside-root且两按钮禁用。目录移除原List未独立暴露按钮，改用ScrollView/VStack；完整N04仍保留。
 
 使用输入仅build/f02-public公开临时目录，FinanceBook及用户原生实例未修改。旧F01私人对照继承，F02未改会计求值；当前版本私人archive对照尚未重新执行。
+
+最终源码4d49e1a、0.1.3 build-info working_tree=clean；最终App编译、签名/arm64/目标13资源检查通过。开发ZIP仓库外解压校验与build-info比对通过。SHA-256：`ef1f5243dde11cafa332c074c224d970bc0c24ecc86670b5f11d389b39a58d26`。最终真实NativeClientTests再次运行通过。
