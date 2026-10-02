@@ -1,0 +1,6 @@
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Expenses:Food USD
+option "operating_currency" "USD"
+2000-01-02 * "Lunch" "Public fixture" #food
+  Assets:Cash -12 USD
+  Expenses:Food 12 USD

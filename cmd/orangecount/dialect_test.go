@@ -36,8 +36,8 @@ func TestExportAndDialectizeRoundTripThroughCLI(t *testing.T) {
 	entry := writeEntry(t, dialectLedger)
 	dir := t.TempDir()
 	exported := filepath.Join(dir, "export.bean")
-	dialectized := filepath.Join(dir, "roundtrip.bean")
-	fixpoint := filepath.Join(dir, "fixpoint.bean")
+	dialectized := filepath.Join(t.TempDir(), "roundtrip.bean")
+	fixpoint := filepath.Join(t.TempDir(), "fixpoint.bean")
 
 	var out bytes.Buffer
 	if code := runExport([]string{"-out", exported, entry}, &out, &out); code != 0 {
@@ -114,7 +114,7 @@ func TestExportMultiFileLedgerWritesDirectoryTree(t *testing.T) {
 		t.Fatal(err)
 	}
 	var out bytes.Buffer
-	outputDir := filepath.Join(dir, "exported")
+	outputDir := filepath.Join(t.TempDir(), "exported")
 	if code := runExport([]string{"-out", outputDir, entry}, &out, &out); code != 0 {
 		t.Fatalf("multi-file export failed: %s", out.String())
 	}
@@ -135,5 +135,18 @@ func TestDialectDirectiveKindIsPreserved(t *testing.T) {
 	}
 	if directive, ok := file.Directives[0].(ledger.Directive); !ok || directive.Kind() != ledger.KindDialect {
 		t.Fatalf("kind=%+v", file.Directives[0])
+	}
+}
+
+func TestExportCompatibilityFailurePreservesTarget(t *testing.T) {
+	entry := writeEntry(t, "option \"booking_method\" \"AVERAGE\"\n"+strings.ReplaceAll(dialectLedger, "2026-08-12 28 @WeChat -> @Food \"美团\" : 工作午餐 #food\n15 @Cash -> @Food : 通勤\n", ""))
+	target := filepath.Join(t.TempDir(), "existing.bean")
+	os.WriteFile(target, []byte("unchanged"), 0600)
+	var out bytes.Buffer
+	if code := runExport([]string{"-semantics", "v3", "-out", target, entry}, &out, &out); code != 1 || !strings.Contains(out.String(), "AVERAGE") {
+		t.Fatalf("exit %d: %s", code, out.String())
+	}
+	if readFileText(t, target) != "unchanged" {
+		t.Fatal("target changed on refusal")
 	}
 }

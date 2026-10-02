@@ -147,3 +147,7 @@ parity-triage: parity-diff
 
 parity-report:
 	./tools/reference/differential-corpus.sh
+
+.PHONY: source-export-oracle
+source-export-oracle:
+	uv run --offline --project tools/reference python tools/reference/verify_source_export.py

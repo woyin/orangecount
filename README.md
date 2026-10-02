@@ -132,7 +132,10 @@ compiled into ordinary transactions at build time (ADR-0045):
   rewrites only transactions the dialect can represent exactly (two plain
   postings, no cost/price/metadata, non-empty narration) and preserves every
   other byte; balance equality and a byte-stable round-trip fixpoint are
-  enforced by property tests.
+  enforced by property tests. Targets must be outside the source directory;
+  include graphs require a new output directory. Effective AVERAGE and
+  unproven extensions are refused before publication. See
+  [safe source export](docs/source-export.md) for the supported subset.
 
 ## Performance
 

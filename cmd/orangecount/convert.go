@@ -7,21 +7,17 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
 
 	"orangecount/internal/diagnostic"
-	"orangecount/internal/dialect"
-	"orangecount/internal/ledger"
 	"orangecount/internal/snapshot"
-	"orangecount/internal/source"
+	"orangecount/internal/sourceexport"
 )
 
 func runExport(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("export", flag.ContinueOnError)
 	fs.SetOutput(stderr)
 	buildOptions := semanticsFlag(fs)
-	out := fs.String("out", "", "output file (single-file ledger) or directory (include graph)")
+	out := fs.String("out", "", "atomic output outside source directory; existing parent required; include graph requires a new directory")
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
@@ -39,7 +35,7 @@ func runExport(args []string, stdout, stderr io.Writer) int {
 func runDialectize(args []string, stdout, stderr io.Writer) int {
 	fs := flag.NewFlagSet("dialectize", flag.ContinueOnError)
 	fs.SetOutput(stderr)
-	out := fs.String("out", "", "output file (single-file ledger) or directory (include graph)")
+	out := fs.String("out", "", "atomic output outside source directory; existing parent required; include graph requires a new directory")
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
@@ -55,77 +51,19 @@ func runDialectize(args []string, stdout, stderr io.Writer) int {
 }
 
 func writeConverted(entry, out, label string, stdout, stderr io.Writer, reverse bool, options ...snapshot.BuildOptions) int {
-	graph, err := source.LoadGraph(entry)
+	config := sourceexport.Options{Reverse: reverse}
+	if len(options) > 0 {
+		config.Build = options[0]
+	}
+	plan, err := sourceexport.Prepare(entry, config)
+	if err == nil {
+		err = plan.Write(out)
+	}
 	if err != nil {
 		fmt.Fprintf(stderr, "orangecount %s: %v\n", label, err)
 		return 1
 	}
-	parsed, bag := ledger.ParseGraph(graph)
-	if bag.HasErrors() {
-		renderBag(stderr, bag, label)
-		return 1
-	}
-	if len(options) > 0 && options[0].Evaluation.SemanticsProfile != "" {
-		result := snapshot.BuildGraphWithOptions(graph, options[0])
-		if result.Snapshot == nil {
-			_ = diagnostic.RenderHuman(stderr, result.Diagnostics, "en")
-			return 1
-		}
-	}
-	outputs := make(map[source.FileID][]byte)
-	if reverse {
-		for fileID, file := range parsed {
-			if file == nil || file.Source == nil {
-				continue
-			}
-			edits, _ := dialect.Dialectize(file)
-			outputs[fileID] = dialect.ApplyEdits(file.Source.Data, edits)
-		}
-	} else {
-		rendered, diags := dialect.ExportText(graph, parsed)
-		for _, d := range diags {
-			if d.Severity == diagnostic.Error {
-				fmt.Fprintf(stderr, "orangecount %s: %s %s\n", label, d.Code, d.Message)
-				return 1
-			}
-		}
-		outputs = rendered
-	}
-	return writeConvertedFiles(graph, outputs, out, label, stdout, stderr)
-}
-
-func writeConvertedFiles(graph *source.Graph, outputs map[source.FileID][]byte, out, label string, stdout, stderr io.Writer) int {
-	fail := func(err error) int { fmt.Fprintf(stderr, "orangecount %s: %v\n", label, err); return 1 }
-	if len(graph.Order) == 1 {
-		if dir := filepath.Dir(out); dir != "." {
-			if err := os.MkdirAll(dir, 0o755); err != nil {
-				return fail(err)
-			}
-		}
-		if err := os.WriteFile(out, outputs[graph.Entry], 0o600); err != nil {
-			return fail(err)
-		}
-		fmt.Fprintf(stdout, "orangecount %s: wrote %s\n", label, out)
-		return 0
-	}
-	if err := os.MkdirAll(out, 0o755); err != nil {
-		return fail(err)
-	}
-	entryDir := filepath.Dir(graph.Path(graph.Entry))
-	for fileID, data := range outputs {
-		rel, err := filepath.Rel(entryDir, graph.Path(fileID))
-		if err != nil {
-			return fail(err)
-		}
-		target := filepath.Join(out, rel)
-		if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
-			return fail(err)
-		}
-		if err := os.WriteFile(target, data, 0o600); err != nil {
-			return fail(err)
-		}
-	}
-	fmt.Fprintf(stdout, "orangecount %s: wrote %d files under %s\n", label, len(outputs), out)
+	fmt.Fprintf(stdout, "orangecount %s: wrote %s\n", label, out)
 	return 0
 }
 

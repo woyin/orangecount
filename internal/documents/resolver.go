@@ -182,3 +182,13 @@ func resolveMissingPathDepth(path string, remaining int) (string, error) {
 	}
 	return filepath.Join(canonical, filepath.Base(path)), nil
 }
+
+// CanonicalPath resolves existing ancestors even when the final path is missing.
+// Export protection uses the same symlink semantics as attachment resolution.
+func CanonicalPath(path string) (string, error) {
+	absolute, err := filepath.Abs(path)
+	if err != nil {
+		return "", err
+	}
+	return resolveMissingPath(absolute)
+}

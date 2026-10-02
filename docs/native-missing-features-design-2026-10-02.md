@@ -234,3 +234,7 @@ Python plugin声明和外部工具依赖可能改变账本含义；未纳入声�
 ## F03实施修订
 
 查询分组/重复别名修订改变既有结果，运行契约升级 `beanquery-0.2.0-typed-v2`；format_version保持1、类型schema不变。新reader允许读取旧typed-v1冻结文件，不能把旧文件重执行后当成原捕获。原生协议保持4，会计revision未改变。balance观察缓存按WHERE短路/已接受posting顺序推进，排序和LIMIT不改变累积；sum保留完整成本键。新增52查询，总计215。有限数值预算与明确排除见查询矩阵。无效重复include/posting保留键加载诊断未纳入本次核心改动，源导出须独立拒绝。
+
+## F04实施修订
+
+Module入口采用 `Prepare(entry, Options) -> Plan`，统一拥有捕获/有效求值/兼容门，不把可变graph/parsed暴露给CLI。单文件与新目录均在已有父目录事务发布；macOS/Linux cgo使用目录描述符，目录排他rename，其他构建明确拒绝多文件发布。源图重新读取核对冻结身份，目标保护包含声明附件旧inode。document改为指向原附件的绝对引用，不复制附件；相对附件保持原义比输出保留原字面量优先。首批option/数字边界、逆转换重新加载要求及跨平台限制见[source-export](source-export.md)。Go尚未支持glob，本批明确拒绝，不宣称已冻结glob。

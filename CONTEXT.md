@@ -563,3 +563,11 @@ _Avoid_: ledger root, include permission
 **Source-export representability**:
 The ability to express a ledger's accounting interpretation in an exported Beancount source without changing its declared accounting meaning.
 _Avoid_: successful serialization, matching final balance
+
+### Source export
+
+A disposable Beancount source snapshot whose declared accounting meaning matches the selected ledger. It preserves references to original attachments and is distinct from a frozen analysis capture or a portable attachment archive.
+
+### Source export plan
+
+A frozen collection of compatible source files and protected ledger/attachment identities, prepared before a target is published. Changes to the source invalidate the plan.
