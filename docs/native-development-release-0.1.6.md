@@ -20,7 +20,7 @@ CLI 示例：
 | 产物 | SHA-256 |
 | --- | --- |
 | `dist/macos/OrangeCount-0.1.6-arm64-development.zip` | `4f3ecffc60e7261e7df152014e6bf0323a64de970736336b16b0acc7a1d238fe` |
-| `dist/cli/OrangeCount-CLI-0.1.6-darwin-arm64.tar.gz` | `c3c8c3e0a005b51fc8ea188d13bf36ea7e4b6576ecc82b2cd969c1020a0f57df` |
+| `dist/cli/OrangeCount-CLI-0.1.6-darwin-arm64.tar.gz` | `85cfd641e2bee99bbd7c1a425f9f60ea71ff3d2106c056ad3ba7b96dbcd4f421` |
 
 仓库内为 `build/OrangeCount.app` 和 `bin/orangecount`。App 与 CLI 的实际 Mach-O deployment target 均检查为 13.0，arm64；仅本机 macOS 27.0.1 有当前运行证据。App 为 ad hoc 签名，尚未公证。CLI 打包时先 source `apps/macos/toolchain.sh` 再构建，避免本机 SDK 默认使 CLI 最低目标误变为 27。
 
