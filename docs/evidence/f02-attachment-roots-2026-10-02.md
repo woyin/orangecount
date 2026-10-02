@@ -11,3 +11,5 @@ Go全量通过；documents/desktop/bridge race通过；fmt/vet/license通过。�
 使用输入仅build/f02-public公开临时目录，FinanceBook及用户原生实例未修改。旧F01私人对照继承，F02未改会计求值；当前版本私人archive对照尚未重新执行。
 
 最终源码4d49e1a、0.1.3 build-info working_tree=clean；最终App编译、签名/arm64/目标13资源检查通过。开发ZIP仓库外解压校验与build-info比对通过。SHA-256：`ef1f5243dde11cafa332c074c224d970bc0c24ecc86670b5f11d389b39a58d26`。最终真实NativeClientTests再次运行通过。
+
+后续回归修订：失效的额外根不再阻断默认根内附件；新增公开回归及race通过。选择系统根、用户Home、/Users或/Volumes时增加覆盖范围确认；该确认未执行实际宽泛授权GUI验收。

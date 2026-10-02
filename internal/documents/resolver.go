@@ -75,12 +75,7 @@ func (r *Resolver) Resolve(sourcePath, declaredPath string) Reference {
 	if r == nil || !filepath.IsAbs(sourcePath) || declaredPath == "" || strings.ContainsRune(declaredPath, 0) {
 		return reference
 	}
-	for i, root := range r.roots {
-		info, err := os.Stat(root)
-		if err != nil || !os.SameFile(info, r.identities[i]) {
-			return reference
-		}
-	}
+
 	path := declaredPath
 	if !filepath.IsAbs(path) {
 		path = filepath.Join(filepath.Dir(sourcePath), path)
@@ -140,10 +135,13 @@ func (r *Resolver) Revalidate(reference Reference) (string, error) {
 }
 
 func (r *Resolver) contains(path string) bool {
-	for _, root := range r.roots {
+	for i, root := range r.roots {
 		relative, err := filepath.Rel(root, path)
 		if err == nil && relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator)) && !filepath.IsAbs(relative) {
-			return true
+			info, err := os.Stat(root)
+			if err == nil && os.SameFile(info, r.identities[i]) {
+				return true
+			}
 		}
 	}
 	return false

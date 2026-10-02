@@ -194,3 +194,23 @@ func TestResolverUnreadableFileAndPermissionRevocation(t *testing.T) {
 		t.Fatal("permission revocation did not block open")
 	}
 }
+
+func TestUnavailableAdditionalRootDoesNotDisableDefaultRoot(t *testing.T) {
+	root, additional := t.TempDir(), t.TempDir()
+	target := filepath.Join(root, "receipt.txt")
+	if err := os.WriteFile(target, []byte("public"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	resolver, err := documents.NewResolver([]string{root, additional})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(additional, additional+"-moved"); err != nil {
+		t.Fatal(err)
+	}
+	defer os.RemoveAll(additional + "-moved")
+	reference := resolver.Resolve(filepath.Join(root, "main.bean"), "receipt.txt")
+	if reference.Status != documents.Available {
+		t.Fatalf("unrelated root disabled default: %s", reference.Status)
+	}
+}
