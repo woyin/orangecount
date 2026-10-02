@@ -39,6 +39,7 @@ struct ViewRequest: Codable, Sendable, Equatable {
     var journal_mode: String? = nil
     var directive_kind: String? = nil
     var document_id: String? = nil
+ var document_policy_revision: UInt64? = nil
     var migration_details: Bool = false
 }
 
@@ -1254,12 +1255,23 @@ struct DirectiveMetadata: Codable, Sendable { let key: String; let value: Direct
 struct DirectivePosting: Codable, Sendable { let posting: JournalPosting; let metadata: [DirectiveMetadata] }
 
 struct Attachment: Codable, Sendable, Identifiable {
+ let policy_revision: UInt64
     let id: String
     let filename: String
     let path: String
     let status: String
 }
-struct DocumentAction: Codable, Sendable { let id: String; let path: String }
+struct DocumentAction: Codable, Sendable { let id: String; let path: String; let policy_revision: UInt64 }
+
+struct AttachmentRoots: Codable, Sendable, Equatable {
+ let policy_revision: UInt64
+ let default_root: String
+ let additional_roots: [String]
+}
+struct AttachmentRootsRequest: Codable, Sendable {
+ let policy_revision: UInt64
+ let additional_roots: [String]
+}
 
 struct DirectiveRecord: Codable, Sendable, Identifiable {
     let attachments: [Attachment]

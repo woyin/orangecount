@@ -92,8 +92,8 @@ struct ContractTests {
         try verifyReportExports()
         print("PASS: protocol mismatch is distinguishable from malformed ledger data")
         for raw in [
-            #"{"protocol_version":3,"data":{"mode":"converted","target_currency":"USD","as_of":"2000-01-02","completeness":"partial","covered_item_count":1,"missing_item_count":1,"missing":[{"commodity":"EUR","reason":"missing-local-quote"}],"quotes":[],"valued_portion":{"exact":"100","display":"100","approximate":false}}}"#,
-            #"{"protocol_version":3,"data":{"mode":"converted","target_currency":"USD","as_of":"2000-01-02","completeness":"partial","covered_item_count":1,"missing_item_count":1,"missing":[{"commodity":"EUR","reason":"missing-local-quote"}],"quotes":[],"valued_portion":{"exact":"100","display":"100","approximate":false},"complete_total":{"exact":"100","display":"100","approximate":false}}}"#
+            #"{"protocol_version":4,"data":{"mode":"converted","target_currency":"USD","as_of":"2000-01-02","completeness":"partial","covered_item_count":1,"missing_item_count":1,"missing":[{"commodity":"EUR","reason":"missing-local-quote"}],"quotes":[],"valued_portion":{"exact":"100","display":"100","approximate":false}}}"#,
+            #"{"protocol_version":4,"data":{"mode":"converted","target_currency":"USD","as_of":"2000-01-02","completeness":"partial","covered_item_count":1,"missing_item_count":1,"missing":[{"commodity":"EUR","reason":"missing-local-quote"}],"quotes":[],"valued_portion":{"exact":"100","display":"100","approximate":false},"complete_total":{"exact":"100","display":"100","approximate":false}}}"#
         ] {
             do {
                 let _: AccountValuation = try BridgeClient.decodeResponse(Data(raw.utf8), as: AccountValuation.self)
@@ -146,7 +146,7 @@ struct ContractTests {
             default:
                 var page = damaged["records_page"] as! [String: Any]; page["returned_count"] = 2; damaged["records_page"] = page
             }
-            let envelope = try JSONSerialization.data(withJSONObject: ["protocol_version": 3, "data": damaged])
+            let envelope = try JSONSerialization.data(withJSONObject: ["protocol_version": 4, "data": damaged])
             do {
                 let _: PricesPayload = try BridgeClient.decodeResponse(envelope, as: PricesPayload.self)
                 throw TestFailure(description: "Malformed price contract accepted mutation \(mutation)")
@@ -172,7 +172,7 @@ struct ContractTests {
             if mutation == 1 { groups[0]["inventory_kind"] = "unsupported-kind" }
             if mutation == 2 { groups[0]["cost_currency"] = NSNull() }
             broken["groups"] = groups
-            let envelope = try JSONSerialization.data(withJSONObject: ["protocol_version": 3, "data": broken])
+            let envelope = try JSONSerialization.data(withJSONObject: ["protocol_version": 4, "data": broken])
             do {
                 let _: HoldingsPayload = try BridgeClient.decodeResponse(envelope, as: HoldingsPayload.self)
                 throw TestFailure(description: "Required nullable keys, inventory kind and cost invariants must reject malformed holdings")
@@ -469,7 +469,7 @@ struct ContractTests {
                 }
                 result["columns"] = columns; result["rows"] = rows; data["result"] = result; altered["execution"] = data
             }
-            let raw: [String: Any] = ["protocol_version": 3, "data": altered]
+            let raw: [String: Any] = ["protocol_version": 4, "data": altered]
             do {
                 let _: QueryResponse = try BridgeClient.decodeResponse(JSONSerialization.data(withJSONObject: raw), as: QueryResponse.self)
                 throw TestFailure(description: "Malformed query \(fault) accepted")
@@ -492,7 +492,7 @@ struct ContractTests {
         malformed = try JSONSerialization.jsonObject(with: JSONEncoder().encode(failed)) as! [String: Any]
         var failure = malformed["error"] as! [String: Any]; failure.removeValue(forKey: "range"); malformed["error"] = failure
         do {
-            let _: QueryResponse = try BridgeClient.decodeResponse(JSONSerialization.data(withJSONObject: ["protocol_version": 3, "data": malformed]), as: QueryResponse.self)
+            let _: QueryResponse = try BridgeClient.decodeResponse(JSONSerialization.data(withJSONObject: ["protocol_version": 4, "data": malformed]), as: QueryResponse.self)
             throw TestFailure(description: "Missing nullable query error range accepted")
         } catch BridgeError.jsonDecodeError { }
         let unicodeText = "SELECT '💰 unknown_fn', unknown_fn(number) LIMIT 0"
@@ -503,7 +503,7 @@ struct ContractTests {
         unicodeFailure["range"] = ["start_byte": 9, "end_byte": 12]
         unicodeRaw["error"] = unicodeFailure
         do {
-            let _: QueryResponse = try BridgeClient.decodeResponse(JSONSerialization.data(withJSONObject: ["protocol_version": 3, "data": unicodeRaw]), as: QueryResponse.self)
+            let _: QueryResponse = try BridgeClient.decodeResponse(JSONSerialization.data(withJSONObject: ["protocol_version": 4, "data": unicodeRaw]), as: QueryResponse.self)
             throw TestFailure(description: "Error range splitting UTF-8 code point accepted")
         } catch BridgeError.jsonDecodeError { }
         try bridge.cancelQuery(handle: session.handle, requestID: 4)
@@ -583,7 +583,7 @@ extension ContractTests {
         let view = try bridge.readView(handle: session.handle, request: ViewRequest(view: "journal", journal_mode: "all", directive_kind: "document"))
         guard let attachment = view.directives?.records.first?.attachments.first else { throw TestFailure(description: "Missing attachment") }
         try expect(attachment.status == "available", "Attachment status crosses real ABI")
-        let action = ViewRequest(view: "journal", snapshot_id: view.state.snapshot_id, journal_mode: "all", document_id: attachment.id)
+        let action = ViewRequest(view: "journal", snapshot_id: view.state.snapshot_id, journal_mode: "all", document_id: attachment.id, document_policy_revision: attachment.policy_revision)
         let response = try bridge.readView(handle: session.handle, request: action)
         try expect(response.document_action?.path == attachment.path, "Attachment opening returns only revalidated canonical target")
         let openedText = try String(contentsOfFile: response.document_action!.path, encoding: .utf8)

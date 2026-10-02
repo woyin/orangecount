@@ -16,6 +16,52 @@ struct NativeClientTests {
         throw NativeClientFailure(message: "Timed out: \(description)")
     }
 
+    @MainActor static func verifyAttachmentRoots() async throws {
+        let base = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let ledger = base.appendingPathComponent("ledger")
+        let extra = base.appendingPathComponent("receipts")
+        try FileManager.default.createDirectory(at: ledger, withIntermediateDirectories: true)
+        try FileManager.default.createDirectory(at: extra, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: base) }
+        let entry = ledger.appendingPathComponent("main.bean")
+        let other = ledger.appendingPathComponent("other.bean")
+        let receipt = extra.appendingPathComponent("receipt.txt")
+        try "public receipt".write(to: receipt, atomically: true, encoding: .utf8)
+        let text = "2024-01-01 open Assets:Cash\n2024-01-02 document Assets:Cash \"" + receipt.path + "\"\n"
+        try text.write(to: entry, atomically: true, encoding: .utf8)
+        try text.write(to: other, atomically: true, encoding: .utf8)
+        let suite = "org.orangecount.tests.roots." + UUID().uuidString
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let first = LedgerStore(preferences: defaults, pollNanoseconds: 10_000_000)
+        let second = LedgerStore(preferences: defaults, pollNanoseconds: 10_000_000)
+        let unrelated = LedgerStore(preferences: defaults, pollNanoseconds: 10_000_000)
+        defer { first.close(); second.close(); unrelated.close() }
+        first.start(path: entry.path, restoreRecent: false)
+        second.start(path: entry.path, restoreRecent: false)
+        unrelated.start(path: other.path, restoreRecent: false)
+        try await waitUntil("three directory policies ready") { first.attachmentRoots != nil && second.attachmentRoots != nil && unrelated.attachmentRoots != nil && first.phase == .ready && second.phase == .ready }
+        let before = first.state!
+        await first.updateAttachmentRoots([extra.path])
+        try await waitUntil("same ledger root broadcast") { second.attachmentRoots?.additional_roots.count == 1 }
+        guard unrelated.attachmentRoots?.additional_roots.isEmpty == true, first.state?.snapshot_id == before.snapshot_id, first.state?.build_count == before.build_count else { throw NativeClientFailure(message: "Root update changed accounting or another ledger") }
+        first.selectedNav = .journal
+        first.showDocuments()
+        try await waitUntil("granted receipt appears") { first.visibleView?.directives?.records.first?.attachments.first?.status == "available" }
+        let prefs = AttachmentRootPreferences(defaults: defaults)
+        let restored = try prefs.restore(entry.path)
+        guard restored.roots.count == 1, restored.invalid.isEmpty else { throw NativeClientFailure(message: "Bookmark did not restore") }
+        await first.updateAttachmentRoots([])
+        try await waitUntil("root revocation broadcast") { second.attachmentRoots?.additional_roots.isEmpty == true && first.visibleView?.directives?.records.first?.attachments.first?.status == "outside-root" }
+        await first.updateAttachmentRoots([extra.path])
+        let old = base.appendingPathComponent("old-receipts")
+        try FileManager.default.moveItem(at: extra, to: old)
+        try FileManager.default.createDirectory(at: extra, withIntermediateDirectories: true)
+        let invalid = try prefs.restore(entry.path)
+        guard invalid.roots.isEmpty, invalid.invalid.count == 1 else { throw NativeClientFailure(message: "Replaced directory silently retained authorization") }
+        print("PASS: real root grant/revoke, bookmarks, replaced directory, same-ledger window broadcast and other-ledger/accounting isolation")
+    }
+
     @MainActor static func verifyReportSave(root: String) async throws {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -109,6 +155,7 @@ struct NativeClientTests {
             try await verifySavedQueries(root: root)
             try await verifyQueryPresets(root: root)
             try await verifyDirectiveNavigation(root: root)
+            try await verifyAttachmentRoots()
             try await verifyReportSave(root: root)
             try await verifyStoreRecovery(root: root)
             try await verifyHoldingNavigation(root: root)

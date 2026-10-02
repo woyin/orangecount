@@ -87,6 +87,8 @@ func (p *publication) readDirectives(request Request, snapshotID, from, to strin
 		from, to = "", ""
 	}
 	payload := &DirectivesPayload{DateFrom: from, DateTo: to, SnapshotID: snapshotID, Mode: request.JournalMode, Records: []DirectiveDTO{}, Page: report.ProjectionPage{TotalCount: page.TotalCount, Offset: page.Offset, Limit: page.Limit, ReturnedCount: len(page.Records), HasMore: page.HasMore, Truncated: len(page.Records) < page.TotalCount}}
+	p.documents.mu.Lock()
+	defer p.documents.mu.Unlock()
 	attachmentCount := 0
 	for _, record := range page.Records {
 		dto, err := projectDirective(record, p.snapshot.Graph())

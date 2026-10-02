@@ -30,7 +30,10 @@ var (
 
 // Resolver owns a fixed set of explicitly allowed canonical directory roots.
 // Construct a new resolver when the user's allowed-root configuration changes.
-type Resolver struct{ roots []string }
+type Resolver struct {
+	roots      []string
+	identities []os.FileInfo
+}
 
 // Reference retains its declaration and observed identity for revalidation.
 // Public fields are presentation only and cannot authorize a different target.
@@ -62,6 +65,7 @@ func NewResolver(roots []string) (*Resolver, error) {
 			return nil, ErrInvalidRoots
 		}
 		resolver.roots = append(resolver.roots, canonical)
+		resolver.identities = append(resolver.identities, info)
 	}
 	return resolver, nil
 }
@@ -70,6 +74,12 @@ func (r *Resolver) Resolve(sourcePath, declaredPath string) Reference {
 	reference := Reference{Status: Unreadable, source: sourcePath, declared: declaredPath, owner: r}
 	if r == nil || !filepath.IsAbs(sourcePath) || declaredPath == "" || strings.ContainsRune(declaredPath, 0) {
 		return reference
+	}
+	for i, root := range r.roots {
+		info, err := os.Stat(root)
+		if err != nil || !os.SameFile(info, r.identities[i]) {
+			return reference
+		}
 	}
 	path := declaredPath
 	if !filepath.IsAbs(path) {

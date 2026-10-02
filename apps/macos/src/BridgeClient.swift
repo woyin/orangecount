@@ -90,9 +90,19 @@ final class BridgeClient: @unchecked Sendable {
             }
         }
         if let id = request.document_id {
-            guard response.document_action?.id == id, response.document_action?.path.hasPrefix("/") == true, response.state.snapshot_id == request.snapshot_id else { throw BridgeError.jsonDecodeError("Attachment authorization does not match request") }
+            guard response.document_action?.id == id, response.document_action?.policy_revision == request.document_policy_revision, response.document_action?.path.hasPrefix("/") == true, response.state.snapshot_id == request.snapshot_id else { throw BridgeError.jsonDecodeError("Attachment authorization does not match request") }
         }
         return response
+    }
+
+    func attachmentRoots(handle: UInt64) throws -> AttachmentRoots {
+        try sessionResponse { OC_AttachmentRoots(handle) }
+    }
+    func configureAttachmentRoots(handle: UInt64, request: AttachmentRootsRequest) throws -> AttachmentRoots {
+        let json = String(decoding: try JSONEncoder().encode(request), as: UTF8.self)
+        return try json.withCString { ptr in
+            try sessionResponse { OC_ConfigureAttachmentRoots(handle, UnsafeMutablePointer(mutating: ptr)) }
+        }
     }
 
     func reloadLedger(handle: UInt64) throws -> LedgerState {
@@ -187,7 +197,7 @@ final class BridgeClient: @unchecked Sendable {
         init(from decoder: Decoder) throws {
             let values = try decoder.container(keyedBy: CodingKeys.self)
             protocol_version = try values.decode(Int.self, forKey: .protocol_version)
-            guard protocol_version == 3 else { throw BridgeError.protocolMismatch(protocol_version) }
+            guard protocol_version == 4 else { throw BridgeError.protocolMismatch(protocol_version) }
             error = try values.decodeIfPresent(ResponseError.self, forKey: .error)
             data = try values.decodeIfPresent(Value.self, forKey: .data)
         }

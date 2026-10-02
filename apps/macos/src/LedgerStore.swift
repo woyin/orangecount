@@ -76,6 +76,11 @@ protocol LedgerQueryExportClient: Sendable {
     func captureQueryExport(handle: UInt64, request: QueryExportRequest) async throws -> QueryExportCapture
 }
 
+protocol LedgerAttachmentRootsClient: Sendable {
+ func attachmentRoots(handle: UInt64) async throws -> AttachmentRoots
+ func configureAttachmentRoots(handle: UInt64, request: AttachmentRootsRequest) async throws -> AttachmentRoots
+}
+
 protocol LedgerReportExportClient: Sendable {
     func captureReportExport(handle: UInt64, request: ReportExportRequest) async throws -> ReportExportCapture
 }
@@ -100,7 +105,13 @@ struct PreparedQueryExport: Sendable {
 // on entry, so superseded queued reads never start. A synchronous C call that
 // already began may finish; LedgerStore still checks generation before publish.
 // Queries additionally use Go budget checkpoints and an independent cancel path.
-actor NativeLedgerClient: LedgerSessionClient, LedgerQueryClient, LedgerQueryExportClient, LedgerExportProtectionClient, LedgerReportExportClient {
+actor NativeLedgerClient: LedgerSessionClient, LedgerQueryClient, LedgerQueryExportClient, LedgerExportProtectionClient, LedgerReportExportClient, LedgerAttachmentRootsClient {
+ func attachmentRoots(handle: UInt64) async throws -> AttachmentRoots {
+ try Task.checkCancellation(); return try BridgeClient.shared.attachmentRoots(handle: handle)
+ }
+ func configureAttachmentRoots(handle: UInt64, request: AttachmentRootsRequest) async throws -> AttachmentRoots {
+ try Task.checkCancellation(); return try BridgeClient.shared.configureAttachmentRoots(handle: handle, request: request)
+ }
     func open(path: String, semantics: String, inputIdentity: String) async throws -> OpenLedgerResult {
         try Task.checkCancellation()
         return try BridgeClient.shared.openLedger(path: Self.resolveEntry(path), semantics: semantics, inputIdentity: inputIdentity)
@@ -282,6 +293,14 @@ final class LedgerStore: ObservableObject {
     private var activeQuery: QueryJob?
     private var pendingQuery: QueryJob?
     private var queryTask: Task<Void, Never>?
+    @Published private(set) var attachmentRoots: AttachmentRoots?
+    @Published private(set) var attachmentRootNotice: String?
+    @Published private(set) var attachmentRootsBusy = false
+    @Published var showAttachmentRootsSheet = false
+    private let rootPreferences: AttachmentRootPreferences
+    private var rootObserver: AnyCancellable?
+    private var rootConfigurationGeneration: UInt64 = 0
+    private var rootOperation: UInt64 = 0
     private let client: any LedgerSessionClient
     private let preferences: UserDefaults?
     private let pollNanoseconds: UInt64
@@ -305,8 +324,16 @@ final class LedgerStore: ObservableObject {
         self.client = client
         self.queryClient = client as? any LedgerQueryClient
         self.preferences = preferences
+ self.rootPreferences = AttachmentRootPreferences(defaults: preferences)
         self.pollNanoseconds = pollNanoseconds
         recentPaths = preferences?.stringArray(forKey: recentsKey) ?? []
+        rootObserver = NotificationCenter.default.publisher(for: AttachmentRootPreferences.changed).sink { [weak self] note in
+            guard let ledger = note.object as? String else { return }
+            Task { @MainActor [weak self] in
+                guard let self, AttachmentRootPreferences.ledgerIdentity(self.currentPath) == ledger else { return }
+                await self.restoreAttachmentRoots()
+            }
+        }
     }
 
     deinit {
@@ -613,6 +640,7 @@ final class LedgerStore: ObservableObject {
         snapshot = nil
         state = nil
         currentPath = path
+ attachmentRoots = nil; attachmentRootNotice = nil; attachmentRootsBusy = false; rootConfigurationGeneration = 0; rootOperation &+= 1
         errorMessage = nil
         showDiagnosticsSheet = false
         phase = .opening
@@ -628,6 +656,8 @@ final class LedgerStore: ObservableObject {
                 self.currentPath = opened.state.entry_path
                 self.preferences?.set(profile, forKey: "org.orangecount.semantics." + path)
                 self.preferences?.set(profile, forKey: "org.orangecount.semantics." + opened.state.entry_path)
+                await self.restoreAttachmentRoots()
+                guard self.generation == expected, !Task.isCancelled else { return }
                 self.loadCurrentView()
                 self.startPolling(handle: opened.handle, generation: expected)
             } catch {
@@ -691,22 +721,77 @@ final class LedgerStore: ObservableObject {
         "org.orangecount.reading." + URL(fileURLWithPath: (path as NSString).expandingTildeInPath).standardizedFileURL.path
     }
 
+    private func restoreAttachmentRoots() async {
+        guard let handle, let rootsClient = client as? any LedgerAttachmentRootsClient else { return }
+        let expected = generation
+        rootOperation &+= 1
+        let operation = rootOperation
+        do {
+            let restored = try rootPreferences.restore(currentPath)
+            if attachmentRoots != nil && restored.generation <= rootConfigurationGeneration { return }
+            let current = try await rootsClient.attachmentRoots(handle: handle)
+            guard generation == expected, self.handle == handle, rootOperation == operation else { return }
+            let updated = try await rootsClient.configureAttachmentRoots(handle: handle,
+                request: AttachmentRootsRequest(policy_revision: current.policy_revision, additional_roots: restored.roots))
+            guard generation == expected, self.handle == handle, rootOperation == operation else { return }
+            attachmentRoots = updated
+            rootConfigurationGeneration = restored.generation
+            attachmentRootNotice = restored.invalid.isEmpty ? nil : "部分目录需要重新选择授权 / Some directories require renewed selection: " + restored.invalid.joined(separator: ", ")
+            loadCurrentView()
+        } catch {
+            guard generation == expected, self.handle == handle, rootOperation == operation else { return }
+            attachmentRootNotice = "附件目录恢复失败 / Attachment directory restore failed: " + error.localizedDescription
+        }
+    }
+
+    func updateAttachmentRoots(_ roots: [String], persist: Bool = true, expectedRevision: UInt64? = nil) async {
+        guard !attachmentRootsBusy, let handle, let current = attachmentRoots,
+              let rootsClient = client as? any LedgerAttachmentRootsClient else { return }
+        guard expectedRevision == nil || expectedRevision == current.policy_revision else { attachmentRootNotice = "目录策略已变化，请重新选择 / Directory policy changed; select again"; return }
+        let expected = generation
+        rootOperation &+= 1
+        let operation = rootOperation
+        attachmentRootsBusy = true
+        defer { if generation == expected { attachmentRootsBusy = false } }
+        do {
+            let prepared = persist ? try rootPreferences.prepare(roots, ledger: currentPath) : nil
+            let updated = try await rootsClient.configureAttachmentRoots(handle: handle,
+                request: AttachmentRootsRequest(policy_revision: current.policy_revision, additional_roots: prepared?.directories.map(\.path) ?? roots))
+            guard generation == expected, self.handle == handle, rootOperation == operation else { return }
+            attachmentRoots = updated
+            attachmentRootNotice = nil
+            if let prepared {
+                rootConfigurationGeneration = prepared.generation
+                do { try rootPreferences.save(prepared, ledger: currentPath) }
+                catch { attachmentRootNotice = "目录本次有效，但未保存；其他窗口未同步 / Directories are active for this session but were not saved: " + error.localizedDescription }
+            }
+            loadCurrentView()
+        } catch {
+            guard generation == expected, self.handle == handle, rootOperation == operation else { return }
+            attachmentRootNotice = "目录配置未更新 / Directory configuration was not updated: " + error.localizedDescription
+        }
+    }
+
     func showDocuments() {
         updateFilters { $0.journal_mode = "all"; $0.directive_kind = "document"; $0.window = "all"; $0.date_from = ""; $0.date_to = ""; $0.text = ""; $0.account = "" }
     }
 
     func openDocument(_ attachment: Attachment, reveal: Bool) {
-        guard attachment.status == "available", let handle, let identity = state?.snapshot_id else { return }
+        guard !attachmentRootsBusy, attachment.status == "available", attachment.policy_revision == attachmentRoots?.policy_revision, let handle, let identity = state?.snapshot_id else { return }
         let expected = generation
         let expectedRead = readGeneration
-        let actionRequest = ViewRequest(view: "journal", snapshot_id: identity, journal_mode: "all", document_id: attachment.id)
+        let actionRequest = ViewRequest(view: "journal", snapshot_id: identity, journal_mode: "all", document_id: attachment.id, document_policy_revision: attachment.policy_revision)
         Task { [weak self, client] in
             do {
                 let response = try await client.read(handle: handle, request: actionRequest)
                 guard let self, self.generation == expected, self.readGeneration == expectedRead,
                       self.state?.snapshot_id == identity, let action = response.document_action,
-                      action.id == attachment.id, action.path == attachment.path else { return }
+                      action.id == attachment.id, action.path == attachment.path,
+                      !self.attachmentRootsBusy, action.policy_revision == self.attachmentRoots?.policy_revision else { return }
                 let url = URL(fileURLWithPath: action.path)
+                guard (try url.resourceValues(forKeys: [.isAliasFileKey])).isAliasFile != true else {
+ self.errorMessage = "不支持 Finder 替身附件 / Finder alias attachments are unsupported"; return
+ }
                 if reveal { NSWorkspace.shared.activateFileViewerSelecting([url]) }
                 else if !NSWorkspace.shared.open(url) { self.errorMessage = "无法打开附件 / Unable to open attachment" }
             } catch {

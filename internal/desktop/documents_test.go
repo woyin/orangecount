@@ -46,7 +46,7 @@ func TestAttachmentPresentationAndOpenRevalidation(t *testing.T) {
 	if len(items) != 1 || items[0].Status != documents.Available || items[0].Path != target {
 		t.Fatalf("attachment not available: %+v", items)
 	}
-	action := desktop.Request{View: "journal", JournalMode: "all", SnapshotID: view.State.SnapshotID, DocumentID: items[0].ID}
+	action := desktop.Request{View: "journal", JournalMode: "all", SnapshotID: view.State.SnapshotID, DocumentID: items[0].ID, DocumentPolicyRevision: items[0].PolicyRevision}
 	result, err := session.Read(action)
 	if err != nil || result.DocumentAction == nil || result.DocumentAction.Path != target {
 		t.Fatal("presented reference could not be authorized", err)
@@ -136,5 +136,65 @@ func TestAttachmentPageResourceBudget(t *testing.T) {
 	_, err = session.Read(desktop.Request{View: "journal", JournalMode: "all", DirectiveKind: "document"})
 	if !errors.Is(err, desktop.ErrResultBudget) {
 		t.Fatalf("expected attachment budget rejection, got %v", err)
+	}
+}
+
+func TestAttachmentPolicyGrantRevokeAndAtomicFailure(t *testing.T) {
+	root, outside := t.TempDir(), t.TempDir()
+	target := filepath.Join(outside, "receipt.txt")
+	if err := os.WriteFile(target, []byte("public receipt"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(root, "main.bean")
+	if err := os.WriteFile(path, []byte("2024-01-01 open Assets:Cash\n2024-01-02 document Assets:Cash \""+target+"\"\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	s, err := desktop.Open(path, desktop.OpenOptions{}.Watch)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	read := func() desktop.ViewResponse {
+		v, e := s.Read(desktop.Request{View: "journal", JournalMode: "all", DirectiveKind: "document"})
+		if e != nil {
+			t.Fatal(e)
+		}
+		return v
+	}
+	v := read()
+	a := v.Directives.Records[0].Attachments[0]
+	if a.Status != documents.OutsideRoot || a.PolicyRevision != 1 {
+		t.Fatal(a)
+	}
+	policy, err := s.ConfigureAttachmentRoots(desktop.AttachmentRootsRequest{PolicyRevision: 1, AdditionalRoots: []string{outside, outside}})
+	if err != nil || policy.PolicyRevision != 2 || len(policy.AdditionalRoots) != 1 {
+		t.Fatal(policy, err)
+	}
+	granted := read()
+	a = granted.Directives.Records[0].Attachments[0]
+	if a.Status != documents.Available || granted.State.BuildCount != v.State.BuildCount || granted.State.SnapshotID != v.State.SnapshotID {
+		t.Fatal("policy rebuilt accounting", granted)
+	}
+	action := desktop.Request{View: "journal", JournalMode: "all", SnapshotID: v.State.SnapshotID, DocumentID: a.ID, DocumentPolicyRevision: a.PolicyRevision}
+	if _, err = s.Read(action); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = s.ConfigureAttachmentRoots(desktop.AttachmentRootsRequest{PolicyRevision: 2, AdditionalRoots: []string{filepath.Join(root, "missing")}}); !errors.Is(err, documents.ErrInvalidRoots) {
+		t.Fatal(err)
+	}
+	if _, err = s.Read(action); err != nil {
+		t.Fatal("invalid update changed policy", err)
+	}
+	if _, err = s.ConfigureAttachmentRoots(desktop.AttachmentRootsRequest{PolicyRevision: 1}); !errors.Is(err, desktop.ErrAttachmentPolicy) {
+		t.Fatal(err)
+	}
+	if _, err = s.ConfigureAttachmentRoots(desktop.AttachmentRootsRequest{PolicyRevision: 2}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err = s.Read(action); !errors.Is(err, desktop.ErrAttachmentPolicy) {
+		t.Fatal("revoked action accepted", err)
+	}
+	if read().Directives.Records[0].Attachments[0].Status != documents.OutsideRoot {
+		t.Fatal("revocation not visible")
 	}
 }

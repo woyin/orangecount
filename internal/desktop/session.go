@@ -15,7 +15,6 @@ import (
 	"sync"
 	"time"
 
-	"orangecount/internal/documents"
 	"orangecount/internal/ledger"
 	"orangecount/internal/report"
 	"orangecount/internal/snapshot"
@@ -43,32 +42,33 @@ type State struct {
 }
 
 type Request struct {
-	DocumentID       string `json:"document_id,omitempty"`
-	JournalMode      string `json:"journal_mode,omitempty"`
-	DirectiveKind    string `json:"directive_kind,omitempty"`
-	MigrationDetails bool   `json:"migration_details"`
-	Valuation        string `json:"valuation"`
-	View             string `json:"view"`
-	Currency         string `json:"currency"`
-	Locale           string `json:"locale"`
-	SnapshotID       string `json:"snapshot_id,omitempty"`
-	DateFrom         string `json:"date_from"`
-	DateTo           string `json:"date_to"`
-	Window           string `json:"window"`
-	Account          string `json:"account"`
-	Scope            string `json:"scope,omitempty"`
-	GroupBy          string `json:"group_by,omitempty"`
-	HoldingSection   string `json:"holding_section,omitempty"`
-	GroupID          string `json:"group_id,omitempty"`
-	EventID          string `json:"event_id,omitempty"`
-	LotKind          string `json:"lot_kind,omitempty"`
-	PriceSection     string `json:"price_section,omitempty"`
-	PriceBase        string `json:"price_base,omitempty"`
-	PriceQuote       string `json:"price_quote,omitempty"`
-	Text             string `json:"text"`
-	Sort             string `json:"sort"`
-	Offset           int    `json:"offset"`
-	Limit            int    `json:"limit"`
+	DocumentPolicyRevision uint64 `json:"document_policy_revision,omitempty"`
+	DocumentID             string `json:"document_id,omitempty"`
+	JournalMode            string `json:"journal_mode,omitempty"`
+	DirectiveKind          string `json:"directive_kind,omitempty"`
+	MigrationDetails       bool   `json:"migration_details"`
+	Valuation              string `json:"valuation"`
+	View                   string `json:"view"`
+	Currency               string `json:"currency"`
+	Locale                 string `json:"locale"`
+	SnapshotID             string `json:"snapshot_id,omitempty"`
+	DateFrom               string `json:"date_from"`
+	DateTo                 string `json:"date_to"`
+	Window                 string `json:"window"`
+	Account                string `json:"account"`
+	Scope                  string `json:"scope,omitempty"`
+	GroupBy                string `json:"group_by,omitempty"`
+	HoldingSection         string `json:"holding_section,omitempty"`
+	GroupID                string `json:"group_id,omitempty"`
+	EventID                string `json:"event_id,omitempty"`
+	LotKind                string `json:"lot_kind,omitempty"`
+	PriceSection           string `json:"price_section,omitempty"`
+	PriceBase              string `json:"price_base,omitempty"`
+	PriceQuote             string `json:"price_quote,omitempty"`
+	Text                   string `json:"text"`
+	Sort                   string `json:"sort"`
+	Offset                 int    `json:"offset"`
+	Limit                  int    `json:"limit"`
 }
 
 type ViewResponse struct {
@@ -89,17 +89,16 @@ type ViewResponse struct {
 }
 
 type publication struct {
-	documentMu         sync.Mutex
-	documentResolver   *documents.Resolver
-	documentReferences map[string]documents.Reference
-	protectedPaths     []string
-	snapshot           *snapshot.Snapshot
-	evaluation         ledger.Evaluation
-	journal            []journalEntry
-	latestDate         string
+	documents      *attachmentPolicy
+	protectedPaths []string
+	snapshot       *snapshot.Snapshot
+	evaluation     ledger.Evaluation
+	journal        []journalEntry
+	latestDate     string
 }
 
 type Session struct {
+	documents                 *attachmentPolicy
 	reportWork                map[string]context.CancelFunc
 	cancelledReports          map[string]bool
 	cancelledReportOrder      []string
@@ -149,6 +148,10 @@ func OpenWithOptions(path string, selected OpenOptions) (*Session, error) {
 		return nil, ErrRequest
 	}
 	s := &Session{store: snapshot.NewStore(nil), state: State{EntryPath: entry}, reloads: make(chan chan error), stop: make(chan struct{}), done: make(chan struct{}), queryGate: make(chan struct{}, 1)}
+	s.documents, err = newAttachmentPolicy(filepath.Dir(entry))
+	if err != nil {
+		return nil, err
+	}
 	s.options.Evaluation.SemanticsProfile = profile
 	s.state.SemanticsProfile, s.state.EvaluationRevision = profile, profile.EvaluationRevision()
 	s.state.ActiveExtensions = []string{}
@@ -183,7 +186,7 @@ func (s *Session) publish(result snapshot.BuildResult) {
 	defer region.End()
 	var next *publication
 	if result.Snapshot != nil {
-		next = &publication{evaluation: result.Snapshot.Evaluation(), snapshot: result.Snapshot}
+		next = &publication{documents: s.documents, evaluation: result.Snapshot.Evaluation(), snapshot: result.Snapshot}
 		next.protectedPaths = exportProtectedPaths(result.Graph, next.evaluation)
 		next.journal = indexJournal(next.evaluation, result.Snapshot.ID)
 		for _, entry := range next.evaluation.Entries {
@@ -284,7 +287,7 @@ func (s *Session) Read(request Request) (ViewResponse, error) {
 		return result, nil
 	}
 	if request.DocumentID != "" {
-		action, err := current.authorizeDocument(request.DocumentID)
+		action, err := current.authorizeDocument(request.DocumentID, request.DocumentPolicyRevision)
 		if err != nil {
 			return ViewResponse{}, err
 		}

@@ -15,11 +15,12 @@ import (
 
 	"orangecount/internal/analysis"
 	"orangecount/internal/desktop"
+	"orangecount/internal/documents"
 	"orangecount/internal/query"
 	"orangecount/internal/report"
 )
 
-const protocolVersion = 3
+const protocolVersion = 4
 
 var sessions = struct {
 	sync.Mutex
@@ -50,6 +51,10 @@ func sessionResponse(data any, err error) *C.char {
 			code, message = "expired-capture", err.Error()
 		case errors.Is(err, analysis.ErrBudget):
 			code, message = "result-budget-exceeded", err.Error()
+		case errors.Is(err, desktop.ErrAttachmentPolicy):
+			code, message = "attachment-policy-changed", err.Error()
+		case errors.Is(err, documents.ErrInvalidRoots):
+			code, message = "invalid-attachment-roots", err.Error()
 		case errors.Is(err, desktop.ErrClosed):
 			code, message = "session-closed", err.Error()
 		case errors.Is(err, desktop.ErrRequest):
@@ -71,7 +76,7 @@ func sessionResponse(data any, err error) *C.char {
 	}
 	encoded, encodeErr := json.Marshal(response)
 	if encodeErr != nil {
-		encoded = []byte(`{"protocol_version":3,"error":{"code":"encoding","message":"Unable to encode ledger response"}}`)
+		encoded = []byte(`{"protocol_version":4,"error":{"code":"encoding","message":"Unable to encode ledger response"}}`)
 	}
 	return C.CString(string(encoded))
 }
@@ -273,4 +278,35 @@ func OC_CancelReportExport(handle C.ulonglong, captureID *C.char) *C.char {
 	return sessionResponse(struct {
 		Cancelled bool `json:"cancelled"`
 	}{true}, session.CancelReportExport(C.GoString(captureID)))
+}
+
+//export OC_AttachmentRoots
+func OC_AttachmentRoots(handle C.ulonglong) *C.char {
+	s, err := sessionFor(uint64(handle))
+	if err != nil {
+		return sessionResponse(nil, err)
+	}
+	roots, err := s.AttachmentRoots()
+	return sessionResponse(roots, err)
+}
+
+//export OC_ConfigureAttachmentRoots
+func OC_ConfigureAttachmentRoots(handle C.ulonglong, requestJSON *C.char) *C.char {
+	s, err := sessionFor(uint64(handle))
+	if err != nil {
+		return sessionResponse(nil, err)
+	}
+	if requestJSON == nil {
+		return sessionResponse(nil, desktop.ErrRequest)
+	}
+	raw := C.GoString(requestJSON)
+	if len(raw) > 65536 {
+		return sessionResponse(nil, desktop.ErrRequest)
+	}
+	var request desktop.AttachmentRootsRequest
+	if analysis.StrictJSON([]byte(raw), &request) != nil {
+		return sessionResponse(nil, desktop.ErrRequest)
+	}
+	roots, err := s.ConfigureAttachmentRoots(request)
+	return sessionResponse(roots, err)
 }

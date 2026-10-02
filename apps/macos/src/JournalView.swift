@@ -246,7 +246,7 @@ private struct DirectiveCard: View {
         return language.text(names[name] ?? name, name)
     }
     private func attachmentStatus(_ status: String) -> String {
-        let names = ["available":"可用", "missing":"文件不存在", "outside-root":"超出账本目录", "unsupported-kind":"不是普通文件", "unreadable":"无法读取"]
+        let names = ["available":"可用", "missing":"文件不存在", "outside-root":"超出允许目录", "unsupported-kind":"不是普通文件", "unreadable":"无法读取"]
         let english = ["available":"Available", "missing":"Missing file", "outside-root":"Outside ledger folder", "unsupported-kind":"Not a regular file", "unreadable":"Unreadable"]
         return language.text(names[status] ?? status, english[status] ?? status)
     }

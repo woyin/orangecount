@@ -78,6 +78,7 @@ struct ContentView: View {
                     Picker("Language", selection: $store.request.locale) { Text("中文").tag("zh-CN"); Text("English").tag("en") }.labelsHidden().frame(width: 95)
                     Button(action: store.reloadSilently) { Image(systemName: "arrow.clockwise") }
                         .disabled(store.state == nil).help(language.text("重新校验 (⌘R)", "Reload (⌘R)"))
+                    Button("附件目录… / Attachment directories…") { store.showAttachmentRootsSheet = true }.disabled(store.attachmentRoots == nil)
                     Button(action: selectFile) { Label(language.text("打开…", "Open…"), systemImage: "folder.badge.plus") }.buttonStyle(.borderedProminent)
                 }.padding(.horizontal, 20).padding(.vertical, 12).background(.ultraThinMaterial)
                 Divider()
@@ -139,6 +140,7 @@ struct ContentView: View {
         }
         .frame(minWidth: 900, minHeight: 600)
         .font(LedgerFonts.font(.body))
+        .sheet(isPresented: $store.showAttachmentRootsSheet) { AttachmentRootsView(store: store) }
         .sheet(isPresented: $store.showDiagnosticsSheet) {
             if let summary = store.summary { DiagnosticsSheetView(summary: summary, retry: store.reloadSilently).environment(\.ledgerLanguage, language) }
         }

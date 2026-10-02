@@ -226,3 +226,7 @@ Python plugin声明和外部工具依赖可能改变账本含义；未纳入声�
 - 原生协议升级3；菜单明确区分完整投影与当前页，面板显示捕获期间、会计语义、记录数和估值状态。源/附件保护仍在最终保存前刷新。
 
 报表捕获增加独立capture_id与OC_CancelReportExport控制；序列化遍历/实际输出检查Go Context，原生取消不排队在捕获后。提前取消记录有32项上限，活跃捕获最多16，关闭取消活跃工作。接口调用的尝试身份与可重复使用的projection_id分开。
+
+## F02实施修订
+
+原生协议升级4；共享Session策略锁保护每页完整附件观察，出版会计快照不因根变化重建。引用ID包含snapshot，缓存最多8192项，淘汰后需刷新。当前非沙盒普通bookmark核对stale与device/inode；未来沙盒security-scoped实现仍需独立构建验收。Finder alias由原生启动前显式拒绝，Go不解析alias。
