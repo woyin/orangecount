@@ -97,19 +97,17 @@ func evaluateTyped(text string, evaluation ledger.Evaluation, rowCeiling int, bu
 		return TypedResult{}, locatedQueryError(err, nil, "parse")
 	}
 	result := TypedResult{Contract: CurrentContract, Columns: make([]Column, 0), Rows: make([][]Cell, 0)}
-	if canonicalTable(q.From) != "postings" {
-		code := "unsupported-capability"
-		if canonicalTable(q.From) == "" {
-			code = "unknown-table"
-		}
-		return TypedResult{}, locatedQueryError(typedFailure(code, "unsupported typed source %q", q.From), q.fromSpan, "compile")
+	table := canonicalTable(q.From)
+	if table == "" {
+		return TypedResult{}, locatedQueryError(typedFailure("unknown-table", "unknown typed source %q", q.From), q.fromSpan, "compile")
 	}
+	compiler := typedCompiler{table: table}
 	if err := resolveTypedAliases(&q); err != nil {
 		return TypedResult{}, err
 	}
 	balanceTargets := []typedExpr{}
 	if q.Where != nil {
-		compiled, err := compileTyped(q.Where)
+		compiled, err := compiler.compile(q.Where)
 		if err != nil {
 			return TypedResult{}, err
 		}
@@ -125,7 +123,7 @@ func evaluateTyped(text string, evaluation ledger.Evaluation, rowCeiling int, bu
 		}}
 	}
 	for i, expr := range q.GroupBy {
-		compiled, err := compileTyped(expr)
+		compiled, err := compiler.compile(expr)
 		if err != nil {
 			return TypedResult{}, err
 		}
@@ -135,7 +133,7 @@ func evaluateTyped(text string, evaluation ledger.Evaluation, rowCeiling int, bu
 		q.GroupBy[i] = compiled
 	}
 	for i, item := range q.OrderBy {
-		compiled, err := compileTyped(item.Expr)
+		compiled, err := compiler.compile(item.Expr)
 		if err != nil {
 			return TypedResult{}, err
 		}
@@ -145,7 +143,7 @@ func evaluateTyped(text string, evaluation ledger.Evaluation, rowCeiling int, bu
 		q.OrderBy[i].Expr = compiled
 	}
 	for i, item := range q.Select {
-		compiled, err := compileTyped(item.Expr)
+		compiled, err := compiler.compile(item.Expr)
 		if err != nil {
 			return TypedResult{}, err
 		}
@@ -194,7 +192,7 @@ func evaluateTyped(text string, evaluation ledger.Evaluation, rowCeiling int, bu
 	if rowCeiling > 0 && (q.Limit == 0 || q.Limit > rowCeiling) {
 		q.Limit = rowCeiling
 	}
-	rows, err := postingRowsWithBudget(evaluation, true, budget)
+	rows, err := standardRows(table, evaluation, budget)
 	if err != nil {
 		return TypedResult{}, err
 	}
@@ -257,8 +255,10 @@ func (e typedExpr) aggregate() bool                       { return e.grouped }
 func (e typedExpr) eval(row Row, rows []Row) (any, error) { return e.value(row, rows) }
 
 // compileTyped binds types independently of data rows, including empty input.
-func compileTyped(expr Expr) (typedExpr, error) {
-	compiled, err := compileTypedNode(expr)
+type typedCompiler struct{ table string }
+
+func (compiler typedCompiler) compile(expr Expr) (typedExpr, error) {
+	compiled, err := compiler.compileNode(expr)
 	if err != nil {
 		return typedExpr{}, locatedQueryError(err, expressionRange(expr), "compile")
 	}
@@ -289,14 +289,22 @@ func compileTyped(expr Expr) (typedExpr, error) {
 	return compiled, nil
 }
 
-func compileTypedNode(expr Expr) (typedExpr, error) {
+func (compiler typedCompiler) compileNode(expr Expr) (typedExpr, error) {
 	result := typedExpr{name: expr.String(), value: expr.eval}
 	switch node := expr.(type) {
 	case fieldExpr:
+		if compiler.table != "postings" {
+			column, exists := scalarTableSchemas[compiler.table][strings.ToLower(node.name)]
+			if !exists {
+				return typedExpr{}, typedFailure("unknown-column", "unknown typed column %q on %s", node.name, compiler.table)
+			}
+			result.kind, result.nullable = column.kind, column.nullable
+			return result, nil
+		}
 		switch strings.ToLower(node.name) {
 		case "account":
 			result.kind = "string"
-		case "currency", "narration", "flag":
+		case "currency", "narration", "flag", "type", "description":
 			result.kind = "string"
 		case "date":
 			result.kind = "date"
@@ -323,7 +331,7 @@ func compileTypedNode(expr Expr) (typedExpr, error) {
 			result.kind = "position"
 		case "weight":
 			result.kind = "amount"
-		case "filename":
+		case "payee", "posting_flag", "location", "filename":
 			result.kind, result.nullable = "string", true
 		case "lineno":
 			result.kind, result.nullable = "integer", true
@@ -353,14 +361,14 @@ func compileTypedNode(expr Expr) (typedExpr, error) {
 			return typedExpr{}, typedFailure("unsupported-capability", "unsupported typed literal %q", node.display)
 		}
 	case parenExpr:
-		inner, err := compileTyped(node.inner)
+		inner, err := compiler.compile(node.inner)
 		if err != nil {
 			return typedExpr{}, err
 		}
 		result.kind, result.nullable, result.grouped, result.value = inner.kind, inner.nullable, inner.grouped, inner.value
 		result.text = inner.text
 	case unaryExpr:
-		inner, err := compileTyped(node.inner)
+		inner, err := compiler.compile(node.inner)
 		if err != nil {
 			return typedExpr{}, err
 		}
@@ -413,11 +421,11 @@ func compileTypedNode(expr Expr) (typedExpr, error) {
 			})
 		}
 	case binaryExpr:
-		left, err := compileTyped(node.left)
+		left, err := compiler.compile(node.left)
 		if err != nil {
 			return typedExpr{}, err
 		}
-		right, err := compileTyped(node.right)
+		right, err := compiler.compile(node.right)
 		if err != nil {
 			return typedExpr{}, err
 		}
@@ -571,11 +579,11 @@ func compileTypedNode(expr Expr) (typedExpr, error) {
 		}
 		if len(node.args) != 1 {
 			if node.name == "date" && len(node.args) == 3 {
-				return compileDateConstructor(node)
+				return compiler.compileDateConstructor(node)
 			}
 			return typedExpr{}, typedFailure("type-mismatch", "no typed signature for %s with %d arguments", node.name, len(node.args))
 		}
-		arg, err := compileTyped(node.args[0])
+		arg, err := compiler.compile(node.args[0])
 		if err != nil {
 			return typedExpr{}, err
 		}

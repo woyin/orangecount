@@ -23,7 +23,7 @@ func SerializeTransaction(txn *ledger.Transaction) string {
 	head.WriteString(txn.Date.Raw)
 	head.WriteString(" ")
 	head.WriteString(flagOrDefault(txn.Flag))
-	if txn.Payee != "" {
+	if txn.Payee != "" || txn.HasPayee {
 		head.WriteString(" ")
 		head.WriteString(strconv.Quote(txn.Payee))
 	}
@@ -179,7 +179,7 @@ func serializeSingleLine(txn *ledger.Transaction, negative, positive ledger.Post
 	line.WriteString(negative.Account)
 	line.WriteString(" -> @")
 	line.WriteString(positive.Account)
-	if txn.Payee != "" {
+	if txn.Payee != "" || txn.HasPayee {
 		line.WriteString(" ")
 		line.WriteString(strconv.Quote(txn.Payee))
 	}
@@ -202,7 +202,7 @@ func writeBlockHeader(block *strings.Builder, txn *ledger.Transaction) {
 	block.WriteString(canonicalDate(txn.Date))
 	block.WriteString(" ")
 	block.WriteString(flagOrDefault(txn.Flag))
-	if txn.Payee != "" {
+	if txn.Payee != "" || txn.HasPayee {
 		block.WriteString(" ")
 		block.WriteString(strconv.Quote(txn.Payee))
 	}
@@ -489,7 +489,7 @@ func writeInvestmentHeader(block *strings.Builder, txn *ledger.Transaction) {
 	block.WriteString(canonicalDate(txn.Date))
 	block.WriteString(" ")
 	block.WriteString(flagOrDefault(txn.Flag))
-	if txn.Payee != "" {
+	if txn.Payee != "" || txn.HasPayee {
 		block.WriteString(" ")
 		block.WriteString(strconv.Quote(txn.Payee))
 	}

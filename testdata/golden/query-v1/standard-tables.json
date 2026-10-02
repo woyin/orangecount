@@ -1,0 +1,1329 @@
+{
+  "schema_version": 2,
+  "oracle": {
+    "beancount": "3.2.3",
+    "beanquery": "0.2.0"
+  },
+  "fixture": "testdata/fixtures/query/standard-tables.bean",
+  "input_sha256": "ee91b307aa46d30ab3911111bbb66dc358b71667b1d7cb267fbe2d9401af7d7a",
+  "queries_sha256": "6f37fc09c07a29d24c9c95c1730508ab3951afbd6dd97b81153ac9b6dcb03db4",
+  "sources_sha256": {
+    "testdata/fixtures/query/standard-tables.bean": "ee91b307aa46d30ab3911111bbb66dc358b71667b1d7cb267fbe2d9401af7d7a"
+  },
+  "cases": [
+    {
+      "id": "entries-scalar",
+      "query": "SELECT type,date,year,month,day,flag,payee,narration,description FROM #entries",
+      "result": {
+        "columns": [
+          {
+            "name": "type",
+            "type": "string"
+          },
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "year",
+            "type": "integer"
+          },
+          {
+            "name": "month",
+            "type": "integer"
+          },
+          {
+            "name": "day",
+            "type": "integer"
+          },
+          {
+            "name": "flag",
+            "type": "string"
+          },
+          {
+            "name": "payee",
+            "type": "string"
+          },
+          {
+            "name": "narration",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "open"
+            },
+            {
+              "type": "date",
+              "value": "2000-01-01"
+            },
+            {
+              "type": "integer",
+              "value": "2000"
+            },
+            {
+              "type": "integer",
+              "value": "1"
+            },
+            {
+              "type": "integer",
+              "value": "1"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "open"
+            },
+            {
+              "type": "date",
+              "value": "2000-01-01"
+            },
+            {
+              "type": "integer",
+              "value": "2000"
+            },
+            {
+              "type": "integer",
+              "value": "1"
+            },
+            {
+              "type": "integer",
+              "value": "1"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "commodity"
+            },
+            {
+              "type": "date",
+              "value": "2000-01-01"
+            },
+            {
+              "type": "integer",
+              "value": "2000"
+            },
+            {
+              "type": "integer",
+              "value": "1"
+            },
+            {
+              "type": "integer",
+              "value": "1"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "transaction"
+            },
+            {
+              "type": "date",
+              "value": "2000-01-02"
+            },
+            {
+              "type": "integer",
+              "value": "2000"
+            },
+            {
+              "type": "integer",
+              "value": "1"
+            },
+            {
+              "type": "integer",
+              "value": "2"
+            },
+            {
+              "type": "string",
+              "value": "*"
+            },
+            {
+              "type": "string",
+              "value": "shop"
+            },
+            {
+              "type": "string",
+              "value": "lunch"
+            },
+            {
+              "type": "string",
+              "value": "shop | lunch"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "balance"
+            },
+            {
+              "type": "date",
+              "value": "2000-01-03"
+            },
+            {
+              "type": "integer",
+              "value": "2000"
+            },
+            {
+              "type": "integer",
+              "value": "1"
+            },
+            {
+              "type": "integer",
+              "value": "3"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "note"
+            },
+            {
+              "type": "date",
+              "value": "2000-01-03"
+            },
+            {
+              "type": "integer",
+              "value": "2000"
+            },
+            {
+              "type": "integer",
+              "value": "1"
+            },
+            {
+              "type": "integer",
+              "value": "3"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "event"
+            },
+            {
+              "type": "date",
+              "value": "2000-01-03"
+            },
+            {
+              "type": "integer",
+              "value": "2000"
+            },
+            {
+              "type": "integer",
+              "value": "1"
+            },
+            {
+              "type": "integer",
+              "value": "3"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "price"
+            },
+            {
+              "type": "date",
+              "value": "2000-01-03"
+            },
+            {
+              "type": "integer",
+              "value": "2000"
+            },
+            {
+              "type": "integer",
+              "value": "1"
+            },
+            {
+              "type": "integer",
+              "value": "3"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "document"
+            },
+            {
+              "type": "date",
+              "value": "2000-01-03"
+            },
+            {
+              "type": "integer",
+              "value": "2000"
+            },
+            {
+              "type": "integer",
+              "value": "1"
+            },
+            {
+              "type": "integer",
+              "value": "3"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "transaction"
+            },
+            {
+              "type": "date",
+              "value": "2000-01-04"
+            },
+            {
+              "type": "integer",
+              "value": "2000"
+            },
+            {
+              "type": "integer",
+              "value": "1"
+            },
+            {
+              "type": "integer",
+              "value": "4"
+            },
+            {
+              "type": "string",
+              "value": "*"
+            },
+            {
+              "type": "string",
+              "value": ""
+            },
+            {
+              "type": "string",
+              "value": "explicit empty"
+            },
+            {
+              "type": "string",
+              "value": "explicit empty"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "entries-empty",
+      "query": "SELECT type,date,year,month,day,flag,payee,narration,description FROM #entries LIMIT 0",
+      "result": {
+        "columns": [
+          {
+            "name": "type",
+            "type": "string"
+          },
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "year",
+            "type": "integer"
+          },
+          {
+            "name": "month",
+            "type": "integer"
+          },
+          {
+            "name": "day",
+            "type": "integer"
+          },
+          {
+            "name": "flag",
+            "type": "string"
+          },
+          {
+            "name": "payee",
+            "type": "string"
+          },
+          {
+            "name": "narration",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          }
+        ],
+        "rows": []
+      }
+    },
+    {
+      "id": "entries-count",
+      "query": "SELECT count(*) FROM #entries",
+      "result": {
+        "columns": [
+          {
+            "name": "count(*)",
+            "type": "integer"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "integer",
+              "value": "10"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "transactions-scalar",
+      "query": "SELECT date,flag,payee,narration FROM #transactions",
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "flag",
+            "type": "string"
+          },
+          {
+            "name": "payee",
+            "type": "string"
+          },
+          {
+            "name": "narration",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "date",
+              "value": "2000-01-02"
+            },
+            {
+              "type": "string",
+              "value": "*"
+            },
+            {
+              "type": "string",
+              "value": "shop"
+            },
+            {
+              "type": "string",
+              "value": "lunch"
+            }
+          ],
+          [
+            {
+              "type": "date",
+              "value": "2000-01-04"
+            },
+            {
+              "type": "string",
+              "value": "*"
+            },
+            {
+              "type": "string",
+              "value": ""
+            },
+            {
+              "type": "string",
+              "value": "explicit empty"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "transactions-empty",
+      "query": "SELECT date,flag,payee,narration FROM #transactions LIMIT 0",
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "flag",
+            "type": "string"
+          },
+          {
+            "name": "payee",
+            "type": "string"
+          },
+          {
+            "name": "narration",
+            "type": "string"
+          }
+        ],
+        "rows": []
+      }
+    },
+    {
+      "id": "transactions-count",
+      "query": "SELECT count(*) FROM #transactions",
+      "result": {
+        "columns": [
+          {
+            "name": "count(*)",
+            "type": "integer"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "integer",
+              "value": "2"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "accounts-scalar",
+      "query": "SELECT account FROM #accounts",
+      "result": {
+        "columns": [
+          {
+            "name": "account",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "Assets:Cash"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Equity:Opening"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "accounts-empty",
+      "query": "SELECT account FROM #accounts LIMIT 0",
+      "result": {
+        "columns": [
+          {
+            "name": "account",
+            "type": "string"
+          }
+        ],
+        "rows": []
+      }
+    },
+    {
+      "id": "accounts-count",
+      "query": "SELECT count(*) FROM #accounts",
+      "result": {
+        "columns": [
+          {
+            "name": "count(*)",
+            "type": "integer"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "integer",
+              "value": "2"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "commodities-scalar",
+      "query": "SELECT date,name FROM #commodities",
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "date",
+              "value": "2000-01-01"
+            },
+            {
+              "type": "string",
+              "value": "USD"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "commodities-empty",
+      "query": "SELECT date,name FROM #commodities LIMIT 0",
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          }
+        ],
+        "rows": []
+      }
+    },
+    {
+      "id": "commodities-count",
+      "query": "SELECT count(*) FROM #commodities",
+      "result": {
+        "columns": [
+          {
+            "name": "count(*)",
+            "type": "integer"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "integer",
+              "value": "1"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "balances-scalar",
+      "query": "SELECT date,account,amount,tolerance,discrepancy FROM #balances",
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "account",
+            "type": "string"
+          },
+          {
+            "name": "amount",
+            "type": "amount"
+          },
+          {
+            "name": "tolerance",
+            "type": "decimal"
+          },
+          {
+            "name": "discrepancy",
+            "type": "amount"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "date",
+              "value": "2000-01-03"
+            },
+            {
+              "type": "string",
+              "value": "Assets:Cash"
+            },
+            {
+              "type": "amount",
+              "value": {
+                "number": "2",
+                "currency": "USD"
+              }
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "balances-empty",
+      "query": "SELECT date,account,amount,tolerance,discrepancy FROM #balances LIMIT 0",
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "account",
+            "type": "string"
+          },
+          {
+            "name": "amount",
+            "type": "amount"
+          },
+          {
+            "name": "tolerance",
+            "type": "decimal"
+          },
+          {
+            "name": "discrepancy",
+            "type": "amount"
+          }
+        ],
+        "rows": []
+      }
+    },
+    {
+      "id": "balances-count",
+      "query": "SELECT count(*) FROM #balances",
+      "result": {
+        "columns": [
+          {
+            "name": "count(*)",
+            "type": "integer"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "integer",
+              "value": "1"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "notes-scalar",
+      "query": "SELECT date,account,comment FROM #notes",
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "account",
+            "type": "string"
+          },
+          {
+            "name": "comment",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "date",
+              "value": "2000-01-03"
+            },
+            {
+              "type": "string",
+              "value": "Assets:Cash"
+            },
+            {
+              "type": "string",
+              "value": "hello"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "notes-empty",
+      "query": "SELECT date,account,comment FROM #notes LIMIT 0",
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "account",
+            "type": "string"
+          },
+          {
+            "name": "comment",
+            "type": "string"
+          }
+        ],
+        "rows": []
+      }
+    },
+    {
+      "id": "notes-count",
+      "query": "SELECT count(*) FROM #notes",
+      "result": {
+        "columns": [
+          {
+            "name": "count(*)",
+            "type": "integer"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "integer",
+              "value": "1"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "events-scalar",
+      "query": "SELECT date,type,description FROM #events",
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "type",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "date",
+              "value": "2000-01-03"
+            },
+            {
+              "type": "string",
+              "value": "location"
+            },
+            {
+              "type": "string",
+              "value": "home"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "events-empty",
+      "query": "SELECT date,type,description FROM #events LIMIT 0",
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "type",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          }
+        ],
+        "rows": []
+      }
+    },
+    {
+      "id": "events-count",
+      "query": "SELECT count(*) FROM #events",
+      "result": {
+        "columns": [
+          {
+            "name": "count(*)",
+            "type": "integer"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "integer",
+              "value": "1"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "documents-scalar",
+      "query": "SELECT date,account,filename FROM #documents",
+      "source_columns": [
+        2
+      ],
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "account",
+            "type": "string"
+          },
+          {
+            "name": "filename",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "date",
+              "value": "2000-01-03"
+            },
+            {
+              "type": "string",
+              "value": "Assets:Cash"
+            },
+            {
+              "type": "string",
+              "value": "standard-tables-receipt.txt"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "documents-empty",
+      "query": "SELECT date,account,filename FROM #documents LIMIT 0",
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "account",
+            "type": "string"
+          },
+          {
+            "name": "filename",
+            "type": "string"
+          }
+        ],
+        "rows": []
+      }
+    },
+    {
+      "id": "documents-count",
+      "query": "SELECT count(*) FROM #documents",
+      "result": {
+        "columns": [
+          {
+            "name": "count(*)",
+            "type": "integer"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "integer",
+              "value": "1"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "prices-scalar",
+      "query": "SELECT date,currency,amount FROM #prices",
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "currency",
+            "type": "string"
+          },
+          {
+            "name": "amount",
+            "type": "amount"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "date",
+              "value": "2000-01-03"
+            },
+            {
+              "type": "string",
+              "value": "USD"
+            },
+            {
+              "type": "amount",
+              "value": {
+                "number": "7",
+                "currency": "CNY"
+              }
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "prices-empty",
+      "query": "SELECT date,currency,amount FROM #prices LIMIT 0",
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "currency",
+            "type": "string"
+          },
+          {
+            "name": "amount",
+            "type": "amount"
+          }
+        ],
+        "rows": []
+      }
+    },
+    {
+      "id": "prices-count",
+      "query": "SELECT count(*) FROM #prices",
+      "result": {
+        "columns": [
+          {
+            "name": "count(*)",
+            "type": "integer"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "integer",
+              "value": "1"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "entries-metadata-location",
+      "query": "SELECT filename,lineno FROM #entries",
+      "source_columns": [
+        0
+      ],
+      "result": {
+        "columns": [
+          {
+            "name": "filename",
+            "type": "string"
+          },
+          {
+            "name": "lineno",
+            "type": "integer"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "standard-tables.bean"
+            },
+            {
+              "type": "integer",
+              "value": "1"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "standard-tables.bean"
+            },
+            {
+              "type": "integer",
+              "value": "2"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "standard-tables.bean"
+            },
+            {
+              "type": "integer",
+              "value": "3"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "standard-tables.bean"
+            },
+            {
+              "type": "integer",
+              "value": "4"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "standard-tables.bean"
+            },
+            {
+              "type": "integer",
+              "value": "7"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "standard-tables.bean"
+            },
+            {
+              "type": "integer",
+              "value": "8"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "standard-tables.bean"
+            },
+            {
+              "type": "integer",
+              "value": "9"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "standard-tables.bean"
+            },
+            {
+              "type": "integer",
+              "value": "11"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "standard-tables.bean"
+            },
+            {
+              "type": "integer",
+              "value": "10"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "standard-tables.bean"
+            },
+            {
+              "type": "integer",
+              "value": "12"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "events-bad-column",
+      "query": "SELECT account FROM #events LIMIT 0",
+      "error": {
+        "class": "CompilationError",
+        "code": "unknown-column"
+      }
+    },
+    {
+      "id": "quoted-source-filter",
+      "query": "SELECT description FROM \"events\" WHERE type = 'location'",
+      "result": {
+        "columns": [
+          {
+            "name": "description",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "home"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "entries-empty-source",
+      "query": "SELECT count(*) FROM #entries WHERE date > 2099-01-01",
+      "result": {
+        "columns": [
+          {
+            "name": "count(*)",
+            "type": "integer"
+          }
+        ],
+        "rows": []
+      }
+    },
+    {
+      "id": "transaction-payee-null-empty",
+      "query": "SELECT payee FROM #transactions WHERE date = 2000-01-04",
+      "result": {
+        "columns": [
+          {
+            "name": "payee",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": ""
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "posting-payee-null-empty",
+      "query": "SELECT payee FROM #postings WHERE date = 2000-01-04",
+      "result": {
+        "columns": [
+          {
+            "name": "payee",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": ""
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": ""
+            }
+          ]
+        ]
+      }
+    }
+  ]
+}

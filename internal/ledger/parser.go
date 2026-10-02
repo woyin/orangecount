@@ -746,6 +746,7 @@ func (p *parser) parseTransaction(date Date, ts []token) {
 		tx.Narration = stringsFound[0]
 	} else if len(stringsFound) >= 2 {
 		tx.Payee, tx.Narration = stringsFound[0], stringsFound[1]
+		tx.HasPayee = true
 		if len(stringsFound) > 2 {
 			p.add("E-PARSE-EXPECTED", diagnostic.Error, ts[len(ts)-1].span)
 		}

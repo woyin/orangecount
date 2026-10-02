@@ -541,6 +541,15 @@ struct ContractTests {
                    "Successful zero rows retain their declared schema")
         print("PASS: query snapshot identity, duplicate titles, typed scalar/compound/NULL, zero rows, failed executions and queued cancellation cross real C/Swift")
         print("PASS: malformed query widths, column IDs, cell types, NULL shape, nullable fields and row metadata are rejected")
+        let tables = try bridge.openLedger(path: root + "/testdata/fixtures/query/standard-tables.bean", semantics: "v3")
+        defer { try? bridge.closeLedger(handle: tables.handle) }
+        let reads: [(String, Int)] = [("SELECT type FROM #entries", 10), ("SELECT payee FROM #transactions", 2), ("SELECT account FROM #accounts", 2), ("SELECT name FROM #commodities", 1), ("SELECT amount FROM #balances", 1), ("SELECT comment FROM #notes", 1), ("SELECT description FROM #events", 1), ("SELECT filename FROM #documents", 1), ("SELECT amount FROM #prices", 1)]
+        for (index, read) in reads.enumerated() {
+            let response = try bridge.executeQuery(handle: tables.handle, request: QueryRequest(snapshot_id: tables.state.snapshot_id, request_id: UInt64(index + 1), text: read.0))
+            try expect(response.error == nil && response.execution?.result.rows.count == read.1, "Standard source must cross C/Swift: \(read.0)")
+        }
+        print("PASS: standard scalar ledger tables and typed Amount cells cross real C/Swift")
+
     }
 
 }

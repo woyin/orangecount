@@ -62,11 +62,11 @@ func castInteger(value any) (any, error) {
 	}
 }
 
-func compileDateConstructor(node functionExpr) (typedExpr, error) {
+func (compiler typedCompiler) compileDateConstructor(node functionExpr) (typedExpr, error) {
 	args := make([]typedExpr, len(node.args))
 	result := typedExpr{name: node.String(), kind: "date", nullable: true}
 	for i, expr := range node.args {
-		compiled, err := compileTyped(expr)
+		compiled, err := compiler.compile(expr)
 		if err != nil {
 			return typedExpr{}, err
 		}

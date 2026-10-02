@@ -558,6 +558,7 @@ func postingRowsWithBudget(evaluation ledger.Evaluation, standard bool, budget *
 			}
 			if standard {
 				if posting.Units != nil {
+					row["_payee_present"] = transaction.HasPayee || transaction.Payee != ""
 					row["_number_source"] = posting.Units.Number
 					position := queryPosition(posting)
 					row["position"] = position
@@ -818,6 +819,9 @@ func (p *queryParser) parse() (Query, error) {
 	if p.acceptWord("from") {
 		sourceToken := p.peek()
 		from, err := p.expectWord("table name")
+		if sourceToken.kind == tokenString && p.defaultPostings {
+			from, err = sourceToken.text, nil
+		}
 		if err != nil {
 			return query, err
 		}
@@ -1376,7 +1380,8 @@ func walkFields(expr Expr, visit func(string)) {
 
 // canonicalTable normalizes a FROM spelling to its schema key.
 func canonicalTable(from string) string {
-	switch strings.ToLower(strings.TrimSpace(from)) {
+	from = strings.TrimPrefix(strings.TrimSpace(from), "#")
+	switch strings.ToLower(from) {
 	case "postings", "posting":
 		return "postings"
 	case "entries", "entry", "directives":
@@ -1385,6 +1390,8 @@ func canonicalTable(from string) string {
 		return "accounts"
 	case "prices", "price":
 		return "prices"
+	case "transactions", "balances", "notes", "events", "documents", "commodities":
+		return strings.ToLower(strings.TrimSpace(from))
 	default:
 		return ""
 	}

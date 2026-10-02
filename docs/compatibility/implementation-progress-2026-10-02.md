@@ -27,3 +27,11 @@ S01–S03 还需要 symlink 别名/目录循环、更多 metadata 非数字覆�
 查询当前 typed 执行仍只支持 postings，Q10–Q14 未完成：全部标准表、字典/集合/结构化值、非有限 Decimal、全函数和运算符重载、子查询、HAVING、DISTINCT、PIVOT 及命令生态均需继续按设计实施。V01/V02 与默认 v3 迁移 M01 也未完成。现阶段不宣称完整兼容或 Beancount 的超集。
 
 Glob 源加载不自动放开 glob 源导出；导出映射及原子发布另行验收，保持现有保守拒绝。
+
+## Q10 首批标量表切片
+
+已实现 typed 表级编译上下文及取数接口，支持 entries、transactions、accounts、commodities、balances、notes、events、documents、prices 的标量字段查询。列名在读行之前绑定到所选表，非法列在零行或 LIMIT 0 时也拒绝。标准 `#table` 与双引号源名可执行。prices/balances 的 amount 使用既有精确金额 wire；document 文件名与上游一致解析为绝对路径。AST 记录显式 payee 的存在，避免空字符串变为 NULL，标准源导出也保持该区别。
+
+此处只交付表的标量部分，**Q10 未封口**：id/hash、结构化 open/close、meta、集合、transaction entry 等字段依赖后续类型与函数切片。全标准表字段与 wildcard 仍需补齐，不把未实现字段归为契约外。
+
+当前增量验证：33 个新独立 Python query goldens 加入原 215 个案例，共 248 个零差异；51 个账务差分通过。Go 全量、vet、query/desktop/bridge/dialect race 通过；四组原生测试通过，新增标准表及 Amount 返回值真实 Swift/C 检查通过；旧 query goldens `--check` 全部通过；源导出 35 个 roundtrip、71 个库存前缀及 6 个拒绝通过。FinanceBook 使用本次新 C archive/Swift probe 再次只读验证，仍为 47 文件、2836 entries、零账务/库存差异，原生契约及价格/持仓检查通过。

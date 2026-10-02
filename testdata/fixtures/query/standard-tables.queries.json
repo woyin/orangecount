@@ -1,0 +1,144 @@
+[
+  {
+    "id": "entries-scalar",
+    "query": "SELECT type,date,year,month,day,flag,payee,narration,description FROM #entries"
+  },
+  {
+    "id": "entries-empty",
+    "query": "SELECT type,date,year,month,day,flag,payee,narration,description FROM #entries LIMIT 0"
+  },
+  {
+    "id": "entries-count",
+    "query": "SELECT count(*) FROM #entries"
+  },
+  {
+    "id": "transactions-scalar",
+    "query": "SELECT date,flag,payee,narration FROM #transactions"
+  },
+  {
+    "id": "transactions-empty",
+    "query": "SELECT date,flag,payee,narration FROM #transactions LIMIT 0"
+  },
+  {
+    "id": "transactions-count",
+    "query": "SELECT count(*) FROM #transactions"
+  },
+  {
+    "id": "accounts-scalar",
+    "query": "SELECT account FROM #accounts"
+  },
+  {
+    "id": "accounts-empty",
+    "query": "SELECT account FROM #accounts LIMIT 0"
+  },
+  {
+    "id": "accounts-count",
+    "query": "SELECT count(*) FROM #accounts"
+  },
+  {
+    "id": "commodities-scalar",
+    "query": "SELECT date,name FROM #commodities"
+  },
+  {
+    "id": "commodities-empty",
+    "query": "SELECT date,name FROM #commodities LIMIT 0"
+  },
+  {
+    "id": "commodities-count",
+    "query": "SELECT count(*) FROM #commodities"
+  },
+  {
+    "id": "balances-scalar",
+    "query": "SELECT date,account,amount,tolerance,discrepancy FROM #balances"
+  },
+  {
+    "id": "balances-empty",
+    "query": "SELECT date,account,amount,tolerance,discrepancy FROM #balances LIMIT 0"
+  },
+  {
+    "id": "balances-count",
+    "query": "SELECT count(*) FROM #balances"
+  },
+  {
+    "id": "notes-scalar",
+    "query": "SELECT date,account,comment FROM #notes"
+  },
+  {
+    "id": "notes-empty",
+    "query": "SELECT date,account,comment FROM #notes LIMIT 0"
+  },
+  {
+    "id": "notes-count",
+    "query": "SELECT count(*) FROM #notes"
+  },
+  {
+    "id": "events-scalar",
+    "query": "SELECT date,type,description FROM #events"
+  },
+  {
+    "id": "events-empty",
+    "query": "SELECT date,type,description FROM #events LIMIT 0"
+  },
+  {
+    "id": "events-count",
+    "query": "SELECT count(*) FROM #events"
+  },
+  {
+    "id": "documents-scalar",
+    "query": "SELECT date,account,filename FROM #documents",
+    "source_columns": [
+      2
+    ]
+  },
+  {
+    "id": "documents-empty",
+    "query": "SELECT date,account,filename FROM #documents LIMIT 0"
+  },
+  {
+    "id": "documents-count",
+    "query": "SELECT count(*) FROM #documents"
+  },
+  {
+    "id": "prices-scalar",
+    "query": "SELECT date,currency,amount FROM #prices"
+  },
+  {
+    "id": "prices-empty",
+    "query": "SELECT date,currency,amount FROM #prices LIMIT 0"
+  },
+  {
+    "id": "prices-count",
+    "query": "SELECT count(*) FROM #prices"
+  },
+  {
+    "id": "entries-metadata-location",
+    "query": "SELECT filename,lineno FROM #entries",
+    "source_columns": [
+      0
+    ]
+  },
+  {
+    "id": "events-bad-column",
+    "query": "SELECT account FROM #events LIMIT 0",
+    "error": {
+      "class": "CompilationError",
+      "code": "unknown-column"
+    }
+  },
+  {
+    "id": "quoted-source-filter",
+    "query": "SELECT description FROM \"events\" WHERE type = 'location'"
+  },
+  {
+    "id": "entries-empty-source",
+    "query": "SELECT count(*) FROM #entries WHERE date > 2099-01-01"
+  },
+  {
+    "id": "transaction-payee-null-empty",
+    "query": "SELECT payee FROM #transactions WHERE date = 2000-01-04"
+  },
+  {
+    "id": "posting-payee-null-empty",
+    "query": "SELECT payee FROM #postings WHERE date = 2000-01-04"
+  }
+]

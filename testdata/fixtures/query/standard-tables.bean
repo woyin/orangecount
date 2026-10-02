@@ -1,0 +1,14 @@
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Equity:Opening USD
+2000-01-01 commodity USD
+2000-01-02 * "shop" "lunch"
+  Assets:Cash 2 USD
+  Equity:Opening -2 USD
+2000-01-03 balance Assets:Cash 2 USD
+2000-01-03 note Assets:Cash "hello"
+2000-01-03 event "location" "home"
+2000-01-03 document Assets:Cash "standard-tables-receipt.txt"
+2000-01-03 price USD 7 CNY
+2000-01-04 * "" "explicit empty"
+  Assets:Cash 1 USD
+  Equity:Opening -1 USD

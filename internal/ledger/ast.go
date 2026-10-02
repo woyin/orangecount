@@ -297,9 +297,11 @@ func (Custom) Kind() DirectiveKind { return KindCustom }
 // metadata, and postings.
 type Transaction struct {
 	DirectiveBase
-	Date      Date
-	Flag      string
-	Payee     string
+	Date  Date
+	Flag  string
+	Payee string
+	// HasPayee preserves an explicit empty payee separately from absent payee.
+	HasPayee  bool
 	Narration string
 	Tags      []string
 	Links     []string
