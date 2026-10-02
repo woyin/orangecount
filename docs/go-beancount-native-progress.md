@@ -308,3 +308,5 @@ standard token/函数/字段错误范围已沿Go→真实C/Swift→NSTextView接
 ### 2026-10-02：首版交付收敛及当前阻断
 
 全指令 typed DTO、原生交易/all/config 模式、生成来源、分页与精确元数据已经接通；本轮修复捕获日期和标签显示，当前51会计/163查询、Go全量/四包race、原生四套与app检查通过，FinanceBook只读对照及真实Swift/C通过。窗口清理改为实际window close，最终app/开发ZIP生成并解压公开输入启动。私人GUI文件选择读取阻塞系统open，解压QA还观察到Open禁用；根因尚未确认，C/D完整验收未满足。见[本批证据](evidence/native-first-delivery-2026-10-02.md)与[使用说明](native-first-delivery-2026-10-02.md)。不能将开发产物、测试和私人GUI验收混为一谈。
+
+本批后续复核更正：final QA 的 FinanceBook 原路径读取已完成，实际核心6页、账户详情和计数查询通过，关闭窗口验证通过。系统open等待并非持续阻断，但首次等待根因及完整安装/性能仍未关闭。代码提交74272ff，开发ZIP与SHA256已生成；见同一证据的“后续复核”。用户介入delivery QA后停止操作该实例。
