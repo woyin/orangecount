@@ -20,3 +20,11 @@
 账本与附件保持只读。查询容器仍是v1，报表v2；旧reader不支持v2。仅单次捕获本投影，当前页不代表全集；嵌套批次/贡献列表也各自保留分页。文件不含源账本或附件副本，离线来源ID不能打开原源文件。
 
 尚未完成F02根配置、F03新增查询语义、F04源导出约束；完整N04/R01及发行任务保留。F01最终包、私人当前archive只读对照和各GUI入口记录在本文件后续追加，未执行项不能记通过。
+
+## 当前冻结与实际保存（源码280881c）
+
+最终独立reportfinalqa在公开cashflow.bean上实际保存资产负债表、损益、日记账、仪表盘、持仓、商品价格、账户概览共7个v2文件，界面均显示成功。独立analysisverify全部读回；日记账2交易/4posting，持仓unknown为unavailable。账户CSV与分析文件data.csv逐字节相同。实际取消sheet显示“已取消保存”，目标文件不存在。嵌套持仓/价格子section本轮自动与真实C覆盖，未逐项声称GUI验收完成。
+
+当前native archive只读FinanceBook对照通过：47文件、双方2836分录、0错误/额外/缺失/库存差异，Expenses73与Income22账户一致；native_checked/native_contract为true，3个持仓截至点与48项价格检查通过。未修改私人账本。
+
+0.1.2开发包对应280881c3f4c524e256684d1e7d029ba127318ecd、working_tree=clean。ZIP在仓库外解压后签名/架构/deployment/资源验证通过，build-info与原包一致。SHA-256：`eb5baca9250d6a777eb1544cedd5942377b331e81bcc7b2376f4136491a764f0`。这是ad hoc arm64开发包，旧系统实际兼容与完整安装验收仍未完成。
