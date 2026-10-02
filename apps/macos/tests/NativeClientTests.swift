@@ -75,6 +75,11 @@ struct NativeClientTests {
             await client.close(handle: opened.handle)
             guard rejected else { throw NativeClientFailure(message: "A cancelled queued request still entered the C client") }
             print("PASS: cancelled requests stop before C execution")
+            try await verifyQueryClient(root: root)
+            try await verifyQueryStore(root: root)
+            try await verifySavedQueries(root: root)
+            try await verifyQueryPresets(root: root)
+            try await verifyDirectiveNavigation(root: root)
             try await verifyStoreRecovery(root: root)
             try await verifyHoldingNavigation(root: root)
             try await verifyPriceNavigation(root: root)
@@ -82,6 +87,294 @@ struct NativeClientTests {
             print("FAIL: \(error)")
             exit(1)
         }
+    }
+
+    @MainActor static func verifySavedQueries(root: String) async throws {
+        let store = LedgerStore(preferences: nil, pollNanoseconds: 60_000_000_000)
+        defer { store.close() }
+        store.loadLedger(at: root + "/testdata/fixtures/native/queries.bean", semantics: "v3")
+        try await waitUntil("saved query ledger") { store.phase == .ready }
+        store.selectedNav = .query
+        store.updateFilters { $0.limit = 1 }
+        try await waitUntil("saved query catalogue") { store.queryCatalogue?.page.limit == 1 }
+        let included = store.queryCatalogue!.queries[0]
+        guard store.useSavedQuery(id: included.id), store.queryDraft == "SELECT unknown(number) LIMIT 0",
+              store.queryPhase == .idle, store.queryResponse == nil else {
+            throw NativeClientFailure(message: "Selecting saved query executed it or discarded invalid text")
+        }
+        store.queryCataloguePage(offset: 1)
+        try await waitUntil("first duplicate query") { store.queryCatalogue?.page.offset == 1 }
+        let first = store.queryCatalogue!.queries[0]
+        guard store.useSavedQuery(id: first.id), first.name == "同名", !store.useSavedQuery(id: included.id) else {
+            throw NativeClientFailure(message: "Saved query identity crossed catalogue page")
+        }
+        store.executeQuery()
+        try await waitUntil("saved query explicit execution") { store.queryPhase == .succeeded }
+        guard store.queryResponse?.context.text == "SELECT account LIMIT 0", store.queryResponse?.execution?.returned_rows == 0 else {
+            throw NativeClientFailure(message: "Saved query did not execute its exact draft")
+        }
+        store.queryCataloguePage(offset: 2)
+        try await waitUntil("second duplicate query") { store.queryCatalogue?.page.offset == 2 }
+        let second = store.queryCatalogue!.queries[0]
+        guard second.name == first.name, second.id != first.id, store.useSavedQuery(id: second.id),
+              store.queryDraft == "SELECT number LIMIT 1", store.queryDraftChanged,
+              store.queryResponse?.context.text == "SELECT account LIMIT 0" else {
+            throw NativeClientFailure(message: "Duplicate name selected wrong text or relabelled prior execution")
+        }
+        print("PASS: saved query sources, snapshot paging, duplicate names, draft-only selection and explicit execution")
+    }
+
+    @MainActor static func verifyQueryPresets(root: String) async throws {
+        let store = LedgerStore(preferences: nil, pollNanoseconds: 60_000_000_000)
+        defer { store.close() }
+        store.loadLedger(at: root + "/testdata/fixtures/query/presets.bean", semantics: "v3")
+        try await waitUntil("preset ledger") { store.phase == .ready }
+        store.selectedNav = .query
+        try await waitUntil("preset catalogue") { store.queryCatalogue?.presets.count == 4 }
+        let presets = store.queryCatalogue!.presets
+        guard !store.useQueryPreset(id: "unknown"), store.useQueryPreset(id: presets[0].id),
+              store.queryDraft == presets[0].text, store.queryPhase == .idle, store.queryResponse == nil else {
+            throw NativeClientFailure(message: "Preset selection executed or changed text")
+        }
+        store.executeQuery()
+        try await waitUntil("preset explicit execution") { store.queryPhase == .succeeded }
+        let executedID = store.queryResponse!.context.request_id
+        guard store.queryResponse?.execution?.returned_rows == 2,
+              store.useQueryPreset(id: presets[1].id), store.queryDraft == presets[1].text,
+              store.queryResponse?.context.request_id == executedID,
+              store.queryResponse?.context.text == presets[0].text, store.queryDraftChanged else {
+            throw NativeClientFailure(message: "Preset changed captured execution")
+        }
+        store.executeQuery()
+        try await waitUntil("expense preset explicit execution") { store.queryPhase == .succeeded && store.queryResponse?.context.text == presets[1].text }
+        guard store.queryResponse?.execution?.returned_rows == 2 else { throw NativeClientFailure(message: "Expense months lost") }
+        store.updateFilters { $0.window = "1m"; $0.date_from = ""; $0.date_to = "" }
+        try await waitUntil("resolved preset period") { store.queryCatalogue?.period?.date_from == "2000-02-01" }
+        let previous = store.queryResponse!.context.request_id
+        guard store.useQueryPreset(id: presets[0].id, inPeriod: true),
+              store.queryDraft.contains("date >= 2000-02-01 AND date <= 2000-02-21"),
+              store.queryResponse?.context.request_id == previous else {
+            throw NativeClientFailure(message: "Period selection executed or hid date bounds")
+        }
+        store.executeQuery()
+        try await waitUntil("period preset execution") { store.queryPhase == .succeeded && store.queryResponse?.context.text == store.queryDraft }
+        guard let periodExecution = store.queryResponse?.execution, periodExecution.returned_rows == 1,
+              case .integer(let month) = periodExecution.result.rows[0][1].value, month == "2" else {
+            throw NativeClientFailure(message: "Period preset did not filter to February")
+        }
+        print("PASS: native preset catalogue, draft-only selection, explicit monthly and captured period execution")
+    }
+
+    @MainActor static func verifyDirectiveNavigation(root: String) async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("orangecount-directives-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        for name in ["all.bean", "included.bean"] {
+            try Data(contentsOf: URL(fileURLWithPath: root + "/testdata/fixtures/directives/" + name)).write(to: directory.appendingPathComponent(name))
+        }
+        let entry = directory.appendingPathComponent("all.bean")
+        let store = LedgerStore(preferences: nil, pollNanoseconds: 60_000_000_000)
+        defer { store.close() }
+        store.loadLedger(at: entry.path, semantics: "v3")
+        try await waitUntil("directive ledger") { store.phase == .ready }
+        store.selectedNav = .journal
+        store.updateFilters { $0.limit = 1 }
+        try await waitUntil("transaction mode") { store.journalPayload?.total_count == 3 }
+        store.selectJournalMode("all")
+        try await waitUntil("all directive page") { store.directivesPayload?.page.total_count == 18 }
+        store.updateFilters { $0.directive_kind = "note" }
+        try await waitUntil("duplicate notes") { store.directivesPayload?.page.total_count == 2 }
+        let firstID = store.directivesPayload!.records[0].id
+        store.journalPage(1)
+        try await waitUntil("second duplicate note") { store.directivesPayload?.page.offset == 1 }
+        let secondID = store.directivesPayload!.records[0].id
+        guard firstID != secondID else { throw NativeClientFailure(message: "Duplicate directive identities collapsed") }
+        store.showAccount("Assets:Cash")
+        try await waitUntil("account from directive mode") { store.accountDetail != nil }
+        guard store.request.journal_mode == nil && store.request.directive_kind == nil else { throw NativeClientFailure(message: "Directive parameters leaked into account route") }
+        store.navigateBack()
+        try await waitUntil("directive Back") { store.directivesPayload?.page.offset == 1 }
+        let oldSnapshot = store.state!.snapshot_id
+        var changed = Data("; unrelated inserted line\n".utf8)
+        changed.append(try Data(contentsOf: entry)); try changed.write(to: entry, options: .atomic)
+        store.reloadSilently()
+        try await waitUntil("directive reload") { store.state?.snapshot_id != oldSnapshot && store.directivesPayload?.page.offset == 0 }
+        guard store.request.directive_kind == "note", store.directivesPayload?.records[0].id != firstID else { throw NativeClientFailure(message: "Reload restored duplicate by ordinal or lost kind filter") }
+        store.selectJournalMode("config")
+        try await waitUntil("configuration mode") { store.directivesPayload?.mode == "config" && store.directivesPayload?.page.total_count == 9 }
+        guard store.request.directive_kind == nil, store.request.offset == 0 else { throw NativeClientFailure(message: "Mode switch retained stale kind or paging") }
+        store.selectedNav = .query
+        try await waitUntil("query after config") { store.queryCatalogue != nil }
+        guard store.request.journal_mode == nil && store.request.directive_kind == nil else { throw NativeClientFailure(message: "Configuration parameters leaked into query") }
+        print("PASS: native directive modes, duplicate pages, account Back, reload and route isolation")
+    }
+
+    @MainActor static func verifyQueryStore(root: String) async throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("orangecount-query-store-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let entry = directory.appendingPathComponent("main.bean")
+        var input = try Data(contentsOf: URL(fileURLWithPath: root + "/testdata/fixtures/query/default-source.bean"))
+        try input.write(to: entry, options: .atomic)
+        let store = LedgerStore(preferences: nil, pollNanoseconds: 60_000_000_000)
+        defer { store.close() }
+        store.loadLedger(at: entry.path, semantics: "v3")
+        try await waitUntil("real query store session") { store.phase == .ready }
+        store.updateFilters { $0.currency = "USD"; $0.valuation = "market-value" }
+        try await waitUntil("query origin analysis") { store.visibleView?.request.valuation == "market-value" }
+        store.selectedNav = .query
+        try await waitUntil("real query workbench route") { store.visibleView?.request.view == "query" }
+        guard store.queryPhase == .idle, store.request.valuation == "at-cost" else {
+            throw NativeClientFailure(message: "Workbench executed draft or retained a report-only valuation")
+        }
+        store.queryDraft = "SELECT number LIMIT 0"
+        store.executeQuery()
+        try await waitUntil("real zero-row query success") { store.queryPhase == .succeeded }
+        guard store.queryResultIsCurrent, store.queryResponse?.execution?.returned_rows == 0,
+              store.queryResponse?.execution?.result.columns.count == 1,
+              store.queryResponse?.context.semantics_profile == "v3" else {
+            throw NativeClientFailure(message: "Query Store lost zero-row schema or semantics")
+        }
+        store.queryDraft = "SELECT account LIMIT 1"
+        let frozenCSV = try await store.captureQueryExport(format: "csv")
+        guard String(data: frozenCSV.content, encoding: .utf8) == "number\n",
+              frozenCSV.context.text == "SELECT number LIMIT 0" else {
+            throw NativeClientFailure(message: "Export must use the successful execution, not the changed draft")
+        }
+        let frozenAnalysis = try await store.captureQueryExport(format: "analysis")
+        guard frozenAnalysis.content.prefix(4) == Data([0x50,0x4b,0x03,0x04]) else {
+            throw NativeClientFailure(message: "Async analysis export must preserve actual Go ZIP bytes")
+        }
+        let prepared = try await store.prepareQueryExport(format: "csv")
+        store.queryDraft = "SELECT invalid_function(number) LIMIT 0"
+        store.executeQuery()
+        try await waitUntil("real query compile error") { store.queryPhase == .failed }
+        do {
+            _ = try await store.captureQueryExport(format: "csv")
+            throw NativeClientFailure(message: "Store exported previous success as a failed execution")
+        } catch is QueryExportError { }
+        guard String(data: frozenCSV.content, encoding: .utf8) == "number\n" else {
+            throw NativeClientFailure(message: "Later execution changed frozen export bytes")
+        }
+        guard !store.queryResultIsCurrent, store.queryResponse?.execution == nil,
+              store.queryResponse?.error?.code == "unknown-function",
+              store.lastSuccessfulQuery?.context.request_id == 1 else {
+            throw NativeClientFailure(message: "Query Store mixed failure with old zero-row success")
+        }
+        var expression = "number"
+        for _ in 0..<18 { expression = "(" + expression + " + 0.0)" }
+        store.queryDraft = "SELECT str(" + expression + ") LIMIT 1"
+        store.executeQuery()
+        try await Task.sleep(nanoseconds: 20_000_000)
+        store.cancelQuery()
+        store.queryDraft = "SELECT account LIMIT 1"
+        store.executeQuery()
+        try await waitUntil("real query after cancellation") { store.queryPhase == .succeeded }
+        guard store.queryResponse?.context.request_id == 4, store.queryResponse?.execution?.returned_rows == 1 else {
+            throw NativeClientFailure(message: "Query Store published cancelled work over latest success")
+        }
+        let oldID = store.state?.snapshot_id
+        input.append(Data("\n2000-01-03 price USD 1 EUR\n".utf8))
+        try input.write(to: entry, options: .atomic)
+        store.reloadSilently()
+        try await waitUntil("real query snapshot change") { store.state?.snapshot_id != oldID && store.phase == .ready }
+        let refreshedProtection = try await store.refreshExportProtection()
+        guard refreshedProtection.protected_paths.contains(where: { $0.hasSuffix("main.bean") }),
+              refreshedProtection.snapshot_id == store.state?.snapshot_id,
+              String(data: frozenCSV.content, encoding: .utf8) == "number\n" else {
+            throw NativeClientFailure(message: "Protection refresh must follow reload without replacing captured query bytes")
+        }
+        let exportTarget = directory.appendingPathComponent("captured.csv")
+        try await store.saveQueryExport(prepared, to: exportTarget)
+        guard try Data(contentsOf: exportTarget) == Data("number\n".utf8) else {
+            throw NativeClientFailure(message: "Saving after reload replaced fixed analysis content")
+        }
+        let cancelledTarget = directory.appendingPathComponent("cancelled.csv")
+        let cancelledSave = Task { @MainActor in try await store.saveQueryExport(prepared, to: cancelledTarget) }
+        cancelledSave.cancel()
+        do { try await cancelledSave.value; throw NativeClientFailure(message: "Cancelled save succeeded") }
+        catch is CancellationError { }
+        guard !FileManager.default.fileExists(atPath: cancelledTarget.path) else {
+            throw NativeClientFailure(message: "Cancelled save created a target")
+        }
+        do {
+            try await store.saveQueryExport(prepared, to: entry)
+            throw NativeClientFailure(message: "Store saved an analysis over its source ledger")
+        } catch AnalysisFileExportError.protectedTarget { }
+        guard store.queryPhase == .stale, !store.queryResultIsCurrent,
+              store.queryResponse?.context.snapshot_id == oldID else {
+            throw NativeClientFailure(message: "Query Store relabelled previous result after real reload")
+        }
+        let validSnapshotID = store.state?.snapshot_id
+        let newAttachment = directory.appendingPathComponent("new-attachment.csv")
+        let attachmentContent = Data("public attachment".utf8)
+        try attachmentContent.write(to: newAttachment)
+        input.append(Data("\n2000-01-04 document Assets:Cash \"new-attachment.csv\"\nnot a valid directive\n".utf8))
+        try input.write(to: entry, options: .atomic)
+        store.reloadSilently()
+        try await waitUntil("invalid reload with new attachment") { store.state?.valid == false && store.state?.reloading == false && store.phase == .stale }
+        let failedProtection = try await store.refreshExportProtection()
+        guard failedProtection.protected_paths.contains(where: { $0.hasSuffix("new-attachment.csv") }),
+              store.state?.snapshot_id == validSnapshotID else {
+            throw NativeClientFailure(message: "Failed input lost new attachment protection or replaced financial snapshot")
+        }
+        do {
+            try await store.saveQueryExport(prepared, to: newAttachment)
+            throw NativeClientFailure(message: "Export overwrote attachment declared in failed input")
+        } catch AnalysisFileExportError.protectedTarget { }
+        guard try Data(contentsOf: newAttachment) == attachmentContent else {
+            throw NativeClientFailure(message: "Failed-input attachment content changed")
+        }
+        store.selectedNav = .balanceSheet
+        try await waitUntil("analysis after workbench") { store.visibleView?.request.view == "balance_sheet" }
+        guard store.request.valuation == "market-value", store.request.currency == "USD" else {
+            throw NativeClientFailure(message: "Workbench overwrote analysis valuation preference")
+        }
+        print("PASS: real query route, zero rows, error, cancelled/latest work, stale snapshot and analysis preferences")
+        print("PASS: failed reload protects newly declared attachment while retaining valid financial snapshot and captured export")
+    }
+
+    @MainActor static func verifyQueryClient(root: String) async throws {
+        let client = NativeLedgerClient()
+        let opened = try await client.open(path: root + "/testdata/fixtures/query/default-source.bean", semantics: "v3")
+        let snapshotID = opened.state.snapshot_id
+        do {
+            let request = QueryRequest(snapshot_id: snapshotID, request_id: 1, text: "SELECT 1 AS v, 2 AS v LIMIT 1")
+            let success = try await client.executeQuery(handle: opened.handle, request: request)
+            guard success.execution?.result.rows.count == 1, success.error == nil else {
+                throw NativeClientFailure(message: "Async query lost its typed result")
+            }
+            try await client.cancelQuery(handle: opened.handle, requestID: 2)
+            let queued = try await client.executeQuery(handle: opened.handle, request: QueryRequest(snapshot_id: snapshotID, request_id: 2, text: "SELECT number"))
+            guard queued.error?.code == "cancelled", queued.execution == nil else {
+                throw NativeClientFailure(message: "Async control cancellation did not reach the session")
+            }
+            let next = try await client.executeQuery(handle: opened.handle, request: QueryRequest(snapshot_id: snapshotID, request_id: 3, text: "SELECT account LIMIT 0"))
+            guard next.execution?.returned_rows == 0, next.error == nil else {
+                throw NativeClientFailure(message: "Cancelled generation poisoned the next query")
+            }
+            var expression = "number"
+            for _ in 0..<18 { expression = "(" + expression + " + 0.0)" }
+            let heavyText = "SELECT str(" + expression + ") LIMIT 1"
+            let baseline = try await client.executeQuery(handle: opened.handle, request: QueryRequest(snapshot_id: snapshotID, request_id: 4, text: heavyText))
+            guard baseline.error?.code == "work-budget-exceeded" else {
+                throw NativeClientFailure(message: "Cancellation test does not exercise bounded expensive evaluation")
+            }
+            let executing = Task {
+                try await client.executeQuery(handle: opened.handle, request: QueryRequest(snapshot_id: snapshotID, request_id: 5, text: heavyText))
+            }
+            try await Task.sleep(nanoseconds: 20_000_000)
+            try await client.cancelQuery(handle: opened.handle, requestID: 5)
+            let stopped = try await executing.value
+            guard stopped.error?.code == "cancelled", stopped.execution == nil else {
+                throw NativeClientFailure(message: "Control cancellation queued behind expensive C execution")
+            }
+        } catch {
+            await client.close(handle: opened.handle)
+            throw error
+        }
+        await client.close(handle: opened.handle)
+        print("PASS: async native query execution, cancellation control and subsequent generation")
     }
 
     @MainActor static func verifyPriceNavigation(root: String) async throws {

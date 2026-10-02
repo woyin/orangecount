@@ -1,6 +1,6 @@
 # Go 会计引擎与原生 macOS 实施进度
 
-**当前实施基线（2026-10-01）**：Q02已实现有界查询执行、快照上下文、会话取消及真实C/Swift typed契约；完整工作台未完成。全量Go/七包race、51会计/147查询、原生三套/app及最新私人Swift/C通过（双方2833指令、零差异），见[本批证据](evidence/q02-bounded-execution-2026-10-01.md)。会计v3-core-3、默认legacy及查询contract保持；下一步按31.2接后台客户端、Store/QueryView、错误位置和导出。Q01剩余语义、X01/X02及GUI/安装/发行继续保留。
+**当前实施基线（2026-10-01）**：Q02已实现有界查询执行、快照上下文、会话取消及真实C/Swift typed契约；完整工作台未完成。全量Go/七包race、51会计/147查询、原生三套/app及最新私人Swift/C通过（双方2833指令、零差异），见[本批证据](evidence/q02-bounded-execution-2026-10-01.md)。会计v3-core-3、默认legacy及查询contract保持；后台客户端与Store首批见[新增证据](evidence/q02-query-store-2026-10-01.md)；[QueryView/导航首批](evidence/q02-query-view-2026-10-01.md)已接入；错误位置与[保存query目录](evidence/q02-saved-query-catalogue-2026-10-01.md)已推进；下一步补preset、固定执行导出与完整验收。Q01剩余语义、X01/X02及GUI/安装/发行继续保留。
 
 前次文档修订新增[开发入口](go-beancount-native-roadmap.md)与[查询能力矩阵](query-capability-matrix.md)，完善设计第27节、计划第15节及实施第33节。当时只读私人Go/Python和query/价格具名检查通过，16个公开oracle探针核实签名；未实施Q01新类型或重跑原生/GUI。具体范围见[复验记录](evidence/go-native-design-refresh-2026-10-01.md)，下列产品任务状态不因文档交付自动升级。
 
@@ -228,3 +228,83 @@ casts最终25场景、九组共116/116通过，独立源序例区分逐步SUM与
 ## Q02有界执行与C/Swift契约首批
 
 已实现ExecuteTyped资源/行/字节预算、实际Context检查、快照上下文及fingerprint、单调请求代次与取消高水位、会话串行gate、C执行/取消接口及Swift严格typed decoder。真实red修复与当前完整检查见[证据](evidence/q02-bounded-execution-2026-10-01.md)。最新私人双方2833条指令相等，旧2831记录为此前捕获。完整Q02仍缺后台客户端/Store/QueryView、精确错误range、保存query/预设及CSV/GUI；不关闭24任务。
+
+## Q02后台客户端接入（2026-10-01）
+
+NativeLedgerClient已接typed执行和独立取消控制路径，真实客户端成功/预先取消/后续代次及耗时表达式取消检查通过；将取消排回执行actor的临时变异被测试拒绝。详见[证据](evidence/q02-native-client-2026-10-01.md)。Store、QueryView、错误位置与导出尚未交付，完整Q02不关闭。
+
+## Q02 Store查询状态首批（2026-10-01）
+
+已接窗口单调请求、捕获执行身份、current/latest-pending、草稿与成功/失败/取消/过期记录，以及reload/换账本/关闭保护。受控队列与真实C/Swift Store新增检查见[证据](evidence/q02-query-store-2026-10-01.md)。尚无QueryView/导航、错误位置或导出；完整Q02继续未完成。
+
+## Q02 原生查询页面与导航首批（2026-10-01）
+
+QueryView、原生结果表及query摘要读取路由已接入，进入不自动执行、离开取消和分析偏好恢复有当前受控/真实C证据；当前全量Go、相关race、原生三套与app通过，见[证据](evidence/q02-query-view-2026-10-01.md)。错误位置、保存query/preset、CSV及GUI/完整资源边界继续未验收，完整Q02不关闭。
+
+## Q02 错误位置首批（2026-10-01）
+
+standard token/函数/字段错误范围已沿Go→真实C/Swift→NSTextView接入，Unicode转换及不分割字符的契约通过。当前六位置例子、147查询、Go全量/相关race、原生三套/app通过，见[证据](evidence/q02-query-locations-2026-10-01.md)。操作符/源/别名及其他全局错误完整覆盖、实际GUI选择仍未验收，完整任务不关闭。
+
+## Q02 操作符/来源/别名错误位置及预算范围（2026-10-01）
+
+已补实际操作符、FROM与别名引用位置；11位置例子与公开低steps/原生numeric预算空范围检查通过。初次race的deadline竞速已改为确定性预算测试，最终四包race、原生三套/app通过，见[证据](evidence/q02-query-location-coverage-2026-10-01.md)。继续保存query/preset与固定执行导出，实际GUI及完整任务尚未完成。
+
+## Q02 保存query目录与草稿选择（2026-10-01）
+
+账本query指令目录、include来源、重复名称独立ID、快照分页及草稿选择已贯通Go→真实C/Swift→Store/QueryView；不会自动执行。当前Go全量/相关race与原生三套/app通过，见[证据](evidence/q02-saved-query-catalogue-2026-10-01.md)。继续preset与固定执行导出；实际GUI、完整资源边界及完整任务未关闭。
+
+## Q02 类型化 CSV 与命令行入口（2026-10-01）
+
+已实现 TypedResult CSV writer 与 `--format typed-csv`，保留列序、重复标题、精确数值和完整库存成本；公开测试、当前 Go 全量及 query/CLI race 通过，见[证据](evidence/q02-typed-csv-2026-10-01.md)。CSV 空字段不能区分 NULL 与空字符串；原生固定执行导出、原子保存、GUI 验收及完整任务仍未完成。
+
+## Q02 分析容器内容生成（2026-10-01）
+
+新增成功 QueryResponse 的 `.ocanalysis` 四成员 ZIP 内容生成；实际解包验证上下文、重复列名、高精度、NULL/空字符串和零行，失败执行拒绝及 writer 失败传播通过。当前 Go 全量、desktop/query race、fmt/vet/license exit0，见[证据](evidence/q02-analysis-container-2026-10-01.md)。原生固定捕获入口、独立验证器、多币种/截断等容器样例、来源路径策略及原子保存仍待完成，完整任务保持未关闭。
+
+## Q02 会话固定导出与 C/Swift 契约（2026-10-01）
+
+当前成功执行独立缓存与按身份捕获字节已实现，调用方修改嵌套库存不会改变导出；错误身份/后续失败的旧代次拒绝。真实 C/Swift CSV/ZIP 传输和当前 Go/相关 race、原生三套通过，见[证据](evidence/q02-query-export-capture-2026-10-01.md)。继续客户端/Store/保存面板、原子替换和目标保护；完整验收尚未完成。
+
+## Q02 原生导出客户端与 Store（2026-10-01）
+
+客户端异步捕获及 Store 成功执行导出动作已接入；草稿不替代执行身份，后续失败不能导出旧成功，异步期间的新请求/快照变化/关闭窗口拒绝迟到内容。真实和受控检查、原生三套、fmt/vet/license通过，见[证据](evidence/q02-export-client-store-2026-10-01.md)。继续保存面板/原子替换/目标保护及 GUI，完整任务仍未完成。
+
+## Q02 固定捕获的保护路径（2026-10-01）
+
+有效快照的源图/document 保护路径已随捕获响应传到 Swift，与导出内容分离；公开 include/缺失附件与解包检查通过。本批 Go 全量、相关 race、原生三套、fmt/vet/license通过，见[证据](evidence/q02-export-protected-paths-2026-10-01.md)。目标拒绝与原子写入尚未实现，继续原生保存器和面板，完整任务不关闭。
+
+## Q02 原子文件保存器首批（2026-10-01）
+
+独立原生保存器已实现固定字节、保护路径/inode 检查、同目录临时写/fsync/关闭和 renameat 替换；源/symlink/hardlink/源移动/缺失附件拒绝与实际部分写失败保留旧文件、临时清理通过，见[证据](evidence/q02-atomic-file-export-2026-10-01.md)。保存面板及跨层保护刷新、并发变化/失败与 GUI 仍待验收，完整任务不关闭。
+
+## Q02 保存工作流与首批实际 GUI（2026-10-01）
+
+保护刷新、prepare/save、后台写入取消及独立 CSV/分析保存面板已接入。当前 Go 全量/相关 race、原生四套/app通过；隔离 QA 实际验证保存/取消、产物精确值和 typed NULL/空字符串、重复扩展名修复、公开源副本覆盖拒绝，见[证据](evidence/q02-query-save-workflow-2026-10-01.md)。继续失败输入新附件保护、容器验证器/完整案例、preset、完整资源/GUI及24任务其他门槛，不关闭任务。
+
+## Q02 失败输入中新附件保护（2026-10-01）
+
+构建过程独立保留已解析 document 源声明，失败时也合并到导出保护；真实 Store 保存验证拒绝新附件覆盖且保留旧有效财务快照。当前 Go 全量/四包 race、147 查询/51 会计对照、原生四套/app及静态检查通过，见[证据](evidence/q02-failed-input-documents-2026-10-01.md)。继续容器验证器与完整格式案例、preset、并发保护/资源/GUI以及其余24任务门槛；完整目标未完成。
+
+### 2026-10-02：查询分析容器读取首批
+
+新增有界、严格 JSON 的独立查询容器读取器与 analysisverify 命令；公开精确值恢复、零行和八类篡改测试通过。全量 Go、desktop race、vet/fmt/license 通过；命令验证此前 GUI 的公开保存产物。见[证据](evidence/q02-analysis-reader-2026-10-02.md)。继续多币种/比值/空库存/成本 nullable/截断与预算异常网格，再推进报表容器、保存并发、预设、X01/X02 和完整原生发行验收；没有缩小 24 项范围。
+
+### 2026-10-02：分析样本网格与首批查询预设
+
+容器补齐多币种/空库存/成本标签/零成本/rational/实际截断及压缩预算、CRC、symlink、UTF-8 故障；修复大小写字段别名和误导 Decimal 显示验证。四个单一来源预设贯通 Go 目录、CLI、Swift/C Store 与原生界面；151/151 固定查询差分通过。见[证据](evidence/q02-analysis-grid-presets-2026-10-02.md)。期间预设、报表容器与其他 24 项未验收范围继续保留。
+
+### 2026-10-02：附件解析与打开前身份检查首批
+
+独立 documents Resolver 已实现显式目录根、声明文件相对路径、symlink containment、五种状态与重新校验。公开替换/改向/修改/删除、额外根与 dangling symlink 逃逸测试通过；全量 Go、documents race/vet 通过。见[证据](evidence/x02-document-resolver-2026-10-02.md)。DTO/原生列表/打开/Finder 和权限、alias、系统 race 验收仍待完成，不把 resolver 完成当成 X02 完成。
+
+### 2026-10-02：显式期间预设
+
+同一快照解析阅读期间，完整日期条件显式写入草稿；四预设分别覆盖双边界/单边界，共新增 12 对照案例，当前 163/163 查询差分通过。CLI、desktop 及真实 Swift/C Store 验证捕获期间、选择不执行、保留旧身份与显式运行；非法日期/逆序/ID/文本预算拒绝。见[证据](evidence/q02-period-presets-2026-10-02.md)。期间菜单 GUI 未验收；用户介入的隔离 QA 保留不操作。
+
+### 2026-10-02：全指令与配置只读索引
+
+有效 Snapshot 建立源 kind/配置词法序与日期有效记录索引，公开 fixture 覆盖 20 source kinds，pad/独立 dialect 生成关联、重复身份、插行、深复制和错误重载隔离通过。当前 163 查询/51 会计及 AVERAGE 扩展、全量 Go/五包 race、四套 native 测试通过。见[证据](evidence/x01-directive-index-2026-10-02.md)。下一阶段实现先分页再复制的 typed DTO、journal all/config 原生模式及 block dialect 来源关联；X01 没有标完成。
+
+### 2026-10-02：首版交付收敛及当前阻断
+
+全指令 typed DTO、原生交易/all/config 模式、生成来源、分页与精确元数据已经接通；本轮修复捕获日期和标签显示，当前51会计/163查询、Go全量/四包race、原生四套与app检查通过，FinanceBook只读对照及真实Swift/C通过。窗口清理改为实际window close，最终app/开发ZIP生成并解压公开输入启动。私人GUI文件选择读取阻塞系统open，解压QA还观察到Open禁用；根因尚未确认，C/D完整验收未满足。见[本批证据](evidence/native-first-delivery-2026-10-02.md)与[使用说明](native-first-delivery-2026-10-02.md)。不能将开发产物、测试和私人GUI验收混为一谈。

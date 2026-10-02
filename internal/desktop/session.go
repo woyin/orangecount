@@ -42,6 +42,8 @@ type State struct {
 }
 
 type Request struct {
+	JournalMode      string `json:"journal_mode,omitempty"`
+	DirectiveKind    string `json:"directive_kind,omitempty"`
 	MigrationDetails bool   `json:"migration_details"`
 	Valuation        string `json:"valuation"`
 	View             string `json:"view"`
@@ -68,41 +70,47 @@ type Request struct {
 }
 
 type ViewResponse struct {
-	Prices    *report.PricesProjection      `json:"prices,omitempty"`
-	Holdings  *report.HoldingsProjection    `json:"holdings,omitempty"`
-	Account   *AccountDetailPayload         `json:"account_detail,omitempty"`
-	State     State                         `json:"state"`
-	Request   Request                       `json:"request"`
-	Summary   SummaryPayload                `json:"summary"`
-	Tree      *TreeReportPayload            `json:"tree,omitempty"`
-	Journal   *JournalPayload               `json:"journal,omitempty"`
-	Trends    *HistoricalTrendsPayload      `json:"trends,omitempty"`
-	Migration *snapshot.MigrationComparison `json:"migration,omitempty"`
+	Directives     *DirectivesPayload            `json:"directives,omitempty"`
+	QueryCatalogue *QueryCatalogue               `json:"query_catalogue,omitempty"`
+	Prices         *report.PricesProjection      `json:"prices,omitempty"`
+	Holdings       *report.HoldingsProjection    `json:"holdings,omitempty"`
+	Account        *AccountDetailPayload         `json:"account_detail,omitempty"`
+	State          State                         `json:"state"`
+	Request        Request                       `json:"request"`
+	Summary        SummaryPayload                `json:"summary"`
+	Tree           *TreeReportPayload            `json:"tree,omitempty"`
+	Journal        *JournalPayload               `json:"journal,omitempty"`
+	Trends         *HistoricalTrendsPayload      `json:"trends,omitempty"`
+	Migration      *snapshot.MigrationComparison `json:"migration,omitempty"`
 }
 
 type publication struct {
-	evaluation ledger.Evaluation
-	journal    []journalEntry
-	latestDate string
+	protectedPaths []string
+	snapshot       *snapshot.Snapshot
+	evaluation     ledger.Evaluation
+	journal        []journalEntry
+	latestDate     string
 }
 
 type Session struct {
-	mu                    sync.RWMutex
-	closed                bool
-	store                 *snapshot.Store
-	state                 State
-	latest                snapshot.BuildResult
-	current               *publication
-	reloads               chan chan error
-	stop                  chan struct{}
-	done                  chan struct{}
-	closeOnce             sync.Once
-	options               snapshot.BuildOptions
-	queryCancel           context.CancelFunc
-	queryRequestID        uint64
-	queryLastID           uint64
-	queryCancelledThrough uint64
-	queryGate             chan struct{}
+	mu                        sync.RWMutex
+	closed                    bool
+	store                     *snapshot.Store
+	state                     State
+	latest                    snapshot.BuildResult
+	current                   *publication
+	reloads                   chan chan error
+	stop                      chan struct{}
+	done                      chan struct{}
+	closeOnce                 sync.Once
+	options                   snapshot.BuildOptions
+	queryCancel               context.CancelFunc
+	queryRequestID            uint64
+	queryLastID               uint64
+	queryCancelledThrough     uint64
+	queryGate                 chan struct{}
+	queryExport               *QueryResponse
+	queryExportProtectedPaths []string
 }
 
 type OpenOptions struct {
@@ -162,7 +170,8 @@ func (s *Session) publish(result snapshot.BuildResult) {
 	defer region.End()
 	var next *publication
 	if result.Snapshot != nil {
-		next = &publication{evaluation: result.Snapshot.Evaluation()}
+		next = &publication{evaluation: result.Snapshot.Evaluation(), snapshot: result.Snapshot}
+		next.protectedPaths = exportProtectedPaths(result.Graph, next.evaluation)
 		next.journal = indexJournal(next.evaluation, result.Snapshot.ID)
 		for _, entry := range next.evaluation.Entries {
 			if entry.Date.Raw > next.latestDate {
@@ -183,6 +192,10 @@ func (s *Session) publish(result snapshot.BuildResult) {
 	if next != nil {
 		if s.queryCancel != nil && result.Snapshot.ID != s.state.SnapshotID {
 			s.queryCancel()
+		}
+		if result.Snapshot.ID != s.state.SnapshotID {
+			s.queryExport = nil
+			s.queryExportProtectedPaths = nil
 		}
 		s.current = next
 		s.state.HasSnapshot = true
@@ -216,7 +229,7 @@ func (s *Session) Read(request Request) (ViewResponse, error) {
 		return ViewResponse{}, ErrRequest
 	}
 	switch request.View {
-	case "balance_sheet", "income_statement", "journal", "dashboard", "migration", "account", "holdings", "prices":
+	case "balance_sheet", "income_statement", "journal", "dashboard", "migration", "account", "holdings", "prices", "query":
 	default:
 		return ViewResponse{}, ErrRequest
 	}
@@ -254,8 +267,20 @@ func (s *Session) Read(request Request) (ViewResponse, error) {
 	if current == nil {
 		return result, nil
 	}
+	if request.View == "query" {
+		from, to := current.dateRange(request)
+		result.QueryCatalogue = projectQueryCatalogue(*evaluation, request, state.SnapshotID, from, to)
+		data, err := json.Marshal(result)
+		if err != nil {
+			return ViewResponse{}, err
+		}
+		if len(data) > holdingsByteLimit-64 {
+			return ViewResponse{}, ErrResultBudget
+		}
+		return result, nil
+	}
 	from, to := current.dateRange(request)
-	if request.View != "balance_sheet" && from != "" && to != "" && from > to {
+	if request.View != "balance_sheet" && !(request.View == "journal" && request.JournalMode == "config") && from != "" && to != "" && from > to {
 		return ViewResponse{}, ErrRequest
 	}
 	switch request.View {
@@ -288,8 +313,16 @@ func (s *Session) Read(request Request) (ViewResponse, error) {
 		tree := TreeReportPayload{Currency: cur, ReportType: request.View, OperatingCurrencies: strings.Fields(evaluation.Options["operating_currency"]), RootNodes: statement.Nodes, DateFrom: from, DateTo: to, Availability: statement.Availability, ValuationStatus: statement.ValuationStatus}
 		result.Tree = &tree
 	case "journal":
-		journal := current.readJournal(request)
-		result.Journal = &journal
+		if request.JournalMode == "all" || request.JournalMode == "config" {
+			payload, err := current.readDirectives(request, state.SnapshotID, from, to)
+			if err != nil {
+				return ViewResponse{}, err
+			}
+			result.Directives = payload
+		} else {
+			journal := current.readJournal(request)
+			result.Journal = &journal
+		}
 	case "dashboard":
 		cur := request.Currency
 		if cur == "native" {
@@ -298,7 +331,7 @@ func (s *Session) Read(request Request) (ViewResponse, error) {
 		trends := projectHistory(*evaluation, from, to, cur, request.Valuation)
 		result.Trends = &trends
 	}
-	if request.View == "holdings" || request.View == "prices" {
+	if request.View == "holdings" || request.View == "prices" || result.Directives != nil {
 		data, err := json.Marshal(result)
 		if err != nil {
 			return ViewResponse{}, err
@@ -316,6 +349,8 @@ func (s *Session) Close() {
 	s.closeOnce.Do(func() {
 		s.mu.Lock()
 		s.closed = true
+		s.queryExport = nil
+		s.queryExportProtectedPaths = nil
 		if s.queryCancel != nil {
 			s.queryCancel()
 		}

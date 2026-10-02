@@ -36,6 +36,8 @@ struct ViewRequest: Codable, Sendable, Equatable {
     var sort: String = ""
     var offset: Int = 0
     var limit: Int = 0
+    var journal_mode: String? = nil
+    var directive_kind: String? = nil
     var migration_details: Bool = false
 }
 
@@ -50,6 +52,8 @@ struct LedgerView: Codable, Sendable {
     var account_detail: AccountDetailPayload? = nil
     var holdings: HoldingsPayload? = nil
     var prices: PricesPayload? = nil
+    var query_catalogue: QueryCatalogue? = nil
+    var directives: DirectivesPayload? = nil
 }
 
 // A nullable value must have a key on the wire. Synthesis decodes this wrapper
@@ -884,9 +888,38 @@ struct QueryContext: Codable, Sendable {
     let fingerprint: String
 }
 
+struct QueryExportRequest: Codable, Sendable {
+    let snapshot_id: String
+    let request_id: UInt64
+    let fingerprint: String
+    let format: String
+}
+
+struct QueryExportCapture: Codable, Sendable {
+    let context: QueryContext
+    let format: String
+    let content: Data
+    var protected_paths: [String] = []
+}
+
+struct ExportProtection: Codable, Sendable {
+    let revision: UInt64
+    let snapshot_id: String
+    let protected_paths: [String]
+}
+
 struct QueryByteRange: Codable, Sendable {
     let start_byte: Int
     let end_byte: Int
+
+    func nativeRange(in text: String) -> NSRange? {
+        guard start_byte >= 0, end_byte >= start_byte, end_byte <= text.utf8.count else { return nil }
+        let bytes = text.utf8
+        let lowerByte = bytes.index(bytes.startIndex, offsetBy: start_byte)
+        let upperByte = bytes.index(bytes.startIndex, offsetBy: end_byte)
+        guard let lower = String.Index(lowerByte, within: text), let upper = String.Index(upperByte, within: text) else { return nil }
+        return NSRange(lower..<upper, in: text)
+    }
 }
 
 struct QueryFailure: Codable, Sendable {
@@ -1079,7 +1112,7 @@ struct QueryResponse: Codable, Sendable {
             throw queryContractError(decoder, "Invalid query execution context")
         }
         if let range = error?.range {
-            guard range.start_byte >= 0, range.end_byte >= range.start_byte, range.end_byte <= context.text.utf8.count else {
+            guard range.start_byte >= 0, range.end_byte >= range.start_byte, range.end_byte <= context.text.utf8.count, range.nativeRange(in: context.text) != nil else {
                 throw queryContractError(decoder, "Invalid query error byte offsets")
             }
         }
@@ -1088,5 +1121,204 @@ struct QueryResponse: Codable, Sendable {
         var values = encoder.container(keyedBy: CodingKeys.self)
         try values.encode(context, forKey: .context)
         try values.encode(execution, forKey: .execution); try values.encode(error, forKey: .error)
+    }
+}
+
+struct SavedQuery: Codable, Sendable, Identifiable {
+    let id: String
+    let date: String
+    let name: String
+    let text: String
+    let source: SourceLocation
+}
+
+struct QueryPreset: Codable, Sendable, Identifiable {
+    let id: String
+    let name_zh: String
+    let name_en: String
+    let text: String
+}
+
+struct QueryPresetPeriod: Codable, Sendable {
+    let date_from: String
+    let date_to: String
+    let presets: [QueryPreset]
+}
+
+private func validPresetDate(_ value: String) -> Bool {
+    if value.isEmpty { return true }
+    let bytes = Array(value.utf8)
+    guard bytes.count == 10, bytes[4] == 45, bytes[7] == 45,
+          bytes.enumerated().allSatisfy({ $0.offset == 4 || $0.offset == 7 || (48...57).contains($0.element) }),
+          let year = Int(value.prefix(4)), let month = Int(value.dropFirst(5).prefix(2)), let day = Int(value.suffix(2)),
+          (1...12).contains(month) else { return false }
+    let leap = year % 400 == 0 || (year % 4 == 0 && year % 100 != 0)
+    let days = [31, leap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]
+    return day >= 1 && day <= days[month - 1]
+}
+
+struct QueryCatalogue: Codable, Sendable {
+    let snapshot_id: String
+    let queries: [SavedQuery]
+    let presets: [QueryPreset]
+    let period: QueryPresetPeriod?
+    let page: ProjectionPage
+    enum CodingKeys: String, CodingKey { case snapshot_id, queries, presets, period, page }
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        snapshot_id = try values.decode(String.self, forKey: .snapshot_id)
+        queries = try values.decode([SavedQuery].self, forKey: .queries)
+        presets = try values.decodeIfPresent([QueryPreset].self, forKey: .presets) ?? []
+        period = try values.decodeIfPresent(QueryPresetPeriod.self, forKey: .period)
+        if let period {
+            guard validPresetDate(period.date_from), validPresetDate(period.date_to),
+                  !period.date_from.isEmpty || !period.date_to.isEmpty,
+                  period.date_from.isEmpty || period.date_to.isEmpty || period.date_from <= period.date_to,
+                  period.presets.map(\.id) == presets.map(\.id),
+                  period.presets.allSatisfy({ !$0.text.isEmpty && $0.text.utf8.count <= 65536 && !$0.name_zh.isEmpty && !$0.name_en.isEmpty }) else {
+                throw queryContractError(decoder, "Invalid preset period")
+            }
+        }
+        page = try values.decode(ProjectionPage.self, forKey: .page)
+        guard presets.count <= 32, Set(presets.map(\.id)).count == presets.count,
+              presets.allSatisfy({ !$0.id.isEmpty && !$0.name_zh.isEmpty && !$0.name_en.isEmpty && !$0.text.isEmpty && $0.text.utf8.count <= 65536 }),
+              !snapshot_id.isEmpty, page.limit > 0, page.limit <= 500,
+              queries.count == page.returned_count, Set(queries.map(\.id)).count == queries.count,
+              queries.allSatisfy({ !$0.id.isEmpty && !$0.source.path.isEmpty && $0.source.line > 0 && $0.source.column > 0 }) else {
+            throw queryContractError(decoder, "Invalid saved query catalogue")
+        }
+    }
+}
+
+indirect enum DirectiveContent: Sendable {
+    case null, text(String), boolean(Bool), decimal(DisplayAmount), amount(QueryAmount)
+    case list([DirectiveValue]), map([DirectiveMetadata])
+}
+
+struct DirectiveValue: Codable, Sendable {
+    let type: String
+    let value: DirectiveContent
+    enum CodingKeys: String, CodingKey { case type, value }
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        type = try values.decode(String.self, forKey: .type)
+        switch type {
+        case "null":
+            guard !values.contains(.value) else { throw queryContractError(decoder, "NULL directive value contains data") }
+            value = .null
+        case "string", "account", "currency", "tag", "link", "date":
+            let text = try values.decode(String.self, forKey: .value)
+            if type == "date", !validPresetDate(text) || text.isEmpty { throw queryContractError(decoder, "Invalid directive date") }
+            value = .text(text)
+        case "bool": value = .boolean(try values.decode(Bool.self, forKey: .value))
+        case "decimal":
+            let number = try values.decode(DisplayAmount.self, forKey: .value)
+            try validateQueryDecimal(number, decoder); value = .decimal(number)
+        case "amount": value = .amount(try values.decode(QueryAmount.self, forKey: .value))
+        case "list": value = .list(try values.decode([DirectiveValue].self, forKey: .value))
+        case "map": value = .map(try values.decode([DirectiveMetadata].self, forKey: .value))
+        default: throw queryContractError(decoder, "Unknown directive value type")
+        }
+    }
+    func encode(to encoder: Encoder) throws {
+        var values = encoder.container(keyedBy: CodingKeys.self)
+        try values.encode(type, forKey: .type)
+        switch value {
+        case .null: break
+        case .text(let text): try values.encode(text, forKey: .value)
+        case .boolean(let boolean): try values.encode(boolean, forKey: .value)
+        case .decimal(let number): try values.encode(number, forKey: .value)
+        case .amount(let amount): try values.encode(amount, forKey: .value)
+        case .list(let list): try values.encode(list, forKey: .value)
+        case .map(let fields): try values.encode(fields, forKey: .value)
+        }
+    }
+    var exactText: String {
+        switch value {
+        case .null: return "NULL"
+        case .text(let text): return text.isEmpty ? "\"\"" : (type == "tag" ? "#" : type == "link" ? "^" : "") + text
+        case .boolean(let boolean): return boolean ? "TRUE" : "FALSE"
+        case .decimal(let number): return number.exact
+        case .amount(let amount): return amount.number.exact + " " + amount.currency
+        case .list(let items): return "[" + items.map(\.exactText).joined(separator: ", ") + "]"
+        case .map(let fields): return "{" + fields.map { $0.key + ": " + $0.value.exactText }.joined(separator: ", ") + "}"
+        }
+    }
+}
+
+struct DirectiveField: Codable, Sendable { let name: String; let value: DirectiveValue }
+struct DirectiveMetadata: Codable, Sendable { let key: String; let value: DirectiveValue; let source: SourceLocation }
+struct DirectivePosting: Codable, Sendable { let posting: JournalPosting; let metadata: [DirectiveMetadata] }
+
+struct DirectiveRecord: Codable, Sendable, Identifiable {
+    let id: String
+    let kind: String
+    let source_kind: String
+    @RequiredNullable var date: String?
+    let generated: Bool
+    @RequiredNullable var origin_id: String?
+    let source: SourceLocation
+    let fields: [DirectiveField]
+    let metadata: [DirectiveMetadata]
+    let tags: [String]
+    let links: [String]
+    let postings: [DirectivePosting]
+}
+
+struct DirectivesPayload: Codable, Sendable {
+    let snapshot_id: String
+    let mode: String
+    let date_from: String
+    let date_to: String
+    let page: ProjectionPage
+    let records: [DirectiveRecord]
+    enum CodingKeys: String, CodingKey { case snapshot_id, mode, date_from, date_to, page, records }
+    init(from decoder: Decoder) throws {
+        let values = try decoder.container(keyedBy: CodingKeys.self)
+        snapshot_id = try values.decode(String.self, forKey: .snapshot_id)
+        mode = try values.decode(String.self, forKey: .mode)
+        date_from = try values.decode(String.self, forKey: .date_from)
+        date_to = try values.decode(String.self, forKey: .date_to)
+        page = try values.decode(ProjectionPage.self, forKey: .page)
+        records = try values.decode([DirectiveRecord].self, forKey: .records)
+        let config: Set<String> = ["option", "plugin", "include", "pushtag", "poptag", "pushmeta", "popmeta"]
+        let dated: Set<String> = ["open", "close", "commodity", "balance", "pad", "event", "query", "price", "document", "note", "custom", "transaction"]
+        guard validPresetDate(date_from), validPresetDate(date_to),
+              (date_from.isEmpty || date_to.isEmpty || date_from <= date_to),
+              (mode != "config" || (date_from.isEmpty && date_to.isEmpty)),
+              !snapshot_id.isEmpty, ["all", "config"].contains(mode), page.limit > 0, page.limit <= 500,
+              page.returned_count == records.count, Set(records.map(\.id)).count == records.count,
+              records.allSatisfy({ record in
+                  !record.id.isEmpty && !record.source.path.isEmpty && record.source.line > 0 && record.source.column > 0 &&
+                  (mode == "config" ? config.contains(record.kind) && record.date == nil : dated.contains(record.kind) && record.date != nil && !record.date!.isEmpty && validPresetDate(record.date!)) &&
+                  (record.generated ? record.kind == "transaction" && (record.origin_id != nil || record.source_kind.isEmpty) : record.origin_id == nil && record.source_kind == record.kind) &&
+                  (record.source_kind.isEmpty || config.union(dated).union(["dialect"]).contains(record.source_kind)) &&
+                  (record.kind == "transaction" || record.postings.isEmpty) && record.validFields
+              }) else { throw queryContractError(decoder, "Invalid directive records") }
+    }
+}
+
+private extension DirectiveRecord {
+    var validFields: Bool {
+        let shapes: [String: [String: String]] = [
+            "option":["key":"string", "value":"string"], "plugin":["module":"string", "config":"string"], "include":["path":"string"],
+            "pushtag":["tag":"tag"], "poptag":["tag":"tag"], "pushmeta":["key":"string", "value":"*"], "popmeta":["key":"string"],
+            "open":["account":"account", "currency":"currency", "booking":"string"], "close":["account":"account"], "commodity":["currency":"currency"],
+            "balance":["account":"account", "amount":"amount", "tolerance":"nullable-decimal"], "pad":["account":"account", "source_account":"account"],
+            "event":["event_type":"string", "value":"string"], "query":["name":"string", "query":"string"], "price":["currency":"currency", "amount":"amount"],
+            "document":["account":"account", "filename":"string"], "note":["account":"account", "comment":"string"], "custom":["custom_type":"string", "value":"*"],
+            "transaction":["flag":"string", "payee":"string", "narration":"string"]]
+        guard let shape = shapes[kind] else { return false }
+        var counts: [String: Int] = [:]
+        for field in fields {
+            guard let expected = shape[field.name], expected == "*" || expected == field.value.type || (expected == "nullable-decimal" && ["decimal", "null"].contains(field.value.type)) else { return false }
+            counts[field.name, default: 0] += 1
+        }
+        for name in shape.keys {
+            if (kind == "open" && name == "currency") || (kind == "custom" && name == "value") { continue }
+            if kind == "document" && name == "filename" { if counts[name, default: 0] == 0 { return false }; continue }
+            if counts[name] != 1 { return false }
+        }
+        return true
     }
 }

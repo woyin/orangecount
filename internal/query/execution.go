@@ -170,10 +170,10 @@ func parseTyped(text string, budget *executionBudget) (Query, error) {
 			}
 		}
 	}
-	parser := queryParser{tokens: tokens, defaultPostings: true}
+	parser := queryParser{tokens: tokens, defaultPostings: true, inputBytes: len(text)}
 	q, err := parser.parse()
 	if err != nil {
-		return Query{}, typedFailure("syntax", "%s", err)
+		return Query{}, locatedQueryError(err, nil, "parse")
 	}
 	type pending struct {
 		expr  Expr

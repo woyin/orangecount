@@ -9,7 +9,7 @@ BUILD_DIR="$REPO_ROOT/build/macos-tests"
 for probe in ClientBurstBenchmark ClientLifecycleProbe; do
   "$OC_SWIFT" -O -parse-as-library -swift-version 6 -target "$OC_TARGET" -sdk "$SDKROOT" \
     -I "$BUILD_DIR" -L "$BUILD_DIR" -lorangecount \
-    apps/macos/src/Models.swift apps/macos/src/BridgeClient.swift apps/macos/src/LedgerStore.swift \
+    apps/macos/src/Models.swift apps/macos/src/BridgeClient.swift apps/macos/src/AnalysisFileExport.swift apps/macos/src/LedgerStore.swift \
     "apps/macos/tests/$probe.swift" -o "$BUILD_DIR/$probe"
 done
 "$BUILD_DIR/ClientBurstBenchmark" "$1"

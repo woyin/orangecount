@@ -1,6 +1,8 @@
 # Go Beancount 与原生 macOS：开发文档入口
 
-**当前开工依据**：[Q02有界执行与C/Swift证据](evidence/q02-bounded-execution-2026-10-01.md)。后端/模型已实现，下一步按31.2接后台客户端、Store与QueryView。完整24任务尚未完成；当前私人双方2833指令、零差异。
+**执行顺序更新（2026-10-02）**：以[收敛交付计划](go-beancount-native-delivery-plan-2026-10-02.md)为准：先修复已知界面问题，冻结代码并完成当前账本/原生验收，打包、提交并交付可用首版，再继续附件及其余完整范围。下文旧“下一批”与旧基线保留为历史，不代表当前状态。
+
+**当前开工依据**：[Q02有界执行与C/Swift证据](evidence/q02-bounded-execution-2026-10-01.md)。后端/模型及[后台客户端](evidence/q02-native-client-2026-10-01.md)已实现，[Store首批](evidence/q02-query-store-2026-10-01.md)已接入，[QueryView/导航首批](evidence/q02-query-view-2026-10-01.md)已接入，错误位置与[保存query目录](evidence/q02-saved-query-catalogue-2026-10-01.md)已推进；下一步补preset、固定执行导出与完整验收。完整24任务尚未完成；当前私人双方2833指令、零差异。
 
 更新：2026-10-01。文档定义完整开发范围，当前Q01已有类型化查询及有效metadata实现；完整目标尚未完成，实际状态以进度和分批证据为准。当前工作区已有大量未提交实现，后续开发应保留这些代码；单独 checkout HEAD 无法重现当前状态。
 

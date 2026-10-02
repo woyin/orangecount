@@ -1,0 +1,15 @@
+include "compound-values.bean"
+2000-01-01 open Income:Salary USD, EUR
+2000-01-01 open Expenses:Food USD, EUR
+2000-01-20 * "January salary"
+  Assets:Cash 100 USD
+  Income:Salary -100 USD
+2000-01-21 * "January food"
+  Expenses:Food 12 USD
+  Assets:Cash -12 USD
+2000-02-20 * "February salary"
+  Assets:Cash 80 EUR
+  Income:Salary -80 EUR
+2000-02-21 * "February food"
+  Expenses:Food 9 EUR
+  Assets:Cash -9 EUR

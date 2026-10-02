@@ -19,7 +19,7 @@ func runQuery(args []string, stdout, stderr io.Writer) int {
 	fs.SetOutput(stderr)
 	buildOptions := semanticsFlag(fs)
 	locale := fs.String("locale", "en", "diagnostic display locale (en or zh-CN)")
-	format := fs.String("format", "json", "result format (json, csv or typed-json; typed-json uses the declared BeanQuery subset)")
+	format := fs.String("format", "json", "result format (json, csv, typed-json or typed-csv; typed formats use the declared BeanQuery subset)")
 	jsonOutput := fs.Bool("json", false, "alias for --format json")
 	csvOutput := fs.Bool("csv", false, "alias for --format csv")
 	if err := fs.Parse(args); err != nil {
@@ -36,11 +36,18 @@ func runQuery(args []string, stdout, stderr io.Writer) int {
 		}
 		return 1
 	}
-	if options.format == "typed-json" {
+	if options.format == "typed-json" || options.format == "typed-csv" {
 		value, err := query.EvaluateTyped(fs.Arg(1), result.Snapshot.Evaluation())
 		if err != nil {
 			fmt.Fprintf(stderr, "orangecount query: %s\n", err)
 			return 1
+		}
+		if options.format == "typed-csv" {
+			if err := value.WriteCSV(stdout); err != nil {
+				fmt.Fprintln(stderr, err)
+				return 1
+			}
+			return 0
 		}
 		encoder := json.NewEncoder(stdout)
 		encoder.SetEscapeHTML(false)
@@ -75,7 +82,7 @@ func validateQueryOptions(options queryOptions, jsonOutput, csvOutput bool, argc
 	case csvOutput:
 		options.format = "csv"
 	}
-	if options.format != "json" && options.format != "csv" && options.format != "typed-json" {
+	if options.format != "json" && options.format != "csv" && options.format != "typed-json" && options.format != "typed-csv" {
 		fmt.Fprintf(stderr, "orangecount query: unsupported format %q\n", options.format)
 		return options, false
 	}

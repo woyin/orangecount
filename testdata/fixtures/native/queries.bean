@@ -1,0 +1,9 @@
+option "title" "Public query catalogue"
+include "queries-included.bean"
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Equity:Opening USD
+2000-01-02 * "Opening"
+  Assets:Cash 1 USD
+  Equity:Opening -1 USD
+2000-01-03 query "同名" "SELECT account LIMIT 0"
+2000-01-03 query "同名" "SELECT number LIMIT 1"

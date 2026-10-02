@@ -66,9 +66,21 @@ final class BridgeClient: @unchecked Sendable {
     func readView(handle: UInt64, request: ViewRequest) throws -> LedgerView {
         let data = try JSONEncoder().encode(request)
         let json = String(decoding: data, as: UTF8.self)
-        return try json.withCString { ptr in
+        let response: LedgerView = try json.withCString { ptr in
             try sessionResponse { OC_ReadView(handle, UnsafeMutablePointer(mutating: ptr)) }
         }
+        if request.view == "query", response.state.has_snapshot {
+            guard response.query_catalogue?.snapshot_id == response.state.snapshot_id else {
+                throw BridgeError.jsonDecodeError("Saved query catalogue does not match view snapshot")
+            }
+        }
+        if request.view == "journal", ["all", "config"].contains(request.journal_mode ?? ""), response.state.has_snapshot {
+            guard response.directives?.snapshot_id == response.state.snapshot_id,
+                  response.directives?.mode == request.journal_mode, response.journal == nil else {
+                throw BridgeError.jsonDecodeError("Directive page does not match captured view")
+            }
+        }
+        return response
     }
 
     func reloadLedger(handle: UInt64) throws -> LedgerState {
@@ -91,6 +103,35 @@ final class BridgeClient: @unchecked Sendable {
         struct Accepted: Decodable { let accepted: Bool }
         let result: Accepted = try sessionResponse { OC_CancelQuery(handle, requestID) }
         guard result.accepted else { throw BridgeError.jsonDecodeError("Query cancellation was not accepted") }
+    }
+
+    func captureQueryExport(handle: UInt64, request: QueryExportRequest) throws -> QueryExportCapture {
+        let data = try JSONEncoder().encode(request)
+        let json = String(decoding: data, as: UTF8.self)
+        let response: QueryExportCapture = try json.withCString { ptr in
+            try sessionResponse { OC_CaptureQueryExport(handle, UnsafeMutablePointer(mutating: ptr)) }
+        }
+        guard response.context.snapshot_id == request.snapshot_id,
+              response.context.request_id == request.request_id,
+              response.context.fingerprint == request.fingerprint,
+              response.format == request.format,
+              !response.protected_paths.isEmpty,
+              Set(response.protected_paths).count == response.protected_paths.count,
+              response.protected_paths.allSatisfy({ $0.hasPrefix("/") }),
+              response.content.count <= 16 * 1024 * 1024 else {
+            throw BridgeError.jsonDecodeError("Query export does not match captured execution or exceeds the byte budget")
+        }
+        return response
+    }
+
+    func exportProtection(handle: UInt64) throws -> ExportProtection {
+        let response: ExportProtection = try sessionResponse { OC_ExportProtection(handle) }
+        guard !response.protected_paths.isEmpty,
+              Set(response.protected_paths).count == response.protected_paths.count,
+              response.protected_paths.allSatisfy({ $0.hasPrefix("/") }) else {
+            throw BridgeError.jsonDecodeError("Invalid export protection paths")
+        }
+        return response
     }
 
     func closeLedger(handle: UInt64) throws {

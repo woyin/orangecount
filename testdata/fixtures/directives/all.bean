@@ -1,0 +1,26 @@
+option "title" "All directive types"
+option "operating_currency" "USD"
+plugin "example.not-executed" "public configuration"
+include "included.bean"
+pushtag #ambient
+pushmeta project: "public"
+2000-01-02 * "source transaction" #explicit ^public-link
+  Assets:Cash 1 USD
+  Equity:Padding -1 USD
+popmeta project:
+poptag #ambient
+2000-01-03 pad Assets:Cash Equity:Padding
+  origin: "pad"
+2000-01-04 balance Assets:Cash 3 USD
+  origin: "balance"
+2000-01-05 1 USD @Assets:Cash -> @Equity:Padding : dialect transfer
+2000-01-06 event "location" "public place"
+2000-01-06 query "public query" "SELECT account LIMIT 0"
+2000-01-06 price USD 1 EUR
+2000-01-06 document Assets:Cash "receipt.pdf" #document ^document-link
+  description: "public attachment"
+2000-01-06 note Assets:Cash "duplicate note" #note ^note-link
+2000-01-06 note Assets:Cash "duplicate note" #note ^note-link
+2000-01-06 custom "public custom" 1 USD TRUE 2000-01-01 "value"
+  values: [1.25000000000000000001, None, TRUE, 2000-01-01, Assets:Cash, USD, #tag, ^link, "", []]
+2000-01-07 close Assets:Quiet

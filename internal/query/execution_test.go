@@ -44,7 +44,7 @@ func TestBoundedQueryInterruptsDeepDecimalExpression(t *testing.T) {
 	}
 	_, err := query.ExecuteTyped(context.Background(), "SELECT str("+expression+") LIMIT 1", typedEvaluation(t), query.ExecutionLimits{Steps: 300})
 	var failure query.TypedError
-	if !errors.As(err, &failure) || failure.Code != "work-budget-exceeded" {
+	if !errors.As(err, &failure) || failure.Code != "work-budget-exceeded" || failure.Range != nil {
 		t.Fatalf("deep repeated calculation was not stopped: %v", err)
 	}
 }

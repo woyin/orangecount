@@ -5,11 +5,12 @@ import Foundation
 
 struct StateTestFailure: Error { let message: String }
 
-actor ControlledClient: LedgerSessionClient {
+actor ControlledClient: LedgerSessionClient, LedgerQueryClient, LedgerQueryExportClient {
     private var pending: [String: CheckedContinuation<OpenLedgerResult, Error>] = [:]
     private var paths: [UInt64: String] = [:]
     private var closed: Set<UInt64> = []
     private var polls: [UInt64: Int] = [:]
+    private var revisions: [UInt64: UInt64] = [:]
     private var pollsAfterClose: [UInt64: Int] = [:]
     private var holdReads = false
     private var reads: [String: (UInt64, ViewRequest, CheckedContinuation<LedgerView, Error>)] = [:]
@@ -41,7 +42,8 @@ actor ControlledClient: LedgerSessionClient {
     }
 
     private func state(_ handle: UInt64) -> LedgerState {
-        LedgerState(revision: 1, snapshot_id: "snapshot-\(handle)", entry_path: paths[handle]!, valid: true, has_snapshot: true, reloading: false, build_count: 1)
+        let revision = revisions[handle, default: 1]
+        return LedgerState(revision: revision, snapshot_id: revision == 1 ? "snapshot-\(handle)" : "snapshot-\(handle)-\(revision)", entry_path: paths[handle]!, valid: true, has_snapshot: true, reloading: false, build_count: revision, evaluation_revision: "legacy-1")
     }
 
     func read(handle: UInt64, request: ViewRequest) async throws -> LedgerView {
@@ -62,6 +64,48 @@ actor ControlledClient: LedgerSessionClient {
         return PollResult(changed: false, state: state(handle))
     }
 
+    private var queries: [UInt64: (UInt64, QueryRequest, CheckedContinuation<QueryResponse, Error>)] = [:]
+    private var queryIDs: [UInt64] = []
+    private var cancelledQueries: Set<UInt64> = []
+    func executeQuery(handle: UInt64, request: QueryRequest) async throws -> QueryResponse {
+        queryIDs.append(request.request_id)
+        return try await withCheckedThrowingContinuation { queries[request.request_id] = (handle, request, $0) }
+    }
+    func cancelQuery(handle: UInt64, requestID: UInt64) async throws { cancelledQueries.insert(requestID) }
+    func hasQuery(_ id: UInt64) -> Bool { queries[id] != nil }
+    func submittedQueries() -> [UInt64] { queryIDs }
+    func queryCancelled(_ id: UInt64) -> Bool { cancelledQueries.contains(id) }
+    func finishQuery(_ id: UInt64, failed: Bool = false) throws {
+        guard let (_, request, continuation) = queries.removeValue(forKey: id) else { return }
+        let context: [String: Any] = ["snapshot_id": request.snapshot_id, "request_id": request.request_id,
+            "text": request.text, "semantics_profile": "legacy", "evaluation_revision": "legacy-1",
+            "fingerprint": String(repeating: "a", count: 64)]
+        let execution: [String: Any] = ["result": ["contract": "beanquery-0.2.0-typed-v1",
+            "columns": [["id": "c0", "name": "v", "type": "integer", "nullable": false]],
+            "rows": [[ ["type": "integer", "value": "7"] ]]],
+            "returned_rows": 1, "row_limit": 10000, "truncated": false]
+        let error: [String: Any] = ["code": "unknown-function", "message": "Unknown function", "phase": "compile", "range": NSNull()]
+        let executionValue: Any = failed ? NSNull() : execution
+        let errorValue: Any = failed ? error : NSNull()
+        let data = try JSONSerialization.data(withJSONObject: ["context": context,
+            "execution": executionValue, "error": errorValue])
+        continuation.resume(returning: try JSONDecoder().decode(QueryResponse.self, from: data))
+    }
+
+    func advanceSnapshot(_ handle: UInt64) { revisions[handle] = revisions[handle, default: 1] + 1 }
+
+    private var pendingExport: (QueryExportRequest, CheckedContinuation<QueryExportCapture, Error>)?
+    func captureQueryExport(handle: UInt64, request: QueryExportRequest) async throws -> QueryExportCapture {
+        try await withCheckedThrowingContinuation { pendingExport = (request, $0) }
+    }
+    func hasExport() -> Bool { pendingExport != nil }
+    func finishExport() {
+        guard let (request, continuation) = pendingExport else { return }
+        pendingExport = nil
+        continuation.resume(returning: QueryExportCapture(context: QueryContext(snapshot_id: request.snapshot_id,
+            semantics_profile: "legacy", evaluation_revision: "legacy-1", request_id: request.request_id,
+            text: "SELECT 1", fingerprint: request.fingerprint), format: request.format, content: Data("v\n7\n".utf8)))
+    }
     func reload(handle: UInt64) async throws -> LedgerState { state(handle) }
     func close(handle: UInt64) async { closed.insert(handle) }
 }
@@ -76,8 +120,146 @@ struct StateTests {
         throw StateTestFailure(message: "Timed out waiting for store state")
     }
 
+    @MainActor static func verifyQueryState() async throws {
+        let client = ControlledClient()
+        let store = LedgerStore(client: client, preferences: nil, pollNanoseconds: 60_000_000_000)
+        defer { store.close() }
+        store.loadLedger(at: "query-A")
+        try await waitUntil { await client.hasPending("query-A") }
+        await client.complete("query-A", handle: 20)
+        try await waitUntil { store.phase == .ready }
+        store.selectedNav = .query
+        try await waitUntil { store.visibleView?.request.view == "query" }
+        guard store.queryPhase == .idle else { throw StateTestFailure(message: "Query navigation executed the draft automatically") }
+        store.queryDraft = "SELECT 1"
+        store.executeQuery()
+        try await waitUntil { await client.hasQuery(1) }
+        store.queryDraft = "SELECT 2"
+        store.executeQuery()
+        store.queryDraft = "SELECT 3"
+        store.executeQuery()
+        try await waitUntil { await client.queryCancelled(1) }
+        guard store.queryPhase == .queued else { throw StateTestFailure(message: "Latest query was not queued") }
+        try await client.finishQuery(1)
+        try await waitUntil { await client.hasQuery(3) }
+        guard await client.submittedQueries() == [1, 3], store.queryResponse == nil else {
+            throw StateTestFailure(message: "Intermediate query executed or obsolete success published")
+        }
+        try await client.finishQuery(3)
+        try await waitUntil { store.queryPhase == .succeeded }
+        guard store.queryResponse?.context.text == "SELECT 3", store.lastSuccessfulQuery?.context.request_id == 3 else {
+            throw StateTestFailure(message: "Successful query lost its captured draft identity")
+        }
+        store.queryDraft = "SELECT 4"
+        guard store.queryDraftChanged else { throw StateTestFailure(message: "Editing draft changed captured execution") }
+        store.executeQuery()
+        try await waitUntil { await client.hasQuery(4) }
+        store.cancelQuery()
+        try await client.finishQuery(4)
+        try await Task.sleep(nanoseconds: 20_000_000)
+        guard store.queryPhase == .cancelled, store.queryResponse == nil, store.lastSuccessfulQuery?.context.request_id == 3 else {
+            throw StateTestFailure(message: "Late cancelled result replaced execution state")
+        }
+        store.executeQuery()
+        try await waitUntil { await client.hasQuery(5) }
+        try await client.finishQuery(5, failed: true)
+        try await waitUntil { store.queryPhase == .failed }
+        guard store.queryResponse?.execution == nil, store.queryResponse?.error?.code == "unknown-function" else {
+            throw StateTestFailure(message: "Query error masqueraded as previous successful result")
+        }
+        store.executeQuery()
+        try await waitUntil { await client.hasQuery(6) }
+        store.loadLedger(at: "query-B")
+        try await waitUntil { await client.hasPending("query-B") }
+        await client.complete("query-B", handle: 21)
+        try await client.finishQuery(6)
+        try await waitUntil { store.phase == .ready }
+        guard store.queryResponse == nil, store.lastSuccessfulQuery == nil else {
+            throw StateTestFailure(message: "Query result crossed ledger boundary")
+        }
+        store.executeQuery()
+        try await waitUntil { await client.hasQuery(7) }
+        store.reloadSilently()
+        try await waitUntil { await client.queryCancelled(7) }
+        try await client.finishQuery(7)
+        try await Task.sleep(nanoseconds: 20_000_000)
+        guard store.queryPhase == .stale, store.queryResponse == nil else {
+            throw StateTestFailure(message: "Reload accepted an in-flight query result")
+        }
+        store.executeQuery()
+        try await waitUntil { await client.hasQuery(8) }
+        try await client.finishQuery(8)
+        try await waitUntil { store.queryResultIsCurrent }
+        await client.advanceSnapshot(21)
+        store.reloadSilently()
+        try await waitUntil { store.state?.snapshot_id == "snapshot-21-2" }
+        guard store.queryPhase == .stale, !store.queryResultIsCurrent,
+              store.queryResponse?.context.snapshot_id == "snapshot-21" else {
+            throw StateTestFailure(message: "A new snapshot relabelled old query success")
+        }
+        store.executeQuery()
+        try await waitUntil { await client.hasQuery(9) }
+        store.selectedNav = .balanceSheet
+        try await client.finishQuery(9)
+        try await Task.sleep(nanoseconds: 20_000_000)
+        guard store.queryPhase == .cancelled, store.queryResponse == nil else {
+            throw StateTestFailure(message: "Leaving workbench accepted an in-flight result")
+        }
+        store.selectedNav = .query
+        store.executeQuery()
+        try await waitUntil { await client.hasQuery(10) }
+        store.close()
+        try await client.finishQuery(10)
+        try await Task.sleep(nanoseconds: 20_000_000)
+        guard store.queryPhase == .idle, store.queryResponse == nil, store.lastSuccessfulQuery == nil else {
+            throw StateTestFailure(message: "Closed store accepted a late query result")
+        }
+        print("PASS: query reload cancels active work, snapshot changes mark prior results stale, and close rejects late responses")
+        print("PASS: query current/latest-pending, captured draft, cancellation, failure and ledger isolation")
+    }
+
+    @MainActor static func verifyLateQueryExports() async throws {
+        for transition in ["query", "snapshot", "close"] {
+            let client = ControlledClient()
+            let store = LedgerStore(client: client, preferences: nil, pollNanoseconds: 60_000_000_000)
+            store.loadLedger(at: "export")
+            try await waitUntil { await client.hasPending("export") }
+            await client.complete("export", handle: 40)
+            try await waitUntil { store.phase == .ready }
+            store.queryDraft = "SELECT 1"
+            store.executeQuery()
+            try await waitUntil { await client.hasQuery(1) }
+            try await client.finishQuery(1)
+            try await waitUntil { store.queryResultIsCurrent }
+            let capture = Task { @MainActor in
+                do { _ = try await store.captureQueryExport(format: "csv"); return false }
+                catch QueryExportError.changedExecution { return true }
+                catch { return false }
+            }
+            try await waitUntil { await client.hasExport() }
+            switch transition {
+            case "query":
+                store.executeQuery()
+                try await waitUntil { await client.hasQuery(2) }
+                try await client.finishQuery(2)
+                try await waitUntil { store.queryResultIsCurrent }
+            case "snapshot":
+                await client.advanceSnapshot(40)
+                store.reloadSilently()
+                try await waitUntil { store.state?.snapshot_id == "snapshot-40-2" }
+            default: store.close()
+            }
+            await client.finishExport()
+            guard await capture.value else { throw StateTestFailure(message: "Late export accepted after \(transition)") }
+            store.close()
+        }
+        print("PASS: query export capture rejects late bytes after new execution, snapshot change and window close")
+    }
+
     @MainActor static func main() async {
         do {
+            try await verifyQueryState()
+            try await verifyLateQueryExports()
             let client = ControlledClient()
             let store = LedgerStore(client: client, preferences: nil, pollNanoseconds: 60_000_000_000)
             store.loadLedger(at: "A")

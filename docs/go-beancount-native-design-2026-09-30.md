@@ -1,6 +1,7 @@
 # Go 会计引擎与原生 macOS 账本分析设计
 
-**当前实施基线（2026-10-01）**：Q02已实现有界查询执行、快照上下文、会话取消及真实C/Swift typed契约；完整工作台未完成。全量Go/七包race、51会计/147查询、原生三套/app及最新私人Swift/C通过（双方2833指令、零差异），见[本批证据](evidence/q02-bounded-execution-2026-10-01.md)。会计v3-core-3、默认legacy及查询contract保持；下一步按31.2接后台客户端、Store/QueryView、错误位置和导出。Q01剩余语义、X01/X02及GUI/安装/发行继续保留。
+**当前进度（2026-10-02）**：查询分析读取与篡改/资源样本、四个预设及显式期间已落地，见[期间证据](evidence/q02-period-presets-2026-10-02.md)；163 查询/51 会计差分通过。附件 resolver 与[全指令索引](evidence/x01-directive-index-2026-10-02.md)为底层首批，原生附件动作与 all/config 模式仍未完成。完整 24 项及 GUI/安装/发行门槛保持，不从底层测试推断整项完成。
+**历史实施基线（2026-10-01）**：Q02已实现有界查询执行、快照上下文、会话取消及真实C/Swift typed契约；完整工作台未完成。全量Go/七包race、51会计/147查询、原生三套/app及最新私人Swift/C通过（双方2833指令、零差异），见[本批证据](evidence/q02-bounded-execution-2026-10-01.md)。会计v3-core-3、默认legacy及查询contract保持；后台客户端与Store首批见[新增证据](evidence/q02-query-store-2026-10-01.md)；[QueryView/导航首批](evidence/q02-query-view-2026-10-01.md)已接入；错误位置与[保存query目录](evidence/q02-saved-query-catalogue-2026-10-01.md)已推进；下一步补preset、固定执行导出与完整验收。Q01剩余语义、X01/X02及GUI/安装/发行继续保留。
 
 开发入口见[文档导航与当前差距](go-beancount-native-roadmap.md)。真实查询签名与尚未实现项见[查询能力矩阵](query-capability-matrix.md)。此前16个固定版本场景的[文档复验](evidence/go-native-design-refresh-2026-10-01.md)为历史证据，最新实现状态如下。
 
@@ -634,7 +635,7 @@ Q01使用已创建的[查询能力矩阵](query-capability-matrix.md)，按每�
 
 ## 26. 附件与分析文件格式（X02）
 
-以下为首版目标格式，当前没有实现。选择单个 `.ocanalysis` ZIP 作为完整分析交付单位，避免 CSV 和 sidecar 各自替换造成半成功。固定成员：`context.json`、`schema.json`、`cells.ndjson`、`data.csv`；UTF-8、无 BOM。ZIP 内无源账本、附件副本或绝对来源路径，导出到仓库也不得包含私人数据。
+以下为首版目标格式；当前查询内容生成、原生捕获/保存及首批实际 GUI 已接入，见[保存工作流证据](evidence/q02-query-save-workflow-2026-10-01.md)，完整格式和保护边界尚未验收。选择单个 `.ocanalysis` ZIP 作为完整分析交付单位，避免 CSV 和 sidecar 各自替换造成半成功。固定成员：`context.json`、`schema.json`、`cells.ndjson`、`data.csv`；UTF-8、无 BOM。ZIP 内无源账本、附件副本或绝对来源路径，导出到仓库也不得包含私人数据。
 
 context 的 `format_version=1`，必填 producer、view、snapshot_id、semantics_profile/revision、normalized_request、capture_scope、returned_rows、truncated、completeness 及所含 page 元数据。capture_scope 区分 current-page / captured-result / complete-projection；后两者不能由当前页推断。schema 保留列 ID/标题/类型/nullable。cells.ndjson 每行是第25节的 positional typed cells 数组，零行结果为零字节，context 与 schema 仍存在。data.csv 是可读表格：RFC CSV quoting、标题允许重复、金额用 exact、compound 用规范 JSON；NULL 与空字符串的无损区分以 typed cells 为准，CSV 本身不作此承诺。
 
@@ -648,7 +649,7 @@ Go 负责精确文件内容与格式，Swift 负责保存面板和本地文件�
 
 ## 27. 查询编译、类型与旧调用方迁移
 
-这是Q01/Q02的Implementation约束。已落地Go入口为ParseStandard/EvaluateTyped及TypedResult/Column/Cell；query contract为`beanquery-0.2.0-typed-v1`。Q02执行协议及C/Swift模型已实现；后台客户端、Store和查询页面尚未接入。新类型模型由query Module统一拥有；desktop只限制预算、绑定快照和投影，不从旧map或显示文本推断金额、币种、成本或NULL。
+这是Q01/Q02的Implementation约束。已落地Go入口为ParseStandard/EvaluateTyped及TypedResult/Column/Cell；query contract为`beanquery-0.2.0-typed-v1`。Q02执行协议及C/Swift模型已实现；后台客户端及Store首批已接入；查询页面首批已接入，GUI与导出尚未验收。新类型模型由query Module统一拥有；desktop只限制预算、绑定快照和投影，不从旧map或显示文本推断金额、币种、成本或NULL。
 
 ### 27.1 执行链与失败位置
 

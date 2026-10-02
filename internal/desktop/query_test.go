@@ -144,3 +144,72 @@ func TestQueryCancelStopsRunningGoWorkAndIsolatesLaterGenerations(t *testing.T) 
 		}
 	}
 }
+
+func TestQueryWorkbenchReadReturnsOnlyCapturedSummary(t *testing.T) {
+	session, err := desktop.OpenWithOptions("../../testdata/fixtures/query/default-source.bean", desktop.OpenOptions{SemanticsProfile: ledger.V3})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer session.Close()
+	state, _ := session.Poll()
+	view, err := session.Read(desktop.Request{View: "query", SnapshotID: state.SnapshotID})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if view.State.SnapshotID != state.SnapshotID || view.Tree != nil || view.Journal != nil || view.Trends != nil || view.Account != nil || view.Holdings != nil || view.Prices != nil {
+		t.Fatalf("workbench unexpectedly projected a report: %+v", view)
+	}
+	if _, err := session.Read(desktop.Request{View: "query", SnapshotID: "obsolete"}); err != desktop.ErrStale {
+		t.Fatalf("stale workbench request: %v", err)
+	}
+}
+
+func TestQueryFailuresExposeActualUTF8TokenRanges(t *testing.T) {
+	session, err := desktop.OpenWithOptions("../../testdata/fixtures/query/default-source.bean", desktop.OpenOptions{SemanticsProfile: ledger.V3})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer session.Close()
+	state, _ := session.Poll()
+	cases := []struct {
+		text, code string
+		start, end int
+	}{
+		{"SELECT '💰 unknown_fn', unknown_fn(number) LIMIT 0", "unknown-function", 26, 36},
+		{"SELECT '账本', )", "syntax", 17, 18},
+		{"SELECT number WHERE", "syntax", 19, 19},
+		{"SELECT abs(missing) LIMIT 0", "unknown-column", 11, 18},
+		{"SELECT year('x') LIMIT 0", "type-mismatch", 7, 11},
+		{"SELECT 2000-02-30", "syntax", 7, 17},
+		{"SELECT 'x' + number LIMIT 0", "type-mismatch", 11, 12},
+		{"SELECT -account LIMIT 0", "type-mismatch", 7, 8},
+		{"SELECT number FROM unsupported LIMIT 0", "unknown-table", 19, 30},
+		{"SELECT 1 AS v, 2 AS v ORDER BY v", "ambiguous-column", 31, 32},
+		{"SELECT account ~ '['", "syntax", 15, 16},
+	}
+	for i, tc := range cases {
+		response, err := session.ExecuteQuery(context.Background(), desktop.QueryRequest{SnapshotID: state.SnapshotID, RequestID: uint64(i + 1), Text: tc.text})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if response.Error == nil || response.Error.Code != tc.code || response.Error.Range == nil || response.Error.Range.Start != tc.start || response.Error.Range.End != tc.end {
+			t.Fatalf("case %d expected [%d,%d), got %+v", i, tc.start, tc.end, response.Error)
+		}
+	}
+}
+
+func TestQueryNumericBudgetDoesNotInventAnExpressionRange(t *testing.T) {
+	session, err := desktop.OpenWithOptions("../../testdata/fixtures/query/default-source.bean", desktop.OpenOptions{SemanticsProfile: ledger.V3})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer session.Close()
+	state, _ := session.Poll()
+	response, err := session.ExecuteQuery(context.Background(), desktop.QueryRequest{SnapshotID: state.SnapshotID, RequestID: 1, Text: "SELECT str(decimal('1e100000000')) LIMIT 1"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if response.Error == nil || response.Error.Code != "numeric-budget-exceeded" || response.Error.Range != nil {
+		t.Fatalf("global budget attributed to expression: %+v", response.Error)
+	}
+}

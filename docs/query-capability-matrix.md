@@ -1,6 +1,6 @@
 # 查询能力与兼容矩阵
 
-**当前实施基线（2026-10-01）**：Q02已实现有界查询执行、快照上下文、会话取消及真实C/Swift typed契约；完整工作台未完成。全量Go/七包race、51会计/147查询、原生三套/app及最新私人Swift/C通过（双方2833指令、零差异），见[本批证据](evidence/q02-bounded-execution-2026-10-01.md)。会计v3-core-3、默认legacy及查询contract保持；下一步按31.2接后台客户端、Store/QueryView、错误位置和导出。Q01剩余语义、X01/X02及GUI/安装/发行继续保留。
+**当前实施基线（2026-10-01）**：Q02已实现有界查询执行、快照上下文、会话取消及真实C/Swift typed契约；完整工作台未完成。全量Go/七包race、51会计/147查询、原生三套/app及最新私人Swift/C通过（双方2833指令、零差异），见[本批证据](evidence/q02-bounded-execution-2026-10-01.md)。会计v3-core-3、默认legacy及查询contract保持；后台客户端与Store首批见[新增证据](evidence/q02-query-store-2026-10-01.md)；[QueryView/导航首批](evidence/q02-query-view-2026-10-01.md)已接入；错误位置与[保存query目录](evidence/q02-saved-query-catalogue-2026-10-01.md)已推进；下一步补preset、固定执行导出与完整验收。Q01剩余语义、X01/X02及GUI/安装/发行继续保留。
 
 更新：2026-10-01。Oracle固定为Beancount 3.2.3 / BeanQuery 0.2.0，依赖身份来自 `tools/reference/uv.lock`。本文件是Q01/Q02实施契约；下列“oracle确认”只证明参考行为，**不表示Go已经实现**。前次16个探针见[历史文档复验](evidence/go-native-design-refresh-2026-10-01.md)，22个基础场景见[标量证据](evidence/q01-typed-query-foundation-2026-10-01.md)。当前11个公开语料集共147个strict场景通过，包含标量、复合值、metadata、转换及日期/聚合端点；见[Q01证据](evidence/q01-date-aggregate-price-2026-10-01.md)；完整Q01仍未完成。
 
@@ -86,7 +86,7 @@ go run ./cmd/orangecount query --format typed-json --semantics v3 \
   'SELECT account, sum(number) AS total GROUP BY account ORDER BY total DESC'
 ```
 
-当前typed来源仅postings；entries/accounts/prices通过旧入口继续可用，新入口给出unsupported-capability。新JSON带contract/columns/rows；Q02执行入口已提供快照上下文与资源预算，原生结果页面尚未接入。integer除法产生的float不在当前已声明cell类型内，明确拒绝；财务decimal保持精确值，非终止算术与oracle精度差异仍须独立登记/验收。
+当前typed来源仅postings；entries/accounts/prices通过旧入口继续可用，新入口给出unsupported-capability。新JSON带contract/columns/rows；Q02执行入口已提供快照上下文与资源预算，原生结果页面首批已接入，GUI验收与导出未完成。integer除法产生的float不在当前已声明cell类型内，明确拒绝；财务decimal保持精确值，非终止算术与oracle精度差异仍须独立登记/验收。
 
 本批报价表示、已验日期/聚合签名通过；下一批补分组/alias/ordinal、balance/sum(inventory)、可执行预设及其他表示/数值长尾。重复include/metadata、保留键覆盖及同日跨文件排序另核实；见实施手册第39节。不能据147场景或existing native页面检查关闭Q01/Q02。typed标量算术/SUM已有28位上下文，复合成本/库存的已验范围已通过，其他表示路径及极端指数仍待独立确定，不能将该范围扩成全局数值豁免。
 
@@ -96,4 +96,10 @@ go run ./cmd/orangecount query --format typed-json --semantics v3 \
 
 ## Q02当前执行接口
 
-ExecuteTyped与Session.ExecuteQuery/CancelQuery、OC_ExecuteQuery/OC_CancelQuery及BridgeClient已实现；资源边界、真实失败与C/Swift解码见[证据](evidence/q02-bounded-execution-2026-10-01.md)。后台客户端、Store/UI与导出尚未接入；range字段固定required-nullable但当前无位置值。此前“尚未提供预算”的描述属于首批前状态，不作为当前源码判断。
+ExecuteTyped与Session.ExecuteQuery/CancelQuery、OC_ExecuteQuery/OC_CancelQuery及BridgeClient已实现；资源边界、真实失败与C/Swift解码见[证据](evidence/q02-bounded-execution-2026-10-01.md)。后台客户端及Store首批已接入，见[Store证据](evidence/q02-query-store-2026-10-01.md)；QueryView及导航首批已接入，导出与GUI验收未完成；range字段required-nullable；语法/函数/字段首批已提供真实token位置，见[证据](evidence/q02-query-locations-2026-10-01.md)，其余位置链与GUI未完整验收。此前“尚未提供预算”的描述属于首批前状态，不作为当前源码判断。
+
+### 2026-10-02 当前补充
+
+首批四预设（按月收入、按月支出、账户库存余额、分录来源）已通过固定 oracle 与 CLI，并接入 native 草稿选择；12 corpus / 151 查询全部通过。它们读取完整快照，收支保留记账符号和多币种库存，不含隐式日期/换汇。查询 CSV/分析保存及独立容器读取已落地；最新范围与未验项见[证据](evidence/q02-analysis-grid-presets-2026-10-02.md)。前文“预设尚未实现”保留历史背景，不代表当前这四项状态；其他查询长尾与完整验收仍待完成。
+
+期间预设已支持四个模板的合法双边界及单边界：选择只把具体日期写入草稿，最近一月由捕获快照解析。当前 12 corpus / 163 查询通过；见[证据](evidence/q02-period-presets-2026-10-02.md)。完整 Q01/Q02 与期间菜单 GUI 未关闭。

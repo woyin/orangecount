@@ -1,6 +1,8 @@
 # Go 会计引擎与原生 macOS 开发计划
 
-**当前实施基线（2026-10-01）**：Q02已实现有界查询执行、快照上下文、会话取消及真实C/Swift typed契约；完整工作台未完成。全量Go/七包race、51会计/147查询、原生三套/app及最新私人Swift/C通过（双方2833指令、零差异），见[本批证据](evidence/q02-bounded-execution-2026-10-01.md)。会计v3-core-3、默认legacy及查询contract保持；下一步按31.2接后台客户端、Store/QueryView、错误位置和导出。Q01剩余语义、X01/X02及GUI/安装/发行继续保留。
+**执行顺序更新（2026-10-02）**：以[收敛交付计划](go-beancount-native-delivery-plan-2026-10-02.md)为准：先修复已知界面问题，冻结代码并完成当前账本/原生验收，打包、提交并交付可用首版，再继续附件及其余完整范围。下文旧“下一批”与旧基线保留为历史，不代表当前状态。
+
+**当前实施基线（2026-10-01）**：Q02已实现有界查询执行、快照上下文、会话取消及真实C/Swift typed契约；完整工作台未完成。全量Go/七包race、51会计/147查询、原生三套/app及最新私人Swift/C通过（双方2833指令、零差异），见[本批证据](evidence/q02-bounded-execution-2026-10-01.md)。会计v3-core-3、默认legacy及查询contract保持；后台客户端与Store首批见[新增证据](evidence/q02-query-store-2026-10-01.md)；[QueryView/导航首批](evidence/q02-query-view-2026-10-01.md)已接入；错误位置与[保存query目录](evidence/q02-saved-query-catalogue-2026-10-01.md)已推进；下一步补preset、固定执行导出与完整验收。Q01剩余语义、X01/X02及GUI/安装/发行继续保留。
 
 文档导航与当前差距见[开发入口](go-beancount-native-roadmap.md)；查询签名核对见[能力矩阵](query-capability-matrix.md)。当前剩余范围、估算口径及开工顺序在第15节。
 

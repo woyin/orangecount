@@ -340,8 +340,41 @@ struct ContractTests {
         }
         print("PASS: all \(names.count) parity fixtures decode on all four native routes")
         try verifyQueries(root: root, bridge: bridge)
+        try verifyDirectivePages(root: root, bridge: bridge)
     }
     static func verifyQueries(root: String, bridge: BridgeClient) throws {
+        let catalogueSession = try bridge.openLedger(path: root + "/testdata/fixtures/native/queries.bean", semantics: "v3")
+        defer { try? bridge.closeLedger(handle: catalogueSession.handle) }
+        let catalogueView = try bridge.readView(handle: catalogueSession.handle, request: ViewRequest(view: "query", limit: 1))
+        guard let catalogue = catalogueView.query_catalogue else { throw TestFailure(description: "Missing saved query catalogue") }
+        try expect(catalogue.page.total_count == 3 && catalogue.queries.count == 1 && catalogue.queries[0].name == "Included" && catalogue.queries[0].source.path.hasSuffix("queries-included.bean"), "Saved query source and pagination must cross real C/Swift without execution")
+        try expect(catalogue.presets.count == 4 && catalogue.period != nil, "Built-in and period presets must cross real C/Swift")
+        for fault in ["invalid-date", "reversed", "empty-bounds", "id-mismatch", "text-budget"] {
+            var invalid = try JSONSerialization.jsonObject(with: JSONEncoder().encode(catalogue)) as! [String: Any]
+            var period = invalid["period"] as! [String: Any]
+            switch fault {
+            case "invalid-date": period["date_from"] = "2000-02-30"
+            case "reversed": period["date_from"] = "2001-01-01"
+            case "empty-bounds": period["date_from"] = ""; period["date_to"] = ""
+            case "id-mismatch":
+                var presets = period["presets"] as! [[String: Any]]; presets[0]["id"] = "wrong"; period["presets"] = presets
+            default:
+                var presets = period["presets"] as! [[String: Any]]; presets[0]["text"] = String(repeating: "x", count: 65537); period["presets"] = presets
+            }
+            invalid["period"] = period
+            do {
+                _ = try JSONDecoder().decode(QueryCatalogue.self, from: JSONSerialization.data(withJSONObject: invalid))
+                throw TestFailure(description: "Malformed preset period accepted: \(fault)")
+            } catch is DecodingError { }
+        }
+        var badCatalogue = try JSONSerialization.jsonObject(with: JSONEncoder().encode(catalogue)) as! [String: Any]
+        badCatalogue["queries"] = []
+        do {
+            _ = try JSONDecoder().decode(QueryCatalogue.self, from: JSONSerialization.data(withJSONObject: badCatalogue))
+            throw TestFailure(description: "Saved query rows inconsistent with pagination accepted")
+        } catch is DecodingError { }
+
+
         let session = try bridge.openLedger(path: root + "/testdata/fixtures/query/default-source.bean", semantics: "v3")
         defer { try? bridge.closeLedger(handle: session.handle) }
         let first = try bridge.executeQuery(handle: session.handle, request: QueryRequest(snapshot_id: session.state.snapshot_id, request_id: 1,
@@ -380,8 +413,19 @@ struct ContractTests {
                 throw TestFailure(description: "Malformed query \(fault) accepted")
             } catch BridgeError.jsonDecodeError { }
         }
+        let exportRequest = QueryExportRequest(snapshot_id: first.context.snapshot_id, request_id: first.context.request_id, fingerprint: first.context.fingerprint, format: "csv")
+        let csvCapture = try bridge.captureQueryExport(handle: session.handle, request: exportRequest)
+        try expect(csvCapture.protected_paths.contains { $0.hasSuffix("default-source.bean") }, "Captured source protection must cross actual C/Swift separately from file contents")
+        try expect(String(data: csvCapture.content, encoding: .utf8)?.hasPrefix("v,v,") == true && csvCapture.context.text == first.context.text, "Actual Go export bytes and captured context must survive C/base64/Swift")
+        let analysisCapture = try bridge.captureQueryExport(handle: session.handle, request: QueryExportRequest(snapshot_id: first.context.snapshot_id, request_id: first.context.request_id, fingerprint: first.context.fingerprint, format: "analysis"))
+        try expect(analysisCapture.content.prefix(4) == Data([0x50,0x4b,0x03,0x04]), "Captured analysis must be a ZIP, not rendered cell text")
         let failed = try bridge.executeQuery(handle: session.handle, request: QueryRequest(snapshot_id: session.state.snapshot_id, request_id: 2, text: "SELECT unknown(number) LIMIT 0"))
-        try expect(failed.execution == nil && failed.error?.code == "unknown-function" && failed.error?.range == nil && failed.context.request_id == 2,
+        do {
+            _ = try bridge.captureQueryExport(handle: session.handle, request: exportRequest)
+            throw TestFailure(description: "Previous success must not export as current after a failed execution")
+        } catch BridgeError.remote(let code, _) { try expect(code == "invalid-request", "Old export generation must be rejected") }
+        try expect(String(data: csvCapture.content, encoding: .utf8)?.hasPrefix("v,v,") == true, "Frozen bytes remain available after later failure")
+        try expect(failed.execution == nil && failed.error?.code == "unknown-function" && failed.error?.range?.start_byte == 7 && failed.error?.range?.end_byte == 14 && failed.context.request_id == 2,
                    "A failed query is separate from its previous success, even on LIMIT 0")
         malformed = try JSONSerialization.jsonObject(with: JSONEncoder().encode(failed)) as! [String: Any]
         var failure = malformed["error"] as! [String: Any]; failure.removeValue(forKey: "range"); malformed["error"] = failure
@@ -389,8 +433,19 @@ struct ContractTests {
             let _: QueryResponse = try BridgeClient.decodeResponse(JSONSerialization.data(withJSONObject: ["protocol_version": 2, "data": malformed]), as: QueryResponse.self)
             throw TestFailure(description: "Missing nullable query error range accepted")
         } catch BridgeError.jsonDecodeError { }
-        try bridge.cancelQuery(handle: session.handle, requestID: 3)
-        let cancelled = try bridge.executeQuery(handle: session.handle, request: QueryRequest(snapshot_id: session.state.snapshot_id, request_id: 3, text: "SELECT number"))
+        let unicodeText = "SELECT '💰 unknown_fn', unknown_fn(number) LIMIT 0"
+        let unicodeError = try bridge.executeQuery(handle: session.handle, request: QueryRequest(snapshot_id: session.state.snapshot_id, request_id: 3, text: unicodeText))
+        try expect(unicodeError.error?.range?.nativeRange(in: unicodeText) == NSRange(location: 24, length: 10), "UTF-8 error range must convert to the actual UTF-16 editor selection")
+        var unicodeRaw = try JSONSerialization.jsonObject(with: JSONEncoder().encode(unicodeError)) as! [String: Any]
+        var unicodeFailure = unicodeRaw["error"] as! [String: Any]
+        unicodeFailure["range"] = ["start_byte": 9, "end_byte": 12]
+        unicodeRaw["error"] = unicodeFailure
+        do {
+            let _: QueryResponse = try BridgeClient.decodeResponse(JSONSerialization.data(withJSONObject: ["protocol_version": 2, "data": unicodeRaw]), as: QueryResponse.self)
+            throw TestFailure(description: "Error range splitting UTF-8 code point accepted")
+        } catch BridgeError.jsonDecodeError { }
+        try bridge.cancelQuery(handle: session.handle, requestID: 4)
+        let cancelled = try bridge.executeQuery(handle: session.handle, request: QueryRequest(snapshot_id: session.state.snapshot_id, request_id: 4, text: "SELECT number"))
         try expect(cancelled.execution == nil && cancelled.error?.code == "cancelled", "Cancellation before C dispatch must be remembered")
         let compound = try bridge.openLedger(path: root + "/testdata/fixtures/query/compound-casts.bean", semantics: "v3")
         defer { try? bridge.closeLedger(handle: compound.handle) }
@@ -404,4 +459,47 @@ struct ContractTests {
         print("PASS: malformed query widths, column IDs, cell types, NULL shape, nullable fields and row metadata are rejected")
     }
 
+}
+
+extension ContractTests {
+    static func verifyDirectivePages(root: String, bridge: BridgeClient) throws {
+        let session = try bridge.openLedger(path: root + "/testdata/fixtures/directives/all.bean", semantics: "v3")
+        defer { try? bridge.closeLedger(handle: session.handle) }
+        let view = try bridge.readView(handle: session.handle, request: ViewRequest(view: "journal", sort: "ascending", journal_mode: "all"))
+        guard let payload = view.directives else { throw TestFailure(description: "Missing directive page") }
+        try expect(payload.records.count == 18 && view.summary.transactions_count == 3 && view.journal == nil, "Directive page must keep transaction count distinct")
+        let pad = payload.records.first { $0.kind == "pad" }!
+        let generated = payload.records.first { $0.generated && $0.source_kind == "pad" }!
+        try expect(generated.origin_id == pad.id && generated.postings.count == 2 && generated.postings[0].posting.amount?.exact == "2", "Generated pad keeps exact amount and origin")
+        let custom = payload.records.first { $0.kind == "custom" }!
+        guard case .list(let items) = custom.metadata[0].value.value, case .decimal(let number) = items[0].value,
+              case .null = items[1].value, case .boolean(true) = items[2].value,
+              case .text("Assets:Cash") = items[4].value, case .text("") = items[8].value, case .list(let empty) = items[9].value else {
+            throw TestFailure(description: "Metadata value types lost across C/Swift")
+        }
+        try expect(number.exact == "1.25000000000000000001" && empty.isEmpty, "Metadata precision and NULL/empty/list distinctions remain exact")
+        let configuration = try bridge.readView(handle: session.handle, request: ViewRequest(view: "journal", date_from: "2099-01-01", journal_mode: "config")).directives!
+        try expect(configuration.records.count == 9 && configuration.records.allSatisfy { $0.date == nil } && configuration.records[0].kind == "option", "Configuration remains undated lexical data")
+        for fault in ["duplicate-id", "missing-date", "missing-origin", "empty-date", "field-type", "field-missing", "wrong-kind", "origin", "pagination"] {
+            var invalid = try JSONSerialization.jsonObject(with: JSONEncoder().encode(payload)) as! [String: Any]
+            var records = invalid["records"] as! [[String: Any]]
+            switch fault {
+            case "duplicate-id": records[1]["id"] = records[0]["id"]
+            case "missing-date": records[0].removeValue(forKey: "date")
+            case "missing-origin": records[0].removeValue(forKey: "origin_id")
+            case "empty-date": records[0]["date"] = ""
+            case "wrong-kind": records[0]["kind"] = "unknown"
+            case "origin": records[0]["origin_id"] = "forged"
+            case "field-type": var fields = records[0]["fields"] as! [[String: Any]]; fields[0]["value"] = ["type":"bool", "value":true]; records[0]["fields"] = fields
+            case "field-missing": records[0]["fields"] = []
+            default: var page = invalid["page"] as! [String: Any]; page["returned_count"] = 0; invalid["page"] = page
+            }
+            invalid["records"] = records
+            do {
+                _ = try JSONDecoder().decode(DirectivesPayload.self, from: JSONSerialization.data(withJSONObject: invalid))
+                throw TestFailure(description: "Malformed directive page accepted: \(fault)")
+            } catch is DecodingError { }
+        }
+        print("PASS: all/config directive pages, exact recursive metadata, generated origins and malformed contracts cross real C/Swift")
+    }
 }

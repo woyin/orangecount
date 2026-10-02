@@ -1,0 +1,6 @@
+option "title" "Included configuration"
+2000-01-01 open Assets:Cash USD
+2000-01-01 open Equity:Padding USD
+2000-01-01 open Assets:Quiet USD
+2000-01-01 commodity USD
+2000-01-01 commodity EUR

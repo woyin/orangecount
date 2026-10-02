@@ -1,6 +1,8 @@
 # Go 会计引擎与原生 macOS 实施及验收手册
 
-**当前实施基线（2026-10-01）**：Q02已实现有界查询执行、快照上下文、会话取消及真实C/Swift typed契约；完整工作台未完成。全量Go/七包race、51会计/147查询、原生三套/app及最新私人Swift/C通过（双方2833指令、零差异），见[本批证据](evidence/q02-bounded-execution-2026-10-01.md)。会计v3-core-3、默认legacy及查询contract保持；下一步按31.2接后台客户端、Store/QueryView、错误位置和导出。Q01剩余语义、X01/X02及GUI/安装/发行继续保留。
+**执行顺序更新（2026-10-02）**：以[收敛交付计划](go-beancount-native-delivery-plan-2026-10-02.md)为准：先修复已知界面问题，冻结代码并完成当前账本/原生验收，打包、提交并交付可用首版，再继续附件及其余完整范围。下文旧“下一批”与旧基线保留为历史，不代表当前状态。
+
+**当前实施基线（2026-10-01）**：Q02已实现有界查询执行、快照上下文、会话取消及真实C/Swift typed契约；完整工作台未完成。全量Go/七包race、51会计/147查询、原生三套/app及最新私人Swift/C通过（双方2833指令、零差异），见[本批证据](evidence/q02-bounded-execution-2026-10-01.md)。会计v3-core-3、默认legacy及查询contract保持；后台客户端与Store首批见[新增证据](evidence/q02-query-store-2026-10-01.md)；[QueryView/导航首批](evidence/q02-query-view-2026-10-01.md)已接入；错误位置与[保存query目录](evidence/q02-saved-query-catalogue-2026-10-01.md)已推进；下一步补preset、固定执行导出与完整验收。Q01剩余语义、X01/X02及GUI/安装/发行继续保留。
 
 首次阅读见[开发入口](go-beancount-native-roadmap.md)。当前下一批从第39节开始，以已有[查询能力矩阵](query-capability-matrix.md)补剩余签名/精度与预设；第33/34节已有标量和复合值实现，历史A02/A03步骤不再当作尚未修复的red。
 
@@ -996,4 +998,16 @@ make query-oracle-check
 
 ### 31.2当前接续点（Q02首批后）
 
-后端有界执行与真实C/Swift模型已落地，见[证据](evidence/q02-bounded-execution-2026-10-01.md)。下一步将execute/cancel接入NativeLedgerClient，取消必须能绕过阻塞的同步C执行；实现Store单调代次、草稿/成功/失败/旧结果、current/latest-pending与切账本/reload/关闭时序，再交付QueryView。error.range当前始终null，须按实际token位置补齐；CSV冻结成功执行并原子保存。原生完整资源边界、实际中途取消及GUI仍须验收。
+**后续实际进度（2026-10-01）**：查询 CSV/分析内容、固定会话捕获、保护路径刷新、原生 prepare/save 和 NSSavePanel 已贯通，隔离 QA 保存/取消/公开源副本覆盖拒绝通过，见[保存证据](evidence/q02-query-save-workflow-2026-10-01.md)；失败输入新附件保护已补，见[当前证据](evidence/q02-failed-input-documents-2026-10-01.md)。下面接续记录保留其阶段背景；当前优先补完整容器解包验证器/多币种/compound/截断/partial/unknown 案例、保存并发和资源边界，再推进 preset、X01/X02 其他页面与附件动作以及完整 GUI/安装/发行门槛。当前只交付查询保存首批，不把它当作第32节全部报表导出或完整24任务验收。
+
+后端有界执行与真实C/Swift模型已落地，见[证据](evidence/q02-bounded-execution-2026-10-01.md)。NativeLedgerClient的execute/cancel已接入，取消绕过阻塞actor，见[客户端证据](evidence/q02-native-client-2026-10-01.md)；Store首批单调代次、草稿/成功/失败/旧结果、current/latest-pending与切账本/reload/关闭时序已落地，见[Store证据](evidence/q02-query-store-2026-10-01.md)；QueryView及导航首批已接入，见[页面证据](evidence/q02-query-view-2026-10-01.md)；下一步补错误位置、保存query/preset和CSV，并继续profile/窗口释放及GUI覆盖。error.range已有语法/函数/字段位置首批，见[位置证据](evidence/q02-query-locations-2026-10-01.md)；操作符/源/别名及预算空范围检查已补，见[补充证据](evidence/q02-query-location-coverage-2026-10-01.md)；保存query目录与草稿选择已接入，见[目录证据](evidence/q02-saved-query-catalogue-2026-10-01.md)；继续其他全局错误、preset与固定执行导出；CSV冻结成功执行并原子保存。原生完整资源边界、实际中途取消及GUI仍须验收。
+
+**2026-10-02 接续**：独立查询容器 reader/CLI 首批已实现，见[证据](evidence/q02-analysis-reader-2026-10-02.md)。下一切片补多币种、比值、空库存、nil/空标签、截断及恶意 ZIP/预算案例；现有 reader 接受生产者 canonical CSV，报表 partial/unknown/page 仍须独立设计与实现。之前的完整容器验收要求保持有效。
+
+**2026-10-02 第二切片**：查询容器上述公开样本网格与故障案例已补；四个查询预设已贯通，见[证据](evidence/q02-analysis-grid-presets-2026-10-02.md)。当前 12 corpus / 151 查询；不重做已验首批。下一步验原生预设 GUI、期间文本显式生成与报表 partial/unknown/page 容器，再推进保存并发/资源边界及 X01/X02 全页动作。
+
+**32.2 首批路径模块（2026-10-02）**：`internal/documents` 公共 Resolver 与实际文件身份重校验已落地，见[证据](evidence/x02-document-resolver-2026-10-02.md)。下一附件切片从有效快照 document 记录构建稳定引用 DTO，根来自账本/明确配置，C/Swift 列表及打开前重校验使用同一模块；不要再在 Swift 写第二套路径判定。
+
+**2026-10-02 第三切片**：显式期间预设已贯通后端解析日期与 Go 模板、native catalogue/Store/Menu 和真实 Swift/C，163 查询通过，见[证据](evidence/q02-period-presets-2026-10-02.md)。下一优先项为报表分析容器 partial/unknown/page 契约、保存并发/预算及 X01 全指令；附件路径模块下一步 DTO/C/Swift/原生动作。期间菜单与其他尚未完成 GUI 仍单独验收。
+
+**32.1 首批索引（2026-10-02）**：成功 Snapshot 的 `DirectiveCatalogue` 已实现配置词法加载与有效日期记录，20 source kinds、生成来源、重复/插行身份、精确值深复制与失败重载隔离已验，见[证据](evidence/x01-directive-index-2026-10-02.md)。下一接口必须先分页再复制并按 kind 生成 typed fields/metadata/source DTO，不能把 getter 的完整 AST 复制直接放进每次 native Read；之后 C/Swift 契约与 Journal 三模式。现有流水交易数量独立保留。

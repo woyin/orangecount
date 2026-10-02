@@ -91,7 +91,7 @@ struct ContentView: View {
                     ProgressView(language.text("正在读取账本…", "Reading ledger…")).controlSize(.small).padding(8)
                 }
                 if store.state?.has_snapshot == true {
-                    ReadingControls(store: store)
+                    if store.selectedNav != .query { ReadingControls(store: store) }
                     if let tree = store.treeReport, let status = tree.valuation_status, status.completeness == "partial" || status.completeness == "unavailable" {
                         Text(language.text("原币余额完整保留；缺少报价，已折算部分不代表完整总计。", "Native balances are retained. Missing quotes mean valued portions are not complete totals.")).foregroundColor(.orange).padding()
                     }
@@ -108,6 +108,8 @@ struct ContentView: View {
                         HoldingsView(store: store, viewState: holdingsState)
                     case .prices:
                         PricesView(store: store)
+                    case .query:
+                        QueryView(store: store)
                     }
                 } else if store.phase == .invalid {
                     VStack(spacing: 12) {
@@ -151,7 +153,7 @@ struct ContentView: View {
             store.start(path: path, restoreRecent: !NativeLaunch.isTestMode)
         }
         .onOpenURL { store.loadLedger(at: $0.path) }
-        .onDisappear { store.close() }
+        .background(WindowCloseObserver(onClose: store.close))
     }
 
     private func selectFile() {
@@ -180,4 +182,28 @@ struct OrangeCountNativeApp: App {
             .windowStyle(.titleBar).windowToolbarStyle(.unified)
             .commands { LedgerMenu() }
     }
+}
+
+// A view can disappear while the window stays open (for example during a
+// file-panel transition). Release its ledger only when its owning window closes.
+@MainActor
+private struct WindowCloseObserver: NSViewRepresentable {
+    let onClose: () -> Void
+    func makeNSView(context: Context) -> WindowCloseView { WindowCloseView(onClose: onClose) }
+    func updateNSView(_ nsView: WindowCloseView, context: Context) { nsView.onClose = onClose }
+}
+
+@MainActor
+private final class WindowCloseView: NSView {
+    var onClose: () -> Void
+    init(onClose: @escaping () -> Void) { self.onClose = onClose; super.init(frame: .zero) }
+    required init?(coder: NSCoder) { fatalError("init(coder:) is unavailable") }
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        NotificationCenter.default.removeObserver(self)
+        guard let window else { return }
+        NotificationCenter.default.addObserver(self, selector: #selector(windowClosing), name: NSWindow.willCloseNotification, object: window)
+    }
+    @objc private func windowClosing(_ notification: Notification) { onClose() }
+    deinit { NotificationCenter.default.removeObserver(self) }
 }

@@ -62,6 +62,15 @@ func indexJournal(e ledger.Evaluation, snapshotID string) []journalEntry {
 }
 
 func validJournalRequest(r Request) bool {
+	if r.View != "journal" && (r.JournalMode != "" || r.DirectiveKind != "") {
+		return false
+	}
+	if r.JournalMode != "" && r.JournalMode != "transactions" && r.JournalMode != "all" && r.JournalMode != "config" {
+		return false
+	}
+	if r.DirectiveKind != "" && (r.JournalMode != "all" && r.JournalMode != "config" || !validDirectiveKind(r.DirectiveKind)) {
+		return false
+	}
 	if r.View != "prices" && (r.PriceSection != "" || r.PriceBase != "" || r.PriceQuote != "") {
 		return false
 	}

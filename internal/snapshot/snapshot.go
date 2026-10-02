@@ -44,6 +44,7 @@ type Snapshot struct {
 	evaluation  *ledger.Evaluation
 	diagnostics []diagnostic.Diagnostic
 	options     BuildOptions
+	directives  DirectiveCatalogue
 }
 
 // BuildResult is the outcome of one build attempt.
@@ -58,6 +59,7 @@ type BuildResult struct {
 	// Evaluation may be partial on an invalid build; only Snapshot is safe
 	// for publication. Migration diagnostics can inspect this attempt locally.
 	evaluation *ledger.Evaluation
+	documents  []DocumentDeclaration
 }
 
 // Build reads, parses, evaluates, and validates an include graph. Snapshot is
@@ -73,7 +75,8 @@ func BuildWithOptions(entry string, options BuildOptions) BuildResult {
 		// LoadGraph can still return a partial graph (for example, when an
 		// included file is unreadable). Keep it available for bounded source
 		// context even though no accounting snapshot may be published.
-		return BuildResult{Graph: graph, Diagnostics: bag.All(), Err: err}
+		parsed, _ := ledger.ParseGraph(graph)
+		return BuildResult{Graph: graph, Diagnostics: bag.All(), Err: err, documents: documentDeclarations(graph, parsed)}
 	}
 	return BuildGraphWithOptions(graph, options)
 }
@@ -90,6 +93,8 @@ func BuildGraphWithOptions(graph *source.Graph, options BuildOptions) BuildResul
 	}
 	options.Evaluation = normalized
 	parsed, parseBag := ledger.ParseGraph(graph)
+	documents := documentDeclarations(graph, parsed)
+	sourceDirectives := indexSourceDirectives(graph, parsed)
 	// Dialect shorthand lines are compiled into ordinary transactions before
 	// evaluation so every downstream view behaves exactly as on a standard
 	// ledger (ADR-0045 E3).
@@ -110,10 +115,10 @@ func BuildGraphWithOptions(graph *source.Graph, options BuildOptions) BuildResul
 	}
 	diagnostics := bag.All()
 	if bag.HasErrors() || !evaluation.Valid {
-		return BuildResult{Graph: graph, Diagnostics: diagnostics, evaluation: evaluation}
+		return BuildResult{Graph: graph, Diagnostics: diagnostics, evaluation: evaluation, documents: documents}
 	}
 	id := snapshotIDWithOptions(graph, options)
-	return BuildResult{Snapshot: &Snapshot{ID: id, BuiltAt: time.Now().UTC(), EntryPath: graph.Path(graph.Entry), graph: graph, parsed: parsed, evaluation: evaluation, diagnostics: append([]diagnostic.Diagnostic(nil), diagnostics...), options: options}, Graph: graph, Diagnostics: diagnostics, evaluation: evaluation}
+	return BuildResult{Snapshot: &Snapshot{ID: id, BuiltAt: time.Now().UTC(), EntryPath: graph.Path(graph.Entry), graph: graph, parsed: parsed, evaluation: evaluation, diagnostics: append([]diagnostic.Diagnostic(nil), diagnostics...), options: options, directives: buildDirectiveCatalogue(sourceDirectives, evaluation, id)}, Graph: graph, Diagnostics: diagnostics, evaluation: evaluation, documents: documents}
 }
 
 func snapshotID(graph *source.Graph) string {

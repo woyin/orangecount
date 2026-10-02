@@ -57,12 +57,13 @@ func (r Result) WriteCSV(w io.Writer) error {
 // Query is a parsed BeanQuery: projection, source table, filters, grouping,
 // ordering, and limit.
 type Query struct {
-	Select  []SelectItem
-	From    string
-	Where   Expr
-	GroupBy []Expr
-	OrderBy []OrderItem
-	Limit   int
+	Select   []SelectItem
+	From     string
+	fromSpan *ByteRange
+	Where    Expr
+	GroupBy  []Expr
+	OrderBy  []OrderItem
+	Limit    int
 	// LimitSpecified distinguishes LIMIT 0 from an absent limit for typed reads.
 	LimitSpecified bool
 }
@@ -89,7 +90,10 @@ type Expr interface {
 }
 
 // ParseError reports a syntax error in the query text.
-type ParseError struct{ Message string }
+type ParseError struct {
+	Message string
+	Range   *ByteRange
+}
 
 func (e ParseError) Error() string { return e.Message }
 
@@ -647,8 +651,9 @@ const (
 )
 
 type queryToken struct {
-	kind queryTokenKind
-	text string
+	kind       queryTokenKind
+	text       string
+	start, end int
 }
 
 // lex splits a query string into words, numbers, strings, operators, and
@@ -666,30 +671,34 @@ func lexQuery(text string, dates bool) []queryToken {
 			i += size
 			continue
 		}
+		start := i
 		if dates && dateTokenAt(text, i) {
-			tokens = append(tokens, queryToken{kind: tokenDate, text: text[i : i+10]})
+			tokens = append(tokens, queryToken{kind: tokenDate, text: text[i : i+10], start: i, end: i + 10})
 			i += 10
 			continue
 		}
 		if r == '\'' || r == '"' {
 			var token queryToken
 			token, i = lexString(text, i, byte(r), size)
+			token.start, token.end = start, i
 			tokens = append(tokens, token)
 			continue
 		}
 		if kind, ok := delimiterKind(r); ok {
-			tokens = append(tokens, queryToken{kind: kind, text: string(r)})
+			tokens = append(tokens, queryToken{kind: kind, text: string(r), start: i, end: i + size})
 			i += size
 			continue
 		}
 		if strings.ContainsRune("=<>!+-/~", r) {
 			var token queryToken
 			token, i = lexOperator(text, i, size)
+			token.start, token.end = start, i
 			tokens = append(tokens, token)
 			continue
 		}
 		var token queryToken
 		token, i = lexWord(text, i)
+		token.start, token.end = start, i
 		tokens = append(tokens, token)
 	}
 	return tokens
@@ -784,6 +793,7 @@ type queryParser struct {
 	tokens          []queryToken
 	index           int
 	defaultPostings bool
+	inputBytes      int
 }
 
 // parse reads one SELECT statement clause by clause. Each clause parser
@@ -801,11 +811,13 @@ func (p *queryParser) parse() (Query, error) {
 		return query, p.errorf("SELECT requires at least one expression")
 	}
 	if p.acceptWord("from") {
+		sourceToken := p.peek()
 		from, err := p.expectWord("table name")
 		if err != nil {
 			return query, err
 		}
 		query.From = from
+		query.fromSpan = &ByteRange{Start: sourceToken.start, End: sourceToken.end}
 	} else if p.defaultPostings {
 		query.From = "postings"
 	} else {
@@ -920,11 +932,11 @@ func (p *queryParser) parseLimit(query *Query) error {
 	}
 	token := p.next()
 	if token.kind != tokenNumber {
-		return p.errorf("LIMIT requires a number")
+		return p.errorAtf(token, "LIMIT requires a number")
 	}
 	limit, err := strconv.Atoi(token.text)
 	if err != nil || limit < 0 {
-		return p.errorf("invalid LIMIT")
+		return p.errorAtf(token, "invalid LIMIT")
 	}
 	query.Limit = limit
 	query.LimitSpecified = true
@@ -955,14 +967,14 @@ func (p *queryParser) expression(minPrecedence int) (Expr, error) {
 			if !p.acceptWord("null") {
 				return nil, p.errorf("IS requires NULL or NOT NULL")
 			}
-			left = unaryExpr{operator: operator, inner: left}
+			left = unaryExpr{operator: operator, inner: left, span: &ByteRange{Start: token.start, End: token.end}}
 			continue
 		}
 		right, rightErr := p.expression(precedence + 1)
 		if rightErr != nil {
 			return nil, rightErr
 		}
-		left = binaryExpr{operator: strings.ToLower(token.text), left: left, right: right}
+		left = binaryExpr{operator: strings.ToLower(token.text), left: left, right: right, span: &ByteRange{Start: token.start, End: token.end}}
 	}
 	return left, nil
 }
@@ -980,13 +992,13 @@ func (p *queryParser) primary() (Expr, error) {
 	case tokenNumber:
 		decimal, err := ledger.ParseDecimal(token.text)
 		if err != nil {
-			return nil, p.errorf("invalid number %q", token.text)
+			return nil, p.errorAtf(token, "invalid number %q", token.text)
 		}
 		return literalExpr{value: decimal, display: token.text}, nil
 	case tokenDate:
 		parsed, err := time.Parse("2006-01-02", token.text)
 		if err != nil || parsed.Year() < 1 {
-			return nil, p.errorf("invalid date %q", token.text)
+			return nil, p.errorAtf(token, "invalid date %q", token.text)
 		}
 		return literalExpr{value: parseDate(token.text), display: token.text}, nil
 	case tokenLParen:
@@ -1000,15 +1012,15 @@ func (p *queryParser) primary() (Expr, error) {
 			if err != nil {
 				return nil, err
 			}
-			return unaryExpr{operator: "-", inner: inner}, nil
+			return unaryExpr{operator: "-", inner: inner, span: &ByteRange{Start: token.start, End: token.end}}, nil
 		}
-		return nil, p.errorf("unexpected operator %q", token.text)
+		return nil, p.errorAtf(token, "unexpected operator %q", token.text)
 	case tokenWord:
 		return p.wordPrimary(token)
 	case tokenStar:
 		return starExpr{}, nil
 	default:
-		return nil, p.errorf("unexpected token %q", token.text)
+		return nil, p.errorAtf(token, "unexpected token %q", token.text)
 	}
 }
 
@@ -1048,16 +1060,16 @@ func (p *queryParser) wordPrimary(token queryToken) (Expr, error) {
 		if err != nil {
 			return nil, err
 		}
-		return unaryExpr{operator: "not", inner: inner}, nil
+		return unaryExpr{operator: "not", inner: inner, span: &ByteRange{Start: token.start, End: token.end}}, nil
 	}
 	if p.accept(tokenLParen) {
 		args, err := p.callArguments()
 		if err != nil {
 			return nil, err
 		}
-		return functionExpr{name: strings.ToLower(token.text), args: args}, nil
+		return functionExpr{name: strings.ToLower(token.text), args: args, span: &ByteRange{Start: token.start, End: token.end}}, nil
 	}
-	return fieldExpr{name: token.text}, nil
+	return fieldExpr{name: token.text, span: &ByteRange{Start: token.start, End: token.end}}, nil
 }
 
 // callArguments parses a function argument list up to the closing
@@ -1119,14 +1131,14 @@ func (p *queryParser) acceptWord(value string) bool {
 func (p *queryParser) expectWord(label string) (string, error) {
 	token := p.next()
 	if token.kind != tokenWord {
-		return "", p.errorf("expected %s", label)
+		return "", p.errorAtf(token, "expected %s", label)
 	}
 	return token.text, nil
 }
 
 func (p *queryParser) peek() queryToken {
 	if p.index >= len(p.tokens) {
-		return queryToken{}
+		return queryToken{start: p.inputBytes, end: p.inputBytes}
 	}
 	return p.tokens[p.index]
 }
@@ -1140,7 +1152,15 @@ func (p *queryParser) next() queryToken {
 }
 
 func (p *queryParser) errorf(format string, args ...any) error {
-	return ParseError{Message: fmt.Sprintf(format, args...)}
+	return p.errorAtf(p.peek(), format, args...)
+}
+
+func (p *queryParser) errorAtf(token queryToken, format string, args ...any) error {
+	failure := ParseError{Message: fmt.Sprintf(format, args...)}
+	if p.defaultPostings {
+		failure.Range = &ByteRange{Start: token.start, End: token.end}
+	}
+	return failure
 }
 
 // operatorPrecedence ranks query operators for expression parsing:
@@ -1355,7 +1375,10 @@ func isClauseWord(value string) bool {
 	}
 }
 
-type fieldExpr struct{ name string }
+type fieldExpr struct {
+	name string
+	span *ByteRange
+}
 
 func (e fieldExpr) String() string  { return e.name }
 func (e fieldExpr) aggregate() bool { return false }
@@ -1389,6 +1412,7 @@ func (starExpr) eval(row Row, _ []Row) (any, error) { return row, nil }
 type unaryExpr struct {
 	operator string
 	inner    Expr
+	span     *ByteRange
 }
 
 type parenExpr struct{ inner Expr }
@@ -1418,6 +1442,7 @@ type binaryExpr struct {
 	operator string
 	left     Expr
 	right    Expr
+	span     *ByteRange
 }
 
 func (e binaryExpr) String() string {
@@ -1526,6 +1551,7 @@ func (e binaryExpr) evalArithmetic(left, right any) (any, error) {
 type functionExpr struct {
 	name string
 	args []Expr
+	span *ByteRange
 }
 
 func (e functionExpr) String() string {

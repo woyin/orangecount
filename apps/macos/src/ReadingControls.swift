@@ -117,7 +117,7 @@ struct ReadingControls: View {
                 TextField(language.text("截至 YYYY-MM-DD", "Through YYYY-MM-DD"), text: $dates.to).frame(width: 165).onSubmit(apply)
                 Button(language.text("应用日期", "Apply dates"), action: apply)
                 Spacer(minLength: 6)
-            }
+            }.disabled(isConfiguration)
             HStack {
                 Picker(language.text("会计语义", "Semantics"), selection: Binding(get: { store.semantics }, set: { store.switchSemantics(to: $0) })) {
                     Text("legacy").tag("legacy")
@@ -158,10 +158,13 @@ struct ReadingControls: View {
         language.text("各原币种（默认）", "Native currencies (default)")
     }
 
+    private var isConfiguration: Bool { store.selectedNav == .journal && store.request.journal_mode == "config" }
+
     private func apply() { store.updateFilters { $0.date_from = store.selectedNav == .balanceSheet ? "" : dates.from; $0.date_to = dates.to; $0.window = "all" } }
     private var scope: String {
-        let start = store.treeReport?.date_from ?? store.journalPayload?.date_from ?? store.trendsPayload?.date_from ?? store.holdingsPayload?.date_from ?? store.pricesPayload?.date_from ?? ""
-        let end = store.treeReport?.date_to ?? store.journalPayload?.date_to ?? store.trendsPayload?.date_to ?? store.holdingsPayload?.date_to ?? store.pricesPayload?.date_to ?? ""
+        if isConfiguration { return language.text("配置指令无日期，按加载顺序显示", "Configuration directives are undated; shown in load order") }
+        let start = store.treeReport?.date_from ?? store.journalPayload?.date_from ?? store.directivesPayload?.date_from ?? store.trendsPayload?.date_from ?? store.holdingsPayload?.date_from ?? store.pricesPayload?.date_from ?? ""
+        let end = store.treeReport?.date_to ?? store.journalPayload?.date_to ?? store.directivesPayload?.date_to ?? store.trendsPayload?.date_to ?? store.holdingsPayload?.date_to ?? store.pricesPayload?.date_to ?? ""
         if store.selectedNav == .balanceSheet { return language.text("截至日余额：", "Balances through: ") + (end.isEmpty ? "—" : end) }
         if store.selectedNav == .prices { return language.text("源历史期间：", "Source history: ") + (start.isEmpty ? language.text("最早记录", "First record") : start) + " → " + (end.isEmpty ? "—" : end) }
         return language.text("发生期间（含首尾日）：", "Inclusive activity range: ") + (start.isEmpty ? language.text("最早记录", "First record") : start) + " → " + (end.isEmpty ? "—" : end)

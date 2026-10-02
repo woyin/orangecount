@@ -12,6 +12,7 @@ enum NavItem: String, CaseIterable, Identifiable {
     case account
     case holdings
     case prices
+    case query
 
     var id: String { rawValue }
     var title: String {
@@ -23,6 +24,7 @@ enum NavItem: String, CaseIterable, Identifiable {
         case .account: return "账户详情"
         case .holdings: return "持仓与收益"
         case .prices: return "商品与价格"
+        case .query: return "查询工作台"
         }
     }
     var englishTitle: String {
@@ -34,6 +36,7 @@ enum NavItem: String, CaseIterable, Identifiable {
         case .account: return "Account details"
         case .holdings: return "Holdings and gains"
         case .prices: return "Commodities and prices"
+        case .query: return "Query workbench"
         }
     }
     var icon: String {
@@ -45,6 +48,7 @@ enum NavItem: String, CaseIterable, Identifiable {
         case .account: return "folder"
         case .holdings: return "chart.bar.xaxis"
         case .prices: return "chart.xyaxis.line"
+        case .query: return "terminal"
         }
     }
 }
@@ -62,10 +66,36 @@ extension LedgerSessionClient {
     func open(path: String, semantics: String = "legacy") async throws -> OpenLedgerResult { try await open(path: path, semantics: semantics, inputIdentity: "") }
 }
 
+protocol LedgerQueryClient: Sendable {
+    func executeQuery(handle: UInt64, request: QueryRequest) async throws -> QueryResponse
+    func cancelQuery(handle: UInt64, requestID: UInt64) async throws
+}
+
+protocol LedgerQueryExportClient: Sendable {
+    func captureQueryExport(handle: UInt64, request: QueryExportRequest) async throws -> QueryExportCapture
+}
+
+protocol LedgerExportProtectionClient: Sendable {
+    func exportProtection(handle: UInt64) async throws -> ExportProtection
+}
+
+enum QueryExportError: Error {
+    case unavailable, changedExecution, invalidFormat
+}
+
+struct PreparedQueryExport: Sendable {
+    let context: QueryContext
+    let format: String
+    fileprivate let file: AnalysisFileExport
+    fileprivate let generation: UInt64
+    fileprivate let handle: UInt64
+}
+
 // One executor per window bounds outstanding C work. Cancellation is checked
 // on entry, so superseded queued reads never start. A synchronous C call that
 // already began may finish; LedgerStore still checks generation before publish.
-actor NativeLedgerClient: LedgerSessionClient {
+// Queries additionally use Go budget checkpoints and an independent cancel path.
+actor NativeLedgerClient: LedgerSessionClient, LedgerQueryClient, LedgerQueryExportClient, LedgerExportProtectionClient {
     func open(path: String, semantics: String, inputIdentity: String) async throws -> OpenLedgerResult {
         try Task.checkCancellation()
         return try BridgeClient.shared.openLedger(path: Self.resolveEntry(path), semantics: semantics, inputIdentity: inputIdentity)
@@ -74,6 +104,41 @@ actor NativeLedgerClient: LedgerSessionClient {
         try Task.checkCancellation()
         return try BridgeClient.shared.readView(handle: handle, request: request)
     }
+    func executeQuery(handle: UInt64, request: QueryRequest) async throws -> QueryResponse {
+        try Task.checkCancellation()
+        return try await withTaskCancellationHandler {
+            let response = try BridgeClient.shared.executeQuery(handle: handle, request: request)
+            try Task.checkCancellation()
+            return response
+        } onCancel: {
+            // Runs outside actor isolation, including while its synchronous C
+            // execution is active. Go observes cancellation at budget checkpoints.
+            try? BridgeClient.shared.cancelQuery(handle: handle, requestID: request.request_id)
+        }
+    }
+
+    nonisolated func cancelQuery(handle: UInt64, requestID: UInt64) async throws {
+        // A control call must not queue behind the C execution it interrupts.
+        // Detached work also keeps this small synchronous bridge call off UI.
+        try await Task.detached {
+            try BridgeClient.shared.cancelQuery(handle: handle, requestID: requestID)
+        }.value
+    }
+
+    func captureQueryExport(handle: UInt64, request: QueryExportRequest) async throws -> QueryExportCapture {
+        try Task.checkCancellation()
+        let capture = try BridgeClient.shared.captureQueryExport(handle: handle, request: request)
+        try Task.checkCancellation()
+        return capture
+    }
+
+    func exportProtection(handle: UInt64) async throws -> ExportProtection {
+        try Task.checkCancellation()
+        let protection = try BridgeClient.shared.exportProtection(handle: handle)
+        try Task.checkCancellation()
+        return protection
+    }
+
     func poll(handle: UInt64, after: UInt64) async throws -> PollResult {
         try Task.checkCancellation()
         return try BridgeClient.shared.pollState(handle: handle, after: after)
@@ -105,6 +170,10 @@ actor NativeLedgerClient: LedgerSessionClient {
     }
 }
 
+enum QueryPhase: Equatable {
+    case idle, running, queued, succeeded, failed, cancelled, stale
+}
+
 enum LedgerPhase: Equatable {
     case idle, opening, loadingView, ready, reloading, stale, invalid, failed, closed
 }
@@ -114,7 +183,20 @@ final class LedgerStore: ObservableObject {
     @Published private(set) var phase: LedgerPhase = .idle
     @Published private(set) var currentPath = ""
     @Published private(set) var snapshot: LedgerView?
-    @Published private(set) var state: LedgerState?
+    @Published private(set) var state: LedgerState? {
+        didSet {
+            if let previous = oldValue, let state,
+               previous.snapshot_id != state.snapshot_id || previous.semantics_profile != state.semantics_profile
+                || previous.evaluation_revision != state.evaluation_revision {
+                invalidateQuery(keepPrevious: true)
+            }
+        }
+    }
+    @Published var queryDraft = "SELECT date, account, number LIMIT 100"
+    @Published private(set) var queryPhase: QueryPhase = .idle
+    @Published private(set) var queryResponse: QueryResponse?
+    @Published private(set) var lastSuccessfulQuery: QueryResponse?
+    @Published private(set) var queryErrorMessage: String?
     @Published private(set) var errorMessage: String?
     @Published private(set) var recentPaths: [String]
     @Published private(set) var semantics = "legacy"
@@ -123,7 +205,8 @@ final class LedgerStore: ObservableObject {
     @Published private(set) var navigationStack: [ViewRequest] = []
     @Published var request = ViewRequest() {
         didSet {
-            if request.view != "journal" && request.view != "prices" { analysisValuation = request.valuation }
+            if request.view != "journal" && request.view != "prices" && request.view != "query" { analysisValuation = request.valuation }
+            if oldValue.view == "query", request.view != "query", activeQuery != nil || pendingQuery != nil { cancelQuery() }
             if request != oldValue { loadCurrentView() }
         }
     }
@@ -136,6 +219,7 @@ final class LedgerStore: ObservableObject {
             navigationStack = []
             var next = request
             next.view = newValue.rawValue
+            next.journal_mode = nil; next.directive_kind = nil
             next.offset = 0
             next.snapshot_id = nil
             next.window = newValue == .journal ? "1m" : (newValue == .dashboard ? "1y" : "all")
@@ -144,7 +228,7 @@ final class LedgerStore: ObservableObject {
             next.scope = nil
             Self.clearHoldingParameters(&next)
             Self.clearPriceParameters(&next)
-            next.valuation = newValue == .journal || newValue == .prices ? "at-cost" : analysisValuation
+            next.valuation = newValue == .journal || newValue == .prices || newValue == .query ? "at-cost" : analysisValuation
             request = next
         }
     }
@@ -155,13 +239,28 @@ final class LedgerStore: ObservableObject {
     var summary: LedgerSummary? { snapshot?.summary }
     var treeReport: TreeReportPayload? { visibleView?.tree }
     var journalPayload: JournalPayload? { visibleView?.journal }
+    var directivesPayload: DirectivesPayload? { visibleView?.directives }
     var trendsPayload: HistoricalTrendsPayload? { visibleView?.trends }
     var accountDetail: AccountDetailPayload? { visibleView?.account_detail }
     var holdingsPayload: HoldingsPayload? { visibleView?.holdings }
     var pricesPayload: PricesPayload? { visibleView?.prices }
+    var queryCatalogue: QueryCatalogue? { visibleView?.query_catalogue }
     var canNavigateBack: Bool { !navigationStack.isEmpty }
     var visibleView: LedgerView? { snapshot?.request == request ? snapshot : nil }
 
+    private struct QueryJob: Sendable {
+        let handle: UInt64
+        let generation: UInt64
+        let semantics: String
+        let evaluationRevision: String
+        let request: QueryRequest
+    }
+    private let queryClient: (any LedgerQueryClient)?
+    private var querySequence: UInt64 = 0
+    private var latestQueryID: UInt64?
+    private var activeQuery: QueryJob?
+    private var pendingQuery: QueryJob?
+    private var queryTask: Task<Void, Never>?
     private let client: any LedgerSessionClient
     private let preferences: UserDefaults?
     private let pollNanoseconds: UInt64
@@ -169,7 +268,10 @@ final class LedgerStore: ObservableObject {
     private var preferencePath = ""
     private var analysisValuation = "at-cost"
     private var handle: UInt64?
-    private var generation: UInt64 = 0
+    private var exportWriters: [UUID: Task<Void, Error>] = [:]
+    private var generation: UInt64 = 0 {
+        didSet { if generation != oldValue { for writer in exportWriters.values { writer.cancel() } } }
+    }
     private var readGeneration: UInt64 = 0
     private var started = false
     private var openTask: Task<Void, Never>?
@@ -180,12 +282,15 @@ final class LedgerStore: ObservableObject {
 
     init(client: any LedgerSessionClient = NativeLedgerClient(), preferences: UserDefaults? = .standard, pollNanoseconds: UInt64 = 250_000_000) {
         self.client = client
+        self.queryClient = client as? any LedgerQueryClient
         self.preferences = preferences
         self.pollNanoseconds = pollNanoseconds
         recentPaths = preferences?.stringArray(forKey: recentsKey) ?? []
     }
 
     deinit {
+        for writer in exportWriters.values { writer.cancel() }
+        queryTask?.cancel()
         openTask?.cancel()
         readTask?.cancel()
         pollTask?.cancel()
@@ -194,6 +299,207 @@ final class LedgerStore: ObservableObject {
         if let handle {
             let client = client
             Task { await client.close(handle: handle) }
+        }
+    }
+
+    var queryDraftChanged: Bool {
+        queryResponse.map { $0.context.text != queryDraft } ?? false
+    }
+    var queryResultIsCurrent: Bool {
+        queryPhase == .succeeded && queryResponse?.context.snapshot_id == state?.snapshot_id
+            && queryResponse?.context.semantics_profile == semantics
+            && queryResponse?.context.evaluation_revision == state?.evaluation_revision
+    }
+
+    // Capture before presenting a save panel. The returned bytes can then be
+    // saved independently of subsequent editor, query, or snapshot changes.
+    func captureQueryExport(format: String) async throws -> QueryExportCapture {
+        guard format == "csv" || format == "analysis" else { throw QueryExportError.invalidFormat }
+        guard queryResultIsCurrent, let response = queryResponse, response.execution != nil,
+              let handle, let exportClient = client as? any LedgerQueryExportClient else {
+            throw QueryExportError.unavailable
+        }
+        let expectedGeneration = generation
+        let identity = response.context
+        let capture = try await exportClient.captureQueryExport(handle: handle,
+            request: QueryExportRequest(snapshot_id: identity.snapshot_id, request_id: identity.request_id,
+                fingerprint: identity.fingerprint, format: format))
+        try Task.checkCancellation()
+        guard generation == expectedGeneration, self.handle == handle, queryResultIsCurrent,
+              queryResponse?.context.request_id == identity.request_id,
+              queryResponse?.context.fingerprint == identity.fingerprint,
+              capture.context.snapshot_id == identity.snapshot_id,
+              capture.context.request_id == identity.request_id,
+              capture.context.fingerprint == identity.fingerprint, capture.format == format else {
+            throw QueryExportError.changedExecution
+        }
+        return capture
+    }
+
+    func refreshExportProtection() async throws -> ExportProtection {
+        guard let handle, let protectionClient = client as? any LedgerExportProtectionClient else {
+            throw QueryExportError.unavailable
+        }
+        let expectedGeneration = generation
+        let protection = try await protectionClient.exportProtection(handle: handle)
+        try Task.checkCancellation()
+        guard generation == expectedGeneration, self.handle == handle else { throw QueryExportError.changedExecution }
+        return protection
+    }
+
+    func prepareQueryExport(format: String) async throws -> PreparedQueryExport {
+        let expectedGeneration = generation
+        guard let handle else { throw QueryExportError.unavailable }
+        let capture = try await captureQueryExport(format: format)
+        let file = try AnalysisFileExport(content: capture.content, protectedPaths: capture.protected_paths)
+        guard generation == expectedGeneration, self.handle == handle else { throw QueryExportError.changedExecution }
+        return PreparedQueryExport(context: capture.context, format: format, file: file,
+            generation: expectedGeneration, handle: handle)
+    }
+
+    func saveQueryExport(_ prepared: PreparedQueryExport, to target: URL) async throws {
+        guard generation == prepared.generation, handle == prepared.handle else { throw QueryExportError.changedExecution }
+        let protection = try await refreshExportProtection()
+        try Task.checkCancellation()
+        guard generation == prepared.generation, handle == prepared.handle else { throw QueryExportError.changedExecution }
+        let file = try prepared.file.addingProtectedPaths(protection.protected_paths)
+        let writer = Task.detached { try file.save(to: target) }
+        let writerID = UUID()
+        exportWriters[writerID] = writer
+        defer { exportWriters.removeValue(forKey: writerID) }
+        try await withTaskCancellationHandler {
+            try await writer.value
+        } onCancel: {
+            writer.cancel()
+        }
+    }
+
+    @discardableResult
+    func useSavedQuery(id: String) -> Bool {
+        guard let catalogue = queryCatalogue, catalogue.snapshot_id == state?.snapshot_id,
+              let saved = catalogue.queries.first(where: { $0.id == id }) else { return false }
+        queryDraft = saved.text
+        return true
+    }
+
+    @discardableResult
+    func useQueryPreset(id: String, inPeriod: Bool = false) -> Bool {
+        guard let catalogue = queryCatalogue, catalogue.snapshot_id == state?.snapshot_id,
+              let preset = (inPeriod ? (catalogue.period?.presets ?? []) : catalogue.presets).first(where: { $0.id == id }) else { return false }
+        queryDraft = preset.text
+        return true
+    }
+
+    func queryCataloguePage(offset: Int) {
+        guard request.view == "query", let catalogue = queryCatalogue,
+              catalogue.snapshot_id == state?.snapshot_id, offset >= 0 else { return }
+        var next = request
+        next.offset = offset
+        next.limit = catalogue.page.limit
+        next.snapshot_id = catalogue.snapshot_id
+        request = next
+    }
+
+    func executeQuery() {
+        queryResponse = nil
+        queryErrorMessage = nil
+        guard let handle, let state, state.has_snapshot, !state.reloading,
+              queryClient != nil, querySequence < UInt64.max else {
+            latestQueryID = nil
+            pendingQuery = nil
+            cancelActiveQuery()
+            queryPhase = .failed
+            queryErrorMessage = request.locale == "zh-CN" ? "尚无可执行查询的有效会话。" : "No queryable ledger session is available."
+            return
+        }
+        querySequence += 1
+        let job = QueryJob(handle: handle, generation: generation, semantics: semantics,
+            evaluationRevision: state.evaluation_revision, request: QueryRequest(snapshot_id: state.snapshot_id, request_id: querySequence, text: queryDraft))
+        latestQueryID = querySequence
+        if activeQuery != nil {
+            pendingQuery = job
+            queryPhase = .queued
+            cancelActiveQuery()
+        } else {
+            launchQuery(job)
+        }
+    }
+
+    func cancelQuery() {
+        latestQueryID = nil
+        pendingQuery = nil
+        cancelActiveQuery()
+        queryResponse = nil
+        queryErrorMessage = nil
+        queryPhase = .cancelled
+    }
+
+    private func cancelActiveQuery() {
+        queryTask?.cancel()
+        if let job = activeQuery, let queryClient {
+            Task { try? await queryClient.cancelQuery(handle: job.handle, requestID: job.request.request_id) }
+        }
+    }
+
+    private func invalidateQuery(keepPrevious: Bool) {
+        let hadQuery = activeQuery != nil || pendingQuery != nil || queryResponse != nil || lastSuccessfulQuery != nil
+        latestQueryID = nil
+        pendingQuery = nil
+        cancelActiveQuery()
+        queryErrorMessage = nil
+        if !keepPrevious { queryResponse = nil; lastSuccessfulQuery = nil }
+        queryPhase = keepPrevious && hadQuery ? .stale : .idle
+    }
+
+    private func launchQuery(_ job: QueryJob) {
+        guard let queryClient else { return }
+        activeQuery = job
+        queryPhase = .running
+        queryTask = Task { [weak self] in
+            let outcome: Result<QueryResponse, Error>
+            do { outcome = .success(try await queryClient.executeQuery(handle: job.handle, request: job.request)) }
+            catch { outcome = .failure(error) }
+            self?.finishQuery(job, outcome: outcome)
+        }
+    }
+
+    private func finishQuery(_ job: QueryJob, outcome: Result<QueryResponse, Error>) {
+        guard activeQuery?.request.request_id == job.request.request_id else { return }
+        activeQuery = nil
+        queryTask = nil
+        if latestQueryID == job.request.request_id, generation == job.generation,
+           handle == job.handle, state?.snapshot_id == job.request.snapshot_id {
+            switch outcome {
+            case .success(let response):
+                guard response.context.request_id == job.request.request_id,
+                      response.context.snapshot_id == job.request.snapshot_id,
+                      response.context.text == job.request.text,
+                      response.context.semantics_profile == job.semantics,
+                      response.context.evaluation_revision == job.evaluationRevision else {
+                    queryPhase = .failed
+                    queryErrorMessage = "Query response does not match the captured execution."
+                    return
+                }
+                queryResponse = response
+                if response.execution != nil {
+                    lastSuccessfulQuery = response
+                    queryPhase = .succeeded
+                } else {
+                    queryErrorMessage = response.error?.message
+                    queryPhase = response.error?.code == "cancelled" ? .cancelled : .failed
+                }
+            case .failure(let error):
+                queryResponse = nil
+                queryErrorMessage = (error as? BridgeError)?.message(locale: request.locale) ?? error.localizedDescription
+                queryPhase = error is CancellationError ? .cancelled : .failed
+            }
+        }
+        if let pending = pendingQuery {
+            pendingQuery = nil
+            if pending.generation == generation, pending.handle == handle,
+               pending.request.snapshot_id == state?.snapshot_id, latestQueryID == pending.request.request_id {
+                launchQuery(pending)
+            }
         }
     }
 
@@ -256,7 +562,7 @@ final class LedgerStore: ObservableObject {
         let valuation = ["at-cost", "units", "market-value"].contains(saved?["valuation"] ?? "") ? saved!["valuation"]! : "at-cost"
         analysisValuation = valuation
         let landing = selectedNav == .account ? NavItem.balanceSheet : selectedNav
-        request = ViewRequest(view: landing.rawValue, valuation: landing == .journal || landing == .prices ? "at-cost" : valuation, currency: saved?["currency"] ?? "", locale: request.locale, window: landing == .journal ? "1m" : (landing == .dashboard ? "1y" : "all"))
+        request = ViewRequest(view: landing.rawValue, valuation: landing == .journal || landing == .prices || landing == .query ? "at-cost" : valuation, currency: saved?["currency"] ?? "", locale: request.locale, window: landing == .journal ? "1m" : (landing == .dashboard ? "1y" : "all"))
         snapshot = nil
         state = nil
         currentPath = path
@@ -338,11 +644,16 @@ final class LedgerStore: ObservableObject {
         "org.orangecount.reading." + URL(fileURLWithPath: (path as NSString).expandingTildeInPath).standardizedFileURL.path
     }
 
+    func selectJournalMode(_ mode: String) {
+        guard request.view == "journal", ["transactions", "all", "config"].contains(mode) else { return }
+        updateFilters { $0.journal_mode = mode; $0.directive_kind = nil; $0.text = ""; $0.account = ""; $0.sort = "" }
+    }
+
     func journalPage(_ offset: Int) {
-        guard let current = visibleView, let journal = current.journal else { return }
+        guard let current = visibleView, let limit = current.journal?.limit ?? current.directives?.page.limit else { return }
         var next = request
         next.offset = max(0, offset)
-        next.limit = journal.limit
+        next.limit = limit
         next.snapshot_id = current.state.snapshot_id
         request = next
     }
@@ -353,6 +664,7 @@ final class LedgerStore: ObservableObject {
         navigationStack.append(request)
         var next = request
         next.view = "account"
+            next.journal_mode = nil; next.directive_kind = nil
         next.account = account
         next.scope = "subtree"
         next.valuation = analysisValuation
@@ -372,6 +684,7 @@ final class LedgerStore: ObservableObject {
         Self.clearHoldingParameters(&next)
         Self.clearPriceParameters(&next)
         next.view = "holdings"
+            next.journal_mode = nil; next.directive_kind = nil
         next.account = account
         next.scope = scope ?? "subtree"
         next.group_by = "account"
@@ -446,6 +759,7 @@ final class LedgerStore: ObservableObject {
         Self.clearHoldingParameters(&next)
         Self.clearPriceParameters(&next)
         next.view = "prices"
+            next.journal_mode = nil; next.directive_kind = nil
         next.account = ""
         next.scope = nil
         next.text = ""
@@ -505,6 +819,7 @@ final class LedgerStore: ObservableObject {
 
     func reloadSilently() {
         guard let handle else { return }
+        if activeQuery != nil || pendingQuery != nil { invalidateQuery(keepPrevious: true) }
         let expected = generation
         reloadTask?.cancel()
         phase = .reloading
@@ -570,6 +885,7 @@ final class LedgerStore: ObservableObject {
     }
 
     private func cancelTasks() {
+        invalidateQuery(keepPrevious: false)
         openTask?.cancel()
         readTask?.cancel()
         pollTask?.cancel()

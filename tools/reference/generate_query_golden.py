@@ -24,7 +24,7 @@ from beancount.core.inventory import Inventory
 from beanquery import query, types
 
 ROOT = Path(__file__).resolve().parents[2]
-CORPORA = ("default-source", "compound-values", "price-weight", "inventory-order", "metadata-source", "metadata-stack", "metadata-pad", "dynamic-values", "casts", "compound-casts", "aggregates")
+CORPORA = ("default-source", "compound-values", "price-weight", "inventory-order", "metadata-source", "metadata-stack", "metadata-pad", "dynamic-values", "casts", "compound-casts", "aggregates", "presets")
 TYPE_NAMES = {"str": "string", "int": "integer", "decimal": "decimal", "bool": "bool", "date": "date", "object": "object", "amount": "amount", "position": "position", "inventory": "inventory", "NULL": "null"}
 
 

@@ -20,9 +20,10 @@ type PresentedDecimal = presentation.Decimal
 // TypedError identifies the execution/compilation category independently of
 // the human message. Source ranges are added with the native query protocol.
 type TypedError struct {
-	Code    string `json:"code"`
-	Message string `json:"message"`
-	Phase   string `json:"phase,omitempty"`
+	Code    string     `json:"code"`
+	Message string     `json:"message"`
+	Phase   string     `json:"phase,omitempty"`
+	Range   *ByteRange `json:"range,omitempty"`
 }
 
 func (e TypedError) Error() string { return e.Message }
@@ -66,7 +67,7 @@ type TypedResult struct {
 // ParseStandard shares the grammar with Parse, with the standard default
 // postings source. Parse remains the compatibility entry for older callers.
 func ParseStandard(text string) (Query, error) {
-	p := queryParser{tokens: lexQuery(text, true), defaultPostings: true}
+	p := queryParser{tokens: lexQuery(text, true), defaultPostings: true, inputBytes: len(text)}
 	return p.parse()
 }
 
@@ -82,7 +83,7 @@ func evaluateTyped(text string, evaluation ledger.Evaluation, rowCeiling int, bu
 		if budget != nil {
 			return TypedResult{}, err
 		}
-		return TypedResult{}, typedFailure("syntax", "%s", err)
+		return TypedResult{}, locatedQueryError(err, nil, "parse")
 	}
 	result := TypedResult{Contract: "beanquery-0.2.0-typed-v1", Columns: make([]Column, 0), Rows: make([][]Cell, 0)}
 	if canonicalTable(q.From) != "postings" {
@@ -90,7 +91,7 @@ func evaluateTyped(text string, evaluation ledger.Evaluation, rowCeiling int, bu
 		if canonicalTable(q.From) == "" {
 			code = "unknown-table"
 		}
-		return TypedResult{}, typedFailure(code, "unsupported typed source %q", q.From)
+		return TypedResult{}, locatedQueryError(typedFailure(code, "unsupported typed source %q", q.From), q.fromSpan, "compile")
 	}
 	if err := resolveTypedAliases(&q); err != nil {
 		return TypedResult{}, err
@@ -216,7 +217,7 @@ func (e typedExpr) eval(row Row, rows []Row) (any, error) { return e.value(row, 
 func compileTyped(expr Expr) (typedExpr, error) {
 	compiled, err := compileTypedNode(expr)
 	if err != nil {
-		return typedExpr{}, err
+		return typedExpr{}, locatedQueryError(err, expressionRange(expr), "compile")
 	}
 	value := compiled.value
 	compiled.value = func(row Row, rows []Row) (any, error) {
@@ -225,7 +226,7 @@ func compileTyped(expr Expr) (typedExpr, error) {
 		}
 		result, err := value(row, rows)
 		if err != nil {
-			return nil, err
+			return nil, locatedQueryError(err, expressionRange(expr), "evaluate")
 		}
 		if err := rowBudget(row, rows).numericValue(result); err != nil {
 			return nil, err
@@ -237,7 +238,8 @@ func compileTyped(expr Expr) (typedExpr, error) {
 			if err := rowBudget(row, rows).step(""); err != nil {
 				return nil, err
 			}
-			return text(row, rows)
+			value, err := text(row, rows)
+			return value, locatedQueryError(err, expressionRange(expr), "evaluate")
 		}
 	}
 	return compiled, nil
@@ -987,7 +989,7 @@ func resolveTypedAliases(q *Query) error {
 		if field, ok := expr.(fieldExpr); ok {
 			key := strings.ToLower(field.name)
 			if counts[key] > 1 {
-				return nil, typedFailure("ambiguous-column", "ambiguous output alias %q", field.name)
+				return nil, locatedQueryError(typedFailure("ambiguous-column", "ambiguous output alias %q", field.name), field.span, "compile")
 			}
 			if replacement, ok := aliases[key]; ok {
 				return replacement, nil

@@ -1,0 +1,6 @@
+[
+  {"id":"monthly-income","name_zh":"按月收入","name_en":"Monthly income","text":"SELECT year(date) AS year, month(date) AS month, sum(position) AS total WHERE account ~ '^Income:' GROUP BY year, month ORDER BY year, month"},
+  {"id":"monthly-expenses","name_zh":"按月支出","name_en":"Monthly expenses","text":"SELECT year(date) AS year, month(date) AS month, sum(position) AS total WHERE account ~ '^Expenses:' GROUP BY year, month ORDER BY year, month"},
+  {"id":"account-balances","name_zh":"账户库存余额","name_en":"Account inventory balances","text":"SELECT account, sum(position) AS balance GROUP BY account ORDER BY account"},
+  {"id":"posting-sources","name_zh":"分录来源","name_en":"Posting sources","text":"SELECT date, account, filename, lineno ORDER BY date, filename, lineno"}
+]

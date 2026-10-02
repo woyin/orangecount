@@ -93,6 +93,8 @@ func (s *Session) ExecuteQuery(ctx context.Context, request QueryRequest) (Query
 	run, cancel := context.WithTimeout(ctx, 5*time.Second)
 	s.queryCancel, s.queryRequestID = cancel, request.RequestID
 	s.queryLastID = request.RequestID
+	s.queryExport = nil
+	s.queryExportProtectedPaths = nil
 	s.mu.Unlock()
 	defer func() {
 		cancel()
@@ -134,9 +136,19 @@ func (s *Session) ExecuteQuery(ctx context.Context, request QueryRequest) (Query
 		result.Execution = nil
 		result.Error = queryFailure(err)
 	}
-	s.mu.RLock()
+	s.mu.Lock()
 	closed, changed := s.closed, s.state.SnapshotID != state.SnapshotID
-	s.mu.RUnlock()
+	if !closed && !changed && result.Execution != nil {
+		if s.queryLastID != request.RequestID || request.RequestID <= s.queryCancelledThrough {
+			result.Execution = nil
+			result.Error = queryFailure(context.Canceled)
+		} else {
+			captured := cloneQueryResponse(result)
+			s.queryExport = &captured
+			s.queryExportProtectedPaths = current.protectedPaths
+		}
+	}
+	s.mu.Unlock()
 	if closed {
 		return QueryResponse{}, ErrClosed
 	}
@@ -169,6 +181,10 @@ func queryFailure(err error) *QueryFailure {
 		failure.Code, failure.Message = "result-budget-exceeded", err.Error()
 	case errors.As(err, &typed):
 		failure.Code, failure.Message, failure.Phase = typed.Code, typed.Message, typed.Phase
+		if typed.Range != nil {
+			location := *typed.Range
+			failure.Range = &location
+		}
 	}
 	return failure
 }

@@ -102,6 +102,37 @@ func OC_CancelQuery(handle C.ulonglong, requestID C.ulonglong) *C.char {
 	}{true}, err)
 }
 
+//export OC_CaptureQueryExport
+func OC_CaptureQueryExport(handle C.ulonglong, requestJSON *C.char) *C.char {
+	session, err := sessionFor(uint64(handle))
+	if err != nil {
+		return sessionResponse(nil, err)
+	}
+	if requestJSON == nil {
+		return sessionResponse(nil, desktop.ErrRequest)
+	}
+	raw := C.GoString(requestJSON)
+	if len(raw) > 4096 {
+		return sessionResponse(nil, desktop.ErrRequest)
+	}
+	var request desktop.QueryExportRequest
+	if err := json.Unmarshal([]byte(raw), &request); err != nil {
+		return sessionResponse(nil, desktop.ErrRequest)
+	}
+	result, err := session.CaptureQueryExport(request)
+	return sessionResponse(result, err)
+}
+
+//export OC_ExportProtection
+func OC_ExportProtection(handle C.ulonglong) *C.char {
+	session, err := sessionFor(uint64(handle))
+	if err != nil {
+		return sessionResponse(nil, err)
+	}
+	result, err := session.ExportProtection()
+	return sessionResponse(result, err)
+}
+
 func sessionFor(handle uint64) (*desktop.Session, error) {
 	sessions.Lock()
 	defer sessions.Unlock()
