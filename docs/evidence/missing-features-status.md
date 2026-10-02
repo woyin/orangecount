@@ -19,3 +19,7 @@
 首批实际GUI：独立org.orangecount.desktop.reportqa读取公开cashflow.bean，资产负债表导出菜单→系统sheet→build/report-public-gui-20261002.ocanalysis，界面显示保存成功；analysisverify输出format_version2、balance_sheet、2行/12列、未截断。该QA为首批构建，不代表之后新增全部Adapter的最终GUI验收。
 
 边界：完整N04/R01及远端/旧系统/签名仍按总计划保留。这里的“已实现”不同于整个功能包退出条件满足。
+
+## 目标范围升级
+
+F01–F04完成仅代表本表原定限定交付。2026-10-02用户进一步要求无插件源加载/查询生态/完整兼容验收，新增C00/S01–S03/Q10–Q14/V01–V02/M01均未实施完成；不得沿用F01–F04状态宣称超集。当前调查已确认glob及监测缺口、加载次序需独立调查，旧ADR对子查询/PIVOT的排除理由错误。[新计划](../beancount-complete-compatibility-plan-2026-10-02.md)优先。

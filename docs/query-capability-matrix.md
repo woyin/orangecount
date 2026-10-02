@@ -2,6 +2,8 @@
 
 **当前基线（2026-10-02，F03）**：16公开语料/215查询通过；运行契约 `beanquery-0.2.0-typed-v2`，分析容器仍为format 1，reader兼容旧typed-v1捕获。原生工作台、四预设、查询CSV/分析保存已交付。下列2026-10-01说明为历史。详见[本次证据](evidence/f03-query-longtail-2026-10-02.md)。
 
+**目标范围修订**：用户已要求完整无插件查询生态，以下unsupported仅表示当前实现缺口；标准功能不得以此作为永久排除。子查询/PIVOT等需按真实上游清单补齐，见[完整兼容计划](beancount-complete-compatibility-plan-2026-10-02.md)。
+
 **当前实施基线（2026-10-01）**：Q02已实现有界查询执行、快照上下文、会话取消及真实C/Swift typed契约；完整工作台未完成。全量Go/七包race、51会计/147查询、原生三套/app及最新私人Swift/C通过（双方2833指令、零差异），见[本批证据](evidence/q02-bounded-execution-2026-10-01.md)。会计v3-core-3、默认legacy及查询contract保持；后台客户端与Store首批见[新增证据](evidence/q02-query-store-2026-10-01.md)；[QueryView/导航首批](evidence/q02-query-view-2026-10-01.md)已接入；错误位置与[保存query目录](evidence/q02-saved-query-catalogue-2026-10-01.md)已推进；下一步补preset、固定执行导出与完整验收。Q01剩余语义、X01/X02及GUI/安装/发行继续保留。
 
 更新：2026-10-01。Oracle固定为Beancount 3.2.3 / BeanQuery 0.2.0，依赖身份来自 `tools/reference/uv.lock`。本文件是Q01/Q02实施契约；下列“oracle确认”只证明参考行为，**不表示Go已经实现**。前次16个探针见[历史文档复验](evidence/go-native-design-refresh-2026-10-01.md)，22个基础场景见[标量证据](evidence/q01-typed-query-foundation-2026-10-01.md)。当前11个公开语料集共147个strict场景通过，包含标量、复合值、metadata、转换及日期/聚合端点；见[Q01证据](evidence/q01-date-aggregate-price-2026-10-01.md)；完整Q01仍未完成。

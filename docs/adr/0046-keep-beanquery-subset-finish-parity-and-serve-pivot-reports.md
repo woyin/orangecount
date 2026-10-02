@@ -1,5 +1,7 @@
 # Keep the BeanQuery subset; finish its column parity honestly and serve pivot reports separately
 
+2026-10-02范围修订：用户要求完整查询生态；固定上游实际支持子查询与PIVOT BY。本文相关排除理由已被[ADR-0050](0050-require-complete-plugin-free-beancount-and-bql-compatibility.md)修订，下文保留历史，不作为当前能力上限。
+
 Users hit "cross-month merge and comparison feel impossible" and asked whether the
 query language should become full SQL. Investigation showed the pain was three
 distinct layers: (A) silent failures — unknown columns like `amount` evaluated to

@@ -1,5 +1,7 @@
 # Ship a Beancount v3 superset dialect with bidirectional compilation
 
+2026-10-02状态澄清：本文superset是设计目标，当前尚未证明every valid v3 file stays valid；目标范围与完整兼容门槛以[ADR-0050](0050-require-complete-plugin-free-beancount-and-bql-compatibility.md)为准。
+
 **Status:** Accepted. The experiment graduated to `main` on or before 2026-08-20.
 
 OrangeCount accepts a dialect superset of Beancount v3 in ledger source files: every valid v3 file stays valid, and additional dialect lines offer a terse two-posting shorthand. Dialect lines are compiled, never rewritten in place: the dialect file is the canonical source of truth, and a separate `export` command emits a pure v3 snapshot for external tools. The work began as an experiment on the `feature/dialect-superset` branch, with `main` retaining the strict v3 contract until graduation.
