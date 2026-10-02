@@ -9,3 +9,5 @@ GUI非法GROUP曾两次触发SwiftUI辅助功能递归并实际崩溃；删除�
 本轮只读FinanceBook当前archive：47文件、2836 entries双方一致，错误/entry/inventory差异均0，Expense73、Income22，native_checked与native_contract均true；3持仓截点、48报价。该证据输入会计及查询数学与最终实现相同；后续仅查询契约名称与UI错误标签改变。未导出或提交私人源。
 
 未对齐无效重复include、posting保留filename/lineno加载诊断；任意Python Decimal陷阱、无限指数与任意Any重载未承诺。源导出兼容门必须独立处理这些边界。
+
+最终源码b0817ef；0.1.4 build-info为clean。开发ZIP仓库外解压、bundle检查与build-info比对通过，SHA-256 `9949531e012d64569656d294bbb9f7ed457c0a6cc7c40860d2a8bef60aaf19b5`。ad hoc签名，旧macOS运行与公证未验。
