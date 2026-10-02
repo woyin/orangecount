@@ -12,4 +12,4 @@ CI 使用明确的 `macos-15` arm64 runner 标签，不使用随时间迁移的 
 
 正常启动不读取仓库 fixture。命令行测试启动设置 `ORANGECOUNT_TEST_MODE=1` 并指定脱敏账本；GUI 自动化使用 `prepare-qa.sh` 生成的独立 QA bundle。两者都隔离用户最近账本偏好。无账本启动展示欢迎页。
 
-当前本机开发交付为[0.1.5](native-development-release-0.1.5.md)，F01–F04功能及App/CLI包已验；上文目标系统与正式发行限制继续适用。
+当前本机开发交付为[0.1.6](native-development-release-0.1.6.md)，提供完整兼容计划的首批源加载与标准查询实现。完整计划仍未完成；上文目标系统与正式发行限制继续适用。0.1.5 的 F01–F04 与 GUI 记录保留为历史证据。

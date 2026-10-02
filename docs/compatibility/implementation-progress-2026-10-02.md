@@ -44,4 +44,4 @@ Go、原生解码/查询显示和查询分析文件读取已增加递归字典�
 
 本切片冻结验证：Go 全量、vet、query/desktop/bridge/ledger race、51 账务差分、284 查询差分均通过；17 个 query corpora 的 Python `--check` 全部通过。原生四组测试通过，包含递归结构值及 Unicode 键保留/拒绝反例。源导出增至 36 个 roundtrip、74 个库存前缀、6 个拒绝；源加载 20 个模式及 6 个语义对照仍通过。FinanceBook 在 v3-core-5/typed-v3 的最新真实 C/Swift probe 下，仍为 47 文件、双方 2836 条记录，零账务/库存差异；Expenses 73 行、Income 22 行一致，3 个持仓截止日、48 个价格检查通过。
 
-App 全量编译和打包将在上述代码提交后进行，以明确构建对应的干净 revision。
+已从干净 `13f00ee` 完成 0.1.6 全量 SwiftUI App 编译、签名和 App/CLI 打包；两包仓库外解压验收通过。GUI 连接本次报错，未计为实际点击验收。版本、校验值及完整限制见[0.1.6 交付](../native-development-release-0.1.6.md)。
