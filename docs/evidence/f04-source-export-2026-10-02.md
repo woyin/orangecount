@@ -11,3 +11,5 @@
 最终Go全量通过；sourceexport/documents/CLI race、fmt/vet/license通过；51会计、215查询通过；CLI构建、macOS无cgo及Linux amd64无cgo交叉编译通过，后两者不代表多文件发布已实现。原生源码未因本包改动；F03四套原生检查继承，最终clean App与包另外记录。跨平台无cgo编译不等于多文件事务可用，能力限制见[source-export](../source-export.md)。
 
 最终只读FinanceBook重新执行当前typed-v2真实C/Swift探针与固定Python同源捕获：47文件、双方2836 entries，0错误/缺失/额外/库存差异；Expense73、Income22均相等，native_checked/native_contract/same_input_capture均true；3持仓截点、48价格检查。无私人源导出，未修改原账本。
+
+最终源码5f4fc4c，clean 0.1.5 App构建/签名/bundle检查通过；ZIP仓库外解压与build-info比对通过。App SHA-256 `3369cfd6faa3463ca01dc05bd24df9400e43fc696ebe8211d3b5d1f52bd470fc`。CLI包独立解压、字节比对并实际公开export/v3 check通过，SHA-256 `d525defb0ca2ebfa99163f6ccc958a3f2a6d85329c73283085ca892a88b4255b`。使用说明见[0.1.5交付](../native-development-release-0.1.5.md)。
