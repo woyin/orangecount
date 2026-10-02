@@ -401,9 +401,31 @@ struct ContractTests {
             }
         }
         print("PASS: all \(names.count) parity fixtures decode on all four native routes")
+        try verifyBalanceQueries(root: root, bridge: bridge)
         try verifyQueries(root: root, bridge: bridge)
         try verifyDirectivePages(root: root, bridge: bridge)
     }
+    static func verifyBalanceQueries(root: String, bridge: BridgeClient) throws {
+        let opened = try bridge.openLedger(path: root + "/testdata/fixtures/query/balance-stream.bean", semantics: "v3")
+        defer { try? bridge.closeLedger(handle: opened.handle) }
+        let result = try bridge.executeQuery(handle: opened.handle, request: QueryRequest(snapshot_id: opened.state.snapshot_id, request_id: 1,
+            text: "SELECT balance,balance WHERE account='Assets:Bank'"))
+        guard let rows = result.execution?.result.rows, rows.count == 2,
+              case .inventory(let first) = rows[0][0].value,
+              case .inventory(let last) = rows[1][0].value else { throw TestFailure(description: "Running Inventory did not cross C/Swift") }
+        try expect(first.first?.units.number.exact == "1000" && last.first?.units.number.exact == "700", "Filtered running inventory keeps source order")
+        let csv = try bridge.captureQueryExport(handle: opened.handle, request: QueryExportRequest(snapshot_id: opened.state.snapshot_id, request_id: 1, fingerprint: result.context.fingerprint, format: "csv"))
+        try expect(String(decoding: csv.content, as: UTF8.self).contains("1000") && String(decoding: csv.content, as: UTF8.self).contains("700"), "Inventory query CSV preserves exact results")
+        let total = try bridge.executeQuery(handle: opened.handle, request: QueryRequest(snapshot_id: opened.state.snapshot_id, request_id: 2,
+            text: "SELECT sum(balance) WHERE account='Assets:Bank'"))
+        guard case .inventory(let sum) = total.execution!.result.rows[0][0].value else { throw TestFailure(description: "sum(Inventory) lost type") }
+        try expect(sum.first?.units.number.exact == "1700", "Inventory aggregate exact sum")
+        let bad = try bridge.executeQuery(handle: opened.handle, request: QueryRequest(snapshot_id: opened.state.snapshot_id, request_id: 3,
+            text: "SELECT account,sum(number) GROUP BY currency LIMIT 0"))
+        try expect(bad.error?.code == "invalid-group" && bad.error?.range != nil && bad.execution == nil, "Invalid grouping rejects even LIMIT 0 with error location")
+        print("PASS: running Inventory, filtered order, sum, CSV and compile-time grouping location cross real C/Swift")
+    }
+
     static func verifyQueries(root: String, bridge: BridgeClient) throws {
         let catalogueSession = try bridge.openLedger(path: root + "/testdata/fixtures/native/queries.bean", semantics: "v3")
         defer { try? bridge.closeLedger(handle: catalogueSession.handle) }

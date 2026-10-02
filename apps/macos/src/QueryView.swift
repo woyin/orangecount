@@ -30,6 +30,8 @@ struct QueryView: View {
             savedQueries
             Text(language.text("查询完整快照；其他页面的日期、币种与估值筛选不自动应用。", "Queries use the whole snapshot; other pages' date, currency and valuation filters do not apply."))
                 .font(LedgerFonts.font(.caption)).foregroundColor(.secondary)
+            Text(language.text("balance 为按扫描及 WHERE 求值累计的库存；sum(balance) 合并累计库存。GROUP BY 支持别名与从1开始的列号。", "balance is running inventory evaluated in scan/WHERE order; sum(balance) merges those inventories. GROUP BY supports aliases and column ordinals starting at 1."))
+                .font(LedgerFonts.font(.caption)).foregroundColor(.secondary)
             QueryTextEditor(text: $store.queryDraft,
                 errorRange: store.queryResponse?.context.text == store.queryDraft ? store.queryResponse?.error?.range : nil,
                 errorRequestID: store.queryResponse?.context.request_id,
@@ -52,7 +54,6 @@ struct QueryView: View {
             QueryExportControls(store: store)
             if let message = store.queryErrorMessage {
                 Text(message).foregroundColor(.red).textSelection(.enabled)
-                    .accessibilityLabel(language.text("查询错误：", "Query error: ") + message)
             }
             if let response = store.queryResponse, let execution = response.execution {
                 context(response)

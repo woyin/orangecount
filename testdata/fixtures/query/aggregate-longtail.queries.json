@@ -1,0 +1,30 @@
+[
+  {
+    "id": "dynamic-endpoints",
+    "query": "SELECT first(meta('value')),last(meta('value')) WHERE account='Assets:Cash'"
+  },
+  {
+    "id": "mixed-extrema",
+    "query": "SELECT min(meta('value')),max(meta('value')) WHERE account='Assets:Cash'",
+    "error": {
+      "class": "TypeError",
+      "code": "type-mismatch"
+    }
+  },
+  {
+    "id": "empty-inventory",
+    "query": "SELECT sum(balance),min(balance),max(balance) WHERE account='missing'"
+  },
+  {
+    "id": "large-finite",
+    "query": "SELECT decimal('1e1000')+decimal('1e999'),decimal('1e-1000')*decimal('1e-1000') LIMIT 1"
+  },
+  {
+    "id": "finite-ties",
+    "query": "SELECT str(decimal('1.2345678901234567890123456785')+0),str(decimal('1.2345678901234567890123456795')+0) LIMIT 1"
+  },
+  {
+    "id": "inventory-casts",
+    "query": "SELECT str(balance),str(cost(balance)),str(units(balance)) LIMIT 2"
+  }
+]

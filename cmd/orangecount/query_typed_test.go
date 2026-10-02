@@ -37,7 +37,7 @@ func TestRunQueryTypedJSONPreservesColumnPositions(t *testing.T) {
 	if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
 		t.Fatal(err)
 	}
-	if result.Contract != "beanquery-0.2.0-typed-v1" || len(result.Columns) != 4 || result.Columns[0].ID == result.Columns[1].ID || result.Rows[0][0].Value != "1" || result.Rows[0][1].Value != "2" || result.Rows[0][2].Value != false || result.Rows[0][3].Value != "" {
+	if result.Contract != query.CurrentContract || len(result.Columns) != 4 || result.Columns[0].ID == result.Columns[1].ID || result.Rows[0][0].Value != "1" || result.Rows[0][1].Value != "2" || result.Rows[0][2].Value != false || result.Rows[0][3].Value != "" {
 		t.Fatalf("result=%s", stdout.String())
 	}
 }

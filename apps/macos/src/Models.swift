@@ -1072,7 +1072,7 @@ struct QueryTypedResult: Codable, Sendable {
         columns = try values.decode([QueryColumn].self, forKey: .columns)
         rows = try values.decode([[QueryCell]].self, forKey: .rows)
         let types: Set<String> = ["null", "string", "date", "integer", "bool", "decimal", "amount", "position", "inventory", "object"]
-        guard contract == "beanquery-0.2.0-typed-v1", Set(columns.map(\.id)).count == columns.count,
+        guard ["beanquery-0.2.0-typed-v1", "beanquery-0.2.0-typed-v2"].contains(contract), Set(columns.map(\.id)).count == columns.count,
               columns.allSatisfy({ !$0.id.isEmpty && types.contains($0.type) }),
               rows.allSatisfy({ row in
                   row.count == columns.count && zip(row, columns).allSatisfy { cell, column in

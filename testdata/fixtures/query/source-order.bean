@@ -1,0 +1,13 @@
+; Copyright 2026 OrangeCount contributors
+; Licensed under the Apache License, Version 2.0.
+2024-01-01 open Assets:Cash USD
+2024-01-01 open Expenses:Food USD
+pushmeta scope: "outer"
+include "source-order-child.bean"
+2024-01-02 * "parent same day"
+  scope: "explicit"
+  filename: "override.bean"
+  lineno: 77
+  Assets:Cash -2 USD
+  Expenses:Food 2 USD
+popmeta scope:

@@ -170,7 +170,7 @@ func parseTyped(text string, budget *executionBudget) (Query, error) {
 			}
 		}
 	}
-	parser := queryParser{tokens: tokens, defaultPostings: true, inputBytes: len(text)}
+	parser := queryParser{tokens: tokens, defaultPostings: true, inputBytes: len(text), inputText: text}
 	q, err := parser.parse()
 	if err != nil {
 		return Query{}, locatedQueryError(err, nil, "parse")

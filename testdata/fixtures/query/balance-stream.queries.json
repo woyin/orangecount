@@ -1,0 +1,178 @@
+[
+  {
+    "id": "all",
+    "query": "SELECT account,balance"
+  },
+  {
+    "id": "filtered",
+    "query": "SELECT account,balance WHERE account=\"Assets:Bank\""
+  },
+  {
+    "id": "ordered",
+    "query": "SELECT account,balance ORDER BY account"
+  },
+  {
+    "id": "limit",
+    "query": "SELECT balance,balance LIMIT 2"
+  },
+  {
+    "id": "zero",
+    "query": "SELECT balance LIMIT 0"
+  },
+  {
+    "id": "sum",
+    "query": "SELECT sum(balance)"
+  },
+  {
+    "id": "filtered-sum",
+    "query": "SELECT sum(balance) WHERE account=\"Assets:Bank\""
+  },
+  {
+    "id": "positive",
+    "query": "SELECT account,balance WHERE number>0"
+  },
+  {
+    "id": "where-balance",
+    "query": "SELECT account,balance WHERE balance IS NOT NULL"
+  },
+  {
+    "id": "where-shortcircuit",
+    "query": "SELECT account,balance WHERE account=\"Assets:Bank\" OR balance IS NOT NULL"
+  },
+  {
+    "id": "compound-aggregate",
+    "query": "SELECT sum(balance),first(balance),last(balance),min(balance),max(balance)"
+  },
+  {
+    "id": "inventory-order",
+    "query": "SELECT account,balance ORDER BY balance"
+  },
+  {
+    "id": "duplicate-sums",
+    "query": "SELECT sum(balance),sum(balance)"
+  },
+  {
+    "id": "group-ordinal",
+    "query": "SELECT account,sum(number) GROUP BY 1"
+  },
+  {
+    "id": "group-alias",
+    "query": "SELECT account AS a,sum(number) GROUP BY a"
+  },
+  {
+    "id": "duplicate-title-order",
+    "query": "SELECT account AS a,currency AS a ORDER BY a"
+  },
+  {
+    "id": "missing-group",
+    "query": "SELECT account,sum(number) GROUP BY currency",
+    "error": {
+      "class": "CompilationError",
+      "code": "invalid-group"
+    }
+  },
+  {
+    "id": "invalid-zero",
+    "query": "SELECT sum(number) GROUP BY 0",
+    "error": {
+      "class": "CompilationError",
+      "code": "invalid-group"
+    }
+  },
+  {
+    "id": "invalid-high",
+    "query": "SELECT sum(number) GROUP BY 3",
+    "error": {
+      "class": "CompilationError",
+      "code": "invalid-group"
+    }
+  },
+  {
+    "id": "aggregate-group",
+    "query": "SELECT account,sum(number) GROUP BY 2",
+    "error": {
+      "class": "CompilationError",
+      "code": "invalid-group"
+    }
+  },
+  {
+    "id": "aggregate-where",
+    "query": "SELECT sum(number) WHERE sum(number)>0",
+    "error": {
+      "class": "CompilationError",
+      "code": "invalid-group"
+    }
+  },
+  {
+    "id": "inventory-group",
+    "query": "SELECT balance GROUP BY balance",
+    "error": {
+      "class": "CompilationError",
+      "code": "invalid-group"
+    }
+  },
+  {
+    "id": "nested",
+    "query": "SELECT sum(sum(balance))",
+    "error": {
+      "class": "CompilationError",
+      "code": "type-mismatch"
+    }
+  },
+  {
+    "id": "missing-group-empty",
+    "query": "SELECT account,sum(number) GROUP BY currency LIMIT 0",
+    "error": {
+      "class": "CompilationError",
+      "code": "invalid-group"
+    }
+  },
+  {
+    "id": "order-ordinal",
+    "query": "SELECT account ORDER BY 1"
+  },
+  {
+    "id": "negative-group-constant",
+    "query": "SELECT sum(number) GROUP BY -1"
+  },
+  {
+    "id": "order-zero",
+    "query": "SELECT account ORDER BY 0",
+    "error": {
+      "class": "CompilationError",
+      "code": "invalid-order"
+    }
+  },
+  {
+    "id": "order-high",
+    "query": "SELECT account ORDER BY 2",
+    "error": {
+      "class": "CompilationError",
+      "code": "invalid-order"
+    }
+  },
+  {
+    "id": "fractional-group",
+    "query": "SELECT sum(number) GROUP BY 1.5",
+    "error": {
+      "class": "ParseError",
+      "code": "syntax"
+    }
+  },
+  {
+    "id": "fractional-order",
+    "query": "SELECT account ORDER BY 1.5",
+    "error": {
+      "class": "ParseError",
+      "code": "syntax"
+    }
+  },
+  {
+    "id": "duplicate-group-alias",
+    "query": "SELECT account AS a,currency AS a GROUP BY a",
+    "error": {
+      "class": "CompilationError",
+      "code": "invalid-group"
+    }
+  }
+]

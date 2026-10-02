@@ -240,7 +240,11 @@ func sumCompoundValues(arg typedExpr, rows []Row) (any, error) {
 			return nil, err
 		}
 		if value != nil {
-			if arg.kind == "amount" {
+			if arg.kind == "inventory" {
+				for _, position := range value.(inventoryValue) {
+					inventory.add(position)
+				}
+			} else if arg.kind == "amount" {
 				inventory.add(positionValue{Units: value.(amountValue)})
 			} else {
 				inventory.add(value.(positionValue))

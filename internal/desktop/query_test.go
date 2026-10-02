@@ -184,7 +184,7 @@ func TestQueryFailuresExposeActualUTF8TokenRanges(t *testing.T) {
 		{"SELECT 'x' + number LIMIT 0", "type-mismatch", 11, 12},
 		{"SELECT -account LIMIT 0", "type-mismatch", 7, 8},
 		{"SELECT number FROM unsupported LIMIT 0", "unknown-table", 19, 30},
-		{"SELECT 1 AS v, 2 AS v ORDER BY v", "ambiguous-column", 31, 32},
+		{"SELECT 1 AS v, 2 AS v ORDER BY 3", "invalid-order", 31, 32},
 		{"SELECT account ~ '['", "syntax", 15, 16},
 	}
 	for i, tc := range cases {

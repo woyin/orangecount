@@ -1,0 +1,2441 @@
+{
+  "schema_version": 2,
+  "oracle": {
+    "beancount": "3.2.3",
+    "beanquery": "0.2.0"
+  },
+  "fixture": "testdata/fixtures/query/balance-cost.bean",
+  "input_sha256": "93478a682755315e75dcfb32e240b6410cac5d610d72310d94dcb0602b7f8d10",
+  "queries_sha256": "21bc48e4b2c8376a37312b63cc97decd8fd73dacbaf404cc3013f5f8c340cff6",
+  "sources_sha256": {
+    "testdata/fixtures/query/balance-cost.bean": "93478a682755315e75dcfb32e240b6410cac5d610d72310d94dcb0602b7f8d10",
+    "testdata/fixtures/query/compound-values.bean": "4681f4762bc2fe7cc64229491bacfc553624e6e4aa132bc4e6fde9538d718b50"
+  },
+  "cases": [
+    {
+      "id": "cost-1",
+      "query": "SELECT account,balance",
+      "result": {
+        "columns": [
+          {
+            "name": "account",
+            "type": "string"
+          },
+          {
+            "name": "balance",
+            "type": "inventory"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "Assets:Stock"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "2",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Assets:Cash"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "2",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-20",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Assets:Stock"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-20",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Assets:Cash"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-40",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Assets:Foreign"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "1",
+                    "currency": "ABC"
+                  },
+                  "cost": {
+                    "number": "3",
+                    "currency": "EUR",
+                    "date": "2000-01-02",
+                    "label": "fx"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-40",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Assets:Cash"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "1",
+                    "currency": "ABC"
+                  },
+                  "cost": {
+                    "number": "3",
+                    "currency": "EUR",
+                    "date": "2000-01-02",
+                    "label": "fx"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-3",
+                    "currency": "EUR"
+                  },
+                  "cost": null
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-40",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Assets:Plain"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "1",
+                    "currency": "ABC"
+                  },
+                  "cost": {
+                    "number": "3",
+                    "currency": "EUR",
+                    "date": "2000-01-02",
+                    "label": "fx"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-3",
+                    "currency": "EUR"
+                  },
+                  "cost": null
+                },
+                {
+                  "units": {
+                    "number": "7",
+                    "currency": "STK"
+                  },
+                  "cost": null
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-40",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Assets:Cash"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "1",
+                    "currency": "ABC"
+                  },
+                  "cost": {
+                    "number": "3",
+                    "currency": "EUR",
+                    "date": "2000-01-02",
+                    "label": "fx"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-3",
+                    "currency": "EUR"
+                  },
+                  "cost": null
+                },
+                {
+                  "units": {
+                    "number": "7",
+                    "currency": "STK"
+                  },
+                  "cost": null
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-54",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Assets:Stock"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "1",
+                    "currency": "ABC"
+                  },
+                  "cost": {
+                    "number": "3",
+                    "currency": "EUR",
+                    "date": "2000-01-02",
+                    "label": "fx"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-3",
+                    "currency": "EUR"
+                  },
+                  "cost": null
+                },
+                {
+                  "units": {
+                    "number": "7",
+                    "currency": "STK"
+                  },
+                  "cost": null
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-03",
+                    "label": ""
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-54",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Assets:Cash"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "1",
+                    "currency": "ABC"
+                  },
+                  "cost": {
+                    "number": "3",
+                    "currency": "EUR",
+                    "date": "2000-01-02",
+                    "label": "fx"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-3",
+                    "currency": "EUR"
+                  },
+                  "cost": null
+                },
+                {
+                  "units": {
+                    "number": "7",
+                    "currency": "STK"
+                  },
+                  "cost": null
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-03",
+                    "label": ""
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-84",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Assets:Plain"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "1",
+                    "currency": "ABC"
+                  },
+                  "cost": {
+                    "number": "3",
+                    "currency": "EUR",
+                    "date": "2000-01-02",
+                    "label": "fx"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-3",
+                    "currency": "EUR"
+                  },
+                  "cost": null
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-03",
+                    "label": ""
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-84",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Assets:Cash"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "1",
+                    "currency": "ABC"
+                  },
+                  "cost": {
+                    "number": "3",
+                    "currency": "EUR",
+                    "date": "2000-01-02",
+                    "label": "fx"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-3",
+                    "currency": "EUR"
+                  },
+                  "cost": null
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-03",
+                    "label": ""
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-70",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Assets:Stock"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "1",
+                    "currency": "ABC"
+                  },
+                  "cost": {
+                    "number": "3",
+                    "currency": "EUR",
+                    "date": "2000-01-02",
+                    "label": "fx"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-3",
+                    "currency": "EUR"
+                  },
+                  "cost": null
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "0",
+                    "currency": "USD",
+                    "date": "2000-01-04",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-03",
+                    "label": ""
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-70",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Assets:Cash"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "1",
+                    "currency": "ABC"
+                  },
+                  "cost": {
+                    "number": "3",
+                    "currency": "EUR",
+                    "date": "2000-01-02",
+                    "label": "fx"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-3",
+                    "currency": "EUR"
+                  },
+                  "cost": null
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "0",
+                    "currency": "USD",
+                    "date": "2000-01-04",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-03",
+                    "label": ""
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-70",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Assets:Stock"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "1",
+                    "currency": "ABC"
+                  },
+                  "cost": {
+                    "number": "3",
+                    "currency": "EUR",
+                    "date": "2000-01-02",
+                    "label": "fx"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-3",
+                    "currency": "EUR"
+                  },
+                  "cost": null
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "0",
+                    "currency": "USD",
+                    "date": "2000-01-04",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-03",
+                    "label": ""
+                  }
+                },
+                {
+                  "units": {
+                    "number": "5",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-05",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-70",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Assets:Cash"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "1",
+                    "currency": "ABC"
+                  },
+                  "cost": {
+                    "number": "3",
+                    "currency": "EUR",
+                    "date": "2000-01-02",
+                    "label": "fx"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-3",
+                    "currency": "EUR"
+                  },
+                  "cost": null
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "0",
+                    "currency": "USD",
+                    "date": "2000-01-04",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-03",
+                    "label": ""
+                  }
+                },
+                {
+                  "units": {
+                    "number": "5",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-05",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-120",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Assets:Stock"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "1",
+                    "currency": "ABC"
+                  },
+                  "cost": {
+                    "number": "3",
+                    "currency": "EUR",
+                    "date": "2000-01-02",
+                    "label": "fx"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-3",
+                    "currency": "EUR"
+                  },
+                  "cost": null
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "0",
+                    "currency": "USD",
+                    "date": "2000-01-04",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-03",
+                    "label": ""
+                  }
+                },
+                {
+                  "units": {
+                    "number": "5",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-05",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-120",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Assets:Cash"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "1",
+                    "currency": "ABC"
+                  },
+                  "cost": {
+                    "number": "3",
+                    "currency": "EUR",
+                    "date": "2000-01-02",
+                    "label": "fx"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-3",
+                    "currency": "EUR"
+                  },
+                  "cost": null
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "0",
+                    "currency": "USD",
+                    "date": "2000-01-04",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-03",
+                    "label": ""
+                  }
+                },
+                {
+                  "units": {
+                    "number": "5",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-05",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-100",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Income:Gains"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "1",
+                    "currency": "ABC"
+                  },
+                  "cost": {
+                    "number": "3",
+                    "currency": "EUR",
+                    "date": "2000-01-02",
+                    "label": "fx"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-3",
+                    "currency": "EUR"
+                  },
+                  "cost": null
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "0",
+                    "currency": "USD",
+                    "date": "2000-01-04",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-03",
+                    "label": ""
+                  }
+                },
+                {
+                  "units": {
+                    "number": "5",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-05",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-110",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "cost-2",
+      "query": "SELECT balance,balance WHERE account=\"Assets:Stock\"",
+      "result": {
+        "columns": [
+          {
+            "name": "balance",
+            "type": "inventory"
+          },
+          {
+            "name": "balance",
+            "type": "inventory"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "2",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "2",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-03",
+                    "label": ""
+                  }
+                }
+              ]
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-03",
+                    "label": ""
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "0",
+                    "currency": "USD",
+                    "date": "2000-01-04",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-03",
+                    "label": ""
+                  }
+                }
+              ]
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "0",
+                    "currency": "USD",
+                    "date": "2000-01-04",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-03",
+                    "label": ""
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "0",
+                    "currency": "USD",
+                    "date": "2000-01-04",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-03",
+                    "label": ""
+                  }
+                },
+                {
+                  "units": {
+                    "number": "5",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-05",
+                    "label": null
+                  }
+                }
+              ]
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "0",
+                    "currency": "USD",
+                    "date": "2000-01-04",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-03",
+                    "label": ""
+                  }
+                },
+                {
+                  "units": {
+                    "number": "5",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-05",
+                    "label": null
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "0",
+                    "currency": "USD",
+                    "date": "2000-01-04",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-03",
+                    "label": ""
+                  }
+                },
+                {
+                  "units": {
+                    "number": "5",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-05",
+                    "label": null
+                  }
+                }
+              ]
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "0",
+                    "currency": "USD",
+                    "date": "2000-01-04",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-03",
+                    "label": ""
+                  }
+                },
+                {
+                  "units": {
+                    "number": "5",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-05",
+                    "label": null
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "cost-3",
+      "query": "SELECT sum(balance) WHERE account=\"Assets:Stock\"",
+      "result": {
+        "columns": [
+          {
+            "name": "sum(balance)",
+            "type": "inventory"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "12",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "0",
+                    "currency": "USD",
+                    "date": "2000-01-04",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "21",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "12",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-03",
+                    "label": ""
+                  }
+                },
+                {
+                  "units": {
+                    "number": "10",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-05",
+                    "label": null
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "cost-4",
+      "query": "SELECT min(balance),max(balance),first(balance),last(balance)",
+      "result": {
+        "columns": [
+          {
+            "name": "min(balance)",
+            "type": "inventory"
+          },
+          {
+            "name": "max(balance)",
+            "type": "inventory"
+          },
+          {
+            "name": "first(balance)",
+            "type": "inventory"
+          },
+          {
+            "name": "last(balance)",
+            "type": "inventory"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "1",
+                    "currency": "ABC"
+                  },
+                  "cost": {
+                    "number": "3",
+                    "currency": "EUR",
+                    "date": "2000-01-02",
+                    "label": "fx"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-3",
+                    "currency": "EUR"
+                  },
+                  "cost": null
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "0",
+                    "currency": "USD",
+                    "date": "2000-01-04",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-03",
+                    "label": ""
+                  }
+                },
+                {
+                  "units": {
+                    "number": "5",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-05",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-120",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "2",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "2",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "1",
+                    "currency": "ABC"
+                  },
+                  "cost": {
+                    "number": "3",
+                    "currency": "EUR",
+                    "date": "2000-01-02",
+                    "label": "fx"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-3",
+                    "currency": "EUR"
+                  },
+                  "cost": null
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "0",
+                    "currency": "USD",
+                    "date": "2000-01-04",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-03",
+                    "label": ""
+                  }
+                },
+                {
+                  "units": {
+                    "number": "5",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-05",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-110",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "cost-5",
+      "query": "SELECT str(balance),cost(balance),units(balance) WHERE account=\"Assets:Stock\"",
+      "result": {
+        "columns": [
+          {
+            "name": "str(balance)",
+            "type": "string"
+          },
+          {
+            "name": "cost(balance)",
+            "type": "inventory"
+          },
+          {
+            "name": "units(balance)",
+            "type": "inventory"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "(2 STK {10 USD, 2000-01-02, \"alpha\"})"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "20",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "2",
+                    "currency": "STK"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "(4 STK {10 USD, 2000-01-02, \"alpha\"})"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "40",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "(3 STK {10 USD, 2000-01-03}, 4 STK {10 USD, 2000-01-02, \"alpha\"})"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "70",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "7",
+                    "currency": "STK"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "(4 STK {0 USD, 2000-01-04}, 3 STK {10 USD, 2000-01-03}, 4 STK {10 USD, 2000-01-02, \"alpha\"})"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "70",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "11",
+                    "currency": "STK"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "(4 STK {0 USD, 2000-01-04}, 3 STK {10 USD, 2000-01-03}, 4 STK {10 USD, 2000-01-02, \"alpha\"}, 5 STK {10 USD, 2000-01-05})"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "120",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "16",
+                    "currency": "STK"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "(4 STK {0 USD, 2000-01-04}, 3 STK {10 USD, 2000-01-02, \"alpha\"}, 3 STK {10 USD, 2000-01-03}, 5 STK {10 USD, 2000-01-05})"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "110",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "15",
+                    "currency": "STK"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "cost-6",
+      "query": "SELECT sum(cost(balance)) WHERE account=\"Assets:Stock\"",
+      "result": {
+        "columns": [
+          {
+            "name": "sum(cost(balance))",
+            "type": "inventory"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "430",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "cost-7",
+      "query": "SELECT account,balance ORDER BY balance LIMIT 3",
+      "result": {
+        "columns": [
+          {
+            "name": "account",
+            "type": "string"
+          },
+          {
+            "name": "balance",
+            "type": "inventory"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "Assets:Cash"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "1",
+                    "currency": "ABC"
+                  },
+                  "cost": {
+                    "number": "3",
+                    "currency": "EUR",
+                    "date": "2000-01-02",
+                    "label": "fx"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-3",
+                    "currency": "EUR"
+                  },
+                  "cost": null
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "0",
+                    "currency": "USD",
+                    "date": "2000-01-04",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-03",
+                    "label": ""
+                  }
+                },
+                {
+                  "units": {
+                    "number": "5",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-05",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-120",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Assets:Stock"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "1",
+                    "currency": "ABC"
+                  },
+                  "cost": {
+                    "number": "3",
+                    "currency": "EUR",
+                    "date": "2000-01-02",
+                    "label": "fx"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-3",
+                    "currency": "EUR"
+                  },
+                  "cost": null
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "0",
+                    "currency": "USD",
+                    "date": "2000-01-04",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-03",
+                    "label": ""
+                  }
+                },
+                {
+                  "units": {
+                    "number": "5",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-05",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-120",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Income:Gains"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "1",
+                    "currency": "ABC"
+                  },
+                  "cost": {
+                    "number": "3",
+                    "currency": "EUR",
+                    "date": "2000-01-02",
+                    "label": "fx"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-3",
+                    "currency": "EUR"
+                  },
+                  "cost": null
+                },
+                {
+                  "units": {
+                    "number": "4",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "0",
+                    "currency": "USD",
+                    "date": "2000-01-04",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-02",
+                    "label": "alpha"
+                  }
+                },
+                {
+                  "units": {
+                    "number": "3",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-03",
+                    "label": ""
+                  }
+                },
+                {
+                  "units": {
+                    "number": "5",
+                    "currency": "STK"
+                  },
+                  "cost": {
+                    "number": "10",
+                    "currency": "USD",
+                    "date": "2000-01-05",
+                    "label": null
+                  }
+                },
+                {
+                  "units": {
+                    "number": "-110",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "cost-8",
+      "query": "SELECT sum(balance) WHERE number=0",
+      "result": {
+        "columns": [
+          {
+            "name": "sum(balance)",
+            "type": "inventory"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "inventory",
+              "value": []
+            }
+          ]
+        ]
+      }
+    }
+  ]
+}

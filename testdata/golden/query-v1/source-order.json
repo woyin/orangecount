@@ -1,0 +1,502 @@
+{
+  "schema_version": 2,
+  "oracle": {
+    "beancount": "3.2.3",
+    "beanquery": "0.2.0"
+  },
+  "fixture": "testdata/fixtures/query/source-order.bean",
+  "input_sha256": "91fe43c2ec045d32ad752146c5bb43744c485fd783b7d4c93c3febed3db1ead6",
+  "queries_sha256": "f5bcd510d3d0eece2873898a48e3be3dfd327cfa3383853dc0095c2baa5f0e61",
+  "sources_sha256": {
+    "testdata/fixtures/query/source-order-child.bean": "aed44444691c658a64fe98720be2189616a7a6236b1a578867e35a53ffbe1cd0",
+    "testdata/fixtures/query/source-order.bean": "91fe43c2ec045d32ad752146c5bb43744c485fd783b7d4c93c3febed3db1ead6"
+  },
+  "cases": [
+    {
+      "id": "source-1",
+      "query": "SELECT narration,account,balance",
+      "result": {
+        "columns": [
+          {
+            "name": "narration",
+            "type": "string"
+          },
+          {
+            "name": "account",
+            "type": "string"
+          },
+          {
+            "name": "balance",
+            "type": "inventory"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "child same day"
+            },
+            {
+              "type": "string",
+              "value": "Assets:Cash"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "-1",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "child same day"
+            },
+            {
+              "type": "string",
+              "value": "Expenses:Food"
+            },
+            {
+              "type": "inventory",
+              "value": []
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "parent same day"
+            },
+            {
+              "type": "string",
+              "value": "Assets:Cash"
+            },
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "-2",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "parent same day"
+            },
+            {
+              "type": "string",
+              "value": "Expenses:Food"
+            },
+            {
+              "type": "inventory",
+              "value": []
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "source-2",
+      "query": "SELECT narration,entry_meta('scope'),account",
+      "result": {
+        "columns": [
+          {
+            "name": "narration",
+            "type": "string"
+          },
+          {
+            "name": "entry_meta('scope')",
+            "type": "object"
+          },
+          {
+            "name": "account",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "child same day"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Assets:Cash"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "child same day"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "Expenses:Food"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "parent same day"
+            },
+            {
+              "type": "string",
+              "value": "explicit"
+            },
+            {
+              "type": "string",
+              "value": "Assets:Cash"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "parent same day"
+            },
+            {
+              "type": "string",
+              "value": "explicit"
+            },
+            {
+              "type": "string",
+              "value": "Expenses:Food"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "source-3",
+      "query": "SELECT narration,filename,lineno",
+      "result": {
+        "columns": [
+          {
+            "name": "narration",
+            "type": "string"
+          },
+          {
+            "name": "filename",
+            "type": "string"
+          },
+          {
+            "name": "lineno",
+            "type": "integer"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "child same day"
+            },
+            {
+              "type": "string",
+              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/source-order-child.bean"
+            },
+            {
+              "type": "integer",
+              "value": "4"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "child same day"
+            },
+            {
+              "type": "string",
+              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/source-order-child.bean"
+            },
+            {
+              "type": "integer",
+              "value": "5"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "parent same day"
+            },
+            {
+              "type": "string",
+              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/source-order.bean"
+            },
+            {
+              "type": "integer",
+              "value": "11"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "parent same day"
+            },
+            {
+              "type": "string",
+              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/source-order.bean"
+            },
+            {
+              "type": "integer",
+              "value": "12"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "source-4",
+      "query": "SELECT narration,entry_meta('filename'),entry_meta('lineno'),meta('filename'),meta('lineno')",
+      "result": {
+        "columns": [
+          {
+            "name": "narration",
+            "type": "string"
+          },
+          {
+            "name": "entry_meta('filename')",
+            "type": "object"
+          },
+          {
+            "name": "entry_meta('lineno')",
+            "type": "object"
+          },
+          {
+            "name": "meta('filename')",
+            "type": "object"
+          },
+          {
+            "name": "meta('lineno')",
+            "type": "object"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "child same day"
+            },
+            {
+              "type": "string",
+              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/source-order-child.bean"
+            },
+            {
+              "type": "integer",
+              "value": "3"
+            },
+            {
+              "type": "string",
+              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/source-order-child.bean"
+            },
+            {
+              "type": "integer",
+              "value": "4"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "child same day"
+            },
+            {
+              "type": "string",
+              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/source-order-child.bean"
+            },
+            {
+              "type": "integer",
+              "value": "3"
+            },
+            {
+              "type": "string",
+              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/source-order-child.bean"
+            },
+            {
+              "type": "integer",
+              "value": "5"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "parent same day"
+            },
+            {
+              "type": "string",
+              "value": "override.bean"
+            },
+            {
+              "type": "decimal",
+              "value": "77"
+            },
+            {
+              "type": "string",
+              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/source-order.bean"
+            },
+            {
+              "type": "integer",
+              "value": "11"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "parent same day"
+            },
+            {
+              "type": "string",
+              "value": "override.bean"
+            },
+            {
+              "type": "decimal",
+              "value": "77"
+            },
+            {
+              "type": "string",
+              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/source-order.bean"
+            },
+            {
+              "type": "integer",
+              "value": "12"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "source-5",
+      "query": "SELECT count(*)",
+      "result": {
+        "columns": [
+          {
+            "name": "count(*)",
+            "type": "integer"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "integer",
+              "value": "4"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "source-6",
+      "query": "SELECT narration,account ORDER BY narration",
+      "result": {
+        "columns": [
+          {
+            "name": "narration",
+            "type": "string"
+          },
+          {
+            "name": "account",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "child same day"
+            },
+            {
+              "type": "string",
+              "value": "Assets:Cash"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "child same day"
+            },
+            {
+              "type": "string",
+              "value": "Expenses:Food"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "parent same day"
+            },
+            {
+              "type": "string",
+              "value": "Assets:Cash"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "parent same day"
+            },
+            {
+              "type": "string",
+              "value": "Expenses:Food"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "source-7",
+      "query": "SELECT balance WHERE account=\"Assets:Cash\"",
+      "result": {
+        "columns": [
+          {
+            "name": "balance",
+            "type": "inventory"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "-1",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "inventory",
+              "value": [
+                {
+                  "units": {
+                    "number": "-3",
+                    "currency": "USD"
+                  },
+                  "cost": null
+                }
+              ]
+            }
+          ]
+        ]
+      }
+    }
+  ]
+}

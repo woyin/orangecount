@@ -1,0 +1,34 @@
+[
+  {
+    "id": "cost-1",
+    "query": "SELECT account,balance"
+  },
+  {
+    "id": "cost-2",
+    "query": "SELECT balance,balance WHERE account=\"Assets:Stock\""
+  },
+  {
+    "id": "cost-3",
+    "query": "SELECT sum(balance) WHERE account=\"Assets:Stock\""
+  },
+  {
+    "id": "cost-4",
+    "query": "SELECT min(balance),max(balance),first(balance),last(balance)"
+  },
+  {
+    "id": "cost-5",
+    "query": "SELECT str(balance),cost(balance),units(balance) WHERE account=\"Assets:Stock\""
+  },
+  {
+    "id": "cost-6",
+    "query": "SELECT sum(cost(balance)) WHERE account=\"Assets:Stock\""
+  },
+  {
+    "id": "cost-7",
+    "query": "SELECT account,balance ORDER BY balance LIMIT 3"
+  },
+  {
+    "id": "cost-8",
+    "query": "SELECT sum(balance) WHERE number=0"
+  }
+]

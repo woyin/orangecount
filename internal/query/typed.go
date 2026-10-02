@@ -4,6 +4,7 @@
 package query
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -57,6 +58,9 @@ func (c Cell) MarshalJSON() ([]byte, error) {
 	return json.Marshal(wire(c))
 }
 
+const CurrentContract = "beanquery-0.2.0-typed-v2"
+const LegacyContract = "beanquery-0.2.0-typed-v1"
+
 // TypedResult never identifies a value by its display title.
 type TypedResult struct {
 	Contract string   `json:"contract"`
@@ -67,14 +71,21 @@ type TypedResult struct {
 // ParseStandard shares the grammar with Parse, with the standard default
 // postings source. Parse remains the compatibility entry for older callers.
 func ParseStandard(text string) (Query, error) {
-	p := queryParser{tokens: lexQuery(text, true), defaultPostings: true, inputBytes: len(text)}
+	p := queryParser{tokens: lexQuery(text, true), defaultPostings: true, inputBytes: len(text), inputText: text}
 	return p.parse()
 }
 
 // EvaluateTyped compiles a read against declared source types, then uses the
 // common execution pipeline. Output IDs prevent title-based data loss.
 func EvaluateTyped(text string, evaluation ledger.Evaluation) (TypedResult, error) {
-	return evaluateTyped(text, evaluation, 0, nil)
+	execution, err := ExecuteTyped(context.Background(), text, evaluation, ExecutionLimits{})
+	if err != nil {
+		return TypedResult{}, err
+	}
+	if execution.Truncated {
+		return TypedResult{}, typedFailure("result-budget-exceeded", "Typed result exceeds the row budget; use bounded execution for explicit truncation")
+	}
+	return execution.Result, nil
 }
 
 func evaluateTyped(text string, evaluation ledger.Evaluation, rowCeiling int, budget *executionBudget) (TypedResult, error) {
@@ -85,7 +96,7 @@ func evaluateTyped(text string, evaluation ledger.Evaluation, rowCeiling int, bu
 		}
 		return TypedResult{}, locatedQueryError(err, nil, "parse")
 	}
-	result := TypedResult{Contract: "beanquery-0.2.0-typed-v1", Columns: make([]Column, 0), Rows: make([][]Cell, 0)}
+	result := TypedResult{Contract: CurrentContract, Columns: make([]Column, 0), Rows: make([][]Cell, 0)}
 	if canonicalTable(q.From) != "postings" {
 		code := "unsupported-capability"
 		if canonicalTable(q.From) == "" {
@@ -96,10 +107,14 @@ func evaluateTyped(text string, evaluation ledger.Evaluation, rowCeiling int, bu
 	if err := resolveTypedAliases(&q); err != nil {
 		return TypedResult{}, err
 	}
+	balanceTargets := []typedExpr{}
 	if q.Where != nil {
 		compiled, err := compileTyped(q.Where)
 		if err != nil {
 			return TypedResult{}, err
+		}
+		if compiled.grouped {
+			return TypedResult{}, locatedQueryError(typedFailure("invalid-group", "aggregates are not allowed in WHERE"), expressionRange(q.Where), "compile")
 		}
 		q.Where = typedExpr{kind: "bool", grouped: compiled.grouped, value: func(row Row, rows []Row) (any, error) {
 			value, err := compiled.eval(row, rows)
@@ -114,12 +129,18 @@ func evaluateTyped(text string, evaluation ledger.Evaluation, rowCeiling int, bu
 		if err != nil {
 			return TypedResult{}, err
 		}
+		if compiled.grouped || compiled.kind == "inventory" {
+			return TypedResult{}, locatedQueryError(typedFailure("invalid-group", "GROUP BY requires a nonaggregate hashable expression"), expressionRange(expr), "compile")
+		}
 		q.GroupBy[i] = compiled
 	}
 	for i, item := range q.OrderBy {
 		compiled, err := compileTyped(item.Expr)
 		if err != nil {
 			return TypedResult{}, err
+		}
+		if referencesBalance(item.Expr) {
+			balanceTargets = append(balanceTargets, compiled)
 		}
 		q.OrderBy[i].Expr = compiled
 	}
@@ -130,10 +151,16 @@ func evaluateTyped(text string, evaluation ledger.Evaluation, rowCeiling int, bu
 		}
 		title := item.Alias
 		if title == "" {
-			title = standardExprName(item.Expr)
+			title = item.sourceTitle
+			if title == "" {
+				title = standardExprName(item.Expr)
+			}
 		}
 		id := fmt.Sprintf("c%d", i)
 		result.Columns = append(result.Columns, Column{ID: id, Name: title, Type: compiled.kind, Nullable: compiled.nullable})
+		if referencesBalance(item.Expr) {
+			balanceTargets = append(balanceTargets, compiled)
+		}
 		q.Select[i].Expr = compiled
 		q.Select[i].Alias = id
 	}
@@ -150,6 +177,17 @@ func evaluateTyped(text string, evaluation ledger.Evaluation, rowCeiling int, bu
 			}
 		}
 	}
+	if len(q.GroupBy) > 0 {
+		covered := map[string]bool{}
+		for _, expr := range q.GroupBy {
+			covered[expr.String()] = true
+		}
+		for _, item := range q.Select {
+			if !item.Expr.aggregate() && !covered[item.Expr.String()] {
+				return TypedResult{}, locatedQueryError(typedFailure("invalid-group", "all nonaggregates must be covered by GROUP BY: %s", item.Expr.String()), expressionRange(item.Expr), "compile")
+			}
+		}
+	}
 	if q.LimitSpecified && q.Limit == 0 {
 		return result, nil
 	}
@@ -157,6 +195,10 @@ func evaluateTyped(text string, evaluation ledger.Evaluation, rowCeiling int, bu
 		q.Limit = rowCeiling
 	}
 	rows, err := postingRowsWithBudget(evaluation, true, budget)
+	if err != nil {
+		return TypedResult{}, err
+	}
+	rows, err = prepareBalanceStream(&q, rows, balanceTargets, budget)
 	if err != nil {
 		return TypedResult{}, err
 	}
@@ -201,6 +243,7 @@ func evaluateTyped(text string, evaluation ledger.Evaluation, rowCeiling int, bu
 }
 
 type typedExpr struct {
+	span     *ByteRange
 	name     string
 	kind     string
 	nullable bool
@@ -219,6 +262,7 @@ func compileTyped(expr Expr) (typedExpr, error) {
 	if err != nil {
 		return typedExpr{}, locatedQueryError(err, expressionRange(expr), "compile")
 	}
+	compiled.span = expressionRange(expr)
 	value := compiled.value
 	compiled.value = func(row Row, rows []Row) (any, error) {
 		if err := rowBudget(row, rows).step(""); err != nil {
@@ -266,6 +310,14 @@ func compileTypedNode(expr Expr) (typedExpr, error) {
 					return nil, nil
 				}
 				return metadataDecimalValue(number).Text, nil
+			}
+		case "balance":
+			result.kind = "inventory"
+			result.value = func(row Row, _ []Row) (any, error) {
+				if observation, ok := row["_balance_observation"].(*balanceObservation); ok {
+					return observation.read(), nil
+				}
+				return inventoryValue{}, nil
 			}
 		case "position":
 			result.kind = "position"
@@ -706,7 +758,7 @@ func compileTypedNode(expr Expr) (typedExpr, error) {
 				}
 			}
 		case "sum":
-			if (arg.kind == "position" || arg.kind == "amount") && !arg.grouped {
+			if (arg.kind == "position" || arg.kind == "amount" || arg.kind == "inventory") && !arg.grouped {
 				result.kind, result.grouped, result.nullable = "inventory", true, false
 				result.value = func(_ Row, rows []Row) (any, error) { return sumCompoundValues(arg, rows) }
 				return result, nil
@@ -759,6 +811,10 @@ func compileTypedNode(expr Expr) (typedExpr, error) {
 }
 
 func typedCell(kind string, value any) (Cell, error) {
+	if err := wireNumericSize(value); err != nil {
+		return Cell{}, err
+	}
+
 	if value == nil {
 		return Cell{Type: "null"}, nil
 	}
@@ -977,20 +1033,28 @@ func compareTypedValues(left, right any) (int, error) {
 
 func resolveTypedAliases(q *Query) error {
 	aliases := map[string]Expr{}
-	counts := map[string]int{}
 	for _, item := range q.Select {
 		if item.Alias != "" {
 			key := strings.ToLower(item.Alias)
 			aliases[key] = item.Expr
-			counts[key]++
 		}
 	}
-	resolve := func(expr Expr) (Expr, error) {
+	resolve := func(expr Expr, code string) (Expr, error) {
+		if literal, ok := expr.(literalExpr); ok {
+			if n, ok := literal.value.(ledger.Decimal); ok {
+				if !n.Rat().IsInt() || strings.ContainsAny(literal.display, ".eE") {
+					return nil, locatedQueryError(typedFailure("syntax", "projection ordinal must be an integer token"), expressionRange(expr), "compile")
+				}
+				r := n.Rat().Num()
+				if !r.IsInt64() || r.Int64() < 1 || r.Int64() > int64(len(q.Select)) {
+					return nil, locatedQueryError(typedFailure(code, "invalid projection column index %s", literal.display), expressionRange(expr), "compile")
+				}
+				return q.Select[int(r.Int64())-1].Expr, nil
+			}
+		}
 		if field, ok := expr.(fieldExpr); ok {
 			key := strings.ToLower(field.name)
-			if counts[key] > 1 {
-				return nil, locatedQueryError(typedFailure("ambiguous-column", "ambiguous output alias %q", field.name), field.span, "compile")
-			}
+
 			if replacement, ok := aliases[key]; ok {
 				return replacement, nil
 			}
@@ -998,18 +1062,47 @@ func resolveTypedAliases(q *Query) error {
 		return expr, nil
 	}
 	for i, expr := range q.GroupBy {
-		resolved, err := resolve(expr)
+		resolved, err := resolve(expr, "invalid-group")
 		if err != nil {
 			return err
 		}
 		q.GroupBy[i] = resolved
 	}
 	for i, item := range q.OrderBy {
-		resolved, err := resolve(item.Expr)
+		resolved, err := resolve(item.Expr, "invalid-order")
 		if err != nil {
 			return err
 		}
 		q.OrderBy[i].Expr = resolved
+	}
+	return nil
+}
+
+// Keep successful typed values representable by the existing analysis format.
+// Intermediate arithmetic has a separate bit budget; final exact spelling has
+// the same 4096-byte ceiling as the strict reader, including rational extensions.
+func wireNumericSize(value any) error {
+	value = unwrapMetadataNumber(value)
+	switch v := value.(type) {
+	case ledger.Decimal:
+		if len(v.String()) > 4096 {
+			return typedFailure("numeric-budget-exceeded", "Exact output exceeds 4096 bytes")
+		}
+	case amountValue:
+		return wireNumericSize(v.Number)
+	case positionValue:
+		if err := wireNumericSize(v.Units); err != nil {
+			return err
+		}
+		if v.Cost != nil {
+			return wireNumericSize(v.Cost.Number)
+		}
+	case inventoryValue:
+		for _, position := range v {
+			if err := wireNumericSize(position); err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }

@@ -70,8 +70,9 @@ type Query struct {
 
 // SelectItem is one projected expression with an optional output alias.
 type SelectItem struct {
-	Expr  Expr
-	Alias string
+	sourceTitle string
+	Expr        Expr
+	Alias       string
 }
 
 // OrderItem is one sort key; Desc reverses its direction.
@@ -698,6 +699,9 @@ func lexQuery(text string, dates bool) []queryToken {
 		}
 		var token queryToken
 		token, i = lexWord(text, i)
+		if dates && metadataDecimalSyntax.MatchString(token.text) && !strings.ContainsAny(token.text, "eE") {
+			token.kind = tokenNumber
+		}
 		token.start, token.end = start, i
 		tokens = append(tokens, token)
 	}
@@ -790,6 +794,7 @@ func lexWord(text string, i int) (queryToken, int) {
 }
 
 type queryParser struct {
+	inputText       string
 	tokens          []queryToken
 	index           int
 	defaultPostings bool
@@ -848,11 +853,30 @@ func (p *queryParser) parseSelectList(query *Query) error {
 		if p.accept(tokenStar) {
 			query.Select = append(query.Select, SelectItem{Expr: starExpr{}})
 		} else {
+			start := p.index
 			expr, err := p.expression(0)
 			if err != nil {
 				return err
 			}
 			item := SelectItem{Expr: expr}
+			if p.defaultPostings && p.inputText != "" {
+				item.sourceTitle = p.inputText[p.tokens[start].start:p.tokens[p.index-1].end]
+				inner := expr
+				for strings.HasPrefix(item.sourceTitle, "+") {
+					item.sourceTitle = strings.TrimSpace(item.sourceTitle[1:])
+				}
+				for {
+					paren, ok := inner.(parenExpr)
+					if !ok {
+						break
+					}
+					item.sourceTitle = strings.TrimSpace(item.sourceTitle[1 : len(item.sourceTitle)-1])
+					inner = paren.inner
+				}
+				if field, ok := inner.(fieldExpr); ok {
+					item.sourceTitle = strings.ToLower(field.name)
+				}
+			}
 			if p.acceptWord("as") {
 				alias, aliasErr := p.expectWord("column alias")
 				if aliasErr != nil {
@@ -988,19 +1012,19 @@ func (p *queryParser) primary() (Expr, error) {
 	token := p.next()
 	switch token.kind {
 	case tokenString:
-		return literalExpr{value: token.text, display: strconv.Quote(token.text)}, nil
+		return literalExpr{span: &ByteRange{Start: token.start, End: token.end}, value: token.text, display: strconv.Quote(token.text)}, nil
 	case tokenNumber:
 		decimal, err := ledger.ParseDecimal(token.text)
 		if err != nil {
 			return nil, p.errorAtf(token, "invalid number %q", token.text)
 		}
-		return literalExpr{value: decimal, display: token.text}, nil
+		return literalExpr{span: &ByteRange{Start: token.start, End: token.end}, value: decimal, display: token.text}, nil
 	case tokenDate:
 		parsed, err := time.Parse("2006-01-02", token.text)
 		if err != nil || parsed.Year() < 1 {
 			return nil, p.errorAtf(token, "invalid date %q", token.text)
 		}
-		return literalExpr{value: parseDate(token.text), display: token.text}, nil
+		return literalExpr{span: &ByteRange{Start: token.start, End: token.end}, value: parseDate(token.text), display: token.text}, nil
 	case tokenLParen:
 		return p.parenthesized()
 	case tokenOperator:
@@ -1044,9 +1068,9 @@ func (p *queryParser) wordPrimary(token queryToken) (Expr, error) {
 	if p.defaultPostings {
 		switch strings.ToLower(token.text) {
 		case "null":
-			return literalExpr{value: nil, display: "NULL"}, nil
+			return literalExpr{span: &ByteRange{Start: token.start, End: token.end}, value: nil, display: "NULL"}, nil
 		case "true", "false":
-			return literalExpr{value: strings.EqualFold(token.text, "true"), display: strings.ToUpper(token.text)}, nil
+			return literalExpr{span: &ByteRange{Start: token.start, End: token.end}, value: strings.EqualFold(token.text, "true"), display: strings.ToUpper(token.text)}, nil
 		}
 	}
 	if strings.EqualFold(token.text, "not") {
@@ -1395,6 +1419,7 @@ func (e fieldExpr) eval(row Row, _ []Row) (any, error) {
 }
 
 type literalExpr struct {
+	span    *ByteRange
 	value   any
 	display string
 }

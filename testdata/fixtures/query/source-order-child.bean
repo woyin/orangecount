@@ -1,0 +1,5 @@
+; Copyright 2026 OrangeCount contributors
+; Licensed under the Apache License, Version 2.0.
+2024-01-02 * "child same day"
+  Assets:Cash -1 USD
+  Expenses:Food 1 USD

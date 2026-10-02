@@ -11,6 +11,10 @@ import (
 // Token spans originate in the lexer, never from searching a displayed name.
 func expressionRange(expr Expr) *ByteRange {
 	switch node := expr.(type) {
+	case typedExpr:
+		return node.span
+	case literalExpr:
+		return node.span
 	case fieldExpr:
 		return node.span
 	case functionExpr:

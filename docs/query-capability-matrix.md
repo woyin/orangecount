@@ -1,6 +1,6 @@
 # 查询能力与兼容矩阵
 
-**当前基线（2026-10-02，278c6e4）**：12公开语料/163查询通过；原生工作台、四预设及显式期间、查询CSV/分析保存和reader已交付。下列2026-10-01说明为历史，不能据其“未接入”字样重复开发。待补格按[native功能计划](native-missing-features-plan-2026-10-02.md) F03执行。
+**当前基线（2026-10-02，F03）**：16公开语料/215查询通过；运行契约 `beanquery-0.2.0-typed-v2`，分析容器仍为format 1，reader兼容旧typed-v1捕获。原生工作台、四预设、查询CSV/分析保存已交付。下列2026-10-01说明为历史。详见[本次证据](evidence/f03-query-longtail-2026-10-02.md)。
 
 **当前实施基线（2026-10-01）**：Q02已实现有界查询执行、快照上下文、会话取消及真实C/Swift typed契约；完整工作台未完成。全量Go/七包race、51会计/147查询、原生三套/app及最新私人Swift/C通过（双方2833指令、零差异），见[本批证据](evidence/q02-bounded-execution-2026-10-01.md)。会计v3-core-3、默认legacy及查询contract保持；后台客户端与Store首批见[新增证据](evidence/q02-query-store-2026-10-01.md)；[QueryView/导航首批](evidence/q02-query-view-2026-10-01.md)已接入；错误位置与[保存query目录](evidence/q02-saved-query-catalogue-2026-10-01.md)已推进；下一步补preset、固定执行导出与完整验收。Q01剩余语义、X01/X02及GUI/安装/发行继续保留。
 
@@ -105,3 +105,16 @@ ExecuteTyped与Session.ExecuteQuery/CancelQuery、OC_ExecuteQuery/OC_CancelQuery
 首批四预设（按月收入、按月支出、账户库存余额、分录来源）已通过固定 oracle 与 CLI，并接入 native 草稿选择；12 corpus / 151 查询全部通过。它们读取完整快照，收支保留记账符号和多币种库存，不含隐式日期/换汇。查询 CSV/分析保存及独立容器读取已落地；最新范围与未验项见[证据](evidence/q02-analysis-grid-presets-2026-10-02.md)。前文“预设尚未实现”保留历史背景，不代表当前这四项状态；其他查询长尾与完整验收仍待完成。
 
 期间预设已支持四个模板的合法双边界及单边界：选择只把具体日期写入草稿，最近一月由捕获快照解析。当前 12 corpus / 163 查询通过；见[证据](evidence/q02-period-presets-2026-10-02.md)。完整 Q01/Q02 与期间菜单 GUI 未关闭。
+
+## F03 已验与排除范围
+
+| 能力 | 状态与证据 |
+| --- | --- |
+| balance Inventory | oracle-verified：WHERE短路与扫描时点、源/include同日顺序、ORDER/LIMIT、完整成本键、重复列 |
+| sum/min/max/first/last Inventory | oracle-verified：空/NULL、相抵、多币种与成本date/label；balance-cost及aggregate-longtail |
+| GROUP/ORDER | oracle-verified：分组覆盖投影、正整数ordinal、负数常量、重复alias最后定义；非法分组扫描前拒绝 |
+| 动态聚合/转换 | oracle-verified：注册语料列出的重载；混合类型明确TypeError，不声称任意Any重载 |
+| Decimal | oracle-verified：有限1000/2000位数与28位舍入；4096字符/65536位中间值预算，构造指数±10000；越界numeric-budget |
+| metadata/include | oracle-verified：合法保留键transaction覆盖、stack显式覆盖、同日include顺序 |
+| 无效源加载 | explicitly-unsupported：重复include与posting保留filename/lineno错误尚未对齐Python加载诊断；不计为已验语义 |
+| 任意Python Decimal陷阱/对象/Any重载 | explicitly-unsupported：仅上述有限范围，未声明无限指数与通用Python对象兼容 |

@@ -71,7 +71,7 @@ func ReadQueryAnalysis(input io.ReaderAt, size int64) (QueryAnalysisDocument, er
 	}
 	c := result.Context
 	q := c.NormalizedRequest
-	if c.FormatVersion != 1 || c.Producer == "" || c.View != "query" || c.CaptureScope != "captured-result" || c.Page != nil || c.Contract != "beanquery-0.2.0-typed-v1" || c.RowLimit < 1 || c.RowLimit > query.QueryRowLimit || c.ReturnedRows < 0 || c.ReturnedRows > c.RowLimit || q.RequestID == 0 || strings.TrimSpace(q.Text) == "" || len(q.Text) > 65536 || c.SnapshotID == "" || c.EvaluationRevision == "" || c.SnapshotID != q.SnapshotID || c.SemanticsProfile != q.SemanticsProfile || c.EvaluationRevision != q.EvaluationRevision {
+	if c.FormatVersion != 1 || c.Producer == "" || c.View != "query" || c.CaptureScope != "captured-result" || c.Page != nil || (c.Contract != query.CurrentContract && c.Contract != query.LegacyContract) || c.RowLimit < 1 || c.RowLimit > query.QueryRowLimit || c.ReturnedRows < 0 || c.ReturnedRows > c.RowLimit || q.RequestID == 0 || strings.TrimSpace(q.Text) == "" || len(q.Text) > 65536 || c.SnapshotID == "" || c.EvaluationRevision == "" || c.SnapshotID != q.SnapshotID || c.SemanticsProfile != q.SemanticsProfile || c.EvaluationRevision != q.EvaluationRevision {
 		return fail()
 	}
 	if (c.SemanticsProfile != "legacy" && c.SemanticsProfile != "v3") || (c.Truncated && (c.ReturnedRows != c.RowLimit || c.Completeness != "truncated")) || (!c.Truncated && c.Completeness != "complete") {

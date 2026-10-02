@@ -1,0 +1,30 @@
+[
+  {
+    "id": "source-1",
+    "query": "SELECT narration,account,balance"
+  },
+  {
+    "id": "source-2",
+    "query": "SELECT narration,entry_meta('scope'),account"
+  },
+  {
+    "id": "source-3",
+    "query": "SELECT narration,filename,lineno"
+  },
+  {
+    "id": "source-4",
+    "query": "SELECT narration,entry_meta('filename'),entry_meta('lineno'),meta('filename'),meta('lineno')"
+  },
+  {
+    "id": "source-5",
+    "query": "SELECT count(*)"
+  },
+  {
+    "id": "source-6",
+    "query": "SELECT narration,account ORDER BY narration"
+  },
+  {
+    "id": "source-7",
+    "query": "SELECT balance WHERE account=\"Assets:Cash\""
+  }
+]

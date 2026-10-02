@@ -194,7 +194,7 @@ func TestTypedQueryDoesNotSuppressGroupKeyErrors(t *testing.T) {
 			tx.Meta = append(tx.Meta, ledger.Metadata{Key: "unrepresentable", Value: ledger.Value{Kind: ledger.ValueList}})
 		}
 	}
-	_, err := query.EvaluateTyped("SELECT account GROUP BY entry_meta('unrepresentable')", evaluation)
+	_, err := query.EvaluateTyped("SELECT entry_meta('unrepresentable') GROUP BY entry_meta('unrepresentable')", evaluation)
 	var detail query.TypedError
 	if !errors.As(err, &detail) || detail.Code != "unsupported-capability" {
 		t.Fatalf("group key error suppressed: %v", err)

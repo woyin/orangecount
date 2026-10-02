@@ -149,3 +149,13 @@ func TestBoundedQueryRejectsGrowingIntermediateNumbers(t *testing.T) {
 		t.Fatalf("large computed number escaped the numeric budget: %v", err)
 	}
 }
+
+func TestTypedEntryRejectsExtremeNumbersBeforeAllocationAndExport(t *testing.T) {
+	for _, text := range []string{"SELECT " + strings.Repeat("9", 4097) + " LIMIT 0", "SELECT decimal('1e999999999') LIMIT 1", "SELECT decimal('1e5000') LIMIT 1"} {
+		_, err := query.EvaluateTyped(text, typedEvaluation(t))
+		var detail query.TypedError
+		if !errors.As(err, &detail) || detail.Code != "numeric-budget-exceeded" {
+			t.Fatalf("unbounded typed entry (%d bytes): %v", len(text), err)
+		}
+	}
+}

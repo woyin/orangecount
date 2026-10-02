@@ -230,3 +230,7 @@ Python plugin声明和外部工具依赖可能改变账本含义；未纳入声�
 ## F02实施修订
 
 原生协议升级4；共享Session策略锁保护每页完整附件观察，出版会计快照不因根变化重建。引用ID包含snapshot，缓存最多8192项，淘汰后需刷新。当前非沙盒普通bookmark核对stale与device/inode；未来沙盒security-scoped实现仍需独立构建验收。Finder alias由原生启动前显式拒绝，Go不解析alias。
+
+## F03实施修订
+
+查询分组/重复别名修订改变既有结果，运行契约升级 `beanquery-0.2.0-typed-v2`；format_version保持1、类型schema不变。新reader允许读取旧typed-v1冻结文件，不能把旧文件重执行后当成原捕获。原生协议保持4，会计revision未改变。balance观察缓存按WHERE短路/已接受posting顺序推进，排序和LIMIT不改变累积；sum保留完整成本键。新增52查询，总计215。有限数值预算与明确排除见查询矩阵。无效重复include/posting保留键加载诊断未纳入本次核心改动，源导出须独立拒绝。
