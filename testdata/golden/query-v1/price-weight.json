@@ -6,7 +6,7 @@
   },
   "fixture": "testdata/fixtures/query/price-weight.bean",
   "input_sha256": "d06800bb7fb7c4f1a569e932f5cd3bea99280702966c70c588178d53914b9cb6",
-  "queries_sha256": "2217120340702667f5d0a0e842633053d626a17ed1d4da0a8024734a0dc19e65",
+  "queries_sha256": "7591ea4e7c21f340d3fb831dc99fb5687b82b775dbab95ade6b72991ef154a5f",
   "sources_sha256": {
     "testdata/fixtures/query/price-weight.bean": "d06800bb7fb7c4f1a569e932f5cd3bea99280702966c70c588178d53914b9cb6"
   },
@@ -536,6 +536,436 @@
             {
               "type": "string",
               "value": "0.00"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "price-and-cost-fields",
+      "query": "SELECT price,cost_number,cost_currency,cost_date,cost_label FROM #postings",
+      "result": {
+        "columns": [
+          {
+            "name": "price",
+            "type": "amount"
+          },
+          {
+            "name": "cost_number",
+            "type": "decimal"
+          },
+          {
+            "name": "cost_currency",
+            "type": "string"
+          },
+          {
+            "name": "cost_date",
+            "type": "date"
+          },
+          {
+            "name": "cost_label",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "amount",
+              "value": {
+                "number": "3.333333333333333333333333333",
+                "currency": "USD"
+              }
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
+            }
+          ],
+          [
+            {
+              "type": "amount",
+              "value": {
+                "number": "3.666666666666666666666666667",
+                "currency": "USD"
+              }
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
+            }
+          ],
+          [
+            {
+              "type": "amount",
+              "value": {
+                "number": "3",
+                "currency": "USD"
+              }
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
+            }
+          ],
+          [
+            {
+              "type": "amount",
+              "value": {
+                "number": "0.5",
+                "currency": "USD"
+              }
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
+            }
+          ],
+          [
+            {
+              "type": "amount",
+              "value": {
+                "number": "2",
+                "currency": "USD"
+              }
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
+            }
+          ],
+          [
+            {
+              "type": "amount",
+              "value": {
+                "number": "3",
+                "currency": "USD"
+              }
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
+            }
+          ],
+          [
+            {
+              "type": "amount",
+              "value": {
+                "number": "0",
+                "currency": "USD"
+              }
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
+            }
+          ],
+          [
+            {
+              "type": "amount",
+              "value": {
+                "number": "0",
+                "currency": "USD"
+              }
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
+            }
+          ],
+          [
+            {
+              "type": "amount",
+              "value": {
+                "number": "2",
+                "currency": "USD"
+              }
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
+            }
+          ],
+          [
+            {
+              "type": "amount",
+              "value": {
+                "number": "0",
+                "currency": "USD"
+              }
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
             }
           ]
         ]

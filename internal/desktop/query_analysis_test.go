@@ -323,3 +323,33 @@ func TestAnalysisReaderRejectsMisleadingDecimalDisplay(t *testing.T) {
 		})
 	}
 }
+
+func TestAnalysisStructuredValuesRoundTrip(t *testing.T) {
+	for _, read := range []string{
+		"SELECT tags,meta,entry,entry_meta('__tolerances__'),other_accounts WHERE date = 2000-01-05 LIMIT 1",
+		"SELECT open,close FROM #accounts LIMIT 1",
+	} {
+		data := publicAnalysis(t, "standard-tables.bean", read)
+		document, err := desktop.ReadQueryAnalysis(bytes.NewReader(data), int64(len(data)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if document.Result.Contract != query.CurrentContract || len(document.Result.Rows) != 1 {
+			t.Fatalf("%+v", document)
+		}
+		if read[7:11] == "tags" {
+			cells := document.Result.Rows[0]
+			if cells[0].Type != "set<string>" || cells[1].Type != "dictionary" || cells[2].Type != "transaction" || cells[3].Type != "dictionary" || cells[4].Type != "list" {
+				t.Fatalf("%+v", cells)
+			}
+			metadata := cells[1].Value.(query.PresentedDictionary)
+			if metadata["absent"].Type != "null" || metadata["detail"].Value.(query.PresentedDecimal).Exact != "2.5" {
+				t.Fatal("nested scalar types changed")
+			}
+			tolerance := cells[3].Value.(query.PresentedDictionary)
+			if tolerance["USD"].Value.(query.PresentedDecimal).Exact != "0.005" {
+				t.Fatal("system metadata changed")
+			}
+		}
+	}
+}

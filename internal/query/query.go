@@ -496,7 +496,7 @@ func postingRowsWithBudget(evaluation ledger.Evaluation, standard bool, budget *
 		if transaction == nil {
 			continue
 		}
-		for _, posting := range transaction.Postings {
+		for postingIndex, posting := range transaction.Postings {
 			if err := budget.step("source"); err != nil {
 				return nil, err
 			}
@@ -558,6 +558,12 @@ func postingRowsWithBudget(evaluation ledger.Evaluation, standard bool, budget *
 			}
 			if standard {
 				if posting.Units != nil {
+					row["_posting_index"] = postingIndex
+					row["_transaction"] = *transaction
+					row["_entry_record"] = entry
+					if posting.Price != nil {
+						row["price"] = queryUnitPrice(posting)
+					}
 					row["_payee_present"] = transaction.HasPayee || transaction.Payee != ""
 					row["_number_source"] = posting.Units.Number
 					position := queryPosition(posting)
@@ -583,7 +589,7 @@ func postingRowsWithBudget(evaluation ledger.Evaluation, standard bool, budget *
 				row["_posting_meta"] = queryMetadata{Values: posting.Meta, Filename: postingFile, Line: line}
 				// Pad-generated entries use balance source metadata on their
 				// postings and do not carry the ordinary transaction tolerance map.
-				row["_entry_meta"] = queryMetadata{Values: transaction.Meta, Filename: entry.File, Line: entry.Span.StartLine, HasTolerances: !posting.SourceMetadata.Present}
+				row["_entry_meta"] = queryMetadata{Values: transaction.Meta, Filename: entry.File, Line: entry.Span.StartLine, HasTolerances: !posting.SourceMetadata.Present, Tolerances: transaction.Tolerances}
 			}
 			rows = append(rows, row)
 		}

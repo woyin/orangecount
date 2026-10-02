@@ -543,12 +543,56 @@ struct ContractTests {
         print("PASS: malformed query widths, column IDs, cell types, NULL shape, nullable fields and row metadata are rejected")
         let tables = try bridge.openLedger(path: root + "/testdata/fixtures/query/standard-tables.bean", semantics: "v3")
         defer { try? bridge.closeLedger(handle: tables.handle) }
-        let reads: [(String, Int)] = [("SELECT type FROM #entries", 10), ("SELECT payee FROM #transactions", 2), ("SELECT account FROM #accounts", 2), ("SELECT name FROM #commodities", 1), ("SELECT amount FROM #balances", 1), ("SELECT comment FROM #notes", 1), ("SELECT description FROM #events", 1), ("SELECT filename FROM #documents", 1), ("SELECT amount FROM #prices", 1)]
+        let reads: [(String, Int)] = [("SELECT type FROM #entries", 11), ("SELECT payee FROM #transactions", 3), ("SELECT account FROM #accounts", 2), ("SELECT name FROM #commodities", 1), ("SELECT amount FROM #balances", 1), ("SELECT comment FROM #notes", 1), ("SELECT description FROM #events", 1), ("SELECT filename FROM #documents", 1), ("SELECT amount FROM #prices", 1)]
         for (index, read) in reads.enumerated() {
             let response = try bridge.executeQuery(handle: tables.handle, request: QueryRequest(snapshot_id: tables.state.snapshot_id, request_id: UInt64(index + 1), text: read.0))
             try expect(response.error == nil && response.execution?.result.rows.count == read.1, "Standard source must cross C/Swift: \(read.0)")
         }
         print("PASS: standard scalar ledger tables and typed Amount cells cross real C/Swift")
+        let structured = try bridge.executeQuery(handle: tables.handle, request: QueryRequest(snapshot_id: tables.state.snapshot_id, request_id: 100, text: "SELECT tags,meta,entry,entry_meta('__tolerances__'),other_accounts WHERE date = 2000-01-05 LIMIT 1"))
+        guard let cells = structured.execution?.result.rows.first else { throw TestFailure(description: "Structured cells missing") }
+        try expect(cells.map(\.type) == ["set<string>", "dictionary", "transaction", "dictionary", "list"], "Declared and actual structured types must cross C/Swift")
+        let lifecycle = try bridge.executeQuery(handle: tables.handle, request: QueryRequest(snapshot_id: tables.state.snapshot_id, request_id: 101, text: "SELECT open,close FROM #accounts LIMIT 1"))
+        try expect(lifecycle.execution?.result.rows.first?.map(\.type) == ["open", "null"], "Lifecycle records preserve nullable close")
+        print("PASS: recursive metadata, sets, transaction/lifecycle records and system tolerances cross real C/Swift")
+        for fault in ["duplicate-key", "unsorted-set", "missing-record-field", "deep-list", "old-contract"] {
+            var altered = try JSONSerialization.jsonObject(with: JSONEncoder().encode(structured)) as! [String: Any]
+            var execution = altered["execution"] as! [String: Any]
+            var result = execution["result"] as! [String: Any]
+            var rows = result["rows"] as! [[[String: Any]]]
+            var columns = result["columns"] as! [[String: Any]]
+            switch fault {
+            case "duplicate-key":
+                var entries = rows[0][1]["value"] as! [[String: Any]]; entries.insert(entries[0], at: 0); rows[0][1]["value"] = entries
+            case "unsorted-set": rows[0][0]["value"] = ["z", "a"]
+            case "missing-record-field":
+                let entries = rows[0][2]["value"] as! [[String: Any]]; rows[0][2]["value"] = entries.filter { $0["key"] as? String != "date" }
+            case "deep-list":
+                var cell: [String: Any] = ["type": "null"]
+                for _ in 0..<35 { cell = ["type": "list", "value": [cell]] }
+                rows[0][0] = cell; columns[0]["type"] = "object"
+            default: result["contract"] = "beanquery-0.2.0-typed-v2"
+            }
+            result["rows"] = rows; result["columns"] = columns; execution["result"] = result; altered["execution"] = execution
+            do {
+                let _: QueryResponse = try BridgeClient.decodeResponse(JSONSerialization.data(withJSONObject: ["protocol_version": 4, "data": altered]), as: QueryResponse.self)
+                throw TestFailure(description: "Malformed recursive query accepted: \(fault)")
+            } catch BridgeError.jsonDecodeError { }
+        }
+        var unicode = try JSONSerialization.jsonObject(with: JSONEncoder().encode(structured)) as! [String: Any]
+        var unicodeExecution = unicode["execution"] as! [String: Any]
+        var unicodeResult = unicodeExecution["result"] as! [String: Any]
+        var unicodeRows = unicodeResult["rows"] as! [[[String: Any]]]
+        var unicodeColumns = unicodeResult["columns"] as! [[String: Any]]
+        unicodeColumns[0]["type"] = "object"
+        unicodeRows[0][0] = ["type": "dictionary", "value": [["key": "e\u{301}", "value": ["type": "integer", "value": "1"]], ["key": "é", "value": ["type": "integer", "value": "2"]]]]
+        unicodeResult["rows"] = unicodeRows; unicodeResult["columns"] = unicodeColumns; unicodeExecution["result"] = unicodeResult; unicode["execution"] = unicodeExecution
+        let unicodeDecoded: QueryResponse = try BridgeClient.decodeResponse(JSONSerialization.data(withJSONObject: ["protocol_version": 4, "data": unicode]), as: QueryResponse.self)
+        guard case .dictionary(let entries) = unicodeDecoded.execution!.result.rows[0][0].value else { throw TestFailure(description: "Missing Unicode dictionary") }
+        try expect(entries.count == 2 && !entries[0].key.utf8.elementsEqual(entries[1].key.utf8), "Distinct Python key spellings must survive Swift Unicode equality")
+        print("PASS: recursive query malformations rejected; distinct Unicode dictionary keys preserved")
+
+
 
     }
 

@@ -1015,9 +1015,12 @@ struct QueryPosition: Codable, Sendable {
     }
 }
 
-enum QueryValue: Sendable {
+struct QueryDictionaryEntry: Codable, Sendable { let key: String; let value: QueryCell }
+
+indirect enum QueryValue: Sendable {
     case null, text(String), integer(String), boolean(Bool), decimal(DisplayAmount)
     case amount(QueryAmount), position(QueryPosition), inventory([QueryPosition])
+    case dictionary([QueryDictionaryEntry]), list([QueryCell]), stringSet([String]), record([QueryDictionaryEntry])
 }
 
 struct QueryCell: Codable, Sendable {
@@ -1043,6 +1046,32 @@ struct QueryCell: Codable, Sendable {
         case "amount": value = .amount(try values.decode(QueryAmount.self, forKey: .value))
         case "position": value = .position(try values.decode(QueryPosition.self, forKey: .value))
         case "inventory": value = .inventory(try values.decode([QueryPosition].self, forKey: .value))
+        case "dictionary", "open", "close", "transaction":
+            guard decoder.codingPath.filter({ $0.stringValue == "value" }).count <= 32 else { throw queryContractError(decoder, "Query nesting limit") }
+            let entries = try values.decode([QueryDictionaryEntry].self, forKey: .value)
+            guard entries.count <= 10000, entries.allSatisfy({ $0.key.utf8.count <= 65536 }),
+                  zip(entries, entries.dropFirst()).allSatisfy({ $0.key.utf8.lexicographicallyPrecedes($1.key.utf8) }) else { throw queryContractError(decoder, "Invalid dictionary keys") }
+            if type != "dictionary" {
+                let schemas: [String: [String: (String, Bool)]] = [
+                    "open": ["meta": ("dictionary", false), "date": ("date", false), "account": ("string", false), "currencies": ("list", true), "booking": ("string", true)],
+                    "close": ["meta": ("dictionary", false), "date": ("date", false), "account": ("string", false)],
+                    "transaction": ["meta": ("dictionary", false), "date": ("date", false), "flag": ("string", false), "payee": ("string", true), "narration": ("string", false), "tags": ("set<string>", false), "links": ("set<string>", false), "accounts": ("set<string>", false)]
+                ]
+                guard let schema = schemas[type], entries.count == schema.count, entries.allSatisfy({ entry in
+                    guard let column = schema[entry.key] else { return false }
+                    return entry.value.type == "null" ? column.1 : entry.value.type == column.0
+                }) else { throw queryContractError(decoder, "Invalid structured query record") }
+                value = .record(entries)
+            } else { value = .dictionary(entries) }
+        case "list":
+            guard decoder.codingPath.filter({ $0.stringValue == "value" }).count <= 32 else { throw queryContractError(decoder, "Query nesting limit") }
+            let list = try values.decode([QueryCell].self, forKey: .value)
+            guard list.count <= 10000 else { throw queryContractError(decoder, "Query list limit") }; value = .list(list)
+        case "set<string>":
+            let set = try values.decode([String].self, forKey: .value)
+            guard set.count <= 10000, set.allSatisfy({ $0.utf8.count <= 65536 }),
+                  zip(set, set.dropFirst()).allSatisfy({ $0.utf8.lexicographicallyPrecedes($1.utf8) }) else { throw queryContractError(decoder, "Invalid string set") }
+            value = .stringSet(set)
         default: throw queryContractError(decoder, "Unknown query cell type")
         }
     }
@@ -1057,6 +1086,9 @@ struct QueryCell: Codable, Sendable {
         case .amount(let amount): try values.encode(amount, forKey: .value)
         case .position(let position): try values.encode(position, forKey: .value)
         case .inventory(let inventory): try values.encode(inventory, forKey: .value)
+        case .dictionary(let entries), .record(let entries): try values.encode(entries, forKey: .value)
+        case .list(let list): try values.encode(list, forKey: .value)
+        case .stringSet(let set): try values.encode(set, forKey: .value)
         }
     }
 }
@@ -1071,12 +1103,14 @@ struct QueryTypedResult: Codable, Sendable {
         contract = try values.decode(String.self, forKey: .contract)
         columns = try values.decode([QueryColumn].self, forKey: .columns)
         rows = try values.decode([[QueryCell]].self, forKey: .rows)
-        let types: Set<String> = ["null", "string", "date", "integer", "bool", "decimal", "amount", "position", "inventory", "object"]
-        guard ["beanquery-0.2.0-typed-v1", "beanquery-0.2.0-typed-v2"].contains(contract), Set(columns.map(\.id)).count == columns.count,
+        let types: Set<String> = ["null", "string", "date", "integer", "bool", "decimal", "amount", "position", "inventory", "object", "dictionary", "list", "set<string>", "open", "close", "transaction"]
+        let structured: Set<String> = ["dictionary", "list", "set<string>", "open", "close", "transaction"]
+        guard (contract == "beanquery-0.2.0-typed-v3" || (columns.allSatisfy({ !structured.contains($0.type) }) && rows.allSatisfy({ $0.allSatisfy({ !structured.contains($0.type) }) }))),
+              ["beanquery-0.2.0-typed-v1", "beanquery-0.2.0-typed-v2", "beanquery-0.2.0-typed-v3"].contains(contract), Set(columns.map(\.id)).count == columns.count,
               columns.allSatisfy({ !$0.id.isEmpty && types.contains($0.type) }),
               rows.allSatisfy({ row in
                   row.count == columns.count && zip(row, columns).allSatisfy { cell, column in
-                      cell.type == "null" ? column.nullable : (column.type == "object" || cell.type == column.type)
+                      cell.type == "null" ? column.nullable : (column.type == "object" || cell.type == column.type || (column.type == "set<string>" && cell.type == "list"))
                   }
               }) else { throw queryContractError(decoder, "Invalid typed query schema or cells") }
     }

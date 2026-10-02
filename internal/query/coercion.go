@@ -284,6 +284,12 @@ func typedTruth(value any) (bool, error) {
 	switch v := unwrapMetadataNumber(value).(type) {
 	case amountValue:
 		return !v.Number.IsZero(), nil
+	case stringSet:
+		return len(v) != 0, nil
+	case dictionaryValue:
+		return len(v) != 0, nil
+	case listValue:
+		return len(v) != 0, nil
 	case inventoryValue:
 		return false, typedFailure("unsupported-capability", "inventory has no implicit truth value")
 	default:

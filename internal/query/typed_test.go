@@ -125,19 +125,16 @@ func TestTypedQuerySeparatesPostingAndTransactionMetadata(t *testing.T) {
 	}
 }
 
-func TestTypedQueryRejectsUnrepresentedSystemToleranceObject(t *testing.T) {
-	// The pinned loader supplies a dict on ordinary transactions, including
-	// an empty dict. An unavailable wire type must not masquerade as NULL.
+func TestTypedQueryPreservesSystemToleranceDictionary(t *testing.T) {
 	for _, fn := range []string{"entry_meta", "any_meta"} {
-		_, err := query.EvaluateTyped("SELECT "+fn+"('__tolerances__') LIMIT 1", typedEvaluation(t))
-		var detail query.TypedError
-		if !errors.As(err, &detail) || detail.Code != "unsupported-capability" {
-			t.Errorf("%s lost the system object: %v", fn, err)
+		result, err := query.EvaluateTyped("SELECT "+fn+"('__tolerances__') LIMIT 1", typedEvaluation(t))
+		if err != nil || len(result.Rows) != 1 || result.Rows[0][0].Type != "dictionary" || len(result.Rows[0][0].Value.(query.PresentedDictionary)) != 0 {
+			t.Fatalf("%s %+v %v", fn, result, err)
 		}
 	}
 	result, err := query.EvaluateTyped("SELECT meta('__tolerances__') LIMIT 1", typedEvaluation(t))
 	if err != nil || len(result.Rows) != 1 || result.Rows[0][0].Type != "null" {
-		t.Fatalf("posting scope: %+v, %v", result, err)
+		t.Fatalf("posting scope: %+v %v", result, err)
 	}
 }
 
@@ -191,7 +188,7 @@ func TestTypedQueryDoesNotSuppressGroupKeyErrors(t *testing.T) {
 	evaluation := typedEvaluation(t)
 	for _, entry := range evaluation.Entries {
 		if tx, ok := entry.Directive.(*ledger.Transaction); ok {
-			tx.Meta = append(tx.Meta, ledger.Metadata{Key: "unrepresentable", Value: ledger.Value{Kind: ledger.ValueList}})
+			tx.Meta = append(tx.Meta, ledger.Metadata{Key: "unrepresentable", Value: ledger.Value{Kind: ledger.ValueInvalid}})
 		}
 	}
 	_, err := query.EvaluateTyped("SELECT entry_meta('unrepresentable') GROUP BY entry_meta('unrepresentable')", evaluation)

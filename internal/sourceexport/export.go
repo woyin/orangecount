@@ -311,7 +311,9 @@ func financialFingerprint(e ledger.Evaluation) (string, error) {
 	clean = func(x any) {
 		switch y := x.(type) {
 		case map[string]any:
-			for _, key := range []string{"At", "Span", "Raw", "File", "SourceMetadata"} {
+			// Tolerances is derived query metadata; legacy/v3 export acceptance
+			// compares actual postings/inventories and declared user metadata.
+			for _, key := range []string{"At", "Span", "Raw", "File", "SourceMetadata", "Tolerances"} {
 				delete(y, key)
 			}
 			for key, z := range y {

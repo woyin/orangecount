@@ -1378,7 +1378,7 @@ func (p *parser) value(ts []token, i int) (Value, int) {
 	if strings.HasPrefix(t.text, "^") {
 		return Value{Kind: ValueLink, Raw: t.text, String: strings.TrimPrefix(t.text, "^"), At: t.span}, i + 1
 	}
-	if strings.EqualFold(t.text, "None") {
+	if t.text == "NULL" || strings.EqualFold(t.text, "None") {
 		return Value{Kind: ValueNull, Raw: t.text, At: t.span}, i + 1
 	}
 	if n, next, ok := parseNumberExpr(ts, i); ok {

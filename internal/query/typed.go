@@ -58,7 +58,8 @@ func (c Cell) MarshalJSON() ([]byte, error) {
 	return json.Marshal(wire(c))
 }
 
-const CurrentContract = "beanquery-0.2.0-typed-v2"
+const CurrentContract = "beanquery-0.2.0-typed-v3"
+const PreviousContract = "beanquery-0.2.0-typed-v2"
 const LegacyContract = "beanquery-0.2.0-typed-v1"
 
 // TypedResult never identifies a value by its display title.
@@ -102,6 +103,7 @@ func evaluateTyped(text string, evaluation ledger.Evaluation, rowCeiling int, bu
 		return TypedResult{}, locatedQueryError(typedFailure("unknown-table", "unknown typed source %q", q.From), q.fromSpan, "compile")
 	}
 	compiler := typedCompiler{table: table}
+	expandStandardWildcard(&q, table)
 	if err := resolveTypedAliases(&q); err != nil {
 		return TypedResult{}, err
 	}
@@ -216,7 +218,7 @@ func evaluateTyped(text string, evaluation ledger.Evaluation, rowCeiling int, bu
 		cells := make([]Cell, len(result.Columns))
 		for i, col := range result.Columns {
 			value := row[col.ID]
-			cell, err := typedCell(col.Type, value)
+			cell, err := encodeTypedCell(col.Type, value, 0, budget)
 			if err != nil {
 				return TypedResult{}, err
 			}
@@ -294,7 +296,7 @@ func (compiler typedCompiler) compileNode(expr Expr) (typedExpr, error) {
 	switch node := expr.(type) {
 	case fieldExpr:
 		if compiler.table != "postings" {
-			column, exists := scalarTableSchemas[compiler.table][strings.ToLower(node.name)]
+			column, exists := standardTableSchemas[compiler.table][strings.ToLower(node.name)]
 			if !exists {
 				return typedExpr{}, typedFailure("unknown-column", "unknown typed column %q on %s", node.name, compiler.table)
 			}
@@ -329,12 +331,25 @@ func (compiler typedCompiler) compileNode(expr Expr) (typedExpr, error) {
 			}
 		case "position":
 			result.kind = "position"
-		case "weight":
+		case "weight", "price":
 			result.kind = "amount"
+			result.nullable = node.name == "price"
 		case "payee", "posting_flag", "location", "filename":
 			result.kind, result.nullable = "string", true
 		case "lineno":
 			result.kind, result.nullable = "integer", true
+		case "tags", "links", "accounts", "other_accounts":
+			result.kind = "set<string>"
+		case "meta":
+			result.kind, result.nullable = "dictionary", true
+		case "entry":
+			result.kind = "transaction"
+		case "cost_number":
+			result.kind, result.nullable = "decimal", true
+		case "cost_currency", "cost_label":
+			result.kind, result.nullable = "string", true
+		case "cost_date":
+			result.kind, result.nullable = "date", true
 		default:
 			return typedExpr{}, typedFailure("unknown-column", "unknown typed column %q", node.name)
 		}
@@ -819,6 +834,16 @@ func (compiler typedCompiler) compileNode(expr Expr) (typedExpr, error) {
 }
 
 func typedCell(kind string, value any) (Cell, error) {
+	return encodeTypedCell(kind, value, 0, nil)
+}
+
+func encodeTypedCell(kind string, value any, depth int, budget *executionBudget) (Cell, error) {
+	if err := budget.step("encode"); err != nil {
+		return Cell{}, err
+	}
+	if depth > 32 {
+		return Cell{}, typedFailure("result-budget-exceeded", "Typed value nesting exceeds 32")
+	}
 	if err := wireNumericSize(value); err != nil {
 		return Cell{}, err
 	}
@@ -827,6 +852,8 @@ func typedCell(kind string, value any) (Cell, error) {
 		return Cell{Type: "null"}, nil
 	}
 	switch kind {
+	case "dictionary", "list", "set<string>", "open", "close", "transaction":
+		return collectionCell(kind, value, depth, budget)
 	case "object":
 		switch v := value.(type) {
 		case ledger.Decimal:
@@ -845,6 +872,14 @@ func typedCell(kind string, value any) (Cell, error) {
 			return typedCell("integer", v.Value)
 		case metadataDecimal:
 			return typedCell("decimal", v.Value)
+		case dictionaryValue:
+			return encodeTypedCell("dictionary", v, depth, budget)
+		case listValue:
+			return encodeTypedCell("list", v, depth, budget)
+		case stringSet:
+			return encodeTypedCell("set<string>", v, depth, budget)
+		case recordValue:
+			return encodeTypedCell(v.kind, v, depth, budget)
 		default:
 			return Cell{}, typedFailure("unsupported-capability", "unsupported metadata result type %T", value)
 		}
@@ -907,6 +942,7 @@ type queryMetadata struct {
 	Filename      string
 	Line          int
 	HasTolerances bool
+	Tolerances    map[string]ledger.Decimal
 }
 
 type metadataInteger struct{ Value ledger.Decimal }
@@ -914,7 +950,11 @@ type metadataInteger struct{ Value ledger.Decimal }
 func lookupMetadata(raw any, key string) (any, bool, error) {
 	scope, _ := raw.(queryMetadata)
 	if key == "__tolerances__" && scope.HasTolerances {
-		return nil, true, typedFailure("unsupported-capability", "system tolerance map has no typed result representation")
+		values := dictionaryValue{}
+		for currency, value := range scope.Tolerances {
+			values[currency] = value
+		}
+		return values, true, nil
 	}
 	meta := scope.Values
 	for i := len(meta) - 1; i >= 0; i-- {
@@ -933,6 +973,9 @@ func lookupMetadata(raw any, key string) (any, bool, error) {
 			return v.Bool, true, nil
 		case ledger.ValueDate:
 			return v.Date, true, nil
+		case ledger.ValueList, ledger.ValueMap:
+			value, err := metadataCollection(v)
+			return value, true, err
 		case ledger.ValueAmount:
 			number := metadataDecimalValue(v.Amount.Number)
 			return metadataAmount{amountValue{Number: number.Value, Currency: v.Amount.Currency, Text: number.Text}, number.Text + " " + v.Amount.Currency}, true, nil

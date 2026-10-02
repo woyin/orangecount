@@ -18,6 +18,7 @@ from pathlib import Path
 import beancount
 import beanquery
 from beancount import loader
+from beancount.core import data
 from beancount.core.amount import Amount
 from beancount.core.position import Position
 from beancount.core.inventory import Inventory
@@ -25,7 +26,7 @@ from beanquery import query, types
 
 ROOT = Path(__file__).resolve().parents[2]
 CORPORA = ("default-source", "compound-values", "price-weight", "inventory-order", "metadata-source", "metadata-stack", "metadata-pad", "dynamic-values", "casts", "compound-casts", "aggregates", "presets", "balance-stream", "balance-cost", "source-order", "aggregate-longtail", "standard-tables")
-TYPE_NAMES = {"str": "string", "int": "integer", "decimal": "decimal", "bool": "bool", "date": "date", "object": "object", "amount": "amount", "position": "position", "inventory": "inventory", "NULL": "null"}
+TYPE_NAMES = {"str": "string", "int": "integer", "decimal": "decimal", "bool": "bool", "date": "date", "object": "object", "amount": "amount", "position": "position", "inventory": "inventory", "NULL": "null", "dict": "dictionary", "metadata": "dictionary", "set": "set<string>", "set[str]": "set<string>", "frozenset": "set<string>", "list": "list", "open": "open", "close": "close", "transaction": "transaction"}
 
 
 def decimal_text(value):
@@ -38,6 +39,20 @@ def decimal_text(value):
 def cell(value):
     if value is None:
         return {"type": "null"}
+    if isinstance(value, dict) and not isinstance(value, Inventory):
+        return {"type": "dictionary", "value": [{"key": key, "value": cell(v)} for key, v in sorted(value.items())]}
+    if isinstance(value, (set, frozenset)):
+        return {"type": "set<string>", "value": sorted(value)}
+    if isinstance(value, list):
+        return {"type": "list", "value": [cell(v) for v in value]}
+    if isinstance(value, (data.Open, data.Close, data.Transaction)):
+        fields = value._asdict()
+        if isinstance(value, data.Open) and fields["booking"] is not None:
+            fields["booking"] = fields["booking"].name
+        if isinstance(value, data.Transaction):
+            fields.pop("postings")
+            fields["accounts"] = {p.account for p in value.postings}
+        return {"type": type(value).__name__.lower(), "value": [{"key": key, "value": cell(v)} for key, v in sorted(fields.items())]}
     if isinstance(value, bool):
         return {"type": "bool", "value": value}
     if isinstance(value, Decimal):
@@ -103,7 +118,7 @@ def generate(name):
         for row in normalized:
             for index in item.get("source_columns", []):
                 if row[index]["type"] != "null":
-                    row[index]["value"] = Path(row[index]["value"]).relative_to(fixture.parent).as_posix()
+                    normalize_source_cell(row[index], fixture.parent)
         cases.append({**item, "result": {
             "columns": [{"name": c.name, "type": TYPE_NAMES[types.name(c.datatype)]} for c in columns],
             "rows": normalized,
@@ -120,6 +135,19 @@ def generate(name):
             "queries_sha256": hashlib.sha256(queries.read_bytes()).hexdigest(),
             "sources_sha256": dict(sorted(sources.items())), "cases": cases}
 
+
+def normalize_source_cell(value, root):
+    if value["type"] == "null":
+        return
+    if value["type"] == "string":
+        value["value"] = Path(value["value"]).relative_to(root).as_posix()
+    elif value["type"] in {"dictionary", "open", "close", "transaction"}:
+        for entry in value["value"]:
+            child = entry["value"]
+            if entry["key"] == "filename" or child["type"] in {"dictionary", "open", "close", "transaction"}:
+                normalize_source_cell(child, root)
+    else:
+        raise TypeError("Invalid declared source column")
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)

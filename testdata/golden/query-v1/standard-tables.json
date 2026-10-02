@@ -5,10 +5,10 @@
     "beanquery": "0.2.0"
   },
   "fixture": "testdata/fixtures/query/standard-tables.bean",
-  "input_sha256": "ee91b307aa46d30ab3911111bbb66dc358b71667b1d7cb267fbe2d9401af7d7a",
-  "queries_sha256": "6f37fc09c07a29d24c9c95c1730508ab3951afbd6dd97b81153ac9b6dcb03db4",
+  "input_sha256": "d976b3e409acf3050c4a6658b69f109d4f156e6de607a27078fe55ee8eba9bcd",
+  "queries_sha256": "63abb7bb68fe1ab7563f6cac2f7a9b970ca93218a611a1ff15b813b962ac18e4",
   "sources_sha256": {
-    "testdata/fixtures/query/standard-tables.bean": "ee91b307aa46d30ab3911111bbb66dc358b71667b1d7cb267fbe2d9401af7d7a"
+    "testdata/fixtures/query/standard-tables.bean": "d976b3e409acf3050c4a6658b69f109d4f156e6de607a27078fe55ee8eba9bcd"
   },
   "cases": [
     {
@@ -401,6 +401,43 @@
               "type": "string",
               "value": "explicit empty"
             }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "transaction"
+            },
+            {
+              "type": "date",
+              "value": "2000-01-05"
+            },
+            {
+              "type": "integer",
+              "value": "2000"
+            },
+            {
+              "type": "integer",
+              "value": "1"
+            },
+            {
+              "type": "integer",
+              "value": "5"
+            },
+            {
+              "type": "string",
+              "value": "*"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "structured"
+            },
+            {
+              "type": "string",
+              "value": "structured"
+            }
           ]
         ]
       }
@@ -464,7 +501,7 @@
           [
             {
               "type": "integer",
-              "value": "10"
+              "value": "11"
             }
           ]
         ]
@@ -528,6 +565,23 @@
               "type": "string",
               "value": "explicit empty"
             }
+          ],
+          [
+            {
+              "type": "date",
+              "value": "2000-01-05"
+            },
+            {
+              "type": "string",
+              "value": "*"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "structured"
+            }
           ]
         ]
       }
@@ -571,7 +625,7 @@
           [
             {
               "type": "integer",
-              "value": "2"
+              "value": "3"
             }
           ]
         ]
@@ -1234,6 +1288,16 @@
               "type": "integer",
               "value": "12"
             }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "standard-tables.bean"
+            },
+            {
+              "type": "integer",
+              "value": "15"
+            }
           ]
         ]
       }
@@ -1323,6 +1387,2579 @@
             }
           ]
         ]
+      }
+    },
+    {
+      "id": "posting-collections",
+      "query": "SELECT tags,links,accounts,other_accounts FROM #postings WHERE date = 2000-01-05",
+      "result": {
+        "columns": [
+          {
+            "name": "tags",
+            "type": "set<string>"
+          },
+          {
+            "name": "links",
+            "type": "set<string>"
+          },
+          {
+            "name": "accounts",
+            "type": "set<string>"
+          },
+          {
+            "name": "other_accounts",
+            "type": "set<string>"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "set<string>",
+              "value": [
+                "a",
+                "z"
+              ]
+            },
+            {
+              "type": "set<string>",
+              "value": [
+                "link"
+              ]
+            },
+            {
+              "type": "set<string>",
+              "value": [
+                "Assets:Cash",
+                "Equity:Opening"
+              ]
+            },
+            {
+              "type": "list",
+              "value": [
+                {
+                  "type": "string",
+                  "value": "Equity:Opening"
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "set<string>",
+              "value": [
+                "a",
+                "z"
+              ]
+            },
+            {
+              "type": "set<string>",
+              "value": [
+                "link"
+              ]
+            },
+            {
+              "type": "set<string>",
+              "value": [
+                "Assets:Cash",
+                "Equity:Opening"
+              ]
+            },
+            {
+              "type": "list",
+              "value": [
+                {
+                  "type": "string",
+                  "value": "Assets:Cash"
+                }
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "posting-meta",
+      "query": "SELECT meta FROM #postings WHERE date = 2000-01-05",
+      "source_columns": [
+        0
+      ],
+      "result": {
+        "columns": [
+          {
+            "name": "meta",
+            "type": "dictionary"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "dictionary",
+              "value": [
+                {
+                  "key": "absent",
+                  "value": {
+                    "type": "null"
+                  }
+                },
+                {
+                  "key": "amount",
+                  "value": {
+                    "type": "amount",
+                    "value": {
+                      "number": "3",
+                      "currency": "USD"
+                    }
+                  }
+                },
+                {
+                  "key": "detail",
+                  "value": {
+                    "type": "decimal",
+                    "value": "2.5"
+                  }
+                },
+                {
+                  "key": "filename",
+                  "value": {
+                    "type": "string",
+                    "value": "standard-tables.bean"
+                  }
+                },
+                {
+                  "key": "lineno",
+                  "value": {
+                    "type": "integer",
+                    "value": "17"
+                  }
+                },
+                {
+                  "key": "when",
+                  "value": {
+                    "type": "date",
+                    "value": "2000-01-01"
+                  }
+                },
+                {
+                  "key": "yes",
+                  "value": {
+                    "type": "bool",
+                    "value": true
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "dictionary",
+              "value": [
+                {
+                  "key": "filename",
+                  "value": {
+                    "type": "string",
+                    "value": "standard-tables.bean"
+                  }
+                },
+                {
+                  "key": "lineno",
+                  "value": {
+                    "type": "integer",
+                    "value": "23"
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "posting-entry",
+      "query": "SELECT entry FROM #postings WHERE date = 2000-01-05 LIMIT 1",
+      "source_columns": [
+        0
+      ],
+      "result": {
+        "columns": [
+          {
+            "name": "entry",
+            "type": "transaction"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "transaction",
+              "value": [
+                {
+                  "key": "accounts",
+                  "value": {
+                    "type": "set<string>",
+                    "value": [
+                      "Assets:Cash",
+                      "Equity:Opening"
+                    ]
+                  }
+                },
+                {
+                  "key": "date",
+                  "value": {
+                    "type": "date",
+                    "value": "2000-01-05"
+                  }
+                },
+                {
+                  "key": "flag",
+                  "value": {
+                    "type": "string",
+                    "value": "*"
+                  }
+                },
+                {
+                  "key": "links",
+                  "value": {
+                    "type": "set<string>",
+                    "value": [
+                      "link"
+                    ]
+                  }
+                },
+                {
+                  "key": "meta",
+                  "value": {
+                    "type": "dictionary",
+                    "value": [
+                      {
+                        "key": "__tolerances__",
+                        "value": {
+                          "type": "dictionary",
+                          "value": [
+                            {
+                              "key": "USD",
+                              "value": {
+                                "type": "decimal",
+                                "value": "0.005"
+                              }
+                            }
+                          ]
+                        }
+                      },
+                      {
+                        "key": "custom",
+                        "value": {
+                          "type": "string",
+                          "value": "hello"
+                        }
+                      },
+                      {
+                        "key": "filename",
+                        "value": {
+                          "type": "string",
+                          "value": "standard-tables.bean"
+                        }
+                      },
+                      {
+                        "key": "lineno",
+                        "value": {
+                          "type": "integer",
+                          "value": "15"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "key": "narration",
+                  "value": {
+                    "type": "string",
+                    "value": "structured"
+                  }
+                },
+                {
+                  "key": "payee",
+                  "value": {
+                    "type": "null"
+                  }
+                },
+                {
+                  "key": "tags",
+                  "value": {
+                    "type": "set<string>",
+                    "value": [
+                      "a",
+                      "z"
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "transaction-collections",
+      "query": "SELECT tags,links,accounts FROM #transactions",
+      "result": {
+        "columns": [
+          {
+            "name": "tags",
+            "type": "set<string>"
+          },
+          {
+            "name": "links",
+            "type": "set<string>"
+          },
+          {
+            "name": "accounts",
+            "type": "set<string>"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "set<string>",
+              "value": []
+            },
+            {
+              "type": "set<string>",
+              "value": []
+            },
+            {
+              "type": "set<string>",
+              "value": [
+                "Assets:Cash",
+                "Equity:Opening"
+              ]
+            }
+          ],
+          [
+            {
+              "type": "set<string>",
+              "value": []
+            },
+            {
+              "type": "set<string>",
+              "value": []
+            },
+            {
+              "type": "set<string>",
+              "value": [
+                "Assets:Cash",
+                "Equity:Opening"
+              ]
+            }
+          ],
+          [
+            {
+              "type": "set<string>",
+              "value": [
+                "a",
+                "z"
+              ]
+            },
+            {
+              "type": "set<string>",
+              "value": [
+                "link"
+              ]
+            },
+            {
+              "type": "set<string>",
+              "value": [
+                "Assets:Cash",
+                "Equity:Opening"
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "entry-collections",
+      "query": "SELECT tags,links,accounts FROM #entries",
+      "result": {
+        "columns": [
+          {
+            "name": "tags",
+            "type": "set<string>"
+          },
+          {
+            "name": "links",
+            "type": "set<string>"
+          },
+          {
+            "name": "accounts",
+            "type": "set<string>"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "set<string>",
+              "value": [
+                "Assets:Cash"
+              ]
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "set<string>",
+              "value": [
+                "Equity:Opening"
+              ]
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "set<string>",
+              "value": []
+            }
+          ],
+          [
+            {
+              "type": "set<string>",
+              "value": []
+            },
+            {
+              "type": "set<string>",
+              "value": []
+            },
+            {
+              "type": "set<string>",
+              "value": [
+                "Assets:Cash",
+                "Equity:Opening"
+              ]
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "set<string>",
+              "value": [
+                "Assets:Cash"
+              ]
+            }
+          ],
+          [
+            {
+              "type": "set<string>",
+              "value": []
+            },
+            {
+              "type": "set<string>",
+              "value": []
+            },
+            {
+              "type": "set<string>",
+              "value": [
+                "Assets:Cash"
+              ]
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "set<string>",
+              "value": []
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "set<string>",
+              "value": []
+            }
+          ],
+          [
+            {
+              "type": "set<string>",
+              "value": []
+            },
+            {
+              "type": "set<string>",
+              "value": []
+            },
+            {
+              "type": "set<string>",
+              "value": [
+                "Assets:Cash"
+              ]
+            }
+          ],
+          [
+            {
+              "type": "set<string>",
+              "value": []
+            },
+            {
+              "type": "set<string>",
+              "value": []
+            },
+            {
+              "type": "set<string>",
+              "value": [
+                "Assets:Cash",
+                "Equity:Opening"
+              ]
+            }
+          ],
+          [
+            {
+              "type": "set<string>",
+              "value": [
+                "a",
+                "z"
+              ]
+            },
+            {
+              "type": "set<string>",
+              "value": [
+                "link"
+              ]
+            },
+            {
+              "type": "set<string>",
+              "value": [
+                "Assets:Cash",
+                "Equity:Opening"
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "account-lifecycle",
+      "query": "SELECT open,close FROM #accounts",
+      "source_columns": [
+        0,
+        1
+      ],
+      "result": {
+        "columns": [
+          {
+            "name": "open",
+            "type": "open"
+          },
+          {
+            "name": "close",
+            "type": "close"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "open",
+              "value": [
+                {
+                  "key": "account",
+                  "value": {
+                    "type": "string",
+                    "value": "Assets:Cash"
+                  }
+                },
+                {
+                  "key": "booking",
+                  "value": {
+                    "type": "null"
+                  }
+                },
+                {
+                  "key": "currencies",
+                  "value": {
+                    "type": "list",
+                    "value": [
+                      {
+                        "type": "string",
+                        "value": "USD"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "key": "date",
+                  "value": {
+                    "type": "date",
+                    "value": "2000-01-01"
+                  }
+                },
+                {
+                  "key": "meta",
+                  "value": {
+                    "type": "dictionary",
+                    "value": [
+                      {
+                        "key": "filename",
+                        "value": {
+                          "type": "string",
+                          "value": "standard-tables.bean"
+                        }
+                      },
+                      {
+                        "key": "lineno",
+                        "value": {
+                          "type": "integer",
+                          "value": "1"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "open",
+              "value": [
+                {
+                  "key": "account",
+                  "value": {
+                    "type": "string",
+                    "value": "Equity:Opening"
+                  }
+                },
+                {
+                  "key": "booking",
+                  "value": {
+                    "type": "null"
+                  }
+                },
+                {
+                  "key": "currencies",
+                  "value": {
+                    "type": "list",
+                    "value": [
+                      {
+                        "type": "string",
+                        "value": "USD"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "key": "date",
+                  "value": {
+                    "type": "date",
+                    "value": "2000-01-01"
+                  }
+                },
+                {
+                  "key": "meta",
+                  "value": {
+                    "type": "dictionary",
+                    "value": [
+                      {
+                        "key": "filename",
+                        "value": {
+                          "type": "string",
+                          "value": "standard-tables.bean"
+                        }
+                      },
+                      {
+                        "key": "lineno",
+                        "value": {
+                          "type": "integer",
+                          "value": "2"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "system-tolerance-map",
+      "query": "SELECT entry_meta('__tolerances__') WHERE date = 2000-01-05 LIMIT 1",
+      "result": {
+        "columns": [
+          {
+            "name": "entry_meta('__tolerances__')",
+            "type": "object"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "dictionary",
+              "value": [
+                {
+                  "key": "USD",
+                  "value": {
+                    "type": "decimal",
+                    "value": "0.005"
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "empty-system-tolerance-map",
+      "query": "SELECT entry_meta('__tolerances__') WHERE date = 2000-01-02 LIMIT 1",
+      "result": {
+        "columns": [
+          {
+            "name": "entry_meta('__tolerances__')",
+            "type": "object"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "dictionary",
+              "value": []
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "posting-cost-fields",
+      "query": "SELECT cost_number,cost_currency,cost_date,cost_label,price FROM #postings",
+      "result": {
+        "columns": [
+          {
+            "name": "cost_number",
+            "type": "decimal"
+          },
+          {
+            "name": "cost_currency",
+            "type": "string"
+          },
+          {
+            "name": "cost_date",
+            "type": "date"
+          },
+          {
+            "name": "cost_label",
+            "type": "string"
+          },
+          {
+            "name": "price",
+            "type": "amount"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": ""
+            },
+            {
+              "type": "null"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "entries-metadata",
+      "query": "SELECT meta FROM #entries",
+      "source_columns": [
+        0
+      ],
+      "result": {
+        "columns": [
+          {
+            "name": "meta",
+            "type": "dictionary"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "dictionary",
+              "value": [
+                {
+                  "key": "filename",
+                  "value": {
+                    "type": "string",
+                    "value": "standard-tables.bean"
+                  }
+                },
+                {
+                  "key": "lineno",
+                  "value": {
+                    "type": "integer",
+                    "value": "1"
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "dictionary",
+              "value": [
+                {
+                  "key": "filename",
+                  "value": {
+                    "type": "string",
+                    "value": "standard-tables.bean"
+                  }
+                },
+                {
+                  "key": "lineno",
+                  "value": {
+                    "type": "integer",
+                    "value": "2"
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "dictionary",
+              "value": [
+                {
+                  "key": "filename",
+                  "value": {
+                    "type": "string",
+                    "value": "standard-tables.bean"
+                  }
+                },
+                {
+                  "key": "lineno",
+                  "value": {
+                    "type": "integer",
+                    "value": "3"
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "dictionary",
+              "value": [
+                {
+                  "key": "__tolerances__",
+                  "value": {
+                    "type": "dictionary",
+                    "value": []
+                  }
+                },
+                {
+                  "key": "filename",
+                  "value": {
+                    "type": "string",
+                    "value": "standard-tables.bean"
+                  }
+                },
+                {
+                  "key": "lineno",
+                  "value": {
+                    "type": "integer",
+                    "value": "4"
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "dictionary",
+              "value": [
+                {
+                  "key": "filename",
+                  "value": {
+                    "type": "string",
+                    "value": "standard-tables.bean"
+                  }
+                },
+                {
+                  "key": "lineno",
+                  "value": {
+                    "type": "integer",
+                    "value": "7"
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "dictionary",
+              "value": [
+                {
+                  "key": "filename",
+                  "value": {
+                    "type": "string",
+                    "value": "standard-tables.bean"
+                  }
+                },
+                {
+                  "key": "lineno",
+                  "value": {
+                    "type": "integer",
+                    "value": "8"
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "dictionary",
+              "value": [
+                {
+                  "key": "filename",
+                  "value": {
+                    "type": "string",
+                    "value": "standard-tables.bean"
+                  }
+                },
+                {
+                  "key": "lineno",
+                  "value": {
+                    "type": "integer",
+                    "value": "9"
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "dictionary",
+              "value": [
+                {
+                  "key": "filename",
+                  "value": {
+                    "type": "string",
+                    "value": "standard-tables.bean"
+                  }
+                },
+                {
+                  "key": "lineno",
+                  "value": {
+                    "type": "integer",
+                    "value": "11"
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "dictionary",
+              "value": [
+                {
+                  "key": "filename",
+                  "value": {
+                    "type": "string",
+                    "value": "standard-tables.bean"
+                  }
+                },
+                {
+                  "key": "lineno",
+                  "value": {
+                    "type": "integer",
+                    "value": "10"
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "dictionary",
+              "value": [
+                {
+                  "key": "__tolerances__",
+                  "value": {
+                    "type": "dictionary",
+                    "value": []
+                  }
+                },
+                {
+                  "key": "filename",
+                  "value": {
+                    "type": "string",
+                    "value": "standard-tables.bean"
+                  }
+                },
+                {
+                  "key": "lineno",
+                  "value": {
+                    "type": "integer",
+                    "value": "12"
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "dictionary",
+              "value": [
+                {
+                  "key": "__tolerances__",
+                  "value": {
+                    "type": "dictionary",
+                    "value": [
+                      {
+                        "key": "USD",
+                        "value": {
+                          "type": "decimal",
+                          "value": "0.005"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "key": "custom",
+                  "value": {
+                    "type": "string",
+                    "value": "hello"
+                  }
+                },
+                {
+                  "key": "filename",
+                  "value": {
+                    "type": "string",
+                    "value": "standard-tables.bean"
+                  }
+                },
+                {
+                  "key": "lineno",
+                  "value": {
+                    "type": "integer",
+                    "value": "15"
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "transactions-metadata",
+      "query": "SELECT meta FROM #transactions",
+      "source_columns": [
+        0
+      ],
+      "result": {
+        "columns": [
+          {
+            "name": "meta",
+            "type": "dictionary"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "dictionary",
+              "value": [
+                {
+                  "key": "__tolerances__",
+                  "value": {
+                    "type": "dictionary",
+                    "value": []
+                  }
+                },
+                {
+                  "key": "filename",
+                  "value": {
+                    "type": "string",
+                    "value": "standard-tables.bean"
+                  }
+                },
+                {
+                  "key": "lineno",
+                  "value": {
+                    "type": "integer",
+                    "value": "4"
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "dictionary",
+              "value": [
+                {
+                  "key": "__tolerances__",
+                  "value": {
+                    "type": "dictionary",
+                    "value": []
+                  }
+                },
+                {
+                  "key": "filename",
+                  "value": {
+                    "type": "string",
+                    "value": "standard-tables.bean"
+                  }
+                },
+                {
+                  "key": "lineno",
+                  "value": {
+                    "type": "integer",
+                    "value": "12"
+                  }
+                }
+              ]
+            }
+          ],
+          [
+            {
+              "type": "dictionary",
+              "value": [
+                {
+                  "key": "__tolerances__",
+                  "value": {
+                    "type": "dictionary",
+                    "value": [
+                      {
+                        "key": "USD",
+                        "value": {
+                          "type": "decimal",
+                          "value": "0.005"
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "key": "custom",
+                  "value": {
+                    "type": "string",
+                    "value": "hello"
+                  }
+                },
+                {
+                  "key": "filename",
+                  "value": {
+                    "type": "string",
+                    "value": "standard-tables.bean"
+                  }
+                },
+                {
+                  "key": "lineno",
+                  "value": {
+                    "type": "integer",
+                    "value": "15"
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "commodities-metadata",
+      "query": "SELECT meta FROM #commodities",
+      "source_columns": [
+        0
+      ],
+      "result": {
+        "columns": [
+          {
+            "name": "meta",
+            "type": "dictionary"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "dictionary",
+              "value": [
+                {
+                  "key": "filename",
+                  "value": {
+                    "type": "string",
+                    "value": "standard-tables.bean"
+                  }
+                },
+                {
+                  "key": "lineno",
+                  "value": {
+                    "type": "integer",
+                    "value": "3"
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "balances-metadata",
+      "query": "SELECT meta FROM #balances",
+      "source_columns": [
+        0
+      ],
+      "result": {
+        "columns": [
+          {
+            "name": "meta",
+            "type": "dictionary"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "dictionary",
+              "value": [
+                {
+                  "key": "filename",
+                  "value": {
+                    "type": "string",
+                    "value": "standard-tables.bean"
+                  }
+                },
+                {
+                  "key": "lineno",
+                  "value": {
+                    "type": "integer",
+                    "value": "7"
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "notes-metadata",
+      "query": "SELECT meta FROM #notes",
+      "source_columns": [
+        0
+      ],
+      "result": {
+        "columns": [
+          {
+            "name": "meta",
+            "type": "dictionary"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "dictionary",
+              "value": [
+                {
+                  "key": "filename",
+                  "value": {
+                    "type": "string",
+                    "value": "standard-tables.bean"
+                  }
+                },
+                {
+                  "key": "lineno",
+                  "value": {
+                    "type": "integer",
+                    "value": "8"
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "events-metadata",
+      "query": "SELECT meta FROM #events",
+      "source_columns": [
+        0
+      ],
+      "result": {
+        "columns": [
+          {
+            "name": "meta",
+            "type": "dictionary"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "dictionary",
+              "value": [
+                {
+                  "key": "filename",
+                  "value": {
+                    "type": "string",
+                    "value": "standard-tables.bean"
+                  }
+                },
+                {
+                  "key": "lineno",
+                  "value": {
+                    "type": "integer",
+                    "value": "9"
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "documents-metadata",
+      "query": "SELECT meta FROM #documents",
+      "source_columns": [
+        0
+      ],
+      "result": {
+        "columns": [
+          {
+            "name": "meta",
+            "type": "dictionary"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "dictionary",
+              "value": [
+                {
+                  "key": "filename",
+                  "value": {
+                    "type": "string",
+                    "value": "standard-tables.bean"
+                  }
+                },
+                {
+                  "key": "lineno",
+                  "value": {
+                    "type": "integer",
+                    "value": "10"
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "prices-metadata",
+      "query": "SELECT meta FROM #prices",
+      "source_columns": [
+        0
+      ],
+      "result": {
+        "columns": [
+          {
+            "name": "meta",
+            "type": "dictionary"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "dictionary",
+              "value": [
+                {
+                  "key": "filename",
+                  "value": {
+                    "type": "string",
+                    "value": "standard-tables.bean"
+                  }
+                },
+                {
+                  "key": "lineno",
+                  "value": {
+                    "type": "integer",
+                    "value": "11"
+                  }
+                }
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "postings-wildcard",
+      "query": "SELECT * FROM #postings",
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "flag",
+            "type": "string"
+          },
+          {
+            "name": "payee",
+            "type": "string"
+          },
+          {
+            "name": "narration",
+            "type": "string"
+          },
+          {
+            "name": "position",
+            "type": "position"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "date",
+              "value": "2000-01-02"
+            },
+            {
+              "type": "string",
+              "value": "*"
+            },
+            {
+              "type": "string",
+              "value": "shop"
+            },
+            {
+              "type": "string",
+              "value": "lunch"
+            },
+            {
+              "type": "position",
+              "value": {
+                "units": {
+                  "number": "2",
+                  "currency": "USD"
+                },
+                "cost": null
+              }
+            }
+          ],
+          [
+            {
+              "type": "date",
+              "value": "2000-01-02"
+            },
+            {
+              "type": "string",
+              "value": "*"
+            },
+            {
+              "type": "string",
+              "value": "shop"
+            },
+            {
+              "type": "string",
+              "value": "lunch"
+            },
+            {
+              "type": "position",
+              "value": {
+                "units": {
+                  "number": "-2",
+                  "currency": "USD"
+                },
+                "cost": null
+              }
+            }
+          ],
+          [
+            {
+              "type": "date",
+              "value": "2000-01-04"
+            },
+            {
+              "type": "string",
+              "value": "*"
+            },
+            {
+              "type": "string",
+              "value": ""
+            },
+            {
+              "type": "string",
+              "value": "explicit empty"
+            },
+            {
+              "type": "position",
+              "value": {
+                "units": {
+                  "number": "1",
+                  "currency": "USD"
+                },
+                "cost": null
+              }
+            }
+          ],
+          [
+            {
+              "type": "date",
+              "value": "2000-01-04"
+            },
+            {
+              "type": "string",
+              "value": "*"
+            },
+            {
+              "type": "string",
+              "value": ""
+            },
+            {
+              "type": "string",
+              "value": "explicit empty"
+            },
+            {
+              "type": "position",
+              "value": {
+                "units": {
+                  "number": "-1",
+                  "currency": "USD"
+                },
+                "cost": null
+              }
+            }
+          ],
+          [
+            {
+              "type": "date",
+              "value": "2000-01-05"
+            },
+            {
+              "type": "string",
+              "value": "*"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "structured"
+            },
+            {
+              "type": "position",
+              "value": {
+                "units": {
+                  "number": "1",
+                  "currency": "USD"
+                },
+                "cost": null
+              }
+            }
+          ],
+          [
+            {
+              "type": "date",
+              "value": "2000-01-05"
+            },
+            {
+              "type": "string",
+              "value": "*"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "structured"
+            },
+            {
+              "type": "position",
+              "value": {
+                "units": {
+                  "number": "-1",
+                  "currency": "USD"
+                },
+                "cost": null
+              }
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "postings-wildcard-empty",
+      "query": "SELECT * FROM #postings LIMIT 0",
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "flag",
+            "type": "string"
+          },
+          {
+            "name": "payee",
+            "type": "string"
+          },
+          {
+            "name": "narration",
+            "type": "string"
+          },
+          {
+            "name": "position",
+            "type": "position"
+          }
+        ],
+        "rows": []
+      }
+    },
+    {
+      "id": "transactions-wildcard",
+      "query": "SELECT * FROM #transactions",
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "flag",
+            "type": "string"
+          },
+          {
+            "name": "payee",
+            "type": "string"
+          },
+          {
+            "name": "narration",
+            "type": "string"
+          },
+          {
+            "name": "tags",
+            "type": "set<string>"
+          },
+          {
+            "name": "links",
+            "type": "set<string>"
+          },
+          {
+            "name": "accounts",
+            "type": "set<string>"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "date",
+              "value": "2000-01-02"
+            },
+            {
+              "type": "string",
+              "value": "*"
+            },
+            {
+              "type": "string",
+              "value": "shop"
+            },
+            {
+              "type": "string",
+              "value": "lunch"
+            },
+            {
+              "type": "set<string>",
+              "value": []
+            },
+            {
+              "type": "set<string>",
+              "value": []
+            },
+            {
+              "type": "set<string>",
+              "value": [
+                "Assets:Cash",
+                "Equity:Opening"
+              ]
+            }
+          ],
+          [
+            {
+              "type": "date",
+              "value": "2000-01-04"
+            },
+            {
+              "type": "string",
+              "value": "*"
+            },
+            {
+              "type": "string",
+              "value": ""
+            },
+            {
+              "type": "string",
+              "value": "explicit empty"
+            },
+            {
+              "type": "set<string>",
+              "value": []
+            },
+            {
+              "type": "set<string>",
+              "value": []
+            },
+            {
+              "type": "set<string>",
+              "value": [
+                "Assets:Cash",
+                "Equity:Opening"
+              ]
+            }
+          ],
+          [
+            {
+              "type": "date",
+              "value": "2000-01-05"
+            },
+            {
+              "type": "string",
+              "value": "*"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "value": "structured"
+            },
+            {
+              "type": "set<string>",
+              "value": [
+                "a",
+                "z"
+              ]
+            },
+            {
+              "type": "set<string>",
+              "value": [
+                "link"
+              ]
+            },
+            {
+              "type": "set<string>",
+              "value": [
+                "Assets:Cash",
+                "Equity:Opening"
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "transactions-wildcard-empty",
+      "query": "SELECT * FROM #transactions LIMIT 0",
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "flag",
+            "type": "string"
+          },
+          {
+            "name": "payee",
+            "type": "string"
+          },
+          {
+            "name": "narration",
+            "type": "string"
+          },
+          {
+            "name": "tags",
+            "type": "set<string>"
+          },
+          {
+            "name": "links",
+            "type": "set<string>"
+          },
+          {
+            "name": "accounts",
+            "type": "set<string>"
+          }
+        ],
+        "rows": []
+      }
+    },
+    {
+      "id": "accounts-wildcard",
+      "query": "SELECT * FROM #accounts",
+      "source_columns": [
+        1,
+        2
+      ],
+      "result": {
+        "columns": [
+          {
+            "name": "account",
+            "type": "string"
+          },
+          {
+            "name": "open",
+            "type": "open"
+          },
+          {
+            "name": "close",
+            "type": "close"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "string",
+              "value": "Assets:Cash"
+            },
+            {
+              "type": "open",
+              "value": [
+                {
+                  "key": "account",
+                  "value": {
+                    "type": "string",
+                    "value": "Assets:Cash"
+                  }
+                },
+                {
+                  "key": "booking",
+                  "value": {
+                    "type": "null"
+                  }
+                },
+                {
+                  "key": "currencies",
+                  "value": {
+                    "type": "list",
+                    "value": [
+                      {
+                        "type": "string",
+                        "value": "USD"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "key": "date",
+                  "value": {
+                    "type": "date",
+                    "value": "2000-01-01"
+                  }
+                },
+                {
+                  "key": "meta",
+                  "value": {
+                    "type": "dictionary",
+                    "value": [
+                      {
+                        "key": "filename",
+                        "value": {
+                          "type": "string",
+                          "value": "standard-tables.bean"
+                        }
+                      },
+                      {
+                        "key": "lineno",
+                        "value": {
+                          "type": "integer",
+                          "value": "1"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          [
+            {
+              "type": "string",
+              "value": "Equity:Opening"
+            },
+            {
+              "type": "open",
+              "value": [
+                {
+                  "key": "account",
+                  "value": {
+                    "type": "string",
+                    "value": "Equity:Opening"
+                  }
+                },
+                {
+                  "key": "booking",
+                  "value": {
+                    "type": "null"
+                  }
+                },
+                {
+                  "key": "currencies",
+                  "value": {
+                    "type": "list",
+                    "value": [
+                      {
+                        "type": "string",
+                        "value": "USD"
+                      }
+                    ]
+                  }
+                },
+                {
+                  "key": "date",
+                  "value": {
+                    "type": "date",
+                    "value": "2000-01-01"
+                  }
+                },
+                {
+                  "key": "meta",
+                  "value": {
+                    "type": "dictionary",
+                    "value": [
+                      {
+                        "key": "filename",
+                        "value": {
+                          "type": "string",
+                          "value": "standard-tables.bean"
+                        }
+                      },
+                      {
+                        "key": "lineno",
+                        "value": {
+                          "type": "integer",
+                          "value": "2"
+                        }
+                      }
+                    ]
+                  }
+                }
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "accounts-wildcard-empty",
+      "query": "SELECT * FROM #accounts LIMIT 0",
+      "source_columns": [
+        1,
+        2
+      ],
+      "result": {
+        "columns": [
+          {
+            "name": "account",
+            "type": "string"
+          },
+          {
+            "name": "open",
+            "type": "open"
+          },
+          {
+            "name": "close",
+            "type": "close"
+          }
+        ],
+        "rows": []
+      }
+    },
+    {
+      "id": "commodities-wildcard",
+      "query": "SELECT * FROM #commodities",
+      "source_columns": [
+        0
+      ],
+      "result": {
+        "columns": [
+          {
+            "name": "meta",
+            "type": "dictionary"
+          },
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "dictionary",
+              "value": [
+                {
+                  "key": "filename",
+                  "value": {
+                    "type": "string",
+                    "value": "standard-tables.bean"
+                  }
+                },
+                {
+                  "key": "lineno",
+                  "value": {
+                    "type": "integer",
+                    "value": "3"
+                  }
+                }
+              ]
+            },
+            {
+              "type": "date",
+              "value": "2000-01-01"
+            },
+            {
+              "type": "string",
+              "value": "USD"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "commodities-wildcard-empty",
+      "query": "SELECT * FROM #commodities LIMIT 0",
+      "source_columns": [
+        0
+      ],
+      "result": {
+        "columns": [
+          {
+            "name": "meta",
+            "type": "dictionary"
+          },
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          }
+        ],
+        "rows": []
+      }
+    },
+    {
+      "id": "balances-wildcard",
+      "query": "SELECT * FROM #balances",
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "account",
+            "type": "string"
+          },
+          {
+            "name": "amount",
+            "type": "amount"
+          },
+          {
+            "name": "tolerance",
+            "type": "decimal"
+          },
+          {
+            "name": "discrepancy",
+            "type": "amount"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "date",
+              "value": "2000-01-03"
+            },
+            {
+              "type": "string",
+              "value": "Assets:Cash"
+            },
+            {
+              "type": "amount",
+              "value": {
+                "number": "2",
+                "currency": "USD"
+              }
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "balances-wildcard-empty",
+      "query": "SELECT * FROM #balances LIMIT 0",
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "account",
+            "type": "string"
+          },
+          {
+            "name": "amount",
+            "type": "amount"
+          },
+          {
+            "name": "tolerance",
+            "type": "decimal"
+          },
+          {
+            "name": "discrepancy",
+            "type": "amount"
+          }
+        ],
+        "rows": []
+      }
+    },
+    {
+      "id": "notes-wildcard",
+      "query": "SELECT * FROM #notes",
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "account",
+            "type": "string"
+          },
+          {
+            "name": "comment",
+            "type": "string"
+          },
+          {
+            "name": "tags",
+            "type": "set<string>"
+          },
+          {
+            "name": "links",
+            "type": "set<string>"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "date",
+              "value": "2000-01-03"
+            },
+            {
+              "type": "string",
+              "value": "Assets:Cash"
+            },
+            {
+              "type": "string",
+              "value": "hello"
+            },
+            {
+              "type": "set<string>",
+              "value": []
+            },
+            {
+              "type": "set<string>",
+              "value": []
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "notes-wildcard-empty",
+      "query": "SELECT * FROM #notes LIMIT 0",
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "account",
+            "type": "string"
+          },
+          {
+            "name": "comment",
+            "type": "string"
+          },
+          {
+            "name": "tags",
+            "type": "set<string>"
+          },
+          {
+            "name": "links",
+            "type": "set<string>"
+          }
+        ],
+        "rows": []
+      }
+    },
+    {
+      "id": "events-wildcard",
+      "query": "SELECT * FROM #events",
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "type",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "date",
+              "value": "2000-01-03"
+            },
+            {
+              "type": "string",
+              "value": "location"
+            },
+            {
+              "type": "string",
+              "value": "home"
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "events-wildcard-empty",
+      "query": "SELECT * FROM #events LIMIT 0",
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "type",
+            "type": "string"
+          },
+          {
+            "name": "description",
+            "type": "string"
+          }
+        ],
+        "rows": []
+      }
+    },
+    {
+      "id": "documents-wildcard",
+      "query": "SELECT * FROM #documents",
+      "source_columns": [
+        2
+      ],
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "account",
+            "type": "string"
+          },
+          {
+            "name": "filename",
+            "type": "string"
+          },
+          {
+            "name": "tags",
+            "type": "set<string>"
+          },
+          {
+            "name": "links",
+            "type": "set<string>"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "date",
+              "value": "2000-01-03"
+            },
+            {
+              "type": "string",
+              "value": "Assets:Cash"
+            },
+            {
+              "type": "string",
+              "value": "standard-tables-receipt.txt"
+            },
+            {
+              "type": "set<string>",
+              "value": []
+            },
+            {
+              "type": "set<string>",
+              "value": []
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "documents-wildcard-empty",
+      "query": "SELECT * FROM #documents LIMIT 0",
+      "source_columns": [
+        2
+      ],
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "account",
+            "type": "string"
+          },
+          {
+            "name": "filename",
+            "type": "string"
+          },
+          {
+            "name": "tags",
+            "type": "set<string>"
+          },
+          {
+            "name": "links",
+            "type": "set<string>"
+          }
+        ],
+        "rows": []
+      }
+    },
+    {
+      "id": "prices-wildcard",
+      "query": "SELECT * FROM #prices",
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "currency",
+            "type": "string"
+          },
+          {
+            "name": "amount",
+            "type": "amount"
+          }
+        ],
+        "rows": [
+          [
+            {
+              "type": "date",
+              "value": "2000-01-03"
+            },
+            {
+              "type": "string",
+              "value": "USD"
+            },
+            {
+              "type": "amount",
+              "value": {
+                "number": "7",
+                "currency": "CNY"
+              }
+            }
+          ]
+        ]
+      }
+    },
+    {
+      "id": "prices-wildcard-empty",
+      "query": "SELECT * FROM #prices LIMIT 0",
+      "result": {
+        "columns": [
+          {
+            "name": "date",
+            "type": "date"
+          },
+          {
+            "name": "currency",
+            "type": "string"
+          },
+          {
+            "name": "amount",
+            "type": "amount"
+          }
+        ],
+        "rows": []
       }
     }
   ]

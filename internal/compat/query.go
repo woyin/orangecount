@@ -208,15 +208,13 @@ func CheckQueryGolden(root, goldenPath string) (QueryParity, error) {
 }
 
 func normalizeQuerySources(result *queryResult, indices []int, root string) error {
-	for _, index := range indices {
-		if index < 0 || index >= len(result.Columns) || (result.Columns[index].Type != "string" && result.Columns[index].Type != "object") {
-			return fmt.Errorf("invalid declared source column")
+	var normalize func(*query.Cell) error
+	normalize = func(cell *query.Cell) error {
+		if cell.Type == "null" {
+			return nil
 		}
-		for _, row := range result.Rows {
-			if row[index].Type == "null" {
-				continue
-			}
-			path, ok := row[index].Value.(string)
+		if cell.Type == "string" {
+			path, ok := cell.Value.(string)
 			if !ok || !filepath.IsAbs(path) {
 				return fmt.Errorf("invalid source path")
 			}
@@ -224,7 +222,46 @@ func normalizeQuerySources(result *queryResult, indices []int, root string) erro
 			if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 				return fmt.Errorf("source outside public corpus")
 			}
-			row[index].Value = filepath.ToSlash(rel)
+			cell.Value = filepath.ToSlash(rel)
+			return nil
+		}
+		if cell.Type == "dictionary" || cell.Type == "open" || cell.Type == "close" || cell.Type == "transaction" {
+			entries, ok := cell.Value.([]any)
+			if !ok {
+				return fmt.Errorf("invalid structured source")
+			}
+			for _, raw := range entries {
+				entry, ok := raw.(map[string]any)
+				if !ok {
+					return fmt.Errorf("invalid dictionary source entry")
+				}
+				child, ok := entry["value"].(map[string]any)
+				if !ok {
+					return fmt.Errorf("invalid source child")
+				}
+				kind, _ := child["type"].(string)
+				if entry["key"] == "filename" || kind == "dictionary" || kind == "open" || kind == "close" || kind == "transaction" {
+					value := query.Cell{Type: kind, Value: child["value"]}
+					if err := normalize(&value); err != nil {
+						return err
+					}
+					if kind != "null" {
+						child["value"] = value.Value
+					}
+				}
+			}
+			return nil
+		}
+		return fmt.Errorf("invalid declared source column")
+	}
+	for _, index := range indices {
+		if index < 0 || index >= len(result.Columns) {
+			return fmt.Errorf("invalid declared source column")
+		}
+		for _, row := range result.Rows {
+			if err := normalize(&row[index]); err != nil {
+				return err
+			}
 		}
 	}
 	return nil
@@ -253,7 +290,7 @@ func normalizeQueryResult(value query.TypedResult) (queryResult, error) {
 				if !value.Columns[i].Nullable {
 					return result, fmt.Errorf("unexpected null")
 				}
-			} else if cell.Type != value.Columns[i].Type && value.Columns[i].Type != "object" {
+			} else if cell.Type != value.Columns[i].Type && value.Columns[i].Type != "object" && !(value.Columns[i].Type == "set<string>" && cell.Type == "list") {
 				return result, fmt.Errorf("schema type mismatch")
 			}
 			cell.Value = normalizeQueryCellValue(cell.Value)
@@ -274,6 +311,20 @@ func normalizeQueryResult(value query.TypedResult) (queryResult, error) {
 
 func normalizeQueryCellValue(value any) any {
 	switch value := value.(type) {
+	case query.PresentedDictionary:
+		result := query.PresentedDictionary{}
+		for key, cell := range value {
+			cell.Value = normalizeQueryCellValue(cell.Value)
+			result[key] = cell
+		}
+		return result
+	case query.PresentedList:
+		result := query.PresentedList{}
+		for _, cell := range value {
+			cell.Value = normalizeQueryCellValue(cell.Value)
+			result = append(result, cell)
+		}
+		return result
 	case query.PresentedDecimal:
 		return value.Exact
 	case query.PresentedAmount:

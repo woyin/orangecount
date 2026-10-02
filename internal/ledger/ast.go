@@ -307,6 +307,8 @@ type Transaction struct {
 	Links     []string
 	Meta      []Metadata
 	Postings  []Posting
+	// Tolerances retains the loader-computed system metadata for typed queries.
+	Tolerances map[string]Decimal
 }
 
 // Kind implements Directive.

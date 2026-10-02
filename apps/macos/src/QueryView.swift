@@ -300,6 +300,9 @@ private struct NativeQueryTable: NSViewRepresentable {
         case .amount(let value): return value.number.exact + " " + value.currency
         case .position(let value): return encoded(value)
         case .inventory(let value): return encoded(value)
+        case .dictionary(let value), .record(let value): return encoded(value)
+        case .list(let value): return encoded(value)
+        case .stringSet(let value): return encoded(value)
         }
     }
 

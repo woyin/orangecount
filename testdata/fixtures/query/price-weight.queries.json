@@ -10,5 +10,9 @@
   {
     "id": "quote-weight-text",
     "query": "SELECT str(weight), str(number(weight)) WHERE account = 'Assets:Plain' ORDER BY date"
+  },
+  {
+    "id": "price-and-cost-fields",
+    "query": "SELECT price,cost_number,cost_currency,cost_date,cost_label FROM #postings"
   }
 ]

@@ -28,7 +28,7 @@ func ParseSemanticsProfile(value string) (SemanticsProfile, error) {
 // EvaluationRevision must change when a profile's accounting rules change.
 func (p SemanticsProfile) EvaluationRevision() string {
 	if p == V3 {
-		return "v3-core-4"
+		return "v3-core-5"
 	}
 	return "legacy-1"
 }

@@ -76,6 +76,7 @@ def main():
         for path, expected in [
             (REPO / "testdata/fixtures/query/metadata-pad.bean", None),
             (REPO / "testdata/fixtures/query/metadata-stack.bean", None),
+            (REPO / "testdata/fixtures/query/standard-tables.bean", None),
             (REPO / "testdata/fixtures/source-export/dialect.bean", REPO / "testdata/fixtures/source-export/dialect.expected.bean"),
         ]:
             target = work / ("extra-" + path.stem)

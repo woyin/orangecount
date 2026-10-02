@@ -311,6 +311,22 @@ func queryPriceWeight(posting ledger.Posting) amountValue {
 		value := ledger.BookedPriceWeight(posting)
 		return amountValue{Number: value, Currency: posting.Price.Amount.Currency, Text: value.String()}
 	}
+	quote = queryUnitQuote(posting, units, quote, unitQuantum, quoteQuantum)
+	quoteQuantum, _ = decimalQuantum(quote.Text)
+	value := contextualDecimal(units.Value.Mul(quote.Value), unitQuantum+quoteQuantum,
+		strings.HasPrefix(units.Text, "-") != strings.HasPrefix(quote.Text, "-"))
+	return amountValue{Number: value.Value, Currency: posting.Price.Amount.Currency, Text: value.Text}
+}
+
+func presentPosition(value positionValue) PresentedPosition {
+	result := PresentedPosition{Units: presentAmount(value.Units)}
+	if cost := value.Cost; cost != nil {
+		result.Cost = &PresentedCost{Number: presentation.FormatDecimal(cost.Number), Currency: cost.Currency, Date: cost.Date, Label: cost.Label}
+	}
+	return result
+}
+
+func queryUnitQuote(posting ledger.Posting, units, quote metadataDecimal, unitQuantum, quoteQuantum int64) metadataDecimal {
 	if posting.Price.Total && units.Value.IsZero() {
 		// The booked unit quote is a plain zero even when the source total
 		// is nonzero or carries fractional digits.
@@ -330,17 +346,18 @@ func queryPriceWeight(posting ledger.Posting) amountValue {
 			}
 		}
 		quote = contextualDecimal(quotient, quantum, strings.HasPrefix(quote.Text, "-"))
-		quoteQuantum, _ = decimalQuantum(quote.Text)
 	}
-	value := contextualDecimal(units.Value.Mul(quote.Value), unitQuantum+quoteQuantum,
-		strings.HasPrefix(units.Text, "-") != strings.HasPrefix(quote.Text, "-"))
-	return amountValue{Number: value.Value, Currency: posting.Price.Amount.Currency, Text: value.Text}
+	return quote
 }
-
-func presentPosition(value positionValue) PresentedPosition {
-	result := PresentedPosition{Units: presentAmount(value.Units)}
-	if cost := value.Cost; cost != nil {
-		result.Cost = &PresentedCost{Number: presentation.FormatDecimal(cost.Number), Currency: cost.Currency, Date: cost.Date, Label: cost.Label}
+func queryUnitPrice(posting ledger.Posting) amountValue {
+	quote := metadataDecimalValue(posting.Price.Amount.Number)
+	if posting.Units != nil {
+		units := metadataDecimalValue(posting.Units.Number)
+		unitQuantum, uerr := decimalQuantum(units.Text)
+		quoteQuantum, qerr := decimalQuantum(quote.Text)
+		if uerr == nil && qerr == nil {
+			quote = queryUnitQuote(posting, units, quote, unitQuantum, quoteQuantum)
+		}
 	}
-	return result
+	return amountValue{Number: quote.Value, Currency: posting.Price.Amount.Currency, Text: quote.Text}
 }

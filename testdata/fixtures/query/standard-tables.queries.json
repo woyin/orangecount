@@ -140,5 +140,199 @@
   {
     "id": "posting-payee-null-empty",
     "query": "SELECT payee FROM #postings WHERE date = 2000-01-04"
+  },
+  {
+    "id": "posting-collections",
+    "query": "SELECT tags,links,accounts,other_accounts FROM #postings WHERE date = 2000-01-05"
+  },
+  {
+    "id": "posting-meta",
+    "query": "SELECT meta FROM #postings WHERE date = 2000-01-05",
+    "source_columns": [
+      0
+    ]
+  },
+  {
+    "id": "posting-entry",
+    "query": "SELECT entry FROM #postings WHERE date = 2000-01-05 LIMIT 1",
+    "source_columns": [
+      0
+    ]
+  },
+  {
+    "id": "transaction-collections",
+    "query": "SELECT tags,links,accounts FROM #transactions"
+  },
+  {
+    "id": "entry-collections",
+    "query": "SELECT tags,links,accounts FROM #entries"
+  },
+  {
+    "id": "account-lifecycle",
+    "query": "SELECT open,close FROM #accounts",
+    "source_columns": [
+      0,
+      1
+    ]
+  },
+  {
+    "id": "system-tolerance-map",
+    "query": "SELECT entry_meta('__tolerances__') WHERE date = 2000-01-05 LIMIT 1"
+  },
+  {
+    "id": "empty-system-tolerance-map",
+    "query": "SELECT entry_meta('__tolerances__') WHERE date = 2000-01-02 LIMIT 1"
+  },
+  {
+    "id": "posting-cost-fields",
+    "query": "SELECT cost_number,cost_currency,cost_date,cost_label,price FROM #postings"
+  },
+  {
+    "id": "entries-metadata",
+    "query": "SELECT meta FROM #entries",
+    "source_columns": [
+      0
+    ]
+  },
+  {
+    "id": "transactions-metadata",
+    "query": "SELECT meta FROM #transactions",
+    "source_columns": [
+      0
+    ]
+  },
+  {
+    "id": "commodities-metadata",
+    "query": "SELECT meta FROM #commodities",
+    "source_columns": [
+      0
+    ]
+  },
+  {
+    "id": "balances-metadata",
+    "query": "SELECT meta FROM #balances",
+    "source_columns": [
+      0
+    ]
+  },
+  {
+    "id": "notes-metadata",
+    "query": "SELECT meta FROM #notes",
+    "source_columns": [
+      0
+    ]
+  },
+  {
+    "id": "events-metadata",
+    "query": "SELECT meta FROM #events",
+    "source_columns": [
+      0
+    ]
+  },
+  {
+    "id": "documents-metadata",
+    "query": "SELECT meta FROM #documents",
+    "source_columns": [
+      0
+    ]
+  },
+  {
+    "id": "prices-metadata",
+    "query": "SELECT meta FROM #prices",
+    "source_columns": [
+      0
+    ]
+  },
+  {
+    "id": "postings-wildcard",
+    "query": "SELECT * FROM #postings"
+  },
+  {
+    "id": "postings-wildcard-empty",
+    "query": "SELECT * FROM #postings LIMIT 0"
+  },
+  {
+    "id": "transactions-wildcard",
+    "query": "SELECT * FROM #transactions"
+  },
+  {
+    "id": "transactions-wildcard-empty",
+    "query": "SELECT * FROM #transactions LIMIT 0"
+  },
+  {
+    "id": "accounts-wildcard",
+    "query": "SELECT * FROM #accounts",
+    "source_columns": [
+      1,
+      2
+    ]
+  },
+  {
+    "id": "accounts-wildcard-empty",
+    "query": "SELECT * FROM #accounts LIMIT 0",
+    "source_columns": [
+      1,
+      2
+    ]
+  },
+  {
+    "id": "commodities-wildcard",
+    "query": "SELECT * FROM #commodities",
+    "source_columns": [
+      0
+    ]
+  },
+  {
+    "id": "commodities-wildcard-empty",
+    "query": "SELECT * FROM #commodities LIMIT 0",
+    "source_columns": [
+      0
+    ]
+  },
+  {
+    "id": "balances-wildcard",
+    "query": "SELECT * FROM #balances"
+  },
+  {
+    "id": "balances-wildcard-empty",
+    "query": "SELECT * FROM #balances LIMIT 0"
+  },
+  {
+    "id": "notes-wildcard",
+    "query": "SELECT * FROM #notes"
+  },
+  {
+    "id": "notes-wildcard-empty",
+    "query": "SELECT * FROM #notes LIMIT 0"
+  },
+  {
+    "id": "events-wildcard",
+    "query": "SELECT * FROM #events"
+  },
+  {
+    "id": "events-wildcard-empty",
+    "query": "SELECT * FROM #events LIMIT 0"
+  },
+  {
+    "id": "documents-wildcard",
+    "query": "SELECT * FROM #documents",
+    "source_columns": [
+      2
+    ]
+  },
+  {
+    "id": "documents-wildcard-empty",
+    "query": "SELECT * FROM #documents LIMIT 0",
+    "source_columns": [
+      2
+    ]
+  },
+  {
+    "id": "prices-wildcard",
+    "query": "SELECT * FROM #prices"
+  },
+  {
+    "id": "prices-wildcard-empty",
+    "query": "SELECT * FROM #prices LIMIT 0"
   }
 ]

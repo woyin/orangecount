@@ -12,3 +12,12 @@
 2000-01-04 * "" "explicit empty"
   Assets:Cash 1 USD
   Equity:Opening -1 USD
+2000-01-05 * "structured" #z #a ^link
+  custom: "hello"
+  Assets:Cash 1.00 USD
+    detail: 2.50
+    when: 2000-01-01
+    yes: TRUE
+    absent: NULL
+    amount: 3.00 USD
+  Equity:Opening -1.00 USD

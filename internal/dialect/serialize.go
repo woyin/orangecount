@@ -232,6 +232,9 @@ func writeMetaLines(block *strings.Builder, meta []ledger.Metadata) {
 // metaValueText renders one metadata value: strings quote their content,
 // everything else keeps its raw source form.
 func metaValueText(v ledger.Value) string {
+	if v.Kind == ledger.ValueNull {
+		return "NULL"
+	}
 	if v.Kind == ledger.ValueString {
 		return strconv.Quote(v.String)
 	}

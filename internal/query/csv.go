@@ -59,7 +59,7 @@ func csvCell(cell Cell) (string, error) {
 		if value, ok := cell.Value.(PresentedDecimal); ok {
 			return value.Exact, nil
 		}
-	case "amount", "position", "inventory":
+	case "amount", "position", "inventory", "dictionary", "list", "set<string>", "open", "close", "transaction":
 		data, err := json.Marshal(cell.Value)
 		return string(data), err
 	}

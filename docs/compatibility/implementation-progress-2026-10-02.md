@@ -24,7 +24,7 @@
 
 S01–S03 还需要 symlink 别名/目录循环、更多 metadata 非数字覆盖、构建期间新增/删除竞争、实际原生 glob 重载的对照证据；不能由上面的有限案例推断完整源兼容。C00 仍需补齐诊断规则与全部 grammar 组合，关联逐项 Go 实现与证据。
 
-查询当前 typed 执行仍只支持 postings，Q10–Q14 未完成：全部标准表、字典/集合/结构化值、非有限 Decimal、全函数和运算符重载、子查询、HAVING、DISTINCT、PIVOT 及命令生态均需继续按设计实施。V01/V02 与默认 v3 迁移 M01 也未完成。现阶段不宣称完整兼容或 Beancount 的超集。
+源切片冻结时 typed 执行仍只支持 postings。随后 Q10/Q11 的实施见后文；Q10–Q14 整体仍未完成：全部标准表、字典/集合/结构化值、非有限 Decimal、全函数和运算符重载、子查询、HAVING、DISTINCT、PIVOT 及命令生态均需继续按设计实施。V01/V02 与默认 v3 迁移 M01 也未完成。现阶段不宣称完整兼容或 Beancount 的超集。
 
 Glob 源加载不自动放开 glob 源导出；导出映射及原子发布另行验收，保持现有保守拒绝。
 
@@ -35,3 +35,13 @@ Glob 源加载不自动放开 glob 源导出；导出映射及原子发布另行
 此处只交付表的标量部分，**Q10 未封口**：id/hash、结构化 open/close、meta、集合、transaction entry 等字段依赖后续类型与函数切片。全标准表字段与 wildcard 仍需补齐，不把未实现字段归为契约外。
 
 当前增量验证：33 个新独立 Python query goldens 加入原 215 个案例，共 248 个零差异；51 个账务差分通过。Go 全量、vet、query/desktop/bridge/dialect race 通过；四组原生测试通过，新增标准表及 Amount 返回值真实 Swift/C 检查通过；旧 query goldens `--check` 全部通过；源导出 35 个 roundtrip、71 个库存前缀及 6 个拒绝通过。FinanceBook 使用本次新 C archive/Swift probe 再次只读验证，仍为 47 文件、2836 entries、零账务/库存差异，原生契约及价格/持仓检查通过。
+
+## Q10/Q11 结构化值与返回格式切片
+
+Go、原生解码/查询显示和查询分析文件读取已增加递归字典、列表、字符串集合及 open/close/transaction 的当前结构字段。query contract 升级为 typed-v3；旧 v1/v2 分析仍可读取。Unicode 字典键以有序键值数组保留，重复/乱序/错误 NULL/深层嵌套/缺少结构字段均有 Go 和真实 Swift 解码反例。Posting meta、交易 meta 与系统 __tolerances__ 保持分离。源 NULL 与显式空 payee 得以保留；v3 revision 为 v3-core-5。
+
+标准 wildcard 用声明列序展开，包含零行 schema；entries 的 id/hash 尚缺，因此该表 wildcard 仍不能算完成。新 price 和 cost 字段有独立 oracle，其中 @@ 的 price 修正为上游单位价格及 Decimal 精度。当前公开查询案例为 284 个，零差异；Q10/Q11 仍为部分实施，不能从这些案例推断全语言兼容。具体 wire 及剩余限制见 [query-typed-v3.md](query-typed-v3.md)。
+
+本切片冻结验证：Go 全量、vet、query/desktop/bridge/ledger race、51 账务差分、284 查询差分均通过；17 个 query corpora 的 Python `--check` 全部通过。原生四组测试通过，包含递归结构值及 Unicode 键保留/拒绝反例。源导出增至 36 个 roundtrip、74 个库存前缀、6 个拒绝；源加载 20 个模式及 6 个语义对照仍通过。FinanceBook 在 v3-core-5/typed-v3 的最新真实 C/Swift probe 下，仍为 47 文件、双方 2836 条记录，零账务/库存差异；Expenses 73 行、Income 22 行一致，3 个持仓截止日、48 个价格检查通过。
+
+App 全量编译和打包将在上述代码提交后进行，以明确构建对应的干净 revision。

@@ -381,6 +381,9 @@ func (e *evaluator) evaluateTransaction(tx *Transaction) {
 	if e.options.SemanticsProfile == V3 && e.hasErrorsSince(start) {
 		return
 	}
+	if e.options.SemanticsProfile == V3 {
+		booked.Tolerances = e.transactionTolerances(tx.Postings)
+	}
 	e.replaceLastEntry(booked)
 	e.transaction(booked, tx.Postings)
 	if e.options.SemanticsProfile == V3 && e.hasErrorsSince(start) {
