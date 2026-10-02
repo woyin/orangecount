@@ -161,7 +161,11 @@ struct ContentView: View {
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = true
         panel.canChooseFiles = true
-        if panel.runModal() == .OK, let url = panel.url { store.loadLedger(at: url.path) }
+        let completion: (NSApplication.ModalResponse) -> Void = { [weak store] response in
+            if response == .OK, let url = panel.url { store?.loadLedger(at: url.path) }
+        }
+        if let window = NSApp.keyWindow { panel.beginSheetModal(for: window, completionHandler: completion) }
+        else { panel.begin(completionHandler: completion) }
     }
 }
 

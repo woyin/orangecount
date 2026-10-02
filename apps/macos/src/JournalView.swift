@@ -42,6 +42,7 @@ struct JournalView: View {
                         ForEach(directiveKinds, id: \.self) { kind in Text(directiveKindName(kind, language: language)).tag(kind) }
                     }.frame(maxWidth: 160)
                 }
+                Button(language.text("附件", "Attachments"), action: store.showDocuments)
                 Spacer()
             }
             HStack {
@@ -77,7 +78,7 @@ struct JournalView: View {
                 } else {
                     ScrollView {
                         LazyVStack(alignment: .leading, spacing: 8) {
-                            ForEach(page.records) { record in DirectiveCard(record: record, mode: page.mode, viewState: viewState) }
+                            ForEach(page.records) { record in DirectiveCard(record: record, mode: page.mode, viewState: viewState, openAttachment: store.openDocument) }
                         }.padding()
                     }.id("\(page.mode):\(page.page.offset)")
                 }
@@ -238,10 +239,16 @@ private struct DirectiveCard: View {
     let mode: String
     @ObservedObject var viewState: JournalViewState
     @Environment(\.ledgerLanguage) private var language
+    let openAttachment: (Attachment, Bool) -> Void
     private var expansionID: String { "directive:\(mode):\(record.id)" }
     private func fieldName(_ name: String) -> String {
         let names = ["key":"键", "value":"值", "module":"模块", "config":"配置", "path":"路径", "tag":"标签", "account":"账户", "currency":"币种", "booking":"批次选择方法", "amount":"金额", "tolerance":"容差", "source_account":"补齐来源账户", "event_type":"事件类型", "name":"名称", "query":"查询", "filename":"文件", "comment":"备注", "custom_type":"记录类型", "flag":"标记", "payee":"收款人", "narration":"摘要"]
         return language.text(names[name] ?? name, name)
+    }
+    private func attachmentStatus(_ status: String) -> String {
+        let names = ["available":"可用", "missing":"文件不存在", "outside-root":"超出账本目录", "unsupported-kind":"不是普通文件", "unreadable":"无法读取"]
+        let english = ["available":"Available", "missing":"Missing file", "outside-root":"Outside ledger folder", "unsupported-kind":"Not a regular file", "unreadable":"Unreadable"]
+        return language.text(names[status] ?? status, english[status] ?? status)
     }
     var body: some View {
         DisclosureGroup(isExpanded: Binding(get: { viewState.isExpanded(expansionID) }, set: { value in if value != viewState.isExpanded(expansionID) { viewState.toggleExpanded(expansionID) } })) {
@@ -252,6 +259,14 @@ private struct DirectiveCard: View {
                 }
                 ForEach(Array(record.fields.enumerated()), id: \.offset) { _, field in
                     HStack(alignment: .top) { Text(fieldName(field.name) + ":").foregroundColor(.secondary); Text(field.value.exactText).textSelection(.enabled) }
+                }
+                ForEach(record.attachments) { attachment in
+                    HStack {
+                        Text(attachment.filename).textSelection(.enabled)
+                        Text(attachmentStatus(attachment.status)).foregroundColor(.secondary)
+                        Button(language.text("打开附件", "Open attachment")) { openAttachment(attachment, false) }.disabled(attachment.status != "available")
+                        Button(language.text("在 Finder 中显示附件", "Reveal attachment in Finder")) { openAttachment(attachment, true) }.disabled(attachment.status != "available")
+                    }
                 }
                 if !record.tags.isEmpty { Text(record.tags.map { "#" + $0 }.joined(separator: "  ")).textSelection(.enabled) }
                 if !record.links.isEmpty { Text(record.links.map { "^" + $0 }.joined(separator: "  ")).textSelection(.enabled) }

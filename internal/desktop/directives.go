@@ -43,18 +43,19 @@ type DirectivePosting struct {
 	Metadata []DirectiveMetadata `json:"metadata"`
 }
 type DirectiveDTO struct {
-	ID         string              `json:"id"`
-	Kind       string              `json:"kind"`
-	SourceKind string              `json:"source_kind"`
-	Date       *string             `json:"date"`
-	Generated  bool                `json:"generated"`
-	OriginID   *string             `json:"origin_id"`
-	Source     SourceLocation      `json:"source"`
-	Fields     []DirectiveField    `json:"fields"`
-	Metadata   []DirectiveMetadata `json:"metadata"`
-	Tags       []string            `json:"tags"`
-	Links      []string            `json:"links"`
-	Postings   []DirectivePosting  `json:"postings"`
+	Attachments []AttachmentDTO     `json:"attachments"`
+	ID          string              `json:"id"`
+	Kind        string              `json:"kind"`
+	SourceKind  string              `json:"source_kind"`
+	Date        *string             `json:"date"`
+	Generated   bool                `json:"generated"`
+	OriginID    *string             `json:"origin_id"`
+	Source      SourceLocation      `json:"source"`
+	Fields      []DirectiveField    `json:"fields"`
+	Metadata    []DirectiveMetadata `json:"metadata"`
+	Tags        []string            `json:"tags"`
+	Links       []string            `json:"links"`
+	Postings    []DirectivePosting  `json:"postings"`
 }
 type DirectivesPayload struct {
 	SnapshotID string                `json:"snapshot_id"`
@@ -86,9 +87,24 @@ func (p *publication) readDirectives(request Request, snapshotID, from, to strin
 		from, to = "", ""
 	}
 	payload := &DirectivesPayload{DateFrom: from, DateTo: to, SnapshotID: snapshotID, Mode: request.JournalMode, Records: []DirectiveDTO{}, Page: report.ProjectionPage{TotalCount: page.TotalCount, Offset: page.Offset, Limit: page.Limit, ReturnedCount: len(page.Records), HasMore: page.HasMore, Truncated: len(page.Records) < page.TotalCount}}
+	attachmentCount := 0
 	for _, record := range page.Records {
 		dto, err := projectDirective(record, p.snapshot.Graph())
 		if err != nil {
+			return nil, err
+		}
+		if dto.Kind == "document" {
+			for _, field := range dto.Fields {
+				if field.Name == "filename" {
+					attachmentCount++
+				}
+			}
+			if attachmentCount > 500 {
+				return nil, ErrResultBudget
+			}
+		}
+		dto.Attachments = []AttachmentDTO{}
+		if err := p.projectAttachments(&dto); err != nil {
 			return nil, err
 		}
 		payload.Records = append(payload.Records, dto)
@@ -217,13 +233,19 @@ func projectDirective(record snapshot.DirectiveRecord, graph *source.Graph) (Dir
 	return dto, nil
 }
 func projectDirectiveMetadata(metadata []ledger.Metadata, file string, graph *source.Graph) ([]DirectiveMetadata, error) {
+	return projectDirectiveMetadataDepth(metadata, file, graph, 0)
+}
+func projectDirectiveMetadataDepth(metadata []ledger.Metadata, file string, graph *source.Graph, depth int) ([]DirectiveMetadata, error) {
+	if depth > 64 {
+		return nil, ErrResultBudget
+	}
 	result := []DirectiveMetadata{}
 	for _, meta := range metadata {
 		path := file
 		if graph != nil && graph.Path(meta.Span.File) != "" {
 			path = graph.Path(meta.Span.File)
 		}
-		value, err := projectDirectiveValue(meta.Value, path, graph)
+		value, err := projectDirectiveValueDepth(meta.Value, path, graph, depth)
 		if err != nil {
 			return nil, err
 		}
@@ -232,6 +254,12 @@ func projectDirectiveMetadata(metadata []ledger.Metadata, file string, graph *so
 	return result, nil
 }
 func projectDirectiveValue(value ledger.Value, file string, graph *source.Graph) (DirectiveValue, error) {
+	return projectDirectiveValueDepth(value, file, graph, 0)
+}
+func projectDirectiveValueDepth(value ledger.Value, file string, graph *source.Graph, depth int) (DirectiveValue, error) {
+	if depth > 64 {
+		return DirectiveValue{}, ErrResultBudget
+	}
 	kind := string(value.Kind)
 	switch value.Kind {
 	case ledger.ValueNull:
@@ -249,7 +277,7 @@ func projectDirectiveValue(value ledger.Value, file string, graph *source.Graph)
 	case ledger.ValueList:
 		items := []DirectiveValue{}
 		for _, item := range value.List {
-			v, err := projectDirectiveValue(item, file, graph)
+			v, err := projectDirectiveValueDepth(item, file, graph, depth+1)
 			if err != nil {
 				return DirectiveValue{}, err
 			}
@@ -257,7 +285,7 @@ func projectDirectiveValue(value ledger.Value, file string, graph *source.Graph)
 		}
 		return DirectiveValue{"list", items}, nil
 	case ledger.ValueMap:
-		fields, err := projectDirectiveMetadata(value.Map, file, graph)
+		fields, err := projectDirectiveMetadataDepth(value.Map, file, graph, depth+1)
 		return DirectiveValue{"map", fields}, err
 	default:
 		return DirectiveValue{}, fmt.Errorf("unsupported directive metadata value")

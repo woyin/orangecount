@@ -463,6 +463,8 @@ struct ContractTests {
 
 extension ContractTests {
     static func verifyDirectivePages(root: String, bridge: BridgeClient) throws {
+        try verifyBlockOrigins(bridge: bridge)
+        try verifyAttachmentActions(root: root, bridge: bridge)
         let session = try bridge.openLedger(path: root + "/testdata/fixtures/directives/all.bean", semantics: "v3")
         defer { try? bridge.closeLedger(handle: session.handle) }
         let view = try bridge.readView(handle: session.handle, request: ViewRequest(view: "journal", sort: "ascending", journal_mode: "all"))
@@ -501,5 +503,56 @@ extension ContractTests {
             } catch is DecodingError { }
         }
         print("PASS: all/config directive pages, exact recursive metadata, generated origins and malformed contracts cross real C/Swift")
+    }
+}
+
+extension ContractTests {
+    static func verifyAttachmentActions(root: String, bridge: BridgeClient) throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("orangecount-attachment-" + UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let original = try String(contentsOfFile: root + "/testdata/fixtures/directives/all.bean", encoding: .utf8)
+        try original.replacingOccurrences(of: "receipt.pdf", with: "receipt.txt").write(to: directory.appendingPathComponent("all.bean"), atomically: true, encoding: .utf8)
+        try FileManager.default.copyItem(atPath: root + "/testdata/fixtures/directives/included.bean", toPath: directory.appendingPathComponent("included.bean").path)
+        let target = directory.appendingPathComponent("receipt.txt")
+        try "public attachment".write(to: target, atomically: true, encoding: .utf8)
+        let session = try bridge.openLedger(path: directory.appendingPathComponent("all.bean").path, semantics: "v3")
+        defer { try? bridge.closeLedger(handle: session.handle) }
+        let view = try bridge.readView(handle: session.handle, request: ViewRequest(view: "journal", journal_mode: "all", directive_kind: "document"))
+        guard let attachment = view.directives?.records.first?.attachments.first else { throw TestFailure(description: "Missing attachment") }
+        try expect(attachment.status == "available", "Attachment status crosses real ABI")
+        let action = ViewRequest(view: "journal", snapshot_id: view.state.snapshot_id, journal_mode: "all", document_id: attachment.id)
+        let response = try bridge.readView(handle: session.handle, request: action)
+        try expect(response.document_action?.path == attachment.path, "Attachment opening returns only revalidated canonical target")
+        let openedText = try String(contentsOfFile: response.document_action!.path, encoding: .utf8)
+        try expect(openedText == "public attachment", "Authorized target identifies the presented file")
+        try "replacement attachment".write(to: target, atomically: true, encoding: .utf8)
+        do {
+            _ = try bridge.readView(handle: session.handle, request: action)
+            throw TestFailure(description: "Replaced attachment authorized")
+        } catch is BridgeError { }
+        print("PASS: attachment status and snapshot-bound opening authorization reject replacement across real C/Swift")
+    }
+}
+
+extension ContractTests {
+    static func verifyBlockOrigins(bridge: BridgeClient) throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("orangecount-block-" + UUID().uuidString)
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        let path = directory.appendingPathComponent("block.bean")
+        let input = """
+        2000-01-01 open Assets:Cash USD
+        2000-01-01 open Expenses:One USD
+        2000-01-02 * "block"
+          1 USD @Assets:Cash -> @Expenses:One
+        """
+        try (input + "\n").write(to: path, atomically: true, encoding: .utf8)
+        let session = try bridge.openLedger(path: path.path, semantics: "v3")
+        defer { try? bridge.closeLedger(handle: session.handle) }
+        let view = try bridge.readView(handle: session.handle, request: ViewRequest(view: "journal", journal_mode: "all", directive_kind: "transaction"))
+        guard let transaction = view.directives?.records.first else { throw TestFailure(description: "Missing compiled block") }
+        try expect(transaction.generated && transaction.source_kind == "transaction" && transaction.origin_id != nil && transaction.postings.count == 2, "Block expansion preserves header origin through real ABI")
+        print("PASS: block dialect generated origin crosses real C/Swift")
     }
 }

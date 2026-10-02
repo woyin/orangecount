@@ -310,3 +310,9 @@ standard token/函数/字段错误范围已沿Go→真实C/Swift→NSTextView接
 全指令 typed DTO、原生交易/all/config 模式、生成来源、分页与精确元数据已经接通；本轮修复捕获日期和标签显示，当前51会计/163查询、Go全量/四包race、原生四套与app检查通过，FinanceBook只读对照及真实Swift/C通过。窗口清理改为实际window close，最终app/开发ZIP生成并解压公开输入启动。私人GUI文件选择读取阻塞系统open，解压QA还观察到Open禁用；根因尚未确认，C/D完整验收未满足。见[本批证据](evidence/native-first-delivery-2026-10-02.md)与[使用说明](native-first-delivery-2026-10-02.md)。不能将开发产物、测试和私人GUI验收混为一谈。
 
 本批后续复核更正：final QA 的 FinanceBook 原路径读取已完成，实际核心6页、账户详情和计数查询通过，关闭窗口验证通过。系统open等待并非持续阻断，但首次等待根因及完整安装/性能仍未关闭。代码提交74272ff，开发ZIP与SHA256已生成；见同一证据的“后续复核”。用户介入delivery QA后停止操作该实例。
+
+## 2026-10-02：附件原生流程及全指令边界
+
+已接通 document DTO、日记账附件入口、五种状态、打开前重新核验、默认应用打开及 Finder。公开实际操作已验证 TextEdit 内容、Finder 选中和不可用状态禁用。block DSL 生成来源、嵌套检索及深度/文本/附件数量限制已补齐。文件选择使用异步 sheet，公开账本实际重载通过。
+
+具体证据与尚未完成边界见 [验收记录](evidence/native-attachments-and-directives-2026-10-02.md)。下一项仍为查询能力矩阵与报表分析容器，随后完整 GUI/辅助功能/安装验收；不将这批计为全项目完成。

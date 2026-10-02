@@ -1,6 +1,7 @@
 // Copyright 2026 OrangeCount contributors
 // Licensed under the Apache License, Version 2.0.
 
+import AppKit
 import Combine
 import Foundation
 
@@ -642,6 +643,31 @@ final class LedgerStore: ObservableObject {
 
     private func readingPreferenceKey(_ path: String) -> String {
         "org.orangecount.reading." + URL(fileURLWithPath: (path as NSString).expandingTildeInPath).standardizedFileURL.path
+    }
+
+    func showDocuments() {
+        updateFilters { $0.journal_mode = "all"; $0.directive_kind = "document"; $0.window = "all"; $0.date_from = ""; $0.date_to = ""; $0.text = ""; $0.account = "" }
+    }
+
+    func openDocument(_ attachment: Attachment, reveal: Bool) {
+        guard attachment.status == "available", let handle, let identity = state?.snapshot_id else { return }
+        let expected = generation
+        let expectedRead = readGeneration
+        let actionRequest = ViewRequest(view: "journal", snapshot_id: identity, journal_mode: "all", document_id: attachment.id)
+        Task { [weak self, client] in
+            do {
+                let response = try await client.read(handle: handle, request: actionRequest)
+                guard let self, self.generation == expected, self.readGeneration == expectedRead,
+                      self.state?.snapshot_id == identity, let action = response.document_action,
+                      action.id == attachment.id, action.path == attachment.path else { return }
+                let url = URL(fileURLWithPath: action.path)
+                if reveal { NSWorkspace.shared.activateFileViewerSelecting([url]) }
+                else if !NSWorkspace.shared.open(url) { self.errorMessage = "无法打开附件 / Unable to open attachment" }
+            } catch {
+                guard let self, self.generation == expected, self.readGeneration == expectedRead else { return }
+                self.errorMessage = "附件已变化或不可访问，请重新加载账本 / Attachment changed or unavailable; reload the ledger"
+            }
+        }
     }
 
     func selectJournalMode(_ mode: String) {

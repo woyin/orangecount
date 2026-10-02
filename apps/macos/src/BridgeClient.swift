@@ -74,11 +74,14 @@ final class BridgeClient: @unchecked Sendable {
                 throw BridgeError.jsonDecodeError("Saved query catalogue does not match view snapshot")
             }
         }
-        if request.view == "journal", ["all", "config"].contains(request.journal_mode ?? ""), response.state.has_snapshot {
+        if request.document_id == nil, request.view == "journal", ["all", "config"].contains(request.journal_mode ?? ""), response.state.has_snapshot {
             guard response.directives?.snapshot_id == response.state.snapshot_id,
                   response.directives?.mode == request.journal_mode, response.journal == nil else {
                 throw BridgeError.jsonDecodeError("Directive page does not match captured view")
             }
+        }
+        if let id = request.document_id {
+            guard response.document_action?.id == id, response.document_action?.path.hasPrefix("/") == true, response.state.snapshot_id == request.snapshot_id else { throw BridgeError.jsonDecodeError("Attachment authorization does not match request") }
         }
         return response
     }

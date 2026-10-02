@@ -12,6 +12,8 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
+	"unicode/utf8"
 )
 
 // DirectiveRecord keeps effective data separate from its original source kind.
@@ -36,6 +38,7 @@ type DirectiveCatalogue struct {
 }
 
 type sourceDirectiveIndex struct {
+	generated     map[source.Span]bool
 	configuration []DirectiveRecord
 	origins       map[source.Span]DirectiveRecord
 }
@@ -51,7 +54,7 @@ func (s *Snapshot) DirectiveCatalogue() DirectiveCatalogue {
 }
 
 func indexSourceDirectives(graph *source.Graph, parsed map[source.FileID]*ledger.File) sourceDirectiveIndex {
-	index := sourceDirectiveIndex{configuration: []DirectiveRecord{}, origins: map[source.Span]DirectiveRecord{}}
+	index := sourceDirectiveIndex{generated: map[source.Span]bool{}, configuration: []DirectiveRecord{}, origins: map[source.Span]DirectiveRecord{}}
 	if graph == nil {
 		return index
 	}
@@ -66,12 +69,17 @@ func indexSourceDirectives(graph *source.Graph, parsed map[source.FileID]*ledger
 		if file == nil {
 			return
 		}
-		for _, directive := range file.Directives {
+		for position, directive := range file.Directives {
 			path := graph.Path(id)
 			kind := directive.Kind()
 			hash := sha256.Sum256([]byte(path + "\x00" + string(kind) + "\x00" + directive.RawText()))
 			record := DirectiveRecord{ID: hex.EncodeToString(hash[:]), Kind: kind, SourceKind: kind, File: path, Span: directive.Span(), Directive: directive}
 			index.origins[record.Span] = record
+			if header, ok := directive.(*ledger.Transaction); ok && len(header.Postings) == 0 && position+1 < len(file.Directives) {
+				if leg, ok := file.Directives[position+1].(ledger.Dialect); ok && !leg.HasDate {
+					index.generated[record.Span] = true
+				}
+			}
 			if configurationKind(kind) {
 				index.configuration = append(index.configuration, record)
 			}
@@ -129,7 +137,7 @@ func buildDirectiveCatalogue(index sourceDirectiveIndex, evaluation *ledger.Eval
 		}
 		origin, exists := index.origins[entry.Span]
 		record := DirectiveRecord{ID: origin.ID, Kind: entry.Directive.Kind(), SourceKind: origin.Kind, Date: entry.Date.Raw, File: entry.File, Span: entry.Span, Directive: entry.Directive}
-		record.Generated = !exists || record.Kind != origin.Kind
+		record.Generated = !exists || record.Kind != origin.Kind || index.generated[entry.Span]
 		if record.Generated {
 			record.OriginID = origin.ID
 			record.ID = origin.ID + ":generated:" + snapshotID + ":" + strconv.Itoa(ordinal)
@@ -154,6 +162,20 @@ type DirectiveRecordPage struct {
 
 func (s *Snapshot) SelectDirectives(selection DirectiveSelection) (DirectiveRecordPage, error) {
 	page := DirectiveRecordPage{Records: []DirectiveRecord{}, Offset: selection.Offset, Limit: selection.Limit}
+	if len(selection.Text) > 65536 || !utf8.ValidString(selection.Text) {
+		return page, fmt.Errorf("invalid directive search")
+	}
+	for _, date := range []string{selection.DateFrom, selection.DateTo} {
+		if date != "" {
+			if _, err := time.Parse("2006-01-02", date); err != nil {
+				return page, fmt.Errorf("invalid directive date")
+			}
+		}
+	}
+	if selection.Mode != "config" && selection.DateFrom != "" && selection.DateTo != "" && selection.DateFrom > selection.DateTo {
+		return page, fmt.Errorf("inverted directive date range")
+	}
+
 	if selection.Mode != "all" && selection.Mode != "config" || selection.Offset < 0 || selection.Limit < 0 || selection.Limit > 500 {
 		return page, fmt.Errorf("invalid directive selection")
 	}
@@ -210,7 +232,8 @@ func prepareDirectiveSearch(record *DirectiveRecord) {
 	value := reflect.Indirect(reflect.ValueOf(record.Directive))
 	if field := value.FieldByName("Meta"); field.IsValid() {
 		for _, meta := range field.Interface().([]ledger.Metadata) {
-			parts = append(parts, meta.Key, meta.Value.Raw, meta.Value.String)
+			parts = append(parts, meta.Key)
+			parts = appendDirectiveValueSearch(parts, meta.Value, 0)
 		}
 	}
 	switch directive := value.Interface().(type) {
@@ -233,4 +256,29 @@ func prepareDirectiveSearch(record *DirectiveRecord) {
 		}
 	}
 	record.search = strings.ToLower(strings.Join(append(parts, record.accounts...), " "))
+}
+
+func appendDirectiveValueSearch(parts []string, value ledger.Value, depth int) []string {
+	if depth > 64 {
+		return parts
+	}
+	parts = append(parts, value.Raw, value.String, value.Number.Raw, value.Date.Raw, value.Amount.Number.Raw, value.Amount.Currency)
+	switch value.Kind {
+	case ledger.ValueTag:
+		parts = append(parts, "#"+value.String)
+	case ledger.ValueLink:
+		parts = append(parts, "^"+value.String)
+	case ledger.ValueBool:
+		parts = append(parts, strconv.FormatBool(value.Bool))
+	case ledger.ValueNull:
+		parts = append(parts, "NULL")
+	}
+	for _, child := range value.List {
+		parts = appendDirectiveValueSearch(parts, child, depth+1)
+	}
+	for _, field := range value.Map {
+		parts = append(parts, field.Key)
+		parts = appendDirectiveValueSearch(parts, field.Value, depth+1)
+	}
+	return parts
 }

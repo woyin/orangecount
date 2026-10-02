@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"orangecount/internal/ledger"
 )
@@ -62,6 +63,12 @@ func indexJournal(e ledger.Evaluation, snapshotID string) []journalEntry {
 }
 
 func validJournalRequest(r Request) bool {
+	if len(r.Text) > 65536 || !utf8.ValidString(r.Text) {
+		return false
+	}
+	if r.DocumentID != "" && (len(r.DocumentID) > 512 || r.View != "journal" || r.JournalMode != "all" || r.SnapshotID == "") {
+		return false
+	}
 	if r.View != "journal" && (r.JournalMode != "" || r.DirectiveKind != "") {
 		return false
 	}

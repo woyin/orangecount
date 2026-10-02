@@ -38,6 +38,7 @@ struct ViewRequest: Codable, Sendable, Equatable {
     var limit: Int = 0
     var journal_mode: String? = nil
     var directive_kind: String? = nil
+    var document_id: String? = nil
     var migration_details: Bool = false
 }
 
@@ -54,6 +55,7 @@ struct LedgerView: Codable, Sendable {
     var prices: PricesPayload? = nil
     var query_catalogue: QueryCatalogue? = nil
     var directives: DirectivesPayload? = nil
+    var document_action: DocumentAction? = nil
 }
 
 // A nullable value must have a key on the wire. Synthesis decodes this wrapper
@@ -1250,7 +1252,16 @@ struct DirectiveField: Codable, Sendable { let name: String; let value: Directiv
 struct DirectiveMetadata: Codable, Sendable { let key: String; let value: DirectiveValue; let source: SourceLocation }
 struct DirectivePosting: Codable, Sendable { let posting: JournalPosting; let metadata: [DirectiveMetadata] }
 
+struct Attachment: Codable, Sendable, Identifiable {
+    let id: String
+    let filename: String
+    let path: String
+    let status: String
+}
+struct DocumentAction: Codable, Sendable { let id: String; let path: String }
+
 struct DirectiveRecord: Codable, Sendable, Identifiable {
+    let attachments: [Attachment]
     let id: String
     let kind: String
     let source_kind: String
@@ -1293,7 +1304,11 @@ struct DirectivesPayload: Codable, Sendable {
                   (mode == "config" ? config.contains(record.kind) && record.date == nil : dated.contains(record.kind) && record.date != nil && !record.date!.isEmpty && validPresetDate(record.date!)) &&
                   (record.generated ? record.kind == "transaction" && (record.origin_id != nil || record.source_kind.isEmpty) : record.origin_id == nil && record.source_kind == record.kind) &&
                   (record.source_kind.isEmpty || config.union(dated).union(["dialect"]).contains(record.source_kind)) &&
-                  (record.kind == "transaction" || record.postings.isEmpty) && record.validFields
+                  (record.kind == "transaction" || record.postings.isEmpty) &&
+                  (record.kind == "document" || record.attachments.isEmpty) &&
+                  (record.kind != "document" || record.attachments.map(\.filename) == record.fields.filter { $0.name == "filename" }.compactMap { if case .text(let text) = $0.value.value { return text }; return nil }) &&
+                  Set(record.attachments.map(\.id)).count == record.attachments.count &&
+                  record.attachments.allSatisfy { !$0.id.isEmpty && ["available", "missing", "outside-root", "unsupported-kind", "unreadable"].contains($0.status) && ($0.status != "available" || $0.path.hasPrefix("/")) } && record.validFields
               }) else { throw queryContractError(decoder, "Invalid directive records") }
     }
 }

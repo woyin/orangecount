@@ -208,3 +208,40 @@ func TestDirectiveCatalogueCopiesExactNumbersMetadataAndTags(t *testing.T) {
 		}
 	}
 }
+
+func TestBlockDialectTransactionsKeepHeaderOrigin(t *testing.T) {
+	root := t.TempDir()
+	entry := filepath.Join(root, "block.bean")
+	input := `2000-01-01 open Assets:Cash USD
+2000-01-01 open Expenses:One USD
+2000-01-01 open Expenses:Two USD
+2000-01-02 * "block"
+  1 USD @Assets:Cash -> @Expenses:One
+  2 USD @Assets:Cash -> @Expenses:Two
+2000-01-02 * "block"
+  1 USD @Assets:Cash -> @Expenses:One
+  2 USD @Assets:Cash -> @Expenses:Two
+`
+	if err := os.WriteFile(entry, []byte(input), 0600); err != nil {
+		t.Fatal(err)
+	}
+	built := snapshot.BuildWithOptions(entry, snapshot.BuildOptions{Evaluation: ledger.EvalOptions{SemanticsProfile: ledger.V3}})
+	if built.Snapshot == nil {
+		t.Fatal(built.Diagnostics)
+	}
+	page, err := built.Snapshot.SelectDirectives(snapshot.DirectiveSelection{Mode: "all", Kind: "transaction"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(page.Records) != 2 {
+		t.Fatal("lost block transactions")
+	}
+	for _, record := range page.Records {
+		if !record.Generated || record.SourceKind != ledger.KindTxn || record.OriginID == "" {
+			t.Fatal("block header origin missing", record)
+		}
+	}
+	if page.Records[0].OriginID == page.Records[1].OriginID {
+		t.Fatal("duplicate source headers merged")
+	}
+}

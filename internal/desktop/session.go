@@ -15,6 +15,7 @@ import (
 	"sync"
 	"time"
 
+	"orangecount/internal/documents"
 	"orangecount/internal/ledger"
 	"orangecount/internal/report"
 	"orangecount/internal/snapshot"
@@ -42,6 +43,7 @@ type State struct {
 }
 
 type Request struct {
+	DocumentID       string `json:"document_id,omitempty"`
 	JournalMode      string `json:"journal_mode,omitempty"`
 	DirectiveKind    string `json:"directive_kind,omitempty"`
 	MigrationDetails bool   `json:"migration_details"`
@@ -70,6 +72,7 @@ type Request struct {
 }
 
 type ViewResponse struct {
+	DocumentAction *DocumentAction               `json:"document_action,omitempty"`
 	Directives     *DirectivesPayload            `json:"directives,omitempty"`
 	QueryCatalogue *QueryCatalogue               `json:"query_catalogue,omitempty"`
 	Prices         *report.PricesProjection      `json:"prices,omitempty"`
@@ -85,11 +88,14 @@ type ViewResponse struct {
 }
 
 type publication struct {
-	protectedPaths []string
-	snapshot       *snapshot.Snapshot
-	evaluation     ledger.Evaluation
-	journal        []journalEntry
-	latestDate     string
+	documentMu         sync.Mutex
+	documentResolver   *documents.Resolver
+	documentReferences map[string]documents.Reference
+	protectedPaths     []string
+	snapshot           *snapshot.Snapshot
+	evaluation         ledger.Evaluation
+	journal            []journalEntry
+	latestDate         string
 }
 
 type Session struct {
@@ -265,6 +271,14 @@ func (s *Session) Read(request Request) (ViewResponse, error) {
 		return result, nil
 	}
 	if current == nil {
+		return result, nil
+	}
+	if request.DocumentID != "" {
+		action, err := current.authorizeDocument(request.DocumentID)
+		if err != nil {
+			return ViewResponse{}, err
+		}
+		result.DocumentAction = action
 		return result, nil
 	}
 	if request.View == "query" {
