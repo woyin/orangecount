@@ -6,6 +6,8 @@
 package source
 
 import (
+	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -244,5 +246,51 @@ func TestIncludeScannerAndSpanAliasesHandleEscapesAndInvalidRanges(t *testing.T)
 	span := file.SpanAt(4, 2)
 	if span.Start != 4 || span.End != 4 || file.Text(Span{File: file.ID, Start: -1, End: 2}) == "" {
 		t.Fatalf("span alias/range handling span=%+v", span)
+	}
+}
+
+func TestLoadGraphRecursiveGlobLoadsAllVisibleMatches(t *testing.T) {
+	dir := t.TempDir()
+	os.MkdirAll(filepath.Join(dir, "parts", "nested"), 0700)
+	entry := filepath.Join(dir, "main.bean")
+	os.WriteFile(entry, []byte("include \"parts/**/*.bean\"\n"), 0600)
+	for _, name := range []string{"parts/a.bean", "parts/nested/b.bean", "parts/.hidden.bean"} {
+		os.WriteFile(filepath.Join(dir, name), []byte("; public fixture\n"), 0600)
+	}
+	graph, err := LoadGraph(entry)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(graph.Diagnostics) != 0 || len(graph.Order) != 3 || len(graph.Edges[graph.Entry]) != 2 {
+		t.Fatalf("order=%v diagnostics=%+v edges=%+v", graph.Order, graph.Diagnostics, graph.Edges)
+	}
+}
+
+func TestLoadGraphWorkBudgetAndCancellation(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	os.WriteFile(entry, []byte("include \"*.bean\"\n"), 0600)
+	graph, err := LoadGraphWithOptions(context.Background(), entry, LoadOptions{IncludeWorkLimit: 1})
+	if err == nil || len(graph.Diagnostics) == 0 || graph.Diagnostics[0].Code != "E-INCLUDE-BUDGET" {
+		t.Fatalf("partial capture not rejected: %v %+v", err, graph.Diagnostics)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if _, err = LoadGraphContext(ctx, entry); !errors.Is(err, context.Canceled) {
+		t.Fatalf("cancellation lost: %v", err)
+	}
+}
+
+func TestRepeatedIncludeIsABlockingLoadDiagnostic(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	os.WriteFile(entry, []byte("include \"child.bean\"\ninclude \"child.bean\"\n"), 0600)
+	os.WriteFile(filepath.Join(dir, "child.bean"), []byte("; child\n"), 0600)
+	graph, err := LoadGraph(entry)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(graph.Diagnostics) != 1 || graph.Diagnostics[0].Code != "E-INCLUDE-DUPLICATE" {
+		t.Fatalf("duplicate silently accepted: %+v", graph.Diagnostics)
 	}
 }

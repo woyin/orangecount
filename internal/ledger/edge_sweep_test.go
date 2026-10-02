@@ -62,11 +62,11 @@ func TestEvaluatePluginCommodityAndUnknownFileID(t *testing.T) {
 2000-01-01 open Assets:A USD
 `
 	file, parseBag := ParseText("noop.bean", []byte(text))
-	if parseBag.HasErrors() {
+	if !parseBag.HasErrors() {
 		t.Fatalf("parse=%+v", parseBag.All())
 	}
 	evaluation := EvaluateFiles(map[source.FileID]*File{1: file}, []source.FileID{1}, EvalOptions{})
-	if !evaluation.Valid {
+	if evaluation.Valid {
 		t.Fatalf("diagnostics=%+v", evaluation.Diagnostics)
 	}
 	// An order entry whose file never parsed is skipped, not a panic.

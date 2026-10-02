@@ -151,6 +151,10 @@ func severityRank(s Severity) int {
 }
 
 var messages = map[string]map[string]string{
+	"E-INCLUDE-BUDGET":       {"en": "include capture cancelled or exceeded resource budget", "zh-CN": "include捕获已取消或超过资源预算"},
+	"E-INCLUDE-DUPLICATE":    {"en": "source file included more than once", "zh-CN": "同一源文件被重复include"},
+	"E-PARSE-METADATA":       {"en": "duplicate or reserved posting metadata field", "zh-CN": "posting元数据字段重复或占用保留字段"},
+	"E-PLUGIN-UNSUPPORTED":   {"en": "user plugins are unsupported; migrate their effects to core directives", "zh-CN": "不支持用户插件；请将插件作用迁移到核心指令"},
 	"E-INCLUDE-CYCLE":        {"en": "include cycle detected", "zh-CN": "检测到 include 循环"},
 	"E-INCLUDE-READ":         {"en": "cannot read included file", "zh-CN": "无法读取 include 文件"},
 	"E-PARSE-DATE":           {"en": "invalid date", "zh-CN": "日期无效"},

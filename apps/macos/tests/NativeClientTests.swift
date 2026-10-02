@@ -278,7 +278,7 @@ struct NativeClientTests {
         try await waitUntil("directive reload") { store.state?.snapshot_id != oldSnapshot && store.directivesPayload?.page.offset == 0 }
         guard store.request.directive_kind == "note", store.directivesPayload?.records[0].id != firstID else { throw NativeClientFailure(message: "Reload restored duplicate by ordinal or lost kind filter") }
         store.selectJournalMode("config")
-        try await waitUntil("configuration mode") { store.directivesPayload?.mode == "config" && store.directivesPayload?.page.total_count == 9 }
+        try await waitUntil("configuration mode") { store.directivesPayload?.mode == "config" && store.directivesPayload?.page.total_count == 8 }
         guard store.request.directive_kind == nil, store.request.offset == 0 else { throw NativeClientFailure(message: "Mode switch retained stale kind or paging") }
         store.selectedNav = .query
         try await waitUntil("query after config") { store.queryCatalogue != nil }

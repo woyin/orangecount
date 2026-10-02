@@ -332,6 +332,16 @@ func (p *parser) parseContinuation(ln line, ts []token) {
 			return
 		}
 		if p.posting != nil {
+			if meta.Key == "filename" || meta.Key == "lineno" {
+				p.add("E-PARSE-METADATA", diagnostic.Error, meta.Span)
+				return
+			}
+			for _, old := range p.posting.Meta {
+				if old.Key == meta.Key {
+					p.add("E-PARSE-METADATA", diagnostic.Error, meta.Span)
+					return
+				}
+			}
 			p.posting.Meta = append(p.posting.Meta, meta)
 			p.posting.At.End = meta.Span.End
 			p.posting.At.EndLine, p.posting.At.EndColumn = meta.Span.EndLine, meta.Span.EndColumn
@@ -479,8 +489,7 @@ func (p *parser) parseOptionKeyword(base DirectiveBase, ts []token) {
 	p.appendDirective(Option{DirectiveBase: base, Key: ts[1].value, Value: ts[2].value})
 }
 
-// parsePluginKeyword reads `plugin "module" ["config"]` and warns that v3
-// migrates plugins into the core engine.
+// parsePluginKeyword retains syntax evidence but rejects user plugins.
 func (p *parser) parsePluginKeyword(base DirectiveBase, ts []token) {
 	if (len(ts) != 2 && len(ts) != 3) || ts[1].kind != tokString || (len(ts) == 3 && ts[2].kind != tokString) {
 		p.add("E-PARSE-EXPECTED", diagnostic.Error, base.At)
@@ -491,7 +500,7 @@ func (p *parser) parsePluginKeyword(base DirectiveBase, ts []token) {
 		d.Config = ts[2].value
 	}
 	p.appendDirective(d)
-	p.add("W-PLUGIN-MIGRATION", diagnostic.Warning, ts[0].span)
+	p.add("E-PLUGIN-UNSUPPORTED", diagnostic.Error, ts[0].span)
 }
 
 // parseIncludeKeyword reads `include "path"`.

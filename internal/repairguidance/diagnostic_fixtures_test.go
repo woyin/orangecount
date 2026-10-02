@@ -26,6 +26,8 @@ func TestEveryGuidanceCodeHasARepresentativeTrigger(t *testing.T) {
 		profile ledger.SemanticsProfile
 	}{
 		{code: "E-SOURCE-UTF8"},
+		{code: "E-PLUGIN-UNSUPPORTED", text: "plugin \"public.example\"\n"},
+		{code: "E-PARSE-METADATA", text: "2000-01-01 * \"public\"\n  Assets:Cash 1 USD\n    filename: \"reserved\"\n"},
 		{code: "E-PARSE-DATE", text: "2000-02-30 open Assets:Cash USD\n"},
 		{code: "E-PARSE-DIRECTIVE", text: "2000-01-01 opne Assets:Cash USD\n"},
 		{code: "E-PARSE-EXPECTED", text: "2000-01-01 open\n"},

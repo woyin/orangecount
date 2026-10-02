@@ -88,15 +88,15 @@ func (s *Server) handleImportPreview(w http.ResponseWriter, r *http.Request, cur
 	}
 	file, bag := ledger.ParseText(name, []byte(normalized))
 	diagnostics := bag.All()
+	if err := rejectImportDirectives(file); err != nil {
+		writeAPIError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	if bag.HasErrors() {
 		writeJSON(w, struct {
 			Valid       bool                 `json:"valid"`
 			Diagnostics []diagnosticResponse `json:"diagnostics"`
 		}{Valid: false, Diagnostics: diagnosticsPayload(diagnostics, nil)})
-		return
-	}
-	if err := rejectImportDirectives(file); err != nil {
-		writeAPIError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 	// Evaluate the imported file against the merged include graph rather than

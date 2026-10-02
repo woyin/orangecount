@@ -1,6 +1,6 @@
 option "title" "All directive types"
 option "operating_currency" "USD"
-plugin "example.not-executed" "public configuration"
+; user plugins are rejected; see the dedicated invalid-source tests
 include "included.bean"
 pushtag #ambient
 pushmeta project: "public"

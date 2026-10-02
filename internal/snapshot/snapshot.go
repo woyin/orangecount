@@ -100,10 +100,14 @@ func BuildGraphWithOptions(graph *source.Graph, options BuildOptions) BuildResul
 	// ledger (ADR-0045 E3).
 	parsed, _, dialectBag := dialect.Expand(graph, parsed)
 	var evaluation *ledger.Evaluation
-	if options.Evaluation.SemanticsProfile == ledger.V3 && parseBag.HasErrors() {
+	pluginBlocked := false
+	for _, d := range parseBag.All() {
+		pluginBlocked = pluginBlocked || d.Code == "E-PLUGIN-UNSUPPORTED"
+	}
+	if (options.Evaluation.SemanticsProfile == ledger.V3 && parseBag.HasErrors()) || pluginBlocked {
 		// A malformed declaration must not also configure the evaluator and
 		// manufacture secondary semantic errors from incomplete syntax.
-		evaluation = &ledger.Evaluation{SemanticsProfile: ledger.V3, EvaluationRevision: ledger.V3.EvaluationRevision(), ActiveExtensions: []string{}}
+		evaluation = &ledger.Evaluation{SemanticsProfile: options.Evaluation.SemanticsProfile, EvaluationRevision: options.Evaluation.SemanticsProfile.EvaluationRevision(), ActiveExtensions: []string{}}
 	} else {
 		evaluation = ledger.Evaluate(graph, parsed, options.Evaluation)
 	}
@@ -399,6 +403,12 @@ func patrolFromGraph(entry string, graph *source.Graph) *graphPatrol {
 	seen := map[string]bool{entry: true}
 	paths := []string{entry}
 	if graph != nil {
+		for _, path := range graph.WatchPaths() {
+			if !seen[path] {
+				seen[path] = true
+				paths = append(paths, path)
+			}
+		}
 		for _, id := range graph.Order {
 			if file := graph.File(id); file != nil && !seen[file.Path] {
 				seen[file.Path] = true
@@ -426,7 +436,25 @@ func (p *graphPatrol) signature() string {
 			fmt.Fprintf(&builder, "%s:missing\x00", path)
 			continue
 		}
-		fmt.Fprintf(&builder, "%s:%d:%d\x00", path, info.Size(), info.ModTime().UnixNano())
+		fmt.Fprintf(&builder, "%s:%d:%d:%s\x00", path, info.Size(), info.ModTime().UnixNano(), fileIdentity(info))
 	}
 	return builder.String()
+}
+
+func fileIdentity(info os.FileInfo) string {
+	value := reflect.ValueOf(info.Sys())
+	if value.Kind() == reflect.Pointer {
+		value = value.Elem()
+	}
+	if value.Kind() != reflect.Struct {
+		return ""
+	}
+	var result strings.Builder
+	for _, name := range []string{"Dev", "Ino"} {
+		field := value.FieldByName(name)
+		if field.IsValid() && field.CanInterface() {
+			fmt.Fprintf(&result, "%v/", field.Interface())
+		}
+	}
+	return result.String()
 }

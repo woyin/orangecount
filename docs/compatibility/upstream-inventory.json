@@ -1,0 +1,4146 @@
+{
+  "beancount_loader_sha256": "91ec104a758402cbc2d3b0638fec47054954fc3fbe8411a53436bbfffd39bd82",
+  "beanquery_source_sha256": {
+    "__init__.py": "f932c112557e71932127d7f06acae2fbb80d674d1829ef46bcb301e7eb024b53",
+    "__main__.py": "002ad78ff0a4625964afd23a259a05dd16019b776944fce101d2e501f59b9060",
+    "compiler.py": "23e4b15e7dfab9a8be82f0fb667b8983e788a86f3f2baba7940279527bdd2317",
+    "cursor.py": "5ec8158c8c049afa0146832b4fc2b13d4898ce2d7490d62c252dd3eb60922f30",
+    "cursor_test.py": "3b9f238dd19b94242d2964a5d4444c57ff52a65c8646c84fe9e87fa966d7e43f",
+    "errors.py": "060c731ca48c47afce47b4ffe8c2ef9022ddc277f7a3a9c42e04280f3c5975b5",
+    "hashable.py": "2ec846627d86b305fe039527174e64551ea7e4db7f3f1a65d6d91a7aadddd020",
+    "hashable_test.py": "24c2f042ac0710589f6d9d30cc1c64e3ecb536fc52fa314938b0d2d443c03162",
+    "numberify.py": "ef6e7b99525a5d3bc5a79bea4e0ddd267885397c53db49bf8c4b9ee0dff563a1",
+    "numberify_test.py": "df5fb91304f8c7b8f36078b816515606b100fc846ce8560d84063e68528ecc22",
+    "parser/__init__.py": "a99c52f309e2c2b5587932c4bd88108b5203186ada87bb8fe3070212acb02675",
+    "parser/ast.py": "0d759ca38c0bf5ea9cbf3715f5daa1c06bc8764dab8c8ced829a4a74c5a64d36",
+    "parser/parser.py": "af70b25dddae10093c09f0cf45d6d58b27ccb9ae463dd94fcc10e5211a2f3dbe",
+    "parser_test.py": "9618ce61beb573071d4bda47f7e25e360c2121fcc52de75689cf3be98c873c77",
+    "query.py": "8060fe5ad1978451694138a8733f619af4c57a22877baf324b5f936483dd683a",
+    "query_compile.py": "903094b7185a909e27ce56645b8fb81dd7f229b22412840a89ce6bf89e50f93c",
+    "query_compile_test.py": "4d1ea67b30f606c590f65cb49476baa892855ae16423882644772ff97c63a169",
+    "query_env.py": "230099a346848dbdf703f61e39b2d9357bdb23650b95bbee39a162ada6f6a044",
+    "query_env_test.py": "89b57d7a75646439b5266b18cdfbe3c31c00d32619cc52d6209f53403df49e3c",
+    "query_execute.py": "5c3c9d07550fe59695ad204460d2bcfe279e8825f1d7ede0ce05fc9ee0ed83db",
+    "query_execute_test.py": "1896bb1784ce09765fab85add1ac51a7a27ea56b565f40e272c7b3cccb2ff0e4",
+    "query_render.py": "149141cfe3cfc5466b8eb1212eb2957032548a2505a6d444fc9e2680c2eabf2c",
+    "query_render_test.py": "c9fbbaa0c2b0744926ab73f2ee3733da014b17f2a9ac11e8e8afab9931e805cc",
+    "query_test.py": "a13986109568c4e3cc26ac6284af972f80b8fd35d099f1a5a3034028dac9f98d",
+    "render/beancount.py": "0d157e62036445594a3835b347e3a5407cc3cc096e822be40df9aaca03b99600",
+    "render/csv.py": "80b4982601dc6fe9786045d6315fe8668d9f1fc85da06d09c1046b2bb7bf06a8",
+    "render/text.py": "d768c651b8802818d809fcfb5203bf031321f3ada126e4e96cecd3ef4f09ad35",
+    "shell.py": "2ebaf3a1ce3158c2c2b03a47b52d87be4c806397ecbd3987a42883308a93128e",
+    "shell_test.py": "bc8dc357c38599c677b6348ace1bfadefc3819055f4d7b793a67999fe28a2294",
+    "sources/beancount.py": "bba51785d57f964d79d6a6395c58bcbf8fd8e8a2364764c4c89ae251fe48dea6",
+    "sources/csv.py": "2ca1ba4173669d51e7e522f30d20dcab10af5c9762afb30c8766fd5b77116dfa",
+    "sources/memory.py": "318dd41708e001ca957a78a2ce9f3f8b7e281b5fe8590fc3e7add641107ff79a",
+    "sources/test.py": "ea3898b4f388d7e786ebd571bad1fb2cbe7a07421816b71f9beee47156a9e591",
+    "tables.py": "328d19e20734a4f6d0182e3eb428a9d50d2b9ed2771f3ae24a1dbf96f01d84ee",
+    "types.py": "9deedd9b4bcc2720042192dc472edd6f4606735ed038e32edf31d7f1e546960c",
+    "types_test.py": "0bbb616eabc6df9e4e3f79cb2d165083b7361177e2c0cd11b64f6779040dc3e7"
+  },
+  "capabilities": [
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.accounts.account",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "AccountsTable.account"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.accounts.close",
+      "kind": "column",
+      "output": "beanquery.sources.beancount.Close",
+      "status": "pending",
+      "upstream_symbol": "AccountsTable.close"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.accounts.open",
+      "kind": "column",
+      "output": "beanquery.sources.beancount.Open",
+      "status": "pending",
+      "upstream_symbol": "AccountsTable.open"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.balances.account",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "BalancesTable.account"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.balances.amount",
+      "kind": "column",
+      "output": "beancount.core.amount.Amount",
+      "status": "pending",
+      "upstream_symbol": "BalancesTable.amount"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.balances.date",
+      "kind": "column",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "BalancesTable.date"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.balances.discrepancy",
+      "kind": "column",
+      "output": "beancount.core.amount.Amount",
+      "status": "pending",
+      "upstream_symbol": "BalancesTable.discrepancy"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.balances.meta",
+      "kind": "column",
+      "output": "beanquery.sources.beancount.Metadata",
+      "status": "pending",
+      "upstream_symbol": "BalancesTable.meta"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.balances.tolerance",
+      "kind": "column",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "BalancesTable.tolerance"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.commodities.date",
+      "kind": "column",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "CommoditiesTable.date"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.commodities.meta",
+      "kind": "column",
+      "output": "beanquery.sources.beancount.Metadata",
+      "status": "pending",
+      "upstream_symbol": "CommoditiesTable.meta"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.commodities.name",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "CommoditiesTable.name"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.documents.account",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "DocumentsTable.account"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.documents.date",
+      "kind": "column",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "DocumentsTable.date"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.documents.filename",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "DocumentsTable.filename"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.documents.links",
+      "kind": "column",
+      "output": "frozenset[str]",
+      "status": "pending",
+      "upstream_symbol": "DocumentsTable.links"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.documents.meta",
+      "kind": "column",
+      "output": "beanquery.sources.beancount.Metadata",
+      "status": "pending",
+      "upstream_symbol": "DocumentsTable.meta"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.documents.tags",
+      "kind": "column",
+      "output": "frozenset[str]",
+      "status": "pending",
+      "upstream_symbol": "DocumentsTable.tags"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.entries.accounts",
+      "kind": "column",
+      "output": "typing.Set[str]",
+      "status": "pending",
+      "upstream_symbol": "EntriesTable.accounts"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.entries.date",
+      "kind": "column",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "EntriesTable.date"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.entries.day",
+      "kind": "column",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "EntriesTable.day"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.entries.description",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "EntriesTable.description"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.entries.filename",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "EntriesTable.filename"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.entries.flag",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "EntriesTable.flag"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.entries.id",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "EntriesTable.id"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.entries.lineno",
+      "kind": "column",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "EntriesTable.lineno"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.entries.links",
+      "kind": "column",
+      "output": "builtins.set",
+      "status": "pending",
+      "upstream_symbol": "EntriesTable.links"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.entries.meta",
+      "kind": "column",
+      "output": "builtins.dict",
+      "status": "pending",
+      "upstream_symbol": "EntriesTable.meta"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.entries.month",
+      "kind": "column",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "EntriesTable.month"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.entries.narration",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "EntriesTable.narration"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.entries.payee",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "EntriesTable.payee"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.entries.tags",
+      "kind": "column",
+      "output": "builtins.set",
+      "status": "pending",
+      "upstream_symbol": "EntriesTable.tags"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.entries.type",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "EntriesTable.type"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.entries.year",
+      "kind": "column",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "EntriesTable.year"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.events.date",
+      "kind": "column",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "EventsTable.date"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.events.description",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "EventsTable.description"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.events.meta",
+      "kind": "column",
+      "output": "beanquery.sources.beancount.Metadata",
+      "status": "pending",
+      "upstream_symbol": "EventsTable.meta"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.events.type",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "EventsTable.type"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.notes.account",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "NotesTable.account"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.notes.comment",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "NotesTable.comment"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.notes.date",
+      "kind": "column",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "NotesTable.date"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.notes.links",
+      "kind": "column",
+      "output": "frozenset[str]",
+      "status": "pending",
+      "upstream_symbol": "NotesTable.links"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.notes.meta",
+      "kind": "column",
+      "output": "beanquery.sources.beancount.Metadata",
+      "status": "pending",
+      "upstream_symbol": "NotesTable.meta"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.notes.tags",
+      "kind": "column",
+      "output": "frozenset[str]",
+      "status": "pending",
+      "upstream_symbol": "NotesTable.tags"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.account",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.account"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.accounts",
+      "kind": "column",
+      "output": "typing.Set[str]",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.accounts"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.balance",
+      "kind": "column",
+      "output": "beancount.core.inventory.Inventory",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.balance"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.cost_currency",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.cost_currency"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.cost_date",
+      "kind": "column",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.cost_date"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.cost_label",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.cost_label"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.cost_number",
+      "kind": "column",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.cost_number"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.currency",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.currency"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.date",
+      "kind": "column",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.date"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.day",
+      "kind": "column",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.day"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.description",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.description"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.entry",
+      "kind": "column",
+      "output": "beancount.core.data.Transaction",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.entry"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.filename",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.filename"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.flag",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.flag"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.id",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.id"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.lineno",
+      "kind": "column",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.lineno"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.links",
+      "kind": "column",
+      "output": "builtins.set",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.links"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.location",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.location"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.meta",
+      "kind": "column",
+      "output": "builtins.dict",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.meta"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.month",
+      "kind": "column",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.month"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.narration",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.narration"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.number",
+      "kind": "column",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.number"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.other_accounts",
+      "kind": "column",
+      "output": "builtins.set",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.other_accounts"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.payee",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.payee"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.position",
+      "kind": "column",
+      "output": "beancount.core.position.Position",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.position"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.posting_flag",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.posting_flag"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.price",
+      "kind": "column",
+      "output": "beancount.core.amount.Amount",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.price"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.tags",
+      "kind": "column",
+      "output": "builtins.set",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.tags"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.type",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.type"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.weight",
+      "kind": "column",
+      "output": "beancount.core.amount.Amount",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.weight"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.postings.year",
+      "kind": "column",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "PostingsTable.year"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.prices.amount",
+      "kind": "column",
+      "output": "beancount.core.amount.Amount",
+      "status": "pending",
+      "upstream_symbol": "PricesTable.amount"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.prices.currency",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "PricesTable.currency"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.prices.date",
+      "kind": "column",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "PricesTable.date"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.prices.meta",
+      "kind": "column",
+      "output": "beanquery.sources.beancount.Metadata",
+      "status": "pending",
+      "upstream_symbol": "PricesTable.meta"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.transactions.accounts",
+      "kind": "column",
+      "output": "typing.Set[str]",
+      "status": "pending",
+      "upstream_symbol": "TransactionsTable.accounts"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.transactions.date",
+      "kind": "column",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "TransactionsTable.date"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.transactions.flag",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "TransactionsTable.flag"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.transactions.links",
+      "kind": "column",
+      "output": "builtins.set",
+      "status": "pending",
+      "upstream_symbol": "TransactionsTable.links"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.transactions.meta",
+      "kind": "column",
+      "output": "beanquery.sources.beancount.Metadata",
+      "status": "pending",
+      "upstream_symbol": "TransactionsTable.meta"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.transactions.narration",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "TransactionsTable.narration"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.transactions.payee",
+      "kind": "column",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "TransactionsTable.payee"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "table.transactions.tags",
+      "kind": "column",
+      "output": "builtins.set",
+      "status": "pending",
+      "upstream_symbol": "TransactionsTable.tags"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.abs.0",
+      "input": [
+        "beancount.core.inventory.Inventory"
+      ],
+      "kind": "function",
+      "output": "beancount.core.inventory.Inventory",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.abs.1",
+      "input": [
+        "beancount.core.position.Position"
+      ],
+      "kind": "function",
+      "output": "beancount.core.position.Position",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.abs.2",
+      "input": [
+        "decimal.Decimal"
+      ],
+      "kind": "function",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.account_sortkey.0",
+      "input": [
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.any_meta.0",
+      "input": [
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "builtins.object",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.bool.0",
+      "input": [
+        "beanquery.types.Any"
+      ],
+      "kind": "function",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.close_date.0",
+      "input": [
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.commodity.0",
+      "input": [
+        "beancount.core.amount.Amount"
+      ],
+      "kind": "function",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.commodity_meta.0",
+      "input": [
+        "builtins.str",
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "builtins.object",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.commodity_meta.1",
+      "input": [
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "builtins.dict",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.convert.0",
+      "input": [
+        "beancount.core.amount.Amount",
+        "builtins.str",
+        "datetime.date"
+      ],
+      "kind": "function",
+      "output": "beancount.core.amount.Amount",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.convert.1",
+      "input": [
+        "beancount.core.amount.Amount",
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "beancount.core.amount.Amount",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.convert.2",
+      "input": [
+        "beancount.core.position.Position",
+        "builtins.str",
+        "datetime.date"
+      ],
+      "kind": "function",
+      "output": "beancount.core.amount.Amount",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.convert.3",
+      "input": [
+        "beancount.core.position.Position",
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "beancount.core.amount.Amount",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.convert.4",
+      "input": [
+        "beancount.core.inventory.Inventory",
+        "builtins.str",
+        "datetime.date"
+      ],
+      "kind": "function",
+      "output": "beancount.core.inventory.Inventory",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.convert.5",
+      "input": [
+        "beancount.core.inventory.Inventory",
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "beancount.core.inventory.Inventory",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.cost.0",
+      "input": [
+        "beancount.core.position.Position"
+      ],
+      "kind": "function",
+      "output": "beancount.core.amount.Amount",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.cost.1",
+      "input": [
+        "beancount.core.inventory.Inventory"
+      ],
+      "kind": "function",
+      "output": "beancount.core.inventory.Inventory",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.count.0",
+      "input": [
+        "beanquery.types.*"
+      ],
+      "kind": "function",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.Count"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.count.1",
+      "input": [
+        "beanquery.types.Any"
+      ],
+      "kind": "function",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.CountArg"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.currency.0",
+      "input": [
+        "beancount.core.amount.Amount"
+      ],
+      "kind": "function",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.currency_meta.0",
+      "input": [
+        "builtins.str",
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "builtins.object",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.currency_meta.1",
+      "input": [
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "builtins.dict",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.date.0",
+      "input": [
+        "builtins.object"
+      ],
+      "kind": "function",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.date.1",
+      "input": [
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.date.2",
+      "input": [
+        "datetime.date"
+      ],
+      "kind": "function",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.date.3",
+      "input": [
+        "builtins.int",
+        "builtins.int",
+        "builtins.int"
+      ],
+      "kind": "function",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.date_add.0",
+      "input": [
+        "datetime.date",
+        "builtins.int"
+      ],
+      "kind": "function",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.date_bin.0",
+      "input": [
+        "dateutil.relativedelta.relativedelta",
+        "datetime.date",
+        "datetime.date"
+      ],
+      "kind": "function",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.date_bin.1",
+      "input": [
+        "builtins.str",
+        "datetime.date",
+        "datetime.date"
+      ],
+      "kind": "function",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.date_diff.0",
+      "input": [
+        "datetime.date",
+        "datetime.date"
+      ],
+      "kind": "function",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.date_part.0",
+      "input": [
+        "builtins.str",
+        "datetime.date"
+      ],
+      "kind": "function",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.date_trunc.0",
+      "input": [
+        "builtins.str",
+        "datetime.date"
+      ],
+      "kind": "function",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.day.0",
+      "input": [
+        "datetime.date"
+      ],
+      "kind": "function",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.decimal.0",
+      "input": [
+        "builtins.object"
+      ],
+      "kind": "function",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.decimal.1",
+      "input": [
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.decimal.2",
+      "input": [
+        "builtins.bool"
+      ],
+      "kind": "function",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.decimal.3",
+      "input": [
+        "builtins.int"
+      ],
+      "kind": "function",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.decimal.4",
+      "input": [
+        "decimal.Decimal"
+      ],
+      "kind": "function",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.empty.0",
+      "input": [
+        "beancount.core.inventory.Inventory"
+      ],
+      "kind": "function",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.entry_meta.0",
+      "input": [
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "builtins.object",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.filter_currency.0",
+      "input": [
+        "beancount.core.position.Position",
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "beancount.core.position.Position",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.filter_currency.1",
+      "input": [
+        "beancount.core.inventory.Inventory",
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "beancount.core.inventory.Inventory",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.findfirst.0",
+      "input": [
+        "builtins.str",
+        "builtins.set"
+      ],
+      "kind": "function",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.first.0",
+      "input": [
+        "beanquery.types.Any"
+      ],
+      "kind": "function",
+      "output": "beanquery.types.Any",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.First"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.getitem.0",
+      "input": [
+        "builtins.dict",
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "builtins.object",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.GetItem2"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.getitem.1",
+      "input": [
+        "builtins.dict",
+        "builtins.str",
+        "beanquery.types.Any"
+      ],
+      "kind": "function",
+      "output": "builtins.object",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.GetItem3"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.getprice.0",
+      "input": [
+        "builtins.str",
+        "builtins.str",
+        "datetime.date"
+      ],
+      "kind": "function",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.getprice.1",
+      "input": [
+        "builtins.str",
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.grep.0",
+      "input": [
+        "builtins.str",
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.grepn.0",
+      "input": [
+        "builtins.str",
+        "builtins.str",
+        "builtins.int"
+      ],
+      "kind": "function",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.has_account.0",
+      "input": [
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.int.0",
+      "input": [
+        "builtins.object"
+      ],
+      "kind": "function",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.int.1",
+      "input": [
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.int.2",
+      "input": [
+        "decimal.Decimal"
+      ],
+      "kind": "function",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.int.3",
+      "input": [
+        "builtins.bool"
+      ],
+      "kind": "function",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.int.4",
+      "input": [
+        "builtins.int"
+      ],
+      "kind": "function",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.interval.0",
+      "input": [
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "dateutil.relativedelta.relativedelta",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.joinstr.0",
+      "input": [
+        "builtins.set"
+      ],
+      "kind": "function",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.last.0",
+      "input": [
+        "beanquery.types.Any"
+      ],
+      "kind": "function",
+      "output": "beanquery.types.Any",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.Last"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.leaf.0",
+      "input": [
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.length.0",
+      "input": [
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.length.1",
+      "input": [
+        "builtins.set"
+      ],
+      "kind": "function",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.length.2",
+      "input": [
+        "builtins.list"
+      ],
+      "kind": "function",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.lower.0",
+      "input": [
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.max.0",
+      "input": [
+        "beanquery.types.Any"
+      ],
+      "kind": "function",
+      "output": "beanquery.types.Any",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.Max"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.maxwidth.0",
+      "input": [
+        "builtins.str",
+        "builtins.int"
+      ],
+      "kind": "function",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.meta.0",
+      "input": [
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "builtins.object",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.min.0",
+      "input": [
+        "beanquery.types.Any"
+      ],
+      "kind": "function",
+      "output": "beanquery.types.Any",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.Min"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.month.0",
+      "input": [
+        "datetime.date"
+      ],
+      "kind": "function",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.neg.0",
+      "input": [
+        "beancount.core.inventory.Inventory"
+      ],
+      "kind": "function",
+      "output": "beancount.core.inventory.Inventory",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.neg.1",
+      "input": [
+        "beancount.core.position.Position"
+      ],
+      "kind": "function",
+      "output": "beancount.core.position.Position",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.neg.2",
+      "input": [
+        "beancount.core.amount.Amount"
+      ],
+      "kind": "function",
+      "output": "beancount.core.amount.Amount",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.neg.3",
+      "input": [
+        "decimal.Decimal"
+      ],
+      "kind": "function",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.number.0",
+      "input": [
+        "beancount.core.amount.Amount"
+      ],
+      "kind": "function",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.only.0",
+      "input": [
+        "builtins.str",
+        "beancount.core.inventory.Inventory"
+      ],
+      "kind": "function",
+      "output": "beancount.core.amount.Amount",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.open_date.0",
+      "input": [
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.open_meta.0",
+      "input": [
+        "builtins.str",
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "builtins.object",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.open_meta.1",
+      "input": [
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "builtins.dict",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.parent.0",
+      "input": [
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.parse_date.0",
+      "input": [
+        "builtins.str",
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.parse_date.1",
+      "input": [
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.possign.0",
+      "input": [
+        "beancount.core.inventory.Inventory",
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "beancount.core.inventory.Inventory",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.possign.1",
+      "input": [
+        "beancount.core.position.Position",
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "beancount.core.position.Position",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.possign.2",
+      "input": [
+        "beancount.core.amount.Amount",
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "beancount.core.amount.Amount",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.possign.3",
+      "input": [
+        "decimal.Decimal",
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.quarter.0",
+      "input": [
+        "datetime.date"
+      ],
+      "kind": "function",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.repr.0",
+      "input": [
+        "beanquery.types.Any"
+      ],
+      "kind": "function",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.root.0",
+      "input": [
+        "builtins.str",
+        "builtins.int"
+      ],
+      "kind": "function",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.root.1",
+      "input": [
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.round.0",
+      "input": [
+        "builtins.int",
+        "builtins.int"
+      ],
+      "kind": "function",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.round.1",
+      "input": [
+        "builtins.int"
+      ],
+      "kind": "function",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.round.2",
+      "input": [
+        "decimal.Decimal",
+        "builtins.int"
+      ],
+      "kind": "function",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.round.3",
+      "input": [
+        "decimal.Decimal"
+      ],
+      "kind": "function",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.safediv.0",
+      "input": [
+        "decimal.Decimal",
+        "builtins.int"
+      ],
+      "kind": "function",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.safediv.1",
+      "input": [
+        "decimal.Decimal",
+        "decimal.Decimal"
+      ],
+      "kind": "function",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.splitcomp.0",
+      "input": [
+        "builtins.str",
+        "builtins.str",
+        "builtins.int"
+      ],
+      "kind": "function",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.str.0",
+      "input": [
+        "beanquery.types.Any"
+      ],
+      "kind": "function",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.subst.0",
+      "input": [
+        "builtins.str",
+        "builtins.str",
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.substr.0",
+      "input": [
+        "builtins.str",
+        "builtins.int",
+        "builtins.int"
+      ],
+      "kind": "function",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.sum.0",
+      "input": [
+        "builtins.int"
+      ],
+      "kind": "function",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.SumInt"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.sum.1",
+      "input": [
+        "decimal.Decimal"
+      ],
+      "kind": "function",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.SumDecimal"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.sum.2",
+      "input": [
+        "beancount.core.amount.Amount"
+      ],
+      "kind": "function",
+      "output": "beancount.core.inventory.Inventory",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.SumAmount"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.sum.3",
+      "input": [
+        "beancount.core.position.Position"
+      ],
+      "kind": "function",
+      "output": "beancount.core.inventory.Inventory",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.SumPosition"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.sum.4",
+      "input": [
+        "beancount.core.inventory.Inventory"
+      ],
+      "kind": "function",
+      "output": "beancount.core.inventory.Inventory",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.SumInventory"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.today.0",
+      "input": [],
+      "kind": "function",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.units.0",
+      "input": [
+        "beancount.core.position.Position"
+      ],
+      "kind": "function",
+      "output": "beancount.core.amount.Amount",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.units.1",
+      "input": [
+        "beancount.core.inventory.Inventory"
+      ],
+      "kind": "function",
+      "output": "beancount.core.inventory.Inventory",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.upper.0",
+      "input": [
+        "builtins.str"
+      ],
+      "kind": "function",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.value.0",
+      "input": [
+        "beancount.core.position.Position",
+        "datetime.date"
+      ],
+      "kind": "function",
+      "output": "beancount.core.amount.Amount",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.value.1",
+      "input": [
+        "beancount.core.position.Position"
+      ],
+      "kind": "function",
+      "output": "beancount.core.amount.Amount",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.value.2",
+      "input": [
+        "beancount.core.inventory.Inventory",
+        "datetime.date"
+      ],
+      "kind": "function",
+      "output": "beancount.core.inventory.Inventory",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.value.3",
+      "input": [
+        "beancount.core.inventory.Inventory"
+      ],
+      "kind": "function",
+      "output": "beancount.core.inventory.Inventory",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.weekday.0",
+      "input": [
+        "datetime.date"
+      ],
+      "kind": "function",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.year.0",
+      "input": [
+        "datetime.date"
+      ],
+      "kind": "function",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "function.yearmonth.0",
+      "input": [
+        "datetime.date"
+      ],
+      "kind": "function",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_env.function.<locals>.decorator.<locals>.Func"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Add.0",
+      "input": [
+        "dateutil.relativedelta.relativedelta",
+        "dateutil.relativedelta.relativedelta"
+      ],
+      "kind": "operator",
+      "output": "dateutil.relativedelta.relativedelta",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Add[relativedelta,relativedelta]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Add.1",
+      "input": [
+        "dateutil.relativedelta.relativedelta",
+        "datetime.date"
+      ],
+      "kind": "operator",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Add[relativedelta,date]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Add.2",
+      "input": [
+        "datetime.date",
+        "dateutil.relativedelta.relativedelta"
+      ],
+      "kind": "operator",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Add[date,relativedelta]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Add.3",
+      "input": [
+        "builtins.str",
+        "builtins.str"
+      ],
+      "kind": "operator",
+      "output": "builtins.str",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Add[str,str]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Add.4",
+      "input": [
+        "builtins.int",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Add[int,int]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Add.5",
+      "input": [
+        "builtins.int",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Add[int,Decimal]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Add.6",
+      "input": [
+        "decimal.Decimal",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Add[Decimal,int]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Add.7",
+      "input": [
+        "decimal.Decimal",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Add[Decimal,Decimal]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Add.8",
+      "input": [
+        "datetime.date",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Add[date,int]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Add.9",
+      "input": [
+        "builtins.int",
+        "datetime.date"
+      ],
+      "kind": "operator",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Add[int,date]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Between.0",
+      "input": [
+        "builtins.int",
+        "builtins.int",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Between"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Between.1",
+      "input": [
+        "builtins.int",
+        "builtins.int",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Between"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Between.2",
+      "input": [
+        "builtins.int",
+        "decimal.Decimal",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Between"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Between.3",
+      "input": [
+        "builtins.int",
+        "decimal.Decimal",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Between"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Between.4",
+      "input": [
+        "decimal.Decimal",
+        "builtins.int",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Between"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Between.5",
+      "input": [
+        "decimal.Decimal",
+        "builtins.int",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Between"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Between.6",
+      "input": [
+        "decimal.Decimal",
+        "decimal.Decimal",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Between"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Between.7",
+      "input": [
+        "decimal.Decimal",
+        "decimal.Decimal",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Between"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Between.8",
+      "input": [
+        "datetime.date",
+        "datetime.date",
+        "datetime.date"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Between"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Between.9",
+      "input": [
+        "builtins.str",
+        "builtins.str",
+        "builtins.str"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Between"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Div.0",
+      "input": [
+        "builtins.int",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Div[int,Decimal]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Div.1",
+      "input": [
+        "decimal.Decimal",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Div[Decimal,int]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Div.2",
+      "input": [
+        "decimal.Decimal",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Div[Decimal,Decimal]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Div.3",
+      "input": [
+        "builtins.int",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Div[int,int]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Equal.0",
+      "input": [
+        "builtins.int",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Equal[int,int]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Equal.1",
+      "input": [
+        "decimal.Decimal",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Equal[Decimal,int]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Equal.2",
+      "input": [
+        "builtins.int",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Equal[int,Decimal]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Equal.3",
+      "input": [
+        "decimal.Decimal",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Equal[Decimal,Decimal]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Equal.4",
+      "input": [
+        "datetime.date",
+        "datetime.date"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Equal[date,date]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Equal.5",
+      "input": [
+        "builtins.str",
+        "builtins.str"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Equal[str,str]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Greater.0",
+      "input": [
+        "builtins.int",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Greater[int,int]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Greater.1",
+      "input": [
+        "decimal.Decimal",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Greater[Decimal,int]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Greater.2",
+      "input": [
+        "builtins.int",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Greater[int,Decimal]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Greater.3",
+      "input": [
+        "decimal.Decimal",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Greater[Decimal,Decimal]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Greater.4",
+      "input": [
+        "datetime.date",
+        "datetime.date"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Greater[date,date]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Greater.5",
+      "input": [
+        "builtins.str",
+        "builtins.str"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Greater[str,str]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.GreaterEq.0",
+      "input": [
+        "builtins.int",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.GreaterEq[int,int]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.GreaterEq.1",
+      "input": [
+        "decimal.Decimal",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.GreaterEq[Decimal,int]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.GreaterEq.2",
+      "input": [
+        "builtins.int",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.GreaterEq[int,Decimal]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.GreaterEq.3",
+      "input": [
+        "decimal.Decimal",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.GreaterEq[Decimal,Decimal]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.GreaterEq.4",
+      "input": [
+        "datetime.date",
+        "datetime.date"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.GreaterEq[date,date]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.GreaterEq.5",
+      "input": [
+        "builtins.str",
+        "builtins.str"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.GreaterEq[str,str]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.In.0",
+      "input": [
+        "beanquery.types.Any",
+        "builtins.dict"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.In[any,dict]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.In.1",
+      "input": [
+        "beanquery.types.Any",
+        "builtins.list"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.In[any,list]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.In.2",
+      "input": [
+        "beanquery.types.Any",
+        "builtins.set"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.In[any,set]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.IsNotNull.0",
+      "input": [
+        "beanquery.types.Any"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.IsNotNull[any]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.IsNull.0",
+      "input": [
+        "beanquery.types.Any"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.IsNull[any]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Less.0",
+      "input": [
+        "builtins.int",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Less[int,int]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Less.1",
+      "input": [
+        "decimal.Decimal",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Less[Decimal,int]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Less.2",
+      "input": [
+        "builtins.int",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Less[int,Decimal]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Less.3",
+      "input": [
+        "decimal.Decimal",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Less[Decimal,Decimal]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Less.4",
+      "input": [
+        "datetime.date",
+        "datetime.date"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Less[date,date]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Less.5",
+      "input": [
+        "builtins.str",
+        "builtins.str"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Less[str,str]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.LessEq.0",
+      "input": [
+        "builtins.int",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.LessEq[int,int]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.LessEq.1",
+      "input": [
+        "decimal.Decimal",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.LessEq[Decimal,int]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.LessEq.2",
+      "input": [
+        "builtins.int",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.LessEq[int,Decimal]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.LessEq.3",
+      "input": [
+        "decimal.Decimal",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.LessEq[Decimal,Decimal]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.LessEq.4",
+      "input": [
+        "datetime.date",
+        "datetime.date"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.LessEq[date,date]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.LessEq.5",
+      "input": [
+        "builtins.str",
+        "builtins.str"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.LessEq[str,str]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Match.0",
+      "input": [
+        "builtins.str",
+        "builtins.str"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Match[str,str]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Matches.0",
+      "input": [
+        "builtins.str",
+        "builtins.str"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Matches[str,str]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Mod.0",
+      "input": [
+        "decimal.Decimal",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Mod[Decimal,Decimal]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Mod.1",
+      "input": [
+        "builtins.int",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Mod[int,Decimal]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Mod.2",
+      "input": [
+        "decimal.Decimal",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Mod[Decimal,int]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Mod.3",
+      "input": [
+        "builtins.int",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Mod[int,int]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Mul.0",
+      "input": [
+        "builtins.int",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Mul[int,int]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Mul.1",
+      "input": [
+        "builtins.int",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Mul[int,Decimal]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Mul.2",
+      "input": [
+        "decimal.Decimal",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Mul[Decimal,int]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Mul.3",
+      "input": [
+        "decimal.Decimal",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Mul[Decimal,Decimal]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Neg.0",
+      "input": [
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Neg[Decimal]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Neg.1",
+      "input": [
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Neg[int]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Not.0",
+      "input": [
+        "beanquery.types.Any"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Not[any]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.NotEqual.0",
+      "input": [
+        "builtins.int",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.NotEqual[int,int]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.NotEqual.1",
+      "input": [
+        "decimal.Decimal",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.NotEqual[Decimal,int]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.NotEqual.2",
+      "input": [
+        "builtins.int",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.NotEqual[int,Decimal]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.NotEqual.3",
+      "input": [
+        "decimal.Decimal",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.NotEqual[Decimal,Decimal]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.NotEqual.4",
+      "input": [
+        "datetime.date",
+        "datetime.date"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.NotEqual[date,date]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.NotEqual.5",
+      "input": [
+        "builtins.str",
+        "builtins.str"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.NotEqual[str,str]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.NotIn.0",
+      "input": [
+        "beanquery.types.Any",
+        "builtins.dict"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.NotIn[any,dict]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.NotIn.1",
+      "input": [
+        "beanquery.types.Any",
+        "builtins.list"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.NotIn[any,list]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.NotIn.2",
+      "input": [
+        "beanquery.types.Any",
+        "builtins.set"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.NotIn[any,set]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.NotMatch.0",
+      "input": [
+        "builtins.str",
+        "builtins.str"
+      ],
+      "kind": "operator",
+      "output": "builtins.bool",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.NotMatch[str,str]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Sub.0",
+      "input": [
+        "dateutil.relativedelta.relativedelta",
+        "dateutil.relativedelta.relativedelta"
+      ],
+      "kind": "operator",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Sub[relativedelta,relativedelta]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Sub.1",
+      "input": [
+        "dateutil.relativedelta.relativedelta",
+        "datetime.date"
+      ],
+      "kind": "operator",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Sub[relativedelta,date]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Sub.2",
+      "input": [
+        "datetime.date",
+        "dateutil.relativedelta.relativedelta"
+      ],
+      "kind": "operator",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Sub[date,relativedelta]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Sub.3",
+      "input": [
+        "builtins.int",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Sub[int,int]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Sub.4",
+      "input": [
+        "builtins.int",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Sub[int,Decimal]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Sub.5",
+      "input": [
+        "decimal.Decimal",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Sub[Decimal,int]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Sub.6",
+      "input": [
+        "decimal.Decimal",
+        "decimal.Decimal"
+      ],
+      "kind": "operator",
+      "output": "decimal.Decimal",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Sub[Decimal,Decimal]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Sub.7",
+      "input": [
+        "datetime.date",
+        "builtins.int"
+      ],
+      "kind": "operator",
+      "output": "datetime.date",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Sub[date,int]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "operator.Sub.8",
+      "input": [
+        "datetime.date",
+        "datetime.date"
+      ],
+      "kind": "operator",
+      "output": "builtins.int",
+      "status": "pending",
+      "upstream_symbol": "beanquery.query_compile.Sub[date,date]"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.account_current_conversions",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.account_current_conversions"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.account_current_earnings",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.account_current_earnings"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.account_previous_balances",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.account_previous_balances"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.account_previous_conversions",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.account_previous_conversions"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.account_previous_earnings",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.account_previous_earnings"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.account_rounding",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.account_rounding"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.account_unrealized_gains",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.account_unrealized_gains"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.allow_deprecated_none_for_tags_and_links",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.allow_deprecated_none_for_tags_and_links"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.allow_pipe_separator",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.allow_pipe_separator"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.booking_method",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.booking_method"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.commodities",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.commodities"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.conversion_currency",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.conversion_currency"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.dcontext",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.dcontext"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.display_precision",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.display_precision"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.documents",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.documents"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.filename",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.filename"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.include",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.include"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.infer_tolerance_from_cost",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.infer_tolerance_from_cost"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.inferred_tolerance_default",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.inferred_tolerance_default"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.inferred_tolerance_multiplier",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.inferred_tolerance_multiplier"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.input_hash",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.input_hash"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.insert_pythonpath",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.insert_pythonpath"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.long_string_maxlines",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.long_string_maxlines"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.name_assets",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.name_assets"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.name_equity",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.name_equity"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.name_expenses",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.name_expenses"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.name_income",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.name_income"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.name_liabilities",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.name_liabilities"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.operating_currency",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.operating_currency"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.plugin",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.plugin"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.plugin_processing_mode",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.plugin_processing_mode"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.render_commas",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.render_commas"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.title",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.title"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.tolerance_multiplier",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.tolerance_multiplier"
+    },
+    {
+      "cases": [],
+      "go_location": null,
+      "id": "option.use_precise_interpolation",
+      "kind": "accounting-option",
+      "status": "pending",
+      "upstream_symbol": "beancount.parser.options.OPTIONS.use_precise_interpolation"
+    },
+    {
+      "cases": [],
+      "fields": [
+        "meta",
+        "date",
+        "account",
+        "currencies",
+        "booking"
+      ],
+      "go_location": null,
+      "id": "directive.Open",
+      "kind": "accounting-directive",
+      "status": "pending",
+      "upstream_symbol": "beancount.core.data.Open"
+    },
+    {
+      "cases": [],
+      "fields": [
+        "meta",
+        "date",
+        "account"
+      ],
+      "go_location": null,
+      "id": "directive.Close",
+      "kind": "accounting-directive",
+      "status": "pending",
+      "upstream_symbol": "beancount.core.data.Close"
+    },
+    {
+      "cases": [],
+      "fields": [
+        "meta",
+        "date",
+        "currency"
+      ],
+      "go_location": null,
+      "id": "directive.Commodity",
+      "kind": "accounting-directive",
+      "status": "pending",
+      "upstream_symbol": "beancount.core.data.Commodity"
+    },
+    {
+      "cases": [],
+      "fields": [
+        "meta",
+        "date",
+        "account",
+        "source_account"
+      ],
+      "go_location": null,
+      "id": "directive.Pad",
+      "kind": "accounting-directive",
+      "status": "pending",
+      "upstream_symbol": "beancount.core.data.Pad"
+    },
+    {
+      "cases": [],
+      "fields": [
+        "meta",
+        "date",
+        "account",
+        "amount",
+        "tolerance",
+        "diff_amount"
+      ],
+      "go_location": null,
+      "id": "directive.Balance",
+      "kind": "accounting-directive",
+      "status": "pending",
+      "upstream_symbol": "beancount.core.data.Balance"
+    },
+    {
+      "cases": [],
+      "fields": [
+        "meta",
+        "date",
+        "flag",
+        "payee",
+        "narration",
+        "tags",
+        "links",
+        "postings"
+      ],
+      "go_location": null,
+      "id": "directive.Transaction",
+      "kind": "accounting-directive",
+      "status": "pending",
+      "upstream_symbol": "beancount.core.data.Transaction"
+    },
+    {
+      "cases": [],
+      "fields": [
+        "meta",
+        "date",
+        "account",
+        "comment",
+        "tags",
+        "links"
+      ],
+      "go_location": null,
+      "id": "directive.Note",
+      "kind": "accounting-directive",
+      "status": "pending",
+      "upstream_symbol": "beancount.core.data.Note"
+    },
+    {
+      "cases": [],
+      "fields": [
+        "meta",
+        "date",
+        "type",
+        "description"
+      ],
+      "go_location": null,
+      "id": "directive.Event",
+      "kind": "accounting-directive",
+      "status": "pending",
+      "upstream_symbol": "beancount.core.data.Event"
+    },
+    {
+      "cases": [],
+      "fields": [
+        "meta",
+        "date",
+        "name",
+        "query_string"
+      ],
+      "go_location": null,
+      "id": "directive.Query",
+      "kind": "accounting-directive",
+      "status": "pending",
+      "upstream_symbol": "beancount.core.data.Query"
+    },
+    {
+      "cases": [],
+      "fields": [
+        "meta",
+        "date",
+        "currency",
+        "amount"
+      ],
+      "go_location": null,
+      "id": "directive.Price",
+      "kind": "accounting-directive",
+      "status": "pending",
+      "upstream_symbol": "beancount.core.data.Price"
+    },
+    {
+      "cases": [],
+      "fields": [
+        "meta",
+        "date",
+        "account",
+        "filename",
+        "tags",
+        "links"
+      ],
+      "go_location": null,
+      "id": "directive.Document",
+      "kind": "accounting-directive",
+      "status": "pending",
+      "upstream_symbol": "beancount.core.data.Document"
+    },
+    {
+      "cases": [],
+      "fields": [
+        "meta",
+        "date",
+        "type",
+        "values"
+      ],
+      "go_location": null,
+      "id": "directive.Custom",
+      "kind": "accounting-directive",
+      "status": "pending",
+      "upstream_symbol": "beancount.core.data.Custom"
+    },
+    {
+      "cases": [],
+      "fields": [],
+      "go_location": null,
+      "id": "syntax.Add",
+      "kind": "syntax",
+      "status": "pending",
+      "upstream_symbol": "beanquery.parser.ast.Add"
+    },
+    {
+      "cases": [],
+      "fields": [],
+      "go_location": null,
+      "id": "syntax.And",
+      "kind": "syntax",
+      "status": "pending",
+      "upstream_symbol": "beanquery.parser.ast.And"
+    },
+    {
+      "cases": [],
+      "fields": [],
+      "go_location": null,
+      "id": "syntax.Div",
+      "kind": "syntax",
+      "status": "pending",
+      "upstream_symbol": "beanquery.parser.ast.Div"
+    },
+    {
+      "cases": [],
+      "fields": [],
+      "go_location": null,
+      "id": "syntax.Equal",
+      "kind": "syntax",
+      "status": "pending",
+      "upstream_symbol": "beanquery.parser.ast.Equal"
+    },
+    {
+      "cases": [],
+      "fields": [],
+      "go_location": null,
+      "id": "syntax.From",
+      "kind": "syntax",
+      "status": "pending",
+      "upstream_symbol": "beanquery.parser.ast.From"
+    },
+    {
+      "cases": [],
+      "fields": [],
+      "go_location": null,
+      "id": "syntax.Greater",
+      "kind": "syntax",
+      "status": "pending",
+      "upstream_symbol": "beanquery.parser.ast.Greater"
+    },
+    {
+      "cases": [],
+      "fields": [],
+      "go_location": null,
+      "id": "syntax.GreaterEq",
+      "kind": "syntax",
+      "status": "pending",
+      "upstream_symbol": "beanquery.parser.ast.GreaterEq"
+    },
+    {
+      "cases": [],
+      "fields": [],
+      "go_location": null,
+      "id": "syntax.In",
+      "kind": "syntax",
+      "status": "pending",
+      "upstream_symbol": "beanquery.parser.ast.In"
+    },
+    {
+      "cases": [],
+      "fields": [],
+      "go_location": null,
+      "id": "syntax.IsNotNull",
+      "kind": "syntax",
+      "status": "pending",
+      "upstream_symbol": "beanquery.parser.ast.IsNotNull"
+    },
+    {
+      "cases": [],
+      "fields": [],
+      "go_location": null,
+      "id": "syntax.IsNull",
+      "kind": "syntax",
+      "status": "pending",
+      "upstream_symbol": "beanquery.parser.ast.IsNull"
+    },
+    {
+      "cases": [],
+      "fields": [],
+      "go_location": null,
+      "id": "syntax.Less",
+      "kind": "syntax",
+      "status": "pending",
+      "upstream_symbol": "beanquery.parser.ast.Less"
+    },
+    {
+      "cases": [],
+      "fields": [],
+      "go_location": null,
+      "id": "syntax.LessEq",
+      "kind": "syntax",
+      "status": "pending",
+      "upstream_symbol": "beanquery.parser.ast.LessEq"
+    },
+    {
+      "cases": [],
+      "fields": [],
+      "go_location": null,
+      "id": "syntax.Match",
+      "kind": "syntax",
+      "status": "pending",
+      "upstream_symbol": "beanquery.parser.ast.Match"
+    },
+    {
+      "cases": [],
+      "fields": [],
+      "go_location": null,
+      "id": "syntax.Matches",
+      "kind": "syntax",
+      "status": "pending",
+      "upstream_symbol": "beanquery.parser.ast.Matches"
+    },
+    {
+      "cases": [],
+      "fields": [],
+      "go_location": null,
+      "id": "syntax.Mod",
+      "kind": "syntax",
+      "status": "pending",
+      "upstream_symbol": "beanquery.parser.ast.Mod"
+    },
+    {
+      "cases": [],
+      "fields": [],
+      "go_location": null,
+      "id": "syntax.Mul",
+      "kind": "syntax",
+      "status": "pending",
+      "upstream_symbol": "beanquery.parser.ast.Mul"
+    },
+    {
+      "cases": [],
+      "fields": [],
+      "go_location": null,
+      "id": "syntax.Neg",
+      "kind": "syntax",
+      "status": "pending",
+      "upstream_symbol": "beanquery.parser.ast.Neg"
+    },
+    {
+      "cases": [],
+      "fields": [],
+      "go_location": null,
+      "id": "syntax.Node",
+      "kind": "syntax",
+      "status": "pending",
+      "upstream_symbol": "beanquery.parser.ast.Node"
+    },
+    {
+      "cases": [],
+      "fields": [],
+      "go_location": null,
+      "id": "syntax.Not",
+      "kind": "syntax",
+      "status": "pending",
+      "upstream_symbol": "beanquery.parser.ast.Not"
+    },
+    {
+      "cases": [],
+      "fields": [],
+      "go_location": null,
+      "id": "syntax.NotEqual",
+      "kind": "syntax",
+      "status": "pending",
+      "upstream_symbol": "beanquery.parser.ast.NotEqual"
+    },
+    {
+      "cases": [],
+      "fields": [],
+      "go_location": null,
+      "id": "syntax.NotIn",
+      "kind": "syntax",
+      "status": "pending",
+      "upstream_symbol": "beanquery.parser.ast.NotIn"
+    },
+    {
+      "cases": [],
+      "fields": [],
+      "go_location": null,
+      "id": "syntax.NotMatch",
+      "kind": "syntax",
+      "status": "pending",
+      "upstream_symbol": "beanquery.parser.ast.NotMatch"
+    },
+    {
+      "cases": [],
+      "fields": [],
+      "go_location": null,
+      "id": "syntax.Or",
+      "kind": "syntax",
+      "status": "pending",
+      "upstream_symbol": "beanquery.parser.ast.Or"
+    },
+    {
+      "cases": [],
+      "fields": [],
+      "go_location": null,
+      "id": "syntax.Ordering",
+      "kind": "syntax",
+      "status": "pending",
+      "upstream_symbol": "beanquery.parser.ast.Ordering"
+    },
+    {
+      "cases": [],
+      "fields": [],
+      "go_location": null,
+      "id": "syntax.Sub",
+      "kind": "syntax",
+      "status": "pending",
+      "upstream_symbol": "beanquery.parser.ast.Sub"
+    }
+  ],
+  "note": "Extracted upstream presence only; diagnostic rules, grammar combinations and Go evidence require separate audit.",
+  "reference": {
+    "beancount": "3.2.3",
+    "beanquery": "0.2.0"
+  },
+  "schema_version": 1
+}

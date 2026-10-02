@@ -48,7 +48,7 @@ func TestJournalDirectiveModesFilterBeforePagingAndKeepTransactionCount(t *testi
 	if config.Directives.DateFrom != "" || config.Directives.DateTo != "" {
 		t.Fatal("configuration acquired a date scope")
 	}
-	if config.Directives.Page.TotalCount != 9 || config.Directives.Records[0].Date != nil || config.Directives.Records[0].Kind != "option" {
+	if config.Directives.Page.TotalCount != 8 || config.Directives.Records[0].Date != nil || config.Directives.Records[0].Kind != "option" {
 		t.Fatal("config lexical order or date scope changed")
 	}
 	if _, err := session.Read(desktop.Request{View: "journal", JournalMode: "all", Offset: 1}); !errors.Is(err, desktop.ErrRequest) {

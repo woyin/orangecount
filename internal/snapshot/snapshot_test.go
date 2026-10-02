@@ -287,3 +287,90 @@ func TestWatchReloadsWhenMissingIncludeTargetAppears(t *testing.T) {
 		t.Fatal("watcher ignored a missing include target appearing")
 	}
 }
+
+func TestGlobDetectorNoticesNewMatchesAndMissingSearchDirectory(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	os.WriteFile(entry, []byte("include \"parts/**/*.bean\"\n"), 0600)
+	attempt := Build(entry)
+	detector := NewChangeDetector(entry, attempt.Graph)
+	before := detector.Signature()
+	os.MkdirAll(filepath.Join(dir, "parts", "nested"), 0700)
+	os.WriteFile(filepath.Join(dir, "parts", "nested", "a.bean"), []byte("2000-01-01 open Assets:Cash USD\n"), 0600)
+	if detector.Signature() == before {
+		t.Fatal("new search directory was missed")
+	}
+	attempt = Build(entry)
+	if attempt.Snapshot == nil {
+		t.Fatalf("reload failed: %+v", attempt.Diagnostics)
+	}
+	detector = NewChangeDetector(entry, attempt.Graph)
+	before = detector.Signature()
+	os.WriteFile(filepath.Join(dir, "parts", "nested", "b.bean"), []byte("2000-01-01 open Equity:Opening USD\n"), 0600)
+	if detector.Signature() == before {
+		t.Fatal("new glob match was missed")
+	}
+	second := Build(entry)
+	if second.Snapshot == nil || len(second.Snapshot.Evaluation().Accounts) != 2 {
+		t.Fatalf("new file not evaluated: %+v", second.Diagnostics)
+	}
+}
+
+func TestDetectorNoticesReplacementWithUnchangedSizeAndTime(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	os.WriteFile(entry, []byte("; original\n"), 0600)
+	attempt := Build(entry)
+	detector := NewChangeDetector(entry, attempt.Graph)
+	before := detector.Signature()
+	info, _ := os.Stat(entry)
+	replacement := filepath.Join(dir, "replacement")
+	os.WriteFile(replacement, []byte("; replaced\n"), 0600)
+	os.Chtimes(replacement, info.ModTime(), info.ModTime())
+	os.Rename(replacement, entry)
+	if detector.Signature() == before {
+		t.Fatal("new inode with unchanged attributes was missed")
+	}
+}
+
+func TestV3SourceOrderUsesLineNumbersAcrossIncludedFiles(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	os.WriteFile(entry, []byte("2000-01-01 open Assets:Cash USD\n2000-01-01 open Equity:Opening USD\n2000-01-02 * \"parent\"\n  Assets:Cash 1 USD\n  Equity:Opening -1 USD\ninclude \"child.bean\"\n"), 0600)
+	os.WriteFile(filepath.Join(dir, "child.bean"), []byte("2000-01-02 * \"child\"\n  Assets:Cash 2 USD\n  Equity:Opening -2 USD\n"), 0600)
+	result := BuildWithOptions(entry, BuildOptions{Evaluation: ledger.EvalOptions{SemanticsProfile: ledger.V3}})
+	if result.Snapshot == nil {
+		t.Fatalf("invalid: %+v", result.Diagnostics)
+	}
+	names := []string{}
+	for _, record := range result.Snapshot.Evaluation().Entries {
+		if txn, ok := record.Directive.(*ledger.Transaction); ok {
+			names = append(names, txn.Narration)
+		}
+	}
+	if strings.Join(names, ",") != "child,parent" {
+		t.Fatalf("wrong standard order: %v", names)
+	}
+	old := Build(entry)
+	names = nil
+	for _, record := range old.Snapshot.Evaluation().Entries {
+		if txn, ok := record.Directive.(*ledger.Transaction); ok {
+			names = append(names, txn.Narration)
+		}
+	}
+	if strings.Join(names, ",") != "parent,child" {
+		t.Fatalf("legacy order changed: %v", names)
+	}
+}
+
+func TestPluginDeclarationNeverPublishesAValidSnapshot(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	os.WriteFile(entry, []byte("plugin \"public.example\"\n2000-01-01 open Assets:Cash USD\n"), 0600)
+	for _, profile := range []ledger.SemanticsProfile{ledger.Legacy, ledger.V3} {
+		result := BuildWithOptions(entry, BuildOptions{Evaluation: ledger.EvalOptions{SemanticsProfile: profile}})
+		if result.Snapshot != nil {
+			t.Fatalf("ignored plugin published for %s", profile)
+		}
+	}
+}

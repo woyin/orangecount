@@ -9,9 +9,11 @@ package source
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"unicode/utf8"
@@ -219,6 +221,7 @@ type Graph struct {
 	Edges       map[FileID][]IncludeEdge
 	Diagnostics []GraphIssue
 	readStamps  map[string]os.FileInfo
+	watchPaths  map[string]bool
 }
 
 // ChangedOnDisk checks the attributes captured before each source read,
@@ -348,7 +351,20 @@ func opaqueDisplayPath(id FileID, path string) string {
 // resolved relative to the including file, normalized, and never copied into
 // the repository by this package. Missing includes and cycles are accumulated
 // as deterministic diagnostics while the rest of the graph continues loading.
-func LoadGraph(entry string) (*Graph, error) {
+func LoadGraph(entry string) (*Graph, error) { return LoadGraphContext(context.Background(), entry) }
+
+// LoadGraphContext adds cancellation to bounded source and include capture.
+func LoadGraphContext(ctx context.Context, entry string) (*Graph, error) {
+	return LoadGraphWithOptions(ctx, entry, LoadOptions{})
+}
+
+// LoadOptions bounds filesystem work independently of accounting execution.
+type LoadOptions struct{ IncludeWorkLimit int }
+
+func LoadGraphWithOptions(ctx context.Context, entry string, options LoadOptions) (*Graph, error) {
+	if options.IncludeWorkLimit <= 0 {
+		options.IncludeWorkLimit = 1000000
+	}
 	entry, err := filepath.Abs(entry)
 	if err != nil {
 		return nil, err
@@ -362,11 +378,40 @@ func LoadGraph(entry string) (*Graph, error) {
 		ByPath:     make(map[string]FileID),
 		Edges:      make(map[FileID][]IncludeEdge),
 		readStamps: make(map[string]os.FileInfo),
+		watchPaths: make(map[string]bool),
 	}
+	observe := func(path string) {
+		path = cleanPath(path)
+		g.watchPaths[path] = true
+		if _, ok := g.readStamps[path]; !ok {
+			g.readStamps[path], _ = os.Stat(path)
+		}
+		// Watch the first existing ancestor of an as-yet-missing search directory.
+		for {
+			if _, err := os.Stat(path); err == nil {
+				break
+			}
+			parent := filepath.Dir(path)
+			if parent == path {
+				break
+			}
+			path = parent
+			g.watchPaths[path] = true
+			if _, ok := g.readStamps[path]; !ok {
+				g.readStamps[path], _ = os.Stat(path)
+			}
+		}
+	}
+	matcher := includeMatcher{ctx: ctx, remaining: options.IncludeWorkLimit, observe: observe, cache: make(map[string]*regexp.Regexp)}
+	var captureErr error
 	state := make(map[string]visitState)
 	stack := make([]FileID, 0, 8)
 	var visit func(string, FileID, Span) FileID
 	visit = func(path string, from FileID, includeSpan Span) FileID {
+		if err := matcher.step(); err != nil {
+			captureErr = err
+			return 0
+		}
 		path = cleanPath(path)
 		if resolved, resolveErr := filepath.EvalSymlinks(path); resolveErr == nil {
 			path = cleanPath(resolved)
@@ -374,6 +419,8 @@ func LoadGraph(entry string) (*Graph, error) {
 		if id, ok := g.ByPath[path]; ok {
 			if state[path] == visiting {
 				g.Diagnostics = append(g.Diagnostics, GraphIssue{Code: "E-INCLUDE-CYCLE", Message: "include cycle detected", Path: path, SourcePath: g.Path(from), Span: includeSpan, Related: []Span{includeSpan}})
+			} else if from != 0 {
+				g.Diagnostics = append(g.Diagnostics, GraphIssue{Code: "E-INCLUDE-DUPLICATE", Message: "source file included more than once", Path: path, SourcePath: g.Path(from), Span: includeSpan})
 			}
 			return id
 		}
@@ -398,16 +445,32 @@ func LoadGraph(entry string) (*Graph, error) {
 				// file's directory; absolute paths are used verbatim.
 				childPath = filepath.Join(filepath.Dir(path), inc.path)
 			}
-			child := visit(childPath, id, inc.span)
-			if child != 0 {
-				g.Edges[id] = append(g.Edges[id], IncludeEdge{From: id, To: child, Literal: inc.path, Span: inc.span})
+			matches, matchErr := matcher.expand(childPath, false, 0)
+			if matchErr != nil {
+				captureErr = matchErr
+				g.Diagnostics = append(g.Diagnostics, GraphIssue{Code: "E-INCLUDE-BUDGET", Message: "include matching cancelled or exceeded budget", Path: childPath, SourcePath: path, Span: inc.span})
+				break
 			}
+			if len(matches) == 0 {
+				g.readStamps[childPath], _ = os.Stat(childPath)
+				g.Diagnostics = append(g.Diagnostics, GraphIssue{Code: "E-INCLUDE-READ", Message: "include pattern does not match a file", Path: childPath, SourcePath: path, Span: inc.span})
+			}
+			for _, matched := range matches {
+				child := visit(matched, id, inc.span)
+				if child != 0 {
+					g.Edges[id] = append(g.Edges[id], IncludeEdge{From: id, To: child, Literal: inc.path, Span: inc.span})
+				}
+			}
+
 		}
 		stack = stack[:len(stack)-1]
 		state[path] = visited
 		return id
 	}
 	g.Entry = visit(entry, 0, Span{})
+	if captureErr != nil {
+		return g, captureErr
+	}
 	if g.Entry == 0 {
 		return g, fmt.Errorf("cannot read entry ledger %q", entry)
 	}
@@ -514,4 +577,37 @@ func unescapeString(s string) string {
 		}
 	}
 	return out.String()
+}
+
+// WatchPaths includes searched glob directories and missing ancestors, not just
+// already loaded files. The returned paths are internal filesystem identities.
+func (g *Graph) WatchPaths() []string {
+	if g == nil {
+		return nil
+	}
+	paths := make([]string, 0, len(g.watchPaths))
+	for path := range g.watchPaths {
+		paths = append(paths, path)
+	}
+	sort.Strings(paths)
+	return paths
+}
+
+// LoadOrder is the upstream queue order. Graph.Order retains its historical
+// DFS capture IDs; neither FileID nor canonical path is an entry sort key.
+func (g *Graph) LoadOrder() []FileID {
+	if g == nil || g.Entry == 0 {
+		return nil
+	}
+	queue := []FileID{g.Entry}
+	seen := map[FileID]bool{g.Entry: true}
+	for i := 0; i < len(queue); i++ {
+		for _, edge := range g.Edges[queue[i]] {
+			if !seen[edge.To] {
+				seen[edge.To] = true
+				queue = append(queue, edge.To)
+			}
+		}
+	}
+	return queue
 }

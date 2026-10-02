@@ -21,7 +21,11 @@ var guidanceFixtureManifest = map[string]struct {
 	family string
 	phase  string
 }{
-	"E-INCLUDE-CYCLE": {"source graph", PhaseSource}, "E-INCLUDE-READ": {"source graph", PhaseSource},
+	"E-INCLUDE-DUPLICATE":  {"source graph", PhaseSource},
+	"E-PARSE-METADATA":     {"posting metadata", PhaseSyntax},
+	"E-PLUGIN-UNSUPPORTED": {"unsupported plugins", PhaseSource},
+	"E-INCLUDE-BUDGET":     {"source search", PhaseSource},
+	"E-INCLUDE-CYCLE":      {"source graph", PhaseSource}, "E-INCLUDE-READ": {"source graph", PhaseSource},
 	"E-SOURCE-UTF8": {"encoding", PhaseSyntax},
 	"E-PARSE-DATE":  {"parser", PhaseSyntax}, "E-PARSE-DIRECTIVE": {"parser", PhaseSyntax},
 	"E-PARSE-EXPECTED": {"parser", PhaseSyntax}, "E-PARSE-TOKEN": {"parser", PhaseSyntax}, "E-PARSE-STRING": {"parser", PhaseSyntax},

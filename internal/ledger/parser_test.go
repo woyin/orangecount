@@ -38,9 +38,9 @@ pushtag #global
 `
 	f, bag := ParseText("fixture.bean", []byte(text))
 	if bag.Len() == 0 {
-		t.Fatalf("expected plugin migration warning at minimum")
+		t.Fatalf("expected blocking plugin diagnostic")
 	}
-	if !bagHasCode(bag.All(), "W-PLUGIN-MIGRATION") {
+	if !bagHasCode(bag.All(), "E-PLUGIN-UNSUPPORTED") {
 		t.Fatalf("diagnostics=%+v", bag.All())
 	}
 	if len(f.Directives) != 16 {
@@ -212,7 +212,7 @@ pushtag #tag
   Equity:Opening -1 USD
 `
 	file, diagnostics := ParseText("metadata-all.bean", []byte(text))
-	if diagnostics.HasErrors() || len(file.Directives) != 16 {
+	if diagnostics.Len() != 1 || !bagHasCode(diagnostics.All(), "E-PLUGIN-UNSUPPORTED") || len(file.Directives) != 16 {
 		t.Fatalf("diagnostics=%+v directives=%d", diagnostics.All(), len(file.Directives))
 	}
 	for _, directive := range file.Directives[:15] {
@@ -543,4 +543,13 @@ func bagHasCode(ds []diagnostic.Diagnostic, code string) bool {
 		}
 	}
 	return false
+}
+
+func TestPostingReservedMetadataIsRejected(t *testing.T) {
+	for _, key := range []string{"filename", "lineno"} {
+		_, bag := ParseText("public.bean", []byte("2000-01-01 * \"public\"\n  Assets:Cash 1 USD\n    "+key+": \"override\"\n"))
+		if !bag.HasErrors() {
+			t.Fatalf("reserved posting %s accepted", key)
+		}
+	}
 }

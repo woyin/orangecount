@@ -432,7 +432,7 @@ func TestServerSourceAndErrorPathsUseDisplayIdentifiers(t *testing.T) {
 		t.Fatal(err)
 	}
 	child := filepath.Join(childDir, "child.bean")
-	if err := os.WriteFile(entry, []byte("plugin \"example.plugin\"\ninclude \"nested/child.bean\"\n"), 0o600); err != nil {
+	if err := os.WriteFile(entry, []byte("2000-01-01 open Assets:Main USD\n2000-01-01 open Equity:Main USD\n2000-01-02 pad Assets:Main Equity:Main\ninclude \"nested/child.bean\"\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(child, []byte("2000-01-01 open Assets:Cash USD\n2000-01-01 open Equity:Opening USD\n2000-01-02 pad Assets:Cash Equity:Opening\n"), 0o600); err != nil {

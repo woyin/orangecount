@@ -8,6 +8,7 @@ package ledger
 import (
 	"fmt"
 	"math/big"
+	"reflect"
 	"sort"
 	"strings"
 
@@ -123,6 +124,10 @@ func directiveSortOrder(d Directive) int {
 }
 
 func (e *evaluator) collectDirectives(fileID source.FileID, parsed map[source.FileID]*File, out *[]directiveItem) {
+	e.collectFile(fileID, parsed, out, true)
+}
+
+func (e *evaluator) collectFile(fileID source.FileID, parsed map[source.FileID]*File, out *[]directiveItem, followIncludes bool) {
 	if e.visited[fileID] {
 		return
 	}
@@ -144,9 +149,8 @@ func (e *evaluator) collectDirectives(fileID source.FileID, parsed map[source.Fi
 		}
 		if include, ok := directive.(Include); ok && e.graph != nil {
 			for _, edge := range e.graph.Edges[fileID] {
-				if edge.Literal == include.Path {
+				if followIncludes && edge.Literal == include.Path {
 					e.collectDirectives(edge.To, parsed, out)
-					break
 				}
 			}
 			continue
@@ -176,7 +180,11 @@ func evaluateOrder(graph *source.Graph, parsed map[source.FileID]*File, options 
 	e.result.EvaluationRevision = options.SemanticsProfile.EvaluationRevision()
 	e.result.ActiveExtensions = []string{}
 	var items []directiveItem
-	if graph != nil && graph.Entry != 0 {
+	if graph != nil && graph.Entry != 0 && options.SemanticsProfile == V3 {
+		for _, id := range graph.LoadOrder() {
+			e.collectFile(id, parsed, &items, false)
+		}
+	} else if graph != nil && graph.Entry != 0 {
 		e.collectDirectives(graph.Entry, parsed, &items)
 	} else {
 		for _, fileID := range order {
@@ -205,6 +213,11 @@ func evaluateOrder(graph *source.Graph, parsed map[source.FileID]*File, options 
 		o1, o2 := directiveSortOrder(d1), directiveSortOrder(d2)
 		if o1 != o2 {
 			return o1 < o2
+		}
+		if options.SemanticsProfile == V3 {
+			if cmp := directiveLine(d1).Cmp(directiveLine(d2)); cmp != 0 {
+				return cmp < 0
+			}
 		}
 		return items[i].seq < items[j].seq
 	})
@@ -290,7 +303,6 @@ func (e *evaluator) evaluateFile(fileID source.FileID, parsed map[source.FileID]
 			for _, edge := range e.graph.Edges[fileID] {
 				if edge.Literal == include.Path {
 					e.evaluateFile(edge.To, parsed)
-					break
 				}
 			}
 			continue
@@ -315,8 +327,9 @@ func (e *evaluator) evaluateDirective(file *File, directive Directive) {
 	case Option:
 		e.applyOption(d)
 	case Plugin:
-		// The parser already emits the migration warning. Plugin code is never
+		// The parser already emits a blocking diagnostic. Plugin code is never
 		// executed in this implementation.
+		e.add("E-PLUGIN-UNSUPPORTED", diagnostic.Error, span, path)
 	case Include, TagDirective, PushMeta, PopMeta, Query, Event, Note, Document, Custom:
 		// These directives are source-preserved and consumed by later report
 		// layers; they do not mutate account state in the core evaluator.
@@ -1775,4 +1788,24 @@ func (e *Evaluation) String() string {
 		return "<nil evaluation>"
 	}
 	return fmt.Sprintf("accounts=%d prices=%d valid=%t", len(e.Accounts), len(e.Prices), e.Valid)
+}
+
+func directiveLine(d Directive) Decimal {
+	value := reflect.ValueOf(d)
+	if value.Kind() == reflect.Pointer {
+		value = value.Elem()
+	}
+	if value.Kind() == reflect.Struct {
+		field := value.FieldByName("Meta")
+		if field.IsValid() && field.CanInterface() {
+			if metadata, ok := field.Interface().([]Metadata); ok {
+				for _, m := range metadata {
+					if m.Key == "lineno" && m.Value.Kind == ValueNumber {
+						return DecimalFromNumber(m.Value.Number)
+					}
+				}
+			}
+		}
+	}
+	return NewDecimal(new(big.Rat).SetInt64(int64(d.Span().StartLine)))
 }

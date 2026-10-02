@@ -565,7 +565,7 @@ extension ContractTests {
         }
         try expect(number.exact == "1.25000000000000000001" && empty.isEmpty, "Metadata precision and NULL/empty/list distinctions remain exact")
         let configuration = try bridge.readView(handle: session.handle, request: ViewRequest(view: "journal", date_from: "2099-01-01", journal_mode: "config")).directives!
-        try expect(configuration.records.count == 9 && configuration.records.allSatisfy { $0.date == nil } && configuration.records[0].kind == "option", "Configuration remains undated lexical data")
+        try expect(configuration.records.count == 8 && configuration.records.allSatisfy { $0.date == nil } && configuration.records[0].kind == "option", "Configuration remains undated lexical data")
         for fault in ["duplicate-id", "missing-date", "missing-origin", "empty-date", "field-type", "field-missing", "wrong-kind", "origin", "pagination"] {
             var invalid = try JSONSerialization.jsonObject(with: JSONEncoder().encode(payload)) as! [String: Any]
             var records = invalid["records"] as! [[String: Any]]

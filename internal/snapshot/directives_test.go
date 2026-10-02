@@ -17,7 +17,7 @@ func TestDirectiveCatalogueKeepsLexicalConfigurationAndEffectivePadOrigin(t *tes
 	main := `option "title" "before"
 include "child.bean"
 option "title" "after"
-include "child.bean"
+; duplicate include is a blocking source error
 pushmeta project: "parent"
 2000-01-02 * "source transaction"
   Assets:Padded 1 USD
@@ -41,7 +41,7 @@ popmeta project:
 		t.Fatal(built.Diagnostics)
 	}
 	catalogue := built.Snapshot.DirectiveCatalogue()
-	expected := []ledger.DirectiveKind{ledger.KindOption, ledger.KindInclude, ledger.KindOption, ledger.KindOption, ledger.KindInclude, ledger.KindPushMeta, ledger.KindPopMeta}
+	expected := []ledger.DirectiveKind{ledger.KindOption, ledger.KindInclude, ledger.KindOption, ledger.KindOption, ledger.KindPushMeta, ledger.KindPopMeta}
 	if len(catalogue.Configuration) != len(expected) {
 		t.Fatal("configuration records missing or duplicate include expanded")
 	}
@@ -122,7 +122,7 @@ func TestDirectiveCatalogueCoversEverySourceKindAndPreservesDuplicateIdentity(t 
 			stable[record.File+record.Directive.RawText()] = record.ID
 		}
 	}
-	for _, kind := range []ledger.DirectiveKind{ledger.KindOption, ledger.KindPlugin, ledger.KindInclude, ledger.KindPushTag, ledger.KindPopTag, ledger.KindPushMeta, ledger.KindPopMeta, ledger.KindOpen, ledger.KindClose, ledger.KindCommodity, ledger.KindBalance, ledger.KindPad, ledger.KindEvent, ledger.KindQuery, ledger.KindPrice, ledger.KindDocument, ledger.KindNote, ledger.KindCustom, ledger.KindTxn, ledger.KindDialect} {
+	for _, kind := range []ledger.DirectiveKind{ledger.KindOption, ledger.KindInclude, ledger.KindPushTag, ledger.KindPopTag, ledger.KindPushMeta, ledger.KindPopMeta, ledger.KindOpen, ledger.KindClose, ledger.KindCommodity, ledger.KindBalance, ledger.KindPad, ledger.KindEvent, ledger.KindQuery, ledger.KindPrice, ledger.KindDocument, ledger.KindNote, ledger.KindCustom, ledger.KindTxn, ledger.KindDialect} {
 		if !kinds[kind] {
 			t.Fatal("source kind omitted", kind)
 		}

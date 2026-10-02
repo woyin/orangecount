@@ -11,8 +11,8 @@ A Beancount ledger whose accepted syntax and accounting meaning OrangeCount pres
 _Avoid_: import format, legacy file
 
 **Pivot report**:
-An Excel-style cross-tab over the ledger — rows, columns, and a value (period totals or ending balance) chosen from pickers — served as a report surface on top of grouped query results. Not a query-language feature.
-_Avoid_: PIVOT syntax, full SQL
+An Excel-style cross-tab over the ledger — rows, columns, and a value (period totals or ending balance) chosen from pickers — served as a report surface on top of grouped query results. This report surface is separate from standard BeanQuery PIVOT BY syntax, whose compatibility is required by ADR-0050.
+_Avoid_: treating the report as proof of query-language compatibility
 
 **Ending balance**:
 An account's or group's balance as of the end of a reporting interval, computed from interval balances rather than summed from postings, because inventories do not sum across currencies.
@@ -23,7 +23,7 @@ The Go implementation that parses and evaluates a compatible ledger without dele
 _Avoid_: wrapper, binding, port
 
 **Core ledger compatibility**:
-Support for Beancount's standard directives, transactions, amounts, costs, lots, tolerances, includes, options, and query syntax with equivalent accounting meaning. Python plugin code is not executed; plugin declarations are instead preserved and diagnosed as migration work.
+Support for Beancount's standard directives, transactions, amounts, costs, lots, tolerances, includes, options, and query syntax with equivalent accounting meaning. Python plugin code is not executed; plugin declarations retain a source location and produce a blocking migration diagnostic. Complete plugin-free standard compatibility is required by ADR-0050 but is not yet achieved.
 _Avoid_: partial parser, plugin compatibility
 
 **Compatibility contract**:

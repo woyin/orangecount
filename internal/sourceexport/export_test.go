@@ -205,7 +205,7 @@ func TestIncludeEscapeAndDuplicateRejected(t *testing.T) {
 	for _, text := range []string{"include \"../child.bean\"\n", "include \"../child.bean\"\ninclude \"../child.bean\"\n", "include \"" + child + "\"\n"} {
 		p := filepath.Join(sub, "main.bean")
 		os.WriteFile(p, []byte(text), 0600)
-		if _, err := Prepare(p, Options{}); err == nil || !strings.Contains(err.Error(), "E-EXPORT-INCLUDE") {
+		if _, err := Prepare(p, Options{}); err == nil || !(strings.Contains(err.Error(), "E-EXPORT-INCLUDE") || strings.Contains(err.Error(), "E-INCLUDE-DUPLICATE")) {
 			t.Fatalf("unsafe include accepted: %v", err)
 		}
 	}
