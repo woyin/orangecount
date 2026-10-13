@@ -54,6 +54,13 @@ func TestMigrationPreviewCannotSwitchChangedInput(t *testing.T) {
 	if preview.Migration == nil || preview.Migration.ChangeCounts["balances"] == 0 {
 		t.Fatal("migration preview missing")
 	}
+	state, err := s.Poll()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if preview.Migration.InputIdentity != state.SnapshotID || len(preview.Migration.Details) != 0 {
+		t.Fatalf("default migration preview is not counts-only and bound to the loaded snapshot: snapshot=%q migration=%q details=%d", state.SnapshotID, preview.Migration.InputIdentity, len(preview.Migration.Details))
+	}
 	if err := os.WriteFile(path, append(text, []byte("\n; changed\n")...), 0600); err != nil {
 		t.Fatal(err)
 	}

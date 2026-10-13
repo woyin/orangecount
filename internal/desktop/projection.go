@@ -11,6 +11,7 @@ import (
 	"orangecount/internal/diagnostic"
 	"orangecount/internal/ledger"
 	"orangecount/internal/report"
+	"orangecount/internal/source"
 	"sort"
 	"strings"
 )
@@ -35,6 +36,7 @@ type JournalPostingDTO struct {
 	UnitsCurrency string                   `json:"units_currency"`
 	Cost          *PostingCost             `json:"cost,omitempty"`
 	Price         *PostingPrice            `json:"price,omitempty"`
+	Metadata      []DirectiveMetadata      `json:"metadata,omitempty" analysis:"-"`
 	Source        SourceLocation           `json:"source"`
 	Amount        *report.PresentedDecimal `json:"amount,omitempty"`
 }
@@ -47,6 +49,7 @@ type JournalTransactionDTO struct {
 	Narration string              `json:"narration"`
 	Tags      []string            `json:"tags"`
 	Links     []string            `json:"links"`
+	Metadata  []DirectiveMetadata `json:"metadata,omitempty" analysis:"-"`
 	Postings  []JournalPostingDTO `json:"postings"`
 	Source    SourceLocation      `json:"source"`
 }
@@ -104,6 +107,7 @@ type HistoricalTrendsPayload struct {
 	CashFlowAvailability string                         `json:"cash_flow_availability"`
 	NetWorthPoints       []TrendPointDTO                `json:"net_worth_points"`
 	MonthlyCashFlows     []CashFlowBarDTO               `json:"monthly_cash_flows"`
+	SourceFiles          map[source.FileID]string       `json:"source_files,omitempty"`
 	Error                string                         `json:"error,omitempty"`
 }
 
@@ -151,6 +155,13 @@ func ProjectSummary(path string, evaluation *ledger.Evaluation, diagnostics []Di
 }
 
 func ProjectJournal(eval ledger.Evaluation) JournalPayload {
+	result, _ := ProjectJournalWithGraph(eval, nil)
+	return result
+}
+
+// ProjectJournalWithGraph projects exact transaction rows, typed metadata and
+// source locations from the same immutable source graph.
+func ProjectJournalWithGraph(eval ledger.Evaluation, graph *source.Graph) (JournalPayload, error) {
 	txs := make([]JournalTransactionDTO, 0)
 
 	for i, record := range eval.Entries {
@@ -165,6 +176,16 @@ func ProjectJournal(eval ledger.Evaluation) JournalPayload {
 			continue
 		}
 
+		var (
+			metadata []DirectiveMetadata
+			err      error
+		)
+		if graph != nil {
+			metadata, err = projectDirectiveMetadata(tx.Meta, record.File, graph)
+			if err != nil {
+				return JournalPayload{}, err
+			}
+		}
 		postings := make([]JournalPostingDTO, 0, len(tx.Postings))
 		for _, p := range tx.Postings {
 			num := ""
@@ -176,6 +197,13 @@ func ProjectJournal(eval ledger.Evaluation) JournalPayload {
 				value := report.FormatDecimal(ledger.DecimalFromNumber(p.Units.Number))
 				amount = &value
 			}
+			var postingMetadata []DirectiveMetadata
+			if graph != nil {
+				postingMetadata, err = projectDirectiveMetadata(p.Meta, record.File, graph)
+				if err != nil {
+					return JournalPayload{}, err
+				}
+			}
 			postings = append(postings, JournalPostingDTO{
 				Account:       p.Account,
 				UnitsNumber:   num,
@@ -183,6 +211,7 @@ func ProjectJournal(eval ledger.Evaluation) JournalPayload {
 				Amount:        amount,
 				Cost:          postingCost(p.Cost),
 				Price:         postingPrice(p.Price),
+				Metadata:      postingMetadata,
 				Source:        location(record.File, p.Span()),
 			})
 		}
@@ -204,6 +233,7 @@ func ProjectJournal(eval ledger.Evaluation) JournalPayload {
 			Narration: tx.Narration,
 			Tags:      tags,
 			Links:     links,
+			Metadata:  metadata,
 			Postings:  postings,
 			Source:    location(record.File, record.Span),
 		})
@@ -212,7 +242,7 @@ func ProjectJournal(eval ledger.Evaluation) JournalPayload {
 	return JournalPayload{
 		TotalCount:   len(txs),
 		Transactions: txs,
-	}
+	}, nil
 }
 
 func ProjectTree(eval ledger.Evaluation, reportType string) TreeReportPayload {
@@ -344,6 +374,7 @@ func projectHistory(e ledger.Evaluation, from, to, currency, valuation string) H
 	result := emptyTrends("empty")
 	result.DateFrom, result.DateTo = from, to
 	result.CurrencySeries = series
+	result.SourceFiles = evaluationSourceFiles(e)
 	if len(series) > 1 {
 		result.NetWorthAvailability, result.CashFlowAvailability = "native-multi", "native-multi"
 		return result

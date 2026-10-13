@@ -316,3 +316,71 @@ func TestHistoryCarriesInventoryAndKeepsMissingQuotePoints(t *testing.T) {
 		t.Fatal("legacy flat points must not connect across a missing valuation")
 	}
 }
+
+func TestDashboardDateRangeBoundariesCarryBalancesAndFilterFlows(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "dashboard-ranges.bean")
+	data := `option "operating_currency" "USD"
+2000-01-01 open Assets:Bank USD
+2000-01-01 open Income:Salary USD
+2000-01-01 open Income:Other USD
+2000-01-01 open Expenses:Food USD
+2000-01-01 open Equity:Opening USD
+2000-01-05 * "opening balance"
+  Assets:Bank 50 USD
+  Equity:Opening -50 USD
+2000-01-20 * "salary"
+  Assets:Bank 100 USD
+  Income:Salary -100 USD
+2000-01-31 * "food"
+  Expenses:Food 20 USD
+  Assets:Bank -20 USD
+2000-02-01 * "other income"
+  Assets:Bank 5 USD
+  Income:Other -5 USD
+`
+	if err := os.WriteFile(path, []byte(data), 0600); err != nil {
+		t.Fatal(err)
+	}
+	session, err := desktop.Open(path, snapshot.WatchOptions{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer session.Close()
+
+	singleDay, err := session.Read(desktop.Request{View: "dashboard", Currency: "USD", DateFrom: "2000-01-20", DateTo: "2000-01-20"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	single := singleDay.Trends.CurrencySeries[0]
+	if len(single.NetWorthPoints) != 1 || single.NetWorthPoints[0].Date != "2000-01-20" || single.NetWorthPoints[0].Valuation.CompleteTotal.Exact != "150" {
+		t.Fatalf("single-day net worth lost its carried opening balance or inclusive posting: %+v", single.NetWorthPoints)
+	}
+	if len(single.MonthlyCashFlows) != 1 || single.MonthlyCashFlows[0].Income.CompleteTotal.Exact != "100" || single.MonthlyCashFlows[0].Expenses.CompleteTotal.Exact != "0" {
+		t.Fatalf("single-day flow included activity outside the selected day: %+v", single.MonthlyCashFlows)
+	}
+
+	monthBoundary, err := session.Read(desktop.Request{View: "dashboard", Currency: "USD", DateFrom: "2000-01-20", DateTo: "2000-02-01"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	bounded := monthBoundary.Trends.CurrencySeries[0]
+	if len(bounded.NetWorthPoints) != 2 || bounded.NetWorthPoints[0].Date != "2000-01-31" || bounded.NetWorthPoints[1].Date != "2000-02-01" || bounded.NetWorthPoints[0].Valuation.CompleteTotal.Exact != "130" || bounded.NetWorthPoints[1].Valuation.CompleteTotal.Exact != "135" {
+		t.Fatalf("month-end and explicit end-date balances = %+v", bounded.NetWorthPoints)
+	}
+	if len(bounded.MonthlyCashFlows) != 2 || bounded.IncomeTotal == nil || bounded.IncomeTotal.Exact != "105" || bounded.ExpensesTotal == nil || bounded.ExpensesTotal.Exact != "20" {
+		t.Fatalf("inclusive range totals = %+v", bounded)
+	}
+
+	quietDay, err := session.Read(desktop.Request{View: "dashboard", Currency: "USD", DateFrom: "2000-02-02", DateTo: "2000-02-02"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	quiet := quietDay.Trends.CurrencySeries[0]
+	if len(quiet.NetWorthPoints) != 1 || quiet.NetWorthPoints[0].Valuation.CompleteTotal.Exact != "135" || len(quiet.MonthlyCashFlows) != 0 || quiet.CashFlowAvailability != "empty" {
+		t.Fatalf("quiet day must retain balance and omit fabricated flows: %+v", quiet)
+	}
+
+	if _, err := session.Read(desktop.Request{View: "dashboard", Currency: "USD", DateFrom: "2000-02-02", DateTo: "2000-01-20"}); err != desktop.ErrRequest {
+		t.Fatalf("reversed dashboard range error = %v, want ErrRequest", err)
+	}
+}

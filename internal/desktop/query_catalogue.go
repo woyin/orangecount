@@ -8,7 +8,8 @@ import (
 	"orangecount/internal/ledger"
 	"orangecount/internal/query"
 	"orangecount/internal/report"
-	"slices"
+	"sort"
+	"strings"
 )
 
 type SavedQuery struct {
@@ -35,6 +36,7 @@ type QueryCatalogue struct {
 
 func projectQueryCatalogue(e ledger.Evaluation, request Request, snapshotID, from, to string) *QueryCatalogue {
 	queries := make([]SavedQuery, 0)
+	search := strings.ToLower(strings.TrimSpace(request.QuerySearch))
 	for index, record := range e.Entries {
 		var saved *ledger.Query
 		switch directive := record.Directive.(type) {
@@ -46,11 +48,26 @@ func projectQueryCatalogue(e ledger.Evaluation, request Request, snapshotID, fro
 		if saved == nil {
 			continue
 		}
+		if search != "" && !strings.Contains(strings.ToLower(saved.Date.Raw+" "+saved.Name+" "+saved.Query), search) {
+			continue
+		}
 		queries = append(queries, SavedQuery{ID: fmt.Sprintf("%s:q%d", snapshotID, index), Date: saved.Date.Raw, Name: saved.Name, Text: saved.Query, Source: location(record.File, record.Span)})
 	}
-	if request.Sort == "descending" {
-		slices.Reverse(queries)
-	}
+	descending := request.Sort == "descending"
+	sort.SliceStable(queries, func(i, j int) bool {
+		left, right := queries[i], queries[j]
+		if left.Date != right.Date {
+			if descending {
+				return left.Date > right.Date
+			}
+			return left.Date < right.Date
+		}
+		leftName, rightName := strings.ToLower(left.Name), strings.ToLower(right.Name)
+		if descending {
+			return leftName > rightName
+		}
+		return leftName < rightName
+	})
 	limit := request.Limit
 	if limit == 0 {
 		limit = 100

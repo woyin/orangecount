@@ -83,7 +83,7 @@ func recordSchema(t reflect.Type, id string) (analysis.Column, error) {
 	return c, nil
 }
 func excludedAnalysisField(f reflect.StructField) bool {
-	return f.PkgPath != "" || f.Name == "Path" || f.Name == "SourceFiles" || f.Name == "DirectBalances" || f.Name == "SubtreeBalances" || f.Type.Kind() == reflect.Float64 || (f.Type.Kind() == reflect.Pointer && f.Type.Elem().Kind() == reflect.Float64) || f.Tag.Get("json") == "-"
+	return f.PkgPath != "" || f.Name == "Path" || f.Name == "SourceFiles" || f.Name == "DirectBalances" || f.Name == "SubtreeBalances" || f.Type.Kind() == reflect.Float64 || (f.Type.Kind() == reflect.Pointer && f.Type.Elem().Kind() == reflect.Float64) || f.Tag.Get("json") == "-" || f.Tag.Get("analysis") == "-"
 }
 func recordValue(v reflect.Value, column analysis.Column, snapshot string) (query.Cell, error) {
 	if v.Kind() == reflect.Pointer {

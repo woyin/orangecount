@@ -4,6 +4,7 @@ package desktop_test
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -14,6 +15,33 @@ import (
 	"path/filepath"
 	"testing"
 )
+
+func TestReportCaptureCancellationIsRememberedBeforeCaptureStarts(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "main.bean")
+	text := "2024-01-01 open Assets:Cash USD\n2024-01-01 open Equity:Opening USD\n2024-01-02 * \"public\"\n  Assets:Cash 12 USD\n  Equity:Opening -12 USD\n"
+	if err := os.WriteFile(path, []byte(text), 0600); err != nil {
+		t.Fatal(err)
+	}
+	session, err := desktop.OpenWithOptions(path, desktop.OpenOptions{SemanticsProfile: ledger.V3})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer session.Close()
+	view, err := session.Read(desktop.Request{View: "balance_sheet", Currency: "USD"})
+	if err != nil || view.ReportExport == nil {
+		t.Fatalf("create report projection: %+v, %v", view.ReportExport, err)
+	}
+	request := desktop.ReportExportRequest{
+		CaptureID: "cancel-before-start", ProjectionID: view.ReportExport.ProjectionID,
+		SnapshotID: view.State.SnapshotID, Format: "analysis", CaptureScope: view.ReportExport.CaptureScope,
+	}
+	if err := session.CancelReportExport(request.CaptureID); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := session.CaptureReportExport(request); !errors.Is(err, context.Canceled) {
+		t.Fatalf("pre-cancelled report capture = %v, want context.Canceled", err)
+	}
+}
 
 func TestTreeCaptureHasExactValuesAndFixedIdentity(t *testing.T) {
 	root := t.TempDir()
@@ -163,6 +191,225 @@ func TestReportProjectionSectionsRoundTrip(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestStatementReportAnalysisPreservesCurrencyAndValuationRequest(t *testing.T) {
+	path, err := filepath.Abs("../../testdata/fixtures/native/valuation.bean")
+	if err != nil {
+		t.Fatal(err)
+	}
+	cases := []struct {
+		name, currency, valuation, wantValuation string
+	}{
+		{name: "native currencies at default cost", wantValuation: "at-cost"},
+		{name: "USD market value", currency: "USD", valuation: "market-value", wantValuation: "market-value"},
+	}
+	profileProjectionIDs := map[ledger.SemanticsProfile]map[string]string{}
+	for _, profile := range []ledger.SemanticsProfile{ledger.Legacy, ledger.V3} {
+		t.Run(string(profile), func(t *testing.T) {
+			s, err := desktop.OpenWithOptions(path, desktop.OpenOptions{SemanticsProfile: profile})
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer s.Close()
+			projectionIDs := map[string]bool{}
+			profileProjectionIDs[profile] = map[string]string{}
+			for _, tc := range cases {
+				t.Run(tc.name, func(t *testing.T) {
+					view, err := s.Read(desktop.Request{View: "balance_sheet", Currency: tc.currency, Valuation: tc.valuation})
+					if err != nil {
+						t.Fatal(err)
+					}
+					if view.ReportExport == nil {
+						t.Fatal("statement omitted report export identity")
+					}
+					if view.ReportExport.SemanticsProfile != string(profile) || view.ReportExport.Currency != tc.currency || view.ReportExport.Valuation != tc.wantValuation {
+						t.Errorf("report identity profile/currency/valuation = %q/%q/%q, want %q/%q/%q", view.ReportExport.SemanticsProfile, view.ReportExport.Currency, view.ReportExport.Valuation, profile, tc.currency, tc.wantValuation)
+					}
+					projectionIDs[view.ReportExport.ProjectionID] = true
+					profileProjectionIDs[profile][tc.currency+"\x00"+tc.wantValuation] = view.ReportExport.ProjectionID
+					capture, err := s.CaptureReportExport(desktop.ReportExportRequest{
+						ProjectionID: view.ReportExport.ProjectionID, SnapshotID: view.State.SnapshotID,
+						Format: "analysis", CaptureScope: view.ReportExport.CaptureScope,
+					})
+					if err != nil {
+						t.Fatal(err)
+					}
+					doc, err := analysis.ReadReport(bytes.NewReader(capture.Content), int64(len(capture.Content)))
+					if err != nil {
+						t.Fatal(err)
+					}
+					if doc.Context.SemanticsProfile != string(profile) {
+						t.Errorf("analysis profile = %q, want %q", doc.Context.SemanticsProfile, profile)
+					}
+					if got := doc.Context.NormalizedRequest["currency"]; got != tc.currency {
+						t.Errorf("analysis currency = %q, want %q", got, tc.currency)
+					}
+					if got := doc.Context.NormalizedRequest["valuation"]; got != tc.wantValuation {
+						t.Errorf("analysis valuation = %q, want %q", got, tc.wantValuation)
+					}
+				})
+			}
+			if len(projectionIDs) != len(cases) {
+				t.Fatalf("different currency/valuation requests shared a projection ID: %v", projectionIDs)
+			}
+		})
+	}
+	for _, tc := range cases {
+		key := tc.currency + "\x00" + tc.wantValuation
+		if profileProjectionIDs[ledger.Legacy][key] == profileProjectionIDs[ledger.V3][key] {
+			t.Errorf("legacy and v3 %s reports share a projection ID %q", tc.name, profileProjectionIDs[ledger.V3][key])
+		}
+	}
+}
+
+func TestDashboardReportAnalysisNormalizesNativeCurrencyAndDefaultValuation(t *testing.T) {
+	path, err := filepath.Abs("../../testdata/fixtures/native/history.bean")
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := desktop.OpenWithOptions(path, desktop.OpenOptions{SemanticsProfile: ledger.V3})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	view, err := s.Read(desktop.Request{View: "dashboard", Currency: "native", Locale: "zh-CN"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if view.ReportExport == nil {
+		t.Fatal("dashboard omitted report export identity")
+	}
+	if view.ReportExport.Currency != "" || view.ReportExport.Valuation != "at-cost" {
+		t.Fatalf("dashboard report identity currency/valuation = %q/%q, want native currencies at at-cost", view.ReportExport.Currency, view.ReportExport.Valuation)
+	}
+	capture, err := s.CaptureReportExport(desktop.ReportExportRequest{
+		ProjectionID: view.ReportExport.ProjectionID, SnapshotID: view.State.SnapshotID,
+		Format: "analysis", CaptureScope: view.ReportExport.CaptureScope,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc, err := analysis.ReadReport(bytes.NewReader(capture.Content), int64(len(capture.Content)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := doc.Context.NormalizedRequest["currency"]; got != "" {
+		t.Errorf("dashboard analysis currency = %q, want native currencies", got)
+	}
+	if got := doc.Context.NormalizedRequest["valuation"]; got != "at-cost" {
+		t.Errorf("dashboard analysis valuation = %q, want at-cost", got)
+	}
+}
+
+func TestAccountAndHoldingsReportAnalysisUseEffectiveCurrencyAndValuation(t *testing.T) {
+	cases := []struct {
+		name, fixture, wantCurrency, wantValuation string
+		request                                    desktop.Request
+	}{
+		{
+			name: "account native at default cost", fixture: "account-detail.bean",
+			request:       desktop.Request{View: "account", Account: "Assets:Test", Currency: "native"},
+			wantValuation: "at-cost",
+		},
+		{
+			name: "holdings native at default cost", fixture: "average-history.bean",
+			request:       desktop.Request{View: "holdings", Account: "Assets:Stock", Currency: "native", HoldingSection: "groups"},
+			wantValuation: "at-cost",
+		},
+		{
+			name: "holdings USD market value", fixture: "average-history.bean",
+			request:      desktop.Request{View: "holdings", Account: "Assets:Stock", Currency: "USD", Valuation: "market-value", HoldingSection: "groups"},
+			wantCurrency: "USD", wantValuation: "market-value",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			path, err := filepath.Abs("../../testdata/fixtures/native/" + tc.fixture)
+			if err != nil {
+				t.Fatal(err)
+			}
+			s, err := desktop.OpenWithOptions(path, desktop.OpenOptions{SemanticsProfile: ledger.V3})
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer s.Close()
+			view, err := s.Read(tc.request)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if view.ReportExport == nil {
+				t.Fatal("missing report export identity")
+			}
+			if view.ReportExport.Currency != tc.wantCurrency || view.ReportExport.Valuation != tc.wantValuation {
+				t.Errorf("report identity currency/valuation = %q/%q, want %q/%q", view.ReportExport.Currency, view.ReportExport.Valuation, tc.wantCurrency, tc.wantValuation)
+			}
+			capture, err := s.CaptureReportExport(desktop.ReportExportRequest{
+				ProjectionID: view.ReportExport.ProjectionID, SnapshotID: view.State.SnapshotID,
+				Format: "analysis", CaptureScope: view.ReportExport.CaptureScope,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			doc, err := analysis.ReadReport(bytes.NewReader(capture.Content), int64(len(capture.Content)))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := doc.Context.NormalizedRequest["currency"]; got != tc.wantCurrency {
+				t.Errorf("analysis currency = %q, want %q", got, tc.wantCurrency)
+			}
+			if got := doc.Context.NormalizedRequest["valuation"]; got != tc.wantValuation {
+				t.Errorf("analysis valuation = %q, want %q", got, tc.wantValuation)
+			}
+		})
+	}
+}
+
+func TestPriceReportIdentityRetainsSelectedQuotePair(t *testing.T) {
+	path, err := filepath.Abs("../../testdata/fixtures/native/prices.bean")
+	if err != nil {
+		t.Fatal(err)
+	}
+	s, err := desktop.OpenWithOptions(path, desktop.OpenOptions{SemanticsProfile: ledger.V3})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	view, err := s.Read(desktop.Request{
+		View: "prices", PriceSection: "history", PriceBase: "STK", PriceQuote: "USD",
+		DateFrom: "2000-01-01", DateTo: "2000-01-31",
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if view.ReportExport == nil {
+		t.Fatal("price history omitted report export identity")
+	}
+	identityJSON, err := json.Marshal(view.ReportExport)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var identity map[string]any
+	if err := json.Unmarshal(identityJSON, &identity); err != nil {
+		t.Fatal(err)
+	}
+	if identity["price_base"] != "STK" || identity["price_quote"] != "USD" {
+		t.Fatalf("price report identity pair = %v/%v, want STK/USD", identity["price_base"], identity["price_quote"])
+	}
+	capture, err := s.CaptureReportExport(desktop.ReportExportRequest{
+		ProjectionID: view.ReportExport.ProjectionID, SnapshotID: view.State.SnapshotID,
+		Format: "analysis", CaptureScope: view.ReportExport.CaptureScope,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	doc, err := analysis.ReadReport(bytes.NewReader(capture.Content), int64(len(capture.Content)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if doc.Context.NormalizedRequest["price_base"] != "STK" || doc.Context.NormalizedRequest["price_quote"] != "USD" {
+		t.Fatalf("captured price request pair = %q/%q, want STK/USD", doc.Context.NormalizedRequest["price_base"], doc.Context.NormalizedRequest["price_quote"])
 	}
 }
 

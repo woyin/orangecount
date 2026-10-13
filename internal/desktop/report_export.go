@@ -25,6 +25,10 @@ type ReportExportIdentity struct {
 	Truncated         bool   `json:"truncated"`
 	DateFrom          string `json:"date_from"`
 	DateTo            string `json:"date_to"`
+	Currency          string `json:"currency,omitempty"`
+	Valuation         string `json:"valuation,omitempty"`
+	PriceBase         string `json:"price_base,omitempty"`
+	PriceQuote        string `json:"price_quote,omitempty"`
 	SemanticsProfile  string `json:"semantics_profile"`
 	Completeness      string `json:"completeness"`
 	ProjectionID      string `json:"projection_id"`
@@ -95,7 +99,7 @@ func (s *Session) retainReport(result *ViewResponse) error {
 		}
 		return err
 	}
-	identity := ReportExportIdentity{ReturnedRows: d.Context.ReturnedRows, SourceRecordCount: d.Context.SourceRecordCount, Truncated: d.Context.Truncated, DateFrom: d.Context.NormalizedRequest["date_from"], DateTo: d.Context.NormalizedRequest["date_to"], SemanticsProfile: d.Context.SemanticsProfile, Completeness: d.Context.Completeness, ProjectionID: id, SnapshotID: result.State.SnapshotID, Section: d.Context.Section, CaptureScope: d.Context.CaptureScope}
+	identity := ReportExportIdentity{ReturnedRows: d.Context.ReturnedRows, SourceRecordCount: d.Context.SourceRecordCount, Truncated: d.Context.Truncated, DateFrom: d.Context.NormalizedRequest["date_from"], DateTo: d.Context.NormalizedRequest["date_to"], Currency: d.Context.NormalizedRequest["currency"], Valuation: d.Context.NormalizedRequest["valuation"], PriceBase: d.Context.NormalizedRequest["price_base"], PriceQuote: d.Context.NormalizedRequest["price_quote"], SemanticsProfile: d.Context.SemanticsProfile, Completeness: d.Context.Completeness, ProjectionID: id, SnapshotID: result.State.SnapshotID, Section: d.Context.Section, CaptureScope: d.Context.CaptureScope}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.closed {
@@ -199,7 +203,11 @@ func (s *Session) CaptureReportExport(request ReportExportRequest) (ReportExport
 func treeAnalysis(response ViewResponse) analysis.Document {
 	tree := response.Tree
 	r := response.Request
-	normalized := map[string]string{"view": r.View, "section": "tree", "date_from": tree.DateFrom, "date_to": tree.DateTo, "currency": tree.Currency, "valuation": tree.ValuationStatus.Mode}
+	valuation := r.Valuation
+	if valuation == "" {
+		valuation = "at-cost"
+	}
+	normalized := map[string]string{"view": r.View, "section": "tree", "date_from": tree.DateFrom, "date_to": tree.DateTo, "currency": tree.Currency, "valuation": valuation}
 	d := analysis.Document{Context: analysis.Context{FormatVersion: 2, Producer: "OrangeCount", Contract: "native-report-analysis-v1", View: r.View, Section: "tree", SnapshotID: response.State.SnapshotID, SemanticsProfile: string(response.State.SemanticsProfile), EvaluationRevision: response.State.EvaluationRevision, NormalizedRequest: normalized, CaptureScope: "complete-projection", Completeness: tree.ValuationStatus.Completeness, ValuationStatus: &tree.ValuationStatus, ValuationDetails: map[string]report.ValuationStatus{}}, Schema: analysis.Schema{RowUnit: "account", PageUnit: "account"}, Rows: [][]query.Cell{}}
 	c := analysis.NewColumn
 	statusColumns := []analysis.Column{c("mode", "Mode", "string", false), c("currency", "Currency", "string", false), c("as_of", "As of", "string", false), c("completeness", "Completeness", "string", false), c("covered", "Covered", "integer", false), c("missing", "Missing", "integer", false)}

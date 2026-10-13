@@ -209,6 +209,32 @@ func TestNativePricesSelectedCommodityIsCompleteBeyondCatalogPreview(t *testing.
 	}
 }
 
+func TestNativePricesSearchFiltersFullCatalogBeforePaging(t *testing.T) {
+	var input strings.Builder
+	for i := 0; i < 205; i++ {
+		fmt.Fprintf(&input, "2000-01-01 commodity C%03d\n", i)
+	}
+	path := filepath.Join(t.TempDir(), "main.bean")
+	if err := os.WriteFile(path, []byte(input.String()), 0600); err != nil {
+		t.Fatal(err)
+	}
+	s, err := desktop.OpenWithOptions(path, desktop.OpenOptions{SemanticsProfile: ledger.V3})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	view, err := s.Read(desktop.Request{View: "prices", PriceSection: "commodities", CommoditySearch: "c204", Limit: 10})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if view.Prices == nil || view.Prices.CommoditiesPage.TotalCount != 1 || len(view.Prices.Commodities) != 1 || view.Prices.Commodities[0].Currency != "C204" {
+		t.Fatalf("catalog search did not reach items beyond the first page: %+v", view.Prices)
+	}
+	if _, err := s.Read(desktop.Request{View: "prices", PriceSection: "history", PriceBase: "C204", PriceQuote: "USD", CommoditySearch: "C204"}); !errors.Is(err, desktop.ErrRequest) {
+		t.Fatal("catalog search must not be accepted on a price-history request")
+	}
+}
+
 func TestNativePricesEmptyAndUnplottableValuesPreserveExactMeaning(t *testing.T) {
 	empty := filepath.Join(t.TempDir(), "empty.bean")
 	if err := os.WriteFile(empty, []byte("; No declarations, prices or account use.\n"), 0600); err != nil {

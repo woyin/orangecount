@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"slices"
+	"strings"
 
 	"orangecount/internal/ledger"
 	"orangecount/internal/report"
@@ -35,6 +36,17 @@ func projectPrices(e ledger.Evaluation, r Request, snapshotID, from, to string) 
 		if r.PriceBase != "" {
 			result.Section = "history"
 		}
+	}
+	if result.Section == "commodities" && strings.TrimSpace(r.CommoditySearch) != "" {
+		needle := strings.ToLower(strings.TrimSpace(r.CommoditySearch))
+		filtered := result.Commodities[:0]
+		for _, item := range result.Commodities {
+			searchable := strings.ToLower(item.Currency + " " + strings.Join(item.Accounts, " ") + " " + strings.Join(item.QuoteCurrencies, " "))
+			if strings.Contains(searchable, needle) {
+				filtered = append(filtered, item)
+			}
+		}
+		result.Commodities = filtered
 	}
 	for i := range result.Records {
 		sum := sha256.Sum256([]byte(snapshotID + "\x00" + result.Records[i].ID))

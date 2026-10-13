@@ -34,6 +34,41 @@ func publicAnalysis(t *testing.T, fixture, text string) []byte {
 	return output.Bytes()
 }
 
+func rewriteAnalysisMember(t *testing.T, data []byte, name string, edit func([]byte) []byte) []byte {
+	t.Helper()
+	archive, err := zip.NewReader(bytes.NewReader(data), int64(len(data)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var output bytes.Buffer
+	writer := zip.NewWriter(&output)
+	for _, file := range archive.File {
+		reader, err := file.Open()
+		if err != nil {
+			t.Fatal(err)
+		}
+		contents, err := io.ReadAll(reader)
+		closeErr := reader.Close()
+		if err != nil || closeErr != nil {
+			t.Fatalf("read archive member %s: %v %v", file.Name, err, closeErr)
+		}
+		if file.Name == name {
+			contents = edit(contents)
+		}
+		member, err := writer.Create(file.Name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := member.Write(contents); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := writer.Close(); err != nil {
+		t.Fatal(err)
+	}
+	return output.Bytes()
+}
+
 func TestAnalysisReaderRestoresExactPositionalValuesAndZeroRows(t *testing.T) {
 	for _, test := range []struct {
 		fixture, text string
@@ -73,9 +108,27 @@ func TestAnalysisReaderRestoresExactPositionalValuesAndZeroRows(t *testing.T) {
 	}
 }
 
+func TestAnalysisReaderAcceptsSupportedScalarContracts(t *testing.T) {
+	original := publicAnalysis(t, "default-source.bean", "SELECT account, number LIMIT 1")
+	for _, contract := range []string{query.LegacyContract, query.PreviousContract, query.CurrentContract} {
+		t.Run(contract, func(t *testing.T) {
+			data := rewriteAnalysisMember(t, original, "context.json", func(contents []byte) []byte {
+				return bytes.Replace(contents, []byte(query.CurrentContract), []byte(contract), 1)
+			})
+			document, err := desktop.ReadQueryAnalysis(bytes.NewReader(data), int64(len(data)))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if document.Result.Contract != contract || len(document.Result.Columns) != 2 || len(document.Result.Rows) != 1 {
+				t.Fatalf("contract %s did not restore its scalar result: %+v", contract, document)
+			}
+		})
+	}
+}
+
 func TestAnalysisReaderRejectsTamperedArchives(t *testing.T) {
 	original := publicAnalysis(t, "default-source.bean", "SELECT 1 AS v LIMIT 1")
-	for _, scenario := range []string{"extra", "duplicate", "missing", "csv", "context", "schema", "cell", "duplicate-key", "case-alias"} {
+	for _, scenario := range []string{"extra", "duplicate", "missing", "csv", "context", "schema", "cell", "duplicate-key", "case-alias", "unknown-contract", "future-format"} {
 		t.Run(scenario, func(t *testing.T) {
 			source, err := zip.NewReader(bytes.NewReader(original), int64(len(original)))
 			if err != nil {
@@ -103,6 +156,10 @@ func TestAnalysisReaderRejectsTamperedArchives(t *testing.T) {
 					data = bytes.Replace(data, []byte(`"view":"query"`), []byte(`"view":"query","VIEW":"query"`), 1)
 				case scenario == "duplicate-key" && file.Name == "context.json":
 					data = bytes.Replace(data, []byte(`"format_version":1`), []byte(`"format_version":1,"format_version":1`), 1)
+				case scenario == "unknown-contract" && file.Name == "context.json":
+					data = bytes.Replace(data, []byte(query.CurrentContract), []byte("beanquery-0.2.0-typed-v99"), 1)
+				case scenario == "future-format" && file.Name == "context.json":
+					data = bytes.Replace(data, []byte(`"format_version":1`), []byte(`"format_version":2`), 1)
 				}
 				member, _ := writer.Create(file.Name)
 				member.Write(data)

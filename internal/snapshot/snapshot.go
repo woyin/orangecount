@@ -336,10 +336,15 @@ func (s *Store) Watch(ctx context.Context, entry string, options BuildOptions, w
 	if s == nil {
 		return fmt.Errorf("nil snapshot store")
 	}
+	return s.watch(ctx, entry, options, watch, callback, source.LoadGraph)
+}
+
+func (s *Store) watch(ctx context.Context, entry string, options BuildOptions, watch WatchOptions, callback func(ReloadResult), loadGraph func(string) (*source.Graph, error)) error {
 	watch = watch.normalized()
 	// Seed the patrol with one full graph load; every later tick stats the
 	// known paths instead of re-reading file contents (ADR-0044).
-	patrol := newGraphPatrol(entry)
+	graph, _ := loadGraph(entry)
+	patrol := patrolFromGraph(entry, graph)
 	lastSignature := patrol.signature()
 	ticker := time.NewTicker(watch.PollInterval)
 	defer ticker.Stop()

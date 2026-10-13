@@ -40,6 +40,35 @@ func TestQueryCataloguePreservesDuplicatesAndIncludedSource(t *testing.T) {
 	if len(rows) != 2 || rows[0].Name != "同名" || rows[1].Name != "同名" || rows[0].ID == rows[1].ID || rows[0].Text == rows[1].Text {
 		t.Fatalf("duplicate query identities lost: %+v", rows)
 	}
+	descending, err := session.Read(desktop.Request{View: "query", SnapshotID: state.SnapshotID, Sort: "descending", Limit: 1})
+	if err != nil || len(descending.QueryCatalogue.Queries) != 1 || descending.QueryCatalogue.Queries[0].Name != "同名" {
+		t.Fatalf("descending date/name order = %+v, err = %v", descending.QueryCatalogue, err)
+	}
+}
+
+func TestQueryCatalogueSearchFiltersBeforePaging(t *testing.T) {
+	session, err := desktop.OpenWithOptions("../../testdata/fixtures/native/queries.bean", desktop.OpenOptions{SemanticsProfile: ledger.V3})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer session.Close()
+	state, _ := session.Poll()
+	view, err := session.Read(desktop.Request{View: "query", SnapshotID: state.SnapshotID, QuerySearch: "同名", Sort: "descending", Limit: 1})
+	if err != nil {
+		t.Fatal(err)
+	}
+	page := view.QueryCatalogue.Page
+	if page.TotalCount != 2 || page.ReturnedCount != 1 || !page.HasMore || len(view.QueryCatalogue.Queries) != 1 || view.QueryCatalogue.Queries[0].Name != "同名" {
+		t.Fatalf("filtered page = %+v, rows = %+v", page, view.QueryCatalogue.Queries)
+	}
+	matchingText, err := session.Read(desktop.Request{View: "query", SnapshotID: state.SnapshotID, QuerySearch: "UNKNOWN(NUMBER)", Limit: 100})
+	if err != nil || matchingText.QueryCatalogue.Page.TotalCount != 1 || matchingText.QueryCatalogue.Queries[0].Name != "Included" {
+		t.Fatalf("BQL-text search = %+v, err = %v", matchingText.QueryCatalogue, err)
+	}
+	_, err = session.Read(desktop.Request{View: "dashboard", QuerySearch: "same"})
+	if !errors.Is(err, desktop.ErrRequest) {
+		t.Fatalf("query search on dashboard error = %v, want ErrRequest", err)
+	}
 }
 
 func TestQueryCatalogueReloadRejectsPreviousPageIdentity(t *testing.T) {

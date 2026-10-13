@@ -65,7 +65,9 @@ type Request struct {
 	PriceSection           string `json:"price_section,omitempty"`
 	PriceBase              string `json:"price_base,omitempty"`
 	PriceQuote             string `json:"price_quote,omitempty"`
+	CommoditySearch        string `json:"commodity_search,omitempty"`
 	Text                   string `json:"text"`
+	QuerySearch            string `json:"query_search,omitempty"`
 	Sort                   string `json:"sort"`
 	Offset                 int    `json:"offset"`
 	Limit                  int    `json:"limit"`
@@ -329,7 +331,10 @@ func (s *Session) Read(request Request) (ViewResponse, error) {
 			return ViewResponse{}, err
 		}
 		result.Account = account
-		journal := current.readJournal(request)
+		journal, err := current.readJournal(request)
+		if err != nil {
+			return ViewResponse{}, err
+		}
 		result.Journal = &journal
 	case "balance_sheet", "income_statement":
 		cur := request.Currency
@@ -347,7 +352,10 @@ func (s *Session) Read(request Request) (ViewResponse, error) {
 			}
 			result.Directives = payload
 		} else {
-			journal := current.readJournal(request)
+			journal, err := current.readJournal(request)
+			if err != nil {
+				return ViewResponse{}, err
+			}
 			result.Journal = &journal
 		}
 	case "dashboard":

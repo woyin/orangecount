@@ -6,6 +6,7 @@ package desktop
 import (
 	"orangecount/internal/ledger"
 	"orangecount/internal/report"
+	"orangecount/internal/source"
 )
 
 type AccountLifecycleSource struct {
@@ -16,7 +17,8 @@ type AccountLifecycleSource struct {
 
 type AccountDetailPayload struct {
 	*report.AccountDetailProjection
-	Sources []AccountLifecycleSource `json:"sources"`
+	Sources     []AccountLifecycleSource `json:"sources"`
+	SourceFiles map[source.FileID]string `json:"source_files"`
 }
 
 func projectAccount(e ledger.Evaluation, r Request, from, to string) (*AccountDetailPayload, error) {
@@ -24,7 +26,7 @@ func projectAccount(e ledger.Evaluation, r Request, from, to string) (*AccountDe
 	if err != nil {
 		return nil, err
 	}
-	result := &AccountDetailPayload{AccountDetailProjection: projection, Sources: []AccountLifecycleSource{}}
+	result := &AccountDetailPayload{AccountDetailProjection: projection, Sources: []AccountLifecycleSource{}, SourceFiles: evaluationSourceFiles(e)}
 	for _, entry := range e.Entries {
 		account := ""
 		switch d := entry.Directive.(type) {

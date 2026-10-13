@@ -10,7 +10,24 @@ import (
 )
 
 func baseAnalysis(response ViewResponse, section, unit, from, to string) analysis.Document {
-	return analysis.Document{Context: analysis.Context{FormatVersion: 2, Producer: "OrangeCount", Contract: "native-report-analysis-v1", View: response.Request.View, Section: section, SnapshotID: response.State.SnapshotID, SemanticsProfile: string(response.State.SemanticsProfile), EvaluationRevision: response.State.EvaluationRevision, NormalizedRequest: map[string]string{"view": response.Request.View, "section": section, "date_from": from, "date_to": to, "currency": response.Request.Currency, "valuation": response.Request.Valuation}, CaptureScope: "complete-projection", Completeness: "empty", ValuationDetails: map[string]report.ValuationStatus{}}, Schema: analysis.Schema{RowUnit: unit, PageUnit: unit, Columns: []analysis.Column{}}, Rows: [][]query.Cell{}}
+	currency := response.Request.Currency
+	if currency == "native" {
+		currency = ""
+	}
+	if response.Holdings != nil {
+		currency = response.Holdings.Currency
+	}
+	valuation := response.Request.Valuation
+	if response.Trends != nil && valuation == "" {
+		valuation = "at-cost"
+	}
+	if response.Account != nil {
+		valuation = response.Account.Valuation
+	}
+	if response.Holdings != nil {
+		valuation = response.Holdings.Valuation
+	}
+	return analysis.Document{Context: analysis.Context{FormatVersion: 2, Producer: "OrangeCount", Contract: "native-report-analysis-v1", View: response.Request.View, Section: section, SnapshotID: response.State.SnapshotID, SemanticsProfile: string(response.State.SemanticsProfile), EvaluationRevision: response.State.EvaluationRevision, NormalizedRequest: map[string]string{"view": response.Request.View, "section": section, "date_from": from, "date_to": to, "currency": currency, "valuation": valuation}, CaptureScope: "complete-projection", Completeness: "empty", ValuationDetails: map[string]report.ValuationStatus{}}, Schema: analysis.Schema{RowUnit: unit, PageUnit: unit, Columns: []analysis.Column{}}, Rows: [][]query.Cell{}}
 }
 func decimalCell(v *report.PresentedDecimal) query.Cell {
 	if v == nil {

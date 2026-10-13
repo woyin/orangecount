@@ -230,6 +230,46 @@ func TestGraphPatrolSignatureTracksStatIdentity(t *testing.T) {
 	}
 }
 
+func TestWatchLoadsSourceGraphOnceWhileIdle(t *testing.T) {
+	entry := filepath.Join(t.TempDir(), "main.bean")
+	contents := "2000-01-01 open Assets:Cash USD\n2000-01-01 open Equity:Opening USD\n"
+	if err := os.WriteFile(entry, []byte(contents), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	store := NewStore(Build(entry).Snapshot)
+	ctx, cancel := context.WithCancel(context.Background())
+	loaded := make(chan struct{})
+	done := make(chan error, 1)
+	loadCount := 0
+	loadGraph := func(path string) (*source.Graph, error) {
+		loadCount++
+		graph, err := source.LoadGraph(path)
+		if loadCount == 1 {
+			close(loaded)
+		}
+		return graph, err
+	}
+	const pollInterval = 5 * time.Millisecond
+	go func() {
+		done <- store.watch(ctx, entry, BuildOptions{}, WatchOptions{PollInterval: pollInterval}, nil, loadGraph)
+	}()
+	select {
+	case <-loaded:
+	case <-time.After(time.Second):
+		cancel()
+		<-done
+		t.Fatal("watcher did not finish its initial graph load")
+	}
+	time.Sleep(10 * pollInterval)
+	cancel()
+	if err := <-done; err != nil {
+		t.Fatalf("watcher returned an error: %v", err)
+	}
+	if loadCount != 1 {
+		t.Fatalf("idle watcher loaded source graph %d times, want only the initial load", loadCount)
+	}
+}
+
 func TestGraphPatrolWatchesPreviouslyMissingIncludeTargets(t *testing.T) {
 	dir := t.TempDir()
 	entry := filepath.Join(dir, "main.bean")

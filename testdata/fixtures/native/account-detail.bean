@@ -13,7 +13,9 @@ option "booking_method" "LIFO"
   Equity:Opening -1029 USD
 
 2000-01-03 * "Child reduction"
+  transaction_ref: "manual-review-7"
   Assets:Test:Child -5 USD
+    posting_note: "partial reduction"
   Equity:Opening 5 USD
 
 2000-01-05 close Assets:Test:Child

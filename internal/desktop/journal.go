@@ -63,7 +63,13 @@ func indexJournal(e ledger.Evaluation, snapshotID string) []journalEntry {
 }
 
 func validJournalRequest(r Request) bool {
-	if len(r.Text) > 65536 || !utf8.ValidString(r.Text) {
+	if len(r.Text) > 65536 || !utf8.ValidString(r.Text) || len(r.QuerySearch) > 65536 || !utf8.ValidString(r.QuerySearch) || len(r.CommoditySearch) > 4096 || !utf8.ValidString(r.CommoditySearch) {
+		return false
+	}
+	if r.QuerySearch != "" && r.View != "query" {
+		return false
+	}
+	if r.CommoditySearch != "" && (r.View != "prices" || r.PriceSection != "commodities") {
 		return false
 	}
 	if r.DocumentID != "" && (len(r.DocumentID) > 512 || r.View != "journal" || r.JournalMode != "all" || r.SnapshotID == "") {
@@ -180,7 +186,7 @@ func (p *publication) dateRange(r Request) (string, string) {
 	return from, to
 }
 
-func (p *publication) readJournal(r Request) JournalPayload {
+func (p *publication) readJournal(r Request) (JournalPayload, error) {
 	from, to := p.dateRange(r)
 	limit := r.Limit
 	if limit == 0 {
@@ -220,10 +226,14 @@ func (p *publication) readJournal(r Request) JournalPayload {
 	for _, entry := range selected {
 		evaluation.Entries = append(evaluation.Entries, p.evaluation.Entries[entry.index])
 	}
-	result.Transactions = ProjectJournal(evaluation).Transactions
+	projected, err := ProjectJournalWithGraph(evaluation, p.snapshot.Graph())
+	if err != nil {
+		return JournalPayload{}, err
+	}
+	result.Transactions = projected.Transactions
 	for i := range result.Transactions {
 		result.Transactions[i].ID = selected[i].id
 	}
 	result.HasMore = r.Offset+len(selected) < result.TotalCount
-	return result
+	return result, nil
 }

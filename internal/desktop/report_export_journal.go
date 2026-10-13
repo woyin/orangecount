@@ -17,19 +17,53 @@ func journalAnalysis(response ViewResponse) (analysis.Document, error) {
 	d.Schema.PageUnit = "transaction"
 	d.Context.NormalizedRequest["text"] = response.Request.Text
 	d.Context.NormalizedRequest["account"] = response.Request.Account
+	transactionMetadata := journalMetadataColumn("transaction_metadata", "Transaction metadata")
+	postingMetadata := journalMetadataColumn("posting_metadata", "Posting metadata")
 	column, err := recordSchema(reflect.TypeOf(JournalPostingDTO{}), "posting")
 	if err != nil {
 		return d, err
 	}
 	c := analysis.NewColumn
-	d.Schema.Columns = []analysis.Column{c("transaction_id", "Transaction", "string", false), c("posting_index", "Posting index", "integer", false), c("date", "Date", "date", false), c("flag", "Flag", "string", false), c("payee", "Payee", "string", false), c("narration", "Narration", "string", false), c("tags", "Tags", "set<string>", false), c("links", "Links", "set<string>", false), column}
+	d.Schema.Columns = []analysis.Column{
+		c("transaction_id", "Transaction", "string", false),
+		c("posting_index", "Posting index", "integer", false),
+		c("date", "Date", "date", false),
+		c("flag", "Flag", "string", false),
+		c("payee", "Payee", "string", false),
+		c("narration", "Narration", "string", false),
+		c("tags", "Tags", "set<string>", false),
+		c("links", "Links", "set<string>", false),
+		transactionMetadata,
+		postingMetadata,
+		column,
+	}
 	for _, t := range p.Transactions {
 		for i, posting := range t.Postings {
 			cell, err := recordValue(reflect.ValueOf(posting), column, response.State.SnapshotID)
 			if err != nil {
 				return d, err
 			}
-			d.Rows = append(d.Rows, []query.Cell{stringCell(t.ID), {Type: "integer", Value: strconv.Itoa(i)}, {Type: "date", Value: t.Date}, stringCell(t.Flag), stringCell(t.Payee), stringCell(t.Narration), {Type: "set<string>", Value: analysis.NormalizeSet(t.Tags)}, {Type: "set<string>", Value: analysis.NormalizeSet(t.Links)}, cell})
+			transactionMetadataCell, err := journalMetadataCell(t.Metadata)
+			if err != nil {
+				return d, err
+			}
+			postingMetadataCell, err := journalMetadataCell(posting.Metadata)
+			if err != nil {
+				return d, err
+			}
+			d.Rows = append(d.Rows, []query.Cell{
+				stringCell(t.ID),
+				{Type: "integer", Value: strconv.Itoa(i)},
+				{Type: "date", Value: t.Date},
+				stringCell(t.Flag),
+				stringCell(t.Payee),
+				stringCell(t.Narration),
+				{Type: "set<string>", Value: analysis.NormalizeSet(t.Tags)},
+				{Type: "set<string>", Value: analysis.NormalizeSet(t.Links)},
+				transactionMetadataCell,
+				postingMetadataCell,
+				cell,
+			})
 		}
 	}
 	d.Context.ReturnedRows = len(d.Rows)
