@@ -1,5 +1,7 @@
 # OrangeCount macOS 原生桌面版架构方案与详细工程计划 (Native Desktop App Specification)
 
+**2026-10-07 状态更新：历史 SwiftUI 架构基线。** 用户已选择 MyGO Go `ui` 作为下一代桌面技术路线，见[ADR-0051](adr/0051-use-mygo-native-go-ui-for-the-desktop-client.md)和[新设计](mygo-native-desktop-design-2026-10-07.md)。本文保留现有实现的行为与历史设计依据；新客户端尚未实现，现有 SwiftUI 客户端继续作为迁移对比基线。
+
 - **文档版本**：v2.0 (Industrial Detailed Specification)
 - **文档状态**：Draft for Architecture Review & Execution Baseline
 - **定位**：OrangeCount 原生 macOS 桌面客户端（纯 Native，零 WebView，零网络暴露，单进程内存直连）。

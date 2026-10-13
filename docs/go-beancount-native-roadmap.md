@@ -1,5 +1,7 @@
 # Go Beancount 与原生 macOS：开发文档入口
 
+**桌面技术路线更新（2026-10-07）**：用户已选择用 MyGO 的 Go `ui` 重写桌面客户端。下一代桌面实施从[详细设计](mygo-native-desktop-design-2026-10-07.md)、[实施计划](mygo-native-desktop-plan-2026-10-07.md)与[46项任务台账](mygo-native-desktop-tasks-2026-10-07.md)开始，决策见[ADR-0051](adr/0051-use-mygo-native-go-ui-for-the-desktop-client.md)。当前新客户端尚未实现。以下既有 Go 会计/查询/兼容工作继续适用；旧 SwiftUI 计划和证据作为迁移功能、对比与撤回基线，不再决定下一代展示技术路线。
+
 **执行顺序更新（2026-10-02）**：以[收敛交付计划](go-beancount-native-delivery-plan-2026-10-02.md)为准：先修复已知界面问题，冻结代码并完成当前账本/原生验收，打包、提交并交付可用首版，再继续附件及其余完整范围。下文旧“下一批”与旧基线保留为历史，不代表当前状态。
 
 **当前开工依据**：[Q02有界执行与C/Swift证据](evidence/q02-bounded-execution-2026-10-01.md)。后端/模型及[后台客户端](evidence/q02-native-client-2026-10-01.md)已实现，[Store首批](evidence/q02-query-store-2026-10-01.md)已接入，[QueryView/导航首批](evidence/q02-query-view-2026-10-01.md)已接入，错误位置与[保存query目录](evidence/q02-saved-query-catalogue-2026-10-01.md)已推进；下一步补preset、固定执行导出与完整验收。完整24任务尚未完成；当前私人双方2833指令、零差异。

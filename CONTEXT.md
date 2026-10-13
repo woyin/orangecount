@@ -548,6 +548,14 @@ _Avoid_: full translation, lossy conversion, normalization
 
 ### Native analysis and attachment permissions
 
+**Ledger reading workspace**:
+An independent reading context for one source ledger and explicitly selected semantics profile, with its own navigation, filters, diagnostics, and analysis captures. Opening another ledger or selecting another profile starts a new reading context.
+_Avoid_: repository workspace, shared global ledger, implicit profile switch
+
+**Retained valid analysis**:
+The last valid analysis of the same ledger and semantics profile, kept readable after a failed reload and explicitly distinguished from the latest source state. It never substitutes for the results of another ledger or profile.
+_Avoid_: current results, recovered ledger, silent stale data
+
 **Analysis capture**:
 An immutable selection of evaluated ledger results together with the accounting interpretation, reporting scope, and completeness facts under which those results were obtained.
 _Avoid_: live export, editor contents

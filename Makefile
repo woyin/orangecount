@@ -104,6 +104,41 @@ mac-package: app
 mac-benchmark:
 	@sh ./apps/macos/benchmark.sh
 
+# Standalone MyGo Go UI preview. This module keeps its own go.mod/go.sum and
+# is always built with GOWORK=off and CGO disabled.
+.PHONY: goui-build goui-test goui-check goui-native-e2e goui-native-soak goui-qa goui-package goui-package-verify goui-benchmark goui-private-read
+goui-build:
+	@./apps/goui/build.sh
+
+goui-test:
+	@./apps/goui/test.sh
+
+goui-check: goui-test goui-build
+
+goui-native-e2e:
+	@./apps/goui/native-e2e.sh
+
+# Explicit ten-minute AppKit window reload/RSS soak; kept out of the quick E2E suite.
+goui-native-soak:
+	@ORANGECOUNT_GOUI_NATIVE_SOAK=1 ./apps/goui/native-e2e.sh -run '^TestNativeTenMinuteReloadRSSPlateau$$' -count=1 -v -timeout=15m
+
+goui-qa:
+	@./apps/goui/prepare-qa.sh
+
+goui-package:
+	@./apps/goui/package.sh
+
+goui-package-verify:
+	@./apps/goui/verify-package.sh "$(OUT_DIR)" "$(VERSION)" "$(GOARCH)"
+
+goui-benchmark:
+	@./apps/goui/benchmark.sh
+
+# Opt-in read-only comparison for one external ledger. The Go UI probe only
+# logs view IDs and a one-way snapshot digest, never ledger content or path.
+goui-private-read:
+	@sh ./apps/goui/private-read.sh
+
 verify-native-equivalence:
 	@./tools/parity/verify_native_equivalence.sh
 

@@ -44,6 +44,18 @@ does not change ledger semantics.
 
 ## Native macOS reader
 
+The MyGo native Go `ui` client is under active development in `apps/goui` and
+reuses the existing accounting engine. Its architecture and migration scope are
+recorded in the [decision](docs/adr/0051-use-mygo-native-go-ui-for-the-desktop-client.md),
+[design](docs/mygo-native-desktop-design-2026-10-07.md),
+[implementation plan](docs/mygo-native-desktop-plan-2026-10-07.md), and
+[task ledger](docs/mygo-native-desktop-tasks-2026-10-07.md). See the
+[Go UI development guide](apps/goui/README.md) for build, QA, and development
+package instructions. The new client has not passed its complete GUI,
+input-method, accessibility, performance, and delivery gates; the SwiftUI app
+below remains the current macOS client and migration baseline until those gates
+are accepted.
+
 The Apple Silicon SwiftUI app reads local ledgers through an in-process Go
 C archive, without a local HTTP server. It provides dated balance sheets,
 period income statements, filtered and paginated transactions, exact amount
