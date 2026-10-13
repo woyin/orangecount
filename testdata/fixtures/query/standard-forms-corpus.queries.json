@@ -1,0 +1,178 @@
+[
+  {
+    "id": "simple",
+    "query": "SELECT account, number ORDER BY account"
+  },
+  {
+    "id": "distinct",
+    "query": "SELECT DISTINCT account ORDER BY account"
+  },
+  {
+    "id": "distinct-order-limit",
+    "query": "SELECT DISTINCT account ORDER BY account DESC LIMIT 2"
+  },
+  {
+    "id": "distinct-multi-column",
+    "query": "SELECT DISTINCT account, currency ORDER BY account, currency"
+  },
+  {
+    "id": "distinct-empty-literal",
+    "query": "SELECT DISTINCT '' AS blank FROM postings"
+  },
+  {
+    "id": "distinct-null-cost",
+    "query": "SELECT DISTINCT cost_number FROM postings ORDER BY cost_number"
+  },
+  {
+    "id": "distinct-null-price",
+    "query": "SELECT DISTINCT price FROM postings"
+  },
+  {
+    "id": "distinct-meta-null-empty",
+    "query": "SELECT DISTINCT meta('note') FROM postings ORDER BY 1"
+  },
+  {
+    "id": "having",
+    "query": "SELECT account, sum(number) AS total GROUP BY account HAVING sum(number) > 0 ORDER BY account"
+  },
+  {
+    "id": "having-count",
+    "query": "SELECT account, count(*) AS n GROUP BY account HAVING count(*) > 1 ORDER BY account"
+  },
+  {
+    "id": "having-not",
+    "query": "SELECT account, sum(number) AS total GROUP BY account HAVING NOT sum(number) > 0 ORDER BY account"
+  },
+  {
+    "id": "having-where",
+    "query": "SELECT account, count(*) AS n WHERE account != 'Assets:Cash' GROUP BY account HAVING count(*) > 0 ORDER BY account"
+  },
+  {
+    "id": "having-limit",
+    "query": "SELECT account, sum(number) AS t GROUP BY account HAVING sum(number) > 0 ORDER BY t DESC LIMIT 1"
+  },
+  {
+    "id": "having-source-predicate",
+    "query": "SELECT account, count(*) AS n GROUP BY account HAVING count(*) > 0 AND account = 'Equity:Opening' ORDER BY account"
+  },
+  {
+    "id": "having-alias-error",
+    "query": "SELECT account, sum(number) AS total GROUP BY account HAVING total > 0",
+    "error": {
+      "class": "CompilationError",
+      "code": "unknown-column"
+    }
+  },
+  {
+    "id": "having-nonaggregate-error",
+    "query": "SELECT account, sum(number) AS total GROUP BY account HAVING 1 = 1",
+    "error": {
+      "class": "CompilationError",
+      "code": "invalid-group"
+    }
+  },
+  {
+    "id": "subquery",
+    "query": "SELECT account FROM (SELECT account WHERE number > 0) ORDER BY account"
+  },
+  {
+    "id": "subquery-nested",
+    "query": "SELECT account FROM (SELECT account FROM (SELECT account FROM postings) WHERE account ~ 'Cash') ORDER BY account"
+  },
+  {
+    "id": "subquery-aggregate",
+    "query": "SELECT sum(number) AS total FROM (SELECT number WHERE number > 0)"
+  },
+  {
+    "id": "subquery-inner-having",
+    "query": "SELECT account, n FROM (SELECT account, sum(number) AS n GROUP BY account HAVING sum(number) > 0) ORDER BY account"
+  },
+  {
+    "id": "subquery-inner-distinct-limit",
+    "query": "SELECT account FROM (SELECT DISTINCT account FROM postings ORDER BY account DESC LIMIT 1)"
+  },
+  {
+    "id": "subquery-star",
+    "query": "SELECT * FROM (SELECT account, currency FROM postings) WHERE account ~ 'Cash' ORDER BY account, currency"
+  },
+  {
+    "id": "subquery-empty",
+    "query": "SELECT DISTINCT account FROM (SELECT account FROM postings WHERE number > 1000000000000)"
+  },
+  {
+    "id": "subquery-unknown-error",
+    "query": "SELECT bogus FROM (SELECT account FROM postings)",
+    "error": {
+      "class": "CompilationError",
+      "code": "unknown-column"
+    }
+  },
+  {
+    "id": "pivot",
+    "query": "SELECT account, currency, sum(number) GROUP BY account, currency PIVOT BY 1, 2"
+  },
+  {
+    "id": "pivot-reverse",
+    "query": "SELECT account, currency, sum(number) GROUP BY account, currency PIVOT BY currency, account"
+  },
+  {
+    "id": "pivot-count-measure",
+    "query": "SELECT account, currency, sum(number) AS s, count(*) AS n GROUP BY account, currency PIVOT BY account, currency"
+  },
+  {
+    "id": "pivot-having",
+    "query": "SELECT account, currency, sum(number) GROUP BY account, currency HAVING sum(number) > 0 PIVOT BY account, currency"
+  },
+  {
+    "id": "pivot-order-limit",
+    "query": "SELECT account, currency, sum(number) GROUP BY account, currency ORDER BY 1 PIVOT BY account, currency LIMIT 2"
+  },
+  {
+    "id": "pivot-limit-0",
+    "query": "SELECT account, currency, sum(number) GROUP BY account, currency PIVOT BY account, currency LIMIT 0"
+  },
+  {
+    "id": "pivot-keys-only",
+    "query": "SELECT account, currency GROUP BY account, currency PIVOT BY account, currency"
+  },
+  {
+    "id": "pivot-not-groupby-error",
+    "query": "SELECT account, sum(number) AS total GROUP BY account PIVOT BY 1, 2",
+    "error": {
+      "class": "CompilationError",
+      "code": "invalid-pivot"
+    }
+  },
+  {
+    "id": "pivot-repeat-error",
+    "query": "SELECT account, currency, sum(number) GROUP BY account, currency PIVOT BY account, account",
+    "error": {
+      "class": "CompilationError",
+      "code": "invalid-pivot"
+    }
+  },
+  {
+    "id": "pivot-index-error",
+    "query": "SELECT account, currency, sum(number) GROUP BY account, currency PIVOT BY 1, 9",
+    "error": {
+      "class": "CompilationError",
+      "code": "invalid-pivot"
+    }
+  },
+  {
+    "id": "pivot-single-error",
+    "query": "SELECT account, currency, sum(number) GROUP BY account, currency PIVOT BY 1",
+    "error": {
+      "class": "ParseError",
+      "code": "syntax"
+    }
+  },
+  {
+    "id": "bigint-control",
+    "query": "SELECT 9223372036854775807 + 1 LIMIT 1"
+  },
+  {
+    "id": "bigint-distinct",
+    "query": "SELECT DISTINCT 9223372036854775807 + 1 AS big FROM postings"
+  }
+]

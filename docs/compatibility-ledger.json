@@ -34,6 +34,24 @@
       "orangecount": "OrangeCount attributes posting lifecycle errors directly to the offending posting line for precise editor and LSP diagnostics.",
       "rationale": "Precise span attribution improves error location for users without altering accounting semantics.",
       "status": "intentional-boundary"
+    },
+    {
+      "id": "having-bare-source-column-context-row",
+      "area": "bql-having",
+      "reference": "BeanQuery 0.2.0 evaluates a bare source column in HAVING against the context row its scan loop leaves behind: the loop variable is assigned before the WHERE test, so the row is the last row of the unfiltered source table. The predicate is therefore a group-level test, not a per-group filter. On the standard-forms fixture (last source row Assets:Cash) `HAVING count(*) > 0 AND account = 'Assets:Cash'` keeps every group; `HAVING count(*) > 0 AND account ~ 'Exp'` keeps none.",
+      "orangecount": "Reproduces the observed result by evaluating HAVING against that same context row, captured before WHERE runs (prepareBalanceStream carries it for the typed balance stream). CLI, web and desktop results agree with the pinned reference on the fixture.",
+      "rationale": "The project's stated oracle is BeanQuery 0.2.0 and the compatibility matrix registers differences item by item. Reproducing the observation keeps CLI, web and desktop results aligned with the pinned reference; a future upstream change to that loop would need a new observation.",
+      "status": "oracle-observation",
+      "evidence": "internal/query/standard_forms_test.go (TestHavingFiltersGroupsAfterAggregation, including the WHERE interaction), docs/evidence/query-oracle-2026-10-12.json, docs/query-capability-matrix.md"
+    },
+    {
+      "id": "pivot-result-width-row-budget",
+      "area": "bql-pivot",
+      "reference": "A PIVOT BY reshapes rows into columns; BeanQuery 0.2.0 has no interactive row ceiling, so a one-row pivot may carry more columns than the number of rows.",
+      "orangecount": "The bounded typed entry (ExecuteTyped, used by desktop.Session) rejects a post-reshape column count above the row ceiling with result-budget-exceeded, and the dense pivot matrix is bounded by QueryPivotCellLimit before allocation. The legacy entry keeps its previous unbounded behaviour apart from the cell ceiling.",
+      "rationale": "Returning an over-wide result while reporting truncated=false would be a wrong result with no error, against the honest-filtering contract. Failing loudly matches the existing byte-budget behaviour.",
+      "status": "intentional-boundary",
+      "evidence": "internal/query/execution.go (ExecuteTyped), internal/query/standard_forms_test.go (TestPivotResultWidthRespectsTheRowBudget, TestPivotCellBudgetBoundsTheDenseMatrixBeforeAllocation)"
     }
   ],
   "sanitized_fixtures": [

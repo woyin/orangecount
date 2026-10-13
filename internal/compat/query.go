@@ -74,7 +74,7 @@ type QueryFailure struct {
 // single-file entry for inspection and detector fault injection.
 func CheckQueryCorpus(root string) (QueryParity, error) {
 	result := QueryParity{Failures: make([]QueryFailure, 0)}
-	for _, name := range []string{"default-source", "compound-values", "price-weight", "inventory-order", "metadata-source", "metadata-stack", "metadata-pad", "dynamic-values", "casts", "compound-casts", "aggregates", "presets", "balance-stream", "balance-cost", "source-order", "aggregate-longtail", "standard-tables"} {
+	for _, name := range []string{"default-source", "compound-values", "price-weight", "inventory-order", "metadata-source", "metadata-stack", "metadata-pad", "dynamic-values", "casts", "compound-casts", "aggregates", "presets", "balance-stream", "balance-cost", "source-order", "aggregate-longtail", "standard-tables", "standard-forms"} {
 		part, err := CheckQueryGolden(root, filepath.Join(root, "testdata/golden/query-v1", name+".json"))
 		if err != nil {
 			return result, fmt.Errorf("%s: %w", name, err)

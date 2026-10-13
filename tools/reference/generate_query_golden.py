@@ -25,7 +25,13 @@ from beancount.core.inventory import Inventory
 from beanquery import query, types
 
 ROOT = Path(__file__).resolve().parents[2]
-CORPORA = ("default-source", "compound-values", "price-weight", "inventory-order", "metadata-source", "metadata-stack", "metadata-pad", "dynamic-values", "casts", "compound-casts", "aggregates", "presets", "balance-stream", "balance-cost", "source-order", "aggregate-longtail", "standard-tables")
+CORPORA = ("default-source", "compound-values", "price-weight", "inventory-order", "metadata-source", "metadata-stack", "metadata-pad", "dynamic-values", "casts", "compound-casts", "aggregates", "presets", "balance-stream", "balance-cost", "source-order", "aggregate-longtail", "standard-tables", "standard-forms")
+
+# Fixture stems for corpora whose golden name differs from the shared fixture
+# file name: generate(name) reads testdata/fixtures/query/{stem}.bean. The
+# standard-forms stem avoids colliding with the unit-test fixture of the same
+# name used by internal/query.
+FIXTURE_STEMS = {"standard-forms": "standard-forms-corpus"}
 TYPE_NAMES = {"str": "string", "int": "integer", "decimal": "decimal", "bool": "bool", "date": "date", "object": "object", "amount": "amount", "position": "position", "inventory": "inventory", "NULL": "null", "dict": "dictionary", "metadata": "dictionary", "set": "set<string>", "set[str]": "set<string>", "frozenset": "set<string>", "list": "list", "open": "open", "close": "close", "transaction": "transaction"}
 
 
@@ -95,7 +101,7 @@ def inventory_key(value):
 
 
 def generate(name):
-    fixture = ROOT / f"testdata/fixtures/query/{name}.bean"
+    fixture = ROOT / f"testdata/fixtures/query/{FIXTURE_STEMS.get(name, name)}.bean"
     queries = fixture.with_suffix(".queries.json")
     if (beancount.__version__, beanquery.__version__) != ("3.2.3", "0.2.0"):
         raise RuntimeError("Expected Beancount 3.2.3 / BeanQuery 0.2.0")

@@ -1,0 +1,38 @@
+; Synthetic multi-currency ledger for the standard BeanQuery forms
+; (DISTINCT, HAVING, derived tables, PIVOT BY). It is the reviewed input for
+; testdata/golden/query-v1/standard-forms.json; every value in that golden is a
+; BeanQuery 0.2.0 / Beancount 3.2.3 observation for this exact input.
+
+2000-01-01 open Assets:Cash USD, CNY
+2000-01-01 open Assets:Broker HOOL
+2000-01-01 open Equity:Opening USD, CNY
+2000-01-01 open Expenses:Food USD, CNY
+2000-01-01 commodity HOOL
+2000-01-01 commodity CNY
+
+2000-01-02 * "Opening" "opening usd"
+  Assets:Cash 100.00 USD
+  Equity:Opening -100.00 USD
+
+2000-01-03 * "Opening" "opening cny"
+  Assets:Cash 700.00 CNY
+  Equity:Opening -700.00 CNY
+
+2000-01-04 * "Corner Cafe" "lunch"
+  Expenses:Food 10.00 USD
+    note: "lunch"
+  Assets:Cash -10.00 USD
+    note:
+
+2000-01-05 * "Night Market" "dinner"
+  Expenses:Food 70.00 CNY
+    note: ""
+  Assets:Cash -70.00 CNY
+
+2000-01-06 * "Broker" "buy shares"
+  Assets:Broker 2 HOOL @ 50.00 USD
+  Assets:Cash -100.00 USD
+
+2000-01-07 * "Opening" "big integer"
+  Assets:Cash 3000000000.00 USD
+  Equity:Opening -3000000000.00 USD
