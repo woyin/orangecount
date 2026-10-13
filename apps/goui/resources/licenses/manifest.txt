@@ -1,0 +1,21 @@
+OrangeCount Go UI development bundle license inventory
+
+The package script includes the root OrangeCount LICENSE and NOTICE, the Go
+toolchain license, and the LICENSE file from every module in apps/goui/go.mod's
+resolved module graph. The generated bundle manifest records each exact module
+version and the corresponding included license filename.
+
+Application and desktop UI dependencies:
+- OrangeCount (Apache-2.0): repository LICENSE and NOTICE
+- github.com/egoist/mygo: pinned in apps/goui/go.mod; vendored fork retains its
+  upstream LICENSE; commit and local patch provenance are copied from
+  third_party/mygo/UPSTREAM.md to UPSTREAM-mygo.md
+- Remaining Go modules: see the generated bundle manifest and included LICENSE
+  texts for exact versions and terms
+
+This application bundle does not include third-party font or icon files. Text
+uses platform fonts and controls/icons are drawn by MyGo from native/vector
+primitives. macOS system frameworks are supplied by the operating system.
+
+This is an unsigned development bundle. It carries no Developer ID signature,
+notarization ticket, or claim of support for macOS versions earlier than 13.0.

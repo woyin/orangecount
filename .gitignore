@@ -2,6 +2,8 @@
 /bin/
 /dist/
 /build/
+/apps/goui/build/
+/apps/goui/orangecount-goui
 *.test
 /orangecount
 
