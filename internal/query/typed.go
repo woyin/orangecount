@@ -97,24 +97,126 @@ func evaluateTyped(text string, evaluation ledger.Evaluation, rowCeiling int, bu
 		}
 		return TypedResult{}, locatedQueryError(err, nil, "parse")
 	}
-	result := TypedResult{Contract: CurrentContract, Columns: make([]Column, 0), Rows: make([][]Cell, 0)}
-	table := canonicalTable(q.From)
-	if table == "" {
-		return TypedResult{}, locatedQueryError(typedFailure("unknown-table", "unknown typed source %q", q.From), q.fromSpan, "compile")
-	}
-	compiler := typedCompiler{table: table}
-	expandStandardWildcard(&q, table)
-	if err := resolveTypedAliases(&q); err != nil {
+	plan, err := executeTypedPlan(q, evaluation, rowCeiling, budget, 0)
+	if err != nil {
 		return TypedResult{}, err
+	}
+	return encodeTypedPlan(plan, budget)
+}
+
+// typedPlan is a compiled typed query before cell encoding: the bound output
+// columns plus the raw typed rows keyed by column ID. A derived table consumes
+// this shape directly, which is why values stay unencoded inside the plan.
+type typedPlan struct {
+	columns []Column
+	rows    []Row
+}
+
+// typedDerivedTable describes the columns an enclosing query sees when it
+// reads a derived table. Duplicate titles keep their own positions, so a star
+// select stays lossless;
+// a bare name reference resolves to the last position carrying that title,
+// matching the reference's alias map.
+type typedDerivedTable struct {
+	names    []string
+	kinds    []string
+	nullable []bool
+	ids      []string
+	byName   map[string]int
+	byID     map[string]int
+}
+
+func derivedFromPlan(plan typedPlan) *typedDerivedTable {
+	derived := &typedDerivedTable{byName: map[string]int{}, byID: map[string]int{}}
+	for i, column := range plan.columns {
+		derived.names = append(derived.names, column.Name)
+		derived.kinds = append(derived.kinds, column.Type)
+		derived.nullable = append(derived.nullable, column.Nullable)
+		derived.ids = append(derived.ids, column.ID)
+		derived.byName[strings.ToLower(column.Name)] = i
+		derived.byID[column.ID] = i
+	}
+	return derived
+}
+
+// expandDerivedWildcard rewrites `SELECT *` over a derived table into one
+// positional read per inner column, in the inner projection order, so the
+// schema survives an empty inner result and duplicate inner titles stay
+// distinguishable.
+func expandDerivedWildcard(q *Query, derived *typedDerivedTable) {
+	selectItems := make([]SelectItem, 0, len(q.Select))
+	for _, item := range q.Select {
+		if _, ok := item.Expr.(starExpr); !ok {
+			selectItems = append(selectItems, item)
+			continue
+		}
+		for i, name := range derived.names {
+			selectItems = append(selectItems, SelectItem{Expr: derivedColumnExpr{id: derived.ids[i], name: name}, sourceTitle: name})
+		}
+	}
+	q.Select = selectItems
+}
+
+// derivedColumnExpr addresses one derived column by position.
+type derivedColumnExpr struct {
+	id   string
+	name string
+}
+
+func (e derivedColumnExpr) String() string                     { return e.name }
+func (e derivedColumnExpr) aggregate() bool                    { return false }
+func (e derivedColumnExpr) eval(row Row, _ []Row) (any, error) { return row[e.id], nil }
+
+// executeTypedPlan compiles one SELECT against its declared source and runs
+// the bounded execution pipeline. A derived table executes its inner select
+// first and hands its output columns and typed rows to this level.
+func executeTypedPlan(q Query, evaluation ledger.Evaluation, rowCeiling int, budget *executionBudget, depth int) (typedPlan, error) {
+	if depth > maxDerivedTableDepth {
+		return typedPlan{}, typedFailure("complexity-budget-exceeded", "Derived tables exceed the maximum depth of %d", maxDerivedTableDepth)
+	}
+	plan := typedPlan{columns: make([]Column, 0)}
+	var (
+		compiler typedCompiler
+		rows     []Row
+		table    string
+	)
+	if q.fromSubquery != nil {
+		// The inner select is intentionally unbounded: the enclosing row
+		// ceiling exists only to detect truncation of the final result, and
+		// applying it inside would drop rows before the outer ORDER BY.
+		inner, err := executeTypedPlan(*q.fromSubquery, evaluation, 0, budget, depth+1)
+		if err != nil {
+			return typedPlan{}, err
+		}
+		derived := derivedFromPlan(inner)
+		compiler = typedCompiler{derived: derived}
+		rows = inner.rows
+		// Derived rows keep the execution budget so that WHERE, GROUP BY,
+		// HAVING, projection and sorting in the enclosing query still count
+		// steps and check cancellation per row.
+		for _, row := range rows {
+			row["_query_execution"] = budget
+		}
+		expandDerivedWildcard(&q, derived)
+	} else {
+		table = canonicalTable(q.From)
+		if table == "" {
+			return typedPlan{}, locatedQueryError(typedFailure("unknown-table", "unknown typed source %q", q.From), q.fromSpan, "compile")
+		}
+		compiler = typedCompiler{table: table}
+		expandStandardWildcard(&q, table)
+	}
+	if err := resolveTypedAliases(&q); err != nil {
+		return typedPlan{}, err
 	}
 	balanceTargets := []typedExpr{}
 	if q.Where != nil {
 		compiled, err := compiler.compile(q.Where)
 		if err != nil {
-			return TypedResult{}, err
+			return typedPlan{}, err
 		}
 		if compiled.grouped {
-			return TypedResult{}, locatedQueryError(typedFailure("invalid-group", "aggregates are not allowed in WHERE"), expressionRange(q.Where), "compile")
+			return typedPlan{}, locatedQueryError(typedFailure("invalid-group", "aggregates are not allowed in WHERE"), expressionRange(q.Where), "compile")
 		}
 		q.Where = typedExpr{kind: "bool", grouped: compiled.grouped, value: func(row Row, rows []Row) (any, error) {
 			value, err := compiled.eval(row, rows)
@@ -127,38 +229,53 @@ func evaluateTyped(text string, evaluation ledger.Evaluation, rowCeiling int, bu
 	for i, expr := range q.GroupBy {
 		compiled, err := compiler.compile(expr)
 		if err != nil {
-			return TypedResult{}, err
+			return typedPlan{}, err
 		}
 		if compiled.grouped || compiled.kind == "inventory" {
-			return TypedResult{}, locatedQueryError(typedFailure("invalid-group", "GROUP BY requires a nonaggregate hashable expression"), expressionRange(expr), "compile")
+			return typedPlan{}, locatedQueryError(typedFailure("invalid-group", "GROUP BY requires a nonaggregate hashable expression"), expressionRange(expr), "compile")
 		}
 		q.GroupBy[i] = compiled
+	}
+	if q.Having != nil {
+		compiled, err := compiler.compile(q.Having)
+		if err != nil {
+			return typedPlan{}, err
+		}
+		if !compiled.grouped {
+			return typedPlan{}, locatedQueryError(typedFailure("invalid-group", "the HAVING clause must be an aggregate expression"), expressionRange(q.Having), "compile")
+		}
+		q.Having = compiled
 	}
 	for i, item := range q.OrderBy {
 		compiled, err := compiler.compile(item.Expr)
 		if err != nil {
-			return TypedResult{}, err
+			return typedPlan{}, err
 		}
-		if referencesBalance(item.Expr) {
+		if q.fromSubquery == nil && referencesBalance(item.Expr) {
 			balanceTargets = append(balanceTargets, compiled)
 		}
 		q.OrderBy[i].Expr = compiled
 	}
+	projection := make([]string, len(q.Select))
+	titles := make([]string, len(q.Select))
+	for i, item := range q.Select {
+		projection[i] = item.Expr.String()
+		titles[i] = item.Alias
+		if titles[i] == "" {
+			titles[i] = item.sourceTitle
+		}
+		if titles[i] == "" {
+			titles[i] = standardExprName(item.Expr)
+		}
+	}
 	for i, item := range q.Select {
 		compiled, err := compiler.compile(item.Expr)
 		if err != nil {
-			return TypedResult{}, err
-		}
-		title := item.Alias
-		if title == "" {
-			title = item.sourceTitle
-			if title == "" {
-				title = standardExprName(item.Expr)
-			}
+			return typedPlan{}, err
 		}
 		id := fmt.Sprintf("c%d", i)
-		result.Columns = append(result.Columns, Column{ID: id, Name: title, Type: compiled.kind, Nullable: compiled.nullable})
-		if referencesBalance(item.Expr) {
+		plan.columns = append(plan.columns, Column{ID: id, Name: titles[i], Type: compiled.kind, Nullable: compiled.nullable})
+		if q.fromSubquery == nil && referencesBalance(item.Expr) {
 			balanceTargets = append(balanceTargets, compiled)
 		}
 		q.Select[i].Expr = compiled
@@ -184,41 +301,178 @@ func evaluateTyped(text string, evaluation ledger.Evaluation, rowCeiling int, bu
 		}
 		for _, item := range q.Select {
 			if !item.Expr.aggregate() && !covered[item.Expr.String()] {
-				return TypedResult{}, locatedQueryError(typedFailure("invalid-group", "all nonaggregates must be covered by GROUP BY: %s", item.Expr.String()), expressionRange(item.Expr), "compile")
+				return typedPlan{}, locatedQueryError(typedFailure("invalid-group", "all nonaggregates must be covered by GROUP BY: %s", item.Expr.String()), expressionRange(item.Expr), "compile")
 			}
 		}
 	}
-	if q.LimitSpecified && q.Limit == 0 {
-		return result, nil
+	pivotIndexes, err := pivotProjectionIndexes(q, projection, titles)
+	if err != nil {
+		return typedPlan{}, err
 	}
-	if rowCeiling > 0 && (q.Limit == 0 || q.Limit > rowCeiling) {
+	if q.LimitSpecified && q.Limit == 0 {
+		return pivotTypedPlan(q, plan, pivotIndexes, budget)
+	}
+	// The row ceiling is a pre-reshape implementation budget. Applying it to a
+	// PIVOT BY query would clip the rows before their pivot values become
+	// columns, silently dropping pivot columns and reporting a complete result;
+	// for pivots the ceiling is applied to the final (reshaped) rows instead.
+	if len(q.Pivot) == 0 && rowCeiling > 0 && (q.Limit == 0 || q.Limit > rowCeiling) {
 		q.Limit = rowCeiling
 	}
-	rows, err := standardRows(table, evaluation, budget)
-	if err != nil {
-		return TypedResult{}, err
-	}
-	rows, err = prepareBalanceStream(&q, rows, balanceTargets, budget)
-	if err != nil {
-		return TypedResult{}, err
+	if q.fromSubquery == nil {
+		rows, err = standardRows(table, evaluation, budget)
+		if err != nil {
+			return typedPlan{}, err
+		}
+		rows, err = prepareBalanceStream(&q, rows, balanceTargets, budget)
+		if err != nil {
+			return typedPlan{}, err
+		}
 	}
 	raw, err := evaluateRowsBounded(q, rows, compareTypedValues, budget)
 	if err != nil {
-		return TypedResult{}, err
+		return typedPlan{}, err
+	}
+	plan.rows = raw.Rows
+	return pivotTypedPlan(q, plan, pivotIndexes, budget)
+}
+
+// pivotProjectionIndexes resolves PIVOT BY against the projection the same way
+// the reference does: an integer literal names a 1-based projection position,
+// a bare name matches a projection title (alias first, expression text
+// otherwise, case-insensitively), and any other expression is rejected because
+// upstream resolves PIVOT BY through the target list only. It also enforces
+// that the two pivot columns differ and that the column spread across output
+// columns is one of the GROUP BY keys.
+func pivotProjectionIndexes(q Query, projection, titles []string) ([2]int, error) {
+	indexes := [2]int{-1, -1}
+	if len(q.Pivot) == 0 {
+		return indexes, nil
+	}
+	for j, expr := range q.Pivot {
+		if ordinal, ok := projectionOrdinal(expr); ok {
+			if ordinal < 1 || ordinal > len(projection) {
+				return indexes, locatedQueryError(typedFailure("invalid-pivot", "invalid PIVOT BY column index %d", ordinal), expressionRange(expr), "compile")
+			}
+			indexes[j] = ordinal - 1
+			continue
+		}
+		field, ok := expr.(fieldExpr)
+		if !ok {
+			return indexes, locatedQueryError(typedFailure("invalid-pivot", "PIVOT BY column %s is not in the projection", expr.String()), expressionRange(expr), "compile")
+		}
+		found := -1
+		for i, title := range titles {
+			if strings.EqualFold(title, field.name) {
+				found = i
+				break
+			}
+		}
+		if found < 0 {
+			return indexes, locatedQueryError(typedFailure("invalid-pivot", "PIVOT BY column %s is not in the projection", expr.String()), expressionRange(expr), "compile")
+		}
+		indexes[j] = found
+	}
+	if indexes[0] == indexes[1] {
+		return indexes, locatedQueryError(typedFailure("invalid-pivot", "the two PIVOT BY columns cannot be the same column"), expressionRange(q.Pivot[0]), "compile")
+	}
+	grouped := map[string]bool{}
+	for _, expr := range q.GroupBy {
+		grouped[expr.String()] = true
+	}
+	if !grouped[q.Select[indexes[1]].Expr.String()] {
+		return indexes, locatedQueryError(typedFailure("invalid-pivot", "the second PIVOT BY column must be a GROUP BY column"), expressionRange(q.Pivot[1]), "compile")
+	}
+	return indexes, nil
+}
+
+// projectionOrdinal reports the integer literal naming a projection position.
+func projectionOrdinal(expr Expr) (int, bool) {
+	literal, ok := expr.(literalExpr)
+	if !ok || strings.ContainsAny(literal.display, ".eE") {
+		return 0, false
+	}
+	number, ok := literal.value.(ledger.Decimal)
+	if !ok || !number.Rat().IsInt() {
+		return 0, false
+	}
+	return int(number.Rat().Num().Int64()), true
+}
+
+// pivotTypedPlan reshapes a compiled plan for PIVOT BY: the first pivot column
+// stays the output row key, the second becomes one output column per distinct
+// value, and every other projected column repeats as a measure for each of
+// them. Row keys and pivot values are emitted in ascending typed order; a
+// combination without a row stays NULL, so measure columns are always
+// nullable. A query without PIVOT BY returns its plan unchanged. When every
+// projected column is a pivot key there is no measure to repeat, and the
+// reference keeps only the row-key column.
+func pivotTypedPlan(q Query, plan typedPlan, indexes [2]int, budget *executionBudget) (typedPlan, error) {
+	if len(q.Pivot) == 0 {
+		return plan, nil
+	}
+	rowIndex, columnIndex := indexes[0], indexes[1]
+	measures := make([]int, 0, len(plan.columns))
+	for i := range plan.columns {
+		if i != rowIndex && i != columnIndex {
+			measures = append(measures, i)
+		}
+	}
+	value := func(row Row, index int) any { return row[plan.columns[index].ID] }
+	step := func() error { return budget.step("pivot") }
+	rowKeys, columnValues, cells, width, err := pivotCells(plan.rows, rowIndex, columnIndex, measures, value, compareTypedValues, step, budget.pivotCellLimit())
+	if err != nil {
+		return typedPlan{}, err
+	}
+	pivoted := typedPlan{columns: make([]Column, 0, 1+len(columnValues)*len(measures))}
+	pivoted.columns = append(pivoted.columns, Column{
+		ID: "c0", Name: plan.columns[rowIndex].Name + "/" + plan.columns[columnIndex].Name,
+		Type: plan.columns[rowIndex].Type, Nullable: plan.columns[rowIndex].Nullable,
+	})
+	if len(measures) == 0 {
+		for _, rowKey := range rowKeys {
+			pivoted.rows = append(pivoted.rows, Row{pivoted.columns[0].ID: rowKey})
+		}
+		return pivoted, nil
+	}
+	for _, columnValue := range columnValues {
+		for _, measure := range measures {
+			name := formatValue(columnValue)
+			if len(measures) > 1 {
+				name += "/" + plan.columns[measure].Name
+			}
+			pivoted.columns = append(pivoted.columns, Column{ID: fmt.Sprintf("c%d", len(pivoted.columns)), Name: name, Type: plan.columns[measure].Type, Nullable: true})
+		}
+	}
+	for i, rowKey := range rowKeys {
+		row := Row{pivoted.columns[0].ID: rowKey}
+		for j, cell := range cells[i*width : (i+1)*width] {
+			row[pivoted.columns[j+1].ID] = cell
+		}
+		pivoted.rows = append(pivoted.rows, row)
+	}
+	return pivoted, nil
+}
+
+// encodeTypedPlan converts a compiled plan into the wire contract. Encoding
+// keeps the previous row, byte and cancellation budgets.
+func encodeTypedPlan(plan typedPlan, budget *executionBudget) (TypedResult, error) {
+	result := TypedResult{Contract: CurrentContract, Columns: plan.columns, Rows: make([][]Cell, 0)}
+	if result.Columns == nil {
+		result.Columns = make([]Column, 0)
 	}
 	byteCount := 0
 	if budget != nil {
-		header, _ := json.Marshal(Execution{Result: result, ReturnedRows: min(len(raw.Rows), budget.limits.Rows), RowLimit: budget.limits.Rows, Truncated: len(raw.Rows) > budget.limits.Rows})
+		header, _ := json.Marshal(Execution{Result: result, ReturnedRows: min(len(plan.rows), budget.limits.Rows), RowLimit: budget.limits.Rows, Truncated: len(plan.rows) > budget.limits.Rows})
 		byteCount = len(header)
 	}
-	for index, row := range raw.Rows {
+	for index, row := range plan.rows {
 		if err := budget.step("encode"); err != nil {
 			return TypedResult{}, err
 		}
 		cells := make([]Cell, len(result.Columns))
 		for i, col := range result.Columns {
-			value := row[col.ID]
-			cell, err := encodeTypedCell(col.Type, value, 0, budget)
+			cell, err := encodeTypedCell(col.Type, row[col.ID], 0, budget)
 			if err != nil {
 				return TypedResult{}, err
 			}
@@ -257,7 +511,10 @@ func (e typedExpr) aggregate() bool                       { return e.grouped }
 func (e typedExpr) eval(row Row, rows []Row) (any, error) { return e.value(row, rows) }
 
 // compileTyped binds types independently of data rows, including empty input.
-type typedCompiler struct{ table string }
+type typedCompiler struct {
+	table   string
+	derived *typedDerivedTable
+}
 
 func (compiler typedCompiler) compile(expr Expr) (typedExpr, error) {
 	compiled, err := compiler.compileNode(expr)
@@ -294,7 +551,24 @@ func (compiler typedCompiler) compile(expr Expr) (typedExpr, error) {
 func (compiler typedCompiler) compileNode(expr Expr) (typedExpr, error) {
 	result := typedExpr{name: expr.String(), value: expr.eval}
 	switch node := expr.(type) {
+	case derivedColumnExpr:
+		index, exists := compiler.derived.byID[node.id]
+		if !exists {
+			return typedExpr{}, typedFailure("unknown-column", "unknown derived column %q", node.name)
+		}
+		result.kind, result.nullable = compiler.derived.kinds[index], compiler.derived.nullable[index]
+		return result, nil
 	case fieldExpr:
+		if compiler.derived != nil {
+			index, exists := compiler.derived.byName[strings.ToLower(node.name)]
+			if !exists {
+				return typedExpr{}, typedFailure("unknown-column", "unknown column %q in derived table", node.name)
+			}
+			id := compiler.derived.ids[index]
+			result.kind, result.nullable = compiler.derived.kinds[index], compiler.derived.nullable[index]
+			result.value = func(row Row, _ []Row) (any, error) { return row[id], nil }
+			return result, nil
+		}
 		if compiler.table != "postings" {
 			column, exists := standardTableSchemas[compiler.table][strings.ToLower(node.name)]
 			if !exists {

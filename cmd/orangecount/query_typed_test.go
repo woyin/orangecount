@@ -92,3 +92,97 @@ func TestRunQueryExplicitPeriodPresets(t *testing.T) {
 		}
 	}
 }
+
+// TestRunQueryStandardForms covers the four standard BQL forms end to end
+// through the packaged CLI. Expected values are the captured BeanQuery 0.2.0
+// observations for testdata/fixtures/query/standard-forms.bean, mapped into
+// the typed contract this CLI exposes.
+func TestRunQueryStandardForms(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		text    string
+		columns []string
+		rows    int
+		extra   func(t *testing.T, result query.TypedResult)
+	}{
+		{
+			name:    "distinct",
+			text:    "SELECT DISTINCT account ORDER BY account",
+			columns: []string{"account"},
+			rows:    3,
+			extra: func(t *testing.T, result query.TypedResult) {
+				if result.Rows[0][0].Value != "Assets:Cash" || result.Rows[2][0].Value != "Expenses:Food" {
+					t.Fatalf("distinct rows=%+v", result.Rows)
+				}
+			},
+		},
+		{
+			name:    "having",
+			text:    "SELECT account, sum(number) AS total GROUP BY account HAVING sum(number) > 0 ORDER BY account",
+			columns: []string{"account", "total"},
+			rows:    2,
+			extra: func(t *testing.T, result query.TypedResult) {
+				if decimalExact(t, result.Rows[0][1]) != "90" {
+					t.Fatalf("having rows=%+v", result.Rows)
+				}
+			},
+		},
+		{
+			name:    "subquery",
+			text:    "SELECT account FROM (SELECT account WHERE number > 0) ORDER BY account",
+			columns: []string{"account"},
+			rows:    2,
+			extra: func(t *testing.T, result query.TypedResult) {
+				if result.Rows[0][0].Value != "Assets:Cash" || result.Rows[1][0].Value != "Expenses:Food" {
+					t.Fatalf("subquery rows=%+v", result.Rows)
+				}
+			},
+		},
+		{
+			name:    "pivot",
+			text:    "SELECT account, currency, sum(number) GROUP BY account, currency PIVOT BY 1, 2",
+			columns: []string{"account/currency", "USD"},
+			rows:    3,
+			extra: func(t *testing.T, result query.TypedResult) {
+				if !result.Columns[1].Nullable || decimalExact(t, result.Rows[0][1]) != "90" {
+					t.Fatalf("pivot result=%+v", result)
+				}
+			},
+		},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			if code := runQuery([]string{"--format", "typed-json", "--semantics", "v3", "../../testdata/fixtures/query/standard-forms.bean", test.text}, &stdout, &stderr); code != 0 {
+				t.Fatalf("exit=%d stderr=%s", code, stderr.String())
+			}
+			var result query.TypedResult
+			if err := json.Unmarshal(stdout.Bytes(), &result); err != nil {
+				t.Fatal(err)
+			}
+			if result.Contract != query.CurrentContract || len(result.Rows) != test.rows || len(result.Columns) != len(test.columns) {
+				t.Fatalf("result=%+v", result)
+			}
+			for i, name := range test.columns {
+				if result.Columns[i].Name != name {
+					t.Fatalf("column %d=%s want %s", i, result.Columns[i].Name, name)
+				}
+			}
+			test.extra(t, result)
+		})
+	}
+}
+
+// decimalExact reads the exact spelling of a decimal cell as it arrives from
+// the CLI wire format, where the value decodes to a generic map.
+func decimalExact(t *testing.T, cell query.Cell) string {
+	t.Helper()
+	if cell.Type != "decimal" {
+		t.Fatalf("cell %+v is not decimal", cell)
+	}
+	value, ok := cell.Value.(map[string]any)
+	if !ok {
+		t.Fatalf("decimal cell %+v has unexpected wire shape", cell)
+	}
+	exact, _ := value["exact"].(string)
+	return exact
+}

@@ -32,6 +32,10 @@ type ExecutionLimits struct {
 	Rows  int
 	Bytes int
 	Steps uint64
+	// PivotCells bounds the dense PIVOT BY matrix (row keys x pivot values x
+	// measures) before it is allocated. Zero selects QueryPivotCellLimit; a
+	// value above the documented ceiling is lowered to it like Rows and Bytes.
+	PivotCells int
 }
 
 type Execution struct {
@@ -49,6 +53,19 @@ type executionBudget struct {
 	phase    string
 	counts   map[string]uint64
 	patterns map[string]*regexp.Regexp
+}
+
+// pivotCellLimit reports the cell ceiling for the dense PIVOT BY matrix. A nil
+// budget (the unbounded legacy path) still gets the documented default so a
+// legacy pivot cannot allocate past it either.
+func (b *executionBudget) pivotCellLimit() int {
+	if b == nil {
+		return QueryPivotCellLimit
+	}
+	if b.limits.PivotCells <= 0 || b.limits.PivotCells > QueryPivotCellLimit {
+		return QueryPivotCellLimit
+	}
+	return b.limits.PivotCells
 }
 
 func (b *executionBudget) step(phase string) error {
@@ -175,6 +192,16 @@ func parseTyped(text string, budget *executionBudget) (Query, error) {
 	if err != nil {
 		return Query{}, locatedQueryError(err, nil, "parse")
 	}
+	if q.fromSubquery != nil {
+		if err := budget.step("parse"); err != nil {
+			return Query{}, err
+		}
+		nested, err := budgetDerivedQuery(q.fromSubquery, budget, 0)
+		if err != nil {
+			return Query{}, err
+		}
+		q.fromSubquery = nested
+	}
 	type pending struct {
 		expr  Expr
 		depth int
@@ -189,8 +216,14 @@ func parseTyped(text string, budget *executionBudget) (Query, error) {
 	for _, item := range q.OrderBy {
 		stack = append(stack, pending{item.Expr, 1})
 	}
+	for _, expr := range q.Pivot {
+		stack = append(stack, pending{expr, 1})
+	}
 	if q.Where != nil {
 		stack = append(stack, pending{q.Where, 1})
+	}
+	if q.Having != nil {
+		stack = append(stack, pending{q.Having, 1})
 	}
 	for len(stack) != 0 {
 		last := stack[len(stack)-1]
@@ -215,6 +248,27 @@ func parseTyped(text string, budget *executionBudget) (Query, error) {
 				push(arg)
 			}
 		}
+	}
+	return q, nil
+}
+
+// budgetDerivedQuery charges one bounded step per derived statement and
+// expression, and rejects nesting beyond the shared derived-table ceiling.
+// The inner statement was already parsed and depth-checked by parseStatement;
+// this pass only applies the execution budget to it.
+func budgetDerivedQuery(q *Query, budget *executionBudget, depth int) (*Query, error) {
+	if depth > maxDerivedTableDepth {
+		return nil, typedFailure("complexity-budget-exceeded", "Derived tables exceed the maximum depth of %d", maxDerivedTableDepth)
+	}
+	if err := budget.step("parse"); err != nil {
+		return nil, err
+	}
+	if q.fromSubquery != nil {
+		nested, err := budgetDerivedQuery(q.fromSubquery, budget, depth+1)
+		if err != nil {
+			return nil, err
+		}
+		q.fromSubquery = nested
 	}
 	return q, nil
 }
@@ -273,6 +327,15 @@ func ExecuteTyped(ctx context.Context, text string, evaluation ledger.Evaluation
 	if len(execution.Result.Rows) > limits.Rows {
 		execution.Truncated = true
 		execution.Result.Rows = execution.Result.Rows[:limits.Rows]
+	}
+	if len(execution.Result.Columns) > limits.Rows {
+		// A PIVOT BY reshapes rows into columns, so the row ceiling is not the
+		// only width check: one row can carry more columns than the ceiling
+		// allows. Clipping mid-measure would produce a schema that no longer
+		// matches the pivot's (pivot value x measure) shape, so fail loudly
+		// like the byte budget instead of returning a wrong result that claims
+		// completeness.
+		return Execution{}, typedFailure("result-budget-exceeded", "Query result exceeds the row budget: %d columns", len(execution.Result.Columns))
 	}
 	execution.ReturnedRows = len(execution.Result.Rows)
 	encoded, err := json.Marshal(execution)

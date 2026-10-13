@@ -120,3 +120,18 @@ ExecuteTyped与Session.ExecuteQuery/CancelQuery、OC_ExecuteQuery/OC_CancelQuery
 | metadata/include | oracle-verified：合法保留键transaction覆盖、stack显式覆盖、同日include顺序 |
 | 无效源加载 | explicitly-unsupported：重复include与posting保留filename/lineno错误尚未对齐Python加载诊断；不计为已验语义 |
 | 任意Python Decimal陷阱/对象/Any重载 | explicitly-unsupported：仅上述有限范围，未声明无限指数与通用Python对象兼容 |
+
+## 2026-10-12 标准形式：DISTINCT / HAVING / 派生表 / PIVOT BY
+
+固定 oracle 观测（本仓库内 [oracle 观测](evidence/query-oracle-2026-10-12.json)；评审期原始捕获 `fix/review-evidence-2026-10-12/query-comparison.json` 不随仓库发布）中的四条标准形式已在当前 typed 管道实现。下表按**已验具体案例**登记，不用一行绿色代表整个语义面：
+
+| 形式 | 已验语义与边界 | 验收 |
+| --- | --- | --- |
+| `SELECT DISTINCT ...` | 按 typed 身份去重；相等 Decimal 的不同书写与重复 NULL 折叠，NULL 与空字符串保持不同行；去重在 ORDER BY/LIMIT 之前 | `internal/query/standard_forms_test.go` |
+| `GROUP BY ... HAVING <agg>` | HAVING 只在 GROUP BY 后解析，过滤整个分组；必须含聚合，不解析 projection 别名；非聚合报 `invalid-group`。**边界**：裸源列按上游扫描上下文行（最后一条源记录）求值，是分组级判定；这与“逐组按该组首行过滤”不同，已按 oracle 观测复现 | 同上 |
+| `FROM (SELECT ... WHERE ...)` | 派生表先执行内层，外层读取其列名与声明类型；支持嵌套（深度上限 16，超出报 `complexity-budget-exceeded`）/别名/`SELECT *`/聚合；未知列报 `unknown-column`；`SELECT *` 只跳过自身字段校验，WHERE/GROUP BY/HAVING/ORDER BY 仍校验（legacy 与 typed 一致） | 同上 |
+| `GROUP BY ... PIVOT BY a, b` | 首列作行键，第二列展开为列，其余 projection 列作 measure 重复；缺失组合 NULL 且 measure 声明 nullable；行键与 pivot 值按 typed 顺序升序；无 measure 时只保留行键列 | 同上 |
+
+四条路径都计入 `evaluateRowsBounded` 的 step 预算与 context 取消；PIVOT reshape 与 DISTINCT 去重各自计数。PIVOT 的稠密矩阵在分配前受 cell 预算约束（`QueryPivotCellLimit`，即 `QueryByteLimit/16`；`ExecutionLimits.PivotCells` 可收紧），矩阵超出 cell 预算或 pivot 后列宽超出行上限都报 `result-budget-exceeded`。CLI typed-json/typed-csv、`desktop.Session` 分析归档与桌面导出沿用同一结果，因此 schema、NULL 与 exact decimal 均可回读。大整数控制例（`SELECT 9223372036854775807 + 1`）行为不变。
+
+仍未封口：`IN` 子查询、FROM 期间修饰、`PIVOT BY` 的表命令形式及其他 Q13/Q14 语法；HAVING 裸源列的上下文行语义依赖上游实现细节。

@@ -56,16 +56,46 @@ func (r Result) WriteCSV(w io.Writer) error {
 
 // Query is a parsed BeanQuery: projection, source table, filters, grouping,
 // ordering, and limit.
+//
+// The standard forms beyond the plain workbench query keep their external
+// meaning:
+//
+//   - Distinct collapses output rows that are equal by canonical typed
+//     identity (repeated NULLs collapse to one row, an empty string never
+//     equals NULL, and Decimals compare by value, not by spelling).
+//   - Having filters whole groups after aggregation; it may reference
+//     aggregates and source columns but not projected aliases.
+//   - FromSubquery is a derived table: the inner select executes first and the
+//     enclosing query reads the inner output columns and their declared types.
+//   - Pivot reshapes the projection: Pivot[0] stays the row key, Pivot[1]
+//     becomes one output column per distinct value, and every other projected
+//     column is a measure repeated for each pivot value. Missing combinations
+//     stay NULL.
 type Query struct {
 	Select   []SelectItem
 	From     string
 	fromSpan *ByteRange
 	Where    Expr
 	GroupBy  []Expr
+	Having   Expr
+	Distinct bool
+	Pivot    []Expr
 	OrderBy  []OrderItem
 	Limit    int
 	// LimitSpecified distinguishes LIMIT 0 from an absent limit for typed reads.
 	LimitSpecified bool
+	// fromSubquery holds a derived table parsed after FROM.
+	fromSubquery *Query
+	// derivedNames are the output titles of that derived table; the legacy
+	// pipeline binds them before execution, the typed compiler builds its own
+	// derived readers (see typed.go).
+	derivedNames []string
+	// havingContextRow is the row upstream leaves in its scan-loop variable when
+	// the loop finishes (the last row of the unfiltered source). The typed
+	// balance stream consumes WHERE while building its running inventory, so it
+	// captures the row here before the filter discards it; evaluateRowsBounded
+	// falls back to the last input row when this is nil.
+	havingContextRow Row
 }
 
 // SelectItem is one projected expression with an optional output alias.
@@ -117,14 +147,124 @@ func Evaluate(text string, evaluation ledger.Evaluation) (Result, error) {
 // apply WHERE, group, project the select list, then order and limit. Each
 // stage is a helper so the pipeline stays readable in order.
 func EvaluateQuery(query Query, evaluation ledger.Evaluation) (Result, error) {
-	if err := prepareQuery(&query); err != nil {
-		return Result{}, err
+	return evaluateQueryDepth(query, evaluation, 0)
+}
+
+// maxDerivedTableDepth bounds recursive derived tables so nesting cannot grow
+// silently with the query text.
+const maxDerivedTableDepth = 16
+
+func evaluateQueryDepth(query Query, evaluation ledger.Evaluation, depth int) (Result, error) {
+	if depth > maxDerivedTableDepth {
+		return Result{}, fmt.Errorf("derived tables exceed the maximum depth of %d", maxDerivedTableDepth)
 	}
-	rows, err := rowsForTable(query.From, evaluation)
+	var rows []Row
+	if query.fromSubquery != nil {
+		inner, err := evaluateQueryDepth(*query.fromSubquery, evaluation, depth+1)
+		if err != nil {
+			return Result{}, err
+		}
+		rows = rowsFromResult(inner)
+		query.derivedNames = inner.Columns
+		if err := prepareDerivedQuery(&query); err != nil {
+			return Result{}, err
+		}
+	} else {
+		if err := prepareQuery(&query); err != nil {
+			return Result{}, err
+		}
+		resolved, err := rowsForTable(query.From, evaluation)
+		if err != nil {
+			return Result{}, err
+		}
+		rows = resolved
+	}
+	result, err := evaluateRows(query, rows)
 	if err != nil {
 		return Result{}, err
 	}
-	return evaluateRows(query, rows)
+	return pivotLegacyResult(query, result)
+}
+
+// rowsFromResult exposes a select result as the input rows of an enclosing
+// derived-table query; output titles become the row keys.
+func rowsFromResult(result Result) []Row {
+	rows := make([]Row, 0, len(result.Rows))
+	for _, row := range result.Rows {
+		rows = append(rows, row)
+	}
+	return rows
+}
+
+// prepareDerivedQuery validates name references against the derived table's
+// output titles instead of a static source schema. A duplicate title resolves
+// to its last position, matching the reference's alias map.
+func prepareDerivedQuery(query *Query) error {
+	resolveGroupAliases(query)
+	valid := map[string]bool{}
+	for _, name := range query.derivedNames {
+		valid[strings.ToLower(name)] = true
+	}
+	visit := func(expr Expr) error {
+		var problem error
+		walkFields(expr, func(name string) {
+			if !valid[strings.ToLower(name)] && problem == nil {
+				problem = fmt.Errorf("unknown column %q in derived table", name)
+			}
+		})
+		return problem
+	}
+	for _, item := range query.Select {
+		if _, ok := item.Expr.(starExpr); ok {
+			// A star select names every derived column, so only this item's
+			// own field check is skipped. WHERE, GROUP BY, HAVING and PIVOT
+			// still run below: skipping them would answer an unanswerable
+			// query with plausible zeroes.
+			continue
+		}
+		if err := visit(item.Expr); err != nil {
+			return err
+		}
+	}
+	if err := visit(query.Where); err != nil {
+		return err
+	}
+	for _, expr := range query.GroupBy {
+		if err := visit(expr); err != nil {
+			return err
+		}
+	}
+	if query.Having != nil && !query.Having.aggregate() {
+		return fmt.Errorf("the HAVING clause must be an aggregate expression")
+	}
+	if err := visit(query.Having); err != nil {
+		return err
+	}
+	for _, expr := range query.Pivot {
+		if err := visit(expr); err != nil {
+			return err
+		}
+	}
+	return validateDerivedOrderByNames(query, valid)
+}
+
+// validateDerivedOrderByNames rejects ORDER BY names the derived table cannot
+// answer. A sort key may name an output title or any column of the inner
+// projection (upstream resolves ORDER BY through its target list, so ordering
+// by an inner column that is not projected stays valid). A typo would
+// otherwise silently no-op the sort.
+func validateDerivedOrderByNames(query *Query, derived map[string]bool) error {
+	for i := range query.OrderBy {
+		field, ok := query.OrderBy[i].Expr.(fieldExpr)
+		if !ok {
+			continue
+		}
+		if derived[strings.ToLower(field.name)] || validOutputName(query, field.name) {
+			continue
+		}
+		return fmt.Errorf("unknown column %q in ORDER BY", field.name)
+	}
+	return nil
 }
 
 // evaluateRows is the common execution pipeline. Typed compilation binds
@@ -142,27 +282,55 @@ func evaluateRowsWithCompare(query Query, rows []Row, compare rowComparison) (Re
 }
 
 func evaluateRowsBounded(query Query, rows []Row, compare rowComparison, budget *executionBudget) (Result, error) {
+	// Upstream evaluates HAVING against the context row its scan loop leaves
+	// behind. The loop variable is assigned before the WHERE test, so the row
+	// is the last input row regardless of filtering; a bare source column in
+	// HAVING is therefore an aggregate-level test, not a per-group one.
+	// Capture that row before grouping reorders the input. A caller that already
+	// consumed WHERE while streaming (prepareBalanceStream) passes the row in.
+	havingRow := query.havingContextRow
+	if havingRow == nil {
+		havingRow = havingContext(rows)
+	}
 	if err := budget.step("where"); err != nil {
 		return Result{}, err
 	}
-	rows, err := applyWhere(query.Where, rows)
+	filtered, err := applyWhere(query.Where, rows)
 	if err != nil {
 		return Result{}, err
 	}
 	if err := budget.step("group"); err != nil {
 		return Result{}, err
 	}
-	groups, err := groupRows(rows, query.GroupBy, query.Select)
+	groups, err := groupRows(filtered, query.GroupBy, query.Select)
 	if err != nil {
 		return Result{}, err
 	}
-	selectItems := expandStarSelect(rows, query.Select)
+	if query.Having != nil {
+		if err := budget.step("having"); err != nil {
+			return Result{}, err
+		}
+		groups, err = applyHaving(query.Having, groups, havingRow)
+		if err != nil {
+			return Result{}, err
+		}
+	}
+	selectItems := expandStarSelect(filtered, query.Select)
 	if err := budget.step("project"); err != nil {
 		return Result{}, err
 	}
-	result, err := projectGroups(selectItems, groups, query.OrderBy)
+	result, err := projectGroups(selectItems, groups, query.OrderBy, budget)
 	if err != nil {
 		return Result{}, err
+	}
+	if query.Distinct {
+		if err := budget.step("distinct"); err != nil {
+			return Result{}, err
+		}
+		result, err = distinctResult(result, budget)
+		if err != nil {
+			return Result{}, err
+		}
 	}
 	if err := budget.step("sort"); err != nil {
 		return Result{}, err
@@ -185,6 +353,105 @@ func evaluateRowsBounded(query Query, rows []Row, compare rowComparison, budget 
 	return result, nil
 }
 
+// applyHaving keeps only the groups whose HAVING predicate is true. The
+// predicate runs once per group against the aggregate-level context row, so it
+// sees the same aggregate values the projection sees and resolves a bare
+// source column exactly as upstream does (the context row is the last row that
+// passed WHERE, which is what makes `HAVING account = 'x'` an aggregate-level
+// test rather than a per-group filter). Iteration is bounded and stops on
+// cancellation like every other execution stage.
+func applyHaving(having Expr, groups [][]Row, context Row) ([][]Row, error) {
+	if having == nil {
+		return groups, nil
+	}
+	kept := make([][]Row, 0, len(groups))
+	for _, group := range groups {
+		if err := rowBudget(context, group).step("having"); err != nil {
+			return nil, err
+		}
+		value, err := having.eval(context, group)
+		if err != nil {
+			return nil, err
+		}
+		truth, err := typedTruth(value)
+		if err != nil {
+			return nil, err
+		}
+		if truth {
+			kept = append(kept, group)
+		}
+	}
+	return kept, nil
+}
+
+// havingContext returns the row upstream leaves in its iteration variable
+// when its scan loop finishes: the last row of the input, captured before
+// WHERE runs because the loop variable is assigned ahead of the filter. A
+// HAVING predicate that references a bare source column therefore observes
+// that one row for every group, not the group's own first row. An empty input
+// leaves the variable unset, which upstream reads as NULL; a zero-value Row
+// gives the same NULL result for every column reference.
+//
+// This is oracle-pinned behavior, not an intentional SQL semantic:
+// TestHavingFiltersGroupsAfterAggregation in standard_forms_test.go reproduces
+// the reference's cell-for-cell observations, including the WHERE case.
+func havingContext(rows []Row) Row {
+	if len(rows) == 0 {
+		return Row{}
+	}
+	return rows[len(rows)-1]
+}
+
+// distinctResult collapses output rows whose canonical typed values are all
+// equal, keeping the first occurrence so ORDER BY and LIMIT still observe the
+// reference's stable order. Equal values of different types (the integer 1 and
+// the decimal 1.0, or NULL and an empty string) stay distinct rows.
+func distinctResult(result Result, budget *executionBudget) (Result, error) {
+	seen := make(map[string]bool, len(result.Rows))
+	kept := make([]Row, 0, len(result.Rows))
+	for _, row := range result.Rows {
+		if err := budget.step("distinct"); err != nil {
+			return Result{}, err
+		}
+		values := make([]any, len(result.Columns))
+		for i, column := range result.Columns {
+			values[i] = row[column]
+		}
+		key, err := identityKey(values)
+		if err != nil {
+			return Result{}, err
+		}
+		if seen[key] {
+			continue
+		}
+		if len(seen) >= QueryDistinctKeyLimit {
+			return Result{}, typedFailure("result-budget-exceeded", "SELECT DISTINCT exceeds the unique-key budget (%d keys); narrow the projection or add a LIMIT", QueryDistinctKeyLimit)
+		}
+		seen[key] = true
+		kept = append(kept, row)
+	}
+	result.Rows = kept
+	return result, nil
+}
+
+// identityKey encodes values for grouping and DISTINCT. The runtime type is
+// part of the identity, so the integer 1, the Decimal 1 and the string "1"
+// never share a row, while every NULL encodes alike and collapses.
+func identityKey(values []any) (string, error) {
+	parts := make([]struct {
+		Type  string `json:"type"`
+		Value any    `json:"value"`
+	}, len(values))
+	for i, value := range values {
+		parts[i].Type, parts[i].Value = fmt.Sprintf("%T", value), value
+	}
+	encoded, err := json.Marshal(parts)
+	if err != nil {
+		return "", err
+	}
+	return string(encoded), nil
+}
+
 // applyWhere filters rows by the WHERE predicate, if present.
 func applyWhere(where Expr, rows []Row) ([]Row, error) {
 	if where == nil {
@@ -201,6 +468,257 @@ func applyWhere(where Expr, rows []Row) ([]Row, error) {
 		}
 	}
 	return filtered, nil
+}
+
+// QueryPivotCellLimit bounds the dense PIVOT BY cell matrix (row keys x pivot
+// values x measures) before it is allocated. One typed-wire cell encodes to at
+// least 15 bytes of JSON ({"type":"null"}), so this ceiling keeps the matrix
+// itself near QueryByteLimit; the dominant dense-pivot allocation is actually
+// the per-row identity encoding, which pivotCells memoizes. Under the default
+// step budget a dense pivot reaches roughly 65k cells (~31 steps per cell),
+// so this limit only binds sparse pivots.
+const QueryPivotCellLimit = QueryByteLimit / 16
+
+// QueryDistinctKeyLimit bounds the deduplication map of SELECT DISTINCT. The
+// map holds one canonical identity key per unique input row (measured 243 B
+// per key at one column up to ~3.4 kB at twenty), and DISTINCT runs before
+// sort and LIMIT, so without this ceiling a high-cardinality DISTINCT on a
+// large ledger grows the map without bound — including on the legacy entry,
+// which runs without a step budget. The value keeps the worst-case map at a
+// small multiple of QueryByteLimit while staying above QueryRowLimit, so any
+// DISTINCT whose result fits the row ceiling still executes and only inputs
+// that would truncate anyway fail loudly.
+const QueryDistinctKeyLimit = QueryByteLimit / 1024
+
+// pivotLegacyResult reshapes a projected result into the PIVOT BY layout:
+// the first pivot column stays the row key, the second turns into one output
+// column per distinct value, and each remaining projected column repeats as a
+// measure for every pivot value. Row and pivot keys are emitted in ascending
+// order and absent combinations stay empty, matching the reference. The
+// projection (including ORDER BY and LIMIT) has already been applied, exactly
+// like upstream's EvalPivot wrapper.
+func pivotLegacyResult(query Query, result Result) (Result, error) {
+	if len(query.Pivot) == 0 {
+		return result, nil
+	}
+	rowIndex, columnIndex, err := pivotTargetIndexes(query, query.Pivot, result.Columns)
+	if err != nil {
+		return Result{}, err
+	}
+	measures := make([]int, 0, len(result.Columns))
+	for i := range result.Columns {
+		if i != rowIndex && i != columnIndex {
+			measures = append(measures, i)
+		}
+	}
+	cell := func(row Row, index int) any { return row[result.Columns[index]] }
+	rows, columns, cells, width, err := pivotCells(result.Rows, rowIndex, columnIndex, measures, cell, legacyComparison, nil, QueryPivotCellLimit)
+	if err != nil {
+		return Result{}, err
+	}
+	pivoted := Result{}
+	pivoted.Columns = append(pivoted.Columns, result.Columns[rowIndex]+"/"+result.Columns[columnIndex])
+	if len(measures) == 0 {
+		// A pivot without a measure keeps only the row key column: upstream
+		// still spreads the second key, but there is no value to repeat.
+		for _, rowKey := range rows {
+			pivoted.Rows = append(pivoted.Rows, Row{pivoted.Columns[0]: rowKey})
+		}
+		return pivoted, nil
+	}
+	for _, column := range columns {
+		for _, measure := range measures {
+			name := formatValue(column)
+			if len(measures) > 1 {
+				name += "/" + result.Columns[measure]
+			}
+			pivoted.Columns = append(pivoted.Columns, name)
+		}
+	}
+	// The legacy result is a title-keyed map, so a repeated pivot title would
+	// silently discard one column. Fail loudly like the duplicate projection
+	// titles already do.
+	seen := make(map[string]bool, len(pivoted.Columns))
+	for _, name := range pivoted.Columns {
+		if seen[name] {
+			return Result{}, fmt.Errorf("duplicate pivot output title %q cannot be represented by legacy JSON/CSV; use typed-json", name)
+		}
+		seen[name] = true
+	}
+	for i, rowKey := range rows {
+		row := Row{pivoted.Columns[0]: rowKey}
+		for j, value := range cells[i*width : (i+1)*width] {
+			row[pivoted.Columns[j+1]] = value
+		}
+		pivoted.Rows = append(pivoted.Rows, row)
+	}
+	return pivoted, nil
+}
+
+// pivotTargetIndexes resolves the two PIVOT BY columns for the legacy entry:
+// an integer literal names a 1-based projection position, a bare name matches
+// an output title, and the second column must be a GROUP BY key. The typed
+// compiler applies the same rules (see pivotProjectionIndexes) and reports
+// them with typed error categories.
+func pivotTargetIndexes(query Query, pivot []Expr, names []string) (int, int, error) {
+	resolve := func(expr Expr) (int, error) {
+		if ordinal, ok := projectionOrdinal(expr); ok {
+			if ordinal < 1 || ordinal > len(names) {
+				return 0, fmt.Errorf("invalid PIVOT BY column index %d", ordinal)
+			}
+			return ordinal - 1, nil
+		}
+		field, ok := expr.(fieldExpr)
+		if !ok {
+			return 0, fmt.Errorf("PIVOT BY column %s is not in the projection", expr.String())
+		}
+		for i, name := range names {
+			if strings.EqualFold(name, field.name) {
+				return i, nil
+			}
+		}
+		return 0, fmt.Errorf("PIVOT BY column %s is not in the projection", expr.String())
+	}
+	first, err := resolve(pivot[0])
+	if err != nil {
+		return 0, 0, err
+	}
+	second, err := resolve(pivot[1])
+	if err != nil {
+		return 0, 0, err
+	}
+	if first == second {
+		return 0, 0, fmt.Errorf("the two PIVOT BY columns cannot be the same column")
+	}
+	if second >= len(query.Select) {
+		return 0, 0, fmt.Errorf("the second PIVOT BY column must be a GROUP BY column")
+	}
+	grouped := map[string]bool{}
+	for _, expr := range query.GroupBy {
+		grouped[expr.String()] = true
+	}
+	if !grouped[query.Select[second].Expr.String()] {
+		return 0, 0, fmt.Errorf("the second PIVOT BY column must be a GROUP BY column")
+	}
+	return first, second, nil
+}
+
+// pivotCells is the shared cell engine for the legacy and typed pipelines.
+// value reads one cell of one projected row, compare orders the pivot keys and
+// step charges the execution budget (nil for the unbounded legacy path). It
+// returns the distinct row keys and pivot values in ascending order together
+// with the measure matrix indexed as
+// cells[row*len(measures)+column*len(measures)+measure]; an absent
+// combination stays nil so the caller can render it as NULL. cellLimit bounds
+// the dense matrix before it is allocated; without it a small query text could
+// allocate gigabytes before any result-size check runs.
+func pivotCells(rows []Row, rowIndex, columnIndex int, measures []int, value func(Row, int) any, compare rowComparison, step func() error, cellLimit int) ([]any, []any, []any, int, error) {
+	if step == nil {
+		step = func() error { return nil }
+	}
+	rowKeys := []any{}
+	columnValues := []any{}
+	rowAt := map[string]int{}
+	columnAt := map[string]int{}
+	// The fill pass below needs the same identities again; caching them per
+	// input row keeps a dense pivot's dominant allocation at one identityKey
+	// per row instead of three (the cell matrix itself is only ~16 B/cell).
+	rowIdentities := make([]string, 0, len(rows))
+	columnIdentities := make([]string, 0, len(rows))
+	for _, row := range rows {
+		if err := step(); err != nil {
+			return nil, nil, nil, 0, err
+		}
+		rowKey, columnValue := value(row, rowIndex), value(row, columnIndex)
+		rowIdentity, err := identityKey([]any{rowKey})
+		if err != nil {
+			return nil, nil, nil, 0, err
+		}
+		columnIdentity, err := identityKey([]any{columnValue})
+		if err != nil {
+			return nil, nil, nil, 0, err
+		}
+		if _, ok := rowAt[rowIdentity]; !ok {
+			rowAt[rowIdentity] = len(rowKeys)
+			rowKeys = append(rowKeys, rowKey)
+		}
+		if _, ok := columnAt[columnIdentity]; !ok {
+			columnAt[columnIdentity] = len(columnValues)
+			columnValues = append(columnValues, columnValue)
+		}
+		rowIdentities = append(rowIdentities, rowIdentity)
+		columnIdentities = append(columnIdentities, columnIdentity)
+	}
+	if err := sortPivotKeys(rowKeys, rowAt, compare, step); err != nil {
+		return nil, nil, nil, 0, err
+	}
+	if err := sortPivotKeys(columnValues, columnAt, compare, step); err != nil {
+		return nil, nil, nil, 0, err
+	}
+	width := len(columnValues) * len(measures)
+	if cellLimit > 0 && len(rowKeys)*width > cellLimit {
+		return nil, nil, nil, 0, typedFailure("result-budget-exceeded", "PIVOT BY result exceeds the cell budget (%d x %d cells); narrow the pivot or add a LIMIT", len(rowKeys), width)
+	}
+	cells := make([]any, len(rowKeys)*width)
+	for i, row := range rows {
+		if err := step(); err != nil {
+			return nil, nil, nil, 0, err
+		}
+		rowPosition := rowAt[rowIdentities[i]]
+		columnPosition := columnAt[columnIdentities[i]]
+		for measureIndex, measure := range measures {
+			cells[rowPosition*width+columnPosition*len(measures)+measureIndex] = value(row, measure)
+		}
+	}
+	return rowKeys, columnValues, cells, width, nil
+}
+
+func mustIdentity(value any) string {
+	identity, _ := identityKey([]any{value})
+	return identity
+}
+
+// sortPivotKeys orders pivot keys ascending and rebases their positions.
+func sortPivotKeys(values []any, positions map[string]int, compare rowComparison, step func() error) error {
+	if len(values) == 0 {
+		return nil
+	}
+	identities := make([]string, len(values))
+	for i, value := range values {
+		identities[i] = mustIdentity(value)
+	}
+	indices := make([]int, len(values))
+	for i := range indices {
+		indices[i] = i
+	}
+	var sortErr error
+	sort.SliceStable(indices, func(i, j int) bool {
+		if sortErr != nil {
+			return false
+		}
+		if err := step(); err != nil {
+			sortErr = err
+			return false
+		}
+		comparison, err := compare(values[indices[i]], values[indices[j]])
+		if err != nil {
+			sortErr = err
+			return false
+		}
+		return comparison < 0
+	})
+	if sortErr != nil {
+		return sortErr
+	}
+	ordered := make([]any, len(values))
+	for position, index := range indices {
+		ordered[position] = values[index]
+	}
+	copy(values, ordered)
+	for position, index := range indices {
+		positions[identities[index]] = position
+	}
+	return nil
 }
 
 // expandStarSelect rewrites a lone `SELECT *` into one field item per column
@@ -236,7 +754,7 @@ func expandStarSelect(rows []Row, selectItems []SelectItem) []SelectItem {
 // that are not projected columns (upstream bean-query permits ordering by
 // any source expression) ride along under their expression text and are
 // stripped by sortResultRows so they never surface as output.
-func projectGroups(selectItems []SelectItem, groups [][]Row, orderBy []OrderItem) (Result, error) {
+func projectGroups(selectItems []SelectItem, groups [][]Row, orderBy []OrderItem, budget *executionBudget) (Result, error) {
 	result := Result{}
 	projected := make(map[string]bool, len(selectItems))
 	for _, item := range selectItems {
@@ -257,6 +775,9 @@ func projectGroups(selectItems []SelectItem, groups [][]Row, orderBy []OrderItem
 		}
 	}
 	for _, group := range groups {
+		if err := budget.step("project"); err != nil {
+			return Result{}, err
+		}
 		row := Row{}
 		for _, item := range selectItems {
 			alias := item.Alias
@@ -336,6 +857,9 @@ func sortResultRowsBy(result Result, orderBy []OrderItem, compare rowComparison)
 // groupRows partitions the joined rows for aggregation: no GROUP BY and no
 // aggregate keeps every row its own group, no GROUP BY with aggregates makes
 // one group, and otherwise rows group by canonical typed key values.
+//
+// A PIVOT BY column is removed from the grouping key because its values are
+// spread across output columns, not down the rows.
 func groupRows(rows []Row, groupBy []Expr, selectItems []SelectItem) ([][]Row, error) {
 	aggregate := false
 	for _, item := range selectItems {
@@ -363,22 +887,10 @@ func groupRows(rows []Row, groupBy []Expr, selectItems []SelectItem) ([][]Row, e
 		if err := rowBudget(row, nil).step(""); err != nil {
 			return nil, err
 		}
-		parts := make([]struct {
-			Type  string `json:"type"`
-			Value any    `json:"value"`
-		}, len(groupBy))
-		for i, expr := range groupBy {
-			value, err := expr.eval(row, []Row{row})
-			if err != nil {
-				return nil, err
-			}
-			parts[i].Type, parts[i].Value = fmt.Sprintf("%T", value), value
-		}
-		encoded, err := json.Marshal(parts)
+		key, err := groupKey(row, groupBy)
 		if err != nil {
 			return nil, err
 		}
-		key := string(encoded)
 		index, ok := indexes[key]
 		if !ok {
 			index = len(groups)
@@ -388,6 +900,20 @@ func groupRows(rows []Row, groupBy []Expr, selectItems []SelectItem) ([][]Row, e
 		groups[index] = append(groups[index], row)
 	}
 	return groups, nil
+}
+
+// groupKey encodes the values of a GROUP BY key by their typed identity so
+// that only values equal as typed values share one group.
+func groupKey(row Row, groupBy []Expr) (string, error) {
+	parts := make([]any, len(groupBy))
+	for i, expr := range groupBy {
+		value, err := expr.eval(row, []Row{row})
+		if err != nil {
+			return "", err
+		}
+		parts[i] = value
+	}
+	return identityKey(parts)
 }
 
 func firstRow(rows []Row) Row {
@@ -812,10 +1338,18 @@ type queryParser struct {
 // consumes its keywords so this loop only sequences them and verifies the
 // statement is fully consumed at the end.
 func (p *queryParser) parse() (Query, error) {
+	return p.parseStatement(false)
+}
+
+// parseStatement parses one complete SELECT. A derived table re-enters this
+// routine and leaves the closing parenthesis for its caller, so the "statement
+// fully consumed" check is skipped at that level.
+func (p *queryParser) parseStatement(nested bool) (Query, error) {
 	query := Query{}
 	if !p.acceptWord("select") {
 		return query, p.errorf("query must start with SELECT")
 	}
+	query.Distinct = p.acceptWord("distinct")
 	if err := p.parseSelectList(&query); err != nil {
 		return query, err
 	}
@@ -823,16 +1357,9 @@ func (p *queryParser) parse() (Query, error) {
 		return query, p.errorf("SELECT requires at least one expression")
 	}
 	if p.acceptWord("from") {
-		sourceToken := p.peek()
-		from, err := p.expectWord("table name")
-		if sourceToken.kind == tokenString && p.defaultPostings {
-			from, err = sourceToken.text, nil
-		}
-		if err != nil {
+		if err := p.parseFrom(&query); err != nil {
 			return query, err
 		}
-		query.From = from
-		query.fromSpan = &ByteRange{Start: sourceToken.start, End: sourceToken.end}
 	} else if p.defaultPostings {
 		query.From = "postings"
 	} else {
@@ -847,13 +1374,44 @@ func (p *queryParser) parse() (Query, error) {
 	if err := p.parseOrderBy(&query); err != nil {
 		return query, err
 	}
+	if err := p.parsePivotBy(&query); err != nil {
+		return query, err
+	}
 	if err := p.parseLimit(&query); err != nil {
 		return query, err
 	}
-	if p.peek().kind != 0 || p.index < len(p.tokens) {
+	if !nested && (p.peek().kind != 0 || p.index < len(p.tokens)) {
 		return query, p.errorf("unexpected token %q", p.peek().text)
 	}
 	return query, nil
+}
+
+// parseFrom consumes either a table name or a parenthesized derived table.
+func (p *queryParser) parseFrom(query *Query) error {
+	if p.peek().kind == tokenLParen {
+		open := p.next()
+		inner, err := p.parseStatement(true)
+		if err != nil {
+			return err
+		}
+		if !p.accept(tokenRParen) {
+			return p.errorf("missing closing parenthesis after derived table")
+		}
+		query.fromSubquery = &inner
+		query.fromSpan = &ByteRange{Start: open.start, End: open.end}
+		return nil
+	}
+	sourceToken := p.peek()
+	from, err := p.expectWord("table name")
+	if sourceToken.kind == tokenString && p.defaultPostings {
+		from, err = sourceToken.text, nil
+	}
+	if err != nil {
+		return err
+	}
+	query.From = from
+	query.fromSpan = &ByteRange{Start: sourceToken.start, End: sourceToken.end}
+	return nil
 }
 
 // parseSelectList consumes the comma-separated projection expressions. A
@@ -917,7 +1475,8 @@ func (p *queryParser) parseWhere(query *Query) error {
 	return nil
 }
 
-// parseGroupBy consumes the optional GROUP BY expression list.
+// parseGroupBy consumes the optional GROUP BY expression list and the HAVING
+// predicate that upstream's grammar only admits after it.
 func (p *queryParser) parseGroupBy(query *Query) error {
 	if !p.acceptWord("group") {
 		return nil
@@ -930,6 +1489,33 @@ func (p *queryParser) parseGroupBy(query *Query) error {
 		return err
 	}
 	query.GroupBy = groupBy
+	if p.acceptWord("having") {
+		having, err := p.expression(0)
+		if err != nil {
+			return err
+		}
+		query.Having = having
+	}
+	return nil
+}
+
+// parsePivotBy consumes the optional PIVOT BY pair. Upstream accepts exactly
+// two columns and places the clause between ORDER BY and LIMIT.
+func (p *queryParser) parsePivotBy(query *Query) error {
+	if !p.acceptWord("pivot") {
+		return nil
+	}
+	if !p.acceptWord("by") {
+		return p.errorf("PIVOT requires BY")
+	}
+	pivot, err := p.expressionList()
+	if err != nil {
+		return err
+	}
+	if len(pivot) != 2 {
+		return p.errorf("PIVOT BY requires two columns")
+	}
+	query.Pivot = pivot
 	return nil
 }
 
@@ -1246,6 +1832,9 @@ func prepareQuery(query *Query) error {
 	if err := validateOrderByNames(query); err != nil {
 		return err
 	}
+	if query.Having != nil && !query.Having.aggregate() {
+		return fmt.Errorf("the HAVING clause must be an aggregate expression")
+	}
 	return validateColumnNames(query)
 }
 
@@ -1328,7 +1917,7 @@ func validateColumnNames(query *Query) error {
 			return err
 		}
 	}
-	return nil
+	return visit(query.Having)
 }
 
 // outputNames lists the projected column names of a select list. A star
@@ -1405,7 +1994,7 @@ func canonicalTable(from string) string {
 
 func isClauseWord(value string) bool {
 	switch strings.ToLower(value) {
-	case "from", "where", "group", "order", "limit", "asc", "desc", "by":
+	case "from", "where", "group", "having", "order", "pivot", "limit", "asc", "desc", "by":
 		return true
 	default:
 		return false

@@ -48,6 +48,12 @@ func (b *balanceObservation) read() inventoryValue {
 func prepareBalanceStream(q *Query, rows []Row, targets []typedExpr, budget *executionBudget) ([]Row, error) {
 	stream := &runningInventory{}
 	selected := make([]Row, 0, len(rows))
+	// The running inventory needs WHERE applied during accumulation, so the
+	// filter is consumed here. HAVING still observes upstream's leftover
+	// scan-loop row (the last row of the unfiltered source), so record it
+	// before the filter can discard it. This oracle-pinned contract is held by
+	// TestHavingFiltersGroupsAfterAggregation in standard_forms_test.go.
+	q.havingContextRow = havingContext(rows)
 	for _, row := range rows {
 		if err := budget.step("where"); err != nil {
 			return nil, err

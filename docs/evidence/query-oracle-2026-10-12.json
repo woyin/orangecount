@@ -1,0 +1,50 @@
+{
+  "captured": "2026-10-12",
+  "oracle": "BeanQuery 0.2.0 / Beancount 3.2.3 (tools/reference/uv.lock)",
+  "fixture": "testdata/fixtures/query/standard-forms.bean",
+  "note": "Oracle observations copied into the repository so the compatibility docs and internal/query tests cite a tracked path. The original capture also lives in the review bundle fix/review-evidence-2026-10-12/query-comparison.json, which is not part of a normal checkout. stdout is kept as raw text so exact decimal spellings survive.",
+  "cases": [
+    {
+      "case": "simple",
+      "query": "SELECT account, number ORDER BY account",
+      "exit": 0,
+      "stdout": "{\"rows\":[[\"Assets:Cash\",100.00],[\"Assets:Cash\",-10.00],[\"Equity:Opening\",-100.00],[\"Expenses:Food\",10.00]],\"t\":\"table\",\"types\":[{\"name\":\"account\",\"dtype\":\"str\"},{\"name\":\"number\",\"dtype\":\"Decimal\"}]}\n",
+      "stderr": ""
+    },
+    {
+      "case": "distinct",
+      "query": "SELECT DISTINCT account ORDER BY account",
+      "exit": 0,
+      "stdout": "{\"rows\":[[\"Assets:Cash\"],[\"Equity:Opening\"],[\"Expenses:Food\"]],\"t\":\"table\",\"types\":[{\"name\":\"account\",\"dtype\":\"str\"}]}\n",
+      "stderr": ""
+    },
+    {
+      "case": "having",
+      "query": "SELECT account, sum(number) AS total GROUP BY account HAVING sum(number) > 0 ORDER BY account",
+      "exit": 0,
+      "stdout": "{\"rows\":[[\"Assets:Cash\",90.00],[\"Expenses:Food\",10.00]],\"t\":\"table\",\"types\":[{\"name\":\"account\",\"dtype\":\"str\"},{\"name\":\"total\",\"dtype\":\"Decimal\"}]}\n",
+      "stderr": ""
+    },
+    {
+      "case": "subquery",
+      "query": "SELECT account FROM (SELECT account WHERE number > 0) ORDER BY account",
+      "exit": 0,
+      "stdout": "{\"rows\":[[\"Assets:Cash\"],[\"Expenses:Food\"]],\"t\":\"table\",\"types\":[{\"name\":\"account\",\"dtype\":\"str\"}]}\n",
+      "stderr": ""
+    },
+    {
+      "case": "pivot",
+      "query": "SELECT account, currency, sum(number) GROUP BY account, currency PIVOT BY 1, 2",
+      "exit": 0,
+      "stdout": "{\"rows\":[[\"Assets:Cash\",90.00],[\"Equity:Opening\",-100.00],[\"Expenses:Food\",10.00]],\"t\":\"table\",\"types\":[{\"name\":\"account/currency\",\"dtype\":\"str\"},{\"name\":\"USD\",\"dtype\":\"Decimal\"}]}\n",
+      "stderr": ""
+    },
+    {
+      "case": "bigint",
+      "query": "SELECT 9223372036854775807 + 1 LIMIT 1",
+      "exit": 0,
+      "stdout": "{\"rows\":[[9223372036854775808]],\"t\":\"table\",\"types\":[{\"name\":\"9223372036854775807 + 1\",\"dtype\":\"int\"}]}\n",
+      "stderr": ""
+    }
+  ]
+}

@@ -33,6 +33,29 @@ Price cell 是上游 book 后的单位价格。总价 @@ 先除以绝对数量�
 
 查询结果与 CSV/分析 ZIP 使用相同不可变捕获。递归编码沿用执行取消和 step 预算，最大嵌套 32 层、单个集合/字典/列表 10000 项；字典键及集合成员最多 65536 字节。整体返回仍受 10000 行及 16 MiB 限制。CSV 对集合/结构输出规范 JSON；类型及 NULL 信息由伴随分析文件保存。
 
+## 标准形式：DISTINCT、HAVING、派生表与 PIVOT BY
+
+四种标准形式已按固定 oracle 的观测实现，期望值来自本仓库内的 [oracle 观测](../evidence/query-oracle-2026-10-12.json)（评审期原始捕获在 `fix/review-evidence-2026-10-12/query-comparison.json`，不随仓库发布）：
+
+| 形式 | 语义 | 代码位置 |
+| --- | --- | --- |
+| `SELECT DISTINCT ...` | 按 typed 身份去重。相等 Decimal 的不同书写、重复 NULL 都折叠为一行；NULL 与空字符串、相同数值的 integer 与 decimal 保持不同行。去重在 projection 之后、ORDER BY/LIMIT 之前执行 | `distinctResult` |
+| `GROUP BY ... HAVING <aggregate predicate>` | 只在 GROUP BY 之后解析（上游语法要求），过滤整个分组；必须包含聚合，不接受 projection 别名；非聚合 HAVING 报 `invalid-group`。HAVING 中的裸源列按上游的扫描上下文行（最后一条源记录）求值，是分组级判定，不是逐组过滤 | `applyHaving`/`havingContext` |
+| `SELECT ... FROM (SELECT ... WHERE ...)` | 派生表先执行内层 select，外层读取其输出列名与声明类型；支持嵌套、别名、`SELECT *`、聚合与 DISTINCT，引用不存在的列报 `unknown-column`；`SELECT *` 只跳过自身字段校验，WHERE/GROUP BY/HAVING/ORDER BY 仍校验 | `executeTypedPlan`/`typedDerivedTable`/`prepareDerivedQuery` |
+| `GROUP BY ... PIVOT BY <col>, <col>` | 第一个 pivot 列保留为行键，第二个展开为每值一列，其余 projection 列作为 measure 在每个 pivot 值下重复；缺失组合为 NULL，measure 列声明 nullable；行键与 pivot 值按 typed 顺序升序；全部投影列都是 pivot 键时只保留行键列 | `pivotTypedPlan` |
+
+全部四条路径都经过 `evaluateRowsBounded` 的 step 预算与取消检查；PIVOT 的 reshape 与 DISTINCT 的去重也各自计数。PIVOT 的稠密矩阵在分配前受 cell 预算约束（`QueryPivotCellLimit`，可由 `ExecutionLimits.PivotCells` 收紧），pivot 后的列宽超过行上限时报 `result-budget-exceeded`，不返回被截断的“完整”结果。CLI typed-json/typed-csv 与 `desktop.Session` 的分析捕获使用同一条管道，因此 `SELECT DISTINCT` 的列、HAVING 的过滤、派生表的列类型以及 PIVOT 的 `row/column` 标题都以 typed schema 保存并可回读。
+
+旧 `Parse`/`Evaluate` 入口同样接受这四种形式（HAVING/PIVOT 由同一 parser 提供），但投影列名仍以文本契约输出，不声明类型。
+
+### 未封口的具体项
+
+以下差异已定位，未在本批修复，不能读作“已等价”：
+
+- `IN` 子查询与 FROM 期间修饰。
+- `PIVOT BY` 的表命令形式（PRINT/JOURNAL/BALANCES 等）。
+- HAVING 裸源列的上下文行依赖上游的循环残留值；本项目已按观测复现，但这不是有意的 SQL 语义，上游重构会改变它。
+
 ## 仍需完成
 
-非有限 Decimal、完整 Any 的转换/运算、全部结构访问、标准 entry id/hash、完整函数/操作符重载、子查询/HAVING/DISTINCT/PIVOT、命令和生态等仍未封口；源 metadata 保留字段的异常类型覆盖也仍需审计。因此此文档是已实现返回契约，不能作为完整 Beancount/BeanQuery 兼容声明。
+非有限 Decimal、完整 Any 的转换/运算、全部结构访问、标准 entry id/hash、完整函数/操作符重载、`IN` 子查询与FROM期间修饰、`PIVOT BY` 的表命令形式（PRINT/JOURNAL/BALANCES等）、命令和生态等仍未封口；源 metadata 保留字段的异常类型覆盖也仍需审计。因此此文档是已实现返回契约，不能作为完整 Beancount/BeanQuery 兼容声明。

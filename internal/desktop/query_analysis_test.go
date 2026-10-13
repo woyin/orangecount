@@ -353,3 +353,52 @@ func TestAnalysisStructuredValuesRoundTrip(t *testing.T) {
 		}
 	}
 }
+
+// TestAnalysisCaptureRoundTripsStandardForms locks the four standard BQL forms
+// (DISTINCT, HAVING, derived table, PIVOT BY) through desktop.Session and the
+// analysis archive. The expected values are the captured BeanQuery 0.2.0
+// observations for testdata/fixtures/query/standard-forms.bean; the archive
+// must restore the pivoted schema, NULL pivot holes and exact decimals.
+func TestAnalysisCaptureRoundTripsStandardForms(t *testing.T) {
+	for _, test := range []struct {
+		name    string
+		text    string
+		columns []string
+		rows    int
+	}{
+		{"distinct", "SELECT DISTINCT account ORDER BY account", []string{"account"}, 3},
+		{"having", "SELECT account, sum(number) AS total GROUP BY account HAVING sum(number) > 0 ORDER BY account", []string{"account", "total"}, 2},
+		{"subquery", "SELECT account FROM (SELECT account WHERE number > 0) ORDER BY account", []string{"account"}, 2},
+		{"pivot", "SELECT account, currency, sum(number) GROUP BY account, currency PIVOT BY 1, 2", []string{"account/currency", "USD"}, 3},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			data := publicAnalysis(t, "standard-forms.bean", test.text)
+			restored, err := desktop.ReadQueryAnalysis(bytes.NewReader(data), int64(len(data)))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(restored.Result.Columns) != len(test.columns) || len(restored.Result.Rows) != test.rows {
+				t.Fatalf("restored=%+v", restored.Result)
+			}
+			for i, name := range test.columns {
+				if restored.Result.Columns[i].Name != name {
+					t.Fatalf("column %d=%s want %s", i, restored.Result.Columns[i].Name, name)
+				}
+			}
+			if test.name == "distinct" && restored.Result.Rows[0][0].Value != "Assets:Cash" {
+				t.Fatalf("distinct rows=%+v", restored.Result.Rows)
+			}
+			if test.name == "having" {
+				decimal, ok := restored.Result.Rows[0][1].Value.(query.PresentedDecimal)
+				if !ok || decimal.Exact != "90" {
+					t.Fatalf("having rows=%+v", restored.Result.Rows)
+				}
+			}
+			if test.name == "pivot" {
+				if restored.Result.Columns[1].Nullable != true || restored.Result.Rows[0][1].Type != "decimal" {
+					t.Fatalf("pivot schema=%+v", restored.Result.Columns)
+				}
+			}
+		})
+	}
+}
