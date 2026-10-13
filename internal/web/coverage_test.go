@@ -447,23 +447,23 @@ func TestUploadHelpersDirectly(t *testing.T) {
 
 func TestCSVImportConversionBranches(t *testing.T) {
 	basic := "date,account,amount\n2000-01-01,Assets:Cash,5\n"
-	if out, err := csvToBeancount(basic, nil); err != nil || !strings.Contains(out, "Equity:Imported") {
+	if out, err := csvToBeancount(basic, nil, ""); err != nil || !strings.Contains(out, "Equity:Imported") {
 		t.Fatalf("basic out=%q err=%v", out, err)
 	}
-	if _, err := csvToBeancount("", nil); err == nil {
+	if _, err := csvToBeancount("", nil, ""); err == nil {
 		t.Fatal("empty CSV should fail")
 	}
-	if _, err := csvToBeancount("date,account\n2000-01-01,Assets:Cash\n", nil); err == nil || !strings.Contains(err.Error(), "amount") {
+	if _, err := csvToBeancount("date,account\n2000-01-01,Assets:Cash\n", nil, ""); err == nil || !strings.Contains(err.Error(), "amount") {
 		t.Fatalf("missing column err=%v", err)
 	}
-	if _, err := csvToBeancount("date,account,amount\n2000-13-01,Assets:Cash,5\n", nil); err == nil || !strings.Contains(err.Error(), "row 2") {
+	if _, err := csvToBeancount("date,account,amount\n2000-13-01,Assets:Cash,5\n", nil, ""); err == nil || !strings.Contains(err.Error(), "row 2") {
 		t.Fatalf("invalid date err=%v", err)
 	}
-	if _, err := csvToBeancount("date,account,amount\n2000-01-01,Assets:Cash,abc\n", nil); err == nil || !strings.Contains(err.Error(), "invalid amount") {
+	if _, err := csvToBeancount("date,account,amount\n2000-01-01,Assets:Cash,abc\n", nil, ""); err == nil || !strings.Contains(err.Error(), "invalid amount") {
 		t.Fatalf("invalid amount err=%v", err)
 	}
 	mapped, err := csvToBeancount("date,account,amount,currency,payee,narration\n2000-01-01,Assets:Cash,5,EUR,\"Pay,ee\",Note\n",
-		map[string]string{"offset_account": "Equity:Custom", "currency": "USD"})
+		map[string]string{"offset_account": "Equity:Custom", "currency": "USD"}, "")
 	if err != nil {
 		t.Fatal(err)
 	}

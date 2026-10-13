@@ -8,12 +8,14 @@ package web
 import (
 	"crypto/sha256"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"net/http"
 	"path/filepath"
 	"strings"
 
 	"orangecount/internal/authoring"
+	"orangecount/internal/datefmt"
 	"orangecount/internal/diagnostic"
 	"orangecount/internal/ledger"
 	"orangecount/internal/query"
@@ -42,7 +44,7 @@ func (s *Server) handleImport(w http.ResponseWriter, r *http.Request) {
 			Adapters []map[string]any `json:"adapters"`
 		}{Adapters: []map[string]any{
 			{"id": "beancount", "label": "Beancount source", "extensions": []string{".bean", ".beancount"}},
-			{"id": "csv", "label": "Generic CSV", "extensions": []string{".csv"}, "columns": []string{"date", "payee", "account", "amount", "currency", "narration"}},
+			{"id": "csv", "label": "Generic CSV", "extensions": []string{".csv"}, "columns": []string{"date", "payee", "account", "amount", "currency", "narration"}, "date_layout": "strftime layout of the date column; blank means %Y-%m-%d"},
 		}})
 		return
 	}
@@ -66,6 +68,11 @@ type importPreviewRequest struct {
 	Content string            `json:"content"`
 	Adapter string            `json:"adapter"`
 	Mapping map[string]string `json:"mapping"`
+	// DateLayout is the optional strftime-style layout of the CSV adapter's
+	// date column (for example "%Y-%m-%d" or "%G-W%V-%u"). Blank keeps the
+	// historical ISO YYYY-MM-DD contract, and a non-blank layout is only
+	// meaningful for the csv adapter.
+	DateLayout string `json:"date_layout"`
 }
 
 func (s *Server) handleImportPreview(w http.ResponseWriter, r *http.Request, current *snapshot.Snapshot) {
@@ -128,8 +135,14 @@ func normalizedImportContent(request importPreviewRequest, adapter string) (name
 		return "", "", err
 	}
 	content = request.Content
+	layout := strings.TrimSpace(request.DateLayout)
+	if adapter != "csv" && layout != "" {
+		// Silently ignoring the layout would let a caller believe the dates
+		// were parsed with it, so refuse the combination instead.
+		return "", "", fmt.Errorf("date_layout applies only to the csv adapter")
+	}
 	if adapter == "csv" {
-		content, err = csvToBeancount(request.Content, request.Mapping)
+		content, err = csvToBeancount(request.Content, request.Mapping, layout)
 		if err != nil {
 			return "", "", err
 		}
@@ -171,17 +184,29 @@ func evaluateImportMerged(current *snapshot.Snapshot, file *ledger.File) *ledger
 // existing ledger's postings, but the preview table should show only what
 // this import would add.
 func importedRowsOnly(evaluation *ledger.Evaluation, name string) query.Result {
-	rows, err := query.Evaluate("SELECT date, account, units, currency, flag, payee, narration FROM postings ORDER BY date, account", *evaluation)
+	// file is selected only to filter by source and is removed from the
+	// response again: without it the filter below read a missing key, dropped
+	// every row, and the preview table was always empty.
+	rows, err := query.Evaluate("SELECT date, account, units, currency, flag, payee, narration, file FROM postings ORDER BY date, account", *evaluation)
 	if err != nil {
 		return query.Result{}
 	}
 	imported := rows.Rows[:0]
 	for _, row := range rows.Rows {
-		if row["file"] == name {
-			imported = append(imported, row)
+		if row["file"] != name {
+			continue
 		}
+		delete(row, "file")
+		imported = append(imported, row)
 	}
 	rows.Rows = imported
+	columns := rows.Columns[:0]
+	for _, column := range rows.Columns {
+		if column != "file" {
+			columns = append(columns, column)
+		}
+	}
+	rows.Columns = columns
 	return rows
 }
 
@@ -284,7 +309,13 @@ func safeImportName(raw, adapter string) (string, error) {
 // csvToBeancount converts a generic CSV import into Beancount transactions
 // balanced against an offset account. The header row names the columns
 // (date, account, amount required; currency, payee, narration optional).
-func csvToBeancount(content string, mapping map[string]string) (string, error) {
+// dateLayout is the optional strftime-style layout of the date column; a blank
+// layout keeps the ISO YYYY-MM-DD contract. One bad row discards the whole
+// conversion, so a failed import never yields a half-written batch.
+func csvToBeancount(content string, mapping map[string]string, dateLayout string) (string, error) {
+	if err := validateCSVDateLayout(dateLayout); err != nil {
+		return "", err
+	}
 	reader := csv.NewReader(strings.NewReader(content))
 	records, err := reader.ReadAll()
 	if err != nil {
@@ -301,7 +332,7 @@ func csvToBeancount(content string, mapping map[string]string) (string, error) {
 	currencyDefault := csvMappingValue(mapping, "currency", "USD")
 	var builder strings.Builder
 	for line, record := range records[1:] {
-		rendered, renderErr := csvRecordToBean(record, header, offset, currencyDefault)
+		rendered, renderErr := csvRecordToBean(record, header, offset, currencyDefault, dateLayout)
 		if renderErr != nil {
 			return "", fmt.Errorf("CSV row %d: %w", line+2, renderErr)
 		}
@@ -340,7 +371,7 @@ func csvMappingValue(mapping map[string]string, key, fallback string) string {
 // csvRecordToBean renders one CSV record as a balanced transaction with its
 // offset posting. Embedded newlines in payee/narration are flattened so one
 // record can never produce broken directives.
-func csvRecordToBean(record []string, header map[string]int, offset, currencyDefault string) (string, error) {
+func csvRecordToBean(record []string, header map[string]int, offset, currencyDefault, dateLayout string) (string, error) {
 	value := func(key string) string {
 		index, ok := header[key]
 		if !ok || index >= len(record) {
@@ -349,8 +380,9 @@ func csvRecordToBean(record []string, header map[string]int, offset, currencyDef
 		return strings.TrimSpace(record[index])
 	}
 	date, amount := value("date"), value("amount")
-	if _, err := parseISODate(date); err != nil {
-		return "", fmt.Errorf("invalid date")
+	renderedDate, err := csvRowDate(date, dateLayout)
+	if err != nil {
+		return "", err
 	}
 	parsedAmount, err := ledger.ParseDecimal(amount)
 	if err != nil {
@@ -363,7 +395,7 @@ func csvRecordToBean(record []string, header map[string]int, offset, currencyDef
 	payee := csvSingleLine(value("payee"))
 	narration := csvSingleLine(value("narration"))
 	var builder strings.Builder
-	builder.WriteString(fmt.Sprintf("%s * \"%s\"", date, escapeBeanString(payee)))
+	builder.WriteString(fmt.Sprintf("%s * \"%s\"", renderedDate, escapeBeanString(payee)))
 	if narration != "" {
 		builder.WriteString(fmt.Sprintf(" \"%s\"", escapeBeanString(narration)))
 	}
@@ -371,6 +403,51 @@ func csvRecordToBean(record []string, header map[string]int, offset, currencyDef
 	builder.WriteString(fmt.Sprintf("  %s %s %s\n", value("account"), parsedAmount.String(), currency))
 	builder.WriteString(fmt.Sprintf("  %s %s %s\n", offset, parsedAmount.Neg().String(), currency))
 	return builder.String(), nil
+}
+
+// validateCSVDateLayout rejects a layout datefmt cannot use before any row is
+// read. The empty probe stops at tokenization, so an unsupported directive or
+// a trailing '%' fails here; a layout whose directives are individually valid
+// but mutually incompatible is refused by datefmt on the first row with the
+// same stable code instead.
+func validateCSVDateLayout(layout string) error {
+	if layout == "" {
+		return nil
+	}
+	_, err := datefmt.Parse(layout, "")
+	var dateErr datefmt.Error
+	if errors.As(err, &dateErr) && dateErr.Code == datefmt.CodeSyntax {
+		return fmt.Errorf("invalid date layout %q: %s", layout, dateErr.Message)
+	}
+	return nil
+}
+
+// csvRowDate parses one CSV date cell into the canonical YYYY-MM-DD form the
+// ledger accepts. A blank layout keeps the historical ISO contract; a declared
+// layout is parsed strictly by datefmt, so a week date resolves to the calendar
+// date every declared field agrees on.
+func csvRowDate(value, layout string) (string, error) {
+	if layout == "" {
+		if _, err := parseISODate(value); err != nil {
+			return "", fmt.Errorf("invalid date")
+		}
+		return value, nil
+	}
+	date, err := datefmt.Parse(layout, value)
+	if err != nil {
+		return "", csvDateError(value, layout, err)
+	}
+	return fmt.Sprintf("%04d-%02d-%02d", date.Year, date.Month, date.Day), nil
+}
+
+// csvDateError turns a datefmt failure into a per-row diagnostic that names the
+// offending cell, the declared layout and datefmt's stable failure code.
+func csvDateError(value, layout string, err error) error {
+	var dateErr datefmt.Error
+	if !errors.As(err, &dateErr) {
+		return fmt.Errorf("invalid date %q for layout %q: %w", value, layout, err)
+	}
+	return fmt.Errorf("invalid date %q for layout %q: %s (%s)", dateErr.Value, dateErr.Format, dateErr.Message, dateErr.Code)
 }
 
 // csvSingleLine collapses line breaks so CSV fields stay single-line strings.

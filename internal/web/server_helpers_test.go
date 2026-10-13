@@ -90,12 +90,12 @@ func TestImportAndAtomicWriteHelpersRejectUnsafeInputAndPreserveContent(t *testi
 			t.Errorf("unsafe import %q/%q accepted", tc[0], tc[1])
 		}
 	}
-	converted, err := csvToBeancount("date,payee,account,amount,currency,narration\n2000-01-02,Cafe,Assets:Cash,1.50,USD,\"note \"\"quoted\"\"\"\n", map[string]string{"offset_account": "Equity:Opening"})
+	converted, err := csvToBeancount("date,payee,account,amount,currency,narration\n2000-01-02,Cafe,Assets:Cash,1.50,USD,\"note \"\"quoted\"\"\"\n", map[string]string{"offset_account": "Equity:Opening"}, "")
 	if err != nil || !strings.Contains(converted, `"note \"quoted\""`) || !strings.Contains(converted, "Equity:Opening -1.5 USD") {
 		t.Fatalf("converted=%q err=%v", converted, err)
 	}
 	for _, content := range []string{"date,account,amount\n", "date,account\n2000-01-01,Assets:Cash\n", "date,account,amount\ninvalid,Assets:Cash,1\n", "date,account,amount\n2000-01-01,Assets:Cash,nope\n"} {
-		if _, err := csvToBeancount(content, nil); err == nil {
+		if _, err := csvToBeancount(content, nil, ""); err == nil {
 			t.Errorf("invalid CSV accepted: %q", content)
 		}
 	}

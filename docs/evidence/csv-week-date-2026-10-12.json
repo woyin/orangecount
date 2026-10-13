@@ -1,0 +1,108 @@
+{
+  "captured": "2026-10-12",
+  "source": "external CSV week-date candidate evidence, copied into the repository so internal/datefmt and docs/csv-week-date-mapping-2026-10-12.md cite a tracked path. The original capture lives in the review bundle fix/review-evidence-2026-10-12/ and is not part of a normal checkout. The candidate reports one date per case (the last value in its CSV); the per-value expectations used by internal/datefmt come from the pinned Python reference plus the candidate's round-trip rule.",
+  "cases": [
+    {
+      "name": "iso_cross_year",
+      "format": "%G-W%V-%u",
+      "values": [
+        "2020-W01-1",
+        "2020-W53-7"
+      ],
+      "candidate_date_for_last_value": "2021-01-03"
+    },
+    {
+      "name": "iso_invalid_53",
+      "format": "%G-W%V-%u",
+      "values": [
+        "2021-W53-1"
+      ],
+      "error": "Invalid week: 53",
+      "error_type": "ValueError"
+    },
+    {
+      "name": "iso_week_zero",
+      "format": "%G-W%V-%u",
+      "values": [
+        "2020-W00-1"
+      ],
+      "error": "time data '2020-W00-1' does not match format '%G-W%V-%u'",
+      "error_type": "ValueError"
+    },
+    {
+      "name": "sunday_cross_year",
+      "format": "%Y %U %w",
+      "values": [
+        "2021 00 0",
+        "2021 01 0",
+        "2021 53 6"
+      ],
+      "error": "CSV week date: year/week/weekday does not round-trip in the declared calendar year; refusing Python's permissive week-field normalization",
+      "error_type": "ValueError"
+    },
+    {
+      "name": "monday_cross_year",
+      "format": "%Y %W %w",
+      "values": [
+        "2021 00 1",
+        "2021 01 1"
+      ],
+      "error": "CSV week date: year/week/weekday does not round-trip in the declared calendar year; refusing Python's permissive week-field normalization",
+      "error_type": "ValueError"
+    },
+    {
+      "name": "ignored_week",
+      "format": "%Y %U",
+      "values": [
+        "2024 40"
+      ],
+      "error": "CSV week date: %U/%W require an explicit calendar year (%Y or %y) and a weekday; refusing Python's defaulting or ignored week fields",
+      "error_type": "ValueError"
+    },
+    {
+      "name": "defaulted_year",
+      "format": "%U %w",
+      "values": [
+        "40 1"
+      ],
+      "error": "CSV week date: %U/%W require an explicit calendar year (%Y or %y) and a weekday; refusing Python's defaulting or ignored week fields",
+      "error_type": "ValueError"
+    },
+    {
+      "name": "conflicting_calendar",
+      "format": "%Y-%m-%d %U %w",
+      "values": [
+        "2024-01-01 02 0"
+      ],
+      "error": "CSV week date: supplied fields identify different dates; refusing Python's precedence or overwrite rules",
+      "error_type": "ValueError"
+    },
+    {
+      "name": "conflicting_iso_calendar",
+      "format": "%G-W%V-%u %Y-%m-%d",
+      "values": [
+        "2020-W01-1 2024-05-01"
+      ],
+      "error": "CSV week date: supplied fields identify different dates; refusing Python's precedence or overwrite rules",
+      "error_type": "ValueError"
+    },
+    {
+      "name": "iso_missing_weekday",
+      "format": "%G-W%V",
+      "values": [
+        "2024-W20"
+      ],
+      "error": "ISO year directive '%G' must be used with the ISO week directive '%V' and a weekday directive ('%A', '%a', '%w', or '%u').",
+      "error_type": "ValueError"
+    },
+    {
+      "name": "calendar_year_with_iso_week",
+      "format": "%Y-W%V-%u",
+      "values": [
+        "2024-W20-1"
+      ],
+      "error": "ISO week directive '%V' is incompatible with the year directive '%Y'. Use the ISO year '%G' instead.",
+      "error_type": "ValueError"
+    }
+  ]
+}
