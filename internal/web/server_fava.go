@@ -222,7 +222,7 @@ func (s *Server) favaImport(w http.ResponseWriter, r *http.Request, current *sna
 			Adapters []map[string]any `json:"adapters"`
 		}{Adapters: []map[string]any{
 			{"id": "beancount", "label": "Beancount source", "extensions": []string{".bean", ".beancount"}},
-			{"id": "csv", "label": "Generic CSV", "extensions": []string{".csv"}},
+			{"id": "csv", "label": "Generic CSV", "extensions": []string{".csv"}, "columns": []string{"date", "payee", "account", "amount", "currency", "narration"}, "date_layout": "strftime layout of the date column; blank means %Y-%m-%d"},
 		}}, current.BuiltAt))
 		return
 	}
