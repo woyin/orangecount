@@ -30,15 +30,30 @@ All notable changes to OrangeCount are documented in this file.
   amount of the built-in web interface (tables, journal postings, running
   balances, pivot cells, chart tooltips). Exact ledger values, sorting, CSV
   exports, and query results are unaffected.
+- Standard BQL forms `DISTINCT`, `GROUP BY ... HAVING`, derived-table
+  subqueries, and `GROUP BY ... PIVOT BY` in the typed engine, with typed/NULL
+  preservation and enforced budget and cancellation.
+- Strict strftime week-date parsing in `internal/datefmt` (%G/%V, %U/%W with
+  weekday), rejecting invalid weeks, conflicting fields, and missing fields
+  without a partial result, plus the optional csv-adapter `date_layout`
+  parameter on `POST /api/v1/import/preview` (default ISO behavior unchanged,
+  all-or-nothing per batch).
+- Standard-forms differential corpus (37 oracle-verified cases), registered in
+  `tools/queryparity` together with the pinned oracle check.
 
 ### Changed
 
 - Number-expression parsing merged into the directive dispatch parser while
   keeping single-literal amounts' source text in `Number.Raw`; `note`
   directives retain tags and links.
+- `SELECT DISTINCT` now enforces a unique-key budget on both the typed and the
+  legacy entry points.
+- Dense `PIVOT BY` memoizes row and column identities; behavior is unchanged.
 
 ### Validated
 
+- FD-0010 approved in `docs/fava-approved-deviations.md` (strict week-date
+  rejection instead of strptime rolling).
 - The private reference ledger validates with zero diagnostics under both
   OrangeCount and Beancount v3 (differential harness: 2,708 entries, no error
   classes), and every built-in report route was walked against it in both
