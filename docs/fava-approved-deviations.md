@@ -125,6 +125,24 @@ A deviation is valid when required by OrangeCount's accounting semantic authorit
 
 No other deviations are currently approved. Existing differences in the prototype and legacy UI are migration gaps, not approved deviations.
 
+### FD-0010 — CSV date layouts reject rolling week-date inputs that Python strptime accepts
+
+| Field | Value |
+| --- | --- |
+| Status | approved |
+| Route and state | R-IMPORT (`import`), CSV adapter `date_layout` parsing |
+| Fava baseline | CSV importer date parsing via Python `datetime.strptime`, which rolls out-of-range week values to an adjacent date (e.g. `2021-W53-1` → `2022-01-03`; `%U`/`%W` week 00 rolls into the previous calendar year) and resolves conflicting calendar/week fields by precedence |
+| OrangeCount behavior | `internal/datefmt` (wired as the CSV adapter's optional `date_layout`) rejects such inputs with typed errors (`date-value-out-of-range`, `date-value-conflict`, `date-value-mismatch`, `date-format-syntax`) and returns no partial date; a rejected row fails the whole preview/commit conversion (all-or-nothing, no partial batch) |
+| Category | semantics |
+| Reason | Bank-statement dates must never silently shift: a rolled date would post transactions to the wrong day. Strict rejection keeps ledger data integrity, and the accepted/rejected contract is documented in `docs/csv-week-date-mapping-2026-10-12.md` section 3. |
+| Scope | CSV import date-layout parsing only; the default `YYYY-MM-DD` path is unchanged; no visual presentation impact |
+| Tests | `internal/datefmt` table-driven tests (incl. `TestParseNeverReturnsADateWithAnError`); `internal/web` `date_layout` tests |
+| Owner | implementing agent (Francis Chen / OrangeCount maintainer) |
+| Approver | user (product owner) only |
+| Approved evidence | approved by product owner 2026-10-13 (directive to execute all identified optimization points, which included registering this deviation) |
+| Expiry condition | a Fava upgrade that changes the importer date contract, or a product-owner decision to accept rolling week-date behavior |
+| Baseline impact | alternate expectation for import date parsing; no visual baseline impact |
+
 ## Entry template
 
 ```markdown
