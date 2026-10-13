@@ -215,8 +215,15 @@ func normalizeQuerySources(result *queryResult, indices []int, root string) erro
 		}
 		if cell.Type == "string" {
 			path, ok := cell.Value.(string)
-			if !ok || !filepath.IsAbs(path) {
+			if !ok {
 				return fmt.Errorf("invalid source path")
+			}
+			if !filepath.IsAbs(path) {
+				// Ledger metadata can override filename with a portable literal
+				// (for example filename: "override.bean"). Both engines echo it
+				// verbatim, so it is compared as-is instead of being treated as
+				// a checkout-dependent path.
+				return nil
 			}
 			rel, err := filepath.Rel(root, path)
 			if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {

@@ -146,6 +146,12 @@ def normalize_source_cell(value, root):
     if value["type"] == "null":
         return
     if value["type"] == "string":
+        if not Path(value["value"]).is_absolute():
+            # Ledger metadata can override filename with a portable literal
+            # (for example filename: "override.bean"). Both engines echo it
+            # verbatim, so it is compared as-is instead of being treated as a
+            # checkout-dependent path.
+            return
         value["value"] = Path(value["value"]).relative_to(root).as_posix()
     elif value["type"] in {"dictionary", "open", "close", "transaction"}:
         for entry in value["value"]:

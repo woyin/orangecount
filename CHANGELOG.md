@@ -4,6 +4,16 @@ All notable changes to OrangeCount are documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Made the query parity gate location-independent: regenerated the presets
+  and source-order goldens with declared `source_columns` (paths normalize to
+  fixture-relative form), and taught both golden normalizers to compare
+  non-absolute filename metadata (ledger overrides such as
+  `filename: "override.bean"`) as portable literals. The gate previously
+  hard-coded the developer checkout path into golden data and failed 6 of 321
+  checks on any other clone.
+
 ### Quality
 
 - Reduced the repository's worst cyclomatic complexity from 26 to 16

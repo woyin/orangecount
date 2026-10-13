@@ -6,7 +6,7 @@
   },
   "fixture": "testdata/fixtures/query/source-order.bean",
   "input_sha256": "91fe43c2ec045d32ad752146c5bb43744c485fd783b7d4c93c3febed3db1ead6",
-  "queries_sha256": "f5bcd510d3d0eece2873898a48e3be3dfd327cfa3383853dc0095c2baa5f0e61",
+  "queries_sha256": "8fa99481156475d82742f786414c988bcd8706856f2aebee977f80de150c6f23",
   "sources_sha256": {
     "testdata/fixtures/query/source-order-child.bean": "aed44444691c658a64fe98720be2189616a7a6236b1a578867e35a53ffbe1cd0",
     "testdata/fixtures/query/source-order.bean": "91fe43c2ec045d32ad752146c5bb43744c485fd783b7d4c93c3febed3db1ead6"
@@ -185,6 +185,9 @@
     {
       "id": "source-3",
       "query": "SELECT narration,filename,lineno",
+      "source_columns": [
+        1
+      ],
       "result": {
         "columns": [
           {
@@ -208,7 +211,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/source-order-child.bean"
+              "value": "source-order-child.bean"
             },
             {
               "type": "integer",
@@ -222,7 +225,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/source-order-child.bean"
+              "value": "source-order-child.bean"
             },
             {
               "type": "integer",
@@ -236,7 +239,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/source-order.bean"
+              "value": "source-order.bean"
             },
             {
               "type": "integer",
@@ -250,7 +253,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/source-order.bean"
+              "value": "source-order.bean"
             },
             {
               "type": "integer",
@@ -263,6 +266,10 @@
     {
       "id": "source-4",
       "query": "SELECT narration,entry_meta('filename'),entry_meta('lineno'),meta('filename'),meta('lineno')",
+      "source_columns": [
+        1,
+        3
+      ],
       "result": {
         "columns": [
           {
@@ -294,7 +301,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/source-order-child.bean"
+              "value": "source-order-child.bean"
             },
             {
               "type": "integer",
@@ -302,7 +309,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/source-order-child.bean"
+              "value": "source-order-child.bean"
             },
             {
               "type": "integer",
@@ -316,7 +323,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/source-order-child.bean"
+              "value": "source-order-child.bean"
             },
             {
               "type": "integer",
@@ -324,7 +331,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/source-order-child.bean"
+              "value": "source-order-child.bean"
             },
             {
               "type": "integer",
@@ -346,7 +353,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/source-order.bean"
+              "value": "source-order.bean"
             },
             {
               "type": "integer",
@@ -368,7 +375,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/source-order.bean"
+              "value": "source-order.bean"
             },
             {
               "type": "integer",

@@ -6,7 +6,7 @@
   },
   "fixture": "testdata/fixtures/query/presets.bean",
   "input_sha256": "588f940646498036f9a3fdb56f81850fbe9396357eea2a67b1c9bca5200e2edd",
-  "queries_sha256": "fda36ff5b35c195f696dfcf9d5857d24c2fd7d6946ce7b91c975ca1721c2b8c3",
+  "queries_sha256": "f8b2cb9f08154a25b4762a932774cf0ac49b9f6a333e4f8fc77995f56a62cc3b",
   "sources_sha256": {
     "testdata/fixtures/query/compound-values.bean": "4681f4762bc2fe7cc64229491bacfc553624e6e4aa132bc4e6fde9538d718b50",
     "testdata/fixtures/query/presets.bean": "588f940646498036f9a3fdb56f81850fbe9396357eea2a67b1c9bca5200e2edd"
@@ -350,6 +350,9 @@
     {
       "id": "posting-sources",
       "query": "SELECT date, account, filename, lineno ORDER BY date, filename, lineno",
+      "source_columns": [
+        2
+      ],
       "result": {
         "columns": [
           {
@@ -381,7 +384,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -399,7 +402,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -417,7 +420,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -435,7 +438,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -453,7 +456,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -471,7 +474,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -489,7 +492,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -507,7 +510,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -525,7 +528,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -543,7 +546,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -561,7 +564,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -579,7 +582,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -597,7 +600,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -615,7 +618,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -633,7 +636,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -651,7 +654,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -669,7 +672,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -687,7 +690,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -705,7 +708,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -723,7 +726,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/presets.bean"
+              "value": "presets.bean"
             },
             {
               "type": "integer",
@@ -741,7 +744,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/presets.bean"
+              "value": "presets.bean"
             },
             {
               "type": "integer",
@@ -759,7 +762,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/presets.bean"
+              "value": "presets.bean"
             },
             {
               "type": "integer",
@@ -777,7 +780,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/presets.bean"
+              "value": "presets.bean"
             },
             {
               "type": "integer",
@@ -795,7 +798,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/presets.bean"
+              "value": "presets.bean"
             },
             {
               "type": "integer",
@@ -813,7 +816,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/presets.bean"
+              "value": "presets.bean"
             },
             {
               "type": "integer",
@@ -831,7 +834,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/presets.bean"
+              "value": "presets.bean"
             },
             {
               "type": "integer",
@@ -849,7 +852,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/presets.bean"
+              "value": "presets.bean"
             },
             {
               "type": "integer",
@@ -1022,6 +1025,9 @@
     {
       "id": "posting-sources-feb",
       "query": "SELECT date, account, filename, lineno WHERE date >= 2000-02-01 AND date <= 2000-02-21 ORDER BY date, filename, lineno",
+      "source_columns": [
+        2
+      ],
       "result": {
         "columns": [
           {
@@ -1053,7 +1059,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/presets.bean"
+              "value": "presets.bean"
             },
             {
               "type": "integer",
@@ -1071,7 +1077,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/presets.bean"
+              "value": "presets.bean"
             },
             {
               "type": "integer",
@@ -1089,7 +1095,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/presets.bean"
+              "value": "presets.bean"
             },
             {
               "type": "integer",
@@ -1107,7 +1113,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/presets.bean"
+              "value": "presets.bean"
             },
             {
               "type": "integer",
@@ -1280,6 +1286,9 @@
     {
       "id": "posting-sources-from",
       "query": "SELECT date, account, filename, lineno WHERE date >= 2000-02-01 ORDER BY date, filename, lineno",
+      "source_columns": [
+        2
+      ],
       "result": {
         "columns": [
           {
@@ -1311,7 +1320,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/presets.bean"
+              "value": "presets.bean"
             },
             {
               "type": "integer",
@@ -1329,7 +1338,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/presets.bean"
+              "value": "presets.bean"
             },
             {
               "type": "integer",
@@ -1347,7 +1356,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/presets.bean"
+              "value": "presets.bean"
             },
             {
               "type": "integer",
@@ -1365,7 +1374,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/presets.bean"
+              "value": "presets.bean"
             },
             {
               "type": "integer",
@@ -1655,6 +1664,9 @@
     {
       "id": "posting-sources-to",
       "query": "SELECT date, account, filename, lineno WHERE date <= 2000-01-31 ORDER BY date, filename, lineno",
+      "source_columns": [
+        2
+      ],
       "result": {
         "columns": [
           {
@@ -1686,7 +1698,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -1704,7 +1716,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -1722,7 +1734,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -1740,7 +1752,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -1758,7 +1770,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -1776,7 +1788,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -1794,7 +1806,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -1812,7 +1824,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -1830,7 +1842,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -1848,7 +1860,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -1866,7 +1878,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -1884,7 +1896,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -1902,7 +1914,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -1920,7 +1932,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -1938,7 +1950,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -1956,7 +1968,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -1974,7 +1986,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -1992,7 +2004,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -2010,7 +2022,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/compound-values.bean"
+              "value": "compound-values.bean"
             },
             {
               "type": "integer",
@@ -2028,7 +2040,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/presets.bean"
+              "value": "presets.bean"
             },
             {
               "type": "integer",
@@ -2046,7 +2058,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/presets.bean"
+              "value": "presets.bean"
             },
             {
               "type": "integer",
@@ -2064,7 +2076,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/presets.bean"
+              "value": "presets.bean"
             },
             {
               "type": "integer",
@@ -2082,7 +2094,7 @@
             },
             {
               "type": "string",
-              "value": "/Users/breestealth/Development/OrangeCount/testdata/fixtures/query/presets.bean"
+              "value": "presets.bean"
             },
             {
               "type": "integer",

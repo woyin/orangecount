@@ -9,11 +9,18 @@
   },
   {
     "id": "source-3",
-    "query": "SELECT narration,filename,lineno"
+    "query": "SELECT narration,filename,lineno",
+    "source_columns": [
+      1
+    ]
   },
   {
     "id": "source-4",
-    "query": "SELECT narration,entry_meta('filename'),entry_meta('lineno'),meta('filename'),meta('lineno')"
+    "query": "SELECT narration,entry_meta('filename'),entry_meta('lineno'),meta('filename'),meta('lineno')",
+    "source_columns": [
+      1,
+      3
+    ]
   },
   {
     "id": "source-5",

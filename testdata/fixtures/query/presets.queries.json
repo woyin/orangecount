@@ -13,7 +13,10 @@
   },
   {
     "id": "posting-sources",
-    "query": "SELECT date, account, filename, lineno ORDER BY date, filename, lineno"
+    "query": "SELECT date, account, filename, lineno ORDER BY date, filename, lineno",
+    "source_columns": [
+      2
+    ]
   },
   {
     "id": "monthly-income-feb",
@@ -29,7 +32,10 @@
   },
   {
     "id": "posting-sources-feb",
-    "query": "SELECT date, account, filename, lineno WHERE date >= 2000-02-01 AND date <= 2000-02-21 ORDER BY date, filename, lineno"
+    "query": "SELECT date, account, filename, lineno WHERE date >= 2000-02-01 AND date <= 2000-02-21 ORDER BY date, filename, lineno",
+    "source_columns": [
+      2
+    ]
   },
   {
     "id": "monthly-income-from",
@@ -45,7 +51,10 @@
   },
   {
     "id": "posting-sources-from",
-    "query": "SELECT date, account, filename, lineno WHERE date >= 2000-02-01 ORDER BY date, filename, lineno"
+    "query": "SELECT date, account, filename, lineno WHERE date >= 2000-02-01 ORDER BY date, filename, lineno",
+    "source_columns": [
+      2
+    ]
   },
   {
     "id": "monthly-income-to",
@@ -61,6 +70,9 @@
   },
   {
     "id": "posting-sources-to",
-    "query": "SELECT date, account, filename, lineno WHERE date <= 2000-01-31 ORDER BY date, filename, lineno"
+    "query": "SELECT date, account, filename, lineno WHERE date <= 2000-01-31 ORDER BY date, filename, lineno",
+    "source_columns": [
+      2
+    ]
   }
 ]
