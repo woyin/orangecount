@@ -14,14 +14,11 @@ graph; OrangeCount builds an immutable snapshot and exposes read-only reports,
 queries, and diagnostics alongside explicit reviewed authoring workflows in a
 local web workbench.
 
-Start with the [development roadmap](docs/go-beancount-native-roadmap.md).
-The development baseline is documented in the
-[Go/native design](docs/go-beancount-native-design-2026-09-30.md),
-[milestone plan](docs/go-beancount-native-plan-2026-09-30.md), and
-[implementation steps](docs/go-beancount-native-implementation-2026-09-30.md).
-These define the accounting and native analysis target. See the
-[current implementation evidence](docs/go-beancount-native-progress.md) for
-implemented behavior, automated checks and remaining acceptance work.
+Start with the [development roadmap](docs/implementation-plan.md) and the
+[compatibility plan](docs/beancount-complete-compatibility-plan-2026-10-02.md).
+The [query capability matrix](docs/query-capability-matrix.md) records which
+Beancount v3 and BQL behavior is verified, and
+[docs/development.md](docs/development.md) covers the build and gate workflow.
 
 ## v0.1 scope
 
@@ -41,48 +38,6 @@ holdings, price, document, source, diagnostics, and query views, plus explicit
 reviewed workflows for editing and adding entries. English (`en`) and
 Simplified Chinese (`zh-CN`) are shipped locales; changing the display locale
 does not change ledger semantics.
-
-## Native macOS reader
-
-The MyGo native Go `ui` client is under active development in `apps/goui` and
-reuses the existing accounting engine. Its architecture and migration scope are
-recorded in the [decision](docs/adr/0051-use-mygo-native-go-ui-for-the-desktop-client.md),
-[design](docs/mygo-native-desktop-design-2026-10-07.md),
-[implementation plan](docs/mygo-native-desktop-plan-2026-10-07.md), and
-[task ledger](docs/mygo-native-desktop-tasks-2026-10-07.md). See the
-[Go UI development guide](apps/goui/README.md) for build, QA, and development
-package instructions. The new client has not passed its complete GUI,
-input-method, accessibility, performance, and delivery gates; the SwiftUI app
-below remains the current macOS client and migration baseline until those gates
-are accepted.
-
-The Apple Silicon SwiftUI app reads local ledgers through an in-process Go
-C archive, without a local HTTP server. It provides dated balance sheets,
-period income statements, filtered and paginated transactions, exact amount
-labels, trends, account details, historical holdings with lot and reduction
-details, local commodity/price history with cutoff quote selection, and
-structured diagnostics with source-file actions. External
-edits reload the session; an invalid edit retains the last valid report and
-shows the new diagnostics. The native app is read-only.
-
-On macOS with Swift 6 / Command Line Tools and Go installed:
-
-```sh
-make mac-check       # actual Go/C/Swift contracts, Swift state tests, app and metadata
-make mac-package     # ad hoc signed development zip, licenses and SHA-256
-open build/OrangeCount.app
-```
-
-The build target is macOS 13.0, arm64. Current local evidence is from macOS
-27.0.1; older-system runtime compatibility, full GUI acceptance and notarized
-distribution are not yet verified. See [support matrix](docs/native-macos-support.md)
-and [native verification record](docs/native-fava-equivalence-report.md).
-Account details, holdings and prices have current Go/C/Swift and navigation checks; their GUI
-acceptance remains pending in the [implementation progress](docs/go-beancount-native-progress.md).
-The [holdings evidence](docs/evidence/a02-native-holdings-2026-10-01.md)
-records exact AVERAGE values, private cutoff checks and full client timing samples.
-The [price evidence](docs/evidence/a03-native-prices-2026-10-01.md) records direct,
-inverse, zero and missing quotes, source multiplicity and client timings.
 
 ## Deliberate boundaries
 

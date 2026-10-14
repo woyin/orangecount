@@ -1,7 +1,0 @@
-; Synthetic two-file price provenance.
-include "holdings-include-prices.bean"
-2000-01-01 open Assets:Cash USD
-2000-01-01 open Assets:Stock STK "FIFO"
-2000-01-02 * "acquisition"
-  Assets:Stock 2 STK {10 USD}
-  Assets:Cash -20 USD

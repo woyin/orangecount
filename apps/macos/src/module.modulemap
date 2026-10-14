@@ -1,4 +1,0 @@
-module OrangeCountBridge [system] {
-    header "Bridge.h"
-    export *
-}

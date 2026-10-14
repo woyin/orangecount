@@ -6,7 +6,7 @@ NPM ?= npm
 .PHONY: all build test race fmt vet license licenses clean app \
 	web-test web-typecheck web-check web-build-check web-build-embedded check fixturegen visual-reference \
 	check-route-manifest check-provenance check-reference-output \
-	golden-regen parity-diff parity-triage parity-report verify-native-equivalence
+	golden-regen parity-diff parity-triage parity-report
 
 all: build
 
@@ -54,8 +54,8 @@ check-provenance:
 check-reference-output:
 	$(NODE) web/scripts/check-reference-output.mjs
 
-# Both Phase 0 static checks together with native equivalence & parity gates.
-check: check-route-manifest check-provenance verify-native-equivalence
+# Both Phase 0 static checks together with the parity gates.
+check: check-route-manifest check-provenance
 
 # Frontend unit tests (node:test, no browser).
 web-test:
@@ -87,66 +87,8 @@ fixturegen:
 visual-reference: fixturegen
 	$(NPM) --prefix web run visual:reference
 
-## Native macOS Desktop App (SwiftUI + Go C-Archive Bridge)
-app:
-	@./apps/macos/build.sh
-
-.PHONY: mac-test mac-check mac-package mac-benchmark
-mac-test:
-	@sh ./apps/macos/test.sh
-
-mac-check: mac-test app
-	@sh ./apps/macos/check-bundle.sh
-
-mac-package: app
-	@sh ./apps/macos/package.sh
-
-mac-benchmark:
-	@sh ./apps/macos/benchmark.sh
-
-# Standalone MyGo Go UI preview. This module keeps its own go.mod/go.sum and
-# is always built with GOWORK=off and CGO disabled.
-.PHONY: goui-build goui-test goui-check goui-native-e2e goui-native-soak goui-qa goui-package goui-package-verify goui-benchmark goui-private-read
-goui-build:
-	@./apps/goui/build.sh
-
-goui-test:
-	@./apps/goui/test.sh
-
-goui-check: goui-test goui-build
-
-goui-native-e2e:
-	@./apps/goui/native-e2e.sh
-
-# Explicit ten-minute AppKit window reload/RSS soak; kept out of the quick E2E suite.
-goui-native-soak:
-	@ORANGECOUNT_GOUI_NATIVE_SOAK=1 ./apps/goui/native-e2e.sh -run '^TestNativeTenMinuteReloadRSSPlateau$$' -count=1 -v -timeout=15m
-
-goui-qa:
-	@./apps/goui/prepare-qa.sh
-
-goui-package:
-	@./apps/goui/package.sh
-
-goui-package-verify:
-	@./apps/goui/verify-package.sh "$(OUT_DIR)" "$(VERSION)" "$(GOARCH)"
-
-goui-benchmark:
-	@./apps/goui/benchmark.sh
-
-# Opt-in read-only comparison for one external ledger. The Go UI probe only
-# logs view IDs and a one-way snapshot digest, never ledger content or path.
-goui-private-read:
-	@sh ./apps/goui/private-read.sh
-
-verify-native-equivalence:
-	@./tools/parity/verify_native_equivalence.sh
-
 ## Beancount v3 reference and differential testing (ADR-0008 / Parity Plan)
 .PHONY: golden-full-regen parity-full
-.PHONY: verify-private-ledger
-verify-private-ledger:
-	sh apps/macos/private-read.sh
 
 golden-full-regen:
 	uv run --project tools/reference python tools/reference/generate_full_golden.py
