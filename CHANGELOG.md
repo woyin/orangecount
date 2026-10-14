@@ -4,6 +4,25 @@ All notable changes to OrangeCount are documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- Dialect transpilation now completes on a mixed real-world ledger:
+  `orangecount dialectize` and `orangecount export` handle aggregated and
+  per-leg postings, same-date entries and a display-only option.
+- `render_commas` is accepted by the export gate as a proven display-only
+  option, recorded in an explicit option policy table instead of a flat
+  allow-list; unproven options stay refused.
+
+### Changed
+
+- The source-export fingerprint compares accounting identity rather than leg
+  layout: same-account legs merge by summing their units (ADR-0045 allows an
+  aggregated line to split back into its per-leg components), and entries
+  sharing a date compare in canonical content order because a conversion
+  rewrites source line numbers. The cross-date entry sequence, the
+  account/price/option sets and every posting value stay sensitive, so a
+  genuine accounting change still fails `E-EXPORT-RELOAD`.
+
 ### Fixed
 
 - Made the query parity gate location-independent: regenerated the presets

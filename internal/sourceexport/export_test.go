@@ -229,6 +229,78 @@ func TestUnprovenOptionsPluginsAndMetadataRejected(t *testing.T) {
 	}
 }
 
+// TestRenderCommasIsAcceptedAsDisplayOnly pins the option policy: render_commas
+// has no reader in this codebase and only affects the upstream renderer, so the
+// export accepts it. The companion assertion keeps the refusal path alive for an
+// option that is still unproven.
+func TestRenderCommasIsAcceptedAsDisplayOnly(t *testing.T) {
+	withOption := "option \"render_commas\" \"TRUE\"\n" + cash
+	p := entry(t, withOption)
+	plan, err := Prepare(p, Options{Build: snapshot.BuildOptions{Evaluation: ledger.EvalOptions{SemanticsProfile: ledger.V3}}})
+	if err != nil {
+		t.Fatalf("render_commas blocked export: %v", err)
+	}
+	target := filepath.Join(t.TempDir(), "out.bean")
+	if err := plan.Write(target); err != nil {
+		t.Fatalf("write failed: %v", err)
+	}
+	written, err := os.ReadFile(target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The option line is preserved and no dialect line leaks into the export.
+	if !strings.Contains(string(written), "render_commas") {
+		t.Fatal("export dropped a preserved option")
+	}
+	if _, err := Prepare(entry(t, "option \"totally_unproven_option\" \"1\"\n"+cash), Options{Build: snapshot.BuildOptions{Evaluation: ledger.EvalOptions{SemanticsProfile: ledger.V3}}}); err == nil {
+		t.Fatal("an unproven option was accepted")
+	}
+}
+
+// TestFingerprintAcceptsEquivalentLayouts pins the two canonicalizations that a
+// faithful dialect rewrite relies on: a transaction whose source line is
+// aggregated may reappear split into per-leg lines, and same-date entries may
+// change sequence. Both must still compare equal, while a genuine accounting
+// change must not.
+func TestFingerprintAcceptsEquivalentLayouts(t *testing.T) {
+	base := func(t *testing.T, body string) ledger.Evaluation {
+		t.Helper()
+		p := entry(t, `2000-01-01 open Assets:Cash USD
+2000-01-01 open Equity:Opening USD
+2000-01-01 open Expenses:Food USD
+option "operating_currency" "USD"
+
+2026-01-01 event "note" "same day as the transaction"
+
+2026-01-02 * "a" "split"
+`+body)
+		b := snapshot.Build(p)
+		if b.Snapshot == nil {
+			t.Fatalf("fixture did not evaluate: %v", b.Diagnostics)
+		}
+		return b.Snapshot.Evaluation()
+	}
+	aggregated := base(t, "  Assets:Cash -50 USD\n  Equity:Opening -50 USD\n  Expenses:Food 100 USD\n")
+	split := base(t, "  Assets:Cash -30 USD\n  Assets:Cash -20 USD\n  Equity:Opening -50 USD\n  Expenses:Food 100 USD\n")
+	want, err := financialFingerprint(aggregated)
+	if err != nil {
+		t.Fatal(err)
+	}
+	got, err := financialFingerprint(split)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want != got {
+		t.Fatal("an equivalent aggregated/split layout changed the fingerprint")
+	}
+	lossy := base(t, "  Assets:Cash -50 USD\n  Equity:Opening -49 USD\n  Expenses:Food 99 USD\n")
+	if third, err := financialFingerprint(lossy); err != nil {
+		t.Fatal(err)
+	} else if third == want {
+		t.Fatal("a genuine accounting change was hidden by canonicalization")
+	}
+}
+
 func TestReverseConversionDoesNotApplyExportCompatibilityGate(t *testing.T) {
 	p := entry(t, "option \"booking_method\" \"AVERAGE\"\n"+strings.Replace(cash, "  Assets:Cash 5 USD\n  Equity:Opening -5 USD", "  Equity:Opening -5 USD\n  Assets:Cash 5 USD", 1))
 	plan, err := Prepare(p, Options{Reverse: true})

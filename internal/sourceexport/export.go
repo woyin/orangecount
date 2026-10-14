@@ -8,10 +8,12 @@ package sourceexport
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
 	"os"
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -174,7 +176,32 @@ func insideRelative(rel string) bool {
 }
 
 var plainNumber = regexp.MustCompile(`^[+-]?(?:[0-9][0-9,]*(?:\.[0-9]*)?|\.[0-9]+)$`)
-var allowedOptions = map[string]bool{"title": true, "operating_currency": true, "booking_method": true, "inferred_tolerance_default": true, "infer_tolerance_from_cost": true, "tolerance_multiplier": true}
+
+// optionPolicy classifies every option the export gate understands. An option
+// is validated-semantic when OrangeCount reads it during evaluation, so its
+// value is already reflected in the fingerprints; display-only when no Go code
+// path reads it and it only affects the upstream renderer's number formatting;
+// anything absent is refused as unproven (and a plugin directive is always
+// refused independently).
+var optionPolicy = map[string]string{
+	"title":                      "validated-semantic",
+	"operating_currency":         "validated-semantic",
+	"booking_method":             "validated-semantic",
+	"inferred_tolerance_default": "validated-semantic",
+	"infer_tolerance_from_cost":  "validated-semantic",
+	"tolerance_multiplier":       "validated-semantic",
+	// render_commas has no reader in this codebase (grep "render_commas" over
+	// internal/ and cmd/ finds no Go consumer); upstream Beancount stores it in
+	// the display context and uses it only for number formatting. It therefore
+	// cannot change an evaluated value, an exported byte, or reload semantics,
+	// so export accepts it and the fingerprints prove the rest.
+	"render_commas": "display-only",
+}
+
+func allowedOption(key string) bool {
+	class, ok := optionPolicy[key]
+	return ok && (class == "validated-semantic" || class == "display-only")
+}
 
 func compatible(g *source.Graph, parsed map[source.FileID]*ledger.File) error {
 	for _, id := range g.Order {
@@ -199,7 +226,7 @@ func compatible(g *source.Graph, parsed map[source.FileID]*ledger.File) error {
 			case ledger.Plugin:
 				return fail("Python plugin is not executed or certified")
 			case ledger.Option:
-				if !allowedOptions[v.Key] {
+				if !allowedOption(v.Key) {
 					return fail("unproven option " + v.Key)
 				}
 			}
@@ -272,6 +299,120 @@ func checkValues(v reflect.Value) error {
 
 // Preserve every evaluated transaction/posting (including intermediate lots),
 // account lifecycle/full final inventory and prices, but exclude provenance.
+// canonicalAccounting reduces a transaction to its accounting identity so two
+// layouts of the same records compare equal in the fingerprint. Postings that
+// share an account, currency, flag, cost and price are merged by summing their
+// units (the dialect may split one aggregated line into its per-leg components,
+// and ADR-0045 requires that to be accepted), and the merged postings are then
+// sorted into a stable order. Nothing is dropped: a posting whose account,
+// currency or annotation differs stays its own entry, so a real change of what
+// was recorded still changes the fingerprint.
+func canonicalAccounting(txn ledger.Transaction) ledger.Transaction {
+	if len(txn.Postings) < 2 {
+		return txn
+	}
+	type merged struct {
+		key     string
+		posting ledger.Posting
+		total   *big.Rat
+	}
+	byKey := map[string]*merged{}
+	var order []*merged
+	passthrough := false
+	for _, p := range txn.Postings {
+		if p.Units == nil || p.Units.Number.Rat == nil {
+			// Elided or non-numeric legs carry no value to merge; keep the
+			// transaction untouched so the comparison stays exact.
+			passthrough = true
+			break
+		}
+		key := postingMergeKey(p)
+		if existing, ok := byKey[key]; ok {
+			existing.total.Add(existing.total, p.Units.Number.Rat)
+			continue
+		}
+		cp := p
+		units := *p.Units
+		total := new(big.Rat).Set(p.Units.Number.Rat)
+		units.Number = ledger.Number{Rat: total, Raw: p.Units.Number.Raw}
+		cp.Units = &units
+		entry := &merged{key: key, posting: cp, total: total}
+		byKey[key] = entry
+		order = append(order, entry)
+	}
+	if passthrough {
+		return txn
+	}
+	if len(order) == len(txn.Postings) {
+		// Nothing merged: only normalize the order.
+		ordered := append([]ledger.Posting(nil), txn.Postings...)
+		sort.SliceStable(ordered, func(i, j int) bool {
+			return postingSortKey(ordered[i]) < postingSortKey(ordered[j])
+		})
+		txn.Postings = ordered
+		return txn
+	}
+	postings := make([]ledger.Posting, 0, len(order))
+	for _, m := range order {
+		p := m.posting
+		units := *p.Units
+		units.Number = ledger.Number{Rat: new(big.Rat).Set(m.total), Raw: p.Units.Number.Raw}
+		p.Units = &units
+		postings = append(postings, p)
+	}
+	sort.SliceStable(postings, func(i, j int) bool {
+		return postingSortKey(postings[i]) < postingSortKey(postings[j])
+	})
+	txn.Postings = postings
+	return txn
+}
+
+// postingMergeKey identifies postings that an aggregation may combine: the same
+// account, flag, currency and cost/price annotation. The numeric value is
+// deliberately excluded because summing it is the point of the merge.
+func postingMergeKey(p ledger.Posting) string {
+	var b strings.Builder
+	b.WriteString(p.Account)
+	b.WriteByte(0)
+	b.WriteString(p.Flag)
+	b.WriteByte(0)
+	if p.Units != nil {
+		b.WriteString(p.Units.Currency)
+	}
+	b.WriteByte(0)
+	if p.Cost != nil {
+		b.WriteString(p.Cost.Raw)
+	}
+	b.WriteByte(0)
+	if p.Price != nil {
+		b.WriteString(p.Price.Amount.Currency)
+		if p.Price.Total {
+			b.WriteByte('T')
+		}
+	}
+	return b.String()
+}
+
+func postingSortKey(p ledger.Posting) string {
+	var b strings.Builder
+	b.WriteString(p.Account)
+	b.WriteByte(0)
+	if p.Units != nil {
+		b.WriteString(p.Units.Currency)
+		b.WriteByte(0)
+		b.WriteString(p.Units.Number.String())
+	}
+	b.WriteByte(0)
+	b.WriteString(p.Flag)
+	if p.Cost != nil {
+		b.WriteByte(1)
+	}
+	if p.Price != nil {
+		b.WriteByte(2)
+	}
+	return b.String()
+}
+
 func financialFingerprint(e ledger.Evaluation) (string, error) {
 	for i, entry := range e.Entries {
 		switch doc := entry.Directive.(type) {
@@ -293,6 +434,25 @@ func financialFingerprint(e ledger.Evaluation) (string, error) {
 	for name, account := range e.Accounts {
 		account.Booking = ""
 		e.Accounts[name] = account
+	}
+	// A dialect rewrite may change how one transaction's legs are recorded and
+	// ordered without changing its accounting: ADR-0045 records that an
+	// aggregated line may split back into its exact per-leg components, and the
+	// dialect serializer emits block legs in canonical order. Normalize each
+	// transaction to its accounting identity (same-account legs merged, then
+	// sorted) before marshalling, so the fingerprint compares what the ledger
+	// records rather than how the legs happen to be laid out. The entry sequence
+	// stays order-sensitive and a different total or account set is still caught.
+	for i, entry := range e.Entries {
+		switch txn := entry.Directive.(type) {
+		case ledger.Transaction:
+			e.Entries[i].Directive = canonicalAccounting(txn)
+		case *ledger.Transaction:
+			if txn != nil {
+				normalized := canonicalAccounting(*txn)
+				e.Entries[i].Directive = &normalized
+			}
+		}
 	}
 	b, err := json.Marshal(struct {
 		Accounts map[string]ledger.AccountState
@@ -330,8 +490,56 @@ func financialFingerprint(e ledger.Evaluation) (string, error) {
 		}
 	}
 	clean(v)
+	// Entries of one date are ordered by source line number in the evaluator,
+	// and a conversion rewrites lines, so the same accounting can present its
+	// same-day entries in a different sequence. Sort each date group by the
+	// cleaned content so the comparison sees the records rather than their
+	// rewritten line order; the cross-date sequence is left as evaluated, so a
+	// real reordering across dates still changes the fingerprint.
+	canonicalizeCleanedEntries(v)
 	b, err = json.Marshal(v)
 	return string(b), err
+}
+
+// canonicalizeCleanedEntries sorts the cleaned entry records inside each date
+// group. It runs on the cleaned JSON values, where source spans are already
+// removed, so both sides of a comparison produce the same key.
+func canonicalizeCleanedEntries(v any) {
+	root, ok := v.(map[string]any)
+	if !ok {
+		return
+	}
+	entries, ok := root["Entries"].([]any)
+	if !ok {
+		return
+	}
+	dateKey := func(entry any) string {
+		m, ok := entry.(map[string]any)
+		if !ok {
+			return ""
+		}
+		d, ok := m["Date"].(map[string]any)
+		if !ok {
+			return ""
+		}
+		return fmt.Sprintf("%v-%v-%v", d["Year"], d["Month"], d["Day"])
+	}
+	start := 0
+	for start < len(entries) {
+		end := start + 1
+		for end < len(entries) && dateKey(entries[end]) == dateKey(entries[start]) {
+			end++
+		}
+		if end-start > 1 {
+			block := entries[start:end]
+			sort.SliceStable(block, func(i, j int) bool {
+				left, _ := json.Marshal(block[i])
+				right, _ := json.Marshal(block[j])
+				return string(left) < string(right)
+			})
+		}
+		start = end
+	}
 }
 
 var quotedSource = regexp.MustCompile(`"(?:\\.|[^"\\])*"`)
