@@ -45,14 +45,26 @@ const results = [];
 for (const cell of cells) {
   const favaPath = path.join(baseDir, cell, "visual", "fava-reference.spec.mjs");
   const ocPath = path.join(ocDir, cell, "visual", "fava-transplanted.spec.mjs");
+  // The modal baselines live in their own producer segment because a separate
+  // script captures them, so both segments are paired against the same
+  // OrangeCount tree.
+  const referenceSegments = ["fava-reference.spec.mjs", "capture-modals.mjs"];
   if (!existsSync(favaPath) || !existsSync(ocPath)) continue;
-  for (const name of readdirSync(favaPath).filter((f) => f.endsWith(".png")).sort()) {
+  const references = referenceSegments
+    .filter((segment) => existsSync(path.join(baseDir, cell, "visual", segment)))
+    .flatMap((segment) =>
+      readdirSync(path.join(baseDir, cell, "visual", segment))
+        .filter((f) => f.endsWith(".png"))
+        .sort()
+        .map((name) => ({ segment, name })),
+    );
+  for (const { segment, name } of references) {
     const ocFile = path.join(ocPath, name);
     if (!existsSync(ocFile)) {
       results.push({ cell, name, ratio: null, reason: "no OrangeCount snapshot" });
       continue;
     }
-    const d = diffRatio(load(path.join(favaPath, name)), load(ocFile));
+    const d = diffRatio(load(path.join(baseDir, cell, "visual", segment, name)), load(ocFile));
     results.push({ cell, name, ratio: d.ratio, sizeDelta: d.sizeDelta, reason: d.reason });
   }
 }

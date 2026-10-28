@@ -50,7 +50,10 @@ for (const [cell, viewport, scheme] of cells) {
   for (const [name, route] of targets) {
     await page.goto(base + prefix + route, { waitUntil: "networkidle" });
     await page.waitForTimeout(1300);
-    const target = path.join(out, cell, "visual", "fava-reference.spec.mjs", name + ".png");
+    // The modal capture declares its own producer segment. Writing into
+    // fava-reference.spec.mjs/ would make the baseline tree attribute these
+    // files to the reference suite, which cannot be checked from the path alone.
+    const target = path.join(out, cell, "visual", "capture-modals.mjs", name + ".png");
     await page.screenshot({ path: target, fullPage: true });
     console.log(cell, name, "captured");
   }

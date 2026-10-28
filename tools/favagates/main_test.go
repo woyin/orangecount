@@ -367,8 +367,34 @@ func TestGateFiveRejectsSelfCapturedBaselines(t *testing.T) {
 	for _, item := range result.Checks[0].Failures {
 		joined += item.Reason + " "
 	}
-	if !strings.Contains(joined, "不是 Fava 参考捕获") {
+	// A mismatched producer segment now fails because its script cannot be
+	// confirmed as an isolated reference capture, which is the same rejection
+	// stated in terms the gate can check from disk.
+	if !strings.Contains(joined, "采集脚本不存在，无法确认来源") {
 		t.Fatalf("missing provenance failure: %s", joined)
+	}
+}
+
+// A non-reference producer is only acceptable when the lock declares it and the
+// script keeps the isolation guard; either half alone must fail the gate.
+func TestGateFiveRequiresDeclaredGuardedSecondaryProducer(t *testing.T) {
+	f := newFixture(t)
+	f.writeReferenceBaselines(t, "capture-modals.mjs", "m-add")
+	// The script keeps the guard, so this case isolates the undeclared-segment
+	// rule rather than failing on the guard first.
+	f.write(t, filepath.Join(f.root, "web", "scripts", "capture-modals.mjs"),
+		"const safeReference = Boolean(process.env.FAVA_BASE_URL);")
+	f.write(t, filepath.Join(f.baselines, "environment-lock.json"), referenceLockJSON)
+	code, result, _ := f.run(t, "5")
+	if code != 1 || result.Passed {
+		t.Fatalf("an undeclared producer segment was accepted: code=%d", code)
+	}
+	joined := ""
+	for _, item := range result.Checks[0].Failures {
+		joined += item.Reason + " "
+	}
+	if !strings.Contains(joined, "未声明该生产者") {
+		t.Fatalf("missing undeclared-producer failure: %s", joined)
 	}
 }
 

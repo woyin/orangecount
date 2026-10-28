@@ -812,8 +812,11 @@ func checkVisualBaselines(p paths) ([]failure, string) {
 		}
 		segments := strings.Split(filepath.ToSlash(relative(p.root, name)), "/")
 		producer := "(未知来源)"
+		// A producer segment names the capture script: Playwright writes
+		// <spec>.spec.mjs, and the standalone modal capture writes its own
+		// <script>.mjs directory so its files are not attributed to the suite.
 		for _, segment := range segments {
-			if strings.HasSuffix(segment, ".spec.mjs") {
+			if strings.HasSuffix(segment, ".mjs") {
 				producer = segment
 			}
 		}
@@ -825,14 +828,20 @@ func checkVisualBaselines(p paths) ([]failure, string) {
 		names = append(names, producer)
 	}
 	sort.Strings(names)
+	// A producer other than the reference suite is only acceptable when the
+	// environment lock declares it and its script carries the same isolation
+	// guard, because such a script screenshots a live server and could
+	// otherwise capture OrangeCount itself and file it as a Fava reference.
 	for _, producer := range names {
 		if producer == referenceSpecSegment {
 			continue
 		}
-		failures = append(failures, failure{
-			Subject: relative(p.root, p.baselines) + "/<cell>/visual/" + producer,
-			Reason:  fmt.Sprintf("%d 张基线由 %s 生成，不是 Fava 参考捕获（自我对照不能作为视觉权威）", producers[producer], producer),
-		})
+		if reason := secondaryProducerReason(p.root, producer); reason != "" {
+			failures = append(failures, failure{
+				Subject: relative(p.root, p.baselines) + "/<cell>/visual/" + producer,
+				Reason:  fmt.Sprintf("%d 张基线由 %s 生成，%s", producers[producer], producer, reason),
+			})
+		}
 	}
 	// The tree must also record the pinned reference environment.
 	lockPath := filepath.Join(p.baselines, "environment-lock.json")
@@ -856,20 +865,40 @@ func checkVisualBaselines(p paths) ([]failure, string) {
 	if !lockPinsEnvironment(lock) {
 		failures = append(failures, failure{Subject: relative(p.root, lockPath), Reason: "环境锁既没有 OCI 镜像身份，也没有可复现的原生环境（capture_method + environment_digest + uv_lock_sha256）"})
 	}
-	if len(lock.Producers) > 0 {
-		declared := 0
-		for _, count := range lock.Producers {
-			declared += count
-		}
-		actual := 0
-		for _, count := range producers {
-			actual += count
-		}
-		if declared != actual {
+	// The declared split is compared per producer, not by total. Summing let a
+	// lock claim every baseline for one script and still pass, which made the
+	// attribution unverifiable. Each producer's directory segment is checked on
+	// its own, so a file in the wrong segment is caught.
+	// A secondary producer must be declared even when the lock carries no
+	// producers map at all, otherwise its files are silently credited to
+	// whatever segment name they sit in.
+	if len(lock.Producers) == 0 {
+		for producer, count := range producers {
+			if producer == referenceSpecSegment {
+				continue
+			}
 			failures = append(failures, failure{
 				Subject: relative(p.root, lockPath),
-				Reason:  fmt.Sprintf("环境锁声明 %d 张基线由 %s 生成，树里实际有 %d 张", declared, producerNote(lock.Producers), actual),
+				Reason:  fmt.Sprintf("树里有 %d 张基线属于 %s，环境锁未声明该生产者", count, producer),
 			})
+		}
+	}
+	if len(lock.Producers) > 0 {
+		for producer, count := range lock.Producers {
+			if actual := producers[producer]; actual != count {
+				failures = append(failures, failure{
+					Subject: relative(p.root, lockPath),
+					Reason:  fmt.Sprintf("环境锁声明 %s 生成 %d 张，树里该段实际有 %d 张", producer, count, actual),
+				})
+			}
+		}
+		for producer, count := range producers {
+			if _, declared := lock.Producers[producer]; !declared {
+				failures = append(failures, failure{
+					Subject: relative(p.root, lockPath),
+					Reason:  fmt.Sprintf("树里有 %d 张基线属于 %s，环境锁未声明该生产者", count, producer),
+				})
+			}
 		}
 		note = fmt.Sprintf("四格 PNG 数：%s；来源：%s", strings.Join(counts, "、"), producerNote(lock.Producers))
 	}
@@ -902,6 +931,24 @@ func lockPinsEnvironment(lock baselineLock) bool {
 }
 
 // producerNote summarizes which specs produced the baseline PNGs.
+// secondaryProducerReason reports why a non-reference producer segment is not
+// acceptable evidence, or "" when its script exists and keeps the isolation
+// guard that stops it capturing OrangeCount's own server.
+func secondaryProducerReason(root, producer string) string {
+	if !strings.HasSuffix(producer, ".mjs") {
+		return "不是可识别的采集脚本段（自我对照不能作为视觉权威）"
+	}
+	script := filepath.Join(root, "web", "scripts", producer)
+	data, err := os.ReadFile(script)
+	if err != nil {
+		return "采集脚本不存在，无法确认来源"
+	}
+	if !strings.Contains(string(data), "safeReference") {
+		return "采集脚本缺少 safeReference 隔离护栏，可能把 OrangeCount 自身当成参考"
+	}
+	return ""
+}
+
 func producerNote(producers map[string]int) string {
 	names := make([]string, 0, len(producers))
 	for producer := range producers {
