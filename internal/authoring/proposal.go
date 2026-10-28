@@ -10,6 +10,8 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+
+	"orangecount/internal/ledger"
 )
 
 // Entry is the structured shape an authoring workflow submits. Only the
@@ -41,7 +43,6 @@ type Posting struct {
 
 var (
 	addEntryDate     = regexp.MustCompile(`\A\d{4}-\d{2}-\d{2}\z`)
-	addEntryAccount  = regexp.MustCompile(`\A[A-Z][A-Za-z0-9\-]*(?::[A-Z][A-Za-z0-9\-]*)+\z`)
 	addEntryCurrency = regexp.MustCompile(`\A[A-Z][A-Z0-9'._\-]{0,23}\z`)
 	addEntryAmount   = regexp.MustCompile(`\A-?\d+(\.\d+)?\z`)
 	addEntryTagLink  = regexp.MustCompile(`\A[A-Za-z0-9\-_/.]+\z`)
@@ -156,7 +157,7 @@ func transactionHead(entry Entry, flag string) (string, error) {
 // leaves the posting for interpolation, otherwise amount and currency must
 // both validate.
 func serializePosting(posting Posting, index int) (string, error) {
-	if !addEntryAccount.MatchString(posting.Account) {
+	if !ledger.ValidAccountName(posting.Account) {
 		return "", fmt.Errorf("posting %d: invalid account %q", index+1, posting.Account)
 	}
 	line := "  " + posting.Account
@@ -173,7 +174,7 @@ func serializePosting(posting Posting, index int) (string, error) {
 }
 
 func serializeBalance(entry Entry) (string, error) {
-	if !addEntryAccount.MatchString(entry.Account) {
+	if !ledger.ValidAccountName(entry.Account) {
 		return "", fmt.Errorf("invalid account %q", entry.Account)
 	}
 	if !addEntryAmount.MatchString(entry.Amount) {
@@ -186,7 +187,7 @@ func serializeBalance(entry Entry) (string, error) {
 }
 
 func serializeNote(entry Entry) (string, error) {
-	if !addEntryAccount.MatchString(entry.Account) {
+	if !ledger.ValidAccountName(entry.Account) {
 		return "", fmt.Errorf("invalid account %q", entry.Account)
 	}
 	comment, err := quoteBeancountString(entry.Comment)

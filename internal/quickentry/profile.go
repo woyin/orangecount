@@ -338,20 +338,11 @@ func accountString(v ledger.Value) string {
 	return ""
 }
 
+// isValidAccount defers to the shared ledger rule so quick entry accepts the
+// same account names the parser does, including UTF-8 components such as
+// "Assets:Wallet:微信".
 func isValidAccount(s string) bool {
-	if !strings.Contains(s, ":") {
-		return false
-	}
-	for _, part := range strings.Split(s, ":") {
-		if part == "" {
-			return false
-		}
-		first := part[0]
-		if first < 'A' || first > 'Z' {
-			return false
-		}
-	}
-	return true
+	return ledger.ValidAccountName(s)
 }
 
 func splitSpaceList(s string) []string {

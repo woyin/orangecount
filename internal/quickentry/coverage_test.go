@@ -542,3 +542,20 @@ func TestResolveAccountAliasChain(t *testing.T) {
 }
 
 var _ = authoring.Entry{}
+
+// Quick entry resolves endpoints through the shared ledger rule, so a real
+// Chinese ledger's aliases and full account names both work.
+func TestIsValidAccountAcceptsUTF8Components(t *testing.T) {
+	valid := []string{"Assets:Cash", "Assets:Wallet:微信", "Expenses:Living:吃的:一日三餐"}
+	for _, name := range valid {
+		if !isValidAccount(name) {
+			t.Errorf("rejected valid account %q", name)
+		}
+	}
+	invalid := []string{"Assets", "assets:cash", "Assets:", "Assets::Cash", "Assets:Cash Money"}
+	for _, name := range invalid {
+		if isValidAccount(name) {
+			t.Errorf("accepted invalid account %q", name)
+		}
+	}
+}

@@ -53,3 +53,31 @@ func TestSerializeEntriesRejectsInvalidProposal(t *testing.T) {
 		t.Fatal("accepted empty proposal")
 	}
 }
+
+// Upstream's lexer accepts UTF-8 in account components, so a personal ledger
+// with Chinese accounts must be writable through the same forms. This pins the
+// arm that a plain ASCII regex used to reject.
+func TestSerializeEntriesAcceptsUTF8Accounts(t *testing.T) {
+	text, err := SerializeEntries([]Entry{{
+		Type: "transaction", Date: "2026-10-28", Narration: "午饭",
+		Postings: []Posting{
+			{Account: "Assets:Wallet:微信", Amount: "-30", Currency: "CNY"},
+			{Account: "Expenses:Living:吃的:一日三餐", Amount: "30", Currency: "CNY"},
+		},
+	}})
+	if err != nil {
+		t.Fatalf("UTF-8 account rejected: %v", err)
+	}
+	want := "2026-10-28 * \"午饭\"\n" +
+		"  Assets:Wallet:微信 -30 CNY\n" +
+		"  Expenses:Living:吃的:一日三餐 30 CNY"
+	if text != want {
+		t.Fatalf("text=%q want=%q", text, want)
+	}
+	if _, err := SerializeEntries([]Entry{{Type: "note", Date: "2026-10-28", Account: "Assets:Wallet:微信", Comment: "x"}}); err != nil {
+		t.Fatalf("UTF-8 note account rejected: %v", err)
+	}
+	if _, err := SerializeEntries([]Entry{{Type: "balance", Date: "2026-10-28", Account: "Liabilities:CreditCard:招行", Amount: "1", Currency: "CNY"}}); err != nil {
+		t.Fatalf("UTF-8 balance account rejected: %v", err)
+	}
+}
