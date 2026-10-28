@@ -1,0 +1,20 @@
+{
+  "command": "orangecount query --semantics v3 --format typed-csv <owner ledger> \"<period query>\"",
+  "ran_at": "2026-10-28",
+  "recorded_by": "coordinator (Main), authorized by product owner",
+  "environment": {
+    "binary": "orangecount 0.3.8-dev (working tree)",
+    "ledger": "仓库外的所有者私有账本（路径本身不写入记录）",
+    "note": "只读查询；只记录聚合行数，不记录科目名、金额、日期、路径或叙述。",
+    "sql": [
+      "SELECT year(date) AS year, month(date) AS month, currency, sum(number) AS total FROM postings WHERE account ~ '^Expenses' GROUP BY year(date), month(date), currency ORDER BY year(date), month(date), currency",
+      "SELECT year(date) AS year, month(date) AS month, currency, sum(number) AS total FROM postings WHERE account ~ '^Income' GROUP BY year(date), month(date), currency ORDER BY year(date), month(date), currency",
+      "SELECT count(*) AS n FROM postings"
+    ]
+  },
+  "output": {
+    "expenses_period_rows": 73,
+    "income_period_rows": 23,
+    "postings_total": 5905
+  }
+}

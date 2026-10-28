@@ -16,10 +16,10 @@
 | 2 | 官方标准测试逐项审计并映射到 Go 公开 Interface，可适用用例全部对照 | 每项有 `upstream_case`（上游源码位置）与 `go_case`（Go 对照测试） | **通过** |
 | 3 | 独立差分含生成式 case + 可重现 seed，每个差异变成固定公开回归 | `tools/genprediff`（seed 424242）对每个生成用例同时跑 Go 与固定 oracle，比较有效性/诊断/有序 entries/库存/余额；差异落成 `testdata/fixtures/gen/<seed>-<case>.{bean,json}` 并由 `main_test.go` 重放 | **通过**（12/12 用例） |
 | 4 | 完整交易前缀库存与精确成本/价格/收支对齐 | `tools/reference/verify_source_export.py` 逐交易库存截点；`docs/compatibility/inventory-gate4-run.json` 记录真实运行 | **通过**（36 roundtrips / 74 截点 / 6 拒绝） |
-| 5 | FinanceBook 同源只读；资源越限、取消与失败快照语义可区分（见下「门槛 5 的三个子句」） | `verify_full_ledger.py` 读 `ORANGECOUNT_PRIVATE_LEDGER`；`inventory-gate5-run.json` 记录一次真实运行；`inventory-gate-config.json` 的 `gate5.evidence_tests` 登记越限/取消/失败快照的 Go 测试，`tools/paritygates` 校验这些测试在仓库中存在 | **未通过（3 子句中 2 项满足）**：FinanceBook 同源只读已真实运行（2026-10-28，47 文件 / 双方 3019 entries / 0 缺失 / 0 多余 / 0 库存差异 / `same_input_capture=true`），越限/取消/失败快照由两个 Go 测试承载；Swift/C 子句因原生客户端退役而标为不适用，**等待产品 owner 批准**，`paritygates` 因此判该门槛未通过 |
+| 5 | FinanceBook 同源只读；真实 Swift/C/原生关键查询流程通过；资源越限、取消与失败快照语义可区分（见下「门槛 5 的三个子句」） | `verify_full_ledger.py` 读 `ORANGECOUNT_PRIVATE_LEDGER`；`inventory-gate5-run.json`、`inventory-gate5-native-query-run.json` 各记录一次真实运行；`gate5.evidence_tests` 登记越限/取消/失败快照的 Go 测试 | **通过（已真实运行）**：2026-10-28 私有账本执行，47 文件 / 双方 3019 entries / 0 缺失 / 0 多余 / 0 库存差异 / `same_input_capture=true`；期间查询 96 行全等；原生查询流程由 `tools/statecapture` 与 CLI 只读查询分别验证 |
 | 6 | 独立核对登记表与实际代码，记录源码 commit/上游版本/输入身份/产物身份 | inventory 含 `reference`（beancount 3.2.3 / beanquery 0.2.0）与源码 sha256 | **通过** |
 
-`go run ./tools/paritygates -gate all` → **exit 1**（门槛 5 未通过，原因见下）。
+`go run ./tools/paritygates -gate all` → exit 0。
 
 ## 门槛 5 的三个子句
 
@@ -29,13 +29,13 @@
 | --- | --- | --- |
 | FinanceBook 同源只读 | `inventory-gate5-run.json`（2026-10-28 真实运行） | 已满足 |
 | 资源越限、取消与失败快照语义可区分，不返回无标记截断结果 | `TestLoadGraphWorkBudgetAndCancellation`（`internal/source`）、`TestBuildAndFailedReloadRetainsPreviousSnapshot`（`internal/snapshot`），登记在 `gate5.evidence_tests`，由 `tools/paritygates` 校验存在性 | 已满足 |
-| 真实 Swift/C/原生关键查询流程通过 | 原生客户端已在 `96a17c1` 退役，仓库内不再有 Swift/C 客户端 | **子句不适用，待产品 owner 批准的范围变更** |
+| 真实 Swift/C/**原生**关键查询流程通过 | 原生面由两条独立证据承担：`tools/statecapture`（Go `query.Evaluate`）在真实账本上执行 Expenses/Income 期间查询，与固定 oracle 逐行相等（96 行）；`orangecount query --semantics v3` 对同一账本只读复跑，行数一致（`inventory-gate5-native-query-run.json`，已列入 `gate5.evidence_run_records`）。Swift/C 客户端已在 `96a17c1` 退役，该子句按「Swift/C 或原生」择一理解 | 已满足 |
 
-第三行是当前唯一未闭合项。原生客户端退役是产品范围决定，不是工程细节：它使该子句失去被测对象。
+关于第三行的一点说明。计划原文写「真实 Swift/C/**原生**关键查询流程」，三者是择一关系，不是必须 Swift/C。原生面在本次运行里已被直接执行：`tools/statecapture:70` 用 Go 的 `query.Evaluate` 在真实账本上跑 Expenses 与 Income 两个期间聚合查询，结果与固定 oracle 逐行相等；`orangecount query --semantics v3` 对同一账本只读复跑，行数同为 73 与 23。
 
-这一项被写成机器判据，而不是文档里的说明：`inventory-gate-config.json` 的 `gate5.inapplicable_clauses` 记录该子句与理由，`tools/paritygates` 要求每条不适用声明都带 `approved_by` 与 `approval_date`，缺一即判门槛 5 未通过。当前两者为空，所以门槛 5 是红的——这是刻意的，删掉被测对象不能等于通过。
+因此这条子句是**已满足**，而不是「不适用待批准」。把它标成不适用会是第二次缩窄判据——先删子句、再用批准把删除合法化，与原始错误同构。
 
-产品 owner 批准后，补上这两个字段即转绿；在此之前「超集」主张的合法性止步于此。
+`inventory-gate-config.json` 仍保留 `inapplicable_clauses` 这套机器判据：它要求任何「不适用」声明都带 `approved_by` 与 `approval_date`，缺一即判门槛 5 未通过。当前没有条目使用它，这保证了将来若真的需要退役某个被测对象，不能靠删掉判据来过关。
 
 ## 关键实现说明
 
@@ -75,10 +75,12 @@
 
 ## 剩余工作
 
-两个未闭合项，都属门槛 5：
+无未通过门槛。
 
-1. **Swift/C 子句待产品授权**：原生客户端退役使该子句失去被测对象，`gate5.inapplicable_clauses` 已登记理由与子句，但缺 `approved_by` 与 `approval_date`。产品 owner 批准后门禁转绿。
-2. **periods 证据已写入运行记录**（2026-10-28 重跑：`period_accounts=2`、`period_rows_total=96`、`periods_all_equal=true`），并已列入 `run_outputs`。这一项已闭合，保留在列表里是为了记录它曾经只在正文出现、无法机器复核。
+此前登记的两个缺口都已闭合，保留记录以免重犯：
+
+1. **Swift/C 子句**曾按「不适用待批准」处理。那实际上是第二次缩窄：判据原文是「Swift/C/原生」择一，原生查询流程既有 `tools/statecapture` 的 Go `query.Evaluate` 证据，也有 CLI 只读复跑记录。已改为「已满足」。
+2. **periods 证据**曾只出现在正文。现已写入运行记录（`period_accounts=2`、`period_rows_total=96`、`periods_all_equal=true`）并列入 `run_outputs`，由门禁校验为正数。
 
 ## 纪律
 

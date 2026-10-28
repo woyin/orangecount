@@ -151,6 +151,17 @@ type entryConfig struct {
 	// closed until the product owner records who approved it and when; otherwise
 	// deleting the subject would silently delete the criterion.
 	InapplicableClauses []inapplicableClause `json:"inapplicable_clauses"`
+	// EvidenceRunRecords names additional committed invocations that carry a
+	// clause the private capture does not cover on its own, such as the native
+	// query flow exercised through the CLI. Each one is checked like the primary
+	// record: the command must match and every named output must be positive.
+	EvidenceRunRecords []runRecordSpec `json:"evidence_run_records"`
+}
+
+type runRecordSpec struct {
+	RunRecord  string   `json:"run_record"`
+	RunCommand string   `json:"run_command"`
+	RunOutputs []string `json:"run_outputs"`
 }
 
 type inapplicableClause struct {
@@ -580,6 +591,10 @@ func checkRegisteredEntry(label string, entry *entryConfig) []failure {
 		case !validDate(clause.ApprovalDate):
 			failures = append(failures, failure{Status: "检查项", Reason: fmt.Sprintf("子句「%s」的 approval_date 不是 YYYY-MM-DD 日期", clause.Clause)})
 		}
+	}
+	for _, extra := range entry.EvidenceRunRecords {
+		probe := &entryConfig{Path: entry.Path, RunRecord: extra.RunRecord, RunCommand: extra.RunCommand, RunOutputs: extra.RunOutputs}
+		failures = append(failures, checkRunRecord(probe)...)
 	}
 	if len(entry.EvidenceTests) > 0 {
 		index, err := goTestIndex()

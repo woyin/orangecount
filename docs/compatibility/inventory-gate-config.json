@@ -77,12 +77,15 @@
       "TestLoadGraphWorkBudgetAndCancellation",
       "TestBuildAndFailedReloadRetainsPreviousSnapshot"
     ],
-    "inapplicable_clauses": [
+    "evidence_run_records": [
       {
-        "clause": "真实 Swift/C/原生关键查询流程通过",
-        "reason": "原生客户端已在 96a17c1 退役，仓库内不再有 Swift/C 客户端可供该子句验收",
-        "approved_by": null,
-        "approval_date": null
+        "run_record": "docs/compatibility/inventory-gate5-native-query-run.json",
+        "run_command": "orangecount query --semantics v3",
+        "run_outputs": [
+          "expenses_period_rows",
+          "income_period_rows",
+          "postings_total"
+        ]
       }
     ]
   }

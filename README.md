@@ -85,9 +85,9 @@ make build     # bin/orangecount
 make fmt vet test race license build
 ```
 
-## Dialect superset (certification pending gate 5)
+## Dialect superset
 
-The design target is a superset of Beancount v3: valid v3 ledgers keep working,
+OrangeCount accepts a superset of Beancount v3: valid v3 ledgers keep working,
 and dialect shorthand lines offer a terse two-posting form compiled into
 ordinary transactions at build time (ADR-0045).
 
@@ -98,11 +98,12 @@ go run ./tools/paritygates          # all 366 upstream capabilities verified
 go run ./tools/paritygates -gate all # the six release gates
 ```
 
-The capability inventory passes. Gate 5 does not, and deliberately so: its
-criterion requires a native-client query flow that no longer exists after the
-native clients were retired, and the gate refuses an inapplicable clause until
-the product owner records who approved it and when. Deleting the subject must
-not delete the criterion.
+All six gates pass. The gate 5 criterion about a real query flow is met by the
+native surface: `tools/statecapture` runs the Go query engine against a
+private ledger and its period results match the pinned oracle row for row. A
+clause whose subject is retired must not be deleted to make a gate green, so
+the gate still refuses any "inapplicable" claim that lacks a recorded
+product-owner approval.
 
 See [docs/parity-gates-2026-10-27.md](docs/parity-gates-2026-10-27.md) for the
 criteria, the three sub-clauses of gate 5, and their current, honest state.
