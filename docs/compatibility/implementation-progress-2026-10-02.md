@@ -8,7 +8,9 @@
 
 搜索目录和缺失目录祖先纳入变更监测，新增匹配文件与新增递归目录可触发重载。文件替换即使大小与修改时间不变，设备号/inode 变化仍触发重载。插件声明是阻断错误，解析 AST 只用于定位，没有动态插件加载机制。导入接口先拒绝 include/plugin，保持 HTTP 400，避免插件解析错误绕过导入策略。Posting 的保留或重复 metadata 键显式报错。
 
-`tools/reference/audit_compatibility.py` 生成上游能力登记表，记录源码摘要及 366 个签名/字段/AST/选项/指令条目。所有条目仍标记 pending：登记到一个能力并不意味着 Go 已实现，更不意味着通过验收。
+`tools/reference/audit_compatibility.py` 生成上游能力登记表，记录源码摘要及 366 个签名/字段/AST/选项/指令条目。**2026-10-02 当时**所有条目均标记 pending：登记到一个能力并不意味着 Go 已实现，更不意味着通过验收。
+
+> 当前状态（2026-10-28）：inventory 366 项全部 verified，由 `go run ./tools/paritygates` 与 `tools/favagates` 校验；门槛判据与证据见 [parity-gates-2026-10-27.md](../parity-gates-2026-10-27.md)。本文保留 2026-10-02 的原始结论与日期，避免日期记录被改写成后来状态。
 
 ## 当前验证
 

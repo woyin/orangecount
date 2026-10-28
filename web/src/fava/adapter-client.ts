@@ -245,32 +245,3 @@ export function createAdapterClient(
   };
 }
 
-/** A deterministic shell-only adapter for isolated frontend unit/prototype work. */
-export function createSyntheticAdapter(): AdapterClient {
-  const bootstrap: BootstrapPayload = {
-    ledger_title: "OrangeCount",
-    locale: "en",
-    locales: ["en", "zh-CN"],
-    theme: "system",
-    routes: ["journal", "balance_sheet", "trial_balance", "account"],
-    accounts: [],
-    currencies: ["USD"],
-    tags: [],
-    links: [],
-    payees: [],
-    years: [],
-    operating_currencies: ["USD"],
-    render_commas: false,
-    user_queries: [],
-    document_roots: [],
-    errors: [],
-    account_details: {},
-  };
-  return {
-    bootstrap: async () => bootstrap,
-    changed: async () => false,
-    guide: async (code) => ({ code, topic: `diagnostics/${code}`, phase: "recheck-after-semantic", short_action: "Guide unavailable in shell-only mode", what: "Guide unavailable in shell-only mode", why: "", inspect: [], safe_steps: [], example: { before: "", after: "", note: "" }, revalidate: "" }),
-    diagnosticContext: async () => ({ available: false, reason: "Context unavailable in shell-only mode" }),
-    load: async () => ({ state: "shell-only", rows: [] }),
-  };
-}
