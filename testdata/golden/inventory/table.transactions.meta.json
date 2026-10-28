@@ -1,0 +1,128 @@
+{
+  "declared_type_consistent": true,
+  "fixture": "testdata/golden/inventory/fixture.bean",
+  "fixture_sha256": "e1481a647a86bcaa40e76f3f1c0965c688d26eef2a0e6fe1922086b96d6a803a",
+  "id": "table.transactions.meta",
+  "kind": "column",
+  "loader_errors": [],
+  "oracle": {
+    "beancount": "3.2.3",
+    "beanquery": "0.2.0"
+  },
+  "oracle_type": "metadata",
+  "query": "SELECT meta AS v FROM #transactions",
+  "rows": [
+    {
+      "type": "dictionary",
+      "value": [
+        {
+          "key": "__tolerances__",
+          "value": {
+            "type": "dictionary",
+            "value": [
+              {
+                "key": "USD",
+                "value": {
+                  "type": "decimal",
+                  "value": "0.005"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "key": "filename",
+          "value": {
+            "type": "string",
+            "value": "testdata/golden/inventory/fixture.bean"
+          }
+        },
+        {
+          "key": "lineno",
+          "value": {
+            "type": "integer",
+            "value": "13"
+          }
+        },
+        {
+          "key": "probe",
+          "value": {
+            "type": "string",
+            "value": "txn"
+          }
+        }
+      ]
+    },
+    {
+      "type": "dictionary",
+      "value": [
+        {
+          "key": "__tolerances__",
+          "value": {
+            "type": "dictionary",
+            "value": [
+              {
+                "key": "USD",
+                "value": {
+                  "type": "decimal",
+                  "value": "0.005"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "key": "filename",
+          "value": {
+            "type": "string",
+            "value": "testdata/golden/inventory/fixture.bean"
+          }
+        },
+        {
+          "key": "lineno",
+          "value": {
+            "type": "integer",
+            "value": "19"
+          }
+        }
+      ]
+    },
+    {
+      "type": "dictionary",
+      "value": [
+        {
+          "key": "__tolerances__",
+          "value": {
+            "type": "dictionary",
+            "value": [
+              {
+                "key": "USD",
+                "value": {
+                  "type": "decimal",
+                  "value": "0.005"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "key": "filename",
+          "value": {
+            "type": "string",
+            "value": "testdata/golden/inventory/fixture.bean"
+          }
+        },
+        {
+          "key": "lineno",
+          "value": {
+            "type": "integer",
+            "value": "23"
+          }
+        }
+      ]
+    }
+  ],
+  "schema_version": 1,
+  "status": "ok",
+  "type": "dictionary"
+}

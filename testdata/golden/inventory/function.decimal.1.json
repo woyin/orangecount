@@ -1,0 +1,23 @@
+{
+  "declared_type_consistent": true,
+  "fixture": "testdata/golden/inventory/fixture.bean",
+  "fixture_sha256": "e1481a647a86bcaa40e76f3f1c0965c688d26eef2a0e6fe1922086b96d6a803a",
+  "id": "function.decimal.1",
+  "kind": "function",
+  "loader_errors": [],
+  "oracle": {
+    "beancount": "3.2.3",
+    "beanquery": "0.2.0"
+  },
+  "oracle_type": "decimal",
+  "query": "SELECT decimal('2.50') AS v FROM #entries LIMIT 1",
+  "rows": [
+    {
+      "type": "decimal",
+      "value": "2.50"
+    }
+  ],
+  "schema_version": 1,
+  "status": "ok",
+  "type": "decimal"
+}

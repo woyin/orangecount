@@ -63,9 +63,10 @@ func TestEvaluateValueFormTransactionAndEmptyPostings(t *testing.T) {
 	}
 }
 
-func TestEvaluatePadWithoutMissingBalanceWarns(t *testing.T) {
-	// A pad is only consumed by a balance assertion for its account. With no
-	// assertion at all it can never fire, and the warning keeps that visible.
+func TestEvaluatePadWithoutMissingBalanceIsAnError(t *testing.T) {
+	// A pad is only consumed by a balance assertion for its account. Upstream
+	// reports one that is never consumed as PadError, so the ledger must be
+	// invalid here too; a warning would accept a ledger Beancount rejects.
 	evaluation, codes := evaluateText(t, `2000-01-01 open Assets:Cash USD
 2000-01-01 open Equity:Opening USD
 2000-01-01 pad Assets:Cash Equity:Opening
@@ -73,10 +74,10 @@ func TestEvaluatePadWithoutMissingBalanceWarns(t *testing.T) {
   Assets:Cash 10 USD
   Equity:Opening -10 USD
 `)
-	if !evaluation.Valid {
-		t.Fatalf("evaluation must stay valid: %+v", evaluation.Diagnostics)
+	if evaluation.Valid {
+		t.Fatalf("evaluation must be invalid: %+v", evaluation.Diagnostics)
 	}
-	if !strings.Contains(codes, "W-EVAL-PAD-UNUSED") {
+	if !strings.Contains(codes, "E-EVAL-PAD-UNUSED") {
 		t.Fatalf("codes=%s", codes)
 	}
 }

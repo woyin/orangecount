@@ -1223,7 +1223,7 @@ func lexQuery(text string, dates bool) []queryToken {
 			i += size
 			continue
 		}
-		if strings.ContainsRune("=<>!+-/~", r) {
+		if strings.ContainsRune("=<>!+-/~%?", r) {
 			var token queryToken
 			token, i = lexOperator(text, i, size)
 			token.start, token.end = start, i
@@ -1301,8 +1301,13 @@ func lexString(text string, i int, quote byte, size int) (queryToken, int) {
 func lexOperator(text string, i int, size int) (queryToken, int) {
 	start := i
 	i += size
-	if i < len(text) && (text[i] == '=' || (text[start] == '<' && text[i] == '>')) {
-		i++
+	if i < len(text) {
+		next := text[i]
+		glue := next == '=' || (text[start] == '<' && next == '>') ||
+			((text[start] == '!' || text[start] == '?') && next == '~')
+		if glue {
+			i++
+		}
 	}
 	return queryToken{kind: tokenOperator, text: text[start:i]}, i
 }
@@ -1575,8 +1580,43 @@ func (p *queryParser) expression(minPrecedence int) (Expr, error) {
 		if isNull {
 			precedence = 3
 		}
+		isBetween := p.defaultPostings && token.kind == tokenWord && strings.EqualFold(token.text, "between")
+		isNotBetween := p.defaultPostings && token.kind == tokenWord && strings.EqualFold(token.text, "not") && p.peekWord(1, "between")
+		isNotIn := p.defaultPostings && token.kind == tokenWord && strings.EqualFold(token.text, "not") && p.peekWord(1, "in")
+		if isBetween || isNotBetween || isNotIn {
+			precedence = 3
+		}
 		if precedence < minPrecedence {
 			break
+		}
+		if isBetween || isNotBetween {
+			if isNotBetween {
+				p.next()
+			}
+			p.next()
+			lower, err := p.expression(4)
+			if err != nil {
+				return nil, err
+			}
+			if !p.acceptWord("and") {
+				return nil, p.errorf("BETWEEN requires AND")
+			}
+			upper, err := p.expression(4)
+			if err != nil {
+				return nil, err
+			}
+			bounds := binaryExpr{
+				operator: "and",
+				left:     binaryExpr{operator: ">=", left: left, right: lower, span: &ByteRange{Start: token.start, End: token.end}},
+				right:    binaryExpr{operator: "<=", left: left, right: upper, span: &ByteRange{Start: token.start, End: token.end}},
+				span:     &ByteRange{Start: token.start, End: token.end},
+			}
+			if isNotBetween {
+				left = unaryExpr{operator: "not", inner: bounds, span: &ByteRange{Start: token.start, End: token.end}}
+			} else {
+				left = bounds
+			}
+			continue
 		}
 		p.next()
 		if isNull {
@@ -1588,6 +1628,23 @@ func (p *queryParser) expression(minPrecedence int) (Expr, error) {
 				return nil, p.errorf("IS requires NULL or NOT NULL")
 			}
 			left = unaryExpr{operator: operator, inner: left, span: &ByteRange{Start: token.start, End: token.end}}
+			continue
+		}
+		if p.defaultPostings && token.kind == tokenWord && strings.EqualFold(token.text, "in") {
+			var membershipErr error
+			left, membershipErr = p.membership(left, false, token)
+			if membershipErr != nil {
+				return nil, membershipErr
+			}
+			continue
+		}
+		if p.defaultPostings && token.kind == tokenWord && strings.EqualFold(token.text, "not") && p.peekWord(0, "in") {
+			p.next()
+			var membershipErr error
+			left, membershipErr = p.membership(left, true, token)
+			if membershipErr != nil {
+				return nil, membershipErr
+			}
 			continue
 		}
 		right, rightErr := p.expression(precedence + 1)
@@ -1659,8 +1716,27 @@ func (p *queryParser) parenthesized() (Expr, error) {
 	return expr, nil
 }
 
-// wordPrimary parses a leading word: NOT, a function call, or a field name.
+func (p *queryParser) intervalPrimary(token queryToken) (Expr, error) {
+	if !p.accept(tokenLParen) {
+		return nil, p.errorAtf(token, "interval requires an argument")
+	}
+	inner, err := p.expression(0)
+	if err != nil {
+		return nil, err
+	}
+	if !p.accept(tokenRParen) {
+		return nil, p.errorAtf(token, "interval requires one argument")
+	}
+	return intervalExpr{text: inner, span: &ByteRange{Start: token.start, End: token.end}}, nil
+}
+
 func (p *queryParser) wordPrimary(token queryToken) (Expr, error) {
+	if token.text == "" {
+		return nil, p.errorAtf(token, "unexpected end of expression")
+	}
+	if p.defaultPostings && strings.EqualFold(token.text, "interval") {
+		return p.intervalPrimary(token)
+	}
 	if p.defaultPostings {
 		switch strings.ToLower(token.text) {
 		case "null":
@@ -1694,6 +1770,31 @@ func (p *queryParser) wordPrimary(token queryToken) (Expr, error) {
 
 // callArguments parses a function argument list up to the closing
 // parenthesis; a bare * inside the list (as in count(*)) is an argument.
+// intervalExpr is a relativedelta value produced by interval(text). Its
+// value is a period description, never a database row.
+type intervalExpr struct {
+	text Expr
+	span *ByteRange
+}
+
+func (e intervalExpr) String() string  { return "interval(" + e.text.String() + ")" }
+func (e intervalExpr) aggregate() bool { return false }
+func (e intervalExpr) eval(row Row, rows []Row) (any, error) {
+	value, err := e.text.eval(row, rows)
+	if err != nil || value == nil {
+		return nil, err
+	}
+	text, ok := value.(string)
+	if !ok {
+		return nil, fmt.Errorf("interval requires a string period")
+	}
+	interval, err := parseInterval(text)
+	if err != nil {
+		return nil, err
+	}
+	return interval, nil
+}
+
 func (p *queryParser) callArguments() ([]Expr, error) {
 	args := make([]Expr, 0)
 	if p.accept(tokenRParen) {
@@ -1716,6 +1817,60 @@ func (p *queryParser) callArguments() ([]Expr, error) {
 			return nil, p.errorf("function arguments require commas")
 		}
 	}
+}
+
+// membership parses "IN (a, b, ...)" and "IN container". The list form is
+// desugared into equality connectives so membership needs no new AST node.
+func (p *queryParser) membership(left Expr, negate bool, token queryToken) (Expr, error) {
+	span := &ByteRange{Start: token.start, End: token.end}
+	if !p.accept(tokenLParen) {
+		container, err := p.expression(4)
+		if err != nil {
+			return nil, err
+		}
+		operator := "in"
+		if negate {
+			operator = "not in"
+		}
+		return binaryExpr{operator: operator, left: left, right: container, span: span}, nil
+	}
+	values, err := p.expressionList()
+	if err != nil {
+		return nil, err
+	}
+	if !p.accept(tokenRParen) {
+		return nil, p.errorf("missing closing parenthesis after IN list")
+	}
+	if len(values) == 0 {
+		return literalExpr{value: negate, display: map[bool]string{true: "TRUE", false: "FALSE"}[negate]}, nil
+	}
+	operator := "="
+	if negate {
+		operator = "!="
+	}
+	var combined Expr
+	for _, value := range values {
+		comparison := binaryExpr{operator: operator, left: left, right: value, span: span}
+		if combined == nil {
+			combined = comparison
+			continue
+		}
+		connective := "or"
+		if negate {
+			connective = "and"
+		}
+		combined = binaryExpr{operator: connective, left: combined, right: comparison, span: span}
+	}
+	return combined, nil
+}
+
+func (p *queryParser) peekWord(offset int, value string) bool {
+	index := p.index + offset
+	if index >= len(p.tokens) {
+		return false
+	}
+	token := p.tokens[index]
+	return token.kind == tokenWord && strings.EqualFold(token.text, value)
 }
 
 func (p *queryParser) expressionList() ([]Expr, error) {
@@ -1797,15 +1952,21 @@ func operatorPrecedence(token queryToken) int {
 			return 2
 		}
 	}
+	if token.kind == tokenWord {
+		switch strings.ToLower(token.text) {
+		case "in", "between":
+			return 3
+		}
+	}
 	if token.kind != tokenOperator {
 		return -1
 	}
 	switch token.text {
-	case "=", "!=", "<>", "<", "<=", ">", ">=", "~":
+	case "=", "!=", "<>", "<", "<=", ">", ">=", "~", "!~", "?~":
 		return 3
 	case "+", "-":
 		return 4
-	case "*", "/":
+	case "*", "/", "%":
 		return 5
 	default:
 		return -1
@@ -2117,7 +2278,7 @@ func (e binaryExpr) evalComparison(left, right any) (any, error) {
 		return compareValues(left, right) >= 0, nil
 	case "~":
 		return evalRegexMatch(left, right)
-	case "+", "-", "*", "/":
+	case "+", "-", "*", "/", "%":
 		return e.evalArithmetic(left, right)
 	default:
 		return nil, fmt.Errorf("unsupported operator %q", e.operator)
@@ -2155,6 +2316,65 @@ func evalRegexMatch(left, right any) (any, error) {
 
 // evalArithmetic applies +, -, *, / to numeric operands.
 func (e binaryExpr) evalArithmetic(left, right any) (any, error) {
+	if e.operator == "+" || e.operator == "-" {
+		if text, ok := left.(string); ok && isISODate(text) {
+			switch value := right.(type) {
+			case Interval:
+				if e.operator == "-" {
+					value.Years, value.Months, value.Days = -value.Years, -value.Months, -value.Days
+					value.Hours, value.Minutes, value.Seconds = -value.Hours, -value.Minutes, -value.Seconds
+				}
+				return addInterval(text, value), nil
+			case ledger.Decimal:
+				days, ok := wholeDays(value)
+				if !ok {
+					return nil, fmt.Errorf("date arithmetic requires whole days")
+				}
+				if e.operator == "-" {
+					days = -days
+				}
+				return shiftISODate(text, days), nil
+			case string:
+				if e.operator == "-" && isISODate(value) {
+					return isoDateDifference(text, value), nil
+				}
+			}
+			return nil, fmt.Errorf("date arithmetic requires an integer or interval")
+		}
+		if e.operator == "+" {
+			if text, ok := right.(string); ok && isISODate(text) {
+				if days, ok := wholeDays(left); ok {
+					return shiftISODate(text, days), nil
+				}
+				if interval, ok := left.(Interval); ok {
+					return addInterval(text, interval), nil
+				}
+			}
+			if _, ok := left.(Interval); ok {
+				if rightInterval, ok := right.(Interval); ok {
+					return Interval{Years: left.(Interval).Years + rightInterval.Years, Months: left.(Interval).Months + rightInterval.Months, Days: left.(Interval).Days + rightInterval.Days, Hours: left.(Interval).Hours + rightInterval.Hours, Minutes: left.(Interval).Minutes + rightInterval.Minutes, Seconds: left.(Interval).Seconds + rightInterval.Seconds}, nil
+				}
+				return nil, fmt.Errorf("interval arithmetic requires a date or interval")
+			}
+			leftText, leftOK := left.(string)
+			rightText, rightOK := right.(string)
+			if leftOK && rightOK {
+				return leftText + rightText, nil
+			}
+		}
+	}
+	if e.operator == "-" {
+		if interval, ok := left.(Interval); ok {
+			if rightInterval, ok := right.(Interval); ok {
+				return Interval{Years: interval.Years - rightInterval.Years, Months: interval.Months - rightInterval.Months, Days: interval.Days - rightInterval.Days, Hours: interval.Hours - rightInterval.Hours, Minutes: interval.Minutes - rightInterval.Minutes, Seconds: interval.Seconds - rightInterval.Seconds}, nil
+			}
+		}
+		// Interval subtraction is only defined against another interval; the
+		// numeric fallback below must not mask that with a generic error.
+		if _, ok := left.(Interval); ok {
+			return nil, fmt.Errorf("interval subtraction requires an interval operand")
+		}
+	}
 	leftNumber, leftOK := decimalValue(left)
 	rightNumber, rightOK := decimalValue(right)
 	if !leftOK || !rightOK {
@@ -2167,11 +2387,101 @@ func (e binaryExpr) evalArithmetic(left, right any) (any, error) {
 		return leftNumber.Sub(rightNumber), nil
 	case "*":
 		return leftNumber.Mul(rightNumber), nil
+	case "%":
+		if rightNumber.IsZero() {
+			return nil, nil
+		}
+		quotient := new(big.Rat).Quo(leftNumber.Rat(), rightNumber.Rat())
+		truncated := new(big.Int).Quo(quotient.Num(), quotient.Denom())
+		remainder := new(big.Rat).Sub(leftNumber.Rat(), new(big.Rat).Mul(new(big.Rat).SetInt(truncated), rightNumber.Rat()))
+		return ledger.NewDecimal(remainder), nil
 	default: // "/"
 		if rightNumber.IsZero() {
 			return nil, fmt.Errorf("division by zero")
 		}
 		return ledger.NewDecimal(new(big.Rat).Quo(leftNumber.Rat(), rightNumber.Rat())), nil
+	}
+}
+
+const isoDateLayout = "2006-01-02"
+
+func isISODate(text string) bool {
+	if len(text) != len(isoDateLayout) {
+		return false
+	}
+	_, err := time.Parse(isoDateLayout, text)
+	return err == nil
+}
+
+func wholeDays(value any) (int, bool) {
+	number, ok := decimalValue(value)
+	if !ok || !number.Rat().IsInt() {
+		return 0, false
+	}
+	days := number.Rat().Num()
+	if !days.IsInt64() {
+		return 0, false
+	}
+	return int(days.Int64()), true
+}
+
+func shiftISODate(text string, days int) string {
+	parsed, err := time.Parse(isoDateLayout, text)
+	if err != nil {
+		return text
+	}
+	return parsed.AddDate(0, 0, days).Format(isoDateLayout)
+}
+
+func isoDateDifference(left, right string) ledger.Decimal {
+	leftDate, leftErr := time.Parse(isoDateLayout, left)
+	rightDate, rightErr := time.Parse(isoDateLayout, right)
+	if leftErr != nil || rightErr != nil {
+		return ledger.Zero()
+	}
+	return ledger.NewDecimal(new(big.Rat).SetInt64(int64(leftDate.Sub(rightDate).Hours() / 24)))
+}
+
+func typedMembership(operand, container any) (bool, error) {
+	switch values := container.(type) {
+	case stringSet:
+		text, ok := operand.(string)
+		if !ok {
+			return false, nil
+		}
+		for _, value := range values {
+			if value == text {
+				return true, nil
+			}
+		}
+		return false, nil
+	case []string:
+		text, ok := operand.(string)
+		if !ok {
+			return false, nil
+		}
+		for _, value := range values {
+			if value == text {
+				return true, nil
+			}
+		}
+		return false, nil
+	case dictionaryValue:
+		text, ok := operand.(string)
+		if !ok {
+			return false, nil
+		}
+		_, exists := values[text]
+		return exists, nil
+	case listValue:
+		for _, value := range values {
+			if compareValues(operand, value) == 0 {
+				return true, nil
+			}
+		}
+		return false, nil
+	default:
+		return false, fmt.Errorf("membership requires a set, dictionary, or list operand")
 	}
 }
 

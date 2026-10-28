@@ -1,0 +1,5569 @@
+{
+  "counts": {
+    "internal": 2,
+    "needs-fixture": 70,
+    "probe": 294
+  },
+  "items": [
+    {
+      "category": "probe",
+      "id": "table.accounts.account",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"account\" FROM \"accounts\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.accounts.close",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"close\" FROM \"accounts\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.accounts.open",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"open\" FROM \"accounts\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.balances.account",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"account\" FROM \"balances\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.balances.amount",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"amount\" FROM \"balances\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.balances.date",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"date\" FROM \"balances\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.balances.discrepancy",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"discrepancy\" FROM \"balances\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.balances.meta",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"meta\" FROM \"balances\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.balances.tolerance",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"tolerance\" FROM \"balances\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.commodities.date",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"date\" FROM \"commodities\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.commodities.meta",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"meta\" FROM \"commodities\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.commodities.name",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"name\" FROM \"commodities\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.documents.account",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"account\" FROM \"documents\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.documents.date",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"date\" FROM \"documents\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.documents.filename",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"filename\" FROM \"documents\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.documents.links",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"links\" FROM \"documents\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.documents.meta",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"meta\" FROM \"documents\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.documents.tags",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"tags\" FROM \"documents\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.entries.accounts",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"accounts\" FROM \"entries\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.entries.date",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"date\" FROM \"entries\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.entries.day",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"day\" FROM \"entries\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.entries.description",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"description\" FROM \"entries\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.entries.filename",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"filename\" FROM \"entries\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.entries.flag",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"flag\" FROM \"entries\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.entries.id",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"id\" FROM \"entries\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.entries.lineno",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"lineno\" FROM \"entries\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.entries.links",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"links\" FROM \"entries\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.entries.meta",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"meta\" FROM \"entries\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.entries.month",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"month\" FROM \"entries\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.entries.narration",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"narration\" FROM \"entries\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.entries.payee",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"payee\" FROM \"entries\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.entries.tags",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"tags\" FROM \"entries\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.entries.type",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"type\" FROM \"entries\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.entries.year",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"year\" FROM \"entries\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.events.date",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"date\" FROM \"events\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.events.description",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"description\" FROM \"events\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.events.meta",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"meta\" FROM \"events\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.events.type",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"type\" FROM \"events\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.notes.account",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"account\" FROM \"notes\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.notes.comment",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"comment\" FROM \"notes\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.notes.date",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"date\" FROM \"notes\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.notes.links",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"links\" FROM \"notes\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.notes.meta",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"meta\" FROM \"notes\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.notes.tags",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"tags\" FROM \"notes\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.account",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"account\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.accounts",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"accounts\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.balance",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"balance\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.cost_currency",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"cost_currency\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.cost_date",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"cost_date\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.cost_label",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"cost_label\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.cost_number",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"cost_number\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.currency",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"currency\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.date",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"date\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.day",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"day\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.description",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"description\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.entry",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"entry\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.filename",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"filename\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.flag",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"flag\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.id",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"id\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.lineno",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"lineno\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.links",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"links\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.location",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"location\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.meta",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"meta\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.month",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"month\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.narration",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"narration\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.number",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"number\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.other_accounts",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"other_accounts\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.payee",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"payee\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.position",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"position\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.posting_flag",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"posting_flag\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.price",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"price\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.tags",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"tags\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.type",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"type\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.weight",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"weight\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.postings.year",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"year\" FROM \"postings\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.prices.amount",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"amount\" FROM \"prices\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.prices.currency",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"currency\" FROM \"prices\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.prices.date",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"date\" FROM \"prices\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.prices.meta",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"meta\" FROM \"prices\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.transactions.accounts",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"accounts\" FROM \"transactions\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.transactions.date",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"date\" FROM \"transactions\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.transactions.flag",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"flag\" FROM \"transactions\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.transactions.links",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"links\" FROM \"transactions\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.transactions.meta",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"meta\" FROM \"transactions\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.transactions.narration",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"narration\" FROM \"transactions\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.transactions.payee",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"payee\" FROM \"transactions\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "table.transactions.tags",
+      "kind": "column",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "declared column type",
+          "typed row values"
+        ],
+        "query": "SELECT \"tags\" FROM \"transactions\"",
+        "surface": "sql"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.abs.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.abs.1",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.abs.2",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.account_sortkey.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.any_meta.0",
+      "kind": "function",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": true,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.bool.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.close_date.0",
+      "kind": "function",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": true,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.commodity.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.commodity_meta.0",
+      "kind": "function",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": true,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.commodity_meta.1",
+      "kind": "function",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": true,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.convert.0",
+      "kind": "function",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": true,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.convert.1",
+      "kind": "function",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": true,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.convert.2",
+      "kind": "function",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": true,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.convert.3",
+      "kind": "function",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": true,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.convert.4",
+      "kind": "function",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": true,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.convert.5",
+      "kind": "function",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": true,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.cost.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.cost.1",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.count.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.count.1",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.currency.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.currency_meta.0",
+      "kind": "function",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": true,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.currency_meta.1",
+      "kind": "function",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": true,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.date.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.date.1",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.date.2",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.date.3",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.date_add.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.date_bin.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.date_bin.1",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.date_diff.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.date_part.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.date_trunc.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.day.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.decimal.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.decimal.1",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.decimal.2",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.decimal.3",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.decimal.4",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.empty.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.entry_meta.0",
+      "kind": "function",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": true,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.filter_currency.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.filter_currency.1",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.findfirst.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.first.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.getitem.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.getitem.1",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.getprice.0",
+      "kind": "function",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": true,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.getprice.1",
+      "kind": "function",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": true,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.grep.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.grepn.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.has_account.0",
+      "kind": "function",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": true,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.int.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.int.1",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.int.2",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.int.3",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.int.4",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.interval.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.joinstr.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.last.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.leaf.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.length.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.length.1",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.length.2",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.lower.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.max.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.maxwidth.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.meta.0",
+      "kind": "function",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": true,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.min.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.month.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.neg.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.neg.1",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.neg.2",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.neg.3",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.number.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.only.0",
+      "kind": "function",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": true,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.open_date.0",
+      "kind": "function",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": true,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.open_meta.0",
+      "kind": "function",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": true,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.open_meta.1",
+      "kind": "function",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": true,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.parent.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.parse_date.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.parse_date.1",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.possign.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.possign.1",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.possign.2",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.possign.3",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.quarter.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.repr.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.root.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.root.1",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.round.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.round.1",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.round.2",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.round.3",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.safediv.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.safediv.1",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.splitcomp.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.str.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.subst.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.substr.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.sum.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.sum.1",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.sum.2",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.sum.3",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.sum.4",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.today.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": "today() depends on the wall clock, so only its declared type is stable",
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": true
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.units.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.units.1",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.upper.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.value.0",
+      "kind": "function",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": true,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.value.1",
+      "kind": "function",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": true,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.value.2",
+      "kind": "function",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": true,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.value.3",
+      "kind": "function",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": true,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.weekday.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.year.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "function.yearmonth.0",
+      "kind": "function",
+      "probe": {
+        "fixture": null,
+        "note": null,
+        "observes": [
+          "output type",
+          "value for constructed arguments"
+        ],
+        "requires_ledger": false,
+        "surface": "sql-function",
+        "unstable": false
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Add.0",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Add.1",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Add.2",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Add.3",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Add.4",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Add.5",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Add.6",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Add.7",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Add.8",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Add.9",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Between.0",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Between.1",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Between.2",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Between.3",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Between.4",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Between.5",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Between.6",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Between.7",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Between.8",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Between.9",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Div.0",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Div.1",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Div.2",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Div.3",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Equal.0",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Equal.1",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Equal.2",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Equal.3",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Equal.4",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Equal.5",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Greater.0",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Greater.1",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Greater.2",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Greater.3",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Greater.4",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Greater.5",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.GreaterEq.0",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.GreaterEq.1",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.GreaterEq.2",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.GreaterEq.3",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.GreaterEq.4",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.GreaterEq.5",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.In.0",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.In.1",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.In.2",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.IsNotNull.0",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.IsNull.0",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Less.0",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Less.1",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Less.2",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Less.3",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Less.4",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Less.5",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.LessEq.0",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.LessEq.1",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.LessEq.2",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.LessEq.3",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.LessEq.4",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.LessEq.5",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Match.0",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Matches.0",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Mod.0",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Mod.1",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Mod.2",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Mod.3",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Mul.0",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Mul.1",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Mul.2",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Mul.3",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Neg.0",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Neg.1",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Not.0",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.NotEqual.0",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.NotEqual.1",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.NotEqual.2",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.NotEqual.3",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.NotEqual.4",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.NotEqual.5",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.NotIn.0",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.NotIn.1",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.NotIn.2",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.NotMatch.0",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Sub.0",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Sub.1",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Sub.2",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Sub.3",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Sub.4",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Sub.5",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Sub.6",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Sub.7",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "probe",
+      "id": "operator.Sub.8",
+      "kind": "operator",
+      "probe": {
+        "note": "unary and binary forms are exercised through the SQL expression surface",
+        "observes": [
+          "output type",
+          "value for constructed operands"
+        ],
+        "surface": "sql-operator"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.account_current_conversions",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.account_current_earnings",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.account_previous_balances",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.account_previous_conversions",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.account_previous_earnings",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.account_rounding",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.account_unrealized_gains",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.allow_deprecated_none_for_tags_and_links",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.allow_pipe_separator",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.booking_method",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.commodities",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.conversion_currency",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.dcontext",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.display_precision",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.documents",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.filename",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.include",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.infer_tolerance_from_cost",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.inferred_tolerance_default",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.inferred_tolerance_multiplier",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.input_hash",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.insert_pythonpath",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.long_string_maxlines",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.name_assets",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.name_equity",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.name_expenses",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.name_income",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.name_liabilities",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.operating_currency",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.plugin",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.plugin_processing_mode",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.render_commas",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.title",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.tolerance_multiplier",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "option.use_precise_interpolation",
+      "kind": "accounting-option",
+      "probe": {
+        "fixture": "testdata/golden/inventory/options.bean",
+        "observes": [
+          "option value after load",
+          "entry shape affected by the option"
+        ],
+        "surface": "loader-option"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "directive.Open",
+      "kind": "accounting-directive",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "directive fields",
+          "loader errors",
+          "table row"
+        ],
+        "surface": "loader-entry"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "directive.Close",
+      "kind": "accounting-directive",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "directive fields",
+          "loader errors",
+          "table row"
+        ],
+        "surface": "loader-entry"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "directive.Commodity",
+      "kind": "accounting-directive",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "directive fields",
+          "loader errors",
+          "table row"
+        ],
+        "surface": "loader-entry"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "directive.Pad",
+      "kind": "accounting-directive",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "directive fields",
+          "loader errors",
+          "table row"
+        ],
+        "surface": "loader-entry"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "directive.Balance",
+      "kind": "accounting-directive",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "directive fields",
+          "loader errors",
+          "table row"
+        ],
+        "surface": "loader-entry"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "directive.Transaction",
+      "kind": "accounting-directive",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "directive fields",
+          "loader errors",
+          "table row"
+        ],
+        "surface": "loader-entry"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "directive.Note",
+      "kind": "accounting-directive",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "directive fields",
+          "loader errors",
+          "table row"
+        ],
+        "surface": "loader-entry"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "directive.Event",
+      "kind": "accounting-directive",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "directive fields",
+          "loader errors",
+          "table row"
+        ],
+        "surface": "loader-entry"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "directive.Query",
+      "kind": "accounting-directive",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "directive fields",
+          "loader errors",
+          "table row"
+        ],
+        "surface": "loader-entry"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "directive.Price",
+      "kind": "accounting-directive",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "directive fields",
+          "loader errors",
+          "table row"
+        ],
+        "surface": "loader-entry"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "directive.Document",
+      "kind": "accounting-directive",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "directive fields",
+          "loader errors",
+          "table row"
+        ],
+        "surface": "loader-entry"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "directive.Custom",
+      "kind": "accounting-directive",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "directive fields",
+          "loader errors",
+          "table row"
+        ],
+        "surface": "loader-entry"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "syntax.Add",
+      "kind": "syntax",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "parse acceptance",
+          "evaluated result of the syntax form"
+        ],
+        "surface": "sql-parse"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "syntax.And",
+      "kind": "syntax",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "parse acceptance",
+          "evaluated result of the syntax form"
+        ],
+        "surface": "sql-parse"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "syntax.Div",
+      "kind": "syntax",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "parse acceptance",
+          "evaluated result of the syntax form"
+        ],
+        "surface": "sql-parse"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "syntax.Equal",
+      "kind": "syntax",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "parse acceptance",
+          "evaluated result of the syntax form"
+        ],
+        "surface": "sql-parse"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "syntax.From",
+      "kind": "syntax",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "parse acceptance",
+          "evaluated result of the syntax form"
+        ],
+        "surface": "sql-parse"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "syntax.Greater",
+      "kind": "syntax",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "parse acceptance",
+          "evaluated result of the syntax form"
+        ],
+        "surface": "sql-parse"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "syntax.GreaterEq",
+      "kind": "syntax",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "parse acceptance",
+          "evaluated result of the syntax form"
+        ],
+        "surface": "sql-parse"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "syntax.In",
+      "kind": "syntax",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "parse acceptance",
+          "evaluated result of the syntax form"
+        ],
+        "surface": "sql-parse"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "syntax.IsNotNull",
+      "kind": "syntax",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "parse acceptance",
+          "evaluated result of the syntax form"
+        ],
+        "surface": "sql-parse"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "syntax.IsNull",
+      "kind": "syntax",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "parse acceptance",
+          "evaluated result of the syntax form"
+        ],
+        "surface": "sql-parse"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "syntax.Less",
+      "kind": "syntax",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "parse acceptance",
+          "evaluated result of the syntax form"
+        ],
+        "surface": "sql-parse"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "syntax.LessEq",
+      "kind": "syntax",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "parse acceptance",
+          "evaluated result of the syntax form"
+        ],
+        "surface": "sql-parse"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "syntax.Match",
+      "kind": "syntax",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "parse acceptance",
+          "evaluated result of the syntax form"
+        ],
+        "surface": "sql-parse"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "syntax.Matches",
+      "kind": "syntax",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "parse acceptance",
+          "evaluated result of the syntax form"
+        ],
+        "surface": "sql-parse"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "syntax.Mod",
+      "kind": "syntax",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "parse acceptance",
+          "evaluated result of the syntax form"
+        ],
+        "surface": "sql-parse"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "syntax.Mul",
+      "kind": "syntax",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "parse acceptance",
+          "evaluated result of the syntax form"
+        ],
+        "surface": "sql-parse"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "syntax.Neg",
+      "kind": "syntax",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "parse acceptance",
+          "evaluated result of the syntax form"
+        ],
+        "surface": "sql-parse"
+      },
+      "rationale": null
+    },
+    {
+      "category": "internal",
+      "id": "syntax.Node",
+      "kind": "syntax",
+      "probe": null,
+      "rationale": "base AST node class; no independent public behaviour"
+    },
+    {
+      "category": "needs-fixture",
+      "id": "syntax.Not",
+      "kind": "syntax",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "parse acceptance",
+          "evaluated result of the syntax form"
+        ],
+        "surface": "sql-parse"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "syntax.NotEqual",
+      "kind": "syntax",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "parse acceptance",
+          "evaluated result of the syntax form"
+        ],
+        "surface": "sql-parse"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "syntax.NotIn",
+      "kind": "syntax",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "parse acceptance",
+          "evaluated result of the syntax form"
+        ],
+        "surface": "sql-parse"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "syntax.NotMatch",
+      "kind": "syntax",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "parse acceptance",
+          "evaluated result of the syntax form"
+        ],
+        "surface": "sql-parse"
+      },
+      "rationale": null
+    },
+    {
+      "category": "needs-fixture",
+      "id": "syntax.Or",
+      "kind": "syntax",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "parse acceptance",
+          "evaluated result of the syntax form"
+        ],
+        "surface": "sql-parse"
+      },
+      "rationale": null
+    },
+    {
+      "category": "internal",
+      "id": "syntax.Ordering",
+      "kind": "syntax",
+      "probe": null,
+      "rationale": "ORDER BY ordering enum; behaviour is exercised by syntax.Ordering through queries, not as a standalone surface"
+    },
+    {
+      "category": "needs-fixture",
+      "id": "syntax.Sub",
+      "kind": "syntax",
+      "probe": {
+        "fixture": "testdata/golden/inventory/fixture.bean",
+        "observes": [
+          "parse acceptance",
+          "evaluated result of the syntax form"
+        ],
+        "surface": "sql-parse"
+      },
+      "rationale": null
+    }
+  ],
+  "schema_version": 1,
+  "source_inventory": "docs/compatibility/upstream-inventory.json",
+  "source_inventory_sha256": "d01b92c2e17c3fa0985cffa082e76d3a56d2389ad62d8b961e5b1bb31dec7687"
+}

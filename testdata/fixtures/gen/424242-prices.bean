@@ -1,0 +1,20 @@
+option "operating_currency" "USD"
+
+2020-01-01 open Assets:Cash USD
+2020-01-01 open Assets:Bank USD
+2020-01-01 open Assets:Broker USD
+2020-01-01 open Assets:Broker:Stock
+2020-01-01 open Expenses:Food USD
+2020-01-01 open Expenses:Travel USD
+2020-01-01 open Expenses:Fees USD
+2020-01-01 open Income:Salary USD
+2020-01-01 open Equity:Opening USD
+2020-01-01 open Liabilities:Card USD
+2020-01-01 open Equity:Prices AAA
+
+2020-01-02 price AAA 12.00 USD
+2020-01-03 price AAA 13.50 USD
+
+2020-01-04 * "Holding"
+  Assets:Broker:Stock  3 AAA
+  Equity:Prices

@@ -47,3 +47,11 @@ testdata/visual-candidates/
 # Local tool working directories
 .ocbin/
 .qoder/
+
+# Stray tool binaries built at the repository root
+/favagates
+/genprediff
+/paritygates
+
+# Local Fabric agent state (mesh tasks, actor session logs)
+/.pi/

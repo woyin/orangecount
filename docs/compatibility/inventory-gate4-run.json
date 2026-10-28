@@ -1,0 +1,15 @@
+{
+  "command": "uv run --offline --project tools/reference python tools/reference/verify_source_export.py",
+  "ran_at": "2026-10-27",
+  "recorded_by": "worker-gates (W7)",
+  "environment": {
+    "reference": "beancount 3.2.3 / beanquery 0.2.0 (tools/reference/.venv)",
+    "note": "公开语料 only；不读私人账本。"
+  },
+  "output": {
+    "oracle": "beancount-3.2.3",
+    "accepted_roundtrips": 36,
+    "explicit_refusals": 6,
+    "transaction_inventory_checkpoints": 74
+  }
+}

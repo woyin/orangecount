@@ -1,0 +1,79 @@
+{
+  "declared_type_consistent": true,
+  "fixture": "testdata/golden/inventory/fixture.bean",
+  "fixture_sha256": "e1481a647a86bcaa40e76f3f1c0965c688d26eef2a0e6fe1922086b96d6a803a",
+  "id": "table.entries.id",
+  "kind": "column",
+  "loader_errors": [],
+  "oracle": {
+    "beancount": "3.2.3",
+    "beanquery": "0.2.0"
+  },
+  "oracle_type": "str",
+  "query": "SELECT id AS v FROM #entries",
+  "rows": [
+    {
+      "type": "string",
+      "value": "0a7966b5039b04df30aeff89d823746c"
+    },
+    {
+      "type": "string",
+      "value": "28c46f4955afabdbee5ae6fac14298df"
+    },
+    {
+      "type": "string",
+      "value": "524b0816f7ba64ce0ca9460ed10934c5"
+    },
+    {
+      "type": "string",
+      "value": "5759acb9215b98d6afe40c21a900a896"
+    },
+    {
+      "type": "string",
+      "value": "594945d1b7b87dcfe02b4290258a5bc6"
+    },
+    {
+      "type": "string",
+      "value": "62aafd2ed2129e6af36fac36f5c143f6"
+    },
+    {
+      "type": "string",
+      "value": "65c2d09e0a85fa4c1ef97d52f2fb1b95"
+    },
+    {
+      "type": "string",
+      "value": "824dedbffbcd12e4e3b974d6063187be"
+    },
+    {
+      "type": "string",
+      "value": "91fa3ab84905f0fc6dda2ad8d07948bf"
+    },
+    {
+      "type": "string",
+      "value": "a4dcc848bc302955072eaca9796f65d3"
+    },
+    {
+      "type": "string",
+      "value": "a62e28783cc5c430a0dcafe81bc62537"
+    },
+    {
+      "type": "string",
+      "value": "aab9c9aa483df4458fb3bf3a0243d062"
+    },
+    {
+      "type": "string",
+      "value": "bf11994e8aaaa8eb04613bb88544ad1a"
+    },
+    {
+      "type": "string",
+      "value": "d0bf7fbab7a337aab622a263c23644d5"
+    },
+    {
+      "type": "string",
+      "value": "f2366ac47a46a7664168bac9a6f76d57"
+    }
+  ],
+  "schema_version": 1,
+  "status": "ok",
+  "type": "string"
+}

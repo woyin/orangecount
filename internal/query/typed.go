@@ -189,7 +189,7 @@ func executeTypedPlan(q Query, evaluation ledger.Evaluation, rowCeiling int, bud
 			return typedPlan{}, err
 		}
 		derived := derivedFromPlan(inner)
-		compiler = typedCompiler{derived: derived}
+		compiler = typedCompiler{derived: derived, context: queryContext{evaluation: evaluation}}
 		rows = inner.rows
 		// Derived rows keep the execution budget so that WHERE, GROUP BY,
 		// HAVING, projection and sorting in the enclosing query still count
@@ -203,7 +203,7 @@ func executeTypedPlan(q Query, evaluation ledger.Evaluation, rowCeiling int, bud
 		if table == "" {
 			return typedPlan{}, locatedQueryError(typedFailure("unknown-table", "unknown typed source %q", q.From), q.fromSpan, "compile")
 		}
-		compiler = typedCompiler{table: table}
+		compiler = typedCompiler{table: table, context: queryContext{evaluation: evaluation}}
 		expandStandardWildcard(&q, table)
 	}
 	if err := resolveTypedAliases(&q); err != nil {
@@ -514,6 +514,7 @@ func (e typedExpr) eval(row Row, rows []Row) (any, error) { return e.value(row, 
 type typedCompiler struct {
 	table   string
 	derived *typedDerivedTable
+	context queryContext
 }
 
 func (compiler typedCompiler) compile(expr Expr) (typedExpr, error) {
@@ -551,6 +552,13 @@ func (compiler typedCompiler) compile(expr Expr) (typedExpr, error) {
 func (compiler typedCompiler) compileNode(expr Expr) (typedExpr, error) {
 	result := typedExpr{name: expr.String(), value: expr.eval}
 	switch node := expr.(type) {
+	case intervalExpr:
+		// interval() is a calendar period value, so it has no scalar type.
+		if _, err := compiler.compile(node.text); err != nil {
+			return typedExpr{}, err
+		}
+		result.kind, result.nullable = "interval", false
+		result.value = node.eval
 	case derivedColumnExpr:
 		index, exists := compiler.derived.byID[node.id]
 		if !exists {
@@ -578,7 +586,7 @@ func (compiler typedCompiler) compileNode(expr Expr) (typedExpr, error) {
 			return result, nil
 		}
 		switch strings.ToLower(node.name) {
-		case "account":
+		case "id", "account":
 			result.kind = "string"
 		case "currency", "narration", "flag", "type", "description":
 			result.kind = "string"
@@ -732,25 +740,50 @@ func (compiler typedCompiler) compileNode(expr Expr) (typedExpr, error) {
 		result.nullable = left.nullable || right.nullable
 		result.grouped = left.grouped || right.grouped
 		switch node.operator {
-		case "+", "-", "*", "/":
-			if !numericKind(left.kind) || !numericKind(right.kind) {
-				return typedExpr{}, typedFailure("type-mismatch", "arithmetic requires numeric types")
-			}
-			result.kind = "integer"
-			if left.kind == "decimal" || right.kind == "decimal" {
-				result.kind = "decimal"
-			}
-			if node.operator == "/" && result.kind == "integer" {
-				return typedExpr{}, typedFailure("unsupported-capability", "integer division yields an unsupported float type")
-			}
-			if node.operator == "/" {
-				result.nullable = true
+		case "+", "-", "*", "/", "%":
+			switch {
+			case node.operator == "+" && left.kind == "string" && right.kind == "string":
+				result.kind = "string"
+			case node.operator == "+" && left.kind == "interval" && right.kind == "interval",
+				node.operator == "-" && left.kind == "interval" && right.kind == "interval":
+				result.kind = "interval"
+			case node.operator == "+" && left.kind == "date" && right.kind == "interval",
+				node.operator == "+" && left.kind == "interval" && right.kind == "date",
+				node.operator == "-" && left.kind == "date" && right.kind == "interval":
+				result.kind = "date"
+			case node.operator == "+" && left.kind == "date" && right.kind == "integer",
+				node.operator == "+" && left.kind == "integer" && right.kind == "date",
+				node.operator == "-" && left.kind == "date" && right.kind == "integer":
+				result.kind = "date"
+			case node.operator == "-" && left.kind == "date" && right.kind == "date":
+				result.kind = "integer"
+			case numericKind(left.kind) && numericKind(right.kind):
+				result.kind = "integer"
+				if left.kind == "decimal" || right.kind == "decimal" {
+					result.kind = "decimal"
+				}
+				if left.kind == "interval" && right.kind == "interval" {
+					result.kind = "interval"
+				}
+				if node.operator == "/" {
+					// BeanQuery divides integers exactly and returns Decimal.
+					result.kind = "decimal"
+				}
+				if node.operator == "/" || node.operator == "%" {
+					result.nullable = true
+				}
+			default:
+				return typedExpr{}, typedFailure("type-mismatch", "no typed signature for %s on %s and %s", node.operator, left.kind, right.kind)
 			}
 		case "and", "or":
 			// These operators accept truth values of any supported source type.
-		case "~":
+		case "~", "!~", "?~":
 			if left.kind != "string" || right.kind != "string" {
 				return typedExpr{}, typedFailure("type-mismatch", "regular expression requires string types")
+			}
+		case "in", "not in":
+			if right.kind != "set<string>" && right.kind != "dictionary" && right.kind != "list" {
+				return typedExpr{}, typedFailure("type-mismatch", "membership requires a set, dictionary, or list operand")
 			}
 		default:
 			if left.kind == "bool" || right.kind == "bool" || left.kind == "null" || right.kind == "null" {
@@ -820,7 +853,7 @@ func (compiler typedCompiler) compileNode(expr Expr) (typedExpr, error) {
 			if node.operator == "/" && rv.(ledger.Decimal).IsZero() {
 				return nil, nil
 			}
-			if (left.kind == "string" || left.kind == "date") && node.operator != "~" {
+			if (left.kind == "string" || left.kind == "date") && orderingComparison(node.operator) {
 				comparison := strings.Compare(lv.(string), rv.(string))
 				switch node.operator {
 				case "=":
@@ -837,8 +870,26 @@ func (compiler typedCompiler) compileNode(expr Expr) (typedExpr, error) {
 					return comparison >= 0, nil
 				}
 			}
-			if node.operator == "~" {
+			switch node.operator {
+			case "~":
 				return boundedRegex(row, rows, lv, rv)
+			case "!~":
+				value, err := boundedRegex(row, rows, lv, rv)
+				if err != nil || value == nil {
+					return nil, err
+				}
+				return !value.(bool), nil
+			case "?~":
+				return boundedRegex(row, rows, rv, lv)
+			case "in", "not in":
+				value, err := typedMembership(lv, rv)
+				if err != nil {
+					return nil, err
+				}
+				if node.operator == "not in" {
+					value = !value
+				}
+				return value, nil
 			}
 			return node.evalComparison(lv, rv)
 		}
@@ -854,6 +905,9 @@ func (compiler typedCompiler) compileNode(expr Expr) (typedExpr, error) {
 			result = withDecimalCalculation(result, calculate)
 		}
 	case functionExpr:
+		if compiled, handled, err := compiler.compileScalar(node); handled {
+			return compiled, err
+		}
 		switch node.name {
 		case "abs", "length", "count", "sum", "first", "last", "min", "max", "year", "month", "day", "meta", "entry_meta", "any_meta", "units", "cost", "number", "currency", "str", "decimal", "date", "bool", "int":
 		default:
@@ -1079,13 +1133,39 @@ func (compiler typedCompiler) compileNode(expr Expr) (typedExpr, error) {
 			bound := functionExpr{name: "count", args: []Expr{arg}}
 			result.value = func(_ Row, rows []Row) (any, error) { return bound.evalCount(rows) }
 		case "abs":
-			if arg.kind != "decimal" {
+			switch arg.kind {
+			case "decimal":
+				result.kind = arg.kind
+				result = withDecimalCalculation(result, func(row Row, rows []Row) (any, error) {
+					return contextualUnary(arg, false, row, rows)
+				})
+			case "position", "inventory":
+				result.kind = arg.kind
+				result.value = func(row Row, rows []Row) (any, error) {
+					value, err := arg.eval(row, rows)
+					if err != nil || value == nil {
+						return nil, err
+					}
+					absolute := func(amount amountValue) amountValue {
+						if amount.Number.Sign() >= 0 {
+							return amount
+						}
+						return amountValue{Number: amount.Number.Neg(), Currency: amount.Currency, Text: ""}
+					}
+					if position, ok := value.(positionValue); ok {
+						position.Units = absolute(position.Units)
+						return position, nil
+					}
+					reduced := inventoryAccumulator{}
+					for _, position := range value.(inventoryValue) {
+						position.Units = absolute(position.Units)
+						reduced.add(position)
+					}
+					return reduced.value(), nil
+				}
+			default:
 				return typedExpr{}, typedFailure("type-mismatch", "no typed signature for abs(%s)", arg.kind)
 			}
-			result.kind = arg.kind
-			result = withDecimalCalculation(result, func(row Row, rows []Row) (any, error) {
-				return contextualUnary(arg, false, row, rows)
-			})
 		case "length":
 			if arg.kind != "string" {
 				return typedExpr{}, typedFailure("type-mismatch", "no typed signature for length(%s)", arg.kind)
@@ -1179,6 +1259,12 @@ func encodeTypedCell(kind string, value any, depth int, budget *executionBudget)
 			return Cell{}, typedFailure("type-mismatch", "date result has type %T", value)
 		}
 		return Cell{Type: kind, Value: value}, nil
+	case "interval":
+		interval, ok := value.(Interval)
+		if !ok {
+			return Cell{}, typedFailure("type-mismatch", "interval result has type %T", value)
+		}
+		return Cell{Type: kind, Value: interval}, nil
 	case "bool":
 		if _, ok := value.(bool); !ok {
 			return Cell{}, typedFailure("type-mismatch", "bool result has type %T", value)
@@ -1298,6 +1384,15 @@ func standardExprName(expr Expr) string {
 		return "-" + standardExprName(node.inner)
 	}
 	return expr.String()
+}
+
+func orderingComparison(operator string) bool {
+	switch operator {
+	case "=", "!=", "<>", "<", "<=", ">", ">=":
+		return true
+	default:
+		return false
+	}
 }
 
 func numericKind(kind string) bool { return kind == "integer" || kind == "decimal" }

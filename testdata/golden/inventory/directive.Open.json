@@ -1,0 +1,78 @@
+{
+  "declared_type_consistent": true,
+  "fixture": "testdata/golden/inventory/directives.bean",
+  "fixture_sha256": "8f0ce3d1d1439d7a5fd44f59894e675be2c5b51cb1e8b706138af36b18213005",
+  "id": "directive.Open",
+  "kind": "accounting-directive",
+  "loader_errors": [],
+  "oracle": {
+    "beancount": "3.2.3",
+    "beanquery": "0.2.0"
+  },
+  "oracle_type": "open",
+  "query": "SELECT open AS v FROM #accounts LIMIT 1",
+  "rows": [
+    {
+      "type": "open",
+      "value": [
+        {
+          "key": "account",
+          "value": {
+            "type": "string",
+            "value": "Assets:Cash"
+          }
+        },
+        {
+          "key": "booking",
+          "value": {
+            "type": "null"
+          }
+        },
+        {
+          "key": "currencies",
+          "value": {
+            "type": "list",
+            "value": [
+              {
+                "type": "string",
+                "value": "USD"
+              }
+            ]
+          }
+        },
+        {
+          "key": "date",
+          "value": {
+            "type": "date",
+            "value": "2020-01-01"
+          }
+        },
+        {
+          "key": "meta",
+          "value": {
+            "type": "dictionary",
+            "value": [
+              {
+                "key": "filename",
+                "value": {
+                  "type": "string",
+                  "value": "testdata/golden/inventory/directives.bean"
+                }
+              },
+              {
+                "key": "lineno",
+                "value": {
+                  "type": "integer",
+                  "value": "5"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "schema_version": 1,
+  "status": "ok",
+  "type": "open"
+}

@@ -94,6 +94,10 @@ type Evaluation struct {
 	Options            map[string]string
 	Diagnostics        []diagnostic.Diagnostic
 	Valid              bool
+	// EntryPath is the top-level ledger file this evaluation came from. Query
+	// directive ids normalize source filenames relative to its directory so a
+	// hash does not depend on the checkout location.
+	EntryPath string
 }
 
 // Evaluate evaluates parsed files in include traversal order. It is pure with
@@ -176,6 +180,9 @@ func evaluateOrder(graph *source.Graph, parsed map[source.FileID]*File, options 
 	}
 	e.options.InferDecimalTolerance = true
 	e.toleranceMultiplier, _ = ParseDecimal("0.5")
+	if graph != nil {
+		e.result.EntryPath = graph.Path(graph.Entry)
+	}
 	e.result.SemanticsProfile = options.SemanticsProfile
 	e.result.EvaluationRevision = options.SemanticsProfile.EvaluationRevision()
 	e.result.ActiveExtensions = []string{}
@@ -225,8 +232,11 @@ func evaluateOrder(graph *source.Graph, parsed map[source.FileID]*File, options 
 	for _, item := range items {
 		e.evaluateDirective(item.file, item.directive)
 	}
+	// Upstream reports a pad that no balance assertion consumes as PadError, an
+	// error that invalidates the ledger. Keeping it as a warning would let a
+	// ledger that Beancount rejects look valid here.
 	for account, pad := range e.pads {
-		e.add("W-EVAL-PAD-UNUSED", diagnostic.Warning, pad.Span(), e.pathFor(pad.Span()))
+		e.add("E-EVAL-PAD-UNUSED", diagnostic.Error, pad.Span(), e.pathFor(pad.Span()))
 		_ = account
 	}
 	e.finish()
@@ -287,6 +297,9 @@ type pendingBalance struct {
 	tolerance Decimal
 	span      source.Span
 	path      string
+	// entry indexes the recorded entry so the observed difference can be
+	// written back onto the directive the source tables read.
+	entry int
 }
 
 func (e *evaluator) evaluateFile(fileID source.FileID, parsed map[source.FileID]*File) {
@@ -1461,8 +1474,13 @@ func (e *evaluator) balance(d Balance) {
 	}
 	if account, ok := e.accounts[d.Account]; ok {
 		if pad, hasPad := e.pads[d.Account]; hasPad {
-			e.applyPad(d, pad, account)
-			delete(e.pads, d.Account)
+			// A pad is only consumed when it actually inserts a padding
+			// entry. Upstream keeps reporting the pad as unused when the
+			// assertion already matched, so leave it active for a later
+			// assertion and let the unused-pad error fire otherwise.
+			if e.applyPad(d, pad, account) {
+				delete(e.pads, d.Account)
+			}
 		}
 	}
 	tolerance := e.options.DefaultTolerance
@@ -1475,7 +1493,7 @@ func (e *evaluator) balance(d Balance) {
 			e.add("E-EVAL-TOLERANCE", diagnostic.Error, d.Span(), e.pathFor(d.Span()))
 			return
 		}
-		e.pending = append(e.pending, pendingBalance{account: d.Account, currency: currency, date: d.Date, expected: DecimalFromNumber(d.Amount.Number), tolerance: tolerance, span: d.Span(), path: e.pathFor(d.Span())})
+		e.pending = append(e.pending, e.pendingBalanceFor(d, currency, tolerance))
 		return
 	}
 	if d.Tolerance != nil {
@@ -1498,21 +1516,60 @@ func (e *evaluator) balance(d Balance) {
 	if tolerance.IsZero() && e.options.InferDecimalTolerance {
 		tolerance = inferredToleranceForCurrency([]Posting{{Units: &d.Amount}}, currency)
 	}
-	e.pending = append(e.pending, pendingBalance{account: d.Account, currency: currency, date: d.Date, expected: DecimalFromNumber(d.Amount.Number), tolerance: tolerance, span: d.Span(), path: e.pathFor(d.Span())})
+	e.pending = append(e.pending, e.pendingBalanceFor(d, currency, tolerance))
 }
 
-func (e *evaluator) applyPad(balance Balance, pad Pad, target *accountWork) {
+func (e *evaluator) pendingBalanceFor(d Balance, currency string, tolerance Decimal) pendingBalance {
+	pending := pendingBalance{account: d.Account, currency: currency, date: d.Date, expected: DecimalFromNumber(d.Amount.Number), tolerance: tolerance, span: d.Span(), path: e.pathFor(d.Span()), entry: -1}
+	for i := len(e.result.Entries) - 1; i >= 0; i-- {
+		if _, ok := e.result.Entries[i].Directive.(Balance); ok {
+			pending.entry = i
+			break
+		}
+	}
+	return pending
+}
+
+// newAmount builds an exact amount whose source spelling and rational agree,
+// so downstream tolerances and text output stay consistent.
+func newAmount(value Decimal, currency string) *Amount {
+	text := value.String()
+	number, _ := ParseDecimal(text)
+	return &Amount{Number: Number{Raw: text, Rat: number.Rat(), DecimalText: text}, Currency: currency}
+}
+
+// observeBalance records the assertion's actual difference on the recorded
+// directive so the balance source table can report the discrepancy column.
+func (e *evaluator) observeBalance(pending pendingBalance, actual Decimal) {
+	if pending.entry < 0 || pending.entry >= len(e.result.Entries) {
+		return
+	}
+	record := &e.result.Entries[pending.entry]
+	directive, ok := record.Directive.(Balance)
+	if !ok {
+		return
+	}
+	difference := actual.Sub(pending.expected)
+	if difference.IsZero() {
+		directive.DiffAmount = nil
+	} else {
+		directive.DiffAmount = newAmount(difference, directive.Amount.Currency)
+	}
+	record.Directive = directive
+}
+
+func (e *evaluator) applyPad(balance Balance, pad Pad, target *accountWork) bool {
 	sourceAccount, ok := e.accounts[pad.SourceAccount]
 	if !ok || sourceAccount.state.Closed != nil {
 		e.add("E-EVAL-PAD", diagnostic.Error, pad.Span(), e.pathFor(pad.Span()))
-		return
+		return false
 	}
 	currency := balance.Amount.Currency
 	expected := DecimalFromNumber(balance.Amount.Number)
 	actual := target.state.Balances[currency]
 	difference := expected.Sub(actual)
 	if difference.IsZero() {
-		return
+		return false
 	}
 	target.state.Balances[currency] = decimalAdd(target.state.Balances[currency], difference)
 	sourceAccount.state.Balances[currency] = decimalAdd(sourceAccount.state.Balances[currency], difference.Neg())
@@ -1527,8 +1584,10 @@ func (e *evaluator) applyPad(balance Balance, pad Pad, target *accountWork) {
 	)
 	diffAmt := numberFromDecimal(difference)
 	negDiffAmt := numberFromDecimal(difference.Neg())
+	// The narration quotes the difference with the assertion's quantum, so a
+	// whole-number difference still prints with the declared precision.
 	narration := fmt.Sprintf("(Padding inserted for Balance of %s %s for difference %s %s)",
-		balance.Amount.Number.Raw, currency, diffAmt.Raw, currency)
+		balance.Amount.Number.Raw, currency, quantizedDiffText(difference, balance.Amount.Number.Raw), currency)
 	syntheticTx := &Transaction{
 		DirectiveBase: DirectiveBase{At: pad.Span()},
 		Date:          pad.Date,
@@ -1562,6 +1621,7 @@ func (e *evaluator) applyPad(balance Balance, pad Pad, target *accountWork) {
 	if !inserted {
 		e.result.Entries = append(e.result.Entries, syntheticRec)
 	}
+	return true
 }
 
 // finish closes out evaluation: each deferred balance assertion is replayed
@@ -1580,6 +1640,7 @@ func (e *evaluator) finish() {
 				actual = actual.Add(event.amount)
 			}
 		}
+		e.observeBalance(pending, actual)
 		if !within(actual.Sub(pending.expected), pending.tolerance) {
 			e.add("E-EVAL-BALANCE", diagnostic.Error, pending.span, pending.path)
 		}
@@ -1811,4 +1872,32 @@ func directiveLine(d Directive) Decimal {
 		}
 	}
 	return NewDecimal(new(big.Rat).SetInt64(int64(d.Span().StartLine)))
+}
+
+// quantizedDiffText renders a difference with at least the quantum implied by
+// the assertion amount, matching the padded transaction narration upstream.
+func quantizedDiffText(value Decimal, reference string) string {
+	text := value.String()
+	if strings.Contains(text, "/") {
+		return text
+	}
+	quantum := 0
+	if at := strings.IndexByte(reference, '.'); at >= 0 {
+		quantum = len(reference) - at - 1
+	}
+	at := strings.IndexByte(text, '.')
+	current := 0
+	if at >= 0 {
+		current = len(text) - at - 1
+	}
+	if current >= quantum {
+		return text
+	}
+	if at < 0 {
+		text += "."
+	}
+	for i := current; i < quantum; i++ {
+		text += "0"
+	}
+	return text
 }

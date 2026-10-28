@@ -1,0 +1,10 @@
+;; Discrepancy probe: a failing balance assertion is the only way to
+;; produce a non-null diff_amount, so it stays in its own fixture.
+2020-01-01 open Assets:Cash USD
+2020-01-01 open Equity:Opening-Balances
+
+2020-01-02 * "Seed" "Opening"
+  Assets:Cash  -10.00 USD
+  Equity:Opening-Balances  10.00 USD
+
+2020-01-03 balance Assets:Cash -8.00 ~ 0.005 USD

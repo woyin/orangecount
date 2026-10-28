@@ -297,6 +297,8 @@ func FullSideFromBuild(path string, result snapshot.BuildResult) FullGolden {
 				kind = "ValidationError"
 			case "E-EVAL-BALANCE":
 				kind = "BalanceError"
+			case "E-EVAL-PAD-UNUSED":
+				kind = "PadError"
 			case "E-EVAL-INFER":
 				kind = "InterpolationError"
 			case "E-EVAL-INVENTORY":

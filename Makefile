@@ -5,7 +5,7 @@ NPM ?= npm
 
 .PHONY: all build test race fmt vet license licenses clean app \
 	web-test web-typecheck web-check web-build-check web-build-embedded check fixturegen visual-reference \
-	check-route-manifest check-provenance check-reference-output \
+	check-route-manifest check-provenance check-reference-output favagates paritygates genprediff \
 	golden-regen parity-diff parity-triage parity-report
 
 all: build
@@ -40,6 +40,10 @@ clean:
 ## Frontend/dev-only targets. These require Node and are NOT part of the
 ## Go runtime path: `make build`/`make test` above never invoke them.
 ## They are Prerequisite Phase 0 gate checks for the Fava transplant.
+##
+## The embedded UI lives in internal/web/assets/transplanted and is committed,
+## so a clean checkout builds and tests with Go alone. `make web-build-embedded`
+## is the only target that rewrites those committed files.
 
 # Route/state manifest completeness (Prerequisite Phase 0, deliverable A).
 check-route-manifest:
@@ -72,9 +76,33 @@ web-check: web-test web-typecheck check
 web-build-check:
 	$(NPM) --prefix web run build:check
 
-# Copy the deterministic staged transplant into a separate embedded asset
-# namespace. The Go server selects it only with ORANGECOUNT_TRANSPLANTED_UI=1
-# until route gates and visual approval authorize the final cutover.
+# Fava cutover gate (tools/favagates): route manifest acceptance, approved
+# deviations, absence of the retired migration flag and legacy assets, and the
+# visual baseline matrix. The tool must be committed before this target can run
+# on a clean checkout; a missing tool is an error, never a silent pass.
+# Deliberately not a dependency of `check` yet: the gate still reports real
+# failures (non-accepted routes, missing baselines), so `check` would go red.
+favagates:
+	$(GO) run ./tools/favagates
+
+# Superset gate (tools/paritygates): every upstream inventory item is verified or
+# carries an approved exclusion with owner and date. Same commit prerequisite and
+# same deliberate exclusion from `check`.
+paritygates:
+	$(GO) run ./tools/paritygates
+
+# Generative differential (superset gate 3): generate ledgers from a fixed seed,
+# evaluate each with the Go engine and the pinned Beancount oracle, and compare
+# six dimensions of accounting state. Differences are promoted to paired
+# .bean/.json regressions under testdata/fixtures/gen. Requires `uv` and the
+# committed tools/reference environment; never part of `make build`.
+genprediff:
+	$(GO) run ./tools/genprediff
+
+# Rebuild the transplanted shell and copy it into the embedded asset tree
+# (internal/web/assets/transplanted). This is the only entry point that updates
+# the embedded UI; `make build` and `make test` never need Node because the
+# resulting assets are committed.
 web-build-embedded:
 	$(NPM) --prefix web run build:embedded
 

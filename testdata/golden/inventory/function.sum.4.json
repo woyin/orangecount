@@ -1,0 +1,43 @@
+{
+  "declared_type_consistent": true,
+  "fixture": "testdata/golden/inventory/fixture.bean",
+  "fixture_sha256": "e1481a647a86bcaa40e76f3f1c0965c688d26eef2a0e6fe1922086b96d6a803a",
+  "id": "function.sum.4",
+  "kind": "function",
+  "loader_errors": [],
+  "oracle": {
+    "beancount": "3.2.3",
+    "beanquery": "0.2.0"
+  },
+  "oracle_type": "inventory",
+  "query": "SELECT sum(balance) AS v FROM #postings",
+  "rows": [
+    {
+      "type": "inventory",
+      "value": [
+        {
+          "cost": null,
+          "units": {
+            "currency": "USD",
+            "number": "-590.00"
+          }
+        },
+        {
+          "cost": {
+            "currency": "USD",
+            "date": "2020-01-03",
+            "label": "lot-a",
+            "number": "100.00"
+          },
+          "units": {
+            "currency": "HOOL",
+            "number": "7"
+          }
+        }
+      ]
+    }
+  ],
+  "schema_version": 1,
+  "status": "ok",
+  "type": "inventory"
+}

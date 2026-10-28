@@ -1,0 +1,1841 @@
+{
+  "fixture_sha256": "e1481a647a86bcaa40e76f3f1c0965c688d26eef2a0e6fe1922086b96d6a803a",
+  "items": [
+    {
+      "id": "directive.Balance",
+      "kind": "accounting-directive",
+      "status": "ok"
+    },
+    {
+      "id": "directive.Close",
+      "kind": "accounting-directive",
+      "status": "ok"
+    },
+    {
+      "id": "directive.Commodity",
+      "kind": "accounting-directive",
+      "status": "ok"
+    },
+    {
+      "id": "directive.Custom",
+      "kind": "accounting-directive",
+      "status": "ok"
+    },
+    {
+      "id": "directive.Document",
+      "kind": "accounting-directive",
+      "status": "ok"
+    },
+    {
+      "id": "directive.Event",
+      "kind": "accounting-directive",
+      "status": "ok"
+    },
+    {
+      "id": "directive.Note",
+      "kind": "accounting-directive",
+      "status": "ok"
+    },
+    {
+      "id": "directive.Open",
+      "kind": "accounting-directive",
+      "status": "ok"
+    },
+    {
+      "id": "directive.Pad",
+      "kind": "accounting-directive",
+      "status": "ok"
+    },
+    {
+      "id": "directive.Price",
+      "kind": "accounting-directive",
+      "status": "ok"
+    },
+    {
+      "id": "directive.Query",
+      "kind": "accounting-directive",
+      "status": "ok"
+    },
+    {
+      "id": "directive.Transaction",
+      "kind": "accounting-directive",
+      "status": "ok"
+    },
+    {
+      "id": "function.abs.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.abs.1",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.abs.2",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.account_sortkey.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.any_meta.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.bool.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.close_date.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.commodity.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.commodity_meta.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.commodity_meta.1",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.convert.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.convert.1",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.convert.2",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.convert.3",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.convert.4",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.convert.5",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.cost.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.cost.1",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.count.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.count.1",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.currency.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.currency_meta.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.currency_meta.1",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.date.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.date.1",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.date.2",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.date.3",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.date_add.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.date_bin.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.date_bin.1",
+      "kind": "function",
+      "status": "error"
+    },
+    {
+      "id": "function.date_diff.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.date_part.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.date_trunc.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.day.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.decimal.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.decimal.1",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.decimal.2",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.decimal.3",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.decimal.4",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.empty.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.entry_meta.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.filter_currency.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.filter_currency.1",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.findfirst.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.first.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.getitem.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.getitem.1",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.getprice.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.getprice.1",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.grep.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.grepn.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.has_account.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.int.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.int.1",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.int.2",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.int.3",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.int.4",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.interval.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.joinstr.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.last.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.leaf.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.length.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.length.1",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.length.2",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.lower.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.max.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.maxwidth.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.meta.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.min.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.month.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.neg.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.neg.1",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.neg.2",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.neg.3",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.number.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.only.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.open_date.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.open_meta.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.open_meta.1",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.parent.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.parse_date.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.parse_date.1",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.possign.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.possign.1",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.possign.2",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.possign.3",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.quarter.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.repr.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.root.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.root.1",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.round.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.round.1",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.round.2",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.round.3",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.safediv.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.safediv.1",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.splitcomp.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.str.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.subst.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.substr.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.sum.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.sum.1",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.sum.2",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.sum.3",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.sum.4",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.today.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.units.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.units.1",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.upper.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.value.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.value.1",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.value.2",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.value.3",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.weekday.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.year.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "function.yearmonth.0",
+      "kind": "function",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Add.0",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Add.1",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Add.2",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Add.3",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Add.4",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Add.5",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Add.6",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Add.7",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Add.8",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Add.9",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Between.0",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Between.1",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Between.2",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Between.3",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Between.4",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Between.5",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Between.6",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Between.7",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Between.8",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Between.9",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Div.0",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Div.1",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Div.2",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Div.3",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Equal.0",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Equal.1",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Equal.2",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Equal.3",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Equal.4",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Equal.5",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Greater.0",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Greater.1",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Greater.2",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Greater.3",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Greater.4",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Greater.5",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.GreaterEq.0",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.GreaterEq.1",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.GreaterEq.2",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.GreaterEq.3",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.GreaterEq.4",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.GreaterEq.5",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.In.0",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.In.1",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.In.2",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.IsNotNull.0",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.IsNull.0",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Less.0",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Less.1",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Less.2",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Less.3",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Less.4",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Less.5",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.LessEq.0",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.LessEq.1",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.LessEq.2",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.LessEq.3",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.LessEq.4",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.LessEq.5",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Match.0",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Matches.0",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Mod.0",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Mod.1",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Mod.2",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Mod.3",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Mul.0",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Mul.1",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Mul.2",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Mul.3",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Neg.0",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Neg.1",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Not.0",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.NotEqual.0",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.NotEqual.1",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.NotEqual.2",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.NotEqual.3",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.NotEqual.4",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.NotEqual.5",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.NotIn.0",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.NotIn.1",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.NotIn.2",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.NotMatch.0",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Sub.0",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Sub.1",
+      "kind": "operator",
+      "status": "error"
+    },
+    {
+      "id": "operator.Sub.2",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Sub.3",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Sub.4",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Sub.5",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Sub.6",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Sub.7",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "operator.Sub.8",
+      "kind": "operator",
+      "status": "ok"
+    },
+    {
+      "id": "option.account_current_conversions",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.account_current_earnings",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.account_previous_balances",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.account_previous_conversions",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.account_previous_earnings",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.account_rounding",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.account_unrealized_gains",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.allow_deprecated_none_for_tags_and_links",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.allow_pipe_separator",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.booking_method",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.commodities",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.conversion_currency",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.dcontext",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.display_precision",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.documents",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.filename",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.include",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.infer_tolerance_from_cost",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.inferred_tolerance_default",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.inferred_tolerance_multiplier",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.input_hash",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.insert_pythonpath",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.long_string_maxlines",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.name_assets",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.name_equity",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.name_expenses",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.name_income",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.name_liabilities",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.operating_currency",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.plugin",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.plugin_processing_mode",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.render_commas",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.title",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.tolerance_multiplier",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "option.use_precise_interpolation",
+      "kind": "accounting-option",
+      "status": "ok"
+    },
+    {
+      "id": "syntax.Add",
+      "kind": "syntax",
+      "status": "ok"
+    },
+    {
+      "id": "syntax.And",
+      "kind": "syntax",
+      "status": "ok"
+    },
+    {
+      "id": "syntax.Div",
+      "kind": "syntax",
+      "status": "ok"
+    },
+    {
+      "id": "syntax.Equal",
+      "kind": "syntax",
+      "status": "ok"
+    },
+    {
+      "id": "syntax.From",
+      "kind": "syntax",
+      "status": "ok"
+    },
+    {
+      "id": "syntax.Greater",
+      "kind": "syntax",
+      "status": "ok"
+    },
+    {
+      "id": "syntax.GreaterEq",
+      "kind": "syntax",
+      "status": "ok"
+    },
+    {
+      "id": "syntax.In",
+      "kind": "syntax",
+      "status": "ok"
+    },
+    {
+      "id": "syntax.IsNotNull",
+      "kind": "syntax",
+      "status": "ok"
+    },
+    {
+      "id": "syntax.IsNull",
+      "kind": "syntax",
+      "status": "ok"
+    },
+    {
+      "id": "syntax.Less",
+      "kind": "syntax",
+      "status": "ok"
+    },
+    {
+      "id": "syntax.LessEq",
+      "kind": "syntax",
+      "status": "ok"
+    },
+    {
+      "id": "syntax.Match",
+      "kind": "syntax",
+      "status": "ok"
+    },
+    {
+      "id": "syntax.Matches",
+      "kind": "syntax",
+      "status": "ok"
+    },
+    {
+      "id": "syntax.Mod",
+      "kind": "syntax",
+      "status": "ok"
+    },
+    {
+      "id": "syntax.Mul",
+      "kind": "syntax",
+      "status": "ok"
+    },
+    {
+      "id": "syntax.Neg",
+      "kind": "syntax",
+      "status": "ok"
+    },
+    {
+      "id": "syntax.Node",
+      "kind": "syntax",
+      "status": "ok"
+    },
+    {
+      "id": "syntax.Not",
+      "kind": "syntax",
+      "status": "ok"
+    },
+    {
+      "id": "syntax.NotEqual",
+      "kind": "syntax",
+      "status": "ok"
+    },
+    {
+      "id": "syntax.NotIn",
+      "kind": "syntax",
+      "status": "ok"
+    },
+    {
+      "id": "syntax.NotMatch",
+      "kind": "syntax",
+      "status": "ok"
+    },
+    {
+      "id": "syntax.Or",
+      "kind": "syntax",
+      "status": "ok"
+    },
+    {
+      "id": "syntax.Ordering",
+      "kind": "syntax",
+      "status": "ok"
+    },
+    {
+      "id": "syntax.Sub",
+      "kind": "syntax",
+      "status": "ok"
+    },
+    {
+      "id": "table.accounts.account",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.accounts.close",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.accounts.open",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.balances.account",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.balances.amount",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.balances.date",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.balances.discrepancy",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.balances.meta",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.balances.tolerance",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.commodities.date",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.commodities.meta",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.commodities.name",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.documents.account",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.documents.date",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.documents.filename",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.documents.links",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.documents.meta",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.documents.tags",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.entries.accounts",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.entries.date",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.entries.day",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.entries.description",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.entries.filename",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.entries.flag",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.entries.id",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.entries.lineno",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.entries.links",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.entries.meta",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.entries.month",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.entries.narration",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.entries.payee",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.entries.tags",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.entries.type",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.entries.year",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.events.date",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.events.description",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.events.meta",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.events.type",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.notes.account",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.notes.comment",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.notes.date",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.notes.links",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.notes.meta",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.notes.tags",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.account",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.accounts",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.balance",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.cost_currency",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.cost_date",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.cost_label",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.cost_number",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.currency",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.date",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.day",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.description",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.entry",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.filename",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.flag",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.id",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.lineno",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.links",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.location",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.meta",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.month",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.narration",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.number",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.other_accounts",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.payee",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.position",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.posting_flag",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.price",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.tags",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.type",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.weight",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.postings.year",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.prices.amount",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.prices.currency",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.prices.date",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.prices.meta",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.transactions.accounts",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.transactions.date",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.transactions.flag",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.transactions.links",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.transactions.meta",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.transactions.narration",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.transactions.payee",
+      "kind": "column",
+      "status": "ok"
+    },
+    {
+      "id": "table.transactions.tags",
+      "kind": "column",
+      "status": "ok"
+    }
+  ],
+  "oracle": {
+    "beancount": "3.2.3",
+    "beanquery": "0.2.0"
+  },
+  "schema_version": 1,
+  "source_inventory_sha256": "e6e01402ff35bf8d5c4bc6607a1e24ed1ad07765c3e167bf8c18b17eb3d1b4de"
+}

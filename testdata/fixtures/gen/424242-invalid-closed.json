@@ -1,0 +1,34 @@
+{
+  "actual": {
+    "schema_version": 2,
+    "fixture": "424242-invalid-closed.bean",
+    "oracle_engine": "",
+    "valid": false,
+    "errors": [
+      {
+        "type": "ValidationError",
+        "line": 16
+      }
+    ],
+    "state": {
+      "entries": [],
+      "balances": {}
+    }
+  },
+  "oracle": {
+    "schema_version": 2,
+    "fixture": "424242-invalid-closed.bean",
+    "oracle_engine": "beancount-python-3.2.3",
+    "valid": false,
+    "errors": [
+      {
+        "type": "ValidationError",
+        "line": 15
+      }
+    ],
+    "state": {
+      "entries": [],
+      "balances": {}
+    }
+  }
+}

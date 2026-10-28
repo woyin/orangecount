@@ -1,0 +1,44 @@
+{
+  "declared_type_consistent": true,
+  "dynamic": "ast-node",
+  "fixture": "testdata/golden/inventory/fixture.bean",
+  "fixture_sha256": "e1481a647a86bcaa40e76f3f1c0965c688d26eef2a0e6fe1922086b96d6a803a",
+  "id": "syntax.Node",
+  "kind": "syntax",
+  "loader_errors": [],
+  "oracle": {
+    "beancount": "3.2.3",
+    "beanquery": "0.2.0"
+  },
+  "oracle_type": "object",
+  "query": "SELECT account AS v FROM #accounts ORDER BY account DESC",
+  "rows": [
+    {
+      "type": "string",
+      "value": "Column"
+    },
+    {
+      "type": "string",
+      "value": "Column"
+    },
+    {
+      "type": "string",
+      "value": "OrderBy"
+    },
+    {
+      "type": "string",
+      "value": "Select"
+    },
+    {
+      "type": "string",
+      "value": "Table"
+    },
+    {
+      "type": "string",
+      "value": "Target"
+    }
+  ],
+  "schema_version": 1,
+  "status": "ok",
+  "type": "string"
+}

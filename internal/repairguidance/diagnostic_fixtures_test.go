@@ -43,6 +43,7 @@ func TestEveryGuidanceCodeHasARepresentativeTrigger(t *testing.T) {
 		{code: "E-EVAL-INFER", text: "2000-01-01 open Assets:Cash USD\n2000-01-01 open Equity:Opening USD\n2000-01-02 * \"ambiguous\"\n  Assets:Cash\n  Equity:Opening\n"},
 		{code: "E-EVAL-BALANCE", text: "2000-01-01 open Assets:Cash USD\n2000-01-01 open Equity:Opening USD\n2000-01-02 * \"seed\"\n  Assets:Cash 1 USD\n  Equity:Opening -1 USD\n2000-01-03 balance Assets:Cash 2 USD\n"},
 		{code: "E-EVAL-PAD", text: "2000-01-01 open Assets:Cash USD\n2000-01-02 pad Assets:Cash Equity:Missing\n2000-01-03 balance Assets:Cash 1 USD\n"},
+		{code: "E-EVAL-PAD-UNUSED", text: "2000-01-01 open Assets:Cash USD\n2000-01-01 open Equity:Opening USD\n2000-01-02 pad Assets:Cash Equity:Opening\n"},
 		{code: "E-EVAL-TOLERANCE", text: "2000-01-01 open Assets:Cash USD\n2000-01-02 balance Assets:Cash 0 USD ~ -0.01 USD\n"},
 		{code: "E-EVAL-OPTION", text: "option \"tolerance\" \"not-a-number\"\n"},
 		{code: "E-EVAL-INVENTORY", text: "2000-01-01 open Assets:Shares SH\n2000-01-01 open Assets:Cash USD\n2000-01-02 * \"buy\"\n  Assets:Shares 1 SH {10 USD}\n  Assets:Cash -10 USD\n2000-01-03 * \"sell too much\"\n  Assets:Shares -2 SH {10 USD}\n  Assets:Cash 20 USD\n"},

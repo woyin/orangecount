@@ -34,7 +34,8 @@ var guidanceFixtureManifest = map[string]struct {
 	"E-EVAL-CLOSE": {"lifecycle", PhaseSemantic}, "E-EVAL-POSTING": {"lifecycle", PhaseSemantic}, "E-EVAL-CURRENCY": {"currency", PhaseSemantic},
 	"E-EVAL-UNBALANCED": {"transaction", PhaseSemantic}, "E-EVAL-INFER": {"transaction", PhaseSemantic},
 	"E-EVAL-BALANCE": {"assertion", PhaseSemantic}, "E-EVAL-PAD": {"assertion", PhaseSemantic},
-	"E-EVAL-TOLERANCE": {"assertion", PhaseSemantic}, "E-EVAL-INVENTORY": {"inventory", PhaseSemantic},
+	"E-EVAL-PAD-UNUSED": {"assertion", PhaseSemantic},
+	"E-EVAL-TOLERANCE":  {"assertion", PhaseSemantic}, "E-EVAL-INVENTORY": {"inventory", PhaseSemantic},
 	"E-EVAL-OPTION": {"configuration", PhaseSemantic},
 }
 

@@ -1,0 +1,77 @@
+{
+  "declared_type_consistent": true,
+  "fixture": "testdata/golden/inventory/fixture.bean",
+  "fixture_sha256": "e1481a647a86bcaa40e76f3f1c0965c688d26eef2a0e6fe1922086b96d6a803a",
+  "id": "table.entries.links",
+  "kind": "column",
+  "loader_errors": [],
+  "oracle": {
+    "beancount": "3.2.3",
+    "beanquery": "0.2.0"
+  },
+  "oracle_type": "set",
+  "query": "SELECT links AS v FROM #entries",
+  "rows": [
+    {
+      "type": "null"
+    },
+    {
+      "type": "null"
+    },
+    {
+      "type": "null"
+    },
+    {
+      "type": "null"
+    },
+    {
+      "type": "null"
+    },
+    {
+      "type": "null"
+    },
+    {
+      "type": "null"
+    },
+    {
+      "type": "null"
+    },
+    {
+      "type": "null"
+    },
+    {
+      "type": "null"
+    },
+    {
+      "type": "set<string>",
+      "value": [
+        "doc"
+      ]
+    },
+    {
+      "type": "set<string>",
+      "value": [
+        "note"
+      ]
+    },
+    {
+      "type": "set<string>",
+      "value": [
+        "order"
+      ]
+    },
+    {
+      "type": "set<string>",
+      "value": [
+        "receipt"
+      ]
+    },
+    {
+      "type": "set<string>",
+      "value": []
+    }
+  ],
+  "schema_version": 1,
+  "status": "ok",
+  "type": "set<string>"
+}

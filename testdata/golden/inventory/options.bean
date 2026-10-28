@@ -1,0 +1,23 @@
+;; Option probe fixture: exercises the options a loader accepts.
+option "title" "Option probe"
+option "operating_currency" "USD"
+option "booking_method" "STRICT"
+option "render_commas" "TRUE"
+option "display_precision" "USD:2"
+option "inferred_tolerance_default" "USD:0.005"
+option "tolerance_multiplier" "0.5"
+option "infer_tolerance_from_cost" "TRUE"
+option "use_precise_interpolation" "TRUE"
+option "long_string_maxlines" "64"
+option "documents" "docs"
+
+2020-01-01 open Assets:Cash USD
+2020-01-01 open Equity:Opening-Balances
+
+2020-01-02 * "Grocer" "Food" #tag1 ^link1
+  Assets:Cash  -100.00 USD
+  Equity:Opening-Balances  100.00 USD
+
+2020-01-03 balance Assets:Cash -100.00 USD
+2020-01-04 commodity HOOL
+2020-01-05 price HOOL 110.00 USD

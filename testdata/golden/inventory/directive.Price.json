@@ -1,0 +1,26 @@
+{
+  "declared_type_consistent": true,
+  "fixture": "testdata/golden/inventory/directives.bean",
+  "fixture_sha256": "8f0ce3d1d1439d7a5fd44f59894e675be2c5b51cb1e8b706138af36b18213005",
+  "id": "directive.Price",
+  "kind": "accounting-directive",
+  "loader_errors": [],
+  "oracle": {
+    "beancount": "3.2.3",
+    "beanquery": "0.2.0"
+  },
+  "oracle_type": "amount",
+  "query": "SELECT amount AS v FROM #prices LIMIT 1",
+  "rows": [
+    {
+      "type": "amount",
+      "value": {
+        "currency": "USD",
+        "number": "110.00"
+      }
+    }
+  ],
+  "schema_version": 1,
+  "status": "ok",
+  "type": "amount"
+}

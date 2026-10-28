@@ -1,0 +1,23 @@
+{
+  "declared_type_consistent": true,
+  "fixture": "testdata/golden/inventory/options.bean",
+  "fixture_sha256": "2be2b06ddcfb046268e7a2a59f30e8be0c02e0a559ae2daa2bb863e0f4917fd3",
+  "id": "option.commodities",
+  "kind": "accounting-option",
+  "loader_errors": [],
+  "oracle": {
+    "beancount": "3.2.3",
+    "beanquery": "0.2.0"
+  },
+  "oracle_type": "str",
+  "query": "SELECT name AS v FROM #commodities",
+  "rows": [
+    {
+      "type": "string",
+      "value": "HOOL"
+    }
+  ],
+  "schema_version": 1,
+  "status": "ok",
+  "type": "string"
+}

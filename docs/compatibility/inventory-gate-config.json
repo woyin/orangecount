@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "note": "Registers the real OrangeCount entry points that gates 3..5 must find. A registration is not evidence by itself: the gate re-reads each file, checks the recorded markers, the fixed seed, the recorded pipeline wiring when one is claimed, and any committed run record. Gate 3: tools/genprediff runs the pinned Beancount 3.2.3 oracle against generated ledgers and promotes differences to testdata/fixtures/gen; its markers, seed and promotion corpus are verified. Gate 4: reads docs/compatibility/inventory-gate4-run.json, a real offline run of the public-fixture prefix differential (accepted_roundtrips=36, checkpoints=74). Gate 5 is registration-only: ORANGECOUNT_PRIVATE_LEDGER is not set on this host, so the private capture was NOT re-run.",
+  "gate3": {
+    "generative_differential": {
+      "path": "tools/genprediff",
+      "description": "Deterministic synthetic ledger generator with a fixed seed that evaluates every case with both the Go engine and the pinned Beancount 3.2.3 oracle and compares six dimensions: (1) validity, meaning the error-class set and its multiplicity; (2) ordered entries, compared in source order rather than as a sorted multiset; (3) the complete inventory after every single transaction, not only the final balances; (4) final balances including cost lots; (5) every price directive as date/base/quote/rate; (6) period income and expense totals per month and currency. Differences are promoted to paired .bean/.json regressions under testdata/fixtures/gen.",
+      "generative": true,
+      "differential": true,
+      "seed": 424242,
+      "markers": [
+        "const genDefaultSeed = 424242",
+        "func generateCases",
+        "func buildGoDimensions",
+        "func dimensionDifferences",
+        "orderedEntries",
+        "prefix_inventories",
+        "period_income",
+        "compat.FullGoldenDifferences",
+        "genprediff_oracle.py"
+      ],
+      "note": "No pipeline target is registered yet: the Makefile has no genprediff target, so this entry makes no wiring claim. Add one and record referenced_in/reference_token when it exists.",
+      "referenced_in": "Makefile",
+      "reference_token": "genprediff"
+    },
+    "promotion": {
+      "path": "testdata/fixtures/gen",
+      "description": "Fixed public regressions promoted from generative-differential differences.",
+      "fixtures": "testdata/fixtures/gen",
+      "markers": []
+    }
+  },
+  "gate4": {
+    "path": "tools/reference/verify_source_export.py",
+    "description": "Public-fixture prefix inventory differential: compares per-transaction checkpoint inventories and exact final balances between the pinned oracle and the Go export roundtrip.",
+    "markers": [
+      "Every transaction prefix",
+      "checkpoints"
+    ],
+    "referenced_in": "Makefile",
+    "reference_token": "source-export-oracle",
+    "evidence": "docs/evidence/f04-source-export-2026-10-02.md",
+    "evidence_markers": [
+      "逐交易共71个完整库存截点"
+    ],
+    "run_record": "docs/compatibility/inventory-gate4-run.json",
+    "run_command": "verify_source_export.py",
+    "run_outputs": [
+      "accepted_roundtrips",
+      "transaction_inventory_checkpoints"
+    ]
+  },
+  "gate5": {
+    "path": "tools/statecapture/main.go",
+    "description": "Read-only source-graph capture and full-ledger differential against the pinned oracle. The committed run record holds aggregate counts only; no ledger content, path, account, amount or date is stored.",
+    "markers": [
+      "never prints ledger content or source paths",
+      "capture must be outside repository"
+    ],
+    "referenced_in": "tools/reference/verify_full_ledger.py",
+    "reference_token": "tools/statecapture",
+    "evidence": "docs/evidence/a03-native-prices-2026-10-01.md",
+    "evidence_markers": [
+      "same_input_capture=true"
+    ],
+    "rerun_status": "rerun: 2026-10-28 以产品 owner 授权的私有账本真实执行；只读 capture，记录聚合计数",
+    "run_record": "docs/compatibility/inventory-gate5-run.json",
+    "run_command": "verify_full_ledger.py",
+    "run_outputs": [
+      "captured_files",
+      "oracle_entries",
+      "orangecount_entries"
+    ]
+  }
+}

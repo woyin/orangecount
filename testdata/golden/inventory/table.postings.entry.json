@@ -1,0 +1,710 @@
+{
+  "declared_type_consistent": true,
+  "fixture": "testdata/golden/inventory/fixture.bean",
+  "fixture_sha256": "e1481a647a86bcaa40e76f3f1c0965c688d26eef2a0e6fe1922086b96d6a803a",
+  "id": "table.postings.entry",
+  "kind": "column",
+  "loader_errors": [],
+  "oracle": {
+    "beancount": "3.2.3",
+    "beanquery": "0.2.0"
+  },
+  "oracle_type": "transaction",
+  "query": "SELECT entry AS v FROM #postings",
+  "rows": [
+    {
+      "type": "transaction",
+      "value": [
+        {
+          "key": "accounts",
+          "value": {
+            "type": "set<string>",
+            "value": [
+              "Assets:Broker",
+              "Assets:Cash",
+              "Income:Salary"
+            ]
+          }
+        },
+        {
+          "key": "date",
+          "value": {
+            "type": "date",
+            "value": "2020-01-04"
+          }
+        },
+        {
+          "key": "flag",
+          "value": {
+            "type": "string",
+            "value": "*"
+          }
+        },
+        {
+          "key": "links",
+          "value": {
+            "type": "set<string>",
+            "value": []
+          }
+        },
+        {
+          "key": "meta",
+          "value": {
+            "type": "dictionary",
+            "value": [
+              {
+                "key": "__tolerances__",
+                "value": {
+                  "type": "dictionary",
+                  "value": [
+                    {
+                      "key": "USD",
+                      "value": {
+                        "type": "decimal",
+                        "value": "0.005"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "key": "filename",
+                "value": {
+                  "type": "string",
+                  "value": "testdata/golden/inventory/fixture.bean"
+                }
+              },
+              {
+                "key": "lineno",
+                "value": {
+                  "type": "integer",
+                  "value": "23"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "key": "narration",
+          "value": {
+            "type": "string",
+            "value": "Sell shares"
+          }
+        },
+        {
+          "key": "payee",
+          "value": {
+            "type": "string",
+            "value": "Broker"
+          }
+        },
+        {
+          "key": "tags",
+          "value": {
+            "type": "set<string>",
+            "value": []
+          }
+        }
+      ]
+    },
+    {
+      "type": "transaction",
+      "value": [
+        {
+          "key": "accounts",
+          "value": {
+            "type": "set<string>",
+            "value": [
+              "Assets:Broker",
+              "Assets:Cash",
+              "Income:Salary"
+            ]
+          }
+        },
+        {
+          "key": "date",
+          "value": {
+            "type": "date",
+            "value": "2020-01-04"
+          }
+        },
+        {
+          "key": "flag",
+          "value": {
+            "type": "string",
+            "value": "*"
+          }
+        },
+        {
+          "key": "links",
+          "value": {
+            "type": "set<string>",
+            "value": []
+          }
+        },
+        {
+          "key": "meta",
+          "value": {
+            "type": "dictionary",
+            "value": [
+              {
+                "key": "__tolerances__",
+                "value": {
+                  "type": "dictionary",
+                  "value": [
+                    {
+                      "key": "USD",
+                      "value": {
+                        "type": "decimal",
+                        "value": "0.005"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "key": "filename",
+                "value": {
+                  "type": "string",
+                  "value": "testdata/golden/inventory/fixture.bean"
+                }
+              },
+              {
+                "key": "lineno",
+                "value": {
+                  "type": "integer",
+                  "value": "23"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "key": "narration",
+          "value": {
+            "type": "string",
+            "value": "Sell shares"
+          }
+        },
+        {
+          "key": "payee",
+          "value": {
+            "type": "string",
+            "value": "Broker"
+          }
+        },
+        {
+          "key": "tags",
+          "value": {
+            "type": "set<string>",
+            "value": []
+          }
+        }
+      ]
+    },
+    {
+      "type": "transaction",
+      "value": [
+        {
+          "key": "accounts",
+          "value": {
+            "type": "set<string>",
+            "value": [
+              "Assets:Broker",
+              "Assets:Cash",
+              "Income:Salary"
+            ]
+          }
+        },
+        {
+          "key": "date",
+          "value": {
+            "type": "date",
+            "value": "2020-01-04"
+          }
+        },
+        {
+          "key": "flag",
+          "value": {
+            "type": "string",
+            "value": "*"
+          }
+        },
+        {
+          "key": "links",
+          "value": {
+            "type": "set<string>",
+            "value": []
+          }
+        },
+        {
+          "key": "meta",
+          "value": {
+            "type": "dictionary",
+            "value": [
+              {
+                "key": "__tolerances__",
+                "value": {
+                  "type": "dictionary",
+                  "value": [
+                    {
+                      "key": "USD",
+                      "value": {
+                        "type": "decimal",
+                        "value": "0.005"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "key": "filename",
+                "value": {
+                  "type": "string",
+                  "value": "testdata/golden/inventory/fixture.bean"
+                }
+              },
+              {
+                "key": "lineno",
+                "value": {
+                  "type": "integer",
+                  "value": "23"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "key": "narration",
+          "value": {
+            "type": "string",
+            "value": "Sell shares"
+          }
+        },
+        {
+          "key": "payee",
+          "value": {
+            "type": "string",
+            "value": "Broker"
+          }
+        },
+        {
+          "key": "tags",
+          "value": {
+            "type": "set<string>",
+            "value": []
+          }
+        }
+      ]
+    },
+    {
+      "type": "transaction",
+      "value": [
+        {
+          "key": "accounts",
+          "value": {
+            "type": "set<string>",
+            "value": [
+              "Assets:Broker",
+              "Assets:Cash"
+            ]
+          }
+        },
+        {
+          "key": "date",
+          "value": {
+            "type": "date",
+            "value": "2020-01-03"
+          }
+        },
+        {
+          "key": "flag",
+          "value": {
+            "type": "string",
+            "value": "!"
+          }
+        },
+        {
+          "key": "links",
+          "value": {
+            "type": "set<string>",
+            "value": [
+              "order"
+            ]
+          }
+        },
+        {
+          "key": "meta",
+          "value": {
+            "type": "dictionary",
+            "value": [
+              {
+                "key": "__tolerances__",
+                "value": {
+                  "type": "dictionary",
+                  "value": [
+                    {
+                      "key": "USD",
+                      "value": {
+                        "type": "decimal",
+                        "value": "0.005"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "key": "filename",
+                "value": {
+                  "type": "string",
+                  "value": "testdata/golden/inventory/fixture.bean"
+                }
+              },
+              {
+                "key": "lineno",
+                "value": {
+                  "type": "integer",
+                  "value": "19"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "key": "narration",
+          "value": {
+            "type": "string",
+            "value": "Buy shares"
+          }
+        },
+        {
+          "key": "payee",
+          "value": {
+            "type": "string",
+            "value": "Broker"
+          }
+        },
+        {
+          "key": "tags",
+          "value": {
+            "type": "set<string>",
+            "value": [
+              "invest"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "transaction",
+      "value": [
+        {
+          "key": "accounts",
+          "value": {
+            "type": "set<string>",
+            "value": [
+              "Assets:Broker",
+              "Assets:Cash"
+            ]
+          }
+        },
+        {
+          "key": "date",
+          "value": {
+            "type": "date",
+            "value": "2020-01-03"
+          }
+        },
+        {
+          "key": "flag",
+          "value": {
+            "type": "string",
+            "value": "!"
+          }
+        },
+        {
+          "key": "links",
+          "value": {
+            "type": "set<string>",
+            "value": [
+              "order"
+            ]
+          }
+        },
+        {
+          "key": "meta",
+          "value": {
+            "type": "dictionary",
+            "value": [
+              {
+                "key": "__tolerances__",
+                "value": {
+                  "type": "dictionary",
+                  "value": [
+                    {
+                      "key": "USD",
+                      "value": {
+                        "type": "decimal",
+                        "value": "0.005"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "key": "filename",
+                "value": {
+                  "type": "string",
+                  "value": "testdata/golden/inventory/fixture.bean"
+                }
+              },
+              {
+                "key": "lineno",
+                "value": {
+                  "type": "integer",
+                  "value": "19"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "key": "narration",
+          "value": {
+            "type": "string",
+            "value": "Buy shares"
+          }
+        },
+        {
+          "key": "payee",
+          "value": {
+            "type": "string",
+            "value": "Broker"
+          }
+        },
+        {
+          "key": "tags",
+          "value": {
+            "type": "set<string>",
+            "value": [
+              "invest"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "transaction",
+      "value": [
+        {
+          "key": "accounts",
+          "value": {
+            "type": "set<string>",
+            "value": [
+              "Assets:Cash",
+              "Expenses:Food"
+            ]
+          }
+        },
+        {
+          "key": "date",
+          "value": {
+            "type": "date",
+            "value": "2020-01-02"
+          }
+        },
+        {
+          "key": "flag",
+          "value": {
+            "type": "string",
+            "value": "*"
+          }
+        },
+        {
+          "key": "links",
+          "value": {
+            "type": "set<string>",
+            "value": [
+              "receipt"
+            ]
+          }
+        },
+        {
+          "key": "meta",
+          "value": {
+            "type": "dictionary",
+            "value": [
+              {
+                "key": "__tolerances__",
+                "value": {
+                  "type": "dictionary",
+                  "value": [
+                    {
+                      "key": "USD",
+                      "value": {
+                        "type": "decimal",
+                        "value": "0.005"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "key": "filename",
+                "value": {
+                  "type": "string",
+                  "value": "testdata/golden/inventory/fixture.bean"
+                }
+              },
+              {
+                "key": "lineno",
+                "value": {
+                  "type": "integer",
+                  "value": "13"
+                }
+              },
+              {
+                "key": "probe",
+                "value": {
+                  "type": "string",
+                  "value": "txn"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "key": "narration",
+          "value": {
+            "type": "string",
+            "value": "Lunch"
+          }
+        },
+        {
+          "key": "payee",
+          "value": {
+            "type": "string",
+            "value": "Cafe"
+          }
+        },
+        {
+          "key": "tags",
+          "value": {
+            "type": "set<string>",
+            "value": [
+              "food"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "type": "transaction",
+      "value": [
+        {
+          "key": "accounts",
+          "value": {
+            "type": "set<string>",
+            "value": [
+              "Assets:Cash",
+              "Expenses:Food"
+            ]
+          }
+        },
+        {
+          "key": "date",
+          "value": {
+            "type": "date",
+            "value": "2020-01-02"
+          }
+        },
+        {
+          "key": "flag",
+          "value": {
+            "type": "string",
+            "value": "*"
+          }
+        },
+        {
+          "key": "links",
+          "value": {
+            "type": "set<string>",
+            "value": [
+              "receipt"
+            ]
+          }
+        },
+        {
+          "key": "meta",
+          "value": {
+            "type": "dictionary",
+            "value": [
+              {
+                "key": "__tolerances__",
+                "value": {
+                  "type": "dictionary",
+                  "value": [
+                    {
+                      "key": "USD",
+                      "value": {
+                        "type": "decimal",
+                        "value": "0.005"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "key": "filename",
+                "value": {
+                  "type": "string",
+                  "value": "testdata/golden/inventory/fixture.bean"
+                }
+              },
+              {
+                "key": "lineno",
+                "value": {
+                  "type": "integer",
+                  "value": "13"
+                }
+              },
+              {
+                "key": "probe",
+                "value": {
+                  "type": "string",
+                  "value": "txn"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "key": "narration",
+          "value": {
+            "type": "string",
+            "value": "Lunch"
+          }
+        },
+        {
+          "key": "payee",
+          "value": {
+            "type": "string",
+            "value": "Cafe"
+          }
+        },
+        {
+          "key": "tags",
+          "value": {
+            "type": "set<string>",
+            "value": [
+              "food"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "schema_version": 1,
+  "status": "ok",
+  "type": "transaction"
+}

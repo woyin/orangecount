@@ -206,6 +206,11 @@ type Balance struct {
 	Account   string
 	Amount    Amount
 	Tolerance *Number
+	// DiffAmount is the signed difference a failed assertion observed.
+	// BeanQuery exposes it as the discrepancy column, so the value stays on
+	// the directive the way upstream keeps it on the Balance tuple. The field
+	// is nil when the assertion held or was never observed.
+	DiffAmount *Amount
 }
 
 // Kind implements Directive.

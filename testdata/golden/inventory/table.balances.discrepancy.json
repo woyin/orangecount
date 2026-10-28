@@ -1,0 +1,31 @@
+{
+  "declared_type_consistent": true,
+  "fixture": "testdata/golden/inventory/discrepancy.bean",
+  "fixture_sha256": "3b5c3899241dca24519b8e4064c1c00bf7a698d925a3501826672d7daae8d3ea",
+  "id": "table.balances.discrepancy",
+  "kind": "column",
+  "loader_errors": [
+    {
+      "class": "BalanceError",
+      "message": "Balance failed for 'Assets:Cash': expected -8.00 USD != accumulated -10.00 USD (2.00 too little)"
+    }
+  ],
+  "oracle": {
+    "beancount": "3.2.3",
+    "beanquery": "0.2.0"
+  },
+  "oracle_type": "amount",
+  "query": "SELECT discrepancy AS v FROM #balances",
+  "rows": [
+    {
+      "type": "amount",
+      "value": {
+        "currency": "USD",
+        "number": "-2.00"
+      }
+    }
+  ],
+  "schema_version": 1,
+  "status": "ok",
+  "type": "amount"
+}

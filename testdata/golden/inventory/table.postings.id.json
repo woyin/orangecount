@@ -1,0 +1,47 @@
+{
+  "declared_type_consistent": true,
+  "fixture": "testdata/golden/inventory/fixture.bean",
+  "fixture_sha256": "e1481a647a86bcaa40e76f3f1c0965c688d26eef2a0e6fe1922086b96d6a803a",
+  "id": "table.postings.id",
+  "kind": "column",
+  "loader_errors": [],
+  "oracle": {
+    "beancount": "3.2.3",
+    "beanquery": "0.2.0"
+  },
+  "oracle_type": "str",
+  "query": "SELECT id AS v FROM #postings",
+  "rows": [
+    {
+      "type": "string",
+      "value": "28c46f4955afabdbee5ae6fac14298df"
+    },
+    {
+      "type": "string",
+      "value": "28c46f4955afabdbee5ae6fac14298df"
+    },
+    {
+      "type": "string",
+      "value": "62aafd2ed2129e6af36fac36f5c143f6"
+    },
+    {
+      "type": "string",
+      "value": "62aafd2ed2129e6af36fac36f5c143f6"
+    },
+    {
+      "type": "string",
+      "value": "d0bf7fbab7a337aab622a263c23644d5"
+    },
+    {
+      "type": "string",
+      "value": "d0bf7fbab7a337aab622a263c23644d5"
+    },
+    {
+      "type": "string",
+      "value": "d0bf7fbab7a337aab622a263c23644d5"
+    }
+  ],
+  "schema_version": 1,
+  "status": "ok",
+  "type": "string"
+}

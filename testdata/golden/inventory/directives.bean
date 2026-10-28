@@ -1,0 +1,21 @@
+;; Directive probe fixture: every core directive type appears exactly once.
+option "title" "Directive probe"
+option "operating_currency" "USD"
+
+2020-01-01 open Assets:Cash USD
+2020-01-01 open Equity:Opening-Balances
+
+2020-01-02 pad Assets:Cash Equity:Opening-Balances
+2020-01-02 * "Seed" "Opening"
+  Assets:Cash   40.00 USD
+  Equity:Opening-Balances  -40.00 USD
+
+2020-01-03 balance Assets:Cash 100.00 USD
+2020-01-04 note Assets:Cash "A note" #tag1 ^link1
+2020-01-05 event "location" "Paris"
+2020-01-06 commodity HOOL
+2020-01-07 price HOOL 110.00 USD
+2020-01-08 document Assets:Cash "docs/statement.pdf" #doc
+2020-01-09 custom "budget" "food" 100.00 USD
+2020-01-10 query "cash" "SELECT account FROM #accounts"
+2020-01-11 close Assets:Cash

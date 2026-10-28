@@ -19,7 +19,7 @@ type sourceColumn struct {
 }
 
 var standardTableSchemas = map[string]map[string]sourceColumn{
-	"entries":      {"type": {"string", false}, "date": {"date", false}, "year": {"integer", false}, "month": {"integer", false}, "day": {"integer", false}, "filename": {"string", false}, "lineno": {"integer", false}, "flag": {"string", true}, "payee": {"string", true}, "narration": {"string", true}, "description": {"string", true}},
+	"entries":      {"id": {"string", false}, "type": {"string", false}, "date": {"date", false}, "year": {"integer", false}, "month": {"integer", false}, "day": {"integer", false}, "filename": {"string", false}, "lineno": {"integer", false}, "flag": {"string", true}, "payee": {"string", true}, "narration": {"string", true}, "description": {"string", true}},
 	"transactions": {"date": {"date", false}, "flag": {"string", false}, "payee": {"string", true}, "narration": {"string", false}},
 	"accounts":     {"account": {"string", false}},
 	"commodities":  {"date": {"date", false}, "name": {"string", false}},
@@ -41,6 +41,13 @@ func standardRows(table string, evaluation ledger.Evaluation, budget *executionB
 			row["type"] = "transaction"
 			tx, _ := row["_transaction"].(ledger.Transaction)
 			record, _ := row["_entry_record"].(ledger.EntryRecord)
+			// postings.id is the parent transaction identifier, mirroring
+			// upstream PostingsTable.id delegating to hash_entry(entry).
+			id, idErr := directiveID(record, sourceRoot(evaluation))
+			if idErr != nil {
+				return nil, idErr
+			}
+			row["id"] = id
 			scope, _ := row["_posting_meta"].(queryMetadata)
 			metadata, metaErr := metadataDictionary(scope)
 			if metaErr != nil {
@@ -135,6 +142,15 @@ func standardRows(table string, evaluation ledger.Evaluation, budget *executionB
 			}
 		}
 		row := Row{"date": date.Raw, "_query_execution": budget}
+		if table == "entries" {
+			// The id column is the directive's stable identity, computed the
+			// way beancount.core.compare.hash_entry does.
+			id, idErr := directiveID(entry, sourceRoot(evaluation))
+			if idErr != nil {
+				return nil, idErr
+			}
+			row["id"] = id
+		}
 		scope := directiveMetadata(directive, entry)
 		metadata, metaErr := metadataDictionary(scope)
 		if metaErr != nil {
@@ -198,6 +214,11 @@ func standardRows(table string, evaluation ledger.Evaluation, budget *executionB
 			row["amount"] = sourceAmount(d.Amount)
 			if d.Tolerance != nil {
 				row["tolerance"] = ledger.DecimalFromNumber(*d.Tolerance)
+			}
+			// BeanQuery reports the assertion difference it observed; a holding
+			// assertion keeps the column NULL.
+			if d.DiffAmount != nil {
+				row["discrepancy"] = sourceAmount(*d.DiffAmount)
 			}
 		case ledger.Note:
 			if table != "notes" {
@@ -385,7 +406,7 @@ func init() {
 // meta is omitted by ordinary directive tables, included by EntriesTable.
 func expandStandardWildcard(q *Query, table string) {
 	schemas := map[string][]string{
-		"postings":     {"date", "flag", "payee", "narration", "position"},
+		"postings":     {"id", "date", "flag", "payee", "narration", "position"},
 		"entries":      {"id", "type", "filename", "lineno", "date", "year", "month", "day", "flag", "payee", "narration", "description", "tags", "links", "meta", "accounts"},
 		"transactions": {"date", "flag", "payee", "narration", "tags", "links", "accounts"},
 		"accounts":     {"account", "open", "close"},
@@ -407,4 +428,14 @@ func expandStandardWildcard(q *Query, table string) {
 		}
 	}
 	q.Select = selectItems
+}
+
+// sourceRoot is the directory directive ids normalize source filenames
+// against. Keeping it on the evaluation makes the id independent of the
+// checkout location while still derived from the ledger's own layout.
+func sourceRoot(evaluation ledger.Evaluation) string {
+	if evaluation.EntryPath == "" {
+		return ""
+	}
+	return filepath.Dir(evaluation.EntryPath)
 }

@@ -1,0 +1,18 @@
+option "operating_currency" "USD"
+
+2020-01-01 open Assets:Cash USD
+2020-01-01 open Assets:Bank USD
+2020-01-01 open Assets:Broker USD
+2020-01-01 open Assets:Broker:Stock
+2020-01-01 open Expenses:Food USD
+2020-01-01 open Expenses:Travel USD
+2020-01-01 open Expenses:Fees USD
+2020-01-01 open Income:Salary USD
+2020-01-01 open Equity:Opening USD
+2020-01-01 open Liabilities:Card USD
+
+2020-01-02 * "Tagged" #food ^receipt
+  category: "eating"
+  Assets:Cash  -9.00 USD
+  Expenses:Food  9.00 USD
+    note: "single"

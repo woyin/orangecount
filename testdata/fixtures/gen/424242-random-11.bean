@@ -1,0 +1,32 @@
+option "operating_currency" "USD"
+
+2020-01-01 open Assets:Cash USD
+2020-01-01 open Assets:Bank USD
+2020-01-01 open Assets:Broker USD
+2020-01-01 open Assets:Broker:Stock
+2020-01-01 open Expenses:Food USD
+2020-01-01 open Expenses:Travel USD
+2020-01-01 open Expenses:Fees USD
+2020-01-01 open Income:Salary USD
+2020-01-01 open Equity:Opening USD
+2020-01-01 open Liabilities:Card USD
+
+2020-01-02 * "Opening"
+  Assets:Cash  1000.00 USD
+  Equity:Opening  -1000.00 USD
+
+2020-01-13 * "Generated 0"
+  Expenses:Food  76.85 USD
+  Assets:Cash  -76.85 USD
+
+2020-01-07 * "Generated 1"
+  Expenses:Fees  2.21 USD
+  Assets:Cash  -2.21 USD
+
+2020-01-25 * "Generated 2"
+  Expenses:Food  8.68 USD
+  Assets:Cash  -8.68 USD
+
+2020-01-09 * "Generated 3"
+  Expenses:Travel  48.23 USD
+  Assets:Cash  -48.23 USD

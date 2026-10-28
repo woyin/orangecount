@@ -1,0 +1,26 @@
+option "operating_currency" "USD"
+
+2020-01-01 open Assets:Cash USD
+2020-01-01 open Assets:Bank USD
+2020-01-01 open Assets:Broker USD
+2020-01-01 open Assets:Broker:Stock
+2020-01-01 open Expenses:Food USD
+2020-01-01 open Expenses:Travel USD
+2020-01-01 open Expenses:Fees USD
+2020-01-01 open Income:Salary USD
+2020-01-01 open Equity:Opening USD
+2020-01-01 open Liabilities:Card USD
+2020-01-01 open Assets:Euro EUR
+2020-01-01 open Expenses:Euro EUR
+
+2020-01-02 * "USD opening"
+  Assets:Cash  100.00 USD
+  Equity:Opening  -100.00 USD
+
+2020-01-03 * "EUR opening"
+  Assets:Euro  200.00 EUR
+  Equity:Opening  -200.00 EUR
+
+2020-01-04 * "Mixed"
+  Expenses:Euro  10.00 EUR
+  Assets:Euro   -10.00 EUR

@@ -1,0 +1,118 @@
+{
+  "actual": {
+    "schema_version": 2,
+    "fixture": "424242-random-11.bean",
+    "oracle_engine": "",
+    "valid": true,
+    "errors": [],
+    "state": {
+      "entries": [
+        "{\"account\":\"Assets:Bank\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2020-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"424242-random-11.bean\",\"line\":4}}",
+        "{\"account\":\"Assets:Broker\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2020-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"424242-random-11.bean\",\"line\":5}}",
+        "{\"account\":\"Assets:Broker:Stock\",\"booking\":null,\"currencies\":[],\"date\":\"2020-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"424242-random-11.bean\",\"line\":6}}",
+        "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2020-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"424242-random-11.bean\",\"line\":3}}",
+        "{\"account\":\"Equity:Opening\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2020-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"424242-random-11.bean\",\"line\":11}}",
+        "{\"account\":\"Expenses:Fees\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2020-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"424242-random-11.bean\",\"line\":9}}",
+        "{\"account\":\"Expenses:Food\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2020-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"424242-random-11.bean\",\"line\":7}}",
+        "{\"account\":\"Expenses:Travel\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2020-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"424242-random-11.bean\",\"line\":8}}",
+        "{\"account\":\"Income:Salary\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2020-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"424242-random-11.bean\",\"line\":10}}",
+        "{\"account\":\"Liabilities:Card\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2020-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"424242-random-11.bean\",\"line\":12}}",
+        "{\"date\":\"2020-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"Opening\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"1000\"}},{\"account\":\"Equity:Opening\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-1000\"}}],\"source\":{\"file\":\"424242-random-11.bean\",\"line\":14},\"tags\":[]}",
+        "{\"date\":\"2020-01-07\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"Generated 1\",\"payee\":null,\"postings\":[{\"account\":\"Expenses:Fees\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"2.21\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-2.21\"}}],\"source\":{\"file\":\"424242-random-11.bean\",\"line\":22},\"tags\":[]}",
+        "{\"date\":\"2020-01-09\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"Generated 3\",\"payee\":null,\"postings\":[{\"account\":\"Expenses:Travel\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"48.23\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-48.23\"}}],\"source\":{\"file\":\"424242-random-11.bean\",\"line\":30},\"tags\":[]}",
+        "{\"date\":\"2020-01-13\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"Generated 0\",\"payee\":null,\"postings\":[{\"account\":\"Expenses:Food\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"76.85\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-76.85\"}}],\"source\":{\"file\":\"424242-random-11.bean\",\"line\":18},\"tags\":[]}",
+        "{\"date\":\"2020-01-25\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"Generated 2\",\"payee\":null,\"postings\":[{\"account\":\"Expenses:Food\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"8.68\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-8.68\"}}],\"source\":{\"file\":\"424242-random-11.bean\",\"line\":26},\"tags\":[]}"
+      ],
+      "balances": {
+        "Assets:Cash": {
+          "currencies": {
+            "USD": "864.03"
+          },
+          "lots": []
+        },
+        "Equity:Opening": {
+          "currencies": {
+            "USD": "-1000"
+          },
+          "lots": []
+        },
+        "Expenses:Fees": {
+          "currencies": {
+            "USD": "2.21"
+          },
+          "lots": []
+        },
+        "Expenses:Food": {
+          "currencies": {
+            "USD": "85.53"
+          },
+          "lots": []
+        },
+        "Expenses:Travel": {
+          "currencies": {
+            "USD": "48.23"
+          },
+          "lots": []
+        }
+      }
+    }
+  },
+  "oracle": {
+    "schema_version": 2,
+    "fixture": "424242-random-11.bean",
+    "oracle_engine": "beancount-python-3.2.3",
+    "valid": true,
+    "errors": [],
+    "state": {
+      "entries": [
+        "{\"account\":\"Assets:Bank\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2020-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"424242-random-11.bean\",\"line\":4}}",
+        "{\"account\":\"Assets:Broker\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2020-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"424242-random-11.bean\",\"line\":5}}",
+        "{\"account\":\"Assets:Broker:Stock\",\"booking\":null,\"currencies\":[],\"date\":\"2020-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"424242-random-11.bean\",\"line\":6}}",
+        "{\"account\":\"Assets:Cash\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2020-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"424242-random-11.bean\",\"line\":3}}",
+        "{\"account\":\"Equity:Opening\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2020-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"424242-random-11.bean\",\"line\":11}}",
+        "{\"account\":\"Expenses:Fees\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2020-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"424242-random-11.bean\",\"line\":9}}",
+        "{\"account\":\"Expenses:Food\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2020-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"424242-random-11.bean\",\"line\":7}}",
+        "{\"account\":\"Expenses:Travel\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2020-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"424242-random-11.bean\",\"line\":8}}",
+        "{\"account\":\"Income:Salary\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2020-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"424242-random-11.bean\",\"line\":10}}",
+        "{\"account\":\"Liabilities:Card\",\"booking\":null,\"currencies\":[\"USD\"],\"date\":\"2020-01-01\",\"kind\":\"open\",\"metadata\":{},\"source\":{\"file\":\"424242-random-11.bean\",\"line\":12}}",
+        "{\"date\":\"2020-01-02\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"Opening\",\"payee\":null,\"postings\":[{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"1000\"}},{\"account\":\"Equity:Opening\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-1000\"}}],\"source\":{\"file\":\"424242-random-11.bean\",\"line\":14},\"tags\":[]}",
+        "{\"date\":\"2020-01-07\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"Generated 1\",\"payee\":null,\"postings\":[{\"account\":\"Expenses:Fees\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"2.21\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-2.21\"}}],\"source\":{\"file\":\"424242-random-11.bean\",\"line\":22},\"tags\":[]}",
+        "{\"date\":\"2020-01-09\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"Generated 3\",\"payee\":null,\"postings\":[{\"account\":\"Expenses:Travel\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"48.23\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-48.23\"}}],\"source\":{\"file\":\"424242-random-11.bean\",\"line\":30},\"tags\":[]}",
+        "{\"date\":\"2020-01-13\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"Generated 0\",\"payee\":null,\"postings\":[{\"account\":\"Expenses:Food\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"76.85\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-76.85\"}}],\"source\":{\"file\":\"424242-random-11.bean\",\"line\":18},\"tags\":[]}",
+        "{\"date\":\"2020-01-25\",\"flag\":\"*\",\"kind\":\"transaction\",\"links\":[],\"metadata\":{},\"narration\":\"Generated 2\",\"payee\":null,\"postings\":[{\"account\":\"Expenses:Food\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"8.68\"}},{\"account\":\"Assets:Cash\",\"cost\":null,\"flag\":null,\"metadata\":{},\"price\":null,\"units\":{\"currency\":\"USD\",\"number\":\"-8.68\"}}],\"source\":{\"file\":\"424242-random-11.bean\",\"line\":26},\"tags\":[]}"
+      ],
+      "balances": {
+        "Assets:Cash": {
+          "currencies": {
+            "USD": "864.03"
+          },
+          "lots": []
+        },
+        "Equity:Opening": {
+          "currencies": {
+            "USD": "-1000"
+          },
+          "lots": []
+        },
+        "Expenses:Fees": {
+          "currencies": {
+            "USD": "2.21"
+          },
+          "lots": []
+        },
+        "Expenses:Food": {
+          "currencies": {
+            "USD": "85.53"
+          },
+          "lots": []
+        },
+        "Expenses:Travel": {
+          "currencies": {
+            "USD": "48.23"
+          },
+          "lots": []
+        }
+      }
+    }
+  }
+}

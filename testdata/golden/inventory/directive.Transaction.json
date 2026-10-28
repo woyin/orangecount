@@ -1,0 +1,97 @@
+{
+  "declared_type_consistent": true,
+  "fixture": "testdata/golden/inventory/directives.bean",
+  "fixture_sha256": "8f0ce3d1d1439d7a5fd44f59894e675be2c5b51cb1e8b706138af36b18213005",
+  "id": "directive.Transaction",
+  "kind": "accounting-directive",
+  "loader_errors": [],
+  "oracle": {
+    "beancount": "3.2.3",
+    "beanquery": "0.2.0"
+  },
+  "oracle_type": "transaction",
+  "query": "SELECT entry AS v FROM #postings LIMIT 1",
+  "rows": [
+    {
+      "type": "transaction",
+      "value": [
+        {
+          "key": "accounts",
+          "value": {
+            "type": "set<string>",
+            "value": [
+              "Assets:Cash",
+              "Equity:Opening-Balances"
+            ]
+          }
+        },
+        {
+          "key": "date",
+          "value": {
+            "type": "date",
+            "value": "2020-01-02"
+          }
+        },
+        {
+          "key": "flag",
+          "value": {
+            "type": "string",
+            "value": "P"
+          }
+        },
+        {
+          "key": "links",
+          "value": {
+            "type": "set<string>",
+            "value": []
+          }
+        },
+        {
+          "key": "meta",
+          "value": {
+            "type": "dictionary",
+            "value": [
+              {
+                "key": "filename",
+                "value": {
+                  "type": "string",
+                  "value": "testdata/golden/inventory/directives.bean"
+                }
+              },
+              {
+                "key": "lineno",
+                "value": {
+                  "type": "integer",
+                  "value": "8"
+                }
+              }
+            ]
+          }
+        },
+        {
+          "key": "narration",
+          "value": {
+            "type": "string",
+            "value": "(Padding inserted for Balance of 100.00 USD for difference 60.00 USD)"
+          }
+        },
+        {
+          "key": "payee",
+          "value": {
+            "type": "null"
+          }
+        },
+        {
+          "key": "tags",
+          "value": {
+            "type": "set<string>",
+            "value": []
+          }
+        }
+      ]
+    }
+  ],
+  "schema_version": 1,
+  "status": "ok",
+  "type": "transaction"
+}

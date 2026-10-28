@@ -176,7 +176,7 @@ var messages = map[string]map[string]string{
 	"E-EVAL-PAD":             {"en": "pad source account is unavailable", "zh-CN": "pad 的来源账户不可用"},
 	"E-EVAL-TOLERANCE":       {"en": "invalid balance tolerance", "zh-CN": "余额容差无效"},
 	"E-EVAL-OPTION":          {"en": "option is unsupported or has an invalid value", "zh-CN": "option 不受支持或值无效"},
-	"W-EVAL-PAD-UNUSED":      {"en": "pad directive was not consumed by a later balance assertion", "zh-CN": "pad 指令未被后续余额断言使用"},
+	"E-EVAL-PAD-UNUSED":      {"en": "pad directive was not consumed by a later balance assertion", "zh-CN": "pad 指令未被后续余额断言使用"},
 	"W-EVAL-UNSUPPORTED":     {"en": "directive is preserved but not evaluated", "zh-CN": "指令已保留但尚未求值"},
 	"W-PLUGIN-MIGRATION":     {"en": "plugin declarations are not executed; migrate this ledger to core directives", "zh-CN": "不会执行 plugin 声明；请将此账本迁移到核心指令"},
 	"W-UNSUPPORTED":          {"en": "construct is preserved but not evaluated yet", "zh-CN": "语法已保留，但尚未支持求值"},

@@ -13,7 +13,9 @@ pushtag #fixture
 poptag #fixture
 2000-01-03 price SH 10 USD
 2000-01-04 balance Assets:Cash 100 USD
-2000-01-05 pad Assets:Cash Equity:Opening
+; pad is exercised by testdata/fixtures/query/pad-source.bean, which has a
+; consuming balance assertion. An unconsumed pad is a PadError upstream, so
+; this corpus keeps a valid ledger instead.
 2000-01-06 event "kind" "value"
 2000-01-07 query "sample" "SELECT account FROM postings"
 2000-01-08 document Assets:Cash "receipt.pdf" #fixture ^opening

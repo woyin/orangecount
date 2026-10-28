@@ -25,8 +25,8 @@ func TestQueryFunctionAndSyntaxErrorMessages(t *testing.T) {
 		{"select account from postings where account ~ 5", "string pattern"},
 		{"select account from postings limit x", "LIMIT requires a number"},
 		{"select sum(number number) from postings", "commas"},
-		{"select account from postings where number % 2", "unexpected"},
-		{"select account from postings where", "unknown column"},
+		{"select account from postings where number %", "unexpected"},
+		{"select account from postings where", "unexpected"},
 		{"select account, nosuch from postings", "unknown column"},
 		{"select account from postings where date ~ 2020", "string pattern"},
 	}
