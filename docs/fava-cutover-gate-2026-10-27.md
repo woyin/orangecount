@@ -17,7 +17,7 @@
 | 2 | 移植 UI 为唯一标准面 | `ORANGECOUNT_TRANSPLANTED_UI` 零命中 | **通过** |
 | 3 | legacy UI 与原型 shell 删除 | `internal/web/assets/{app.js,app.css,index.html}` 不存在 | **通过** |
 | 4 | 未批准视觉差异清零 | 无 `proposed` 条目；approved 均有批准日期 | **通过** |
-| 5 | 视觉基线入库 | 四格齐全、每张 PNG 来自 Fava 参考捕获、基线根部有环境锁 | **通过**（80 张，17 路由 + 3 模态 × 四格） |
+| 5 | 视觉基线入库 | 四格齐全、每张 PNG 来自 Fava 参考捕获、基线根部有环境锁 | **通过**（92 张，20 路由 + 3 模态 × 四格） |
 
 `go run ./tools/favagates` → exit 0。
 
@@ -36,13 +36,13 @@
 
 ## 已测量的剩余视觉差异（保留，不设门禁）
 
-`web/scripts/compare-to-reference.mjs` 对 76 组截图逐像素比对：
+`web/scripts/compare-to-reference.mjs` 对 88 组截图逐像素比对（4 张 `m-context` 无 OrangeCount 对照，摘要中列为 unpaired）：
 
 | 指标 | 数值 |
 | --- | --- |
-| 中位差异 | 31.9% |
+| 中位差异 | 30.8% |
 | 低于 5% 差异 | 0 组 |
-| 高度不同的组 | 10 组（多为窄屏） |
+| 高度不同的组 | 12 组（多为窄屏） |
 | 最大差异 | trial-balance 48.9% |
 
 配色、字体、侧栏与主区盒完全一致（顶栏 `rgb(0,101,163)`、正文 `rgb(242,242,242)`、

@@ -744,7 +744,13 @@ type baselineLock struct {
 	CaptureMethod     string `json:"capture_method"`
 	EnvironmentDigest string `json:"environment_digest"`
 	UVLockSHA256      string `json:"uv_lock_sha256"`
-	Fava              struct {
+	// Producers records which capture script produced how many PNGs. Playwright
+	// embeds the spec path in the tree, but the modal capture writes into the
+	// reference spec's directory, so the directory alone cannot attribute it.
+	// The lock states the split and the gate verifies the total, which turns an
+	// unverifiable claim into a checked one.
+	Producers map[string]int `json:"producers"`
+	Fava      struct {
 		Version string `json:"version"`
 		Commit  string `json:"commit"`
 	} `json:"fava"`
@@ -849,6 +855,23 @@ func checkVisualBaselines(p paths) ([]failure, string) {
 	}
 	if !lockPinsEnvironment(lock) {
 		failures = append(failures, failure{Subject: relative(p.root, lockPath), Reason: "环境锁既没有 OCI 镜像身份，也没有可复现的原生环境（capture_method + environment_digest + uv_lock_sha256）"})
+	}
+	if len(lock.Producers) > 0 {
+		declared := 0
+		for _, count := range lock.Producers {
+			declared += count
+		}
+		actual := 0
+		for _, count := range producers {
+			actual += count
+		}
+		if declared != actual {
+			failures = append(failures, failure{
+				Subject: relative(p.root, lockPath),
+				Reason:  fmt.Sprintf("环境锁声明 %d 张基线由 %s 生成，树里实际有 %d 张", declared, producerNote(lock.Producers), actual),
+			})
+		}
+		note = fmt.Sprintf("四格 PNG 数：%s；来源：%s", strings.Join(counts, "、"), producerNote(lock.Producers))
 	}
 	return failures, note
 }

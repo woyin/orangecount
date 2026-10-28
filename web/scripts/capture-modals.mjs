@@ -1,8 +1,27 @@
 import { chromium } from "@playwright/test";
 import path from "node:path";
 
+// The modal capture writes into the reference baseline tree, so it needs the
+// same isolation guard as the Playwright reference suite. Without it the script
+// happily screenshots OrangeCount's own server and files the result as a Fava
+// reference capture.
 const base = process.env.FAVA_BASE_URL;
 const out = process.env.MODAL_OUT;
+const safeReference =
+  Boolean(base) &&
+  !/:5000(?:\/|$)/.test(base) &&
+  !/financebook|private|profile/i.test(base);
+if (!safeReference) {
+  console.error(
+    "capture-modals: refusing to capture. Set FAVA_BASE_URL to the isolated " +
+      "Fava 1.30.12 reference server; port 5000 and any financebook/private/profile URL are rejected.",
+  );
+  process.exit(1);
+}
+if (!out) {
+  console.error("capture-modals: MODAL_OUT is required.");
+  process.exit(1);
+}
 const cells = [
   ["desktop-light", { width: 1280, height: 800 }, "light"],
   ["desktop-dark", { width: 1280, height: 800 }, "dark"],

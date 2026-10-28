@@ -12,8 +12,9 @@ The visual layer is judged against **functional parity**, not pixel identity, pe
 the rendering authority and the comparison reference; they are not a
 pixel-equality gate. `go run ./tools/favagates` enforces that any row marked
 `accepted` has FD-0011 approved, so a status flip cannot happen without a
-registered basis. Measured remaining difference: median 31.9% of pixels across
-76 captures (`docs/evidence/visual-parity-2026-10-28.txt`).
+registered basis. Measured remaining difference: median 30.8% of pixels across
+88 captures, with 4 `m-context` captures unpaired
+(`docs/evidence/visual-parity-2026-10-28.txt`).
 
 ## Controlled dimensions
 

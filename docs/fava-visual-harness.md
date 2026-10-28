@@ -13,8 +13,8 @@ is an approved product baseline until the product owner reviews it.
 - The host remains outside the supported Node 22 range; reference capture runs Node 22 inside the OCI image.
 - Fava 1.30.12 is isolated from the host Bison/Python toolchain and runs with no runtime network access.
 - `tools/fixturegen` produces the committed dense synthetic fixture (87 accounts, 304 transaction directives, ten currencies/commodities) from fixed non-private inputs.
-- The reference suite exercises all four English Chromium cells and currently captures five representative routes (20 candidate screenshots).
-- No screenshots exist under `testdata/visual-baselines/`; candidate captures under `testdata/visual-candidates/fava-reference/` are not accepted evidence.
+- The reference suite exercises all four English Chromium cells and captures 20 routes (80 candidate screenshots). The three modal baselines (12 files) were produced by `web/scripts/capture-modals.mjs` against the same pinned Fava; the Docker capture list does not include modals yet. `environment-lock.json` declares that split under `producers`, and gate 5 fails when the declared total disagrees with the tree, so the attribution is checked rather than asserted.
+- Approved baselines live under `testdata/visual-baselines/` (92 screenshots: 20 routes and 3 modals across four cells). New candidate captures under `testdata/visual-candidates/fava-reference/` are not accepted evidence until they are promoted.
 - `npm --prefix web run check:reference-output` verifies the candidate environment lock, fixture hash, and complete screenshot matrix without approving pixels.
 
 A skipped reference suite can never satisfy a route gate. The representative

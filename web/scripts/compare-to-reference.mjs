@@ -66,6 +66,14 @@ const ratios = results.filter((r) => r.ratio !== null).map((r) => r.ratio).sort(
 const below1 = ratios.filter((r) => r < 0.01).length;
 const below5 = ratios.filter((r) => r < 0.05).length;
 const sizeMismatch = results.filter((r) => (r.sizeDelta ?? 0) > 0.01).length;
+// Unpaired baselines are evidence the comparison does not cover, so the summary
+// names them instead of reporting only the pairs that happened to exist. A
+// shrinking coverage used to look like a clean run.
+const unpaired = results.filter((r) => r.ratio === null);
 console.log("\nsummary: " + ratios.length + " compared, " + below1 + " under 1% pixel diff, " +
   below5 + " under 5%, median " + (ratios[Math.floor(ratios.length / 2)] * 100).toFixed(1) + "%, " +
-  sizeMismatch + " with a height difference");
+  sizeMismatch + " with a height difference" +
+  (unpaired.length === 0
+    ? ", 0 unpaired"
+    : ", " + unpaired.length + " unpaired (" +
+      [...new Set(unpaired.map((r) => r.name))].join(", ") + ")"));

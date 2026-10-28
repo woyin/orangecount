@@ -1,6 +1,10 @@
 {
   "schema_version": 1,
   "capture_method": "native-uv",
+  "producers": {
+    "fava-reference.spec.mjs": 80,
+    "capture-modals.mjs": 12
+  },
   "environment_digest": "sha256:5b4916ce0cbcc88a5a279fb84c2f790e9423a87811fa1749ec881ef70009b5c6",
   "uv_lock_sha256": "b2d01b71029b5655e07b230d79bea573830721de4c42406e14188e1a2ea128fe",
   "pinned_packages": {

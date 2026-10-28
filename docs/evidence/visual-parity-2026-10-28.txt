@@ -10,6 +10,8 @@
   59.6%  narrow-light    m-add.png  (height 839 vs 841 (overlap compared))
   52.5%  narrow-dark     options.png  (height 2271 vs 800 (overlap compared))
   52.3%  narrow-light    options.png  (height 2271 vs 800 (overlap compared))
+  50.4%  narrow-dark     holdings-by-account.png  (height 5032 vs 800 (overlap compared))
+  50.3%  narrow-light    holdings-by-account.png  (height 5032 vs 800 (overlap compared))
   48.9%  desktop-dark    trial-balance.png
   48.9%  desktop-light   trial-balance.png
   46.3%  narrow-dark     income-statement.png  (height 839 vs 841 (overlap compared))
@@ -34,12 +36,16 @@
   33.7%  desktop-dark    balance-sheet.png
   32.9%  desktop-light   balance-sheet.png
   32.9%  desktop-dark    import.png
+  32.9%  narrow-dark     holdings-by-currency.png
+  32.8%  narrow-light    holdings-by-currency.png
   32.1%  desktop-dark    query.png
   32.0%  desktop-light   query.png
   31.9%  desktop-dark    income-statement.png
   31.9%  desktop-dark    root.png
   31.9%  desktop-light   income-statement.png
   31.9%  desktop-light   root.png
+  30.8%  desktop-light   holdings-by-account.png
+  30.8%  desktop-dark    holdings-by-account.png
   29.8%  narrow-dark     events.png
   29.5%  narrow-light    events.png
   28.7%  narrow-dark     help.png  (height 883 vs 800 (overlap compared))
@@ -52,6 +58,8 @@
   25.2%  narrow-light    holdings.png
   25.0%  desktop-dark    options.png
   24.9%  desktop-light   options.png
+  24.2%  narrow-dark     holdings-by-cost-currency.png
+  24.1%  narrow-light    holdings-by-cost-currency.png
   24.0%  desktop-dark    editor.png
   23.9%  desktop-dark    commodities.png
   23.7%  desktop-light   commodities.png
@@ -66,6 +74,8 @@
   16.7%  desktop-light   statistics.png
   16.6%  desktop-light   holdings.png
   16.6%  desktop-dark    holdings.png
+  15.8%  desktop-light   holdings-by-currency.png
+  15.8%  desktop-dark    holdings-by-currency.png
   14.1%  desktop-light   errors.png
   14.1%  desktop-dark    errors.png
   13.3%  narrow-dark     documents.png
@@ -73,10 +83,12 @@
   12.1%  desktop-dark    help.png
   12.1%  desktop-light   help.png
   11.6%  narrow-light    import.png
+   9.8%  desktop-dark    holdings-by-cost-currency.png
+   9.8%  desktop-light   holdings-by-cost-currency.png
    8.6%  desktop-dark    journal.png
    8.5%  desktop-light   journal.png
    6.5%  desktop-light   documents.png
    6.4%  desktop-dark    documents.png
    5.3%  desktop-light   import.png
 
-summary: 76 compared, 0 under 1% pixel diff, 0 under 5%, median 31.9%, 10 with a height difference
+summary: 88 compared, 0 under 1% pixel diff, 0 under 5%, median 30.8%, 12 with a height difference, 4 unpaired (m-context.png)
