@@ -14,11 +14,19 @@ graph; OrangeCount builds an immutable snapshot and exposes read-only reports,
 queries, and diagnostics alongside explicit reviewed authoring workflows in a
 local web workbench.
 
+To use it, read the [user guide](docs/user-guide.md): validate a ledger, run a
+query, read a report, record an entry, or export a portable v3 snapshot.
+
 Start with the [development roadmap](docs/implementation-plan.md) and the
 [compatibility plan](docs/beancount-complete-compatibility-plan-2026-10-02.md).
 The [query capability matrix](docs/query-capability-matrix.md) records which
 Beancount v3 and BQL behavior is verified, and
 [docs/development.md](docs/development.md) covers the build and gate workflow.
+
+Coding assistants get three project skills for daily ledger work:
+`orangecount-ledger` (validate and query), `orangecount-authoring` (safe
+writes), and `orangecount-workbench` (reports, spreadsheets, export). They live
+in `.agents/skills/` and are discovered automatically.
 
 ## v0.1 scope
 
