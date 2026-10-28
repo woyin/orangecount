@@ -778,6 +778,11 @@
       "upstream": null,
       "notes": "Development-only browser smoke gate for the explicit transplanted UI asset flag."
     },
+    "web/tests/visual/fava-zh-structure.spec.mjs": {
+      "current_kind": "original",
+      "upstream": null,
+      "notes": "Simplified Chinese structural parity sweep derived from router.mjs; compares element structure and control order, never pixels."
+    },
     "web/tests/visual/fixtures.mjs": {
       "current_kind": "original",
       "upstream": null,

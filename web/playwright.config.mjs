@@ -26,19 +26,37 @@ const viewports = [
 ];
 // The four-cell English matrix is the only approved baseline shape: desktop and
 // narrow viewports, each in the light and dark colour scheme.
-const projects = viewports.flatMap(([size, viewport]) =>
+const chromiumProjects = viewports.flatMap(([size, viewport]) =>
   ["light", "dark"].map((colorScheme) => ({
     name: `${size}-${colorScheme}`,
     use: { baseURL, viewport, deviceScaleFactor: 1, colorScheme },
   })),
 );
+// The plan also requires WebKit and Firefox to repeat the supported behavior and
+// serious-layout checks. Those engines carry no approved pixel baseline, so they
+// run the behavior and structural assertions only: any test whose title names a
+// baseline is excluded, and a screenshot assertion can therefore never judge
+// them. Reference capture stays Chromium-only for the same reason.
+const crossBrowserProjects = isReference
+  ? []
+  : [
+      ["webkit", "WebKit"],
+      ["firefox", "Firefox"],
+    ].map(([browserName, label]) => ({
+      name: `cross-${browserName}`,
+      grepInvert: /baseline/i,
+      use: { baseURL, browserName, viewport: viewports[0][1], deviceScaleFactor: 1, colorScheme: "light", label },
+    }));
+const projects = [...chromiumProjects, ...crossBrowserProjects];
 
 export default defineConfig({
   testDir: path.join(repoRoot, "web", "tests"),
   // One spec per mode: the reference capture only ever records Fava, and the
   // local mode only records the transplanted shell, so `visual:update` cannot
   // mix the two authorities into one baseline tree.
-  testMatch: isReference ? ["**/visual/fava-reference.spec.mjs"] : ["**/visual/fava-transplanted.spec.mjs"],
+  testMatch: isReference
+    ? ["**/visual/fava-reference.spec.mjs"]
+    : ["**/visual/fava-transplanted.spec.mjs", "**/visual/fava-zh-structure.spec.mjs"],
   outputDir: path.join(os.tmpdir(), temporaryRun, "test-results"),
   snapshotPathTemplate: path.join(
     snapshotRoot,

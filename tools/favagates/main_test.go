@@ -41,7 +41,35 @@ func newFixture(t *testing.T) fixture {
 			t.Fatal(err)
 		}
 	}
+	// Gate 1 also verifies that the engine and locale matrix the manifest
+	// declares actually exists in the harness. The fixture supplies a minimal
+	// one so the positive path is exercised; a focused test removes a piece and
+	// expects the failure.
+	f.write(t, filepath.Join(root, "web", "playwright.config.mjs"),
+		`const crossBrowserProjects = [["webkit", "WebKit"], ["firefox", "Firefox"]];`+` testMatch: ["**/visual/fava-zh-structure.spec.mjs"];`)
+	f.write(t, filepath.Join(root, "web", "tests", "visual", "fava-zh-structure.spec.mjs"), "// fixture")
 	return f
+}
+
+// The manifest states which engines and locales the matrix covers. Gate 1 must
+// read the harness, because that prose drifted ahead of the config once already.
+func TestGateOneRequiresDeclaredEngineAndLocaleCoverage(t *testing.T) {
+	f := newFixture(t)
+	os.Remove(filepath.Join(f.root, "web", "tests", "visual", "fava-zh-structure.spec.mjs"))
+	failures := checkControlledDimensions(paths{root: f.root})
+	if len(failures) == 0 {
+		t.Fatal("a missing Chinese structural spec was accepted")
+	}
+	joined := failures[0].Reason
+	if !strings.Contains(joined, "简体中文结构巡检") {
+		t.Fatalf("unexpected reason: %s", joined)
+	}
+
+	g := newFixture(t)
+	g.write(t, filepath.Join(g.root, "web", "playwright.config.mjs"), `testMatch: ["**/visual/fava-zh-structure.spec.mjs"];`)
+	if failures := checkControlledDimensions(paths{root: g.root}); len(failures) != 2 {
+		t.Fatalf("a config without webkit/firefox yielded %d failures: %+v", len(failures), failures)
+	}
 }
 
 func (f fixture) write(t *testing.T, path, content string) {

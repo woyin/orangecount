@@ -162,6 +162,7 @@ func runCheck(number int, p paths) checkReport {
 	case 1:
 		check.Title = "每条标准路由四层门禁通过"
 		check.Failures = checkRouteManifest(p, goTestIndex(p.root))
+		check.Failures = append(check.Failures, checkControlledDimensions(p)...)
 	case 2:
 		check.Title = "移植 UI 为唯一标准面"
 		check.Failures = checkTransplantToken(p)
@@ -501,6 +502,33 @@ func tableRow(line string) ([]string, bool) {
 		cells = append(cells, strings.TrimSpace(part))
 	}
 	return cells, true
+}
+
+// checkControlledDimensions verifies the browser engines and locale matrix the
+// manifest claims exist. That claim is prose, so without a check it drifts ahead
+// of the harness: an earlier revision stated WebKit, Firefox and a Simplified
+// Chinese sweep as fact while the config produced Chromium cells only, and
+// nothing failed.
+func checkControlledDimensions(p paths) []failure {
+	failures := []failure{}
+	config := filepath.Join(p.root, "web", "playwright.config.mjs")
+	data, err := os.ReadFile(config)
+	if err != nil {
+		return []failure{{Subject: relative(p.root, config), Reason: "无法读取 Playwright 配置：" + err.Error()}}
+	}
+	configText := string(data)
+	for _, browser := range []string{"webkit", "firefox"} {
+		if !strings.Contains(configText, "\""+browser+"\"") {
+			failures = append(failures, failure{Subject: relative(p.root, config), Reason: fmt.Sprintf("manifest 声明了 %s 流，但配置没有声明该浏览器项目", browser)})
+		}
+	}
+	spec := filepath.Join(p.root, "web", "tests", "visual", "fava-zh-structure.spec.mjs")
+	if _, err := os.Stat(spec); err != nil {
+		failures = append(failures, failure{Subject: relative(p.root, spec), Reason: "manifest 声明了简体中文结构巡检，但该 spec 不存在"})
+	} else if !strings.Contains(configText, "fava-zh-structure.spec.mjs") {
+		failures = append(failures, failure{Subject: relative(p.root, config), Reason: "简体中文结构 spec 存在，但没有被 testMatch 选中"})
+	}
+	return failures
 }
 
 func hasRoutePrefix(id string) bool {

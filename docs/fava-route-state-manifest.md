@@ -27,16 +27,16 @@ Every adopted route's required English loaded state is exercised in all four Chr
 
 Each route also covers its applicable `empty`, `loading`, `unavailable`, `error`, and `stale` states. Shared state rendering may use representative visual baselines, but route-specific states require their own evidence.
 
-### Known coverage gaps
+### Locale and engine coverage
 
-The controlled matrix is four **Chromium** cells (desktop/narrow × light/dark). Two dimensions the plan requires are not implemented, and no row's `accepted` status may be read as covering them:
+Beyond the four Chromium cells, two further dimensions run and are machine-checked:
 
-| Dimension | Required | Actual |
+| Dimension | How it runs | Authority |
 | --- | --- | --- |
-| Simplified Chinese per-route structure | repeats the structural/behavior manifest for every route | one browser case (`/income_statement?locale=zh-CN`) plus unit tests; no per-route zh-CN structure sweep |
-| WebKit and Firefox | repeat supported behavior and serious-layout checks | zero projects: `web/playwright.config.mjs` generates only the four Chromium cells, and `webkit` / `firefox` appear nowhere in `web/package.json`, `Makefile` or `web/scripts/` |
+| Simplified Chinese structure | `web/tests/visual/fava-zh-structure.spec.mjs` walks every route in `router.mjs` and compares a locale-independent fingerprint (element tag plus sorted class list, in document order) between `en` and `zh-CN`, plus the sidebar link order. It also asserts `document.documentElement.lang` becomes `zh-CN` and the rendered text differs, so a suite that silently stayed English would fail. | structural parity, no pixels |
+| WebKit and Firefox | `web/playwright.config.mjs` declares `cross-webkit` and `cross-firefox` projects. They run the behavior and structural assertions with `grepInvert: /baseline/i`, so no screenshot assertion can judge them. | behavior and serious-layout, no pixels |
 
-These are Wave 7 done-when items. They are recorded here as gaps because an earlier revision of this section stated them as if they already ran; a registry must not describe coverage that no command produces.
+`go run ./tools/favagates` gate 1 fails when a project disappears from the config or when the Chinese spec stops being matched, so this table cannot drift ahead of the harness again. The four Chromium cells remain the only approved baseline shape; the visual bar is unchanged.
 
 ## Status vocabulary
 

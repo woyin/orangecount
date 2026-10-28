@@ -82,16 +82,18 @@
 1. **Swift/C 子句**曾按「不适用待批准」处理。那实际上是第二次缩窄：判据原文是「Swift/C/原生」择一，原生查询流程既有 `tools/statecapture` 的 Go `query.Evaluate` 证据，也有 CLI 只读复跑记录。已改为「已满足」。
 2. **periods 证据**曾只出现在正文。现已写入运行记录（`period_accounts=2`、`period_rows_total=96`、`periods_all_equal=true`）并列入 `run_outputs`，由门禁校验为正数。
 
-## 已知覆盖缺口（不属现有门槛判据）
+## 语言与引擎覆盖（已实现，不改变六道门槛判据）
 
-以下两项是 Wave 7 的 done-when 要求，当前**未实现**。它们不改变上面六道门槛的结论，但也不得被任何 `accepted` 行解读为已覆盖；登记表已把它们列在「Known coverage gaps」：
+Wave 7 要求英文完整矩阵之外还有简体中文结构巡检与 WebKit/Firefox 行为检查。两项已实现并纳入门禁 1 的存在性校验：
 
-| 维度 | 要求 | 现状 |
+| 维度 | 实现 | 权威性 |
 | --- | --- | --- |
-| 简体中文逐路由结构 | 对每条路由重复结构/行为清单 | 仅 1 条浏览器用例（`/income_statement?locale=zh-CN`）与若干单元测试，无逐路由中文结构巡检 |
-| WebKit 与 Firefox | 重复受支持行为与严重布局检查 | 零项目：`web/playwright.config.mjs` 只生成四个 Chromium 格；`webkit` / `firefox` 在 `web/package.json`、`Makefile`、`web/scripts/` 中零命中 |
+| 简体中文逐路由结构 | `web/tests/visual/fava-zh-structure.spec.mjs` 按 `router.mjs` 的 ROUTES 遍历全部路由，比较 `en` 与 `zh-CN` 的结构指纹（标签 + 排序后的 class 链，按文档顺序）与侧栏链接顺序；并断言 `document.documentElement.lang` 变为 `zh-CN`、正文文本确实不同 | 结构一致，不比像素 |
+| WebKit 与 Firefox | `playwright.config.mjs` 声明 `cross-webkit`、`cross-firefox` 项目，用 `grepInvert: /baseline/i` 排除全部截图断言 | 行为与严重布局，不比像素 |
 
-原因记录：登记表此前把这两项写成「已经跑过」。覆盖登记表不能描述没有任何命令产出的覆盖，因此改为缺口登记。补齐需要新增浏览器项目与逐路由中文用例，属独立任务。
+`go run ./tools/favagates` 门槛 1 会在浏览器项目消失、或中文 spec 未被 `testMatch` 选中时失败，因此这段描述不会再次领先于代码。四个 Chromium 格仍是唯一获批的基线形状。
+
+实测：`npm --prefix web run visual:test` 共 364 条通过（此前 172 条）；`cross-webkit` 与 `cross-firefox` 各 46 条通过。
 
 ## 纪律
 
