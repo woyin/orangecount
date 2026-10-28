@@ -113,6 +113,23 @@ async function main() {
         errors.push(`missing candidate screenshot '${path.relative(repoRoot, screenshot)}': ${error.message}`);
       }
     }
+    // The candidate tree must hold exactly the captured route set. A stale
+    // screenshot from an earlier route naming would otherwise survive a
+    // re-capture and be promoted into the baseline tree by name.
+    const directory = path.join(outputRoot, "screenshots", project, "visual", "fava-reference.spec.mjs");
+    const expected = new Set(routeNames.map((route) => `${route}.png`));
+    let present = [];
+    try {
+      present = (await readdir(directory)).filter((name) => name.toLowerCase().endsWith(".png"));
+    } catch (error) {
+      errors.push(`unreadable candidate directory '${path.relative(repoRoot, directory)}': ${error.message}`);
+      continue;
+    }
+    for (const name of present.sort()) {
+      if (!expected.has(name)) {
+        errors.push(`unexpected candidate screenshot '${path.relative(repoRoot, path.join(directory, name))}': not in the capture route list`);
+      }
+    }
   }
 
   if (errors.length > 0) {

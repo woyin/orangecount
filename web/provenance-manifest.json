@@ -768,11 +768,6 @@
       "upstream": null,
       "notes": "Unit test for the clean-room state reducer."
     },
-    "web/tests/visual/fava-high-impact.spec.mjs": {
-      "current_kind": "original",
-      "upstream": null,
-      "notes": "Development-only browser flow checks; not yet release evidence."
-    },
     "web/tests/visual/fava-reference.spec.mjs": {
       "current_kind": "original",
       "upstream": null,
