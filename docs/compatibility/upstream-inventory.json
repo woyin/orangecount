@@ -662,7 +662,7 @@
       "status": "verified",
       "upstream_case": "sources/beancount.py",
       "upstream_symbol": "EntriesTable.id",
-      "verified_at": null
+      "verified_at": "2026-10-28"
     },
     {
       "approval_date": null,
@@ -1512,7 +1512,7 @@
       "status": "verified",
       "upstream_case": "sources/beancount.py",
       "upstream_symbol": "PostingsTable.id",
-      "verified_at": null
+      "verified_at": "2026-10-28"
     },
     {
       "approval_date": null,
@@ -9815,7 +9815,7 @@
       "status": "verified",
       "upstream_case": "parser/ast.py",
       "upstream_symbol": "beanquery.parser.ast.Node",
-      "verified_at": null
+      "verified_at": "2026-10-28"
     },
     {
       "approval_date": null,
@@ -9965,7 +9965,7 @@
       "status": "verified",
       "upstream_case": "parser/ast.py",
       "upstream_symbol": "beanquery.parser.ast.Ordering",
-      "verified_at": null
+      "verified_at": "2026-10-28"
     },
     {
       "approval_date": null,

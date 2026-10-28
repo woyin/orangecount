@@ -65,19 +65,28 @@ Go 侧需要与 Python `str()`/`repr()` 完全一致的拼写（Decimal、date�
 
 这两项都不属于「上游内部结构」，因此不需要 `excluded` 例外记录。
 
-## 未完成的 2 项
+## 曾登记为「未完成」的 2 项：已用可观测探针解决
 
-| 条目 | 状态 | 具体障碍 |
-| --- | --- | --- |
-| `syntax.Node` | pending | 分诊为 `internal`：上游 AST 基类，没有独立于其它语法节点的公开行为，无法构造能区分它的查询。 |
-| `syntax.Ordering` | pending | 分诊为 `internal`：`ORDER BY` 的排序枚举，行为由具体查询体现，无独立可观测接口。 |
+这两项先前按 `internal` 分诊为 `pending`，理由是「没有独立于其它语法节点的公开行为，无法构造能区分它的查询」。上文的探针设计推翻了这个前提：两者都有可观测契约，因此不需要 `excluded` 例外记录，也不需要收窄采集范围。
 
-这两项属上游内部结构。按纪律**不得**标记为 `excluded`（该状态只允许用户插件/外部扩展，且需产品 owner 批准记录），因此保持 `pending` 并在此登记原因。
+| 条目 | 状态 | 可观测契约 | 探针 |
+| --- | --- | --- | --- |
+| `syntax.Node` | verified (2026-10-28) | 一段语句文本分解出的类型化节点集合 | golden `dynamic: "ast-node"`，比较 `beanquery` 的 `walk()` 类名指纹与 Go 侧 `query.ASTNodeKinds` |
+| `syntax.Ordering` | verified (2026-10-28) | `ORDER BY ... DESC` 只可能返回降序首行 | `SELECT account AS v FROM #accounts ORDER BY account DESC LIMIT 1` |
 
-**这意味着门槛 1「366 项全部 verified」在现有 inventory 定义下不可达**，需要产品 owner 在以下两者间决定：
+两项的 `verified_at` 已按实际校验日期记录。
 
-- **A**：把 `audit_compatibility.py` 的 syntax 采集范围从「`vars(ast)` 的全部类」收窄到「有独立语义的语法构造」，inventory 变为 364 项并同步门槛文案；
-- **B**：为这两项出具带 `approved_by`+`approval_date`+`reason` 的例外记录。
+### 防伪验证
+
+`verified` 不是改状态得来：把实现改坏，golden 必须变红。三项变异均实测复现：
+
+| 变异 | 结果 |
+| --- | --- |
+| `ASTNodeKinds` 提前返回只含 `Select` | `row-mismatch want [Column Column OrderBy Select Table Target] got [Select]` |
+| 从指纹中删掉 `OrderBy` 节点 | `row-mismatch want [...] got [Column Column Select Table Target]` |
+| `directiveID` 不再把字段混入摘要 | `table.entries.id` 与 `table.postings.id` 双双 `row-mismatch` |
+
+同时 `uv run --offline --project tools/reference python tools/reference/probe_inventory.py --check` 报告 `inventory goldens match the oracle: 366 items`，说明 golden 本身与固定上游 oracle 一致。
 
 ## 本轮补齐的行为
 
@@ -92,5 +101,5 @@ Go 侧需要与 Python `str()`/`repr()` 完全一致的拼写（Decimal、date�
 
 ## 尚未覆盖
 
-- 上表 2 项保持 pending，等待产品决策。
+- 先前 pending 的 `syntax.Node` 与 `syntax.Ordering` 已用可观测探针补齐（见上文「曾登记为未完成的 2 项」），inventory 无 pending 项。
 - 本证据链只覆盖已登记在 inventory 的能力；它不证明完整兼容，也不证明「Beancount 超集」。完整门槛仍需 `docs/parity-gates-2026-10-27.md` 的全部 6 项通过。

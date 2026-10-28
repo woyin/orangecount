@@ -36,6 +36,7 @@ func verified(id string) map[string]any {
 		"id": id, "status": "verified", "kind": "column",
 		"go_location": "internal/query/columns.go",
 		"cases":       []any{"TestAccountsColumn"},
+		"verified_at": "2026-10-28",
 	}
 }
 
@@ -88,8 +89,10 @@ func TestGateOneRequiresCompleteEvidence(t *testing.T) {
 		cap    map[string]any
 		reason string
 	}{
-		{"verified-without-location", map[string]any{"id": "a", "status": "verified", "cases": []any{"T"}}, "go_location"},
-		{"verified-without-cases", map[string]any{"id": "a", "status": "verified", "go_location": "x.go"}, "cases 或 go_case"},
+		{"verified-without-location", map[string]any{"id": "a", "status": "verified", "cases": []any{"T"}, "verified_at": "2026-10-28"}, "go_location"},
+		{"verified-without-cases", map[string]any{"id": "a", "status": "verified", "go_location": "x.go", "verified_at": "2026-10-28"}, "cases 或 go_case"},
+		{"verified-without-date", map[string]any{"id": "a", "status": "verified", "go_location": "x.go", "cases": []any{"T"}}, "verified_at"},
+		{"verified-with-bad-date", map[string]any{"id": "a", "status": "verified", "go_location": "x.go", "cases": []any{"T"}, "verified_at": "28/10/2026"}, "YYYY-MM-DD"},
 		{"excluded-without-approver", map[string]any{"id": "a", "status": "approved-excluded", "approval_date": "2026-10-27", "reason": "plugin"}, "approved_by"},
 		{"excluded-without-date", map[string]any{"id": "a", "status": "approved-excluded", "approved_by": "owner", "reason": "plugin"}, "approval_date"},
 		{"excluded-with-bad-date", map[string]any{"id": "a", "status": "approved-excluded", "approved_by": "owner", "approval_date": "27/10/2026", "reason": "plugin"}, "YYYY-MM-DD"},

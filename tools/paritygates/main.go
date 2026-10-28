@@ -275,6 +275,14 @@ func checkStatus(inv *inventory, expectedTotal int) statusReport {
 			if len(listText(item.Cases)) == 0 && text(item.GoCase) == "" {
 				reasons = append(reasons, "status=verified 但缺少 cases 或 go_case")
 			}
+			// A verified claim needs the date it was verified. Without it an item
+			// can be flipped to verified and never revisited, which is how four
+			// capabilities once carried a status no one could date.
+			if value := text(item.VerifiedAt); value == "" {
+				reasons = append(reasons, "status=verified 但缺少 verified_at")
+			} else if !validDate(value) {
+				reasons = append(reasons, "verified_at 不是 YYYY-MM-DD 日期")
+			}
 		case "approved-excluded":
 			if text(item.ApprovedBy) == "" {
 				reasons = append(reasons, "status=approved-excluded 但缺少 approved_by")
