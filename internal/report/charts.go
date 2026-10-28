@@ -305,7 +305,7 @@ type chartPosting struct {
 // equity lines per interval.
 func balanceSheetChart(e ledger.Evaluation, keys []string, ends map[string]string, interval, currency, valuation string) ChartSpec {
 	types := e.AccountTypes()
-	labels := []string{types.RootOf("Assets"), types.RootOf("Liabilities"), types.RootOf("Equity"), "Net worth"}
+	labels := []string{e.DisplayRoot("Assets"), e.DisplayRoot("Liabilities"), e.DisplayRoot("Equity"), "Net worth"}
 	seriesValues := make(map[string][]ChartPoint, len(labels))
 	for _, label := range labels {
 		seriesValues[label] = make([]ChartPoint, 0, len(keys))
@@ -345,7 +345,7 @@ func balanceSheetChart(e ledger.Evaluation, keys []string, ends map[string]strin
 // lines per interval.
 func incomeStatementChart(e ledger.Evaluation, keys []string, ends map[string]string, interval, currency, valuation string) ChartSpec {
 	types := e.AccountTypes()
-	labels := []string{types.RootOf("Income"), types.RootOf("Expenses"), "Net profit"}
+	labels := []string{e.DisplayRoot("Income"), e.DisplayRoot("Expenses"), "Net profit"}
 	values := make(map[string][]ChartPoint, len(labels))
 	for _, label := range labels {
 		values[label] = make([]ChartPoint, 0, len(keys))
@@ -760,7 +760,7 @@ func ReportCharts(e ledger.Evaluation, route, period, valuation string) []ChartS
 // currency, in the shape Fava's balance-sheet "Net Worth" chart uses.
 func nativeBalanceCharts(e ledger.Evaluation, keys []string, ends map[string]string, interval, valuation string) []ChartSpec {
 	types := e.AccountTypes()
-	measures := []string{"Net worth", types.RootOf("Assets"), types.RootOf("Liabilities"), types.RootOf("Equity")}
+	measures := []string{"Net worth", e.DisplayRoot("Assets"), e.DisplayRoot("Liabilities"), e.DisplayRoot("Equity")}
 	running := map[string]map[string]ledger.Decimal{}
 	byPeriod := map[string]map[string]map[string]ledger.Decimal{}
 	for _, measure := range measures {
@@ -782,7 +782,7 @@ func nativeBalanceCharts(e ledger.Evaluation, keys []string, ends map[string]str
 			if currency == "" {
 				continue
 			}
-			label := types.RootOf(kind)
+			label := e.DisplayRoot(kind)
 			running[label][currency] = running[label][currency].Add(amount)
 			// Net worth is assets plus liabilities, the same combination the
 			// balance-sheet table reports.
@@ -805,7 +805,7 @@ func nativeBalanceCharts(e ledger.Evaluation, keys []string, ends map[string]str
 // Fava's Net Profit / Income / Expenses monthly bar charts.
 func nativeFlowCharts(e ledger.Evaluation, keys []string, ends map[string]string, interval, valuation string) []ChartSpec {
 	types := e.AccountTypes()
-	measures := []string{"Net profit", types.RootOf("Income"), types.RootOf("Expenses")}
+	measures := []string{"Net profit", e.DisplayRoot("Income"), e.DisplayRoot("Expenses")}
 	byPeriod := map[string]map[string]map[string]ledger.Decimal{}
 	for _, measure := range measures {
 		byPeriod[measure] = map[string]map[string]ledger.Decimal{}
@@ -828,7 +828,7 @@ func nativeFlowCharts(e ledger.Evaluation, keys []string, ends map[string]string
 			if currency == "" {
 				continue
 			}
-			label := types.RootOf(kind)
+			label := e.DisplayRoot(kind)
 			period[label][currency] = period[label][currency].Add(amount)
 			period["Net profit"][currency] = period["Net profit"][currency].Add(amount)
 		}

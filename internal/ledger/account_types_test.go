@@ -48,6 +48,76 @@ func TestAccountTypesFollowNameOptions(t *testing.T) {
 	}
 }
 
+// The cn scheme makes the five Chinese root names exact equivalents of the
+// English ones without any per-type option, and keeps both vocabularies usable
+// in the same ledger.
+func TestAccountTypesCNScheme(t *testing.T) {
+	evaluation := Evaluation{Options: map[string]string{AccountRootSchemeOption: "cn"}}
+	types := evaluation.AccountTypes()
+	if types.Scheme != SchemeCN {
+		t.Fatalf("scheme=%q want %q", types.Scheme, SchemeCN)
+	}
+	cases := map[string]string{
+		"资产:钱包:微信": "Assets",
+		"负债:信用卡":   "Liabilities",
+		"权益:期初":    "Equity",
+		"收入:工资":    "Income",
+		"支出:餐饮":    "Expenses",
+		// The upstream English vocabulary stays valid in the same ledger, so a
+		// Chinese ledger can adopt the scheme without renaming anything.
+		"Assets:Cash":      "Assets",
+		"Liabilities:Card": "Liabilities",
+		"Equity:Opening":   "Equity",
+		"Income:Salary":    "Income",
+		"Expenses:Food":    "Expenses",
+		"Acme:Cash":        "",
+	}
+	for account, want := range cases {
+		if got := types.TypeOf(account); got != want {
+			t.Errorf("TypeOf(%q)=%q want %q", account, got, want)
+		}
+	}
+	for _, kind := range types.Keys() {
+		roots := types.RootsOf(kind)
+		if len(roots) != 2 {
+			t.Fatalf("%s roots=%v want 2 spellings", kind, roots)
+		}
+		if roots[0] != types.RootOf(kind) || roots[1] != cnRootNames[kind] {
+			t.Fatalf("%s roots=%v order or alias wrong", kind, roots)
+		}
+	}
+}
+
+// The global scheme must stay exactly the upstream vocabulary: a Chinese root is
+// an unclassified account, not a silently accepted alias.
+func TestAccountTypesGlobalSchemeRejectsChineseRoots(t *testing.T) {
+	evaluation := Evaluation{Options: map[string]string{AccountRootSchemeOption: "global"}}
+	types := evaluation.AccountTypes()
+	if types.Scheme != SchemeGlobal {
+		t.Fatalf("scheme=%q want %q", types.Scheme, SchemeGlobal)
+	}
+	if got := types.TypeOf("资产:钱包"); got != "" {
+		t.Fatalf("global scheme classified a Chinese root as %q", got)
+	}
+	if got := types.TypeOf("Assets:Cash"); got != "Assets" {
+		t.Fatalf("global scheme lost the English root: %q", got)
+	}
+}
+
+// An unrecognized scheme value falls back to global here; the evaluator reports
+// it as an option error so the typo is never silent.
+func TestRootSchemeFallsBackToGlobal(t *testing.T) {
+	for _, value := range []string{"", "GLOBAL", " global ", "xx", "zh"} {
+		evaluation := Evaluation{Options: map[string]string{AccountRootSchemeOption: value}}
+		if got := evaluation.RootScheme(); got != SchemeGlobal {
+			t.Errorf("scheme %q resolved to %q", value, got)
+		}
+	}
+	if got := (Evaluation{Options: map[string]string{AccountRootSchemeOption: " CN "}}).RootScheme(); got != SchemeCN {
+		t.Errorf("scheme with padding resolved to %q", got)
+	}
+}
+
 func TestAccountTypesIgnoreInvalidRootValues(t *testing.T) {
 	// A value that is not a valid root name must not silently rename a
 	// statement; the evaluator reports it as an option error instead.

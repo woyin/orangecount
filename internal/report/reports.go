@@ -445,11 +445,15 @@ func accountTree(e ledger.Evaluation, kinds []string, retainZero bool) []Account
 	index.retainZero = retainZero
 	var rootNodes []AccountTreeNode
 	for _, kind := range kinds {
-		root := types.RootOf(kind)
-		if root == "" || !index.nodes[root] {
-			continue
+		// A Chinese-scheme ledger may hold both the configured and the alias
+		// spelling of one type. Emitting every spelling present keeps both
+		// subtrees instead of silently dropping the unselected vocabulary.
+		for _, root := range types.RootsOf(kind) {
+			if !index.nodes[root] {
+				continue
+			}
+			rootNodes = append(rootNodes, buildSubtree(root, 0, index))
 		}
-		rootNodes = append(rootNodes, buildSubtree(root, 0, index))
 	}
 	return rootNodes
 }

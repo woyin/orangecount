@@ -1418,11 +1418,21 @@ func (p *parser) listValue(ts []token, i int) (Value, int) {
 	return v, i
 }
 
+// isAccount reports whether a bare word looks like an account name rather than
+// a currency. A colon is required, and the root must be a letter: an ASCII
+// uppercase letter as upstream requires in the global vocabulary, or any
+// non-ASCII rune, because a cn-scheme ledger roots its accounts in a Chinese
+// name. Without the UTF-8 arm a value such as "资产:钱包" in a custom directive
+// is typed as a currency, which silently drops it from every consumer that
+// expects an account.
 func isAccount(s string) bool {
 	if !strings.Contains(s, ":") {
 		return false
 	}
-	first := s[0]
+	first, _ := utf8.DecodeRuneInString(s)
+	if first > 0x7F {
+		return true
+	}
 	return first >= 'A' && first <= 'Z'
 }
 

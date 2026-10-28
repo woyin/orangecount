@@ -100,11 +100,29 @@ func ProjectTreeReport(e ledger.Evaluation, name string, filters report.Filters,
 
 func treeResult(e ledger.Evaluation, name string) (query.Result, []string) {
 	types := e.AccountTypes()
+	// rootsInUse resolves each type to the spellings the ledger actually uses,
+	// so a Chinese-scheme ledger that mixes both vocabularies renders one tree
+	// per spelling instead of an empty placeholder beside a filled tree.
+	rootsInUse := func(kind string) []string {
+		var roots []string
+		for _, root := range types.RootsOf(kind) {
+			if e.RootInUse(root) {
+				roots = append(roots, root)
+			}
+		}
+		if len(roots) == 0 {
+			roots = append(roots, types.RootOf(kind))
+		}
+		return roots
+	}
 	switch name {
 	case "income_statement":
-		return report.IncomeStatement(e), []string{types.RootOf("Income"), "Net Profit", types.RootOf("Expenses")}
+		roots := append(rootsInUse("Income"), "Net Profit")
+		return report.IncomeStatement(e), append(roots, rootsInUse("Expenses")...)
 	case "balance_sheet":
-		return report.BalanceSheet(e), []string{types.RootOf("Assets"), types.RootOf("Liabilities"), types.RootOf("Equity")}
+		roots := rootsInUse("Assets")
+		roots = append(roots, rootsInUse("Liabilities")...)
+		return report.BalanceSheet(e), append(roots, rootsInUse("Equity")...)
 	case "trial_balance":
 		return report.TrialBalanceTree(e), []string{""}
 	default:

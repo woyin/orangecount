@@ -128,7 +128,7 @@ fixture has not yet been implemented.
 | `currencies` / `currency_names` / `precisions` | `attributes.currencies`, `core/commodities.py` | v3-compatible Commodity directives and exact display rules | deterministic names and precisions |
 | `errors` | `get_errors()` | `internal/diagnostic` → `errors` | `[{type,message,source}]` |
 | `fava_options` | `fava_options` dataclass | `internal/web` all applicable built-in options | excluded capability fields remain explicit approved deviations |
-| `options` | `_get_options()` | `internal/ledger` `Evaluation.Options` | title, filename, include, operating_currency, name_* |
+| `options` | `_get_options()` | `internal/ledger` `Evaluation.Options` | title, filename, include, operating_currency, name_*, account_root_scheme |
 | `payees`/`tags`/`links`/`years`/`narrations` | `attributes.*` | `internal/report`/`internal/query` | string[] |
 | `user_queries` | `all_entries_by_type.Query` | `internal/ledger` Query directives | `[{name, query_string}]` |
 | `sidebar_links` | `core/misc.py` | `internal/web` | custom `fava-sidebar-link` subset |

@@ -28,7 +28,7 @@ func StatementView(e ledger.Evaluation, route, from, to, currency, valuation str
 	labels := []string{"Net worth"}
 	if route == "income_statement" {
 		kinds = []string{"Income", "Expenses"}
-		labels = []string{types.RootOf("Income"), types.RootOf("Expenses")}
+		labels = []string{e.DisplayRoot("Income"), e.DisplayRoot("Expenses")}
 	}
 	allowed := map[string]bool{}
 	for _, kind := range kinds {

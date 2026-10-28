@@ -7,20 +7,35 @@ import (
 	"testing"
 
 	"orangecount/internal/ledger"
+	"orangecount/internal/query"
 	"orangecount/internal/source"
 )
 
-// A ledger that renames its root accounts through the name_* options must
-// produce the same statements as the default-root ledger it mirrors. Before
-// classification followed the configured names, such a ledger was accepted and
-// then silently dropped from every statement, which is worse than an error.
-func TestRenamedRootsStillPopulateStatements(t *testing.T) {
-	const text = `option "operating_currency" "CNY"
-option "name_assets" "资产"
-option "name_liabilities" "负债"
-option "name_equity" "权益"
-option "name_income" "收入"
-option "name_expenses" "支出"
+func evaluateReportText(t *testing.T, name, text string) *ledger.Evaluation {
+	t.Helper()
+	file, diagnostics := ledger.ParseText(name, []byte(text))
+	if diagnostics.HasErrors() {
+		t.Fatalf("parse diagnostics: %+v", diagnostics.All())
+	}
+	evaluation := ledger.EvaluateFiles(map[source.FileID]*ledger.File{1: file}, []source.FileID{1}, ledger.EvalOptions{SemanticsProfile: ledger.V3})
+	if !evaluation.Valid {
+		t.Fatalf("ledger invalid: %+v", evaluation.Diagnostics)
+	}
+	return evaluation
+}
+
+func accountsIn(rows []query.Row) map[string]bool {
+	accounts := map[string]bool{}
+	for _, row := range rows {
+		if account, ok := row["account"].(string); ok {
+			accounts[account] = true
+		}
+	}
+	return accounts
+}
+
+const cnSchemeLedger = `option "operating_currency" "CNY"
+option "account_root_scheme" "cn"
 2020-01-01 open 资产:钱包:微信 CNY
 2020-01-01 open 权益:期初 CNY
 2020-01-01 open 收入:工资 CNY
@@ -35,57 +50,87 @@ option "name_expenses" "支出"
   资产:钱包:微信  5000 CNY
   收入:工资  -5000 CNY
 `
-	file, diagnostics := ledger.ParseText("renamed.bean", []byte(text))
-	if diagnostics.HasErrors() {
-		t.Fatalf("parse diagnostics: %+v", diagnostics.All())
-	}
-	evaluation := ledger.EvaluateFiles(map[source.FileID]*ledger.File{1: file}, []source.FileID{1}, ledger.EvalOptions{SemanticsProfile: ledger.V3})
-	if !evaluation.Valid {
-		t.Fatalf("ledger invalid: %+v", evaluation.Diagnostics)
-	}
+
+// The cn scheme makes the five Chinese roots exact equivalents of the English
+// ones with no per-type option, so the statements must populate without any
+// name_* line. Before classification followed the accepted vocabulary, such a
+// ledger was accepted and then silently dropped from every report.
+func TestCNSchemePopulatesStatements(t *testing.T) {
+	evaluation := evaluateReportText(t, "cn.bean", cnSchemeLedger)
 
 	balance := BalanceSheet(*evaluation)
 	if len(balance.Rows) == 0 {
-		t.Fatal("balance sheet is empty for a renamed-root ledger")
+		t.Fatal("balance sheet is empty for a cn-scheme ledger")
 	}
-	accounts := map[string]bool{}
-	for _, row := range balance.Rows {
-		accounts[row["account"].(string)] = true
-	}
-	for _, want := range []string{"资产", "资产:钱包:微信", "权益"} {
+	accounts := accountsIn(balance.Rows)
+	for _, want := range []string{"资产", "资产:钱包:微信", "权益", "权益:期初"} {
 		if !accounts[want] {
 			t.Errorf("balance sheet missing %q; got %v", want, accounts)
 		}
 	}
 
-	income := IncomeStatement(*evaluation)
-	names := map[string]bool{}
-	for _, row := range income.Rows {
-		names[row["account"].(string)] = true
-	}
+	income := accountsIn(IncomeStatement(*evaluation).Rows)
 	for _, want := range []string{"收入:工资", "支出:餐饮"} {
-		if !names[want] {
-			t.Errorf("income statement missing %q; got %v", want, names)
+		if !income[want] {
+			t.Errorf("income statement missing %q; got %v", want, income)
 		}
 	}
 
-	// The tree roots must be the configured names, not the canonical keys.
 	tree := BuildAccountTree(*evaluation, "Assets", "Equity")
 	if len(tree) != 2 || tree[0].FullName != "资产" || tree[1].FullName != "权益" {
 		t.Fatalf("tree roots=%+v", tree)
 	}
 }
 
-// An account whose root is not one of the five configured types cannot be
-// classified, so it must be reported instead of vanishing from reports.
+// Both vocabularies are accepted inside one cn-scheme ledger, so the statements
+// must carry both subtrees instead of one spelling replacing the other.
+func TestCNSchemeKeepsBothSpellings(t *testing.T) {
+	evaluation := evaluateReportText(t, "mixed.bean", `option "operating_currency" "CNY"
+option "account_root_scheme" "cn"
+2020-01-01 open 资产:钱包 CNY
+2020-01-01 open Assets:Cash CNY
+2020-01-01 open 权益:期初 CNY
+2020-01-02 * "seed"
+  资产:钱包  10 CNY
+  Assets:Cash  20 CNY
+  权益:期初  -30 CNY
+`)
+	accounts := accountsIn(BalanceSheet(*evaluation).Rows)
+	for _, want := range []string{"资产", "资产:钱包", "Assets", "Assets:Cash", "权益"} {
+		if !accounts[want] {
+			t.Errorf("balance sheet missing %q; got %v", want, accounts)
+		}
+	}
+	tree := BuildAccountTree(*evaluation, "Assets")
+	if len(tree) != 2 {
+		t.Fatalf("expected one subtree per spelling, got %+v", tree)
+	}
+}
+
+// A Chinese-scheme ledger written in English keeps English chart labels, so the
+// label follows the spelling the ledger uses rather than the scheme.
+func TestDisplayRootFollowsLedgerSpelling(t *testing.T) {
+	cn := evaluateReportText(t, "cn.bean", cnSchemeLedger)
+	if got := cn.DisplayRoot("Assets"); got != "资产" {
+		t.Fatalf("cn ledger label=%q want 资产", got)
+	}
+	english := evaluateReportText(t, "en.bean", `option "account_root_scheme" "cn"
+2020-01-01 open Assets:Cash CNY
+`)
+	if got := english.DisplayRoot("Assets"); got != "Assets" {
+		t.Fatalf("english ledger label=%q want Assets", got)
+	}
+}
+
+// An account whose root is neither the configured name nor an accepted alias
+// must be reported instead of vanishing from reports.
 func TestUnclassifiedRootIsReported(t *testing.T) {
-	const text = `2020-01-01 open Acme:Cash CNY
+	file, diagnostics := ledger.ParseText("unclassified.bean", []byte(`2020-01-01 open Acme:Cash CNY
 2020-01-01 open Equity:Opening CNY
 2020-01-02 * "seed"
   Acme:Cash  1 CNY
   Equity:Opening  -1 CNY
-`
-	file, diagnostics := ledger.ParseText("unclassified.bean", []byte(text))
+`))
 	if diagnostics.HasErrors() {
 		t.Fatalf("parse diagnostics: %+v", diagnostics.All())
 	}
@@ -101,5 +146,24 @@ func TestUnclassifiedRootIsReported(t *testing.T) {
 	}
 	if evaluation.Valid {
 		t.Fatal("an unclassifiable root must invalidate the ledger")
+	}
+}
+
+// The global scheme must not accept a Chinese root, so the account error fires
+// with no cn option present.
+func TestGlobalSchemeRejectsChineseRootAtEvaluation(t *testing.T) {
+	file, diagnostics := ledger.ParseText("global.bean", []byte("2020-01-01 open 资产:钱包 CNY\n"))
+	if diagnostics.HasErrors() {
+		t.Fatalf("parse diagnostics: %+v", diagnostics.All())
+	}
+	evaluation := ledger.EvaluateFiles(map[source.FileID]*ledger.File{1: file}, []source.FileID{1}, ledger.EvalOptions{SemanticsProfile: ledger.V3})
+	found := false
+	for _, d := range evaluation.Diagnostics {
+		if d.Code == "E-EVAL-ACCOUNT" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("global scheme accepted a Chinese root: %+v", evaluation.Diagnostics)
 	}
 }

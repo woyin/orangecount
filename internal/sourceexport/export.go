@@ -78,6 +78,13 @@ func Prepare(entry string, options Options) (*Plan, error) {
 		if e.Options["booking_method"] == "AVERAGE" {
 			return nil, averageError(graph, parsed, "")
 		}
+		// The cn account-root scheme is a dialect extension: upstream validates
+		// every option key and rejects account_root_scheme, and its root
+		// production admits only ASCII. Exporting such a ledger would produce a
+		// file no v3 tool can load, so refusal is the only portable answer.
+		if slices.Contains(e.ActiveExtensions, "cn-account-roots") {
+			return nil, fmt.Errorf("E-EXPORT-COMPAT: the account_root_scheme cn vocabulary is not representable in Beancount v3; export needs ASCII English root names")
+		}
 		// A UTF-8 root account name is a dialect extension: the v3 reader only
 		// admits an ASCII lead byte in the root, so exporting it would produce a
 		// file no v3 tool can load. Refusing is the only portable answer.
@@ -126,6 +133,7 @@ func Prepare(entry string, options Options) (*Plan, error) {
 		}
 		data := outputs[id]
 		if !options.Reverse {
+			data = dropDialectOnlyOptions(data)
 			data, err = rewriteDocuments(data, graph.Path(id))
 			if err != nil {
 				return nil, err
@@ -215,11 +223,46 @@ var optionPolicy = map[string]string{
 	// cannot change an evaluated value, an exported byte, or reload semantics,
 	// so export accepts it and the fingerprints prove the rest.
 	"render_commas": "display-only",
+	// account_root_scheme is a dialect-only selector: the evaluator reads it,
+	// but upstream rejects the key itself. The cn vocabulary is refused before
+	// this gate runs; the global value is the upstream default and its line is
+	// dropped from the snapshot, so the key is admitted here as a
+	// dialect-dropped option rather than as a portable one.
+	"account_root_scheme": optionClassDialectDropped,
+}
+
+// optionClassDialectDropped marks a key the evaluator reads but the emitted
+// snapshot must not contain, because upstream validates option keys.
+const optionClassDialectDropped = "dialect-dropped"
+
+// dropDialectOnlyOptions removes top-level option lines that only OrangeCount
+// understands and that have no effect on the exported accounting. Upstream
+// validates every option key and rejects an unknown one, so leaving such a line
+// in the snapshot would make it unreadable there. Only an unindented option line
+// is removed, so a ledger value or a posting that merely contains the same text
+// is never touched.
+func dropDialectOnlyOptions(data []byte) []byte {
+	lines := strings.Split(string(data), "\n")
+	kept := lines[:0]
+	for _, line := range lines {
+		trimmed := strings.TrimLeft(line, " 	")
+		if len(trimmed) != len(line) {
+			// Indented: never a top-level directive.
+			kept = append(kept, line)
+			continue
+		}
+		lower := strings.ToLower(strings.TrimSpace(trimmed))
+		if strings.HasPrefix(lower, "option \"account_root_scheme\"") && strings.Contains(lower, "\"global\"") {
+			continue
+		}
+		kept = append(kept, line)
+	}
+	return []byte(strings.Join(kept, "\n"))
 }
 
 func allowedOption(key string) bool {
 	class, ok := optionPolicy[key]
-	return ok && (class == "validated-semantic" || class == "display-only")
+	return ok && (class == "validated-semantic" || class == "display-only" || class == optionClassDialectDropped)
 }
 
 func compatible(g *source.Graph, parsed map[source.FileID]*ledger.File) error {
@@ -473,12 +516,24 @@ func financialFingerprint(e ledger.Evaluation) (string, error) {
 			}
 		}
 	}
+	// The account_root_scheme line is dropped from an exported snapshot because
+	// upstream rejects an unknown option key. Removing it must not look like an
+	// accounting change, and it is not one: the global value is exactly the
+	// default vocabulary, so normalizing it out keeps the reload comparison
+	// focused on numbers. The cn value never reaches export, which refuses it.
+	options := make(map[string]string, len(e.Options))
+	for key, value := range e.Options {
+		if key == ledger.AccountRootSchemeOption && strings.EqualFold(strings.TrimSpace(value), string(ledger.SchemeGlobal)) {
+			continue
+		}
+		options[key] = value
+	}
 	b, err := json.Marshal(struct {
 		Accounts map[string]ledger.AccountState
 		Prices   map[string][]ledger.PriceQuote
 		Entries  []ledger.EntryRecord
 		Options  map[string]string
-	}{e.Accounts, e.Prices, e.Entries, e.Options})
+	}{e.Accounts, e.Prices, e.Entries, options})
 	if err != nil {
 		return "", err
 	}

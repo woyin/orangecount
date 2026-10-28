@@ -448,6 +448,24 @@ func (e *evaluator) applyOption(d Option) {
 			}
 		}
 	}
+	// account_root_scheme selects the accepted root vocabulary. An unrecognized
+	// value is reported rather than silently falling back, because the fallback
+	// would reject every Chinese-rooted account with a misleading account error.
+	if e.options.SemanticsProfile == V3 && d.Key == AccountRootSchemeOption {
+		switch strings.ToLower(strings.TrimSpace(d.Value)) {
+		case string(SchemeGlobal), string(SchemeCN):
+			if d.Key == AccountRootSchemeOption && e.result.RootScheme() == SchemeCN {
+				if !contains(e.result.ActiveExtensions, "cn-account-roots") {
+					e.result.ActiveExtensions = append(e.result.ActiveExtensions, "cn-account-roots")
+				}
+			}
+			if !e.accountNamesDistinct() {
+				e.add("E-EVAL-OPTION", diagnostic.Error, d.Span(), e.pathFor(d.Span()))
+			}
+		default:
+			e.add("E-EVAL-OPTION", diagnostic.Error, d.Span(), e.pathFor(d.Span()))
+		}
+	}
 	if e.options.SemanticsProfile == V3 && d.Key == "booking_method" {
 		if !validBooking(d.Value) {
 			e.add("E-EVAL-OPTION", diagnostic.Error, d.Span(), e.pathFor(d.Span()))

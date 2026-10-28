@@ -5,18 +5,34 @@ package ledger
 
 import "strings"
 
-// AccountTypes holds the five root account names in effect for an evaluation.
-// The names are configurable through the name_assets, name_liabilities,
-// name_equity, name_income, and name_expenses options, matching the upstream
-// account-type configuration surface. Reports, queries, and charts classify
-// accounts through TypeOf instead of comparing against hard-coded English
-// literals, so a ledger that renames its roots keeps every report populated.
-type AccountTypes struct {
-	Assets      string
-	Liabilities string
-	Equity      string
-	Income      string
-	Expenses    string
+// AccountRootScheme selects the accepted root-name vocabulary. It is a
+// ledger-level switch because a root name is part of a ledger's convention,
+// not of an individual account: mixing two vocabularies inside one file would
+// make "资产:Cash" and "Assets:Cash" rival spellings of the same type with no
+// way for a reader to tell which one the author meant.
+type AccountRootScheme string
+
+const (
+	// SchemeGlobal is the upstream Beancount v3 vocabulary and the default:
+	// only the five English root names are accepted.
+	SchemeGlobal AccountRootScheme = "global"
+	// SchemeCN additionally accepts the five Chinese root names as exact
+	// equivalents of the English ones. Both vocabularies stay usable in the
+	// same ledger, so a Chinese ledger can adopt the scheme without renaming
+	// existing English-rooted accounts.
+	SchemeCN AccountRootScheme = "cn"
+)
+
+// AccountRootSchemeOption is the option key that selects the scheme.
+const AccountRootSchemeOption = "account_root_scheme"
+
+// cnRootNames maps each canonical account type to its Chinese equivalent.
+var cnRootNames = map[string]string{
+	"Assets":      "资产",
+	"Liabilities": "负债",
+	"Equity":      "权益",
+	"Income":      "收入",
+	"Expenses":    "支出",
 }
 
 // accountTypeKeys is the fixed canonical order of the five account types. The
@@ -24,7 +40,22 @@ type AccountTypes struct {
 // user-facing labels; RootOf maps a key back to the configured display name.
 var accountTypeKeys = [5]string{"Assets", "Liabilities", "Equity", "Income", "Expenses"}
 
-// DefaultAccountTypes returns the upstream default root account names.
+// AccountTypes holds the root names in effect for an evaluation, together with
+// the accepted vocabulary. Reports, queries, and charts classify accounts
+// through TypeOf instead of comparing against hard-coded English literals, so
+// a ledger that renames or translates its roots keeps every report populated.
+type AccountTypes struct {
+	Assets      string
+	Liabilities string
+	Equity      string
+	Income      string
+	Expenses    string
+	// Scheme selects whether the Chinese root names are also accepted.
+	Scheme AccountRootScheme
+}
+
+// DefaultAccountTypes returns the upstream default root account names under the
+// global scheme.
 func DefaultAccountTypes() AccountTypes {
 	return AccountTypes{
 		Assets:      "Assets",
@@ -32,11 +63,12 @@ func DefaultAccountTypes() AccountTypes {
 		Equity:      "Equity",
 		Income:      "Income",
 		Expenses:    "Expenses",
+		Scheme:      SchemeGlobal,
 	}
 }
 
-// RootOf returns the configured root name for a canonical account-type key.
-// An unknown key returns an empty string.
+// RootOf returns the configured primary root name for a canonical account-type
+// key. An unknown key returns an empty string.
 func (t AccountTypes) RootOf(kind string) string {
 	switch kind {
 	case "Assets":
@@ -53,21 +85,47 @@ func (t AccountTypes) RootOf(kind string) string {
 	return ""
 }
 
-// TypeOf classifies an account by its root component and returns the canonical
-// key. An account whose root is not one of the five configured types returns an
-// empty string; callers must treat that as unclassified rather than guessing,
-// because silently guessing would move balances between statements.
-func (t AccountTypes) TypeOf(account string) string {
-	root := account
-	if at := strings.IndexByte(root, ':'); at >= 0 {
-		root = root[:at]
+// RootsOf returns every root spelling accepted for a canonical type, primary
+// first. Tree builders need the whole list rather than just the primary name,
+// because a Chinese-scheme ledger may legitimately hold both "资产:钱包" and
+// "Assets:Cash"; selecting only one spelling would drop the other subtree.
+func (t AccountTypes) RootsOf(kind string) []string {
+	primary := t.RootOf(kind)
+	if primary == "" {
+		return nil
 	}
+	roots := []string{primary}
+	if t.Scheme == SchemeCN {
+		if alias := cnRootNames[kind]; alias != "" && alias != primary {
+			roots = append(roots, alias)
+		}
+	}
+	return roots
+}
+
+// AllRoots returns every accepted root spelling across all five types.
+func (t AccountTypes) AllRoots() []string {
+	roots := make([]string, 0, 10)
+	for _, kind := range accountTypeKeys {
+		roots = append(roots, t.RootsOf(kind)...)
+	}
+	return roots
+}
+
+// TypeOf classifies an account by its root component and returns the canonical
+// key. An account whose root is not an accepted spelling for any configured
+// type returns an empty string; callers must treat that as unclassified rather
+// than guessing, because guessing would move balances between statements.
+func (t AccountTypes) TypeOf(account string) string {
+	root := rootComponent(account)
 	if root == "" {
 		return ""
 	}
 	for _, kind := range accountTypeKeys {
-		if root == t.RootOf(kind) {
-			return kind
+		for _, accepted := range t.RootsOf(kind) {
+			if root == accepted {
+				return kind
+			}
 		}
 	}
 	return ""
@@ -78,12 +136,34 @@ func (t AccountTypes) Keys() []string {
 	return []string{"Assets", "Liabilities", "Equity", "Income", "Expenses"}
 }
 
-// AccountTypes returns the root account names configured by the name_* options.
-// Values that are not syntactically valid root names are ignored here; the
-// evaluator reports them as option errors so a typo never silently renames a
-// statement.
+// rootComponent returns the first component of an account name.
+func rootComponent(account string) string {
+	if at := strings.IndexByte(account, ':'); at >= 0 {
+		return account[:at]
+	}
+	return account
+}
+
+// RootScheme resolves the scheme selected by the account_root_scheme option.
+// An absent or unrecognized value falls back to the global scheme; the
+// evaluator reports an unrecognized value as an option error so a typo never
+// silently changes which roots a ledger accepts.
+func (e Evaluation) RootScheme() AccountRootScheme {
+	switch strings.ToLower(strings.TrimSpace(e.Options[AccountRootSchemeOption])) {
+	case string(SchemeCN):
+		return SchemeCN
+	default:
+		return SchemeGlobal
+	}
+}
+
+// AccountTypes returns the root account names configured by the name_* options
+// together with the vocabulary selected by account_root_scheme. Values that are
+// not syntactically valid root names are ignored here; the evaluator reports
+// them as option errors so a typo never silently renames a statement.
 func (e Evaluation) AccountTypes() AccountTypes {
 	types := DefaultAccountTypes()
+	types.Scheme = e.RootScheme()
 	options := [5]struct {
 		key  string
 		dest *string
@@ -104,12 +184,39 @@ func (e Evaluation) AccountTypes() AccountTypes {
 	return types
 }
 
+// DisplayRoot returns the root spelling to label a canonical type with. The
+// spelling the ledger actually uses wins, so a Chinese-scheme ledger written in
+// English keeps English labels and vice versa; the primary name is the fallback
+// when neither spelling appears.
+func (e Evaluation) DisplayRoot(kind string) string {
+	types := e.AccountTypes()
+	for _, root := range types.RootsOf(kind) {
+		if e.RootInUse(root) {
+			return root
+		}
+	}
+	return types.RootOf(kind)
+}
+
+// RootInUse reports whether any account sits under root.
+func (e Evaluation) RootInUse(root string) bool {
+	if root == "" {
+		return false
+	}
+	for name := range e.Accounts {
+		if name == root || strings.HasPrefix(name, root+":") {
+			return true
+		}
+	}
+	return false
+}
+
 // activateUTF8AccountTypes marks an extension activation when a configured root
-// name contains a non-ASCII rune. Upstream accepts UTF-8 in the components
-// after the root, but its root-name production only admits an ASCII uppercase
-// lead byte, so a UTF-8 root is a dialect extension that a v3 reader cannot
-// load. Registering it keeps sourceexport's refusal to emit a non-portable
-// snapshot accurate instead of silently writing a file no v3 tool can read.
+// name contains a non-ASCII rune. Upstream's root-name production only admits
+// an ASCII uppercase lead byte, so a UTF-8 root is a dialect extension that a
+// v3 reader cannot load. Registering it keeps sourceexport's refusal to emit a
+// non-portable snapshot accurate instead of silently writing a file no v3 tool
+// can read.
 func (e *evaluator) activateUTF8AccountTypes(root string) {
 	for _, r := range root {
 		if r > 0x7F {
@@ -131,21 +238,25 @@ func isAccountNameOption(key string) bool {
 	return false
 }
 
-// accountNamesDistinct reports whether the five configured root names are
-// mutually distinct. Two types sharing one root name would make classification
-// ambiguous, so the evaluator rejects that configuration.
+// accountNamesDistinct reports whether the accepted root names are mutually
+// distinct. Two types sharing one root spelling would make classification
+// ambiguous -- under the Chinese scheme that includes a name_* override that
+// collides with another type's Chinese alias -- so the evaluator rejects the
+// configuration instead of silently preferring one type.
 func (e *evaluator) accountNamesDistinct() bool {
 	types := e.result.AccountTypes()
-	seen := make(map[string]bool, 5)
+	seen := make(map[string]bool, 10)
 	for _, kind := range types.Keys() {
-		root := types.RootOf(kind)
-		if root == "" {
+		roots := types.RootsOf(kind)
+		if len(roots) == 0 || roots[0] == "" {
 			return false
 		}
-		if seen[root] {
-			return false
+		for _, root := range roots {
+			if seen[root] {
+				return false
+			}
+			seen[root] = true
 		}
-		seen[root] = true
 	}
 	return true
 }

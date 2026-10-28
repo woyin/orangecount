@@ -51,6 +51,16 @@ lenient than the upstream textual-order requirement and accepts a strict
 superset of the ledgers upstream accepts here. A non-ASCII root name
 is accepted as a dialect extension (`utf8-account-root`), and `export`
 refuses such a ledger because a v3 reader cannot load it.
+
+`option "account_root_scheme" "cn"` selects the built-in Chinese vocabulary:
+资产, 负债, 权益, 收入, and 支出 become exact equivalents of Assets,
+Liabilities, Equity, Income, and Expenses. Both vocabularies stay usable in the
+same ledger under `cn`, so an existing English-rooted ledger can adopt the
+scheme without renaming accounts. The default, `global`, is the upstream
+vocabulary and rejects a Chinese root with `E-EVAL-ACCOUNT`. The scheme is a
+dialect extension (`cn-account-roots`): `export` refuses a `cn` ledger, and
+drops the `account_root_scheme` line when the value is `global`, because
+upstream rejects unknown option keys.
 `render_commas` is honored as a display option by both web
 interfaces: displayed amounts group thousands while exact ledger values and
 machine exports stay untouched. Currency-specific tolerance options
