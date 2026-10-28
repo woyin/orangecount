@@ -304,7 +304,8 @@ type chartPosting struct {
 // balanceSheetChart builds the balance sheet's assets, liabilities, and
 // equity lines per interval.
 func balanceSheetChart(e ledger.Evaluation, keys []string, ends map[string]string, interval, currency, valuation string) ChartSpec {
-	labels := []string{"Assets", "Liabilities", "Equity", "Net worth"}
+	types := e.AccountTypes()
+	labels := []string{types.RootOf("Assets"), types.RootOf("Liabilities"), types.RootOf("Equity"), "Net worth"}
 	seriesValues := make(map[string][]ChartPoint, len(labels))
 	for _, label := range labels {
 		seriesValues[label] = make([]ChartPoint, 0, len(keys))
@@ -323,16 +324,16 @@ func balanceSheetChart(e ledger.Evaluation, keys []string, ends map[string]strin
 			if status != amountOK {
 				continue
 			}
-			root := accountRoot(posting.account)
-			if root == "Assets" || root == "Liabilities" || root == "Equity" {
-				running[root] = running[root].Add(amount)
+			kind := types.TypeOf(posting.account)
+			if kind == "Assets" || kind == "Liabilities" || kind == "Equity" {
+				running[kind] = running[kind].Add(amount)
 			}
 		}
 		assets, liabilities, equity := running["Assets"], running["Liabilities"], running["Equity"]
-		seriesValues["Assets"] = append(seriesValues["Assets"], ChartPoint{Date: key, Value: assets})
-		seriesValues["Liabilities"] = append(seriesValues["Liabilities"], ChartPoint{Date: key, Value: liabilities})
-		seriesValues["Equity"] = append(seriesValues["Equity"], ChartPoint{Date: key, Value: equity})
-		seriesValues["Net worth"] = append(seriesValues["Net worth"], ChartPoint{Date: key, Value: assets.Add(liabilities)})
+		seriesValues[labels[0]] = append(seriesValues[labels[0]], ChartPoint{Date: key, Value: assets})
+		seriesValues[labels[1]] = append(seriesValues[labels[1]], ChartPoint{Date: key, Value: liabilities})
+		seriesValues[labels[2]] = append(seriesValues[labels[2]], ChartPoint{Date: key, Value: equity})
+		seriesValues[labels[3]] = append(seriesValues[labels[3]], ChartPoint{Date: key, Value: assets.Add(liabilities)})
 	}
 	chart := chartFromSeries(ChartLine, "Balance sheet", chartUnit(currency), currency, valuation, interval, labels, seriesValues)
 	chart.Measure = "balance"
@@ -343,7 +344,8 @@ func balanceSheetChart(e ledger.Evaluation, keys []string, ends map[string]strin
 // incomeStatementChart builds the income statement's revenue and expense
 // lines per interval.
 func incomeStatementChart(e ledger.Evaluation, keys []string, ends map[string]string, interval, currency, valuation string) ChartSpec {
-	labels := []string{"Income", "Expenses", "Net profit"}
+	types := e.AccountTypes()
+	labels := []string{types.RootOf("Income"), types.RootOf("Expenses"), "Net profit"}
 	values := make(map[string][]ChartPoint, len(labels))
 	for _, label := range labels {
 		values[label] = make([]ChartPoint, 0, len(keys))
@@ -362,15 +364,15 @@ func incomeStatementChart(e ledger.Evaluation, keys []string, ends map[string]st
 			if status != amountOK {
 				continue
 			}
-			root := accountRoot(posting.account)
-			if root == "Income" || root == "Expenses" {
-				periodValues[root] = periodValues[root].Add(amount)
+			kind := types.TypeOf(posting.account)
+			if kind == "Income" || kind == "Expenses" {
+				periodValues[kind] = periodValues[kind].Add(amount)
 			}
 		}
 		income, expenses := periodValues["Income"], periodValues["Expenses"]
-		values["Income"] = append(values["Income"], ChartPoint{Date: key, Value: income})
-		values["Expenses"] = append(values["Expenses"], ChartPoint{Date: key, Value: expenses})
-		values["Net profit"] = append(values["Net profit"], ChartPoint{Date: key, Value: income.Add(expenses)})
+		values[labels[0]] = append(values[labels[0]], ChartPoint{Date: key, Value: income})
+		values[labels[1]] = append(values[labels[1]], ChartPoint{Date: key, Value: expenses})
+		values[labels[2]] = append(values[labels[2]], ChartPoint{Date: key, Value: income.Add(expenses)})
 	}
 	chart := chartFromSeries(ChartStackedBar, "Income statement", chartUnit(currency), currency, valuation, interval, labels, values)
 	chart.Measure = "flow"
@@ -631,13 +633,6 @@ func (a *chartAvailability) resolve(currency string) string {
 	return "at-cost"
 }
 
-func accountRoot(name string) string {
-	if index := strings.IndexByte(name, ':'); index >= 0 {
-		return name[:index]
-	}
-	return name
-}
-
 // trialBalanceChart renders the account hierarchy as a single-currency tree.
 // Leaf nodes carry their own direct balance; aggregate nodes carry their subtree
 // total. Only one currency is shown at a time so unrelated commodities are never
@@ -764,7 +759,8 @@ func ReportCharts(e ledger.Evaluation, route, period, valuation string) []ChartS
 // nativeBalanceCharts reports cumulative balances per measure, one series per
 // currency, in the shape Fava's balance-sheet "Net Worth" chart uses.
 func nativeBalanceCharts(e ledger.Evaluation, keys []string, ends map[string]string, interval, valuation string) []ChartSpec {
-	measures := []string{"Net worth", "Assets", "Liabilities", "Equity"}
+	types := e.AccountTypes()
+	measures := []string{"Net worth", types.RootOf("Assets"), types.RootOf("Liabilities"), types.RootOf("Equity")}
 	running := map[string]map[string]ledger.Decimal{}
 	byPeriod := map[string]map[string]map[string]ledger.Decimal{}
 	for _, measure := range measures {
@@ -778,18 +774,19 @@ func nativeBalanceCharts(e ledger.Evaluation, keys []string, ends map[string]str
 		for index < len(postings) && postings[index].date <= end {
 			posting := postings[index]
 			index++
-			root := accountRoot(posting.account)
-			if root != "Assets" && root != "Liabilities" && root != "Equity" {
+			kind := types.TypeOf(posting.account)
+			if kind != "Assets" && kind != "Liabilities" && kind != "Equity" {
 				continue
 			}
 			amount, currency := nativeChartAmount(posting, valuation)
 			if currency == "" {
 				continue
 			}
-			running[root][currency] = running[root][currency].Add(amount)
+			label := types.RootOf(kind)
+			running[label][currency] = running[label][currency].Add(amount)
 			// Net worth is assets plus liabilities, the same combination the
 			// balance-sheet table reports.
-			if root == "Assets" || root == "Liabilities" {
+			if kind == "Assets" || kind == "Liabilities" {
 				running["Net worth"][currency] = running["Net worth"][currency].Add(amount)
 			}
 		}
@@ -807,7 +804,8 @@ func nativeBalanceCharts(e ledger.Evaluation, keys []string, ends map[string]str
 // nativeFlowCharts reports per-period flows for the income statement, matching
 // Fava's Net Profit / Income / Expenses monthly bar charts.
 func nativeFlowCharts(e ledger.Evaluation, keys []string, ends map[string]string, interval, valuation string) []ChartSpec {
-	measures := []string{"Net profit", "Income", "Expenses"}
+	types := e.AccountTypes()
+	measures := []string{"Net profit", types.RootOf("Income"), types.RootOf("Expenses")}
 	byPeriod := map[string]map[string]map[string]ledger.Decimal{}
 	for _, measure := range measures {
 		byPeriod[measure] = map[string]map[string]ledger.Decimal{}
@@ -822,15 +820,16 @@ func nativeFlowCharts(e ledger.Evaluation, keys []string, ends map[string]string
 			if chartPeriodKey(posting.date, interval) != key {
 				continue
 			}
-			root := accountRoot(posting.account)
-			if root != "Income" && root != "Expenses" {
+			kind := types.TypeOf(posting.account)
+			if kind != "Income" && kind != "Expenses" {
 				continue
 			}
 			amount, currency := nativeChartAmount(posting, valuation)
 			if currency == "" {
 				continue
 			}
-			period[root][currency] = period[root][currency].Add(amount)
+			label := types.RootOf(kind)
+			period[label][currency] = period[label][currency].Add(amount)
 			period["Net profit"][currency] = period["Net profit"][currency].Add(amount)
 		}
 		for _, measure := range measures {

@@ -434,6 +434,20 @@ func (e *evaluator) applyOption(d Option) {
 	} else {
 		e.result.Options[d.Key] = d.Value
 	}
+	// The name_* options rename the root accounts that every statement and
+	// chart classifies against. Upstream validates each value as a root account
+	// name; an invalid value is reported instead of silently leaving reports
+	// classified against the wrong roots.
+	if e.options.SemanticsProfile == V3 && isAccountNameOption(d.Key) {
+		if !ValidRootName(d.Value) {
+			e.add("E-EVAL-OPTION", diagnostic.Error, d.Span(), e.pathFor(d.Span()))
+		} else {
+			e.activateUTF8AccountTypes(d.Value)
+			if !e.accountNamesDistinct() {
+				e.add("E-EVAL-OPTION", diagnostic.Error, d.Span(), e.pathFor(d.Span()))
+			}
+		}
+	}
 	if e.options.SemanticsProfile == V3 && d.Key == "booking_method" {
 		if !validBooking(d.Value) {
 			e.add("E-EVAL-OPTION", diagnostic.Error, d.Span(), e.pathFor(d.Span()))
@@ -561,6 +575,14 @@ func (e *evaluator) open(d Open) {
 	if d.Account == "" {
 		e.add("E-EVAL-OPEN", diagnostic.Error, d.Span(), e.pathFor(d.Span()))
 		return
+	}
+	// An account whose root is not one of the five configured account types
+	// cannot be classified by any statement, so reports would silently drop it.
+	// Upstream rejects such a name; reporting it here keeps that contract. The
+	// account is still registered so the single root-cause diagnostic is not
+	// followed by a cascade of posting-lifecycle errors.
+	if e.result.AccountTypes().TypeOf(d.Account) == "" {
+		e.add("E-EVAL-ACCOUNT", diagnostic.Error, d.Span(), e.pathFor(d.Span()))
 	}
 	if existing, ok := e.accounts[d.Account]; ok {
 		// Reopening a closed account and opening an already-open account are

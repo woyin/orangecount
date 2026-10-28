@@ -59,6 +59,7 @@ func StatementHistory(e ledger.Evaluation, from, to, target, valuation string) [
 	if err != nil {
 		return result
 	}
+	types := e.AccountTypes()
 	postings := transactionPostings(e)
 	first := ""
 	currencies := map[string]bool{}
@@ -73,8 +74,8 @@ func StatementHistory(e ledger.Evaluation, from, to, target, valuation string) [
 		if posting.date > to {
 			break
 		}
-		root := accountRoot(posting.account)
-		if root != "Assets" && root != "Liabilities" && root != "Income" && root != "Expenses" {
+		kind := types.TypeOf(posting.account)
+		if kind != "Assets" && kind != "Liabilities" && kind != "Income" && kind != "Expenses" {
 			continue
 		}
 		if first == "" {
@@ -108,9 +109,9 @@ func StatementHistory(e ledger.Evaluation, from, to, target, valuation string) [
 		for index < len(postings) && postings[index].date <= date {
 			posting := postings[index]
 			index++
-			root := accountRoot(posting.account)
+			kind := types.TypeOf(posting.account)
 			amount, commodity := nativeChartAmount(posting, nativeValuation)
-			switch root {
+			switch kind {
 			case "Assets", "Liabilities":
 				net[commodity] = net[commodity].Add(amount)
 				netActive = true
@@ -118,7 +119,7 @@ func StatementHistory(e ledger.Evaluation, from, to, target, valuation string) [
 				if (from != "" && posting.date < from) || posting.date[:7] != cursor.Format("2006-01") {
 					continue
 				}
-				if root == "Income" {
+				if kind == "Income" {
 					income[commodity] = income[commodity].Add(amount.Neg())
 				} else {
 					expenses[commodity] = expenses[commodity].Add(amount)

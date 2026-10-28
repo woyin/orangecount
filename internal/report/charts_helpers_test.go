@@ -70,7 +70,7 @@ func TestChartHelperContractsCoverUnavailableAndNativeMeasurements(t *testing.T)
 	if value, currency := nativeChartAmount(chartPosting{currency: "SH", amount: chartDecimal(t, "-2"), cost: totalCost}, "at-cost"); value.String() != "-3" || currency != "USD" {
 		t.Fatalf("native total reduction=%s %s", value, currency)
 	}
-	if accountRoot("Assets:Cash") != "Assets" || accountRoot("Assets") != "Assets" || !accountWithin("Assets", "Assets:Cash") || accountWithin("Assets:Cash", "Assets:Cashflow") {
+	if ledger.DefaultAccountTypes().TypeOf("Assets:Cash") != "Assets" || !accountWithin("Assets", "Assets:Cash") || accountWithin("Assets:Cash", "Assets:Cashflow") {
 		t.Fatal("account hierarchy helpers changed")
 	}
 	availability := chartAvailability{unavailablePrice: true, unavailableCurrency: true}

@@ -31,7 +31,7 @@ var guidanceFixtureManifest = map[string]struct {
 	"E-PARSE-EXPECTED": {"parser", PhaseSyntax}, "E-PARSE-TOKEN": {"parser", PhaseSyntax}, "E-PARSE-STRING": {"parser", PhaseSyntax},
 	"E-PARSE-METADATA-STACK": {"metadata scope", PhaseSyntax},
 	"E-EVAL-OPEN":            {"lifecycle", PhaseSemantic}, "E-EVAL-REOPEN": {"lifecycle", PhaseSemantic},
-	"E-EVAL-CLOSE": {"lifecycle", PhaseSemantic}, "E-EVAL-POSTING": {"lifecycle", PhaseSemantic}, "E-EVAL-CURRENCY": {"currency", PhaseSemantic},
+	"E-EVAL-CLOSE": {"lifecycle", PhaseSemantic}, "E-EVAL-ACCOUNT": {"account names", PhaseSemantic}, "E-EVAL-POSTING": {"lifecycle", PhaseSemantic}, "E-EVAL-CURRENCY": {"currency", PhaseSemantic},
 	"E-EVAL-UNBALANCED": {"transaction", PhaseSemantic}, "E-EVAL-INFER": {"transaction", PhaseSemantic},
 	"E-EVAL-BALANCE": {"assertion", PhaseSemantic}, "E-EVAL-PAD": {"assertion", PhaseSemantic},
 	"E-EVAL-PAD-UNUSED": {"assertion", PhaseSemantic},

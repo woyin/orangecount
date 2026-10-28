@@ -41,7 +41,17 @@ The same boundary applies to options. Every `option "key" "value"` is parsed
 and preserved verbatim in the evaluation's option map, but only
 `operating_currency` (account/page valuation currencies) and `tolerance`
 (default transaction-balancing tolerance) currently change evaluator
-behavior. `render_commas` is honored as a display option by both web
+behavior. The five `name_assets`/`name_liabilities`/`name_equity`/
+`name_income`/`name_expenses` options rename the root account types that
+every statement, chart, and account-type query classifies against. An account
+whose root is none of the five configured names receives `E-EVAL-ACCOUNT`
+instead of being accepted and then dropped from reports. Options take effect
+for the whole file regardless of where the `option` line sits, which is more
+lenient than the upstream textual-order requirement and accepts a strict
+superset of the ledgers upstream accepts here. A non-ASCII root name
+is accepted as a dialect extension (`utf8-account-root`), and `export`
+refuses such a ledger because a v3 reader cannot load it.
+`render_commas` is honored as a display option by both web
 interfaces: displayed amounts group thousands while exact ledger values and
 machine exports stay untouched. Currency-specific tolerance options
 (`inferred_tolerance_default`, `inferred_tolerance_multiplier`) are recorded

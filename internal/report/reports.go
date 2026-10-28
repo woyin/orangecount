@@ -431,18 +431,22 @@ type AccountTreeNode struct {
 }
 
 // BuildAccountTree builds a hierarchical forest of account tree nodes for the
-// requested account roots (e.g. "Assets", "Liabilities", "Equity" for balance
-// sheet, or "Income", "Expenses" for income statement).
-func BuildAccountTree(e ledger.Evaluation, roots ...string) []AccountTreeNode {
-	return accountTree(e, roots, false)
+// requested account types (e.g. "Assets", "Liabilities", "Equity" for balance
+// sheet, or "Income", "Expenses" for income statement). The argument lists
+// canonical account-type keys, not root-name text, so a ledger that renames its
+// roots through the name_* options still selects the same statements.
+func BuildAccountTree(e ledger.Evaluation, kinds ...string) []AccountTreeNode {
+	return accountTree(e, kinds, false)
 }
 
-func accountTree(e ledger.Evaluation, roots []string, retainZero bool) []AccountTreeNode {
-	index := buildAccountTreeIndex(e, roots)
+func accountTree(e ledger.Evaluation, kinds []string, retainZero bool) []AccountTreeNode {
+	types := e.AccountTypes()
+	index := buildAccountTreeIndex(e, kinds)
 	index.retainZero = retainZero
 	var rootNodes []AccountTreeNode
-	for _, root := range roots {
-		if !index.nodes[root] {
+	for _, kind := range kinds {
+		root := types.RootOf(kind)
+		if root == "" || !index.nodes[root] {
 			continue
 		}
 		rootNodes = append(rootNodes, buildSubtree(root, 0, index))
@@ -499,7 +503,9 @@ func buildSubtree(name string, depth int, index accountTreeIndex) AccountTreeNod
 	}
 }
 
-// BalanceSheet returns the Assets/Liabilities/Equity hierarchy report.
+// BalanceSheet returns the Assets/Liabilities/Equity hierarchy report. The
+// account types are selected by canonical key, so a ledger that renames its
+// roots through the name_* options still gets the same statements.
 func BalanceSheet(e ledger.Evaluation) query.Result {
 	return accountRootReport(e, "Assets", "Liabilities", "Equity")
 }
@@ -914,8 +920,8 @@ func errors(e ledger.Evaluation, graph *source.Graph) query.Result {
 // accountRootReport renders one account subtree as report tree rows. The
 // index construction (see accountTreeIndex) and the row rendering are split
 // so each stays readable; the invariants are documented there.
-func accountRootReport(e ledger.Evaluation, roots ...string) query.Result {
-	index := buildAccountTreeIndex(e, roots)
+func accountRootReport(e ledger.Evaluation, kinds ...string) query.Result {
+	index := buildAccountTreeIndex(e, kinds)
 	names := make([]string, 0, len(index.nodes))
 	for name := range index.nodes {
 		names = append(names, name)
@@ -953,12 +959,13 @@ type accountTreeIndex struct {
 	children   map[string]map[string]bool
 }
 
-// buildAccountTreeIndex builds the subtree index for the accounts whose root is
-// listed in roots (all accounts when roots is empty).
-func buildAccountTreeIndex(e ledger.Evaluation, roots []string) accountTreeIndex {
-	allowed := make(map[string]bool, len(roots))
-	for _, root := range roots {
-		allowed[root] = true
+// buildAccountTreeIndex builds the subtree index for the accounts whose type is
+// listed in kinds (all accounts when kinds is empty).
+func buildAccountTreeIndex(e ledger.Evaluation, kinds []string) accountTreeIndex {
+	types := e.AccountTypes()
+	allowed := make(map[string]bool, len(kinds))
+	for _, kind := range kinds {
+		allowed[kind] = true
 	}
 	index := accountTreeIndex{
 		totals:    map[string]map[string]ledger.Decimal{},
@@ -969,7 +976,7 @@ func buildAccountTreeIndex(e ledger.Evaluation, roots []string) accountTreeIndex
 		children:  map[string]map[string]bool{},
 	}
 	for name, state := range e.Accounts {
-		if !accountAllowed(name, allowed) {
+		if !accountAllowed(types, name, allowed) {
 			continue
 		}
 		index.explicit[name] = true
@@ -991,17 +998,15 @@ func buildAccountTreeIndex(e ledger.Evaluation, roots []string) accountTreeIndex
 	return index
 }
 
-// accountAllowed checks the account's root against the allowed set (an
-// empty set allows everything).
-func accountAllowed(name string, allowed map[string]bool) bool {
+// accountAllowed checks the account's configured type against the allowed set
+// (an empty set allows everything). Classification goes through the configured
+// root names, so this works whether or not the ledger renamed its roots.
+func accountAllowed(types ledger.AccountTypes, name string, allowed map[string]bool) bool {
 	if len(allowed) == 0 {
 		return true
 	}
-	root := name
-	if colon := strings.IndexByte(name, ':'); colon >= 0 {
-		root = name[:colon]
-	}
-	return allowed[root]
+	kind := types.TypeOf(name)
+	return kind != "" && allowed[kind]
 }
 
 // addTreeBalance adds one balance to a node's own totals and, when

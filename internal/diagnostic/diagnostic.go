@@ -167,6 +167,7 @@ var messages = map[string]map[string]string{
 	"E-EVAL-OPEN":            {"en": "account is opened more than once or has an invalid opening date", "zh-CN": "账户重复开户或开户日期无效"},
 	"E-EVAL-REOPEN":          {"en": "account is reopened after it was closed", "zh-CN": "账户在销户后再次开户"},
 	"E-EVAL-CLOSE":           {"en": "account close is invalid or occurs after a close", "zh-CN": "账户销户无效或发生在销户之后"},
+	"E-EVAL-ACCOUNT":         {"en": "account name is not valid or its root is not a configured account type", "zh-CN": "账户名无效，或其根名不属于已配置的账户类型"},
 	"E-EVAL-POSTING":         {"en": "posting references an account outside its open lifecycle", "zh-CN": "记账引用了不在开户生命周期内的账户"},
 	"E-EVAL-CURRENCY":        {"en": "posting currency is not allowed for this account", "zh-CN": "记账货币不在该账户允许的货币范围内"},
 	"E-EVAL-UNBALANCED":      {"en": "transaction does not balance", "zh-CN": "交易未平衡"},

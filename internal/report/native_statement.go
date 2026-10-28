@@ -23,17 +23,18 @@ func StatementView(e ledger.Evaluation, route, from, to, currency, valuation str
 	if valuation == "" {
 		valuation = "at-cost"
 	}
-	roots := []string{"Assets", "Liabilities", "Equity"}
+	types := e.AccountTypes()
+	kinds := []string{"Assets", "Liabilities", "Equity"}
 	labels := []string{"Net worth"}
 	if route == "income_statement" {
-		roots = []string{"Income", "Expenses"}
-		labels = roots
+		kinds = []string{"Income", "Expenses"}
+		labels = []string{types.RootOf("Income"), types.RootOf("Expenses")}
 	}
 	allowed := map[string]bool{}
-	for _, root := range roots {
-		allowed[root] = true
+	for _, kind := range kinds {
+		allowed[kind] = true
 	}
-	projected := ledger.Evaluation{Accounts: map[string]ledger.AccountState{}}
+	projected := ledger.Evaluation{Accounts: map[string]ledger.AccountState{}, Options: e.Options}
 	for name, state := range e.Accounts {
 		if to != "" && state.Opened.Raw > to {
 			continue
@@ -53,12 +54,12 @@ func StatementView(e ledger.Evaluation, route, from, to, currency, valuation str
 		if route == "income_statement" && from != "" && posting.date < from {
 			continue
 		}
-		root := accountRoot(posting.account)
-		if !allowed[root] {
+		kind := types.TypeOf(posting.account)
+		if !allowed[kind] {
 			continue
 		}
 		hasPostings = true
-		inChart := root != "Equity"
+		inChart := kind != "Equity"
 		month := posting.date[:7]
 		if inChart && months[month] == nil {
 			months[month] = map[string]ledger.Decimal{}
@@ -86,10 +87,10 @@ func StatementView(e ledger.Evaluation, route, from, to, currency, valuation str
 			}
 		}
 		if inChart {
-			months[month][root] = months[month][root].Add(amount)
+			months[month][kind] = months[month][kind].Add(amount)
 		}
 	}
-	nodes := accountTree(projected, roots, true)
+	nodes := accountTree(projected, kinds, true)
 	if nodes == nil {
 		nodes = []AccountTreeNode{}
 	}
@@ -105,8 +106,8 @@ func StatementView(e ledger.Evaluation, route, from, to, currency, valuation str
 				values["Net worth"] = append(values["Net worth"], ChartPoint{Date: month, Value: running})
 			}
 		} else {
-			for _, root := range roots {
-				values[root] = append(values[root], ChartPoint{Date: month, Value: months[month][root]})
+			for index, kind := range kinds {
+				values[labels[index]] = append(values[labels[index]], ChartPoint{Date: month, Value: months[month][kind]})
 			}
 		}
 	}

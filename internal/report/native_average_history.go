@@ -31,6 +31,7 @@ type AverageCostSeries struct {
 // after a complete transaction. Liquidation emits an explicit missing average;
 // a later reacquisition starts a new line segment, with its own actual basis.
 func averageInventoryHistory(e ledger.Evaluation, changes []ledger.BookedInventoryChange, account, scope, from, to, groupBy string) []AverageCostSeries {
+	types := e.AccountTypes()
 	result := []AverageCostSeries{}
 	series := map[string]*AverageCostSeries{}
 	quantities, bases := map[string]ledger.Decimal{}, map[string]ledger.Decimal{}
@@ -65,7 +66,7 @@ func averageInventoryHistory(e ledger.Evaluation, changes []ledger.BookedInvento
 			change := changes[cursor]
 			cursor++
 			cost := change.Position.Cost
-			if cost == nil || !holdingAccountMatches(change.Account, account, scope) {
+			if cost == nil || !holdingAccountMatches(types, change.Account, account, scope) {
 				continue
 			}
 			currency := cost.Currency

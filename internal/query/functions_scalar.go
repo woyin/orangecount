@@ -312,7 +312,7 @@ func (compiler typedCompiler) compileScalarCall(node functionExpr) (typedExpr, e
 			if err != nil {
 				return nil, err
 			}
-			return accountSortKey(text), nil
+			return accountSortKey(compiler.context.evaluation.AccountTypes(), text), nil
 		}
 		return result, nil
 	case "length":
@@ -1005,7 +1005,7 @@ func (compiler typedCompiler) compileScalarCall(node functionExpr) (typedExpr, e
 			if err != nil || account == "" {
 				return ledger.Zero(), err
 			}
-			return ledger.NewDecimal(bigRatInt(accountSign(account))), nil
+			return ledger.NewDecimal(bigRatInt(accountSign(compiler.context.evaluation.AccountTypes(), account))), nil
 		}
 		switch args[0].kind {
 		case "decimal", "integer":

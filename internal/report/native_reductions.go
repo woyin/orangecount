@@ -54,6 +54,7 @@ func evaluatedTransaction(record ledger.EntryRecord) *ledger.Transaction {
 }
 
 func reductionEvents(e ledger.Evaluation, changes []ledger.BookedInventoryChange, account, scope, from string, paths map[source.FileID]string, origins map[source.Span]bool) []ReductionEvent {
+	types := e.AccountTypes()
 	result := []ReductionEvent{}
 	works := map[string]*reductionWork{}
 	order := []string{}
@@ -80,7 +81,7 @@ func reductionEvents(e ledger.Evaluation, changes []ledger.BookedInventoryChange
 			counts[change.EntryIndex] = map[string]bool{}
 		}
 		counts[change.EntryIndex][key] = true
-		if tx.Date.Raw < from || !holdingAccountMatches(change.Account, account, scope) {
+		if tx.Date.Raw < from || !holdingAccountMatches(types, change.Account, account, scope) {
 			continue
 		}
 		work := works[key]
@@ -116,7 +117,7 @@ func reductionEvents(e ledger.Evaluation, changes []ledger.BookedInventoryChange
 		tx := evaluatedTransaction(e.Entries[work.entryIndex])
 		transfer := false
 		for _, posting := range tx.Postings {
-			if posting.Flag != "M" && posting.Units != nil && posting.Units.Currency == item.Commodity && ledger.DecimalFromNumber(posting.Units.Number).Sign() > 0 && (accountRoot(posting.Account) == "Assets" || accountRoot(posting.Account) == "Liabilities") {
+			if kind := types.TypeOf(posting.Account); posting.Flag != "M" && posting.Units != nil && posting.Units.Currency == item.Commodity && ledger.DecimalFromNumber(posting.Units.Number).Sign() > 0 && (kind == "Assets" || kind == "Liabilities") {
 				transfer = true
 			}
 		}
@@ -189,6 +190,7 @@ func attributedTradeFees(e ledger.Evaluation, tx *ledger.Transaction, item *Redu
 	if count != 1 {
 		return ledger.Zero(), "ambiguous-trade-fees"
 	}
+	types := e.AccountTypes()
 	fees, cash := ledger.Zero(), ledger.Zero()
 	currency := *item.CostCurrency
 	for _, posting := range tx.Postings {
@@ -199,14 +201,14 @@ func attributedTradeFees(e ledger.Evaluation, tx *ledger.Transaction, item *Redu
 		if amount.IsZero() {
 			continue
 		}
-		root := accountRoot(posting.Account)
-		if root == "Income" {
+		kind := types.TypeOf(posting.Account)
+		if kind == "Income" {
 			continue
 		}
-		if root != "Assets" && root != "Liabilities" && root != "Expenses" {
+		if kind != "Assets" && kind != "Liabilities" && kind != "Expenses" {
 			return ledger.Zero(), "unsupported-trade-counterpart"
 		}
-		if root == "Expenses" {
+		if kind == "Expenses" {
 			assigned := false
 			for _, meta := range posting.Meta {
 				if meta.Key == "trade_fee_for" && meta.Value.String == item.Account && (meta.Value.Kind == ledger.ValueString || meta.Value.Kind == ledger.ValueAccount) {
@@ -224,7 +226,7 @@ func attributedTradeFees(e ledger.Evaluation, tx *ledger.Transaction, item *Redu
 				return ledger.Zero(), "missing-fee-or-settlement-quote"
 			}
 		}
-		if root == "Expenses" {
+		if kind == "Expenses" {
 			fees = fees.Add(amount)
 		} else {
 			cash = cash.Add(amount)

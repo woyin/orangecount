@@ -80,30 +80,26 @@ func (context queryContext) price(base, quote string, date *ledger.Date) (ledger
 var accountTypeOrder = []string{"Assets", "Liabilities", "Equity", "Income", "Expenses"}
 
 // accountSortKey reproduces get_account_sort_key: the configured type index
-// followed by the account name, joined by a dash.
-func accountSortKey(name string) string {
-	root := name
-	if at := strings.IndexByte(root, ':'); at >= 0 {
-		root = root[:at]
-	}
+// followed by the account name, joined by a dash. The index comes from the
+// account's classified type, so a ledger that renames its roots through the
+// name_* options sorts exactly as the default-root ledger it mirrors.
+func accountSortKey(types ledger.AccountTypes, name string) string {
 	index := len(accountTypeOrder)
-	for i, kind := range accountTypeOrder {
-		if strings.EqualFold(kind, root) {
-			index = i
-			break
+	if kind := types.TypeOf(name); kind != "" {
+		for i, key := range accountTypeOrder {
+			if key == kind {
+				index = i
+				break
+			}
 		}
 	}
 	return fmt.Sprintf("%d-%s", index, name)
 }
 
 // accountSign is +1 for assets and expenses, -1 for the other three types.
-func accountSign(name string) int {
-	root := name
-	if at := strings.IndexByte(root, ':'); at >= 0 {
-		root = root[:at]
-	}
-	switch {
-	case strings.EqualFold(root, "Assets"), strings.EqualFold(root, "Expenses"):
+func accountSign(types ledger.AccountTypes, name string) int {
+	switch types.TypeOf(name) {
+	case "Assets", "Expenses":
 		return 1
 	default:
 		return -1

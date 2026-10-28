@@ -2,7 +2,6 @@ package favaadapter
 
 import (
 	"sort"
-	"strings"
 
 	"orangecount/internal/ledger"
 )
@@ -29,6 +28,7 @@ func UpdateActivity(e ledger.Evaluation) []UpdateActivityRow {
 		date string
 		hash string
 	}
+	types := e.AccountTypes()
 	last := map[string]lastEntry{}
 	for _, record := range e.Entries {
 		accounts := recordAccounts(record)
@@ -37,7 +37,7 @@ func UpdateActivity(e ledger.Evaluation) []UpdateActivityRow {
 		}
 		hash := ""
 		for _, account := range accounts {
-			if !strings.HasPrefix(account, "Assets") && !strings.HasPrefix(account, "Liabilities") {
+			if kind := types.TypeOf(account); kind != "Assets" && kind != "Liabilities" {
 				continue
 			}
 			if hash == "" {

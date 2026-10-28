@@ -13,6 +13,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"regexp"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -74,7 +75,16 @@ func Prepare(entry string, options Options) (*Plan, error) {
 				return nil, averageError(graph, parsed, a.Name)
 			}
 		}
-		if e.Options["booking_method"] == "AVERAGE" || len(e.ActiveExtensions) > 0 {
+		if e.Options["booking_method"] == "AVERAGE" {
+			return nil, averageError(graph, parsed, "")
+		}
+		// A UTF-8 root account name is a dialect extension: the v3 reader only
+		// admits an ASCII lead byte in the root, so exporting it would produce a
+		// file no v3 tool can load. Refusing is the only portable answer.
+		if slices.Contains(e.ActiveExtensions, "utf8-account-root") {
+			return nil, fmt.Errorf("E-EXPORT-COMPAT: a non-ASCII root account name is not representable in Beancount v3; rename the root with an ASCII name_* option value")
+		}
+		if len(e.ActiveExtensions) > 0 {
 			return nil, averageError(graph, parsed, "")
 		}
 		if err = compatible(graph, parsed); err != nil {
@@ -190,6 +200,15 @@ var optionPolicy = map[string]string{
 	"inferred_tolerance_default": "validated-semantic",
 	"infer_tolerance_from_cost":  "validated-semantic",
 	"tolerance_multiplier":       "validated-semantic",
+	// The name_* options rename the root accounts that every statement and
+	// chart classifies against, so the evaluator reads them and the fingerprints
+	// reflect them. Upstream validates every value as a root account name, which
+	// ValidRootName mirrors, so a value accepted here is accepted there too.
+	"name_assets":      "validated-semantic",
+	"name_liabilities": "validated-semantic",
+	"name_equity":      "validated-semantic",
+	"name_income":      "validated-semantic",
+	"name_expenses":    "validated-semantic",
 	// render_commas has no reader in this codebase (grep "render_commas" over
 	// internal/ and cmd/ finds no Go consumer); upstream Beancount stores it in
 	// the display context and uses it only for number formatting. It therefore

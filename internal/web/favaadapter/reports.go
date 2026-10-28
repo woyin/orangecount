@@ -99,11 +99,12 @@ func ProjectTreeReport(e ledger.Evaluation, name string, filters report.Filters,
 }
 
 func treeResult(e ledger.Evaluation, name string) (query.Result, []string) {
+	types := e.AccountTypes()
 	switch name {
 	case "income_statement":
-		return report.IncomeStatement(e), []string{"Income", "Net Profit", "Expenses"}
+		return report.IncomeStatement(e), []string{types.RootOf("Income"), "Net Profit", types.RootOf("Expenses")}
 	case "balance_sheet":
-		return report.BalanceSheet(e), []string{"Assets", "Liabilities", "Equity"}
+		return report.BalanceSheet(e), []string{types.RootOf("Assets"), types.RootOf("Liabilities"), types.RootOf("Equity")}
 	case "trial_balance":
 		return report.TrialBalanceTree(e), []string{""}
 	default:

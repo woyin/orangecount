@@ -134,8 +134,9 @@ func HoldingsViewWithOptions(e ledger.Evaluation, account, scope, from, to strin
 	result.AverageHistory = averageInventoryHistory(e, replayed.Changes, account, scope, from, to, result.GroupBy)
 	groups := map[string]*HoldingGroup{}
 	quantities, bases := map[string]ledger.Decimal{}, map[string]ledger.Decimal{}
+	types := e.AccountTypes()
 	for name, positions := range replayed.Accounts {
-		if !holdingAccountMatches(name, account, scope) {
+		if !holdingAccountMatches(types, name, account, scope) {
 			continue
 		}
 		for _, position := range positions {
@@ -264,10 +265,10 @@ func unknownHoldingValue(commodity, reason, currency, cutoff string) *AccountVal
 	return &AccountValuation{ValuationStatus: ValuationStatus{Mode: mode, TargetCurrency: currency, AsOf: cutoff, Completeness: "unavailable", MissingItemCount: 1, Missing: []MissingValuation{{Commodity: commodity, Reason: reason}}, Quotes: []QuoteUse{}}}
 }
 
-func holdingAccountMatches(name, account, scope string) bool {
+func holdingAccountMatches(types ledger.AccountTypes, name, account, scope string) bool {
 	if account == "" {
-		root := accountRoot(name)
-		return root == "Assets" || root == "Liabilities"
+		kind := types.TypeOf(name)
+		return kind == "Assets" || kind == "Liabilities"
 	}
 	return name == account || (scope != "direct" && strings.HasPrefix(name, account+":"))
 }

@@ -37,6 +37,7 @@ func TestEveryGuidanceCodeHasARepresentativeTrigger(t *testing.T) {
 		{code: "E-EVAL-OPEN", text: "2000-01-01 open Assets:Cash USD\n2000-01-02 open Assets:Cash USD\n"},
 		{code: "E-EVAL-REOPEN", text: "2000-01-01 open Assets:Cash USD\n2000-01-02 close Assets:Cash\n2000-01-03 open Assets:Cash USD\n"},
 		{code: "E-EVAL-CLOSE", text: "2000-01-01 close Assets:Cash\n"},
+		{code: "E-EVAL-ACCOUNT", text: "2000-01-01 open Acme:Cash USD\n"},
 		{code: "E-EVAL-POSTING", text: "2000-01-02 * \"too early\"\n  Assets:Cash 1 USD\n  Equity:Opening -1 USD\n2000-01-03 open Assets:Cash USD\n2000-01-03 open Equity:Opening USD\n"},
 		{code: "E-EVAL-CURRENCY", text: "2000-01-01 open Assets:Cash USD\n2000-01-01 open Equity:Opening EUR\n2000-01-02 * \"wrong currency\"\n  Assets:Cash 1 EUR\n  Equity:Opening -1 EUR\n"},
 		{code: "E-EVAL-UNBALANCED", text: "2000-01-01 open Assets:Cash USD\n2000-01-02 * \"missing leg\"\n  Assets:Cash 1 USD\n"},
