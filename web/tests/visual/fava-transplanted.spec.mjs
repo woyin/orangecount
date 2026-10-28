@@ -62,6 +62,20 @@ test.describe("transplanted Fava shell smoke", () => {
     }
   });
 
+  // Each grouped holdings report is a separate Fava route, so each one needs its
+  // own assertion. A single table check on /holdings does not prove that
+  // /holdings/by_cost_currency groups by cost currency.
+  test("grouped holdings reports render their own aggregation", async ({ page }) => {
+    for (const route of [
+      "/holdings/by_account",
+      "/holdings/by_currency",
+      "/holdings/by_cost_currency",
+    ]) {
+      await open(page, route);
+      await expect(page.locator("table tbody tr").first()).toBeVisible();
+    }
+  });
+
   test("commodity and event chart tooltips stay visible after a click", async ({ page }) => {
     await open(page, "/commodities");
     // /commodities mounts CommoditiesReport: one line chart for the active
@@ -332,6 +346,11 @@ test.describe("transplanted Fava shell visual baseline", () => {
     "/balance_sheet",
     "/trial_balance",
     "/holdings",
+    // The three grouped holdings reports Fava also serves. by_root_account and
+    // by_commodity are OrangeCount extensions with no upstream counterpart.
+    "/holdings/by_account",
+    "/holdings/by_currency",
+    "/holdings/by_cost_currency",
     "/commodities",
     "/events",
     "/documents",

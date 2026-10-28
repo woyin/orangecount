@@ -30,6 +30,12 @@ const routeNames = [
   "balance-sheet",
   "trial-balance",
   "holdings",
+  // The three grouped holdings reports Fava also serves. by_root_account and
+  // by_commodity have no upstream counterpart, so they have no reference
+  // screenshot and must not be listed here.
+  "holdings-by-account",
+  "holdings-by-currency",
+  "holdings-by-cost-currency",
   "commodities",
   "events",
   "documents",

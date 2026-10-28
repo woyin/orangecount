@@ -17,6 +17,12 @@ test.describe("optional isolated Fava 1.30.12 reference", () => {
     ["balance-sheet", "balance_sheet"],
     ["trial-balance", "trial_balance"],
     ["holdings", "holdings"],
+    // Fava's HoldingsReportType is all|by_account|by_currency|by_cost_currency.
+    // by_root_account and by_commodity do not exist upstream, so they are
+    // OrangeCount extensions and get no reference capture.
+    ["holdings-by-account", "holdings/by_account"],
+    ["holdings-by-currency", "holdings/by_currency"],
+    ["holdings-by-cost-currency", "holdings/by_cost_currency"],
     ["commodities", "commodities"],
     ["events", "events"],
     ["documents", "documents"],

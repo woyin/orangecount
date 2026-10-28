@@ -182,6 +182,75 @@ func runCheck(number int, p paths) checkReport {
 	return check
 }
 
+// visualBaselineMatchesRoute reports why a row's visual baseline does not
+// belong to the route it cites, or "" when they correspond.
+//
+// The manifest path and the captured baseline name are two spellings of the
+// same upstream route: `/holdings/by_cost_currency` is captured as
+// `holdings-by-cost-currency.png`. A row that cites a different slug points at
+// another route's pixels, so the layer would pass on a file that proves
+// nothing about this route.
+func visualBaselineMatchesRoute(pathCell string, references []layerReference) string {
+	route := strings.Trim(strings.TrimSpace(pathCell), "`*_ ")
+	if route == "" {
+		return "路由路径为空，无法核对视觉基线归属"
+	}
+	// G/M/D rows describe a surface in prose ("Header, Sidebar, PageTitle") and
+	// legitimately share a representative baseline, so only an actual route
+	// path is judged. The caller filters on the R- prefix as well.
+	if !strings.HasPrefix(route, "/") {
+		return ""
+	}
+	want := routeSlug(route)
+	for _, reference := range references {
+		if reference.Layer != "visual" {
+			continue
+		}
+		value := strings.Trim(strings.TrimSpace(reference.Reference), "*_`")
+		if strings.HasPrefix(strings.ToLower(value), "pending") || !strings.HasSuffix(value, ".png") {
+			return ""
+		}
+		slug := strings.TrimSuffix(filepath.Base(value), ".png")
+		if want != "" && slug != want {
+			return fmt.Sprintf("visual 层引用了别的路由的截图：%s 对应 %s.png，实际引用 %s.png", route, want, slug)
+		}
+	}
+	return ""
+}
+
+// routeSlug maps a manifest route path to the baseline name the capture uses.
+// The capture slug lowercases, turns every run of non-alphanumerics into one
+// dash and trims the ends, which is why `/income_statement` becomes
+// `income-statement` and `/holdings/by_cost_currency` becomes
+// `holdings-by-cost-currency`.
+func routeSlug(route string) string {
+	cleaned := strings.Trim(route, "/")
+	if cleaned == "" {
+		return "root"
+	}
+	// A parameterised route is captured through one representative value.
+	switch {
+	case cleaned == "account/<name>":
+		return "account-assets-3ainvestments-3afund"
+	case strings.HasPrefix(cleaned, "help/"):
+		return "help"
+	}
+	var b strings.Builder
+	previousDash := false
+	for _, r := range strings.ToLower(cleaned) {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') {
+			b.WriteRune(r)
+			previousDash = false
+			continue
+		}
+		if !previousDash && b.Len() > 0 {
+			b.WriteByte('-')
+			previousDash = true
+		}
+	}
+	return strings.TrimRight(b.String(), "-")
+}
+
 // checkRouteManifest is gate 1. Every R-/G-/M-/D- row must be accepted and must
 // cite all four evidence layers with a parseable reference.
 func checkRouteManifest(p paths, tests map[string]bool) []failure {
@@ -217,6 +286,17 @@ func checkRouteManifest(p paths, tests map[string]bool) []failure {
 		// "pending" is an honest gap: it fails the layer instead of passing it.
 		// Each row carries one evidence cell holding all four refs.
 		references := parseLayerReferences(line)
+		// A route row's visual baseline must name that route's own capture.
+		// Checking only that some PNG exists let a row cite another route's
+		// screenshot, which is evidence of nothing. The check is limited to R rows
+		// whose second cell is a route path: G/M/D rows describe a surface
+		// ("Header, Sidebar, PageTitle") and legitimately share a representative
+		// baseline, so a path-to-slug rule would mis-fire on every one of them.
+		if strings.HasPrefix(id, "R-") && strings.HasPrefix(strings.TrimSpace(cells[1]), "`/") {
+			if reason := visualBaselineMatchesRoute(cells[1], references); reason != "" {
+				reasons = append(reasons, reason)
+			}
+		}
 		for _, layer := range evidenceLayers {
 			found := false
 			why := "未登记 " + layer + ": 标记"

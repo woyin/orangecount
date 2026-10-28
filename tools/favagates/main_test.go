@@ -460,3 +460,31 @@ func TestCommittedRepositoryStateIsHonest(t *testing.T) {
 		t.Fatalf("accepted rows without an approved visual bar were not rejected: code=%d stderr=%s", code, stderr.String())
 	}
 }
+
+// A route row must cite its own capture. The gate used to accept any existing
+// PNG, so a row could point at another route's screenshot and still pass.
+func TestGateOneRejectsAnotherRoutesBaseline(t *testing.T) {
+	for route, want := range map[string]string{
+		"/":                          "root",
+		"/income_statement":          "income-statement",
+		"/holdings/by_cost_currency": "holdings-by-cost-currency",
+		"/account/<name>":            "account-assets-3ainvestments-3afund",
+		"/help/<slug>":               "help",
+	} {
+		if got := routeSlug(route); got != want {
+			t.Errorf("routeSlug(%q)=%q want %q", route, got, want)
+		}
+	}
+	wrong := []layerReference{{Layer: "visual", Reference: "testdata/visual-baselines/desktop-light/visual/fava-reference.spec.mjs/holdings.png"}}
+	if reason := visualBaselineMatchesRoute("`/holdings/by_cost_currency`", wrong); reason == "" {
+		t.Fatal("a row citing another route's baseline must be rejected")
+	}
+	matching := []layerReference{{Layer: "visual", Reference: "testdata/visual-baselines/desktop-light/visual/fava-reference.spec.mjs/holdings-by-cost-currency.png"}}
+	if reason := visualBaselineMatchesRoute("`/holdings/by_cost_currency`", matching); reason != "" {
+		t.Fatalf("the matching baseline was rejected: %s", reason)
+	}
+	// G/M/D rows describe a surface rather than a path, so the rule must not fire.
+	if reason := visualBaselineMatchesRoute("Header, Sidebar, PageTitle, responsive menu", wrong); reason != "" {
+		t.Fatalf("a surface row was wrongly judged: %s", reason)
+	}
+}

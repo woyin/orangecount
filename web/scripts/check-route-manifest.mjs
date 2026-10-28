@@ -28,7 +28,10 @@ const MANIFEST_PATH = path.resolve(import.meta.dirname, "../../docs/fava-route-s
 // R-* rows of the route registry; a missing one is a coverage gap.
 export const CORE_ROUTE_IDS = Object.freeze([
   "R-ROOT", "R-IS", "R-BS", "R-TB", "R-JOURNAL", "R-ACCOUNT",
-  "R-HOLD-ACCOUNT", "R-HOLD-CURRENCY", "R-HOLD-ROOT", "R-HOLD-COMMODITY",
+  // Fava's HoldingsReportType is all|by_account|by_currency|by_cost_currency.
+  // R-HOLD-ROOT and R-HOLD-COMMODITY were OrangeCount extensions registered as
+  // standard-surface routes; they are now listed under the extension section.
+  "R-HOLD-ALL", "R-HOLD-ACCOUNT", "R-HOLD-CURRENCY", "R-HOLD-COST",
   "R-COMMODITIES", "R-DOCUMENTS", "R-EVENTS", "R-STATISTICS", "R-ERRORS",
   "R-HELP", "R-QUERY", "R-EDITOR", "R-IMPORT", "R-OPTIONS",
 ]);
