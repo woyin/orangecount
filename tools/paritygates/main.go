@@ -19,6 +19,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -136,10 +137,27 @@ type entryConfig struct {
 	// RunRecord points at a committed record of one real invocation. The gate
 	// reads it, requires the recorded command, and requires the named numeric
 	// outputs to be positive. It never re-runs the oracle itself.
-	RunRecord   string   `json:"run_record"`
-	RunCommand  string   `json:"run_command"`
-	RunOutputs  []string `json:"run_outputs"`
-	RerunStatus string   `json:"rerun_status"`
+	RunRecord  string   `json:"run_record"`
+	RunCommand string   `json:"run_command"`
+	RunOutputs []string `json:"run_outputs"`
+	// EvidenceTests names Go tests that carry a clause of the gate which the
+	// private capture cannot observe, such as a work-budget cancellation or a
+	// failed reload keeping the previous snapshot. Naming the test makes the
+	// clause checkable instead of letting the criterion quietly disappear.
+	EvidenceTests []string `json:"evidence_tests"`
+	RerunStatus   string   `json:"rerun_status"`
+	// InapplicableClauses records a criterion whose subject was removed from the
+	// product. Retiring the subject is a product decision, so the gate stays
+	// closed until the product owner records who approved it and when; otherwise
+	// deleting the subject would silently delete the criterion.
+	InapplicableClauses []inapplicableClause `json:"inapplicable_clauses"`
+}
+
+type inapplicableClause struct {
+	Clause       string `json:"clause"`
+	Reason       string `json:"reason"`
+	ApprovedBy   string `json:"approved_by"`
+	ApprovalDate string `json:"approval_date"`
 }
 
 func main() {
@@ -481,6 +499,39 @@ func checkGenerativeDifferential(cfg *gateConfig) []failure {
 	return failures
 }
 
+// goTestIndex lists every Go test function declared under internal/ so a gate
+// can prove that a named evidence test still exists instead of trusting a
+// document to remember it.
+func goTestIndex() (map[string]bool, error) {
+	index := map[string]bool{}
+	pattern := regexp.MustCompile(`^func (Test[A-Za-z0-9_]+)\s*\(`)
+	// Resolve against the repository root, not the process working directory:
+	// the test suite runs this from tools/paritygates, where ./internal does not
+	// exist, and a cwd-relative walk silently reported "no tests".
+	err := filepath.WalkDir(resolveGatePath("internal"), func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() || !strings.HasSuffix(path, "_test.go") {
+			return nil
+		}
+		data, readErr := os.ReadFile(path)
+		if readErr != nil {
+			return readErr
+		}
+		for _, line := range strings.Split(string(data), "\n") {
+			if match := pattern.FindStringSubmatch(strings.TrimSpace(line)); match != nil {
+				index[match[1]] = true
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return index, nil
+}
+
 func missingMarkers(entry *entryConfig, source string) []failure {
 	failures := []failure{}
 	for _, marker := range entry.Markers {
@@ -521,6 +572,26 @@ func checkRegisteredEntry(label string, entry *entryConfig) []failure {
 	}
 	if entry.RunRecord != "" {
 		failures = append(failures, checkRunRecord(entry)...)
+	}
+	for _, clause := range entry.InapplicableClauses {
+		switch {
+		case strings.TrimSpace(clause.ApprovedBy) == "" || strings.TrimSpace(clause.ApprovalDate) == "":
+			failures = append(failures, failure{Status: "检查项", Reason: fmt.Sprintf("子句「%s」列为不适用（%s），但没有产品 owner 的 approved_by 与 approval_date", clause.Clause, clause.Reason)})
+		case !validDate(clause.ApprovalDate):
+			failures = append(failures, failure{Status: "检查项", Reason: fmt.Sprintf("子句「%s」的 approval_date 不是 YYYY-MM-DD 日期", clause.Clause)})
+		}
+	}
+	if len(entry.EvidenceTests) > 0 {
+		index, err := goTestIndex()
+		if err != nil {
+			failures = append(failures, failure{Status: "检查项", Reason: "无法建立 Go 测试索引：" + err.Error()})
+		} else {
+			for _, name := range entry.EvidenceTests {
+				if !index[name] {
+					failures = append(failures, failure{Status: "检查项", Reason: fmt.Sprintf("登记的越限/取消/失败快照证据测试 %s 在仓库中不存在", name)})
+				}
+			}
+		}
 	}
 	if entry.ReferencedIn != "" {
 		token := entry.ReferenceToken

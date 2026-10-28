@@ -70,6 +70,18 @@
       "captured_files",
       "oracle_entries",
       "orangecount_entries"
+    ],
+    "evidence_tests": [
+      "TestLoadGraphWorkBudgetAndCancellation",
+      "TestBuildAndFailedReloadRetainsPreviousSnapshot"
+    ],
+    "inapplicable_clauses": [
+      {
+        "clause": "真实 Swift/C/原生关键查询流程通过",
+        "reason": "原生客户端已在 96a17c1 退役，仓库内不再有 Swift/C 客户端可供该子句验收",
+        "approved_by": null,
+        "approval_date": null
+      }
     ]
   }
 }

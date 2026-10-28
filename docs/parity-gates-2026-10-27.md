@@ -16,10 +16,26 @@
 | 2 | 官方标准测试逐项审计并映射到 Go 公开 Interface，可适用用例全部对照 | 每项有 `upstream_case`（上游源码位置）与 `go_case`（Go 对照测试） | **通过** |
 | 3 | 独立差分含生成式 case + 可重现 seed，每个差异变成固定公开回归 | `tools/genprediff`（seed 424242）对每个生成用例同时跑 Go 与固定 oracle，比较有效性/诊断/有序 entries/库存/余额；差异落成 `testdata/fixtures/gen/<seed>-<case>.{bean,json}` 并由 `main_test.go` 重放 | **通过**（12/12 用例） |
 | 4 | 完整交易前缀库存与精确成本/价格/收支对齐 | `tools/reference/verify_source_export.py` 逐交易库存截点；`docs/compatibility/inventory-gate4-run.json` 记录真实运行 | **通过**（36 roundtrips / 74 截点 / 6 拒绝） |
-| 5 | FinanceBook 同源只读 + 真实客户端关键流程通过 | `verify_full_ledger.py` 读 `ORANGECOUNT_PRIVATE_LEDGER`；`inventory-gate5-run.json` 记录一次真实运行 | **通过（已真实运行）**：2026-10-28 以产品 owner 授权的私有账本执行，47 文件 / 双方 3019 entries / 0 缺失 / 0 多余 / 0 库存差异 / `same_input_capture=true` |
+| 5 | FinanceBook 同源只读；资源越限、取消与失败快照语义可区分（见下「门槛 5 的三个子句」） | `verify_full_ledger.py` 读 `ORANGECOUNT_PRIVATE_LEDGER`；`inventory-gate5-run.json` 记录一次真实运行；`inventory-gate-config.json` 的 `gate5.evidence_tests` 登记越限/取消/失败快照的 Go 测试，`tools/paritygates` 校验这些测试在仓库中存在 | **未通过（3 子句中 2 项满足）**：FinanceBook 同源只读已真实运行（2026-10-28，47 文件 / 双方 3019 entries / 0 缺失 / 0 多余 / 0 库存差异 / `same_input_capture=true`），越限/取消/失败快照由两个 Go 测试承载；Swift/C 子句因原生客户端退役而标为不适用，**等待产品 owner 批准**，`paritygates` 因此判该门槛未通过 |
 | 6 | 独立核对登记表与实际代码，记录源码 commit/上游版本/输入身份/产物身份 | inventory 含 `reference`（beancount 3.2.3 / beanquery 0.2.0）与源码 sha256 | **通过** |
 
-`go run ./tools/paritygates -gate all` → exit 0。
+`go run ./tools/paritygates -gate all` → **exit 1**（门槛 5 未通过，原因见下）。
+
+## 门槛 5 的三个子句
+
+计划原文（`beancount-complete-compatibility-plan-2026-10-02.md` 第 5 节第 5 条）要求三件事，逐条登记如下，避免判据被悄悄缩减：
+
+| 子句 | 证据 | 状态 |
+| --- | --- | --- |
+| FinanceBook 同源只读 | `inventory-gate5-run.json`（2026-10-28 真实运行） | 已满足 |
+| 资源越限、取消与失败快照语义可区分，不返回无标记截断结果 | `TestLoadGraphWorkBudgetAndCancellation`（`internal/source`）、`TestBuildAndFailedReloadRetainsPreviousSnapshot`（`internal/snapshot`），登记在 `gate5.evidence_tests`，由 `tools/paritygates` 校验存在性 | 已满足 |
+| 真实 Swift/C/原生关键查询流程通过 | 原生客户端已在 `96a17c1` 退役，仓库内不再有 Swift/C 客户端 | **子句不适用，待产品 owner 批准的范围变更** |
+
+第三行是当前唯一未闭合项。原生客户端退役是产品范围决定，不是工程细节：它使该子句失去被测对象。
+
+这一项被写成机器判据，而不是文档里的说明：`inventory-gate-config.json` 的 `gate5.inapplicable_clauses` 记录该子句与理由，`tools/paritygates` 要求每条不适用声明都带 `approved_by` 与 `approval_date`，缺一即判门槛 5 未通过。当前两者为空，所以门槛 5 是红的——这是刻意的，删掉被测对象不能等于通过。
+
+产品 owner 批准后，补上这两个字段即转绿；在此之前「超集」主张的合法性止步于此。
 
 ## 关键实现说明
 

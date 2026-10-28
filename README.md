@@ -98,8 +98,14 @@ go run ./tools/paritygates          # all 366 upstream capabilities verified
 go run ./tools/paritygates -gate all # the six release gates
 ```
 
+The capability inventory passes. Gate 5 does not, and deliberately so: its
+criterion requires a native-client query flow that no longer exists after the
+native clients were retired, and the gate refuses an inapplicable clause until
+the product owner records who approved it and when. Deleting the subject must
+not delete the criterion.
+
 See [docs/parity-gates-2026-10-27.md](docs/parity-gates-2026-10-27.md) for the
-gate criteria and their current, honest state.
+criteria, the three sub-clauses of gate 5, and their current, honest state.
 
 ```text
 2026-08-12 28 CNY @WeChat -> @Food "美团" : 工作午餐 #food   full form
