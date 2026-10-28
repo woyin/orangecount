@@ -44,8 +44,13 @@ does not change ledger semantics.
 OrangeCount is not a drop-in replacement for every Beancount or Fava feature.
 In particular, v0.1 does not promise:
 
-- Python plugin execution or the Fava plugin ecosystem, HTTP API, or pixel
-  parity;
+- Python plugin execution or the Fava plugin ecosystem, or its HTTP API;
+- pixel-identical rendering: the standard Fava surface is reproduced functionally
+  (same pages, controls, workflows and outcomes) but not pixel for pixel. That
+  bounded difference is registered as FD-0011 in
+  [docs/fava-approved-deviations.md](docs/fava-approved-deviations.md), and the
+  measured difference is reported in
+  [docs/evidence/visual-parity-2026-10-28.md](docs/evidence/visual-parity-2026-10-28.md);
 - automated bank/broker ingestion, a budget model, a persistent database, or
   unrestricted ledger mutation outside the reviewed authoring workflows; or
 - behavior for v2-only syntax or extensions outside the supported v3 core.
@@ -72,11 +77,21 @@ make build     # bin/orangecount
 make fmt vet test race license build
 ```
 
-## Dialect superset (experimental)
+## Dialect superset
 
-OrangeCount on `main` accepts a superset of Beancount v3: every valid v3 ledger
-still works, and dialect shorthand lines offer a terse two-posting form
-compiled into ordinary transactions at build time (ADR-0045):
+OrangeCount accepts a superset of Beancount v3: valid v3 ledgers keep working,
+and dialect shorthand lines offer a terse two-posting form compiled into
+ordinary transactions at build time (ADR-0045).
+
+The superset claim is machine-checked rather than asserted:
+
+```sh
+go run ./tools/paritygates          # all 366 upstream capabilities verified
+go run ./tools/paritygates -gate all # the six release gates
+```
+
+See [docs/parity-gates-2026-10-27.md](docs/parity-gates-2026-10-27.md) for the
+gate criteria and their current, honest state.
 
 ```text
 2026-08-12 28 CNY @WeChat -> @Food "美团" : 工作午餐 #food   full form
