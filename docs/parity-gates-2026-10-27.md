@@ -82,6 +82,17 @@
 1. **Swift/C 子句**曾按「不适用待批准」处理。那实际上是第二次缩窄：判据原文是「Swift/C/原生」择一，原生查询流程既有 `tools/statecapture` 的 Go `query.Evaluate` 证据，也有 CLI 只读复跑记录。已改为「已满足」。
 2. **periods 证据**曾只出现在正文。现已写入运行记录（`period_accounts=2`、`period_rows_total=96`、`periods_all_equal=true`）并列入 `run_outputs`，由门禁校验为正数。
 
+## 已知覆盖缺口（不属现有门槛判据）
+
+以下两项是 Wave 7 的 done-when 要求，当前**未实现**。它们不改变上面六道门槛的结论，但也不得被任何 `accepted` 行解读为已覆盖；登记表已把它们列在「Known coverage gaps」：
+
+| 维度 | 要求 | 现状 |
+| --- | --- | --- |
+| 简体中文逐路由结构 | 对每条路由重复结构/行为清单 | 仅 1 条浏览器用例（`/income_statement?locale=zh-CN`）与若干单元测试，无逐路由中文结构巡检 |
+| WebKit 与 Firefox | 重复受支持行为与严重布局检查 | 零项目：`web/playwright.config.mjs` 只生成四个 Chromium 格；`webkit` / `firefox` 在 `web/package.json`、`Makefile`、`web/scripts/` 中零命中 |
+
+原因记录：登记表此前把这两项写成「已经跑过」。覆盖登记表不能描述没有任何命令产出的覆盖，因此改为缺口登记。补齐需要新增浏览器项目与逐路由中文用例，属独立任务。
+
 ## 纪律
 
 - 不得缩小标准范围制造全绿；`excluded` 只允许用户明确排除的插件/外部扩展。

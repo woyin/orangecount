@@ -25,7 +25,18 @@ Every adopted route's required English loaded state is exercised in all four Chr
 - `narrow-light`
 - `narrow-dark`
 
-Each route also covers its applicable `empty`, `loading`, `unavailable`, `error`, and `stale` states. Shared state rendering may use representative visual baselines, but route-specific states require their own evidence. Simplified Chinese repeats the structural/behavior manifest; WebKit and Firefox repeat supported behavior and serious-layout checks.
+Each route also covers its applicable `empty`, `loading`, `unavailable`, `error`, and `stale` states. Shared state rendering may use representative visual baselines, but route-specific states require their own evidence.
+
+### Known coverage gaps
+
+The controlled matrix is four **Chromium** cells (desktop/narrow × light/dark). Two dimensions the plan requires are not implemented, and no row's `accepted` status may be read as covering them:
+
+| Dimension | Required | Actual |
+| --- | --- | --- |
+| Simplified Chinese per-route structure | repeats the structural/behavior manifest for every route | one browser case (`/income_statement?locale=zh-CN`) plus unit tests; no per-route zh-CN structure sweep |
+| WebKit and Firefox | repeat supported behavior and serious-layout checks | zero projects: `web/playwright.config.mjs` generates only the four Chromium cells, and `webkit` / `firefox` appear nowhere in `web/package.json`, `Makefile` or `web/scripts/` |
+
+These are Wave 7 done-when items. They are recorded here as gaps because an earlier revision of this section stated them as if they already ran; a registry must not describe coverage that no command produces.
 
 ## Status vocabulary
 
