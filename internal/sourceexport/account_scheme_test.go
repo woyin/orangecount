@@ -13,12 +13,14 @@ import (
 // The cn account-root vocabulary is a dialect extension: upstream rejects the
 // option key and admits only ASCII root names, so exporting such a ledger would
 // write a file no v3 tool can load. The gate must refuse instead of publishing.
-func TestCNSchemeRejectedBeforeTargetWrite(t *testing.T) {
-	text := "option \"account_root_scheme\" \"cn\"\n2000-01-01 open 资产:钱包 CNY\n2000-01-01 open 权益:期初 CNY\n"
-	p := entry(t, text)
-	_, err := Prepare(p, Options{Build: snapshot.BuildOptions{Evaluation: ledger.EvalOptions{SemanticsProfile: ledger.V3}}})
-	if err == nil || !strings.Contains(err.Error(), "account_root_scheme") {
-		t.Fatalf("wanted cn-scheme export rejection, got %v", err)
+func TestLocalizedSchemeRejectedBeforeTargetWrite(t *testing.T) {
+	for _, scheme := range []string{"zh-Hans", "zh-Hant", "ja", "ko", "cn"} {
+		text := "option \"account_root_scheme\" \"" + scheme + "\"\n2000-01-01 open Assets:Cash CNY\n"
+		p := entry(t, text)
+		_, err := Prepare(p, Options{Build: snapshot.BuildOptions{Evaluation: ledger.EvalOptions{SemanticsProfile: ledger.V3}}})
+		if err == nil || !strings.Contains(err.Error(), "account_root_scheme") {
+			t.Errorf("%s: wanted scheme export rejection, got %v", scheme, err)
+		}
 	}
 }
 

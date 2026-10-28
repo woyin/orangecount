@@ -52,15 +52,32 @@ superset of the ledgers upstream accepts here. A non-ASCII root name
 is accepted as a dialect extension (`utf8-account-root`), and `export`
 refuses such a ledger because a v3 reader cannot load it.
 
-`option "account_root_scheme" "cn"` selects the built-in Chinese vocabulary:
-资产, 负债, 权益, 收入, and 支出 become exact equivalents of Assets,
-Liabilities, Equity, Income, and Expenses. Both vocabularies stay usable in the
-same ledger under `cn`, so an existing English-rooted ledger can adopt the
-scheme without renaming accounts. The default, `global`, is the upstream
-vocabulary and rejects a Chinese root with `E-EVAL-ACCOUNT`. The scheme is a
-dialect extension (`cn-account-roots`): `export` refuses a `cn` ledger, and
-drops the `account_root_scheme` line when the value is `global`, because
-upstream rejects unknown option keys.
+`option "account_root_scheme"` selects a built-in localized root vocabulary.
+Each value makes five localized names exact equivalents of Assets, Liabilities,
+Equity, Income, and Expenses:
+
+| Value | Assets | Liabilities | Equity | Income | Expenses |
+| --- | --- | --- | --- | --- | --- |
+| `global` (default) | Assets | Liabilities | Equity | Income | Expenses |
+| `zh-Hans` | 资产 | 负债 | 权益 | 收入 | 支出 |
+| `zh-Hant` | 資產 | 負債 | 權益 | 收入 | 支出 |
+| `ja` | 資産 | 負債 | 純資産 | 収益 | 費用 |
+| `ko` | 자산 | 부채 | 자본 | 수익 | 비용 |
+
+The Japanese set uses the statutory terms of Japanese GAAP and the Korean set
+uses the K-IFRS terms. The English vocabulary stays usable under every scheme,
+so an existing English-rooted ledger can adopt one without renaming accounts.
+`global` rejects a localized root with `E-EVAL-ACCOUNT` instead of guessing at
+its type, and a localized root from a different scheme does not leak into the
+selected one.
+
+The option value accepts the canonical BCP 47 tag plus common spellings (`cn`,
+`tw`, `jp`, `kr`, the English names, and the native names); an unrecognized
+value is `E-EVAL-OPTION` rather than a silent fallback.
+
+The scheme is a dialect extension (`localized-account-roots`): `export` refuses
+a localized ledger, and drops the `account_root_scheme` line when the value is
+`global`, because upstream rejects unknown option keys.
 `render_commas` is honored as a display option by both web
 interfaces: displayed amounts group thousands while exact ledger values and
 machine exports stay untouched. Currency-specific tolerance options

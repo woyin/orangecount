@@ -78,12 +78,12 @@ func Prepare(entry string, options Options) (*Plan, error) {
 		if e.Options["booking_method"] == "AVERAGE" {
 			return nil, averageError(graph, parsed, "")
 		}
-		// The cn account-root scheme is a dialect extension: upstream validates
-		// every option key and rejects account_root_scheme, and its root
+		// A localized account-root scheme is a dialect extension: upstream
+		// validates every option key and rejects account_root_scheme, and its root
 		// production admits only ASCII. Exporting such a ledger would produce a
 		// file no v3 tool can load, so refusal is the only portable answer.
-		if slices.Contains(e.ActiveExtensions, "cn-account-roots") {
-			return nil, fmt.Errorf("E-EXPORT-COMPAT: the account_root_scheme cn vocabulary is not representable in Beancount v3; export needs ASCII English root names")
+		if slices.Contains(e.ActiveExtensions, "localized-account-roots") {
+			return nil, fmt.Errorf("E-EXPORT-COMPAT: the %s account_root_scheme vocabulary is not representable in Beancount v3; export needs ASCII English root names", e.RootScheme())
 		}
 		// A UTF-8 root account name is a dialect extension: the v3 reader only
 		// admits an ASCII lead byte in the root, so exporting it would produce a

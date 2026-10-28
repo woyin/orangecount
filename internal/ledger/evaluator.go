@@ -450,19 +450,15 @@ func (e *evaluator) applyOption(d Option) {
 	}
 	// account_root_scheme selects the accepted root vocabulary. An unrecognized
 	// value is reported rather than silently falling back, because the fallback
-	// would reject every Chinese-rooted account with a misleading account error.
+	// would reject every localized-rooted account with a misleading account error
+	// that points at the accounts instead of at the typo.
 	if e.options.SemanticsProfile == V3 && d.Key == AccountRootSchemeOption {
-		switch strings.ToLower(strings.TrimSpace(d.Value)) {
-		case string(SchemeGlobal), string(SchemeCN):
-			if d.Key == AccountRootSchemeOption && e.result.RootScheme() == SchemeCN {
-				if !contains(e.result.ActiveExtensions, "cn-account-roots") {
-					e.result.ActiveExtensions = append(e.result.ActiveExtensions, "cn-account-roots")
-				}
-			}
+		if scheme, ok := resolveRootScheme(d.Value); ok {
+			e.activateLocalizedRoots(scheme)
 			if !e.accountNamesDistinct() {
 				e.add("E-EVAL-OPTION", diagnostic.Error, d.Span(), e.pathFor(d.Span()))
 			}
-		default:
+		} else {
 			e.add("E-EVAL-OPTION", diagnostic.Error, d.Span(), e.pathFor(d.Span()))
 		}
 	}
