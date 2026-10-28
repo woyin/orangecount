@@ -120,6 +120,12 @@ def compare():
                    "difference_categories": dict(categories),
                    "price_policy_diagnostics": dict(price_policy),
                    "changed_inventory_accounts": changed_accounts, "periods": period_counts}
+        # Scalar aggregates so the committed run record can carry the period
+        # comparison in a form a gate can check, instead of leaving it as prose
+        # that no reader can re-derive from the record.
+        summary["period_accounts"] = len(period_counts)
+        summary["period_rows_total"] = sum(entry["rows"] for entry in period_counts.values())
+        summary["periods_all_equal"] = all(entry["equal"] for entry in period_counts.values())
         native_probe = os.environ.get("ORANGECOUNT_NATIVE_PROBE")
         native_ok = True
         summary["native_checked"] = bool(native_probe)

@@ -1,21 +1,42 @@
 {
-  "command": "ORANGECOUNT_PRIVATE_LEDGER=/Users/breestealth/Documents/FinanceBook/main.bean uv run --offline --project tools/reference python tools/reference/verify_full_ledger.py",
-  "ran_at": "2026-10-28",
-  "recorded_by": "coordinator (Main), authorized by product owner",
+  "command": "ORANGECOUNT_PRIVATE_LEDGER=<owner ledger> uv run --offline --project tools/reference python tools/reference/verify_full_ledger.py",
   "environment": {
-    "reference": "beancount 3.2.3 / beanquery 0.2.0 (tools/reference/.venv)",
     "ledger": "仓库外的所有者私有账本（路径本身不写入记录）",
-    "note": "只读同源 capture；只记录聚合计数，不记录科目名、金额、日期、路径或叙述。"
+    "note": "只读同源 capture；只记录聚合计数，不记录科目名、金额、日期、路径或叙述。",
+    "reference": "beancount 3.2.3 / beanquery 0.2.0 (tools/reference/.venv)"
   },
   "output": {
     "captured_files": 47,
-    "oracle_entries": 3019,
-    "orangecount_entries": 3019,
-    "missing_entries": 0,
-    "extra_entries": 0,
     "changed_inventory_accounts": 0,
-    "same_input_capture": true,
+    "difference_categories": {},
+    "extra_entries": 0,
+    "missing_entries": 0,
+    "native_checked": false,
+    "oracle": "beancount-python-3.2.3",
+    "oracle_entries": 3019,
     "oracle_errors": 0,
-    "orangecount_errors": 0
-  }
+    "oracle_valid": true,
+    "orangecount_entries": 3019,
+    "orangecount_errors": 0,
+    "orangecount_valid": true,
+    "period_accounts": 2,
+    "period_rows_total": 96,
+    "periods": {
+      "Expenses": {
+        "equal": true,
+        "rows": 73
+      },
+      "Income": {
+        "equal": true,
+        "rows": 23
+      }
+    },
+    "periods_all_equal": true,
+    "price_policy_diagnostics": {},
+    "same_input_capture": true,
+    "schema_version": 2,
+    "semantics_profile": "v3"
+  },
+  "ran_at": "2026-10-28",
+  "recorded_by": "coordinator (Main), authorized by product owner"
 }

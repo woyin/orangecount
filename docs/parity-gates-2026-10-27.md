@@ -69,13 +69,16 @@
 | 缺失 / 多余 entries | 0 / 0 |
 | 库存差异账户 | 0 |
 | `same_input_capture` | true |
-| 期间收支 | Expenses 73 行一致、Income 23 行一致 |
+| 期间收支 | Expenses 73 行一致、Income 23 行一致（`inventory-gate5-run.json` 的 `periods` 记录逐账户行数与 `equal`，聚合值 `period_accounts`/`period_rows_total` 列入 `run_outputs` 由门禁校验） |
 
 记录里只有聚合计数，没有科目名、金额、日期、路径或叙述。
 
 ## 剩余工作
 
-无未通过门槛。
+两个未闭合项，都属门槛 5：
+
+1. **Swift/C 子句待产品授权**：原生客户端退役使该子句失去被测对象，`gate5.inapplicable_clauses` 已登记理由与子句，但缺 `approved_by` 与 `approval_date`。产品 owner 批准后门禁转绿。
+2. **periods 证据已写入运行记录**（2026-10-28 重跑：`period_accounts=2`、`period_rows_total=96`、`periods_all_equal=true`），并已列入 `run_outputs`。这一项已闭合，保留在列表里是为了记录它曾经只在正文出现、无法机器复核。
 
 ## 纪律
 

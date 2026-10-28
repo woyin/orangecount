@@ -69,7 +69,9 @@
     "run_outputs": [
       "captured_files",
       "oracle_entries",
-      "orangecount_entries"
+      "orangecount_entries",
+      "period_accounts",
+      "period_rows_total"
     ],
     "evidence_tests": [
       "TestLoadGraphWorkBudgetAndCancellation",

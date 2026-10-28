@@ -85,9 +85,9 @@ make build     # bin/orangecount
 make fmt vet test race license build
 ```
 
-## Dialect superset
+## Dialect superset (certification pending gate 5)
 
-OrangeCount accepts a superset of Beancount v3: valid v3 ledgers keep working,
+The design target is a superset of Beancount v3: valid v3 ledgers keep working,
 and dialect shorthand lines offer a terse two-posting form compiled into
 ordinary transactions at build time (ADR-0045).
 
