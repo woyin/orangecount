@@ -9,8 +9,10 @@ export type Locale = "en" | "zh-CN";
 export const translations: Record<Locale, Record<string, string>> = {
   en: {
     subtitle: "Read-only local ledger view.", language: "Language", theme: "Theme", conversion: "Conversion", interval: "Interval", overview: "Overview", accounts: "Accounts",
-    journal: "Journal", trialBalance: "Trial balance", balanceSheet: "Balance sheet",
-    incomeStatement: "Income statement", holdings: "Holdings", prices: "Prices", commodities: "Commodities", events: "Events",
+    // Fava 1.30.12 renders these report titles in title case; the page title is
+    // the string a screenshot comparison sees, so the casing is part of parity.
+    journal: "Journal", trialBalance: "Trial Balance", balanceSheet: "Balance Sheet",
+    incomeStatement: "Income Statement", holdings: "Holdings", prices: "Prices", commodities: "Commodities", events: "Events",
     documents: "Documents", statistics: "Statistics", diagnostics: "Diagnostics", query: "Query", status: "Status", snapshot: "Snapshot",
     valid: "Valid", accountsCount: "Accounts", diagnosticsCount: "Diagnostics", publishedAt: "Published",
     yes: "yes", no: "no", loading: "Loading…", unavailable: "No valid snapshot.", rows: "rows", columns: "columns",

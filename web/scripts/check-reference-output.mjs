@@ -23,7 +23,25 @@ if (!fixtureRelative || fixtureRelative.startsWith("..") || path.isAbsolute(fixt
 }
 const outputRoot = path.resolve(repoRoot, process.env.FAVA_REFERENCE_OUTPUT || "testdata/visual-candidates/fava-reference");
 const lockPath = path.join(outputRoot, "environment-lock.json");
-const routeNames = ["shell-journal", "income-statement", "balance-sheet", "trial-balance", "account-detail"];
+const routeNames = [
+  "root",
+  "journal",
+  "income-statement",
+  "balance-sheet",
+  "trial-balance",
+  "holdings",
+  "commodities",
+  "events",
+  "documents",
+  "statistics",
+  "editor",
+  "account-assets-3ainvestments-3afund",
+  "query",
+  "import",
+  "options",
+  "help",
+  "errors",
+];
 const projects = ["desktop-light", "desktop-dark", "narrow-light", "narrow-dark"];
 
 async function files(dir, prefix = "") {

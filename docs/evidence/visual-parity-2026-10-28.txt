@@ -1,0 +1,82 @@
+  n/a    desktop-light   m-context.png  (no OrangeCount snapshot)
+  n/a    desktop-dark    m-context.png  (no OrangeCount snapshot)
+  n/a    narrow-light    m-context.png  (no OrangeCount snapshot)
+  n/a    narrow-dark     m-context.png  (no OrangeCount snapshot)
+  87.4%  narrow-dark     m-export.png  (height 839 vs 841 (overlap compared))
+  87.4%  narrow-light    m-export.png  (height 839 vs 841 (overlap compared))
+  69.4%  narrow-dark     m-add.png  (height 839 vs 841 (overlap compared))
+  68.4%  narrow-dark     account-assets-3ainvestments-3afund.png  (height 927 vs 1015 (overlap compared))
+  68.0%  narrow-light    account-assets-3ainvestments-3afund.png  (height 927 vs 1015 (overlap compared))
+  59.6%  narrow-light    m-add.png  (height 839 vs 841 (overlap compared))
+  52.5%  narrow-dark     options.png  (height 2271 vs 800 (overlap compared))
+  52.3%  narrow-light    options.png  (height 2271 vs 800 (overlap compared))
+  48.9%  desktop-dark    trial-balance.png
+  48.9%  desktop-light   trial-balance.png
+  46.3%  narrow-dark     income-statement.png  (height 839 vs 841 (overlap compared))
+  46.3%  narrow-dark     root.png  (height 839 vs 841 (overlap compared))
+  46.2%  narrow-light    income-statement.png  (height 839 vs 841 (overlap compared))
+  46.2%  narrow-light    root.png  (height 839 vs 841 (overlap compared))
+  44.6%  narrow-dark     import.png
+  44.0%  narrow-dark     balance-sheet.png  (height 1205 vs 1202 (overlap compared))
+  43.2%  narrow-dark     statistics.png  (height 1129 vs 1167 (overlap compared))
+  43.1%  narrow-light    statistics.png  (height 1129 vs 1167 (overlap compared))
+  43.1%  narrow-light    balance-sheet.png  (height 1205 vs 1202 (overlap compared))
+  41.2%  narrow-dark     query.png  (height 800 vs 893 (overlap compared))
+  41.0%  narrow-light    query.png  (height 800 vs 893 (overlap compared))
+  40.0%  desktop-dark    account-assets-3ainvestments-3afund.png
+  39.8%  desktop-light   account-assets-3ainvestments-3afund.png
+  39.7%  narrow-dark     editor.png
+  38.4%  narrow-dark     commodities.png
+  38.2%  narrow-light    commodities.png
+  37.7%  narrow-dark     trial-balance.png  (height 1098 vs 1108 (overlap compared))
+  37.6%  narrow-light    trial-balance.png  (height 1098 vs 1108 (overlap compared))
+  34.8%  narrow-light    editor.png
+  33.7%  desktop-dark    balance-sheet.png
+  32.9%  desktop-light   balance-sheet.png
+  32.9%  desktop-dark    import.png
+  32.1%  desktop-dark    query.png
+  32.0%  desktop-light   query.png
+  31.9%  desktop-dark    income-statement.png
+  31.9%  desktop-dark    root.png
+  31.9%  desktop-light   income-statement.png
+  31.9%  desktop-light   root.png
+  29.8%  narrow-dark     events.png
+  29.5%  narrow-light    events.png
+  28.7%  narrow-dark     help.png  (height 883 vs 800 (overlap compared))
+  28.6%  narrow-light    help.png  (height 883 vs 800 (overlap compared))
+  27.3%  narrow-dark     journal.png  (height 1211 vs 1202 (overlap compared))
+  27.1%  desktop-dark    m-add.png
+  27.0%  narrow-light    journal.png  (height 1211 vs 1202 (overlap compared))
+  26.1%  desktop-light   m-add.png
+  25.2%  narrow-dark     holdings.png
+  25.2%  narrow-light    holdings.png
+  25.0%  desktop-dark    options.png
+  24.9%  desktop-light   options.png
+  24.0%  desktop-dark    editor.png
+  23.9%  desktop-dark    commodities.png
+  23.7%  desktop-light   commodities.png
+  23.3%  desktop-light   m-export.png
+  22.9%  desktop-dark    m-export.png
+  21.3%  desktop-light   editor.png
+  20.8%  desktop-dark    events.png
+  20.6%  desktop-light   events.png
+  19.5%  narrow-dark     errors.png
+  19.5%  narrow-light    errors.png
+  16.7%  desktop-dark    statistics.png
+  16.7%  desktop-light   statistics.png
+  16.6%  desktop-light   holdings.png
+  16.6%  desktop-dark    holdings.png
+  14.1%  desktop-light   errors.png
+  14.1%  desktop-dark    errors.png
+  13.3%  narrow-dark     documents.png
+  13.3%  narrow-light    documents.png
+  12.1%  desktop-dark    help.png
+  12.1%  desktop-light   help.png
+  11.6%  narrow-light    import.png
+   8.6%  desktop-dark    journal.png
+   8.5%  desktop-light   journal.png
+   6.5%  desktop-light   documents.png
+   6.4%  desktop-dark    documents.png
+   5.3%  desktop-light   import.png
+
+summary: 76 compared, 0 under 1% pixel diff, 0 under 5%, median 31.9%, 10 with a height difference

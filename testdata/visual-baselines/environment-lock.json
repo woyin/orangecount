@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "capture_method": "native-uv",
+  "environment_digest": "sha256:5b4916ce0cbcc88a5a279fb84c2f790e9423a87811fa1749ec881ef70009b5c6",
+  "uv_lock_sha256": "b2d01b71029b5655e07b230d79bea573830721de4c42406e14188e1a2ea128fe",
+  "pinned_packages": {
+    "fava": "1.30.12",
+    "beancount": "3.2.3"
+  },
+  "fava": {
+    "version": "1.30.12",
+    "commit": "aa7538e8971252c9efc52c8a516a3a77d604553f"
+  },
+  "python": "3.12.13",
+  "beancount": "3.2.3",
+  "node": "v22.23.4",
+  "playwright": "1.52.0",
+  "chromium": "Chromium 136.0.7103.25 (playwright build v1169)",
+  "fonts": [
+    "Fira Sans",
+    "Fira Mono",
+    "Source Code Pro",
+    "Noto Sans CJK fallback"
+  ],
+  "locale": "en-US",
+  "timezone": "UTC",
+  "reduced_motion": "reduce",
+  "device_scale_factor": 1,
+  "viewports": {
+    "desktop": [
+      1280,
+      800
+    ],
+    "narrow": [
+      520,
+      800
+    ]
+  },
+  "fixture_content_sha256": "171546b5af85114af71f9540a79b0f51d88fbf2c38bf69a2b213499422a9d3a7",
+  "fixture": "testdata/fixtures/fava-visual",
+  "capture": {
+    "candidate_only": false,
+    "formal_baseline_directory": "testdata/visual-baselines",
+    "output_directory": "testdata/visual-candidates/fava-reference-native"
+  },
+  "note": "Native uv-installed Fava 1.30.12 capture because the Docker daemon credential helper is unavailable. Same fixture as the OrangeCount snapshots so the two are directly comparable. Environment pinned by environment_digest and uv_lock_sha256."
+}

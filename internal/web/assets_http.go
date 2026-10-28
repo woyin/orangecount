@@ -7,7 +7,15 @@ package web
 
 import (
 	"net/http"
-	"os"
+)
+
+// The transplanted Fava shell is the only standard UI served by OrangeCount.
+// Each path below is a fixed embedded location: no environment variable,
+// build tag or runtime probe may select a different asset tree.
+const (
+	indexAsset = "assets/transplanted/index.html"
+	appAsset   = "assets/transplanted/app.js"
+	styleAsset = "assets/transplanted/app.css"
 )
 
 func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
@@ -16,7 +24,7 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	data, err := assets.ReadFile(s.uiAsset("index.html"))
+	data, err := assets.ReadFile(indexAsset)
 	if err != nil {
 		http.Error(w, "embedded UI unavailable", http.StatusInternalServerError)
 		return
@@ -26,20 +34,13 @@ func (s *Server) handleIndex(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(data)
 }
 
-func (s *Server) uiAsset(name string) string {
-	if os.Getenv("ORANGECOUNT_TRANSPLANTED_UI") == "1" {
-		return "assets/transplanted/" + name
-	}
-	return "assets/" + name
-}
-
 func (s *Server) handleApp(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet && r.Method != http.MethodHead {
 		w.Header().Set("Allow", "GET, HEAD")
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	data, err := assets.ReadFile(s.uiAsset("app.js"))
+	data, err := assets.ReadFile(appAsset)
 	if err != nil {
 		http.Error(w, "embedded UI unavailable", http.StatusInternalServerError)
 		return
@@ -55,7 +56,7 @@ func (s *Server) handleStyle(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		return
 	}
-	data, err := assets.ReadFile(s.uiAsset("app.css"))
+	data, err := assets.ReadFile(styleAsset)
 	if err != nil {
 		http.Error(w, "embedded UI unavailable", http.StatusInternalServerError)
 		return

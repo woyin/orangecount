@@ -18,3 +18,167 @@
 #main-content a.button:visited {
   color: var(--button-color);
 }
+
+/* Print composition.
+ *
+ * Fava has no separate print route: each component carries its own
+ * `@media print` rule and the browser's print dialog composes the page. The
+ * transplanted shell keeps that architecture, so the rules below cover only
+ * what is OrangeCount markup — the shell chrome controls, the report
+ * toolbars, and the adapter export/filter controls.
+ *
+ * Stable contract for browser assertions: in print media on every report
+ * route `#menu-toggle` (inside `.aside-buttons`), `#sidebar`, the header
+ * controls, the journal chips, the query form, the export links, the sort
+ * toggles, and the chart switcher are hidden, while `#main-content` (with its
+ * tables, tree tables, journal list, and chart SVGs) stays visible and is not
+ * clipped. Links print as plain text with no URL suffix.
+ *
+ * Kept in this file rather than a new print.css so the derived stylesheets stay
+ * verbatim and the managed inventory needs no extra row. */
+@media print {
+  /* Navigation chrome: the sidebar, its mobile menu button, and any overlay.
+   * A bare `nav` rule is deliberately absent: the chart measure switcher is a
+   * <nav> and Fava keeps it (showing only the selected measure). */
+  #sidebar,
+  .aside-buttons,
+  #menu-toggle,
+  .overlay,
+  #sidebar nav,
+  .overlay-wrapper {
+    display: none !important;
+  }
+
+  /* Header controls only: the ledger title and page title stay printable. */
+  header .reload-page,
+  header form,
+  header .header-select,
+  header button {
+    display: none !important;
+  }
+
+  /* Report toolbars: filters, sorters, export buttons, chart switchers. */
+  .journal-chips,
+  .query-form,
+  .query-links,
+  .report-controls,
+  .show-charts,
+  .sort-toggle,
+  .sorter,
+  .headerline .button,
+  .headerline button,
+  .editor-buttons,
+  .import-buttons,
+  .saved-queries,
+  .drag-target {
+    display: none !important;
+  }
+
+  /* Chart switchers keep only the selected measure, which is Fava's own
+   * ChartSwitcher print rule: the printed page shows one chart, not a menu. */
+  .chart-switcher button,
+  .chart-picker button {
+    display: none !important;
+    border-left: none !important;
+  }
+
+  .chart-switcher button.selected,
+  .chart-picker button.selected {
+    display: inline !important;
+  }
+
+  /* The page becomes one content column that never scrolls or clips. */
+  html,
+  body {
+    width: auto;
+    height: auto;
+    overflow: visible;
+    color: #000;
+    background: #fff;
+  }
+
+  body {
+    display: block;
+  }
+
+  article,
+  #main-content {
+    padding: 0;
+    overflow: visible;
+  }
+
+  /* Monochrome: no shadows, no tinted row or entry backgrounds. */
+  *,
+  *::before,
+  *::after {
+    color: #000 !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+    background: transparent !important;
+  }
+
+  /* Floated report columns (statistics) would leave the content box zero-height
+   * and overlap across a page break, so print stacks them and clears the
+   * container. */
+  .left,
+  .right {
+    float: none !important;
+    margin-right: 0;
+  }
+
+  article::after,
+  #main-content::after {
+    display: block;
+    clear: both;
+    content: "";
+  }
+
+  /* Tables and lists stay whole per row, but may flow across pages. */
+  table,
+  .flex-table,
+  .report-table,
+  .tree-table-new,
+  .journal {
+    width: 100%;
+    page-break-inside: auto;
+    break-inside: auto;
+  }
+
+  tr,
+  li,
+  .journal > li,
+  .tree-table-new > li {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  /* Charts keep their SVG and axis labels; interactive overlays go away. */
+  svg {
+    max-width: 100%;
+    height: auto;
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .chart-tooltip,
+  .tooltip {
+    display: none !important;
+  }
+
+  /* Links print as plain text: no destination suffix, no underline. */
+  a,
+  a:link,
+  a:visited {
+    color: #000 !important;
+    text-decoration: none !important;
+  }
+
+  a[href]::after {
+    content: none !important;
+  }
+}
+

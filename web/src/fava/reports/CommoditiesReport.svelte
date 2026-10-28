@@ -2,9 +2,12 @@
   import LineChart from "../charts/LineChart.svelte";
   import { translations, type Locale } from "../../translations";
   import PriceTable from "./PriceTable.svelte";
-  import type { DecimalWire, TableReport } from "./types";
+  import { formatAmount, type DecimalWire, type TableReport } from "./types";
 
+  /** Commodity metadata rows for the declared, currently-held commodities. */
   export let report: TableReport;
+  /** Price directives; the adapter keeps them as their own report. */
+  export let prices: TableReport | null = null;
   export let locale = "en";
   export let renderCommas = false;
 
@@ -22,7 +25,7 @@
   // price table per pair and a switchable line chart per pair.
   $: pairs = (() => {
     const byPair = new Map<string, { base: string; quote: string; prices: PriceRow[] }>();
-    for (const row of report.rows) {
+    for (const row of prices?.rows ?? []) {
       const base = typeof row.currency === "string" ? row.currency : "";
       const quote = typeof row.quote_currency === "string" ? row.quote_currency : "";
       const key = `${base} / ${quote}`;
@@ -32,6 +35,9 @@
         amount: row.amount as DecimalWire | undefined,
       });
       byPair.set(key, entry);
+    }
+    for (const entry of byPair.values()) {
+      entry.prices.sort((left, right) => left.date.localeCompare(right.date));
     }
     return [...byPair.entries()];
   })();
@@ -103,6 +109,29 @@
   {/each}
 {:else}
   <p>{t("noPrices")}</p>
+{/if}
+
+<!-- Fava also lists each declared commodity that is currently held, even when
+     no price directive exists for it. The metadata report carries those rows. -->
+{#if report.rows.length}
+  <table class="commodities-table" data-commodities-table>
+    <thead>
+      <tr>
+        {#each report.columns as column (column.name)}
+          <th scope="col" class:num={column.type !== "string"}>{t(column.name)}</th>
+        {/each}
+      </tr>
+    </thead>
+    <tbody>
+      {#each report.rows as row, index (row.currency ?? index)}
+        <tr>
+          {#each report.columns as column (column.name)}
+            <td class:num={column.type !== "string"}>{formatAmount(row[column.name] as DecimalWire | undefined, renderCommas)}</td>
+          {/each}
+        </tr>
+      {/each}
+    </tbody>
+  </table>
 {/if}
 
 <style>

@@ -13,7 +13,6 @@ const webRoot = path.join(repoRoot, "web");
 const fixtureRoot = path.join(repoRoot, "testdata", "fixtures", "fava-visual");
 const entry = path.join(fixtureRoot, "main.bean");
 const documents = path.join(fixtureRoot, "documents");
-const runName = `orangecount-fava-visual-${process.pid}`;
 
 const binary = process.env.ORANGECOUNT_BIN;
 const command = binary || "go";
@@ -21,9 +20,12 @@ const args = binary
   ? ["serve", "--addr", "127.0.0.1:0", "--document-root", documents, entry]
   : ["run", "./cmd/orangecount", "serve", "--addr", "127.0.0.1:0", "--document-root", documents, entry];
 
+// The server reads no environment variable: it always serves the embedded
+// transplanted shell. Only ORANGECOUNT_BASE_URL reaches the browser harness, so
+// no test-only switch can reach the production asset path.
 const server = spawn(command, args, {
   cwd: repoRoot,
-  env: { ...process.env, ORANGECOUNT_VISUAL_RUN: runName, ORANGECOUNT_TRANSPLANTED_UI: process.env.ORANGECOUNT_TRANSPLANTED_UI || "" },
+  env: { ...process.env },
   detached: true,
   stdio: ["ignore", "pipe", "pipe"],
 });
@@ -53,7 +55,9 @@ const baseURL = await new Promise((resolve, reject) => {
 const cli = path.join(webRoot, "node_modules", "@playwright", "test", "cli.js");
 const playwright = spawn(process.execPath, [cli, "test", "--config", path.join(webRoot, "playwright.config.mjs"), ...process.argv.slice(2)], {
   cwd: repoRoot,
-  env: { ...process.env, ORANGECOUNT_BASE_URL: baseURL, ORANGECOUNT_VISUAL_RUN: runName },
+  // The only variable this harness exports: the loopback URL of the server it
+  // just started. It is read by playwright.config.mjs and never by the app.
+  env: { ...process.env, ORANGECOUNT_BASE_URL: baseURL },
   stdio: "inherit",
 });
 

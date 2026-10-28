@@ -2,7 +2,7 @@
 
 ## Current state
 
-`internal/web/assets/` contains the legacy checked-in frontend plus a deterministic `transplanted/` bundle. The Go server selects the latter only with `ORANGECOUNT_TRANSPLANTED_UI=1` until route gates and visual approval authorize final cutover. `web/src/fava/` contains the Fava-derived shell, report, Journal, Query, Editor, Import, and adapter surfaces; route-specific acceptance is still tracked separately.
+`internal/web/assets/transplanted/` holds the only UI the Go server serves: `index.html`, `app.js`, `app.css` and `manifest.json`. The directory is committed so `make build` and `make test` work without Node, and no environment flag or build tag selects a different asset tree. `web/src/fava/` contains the Fava-derived shell, report, Journal, Query, Editor, Import, and adapter surfaces; route-specific acceptance is still tracked separately.
 
 The authoritative migration plan is [`../docs/fava-frontend-transplant-plan.md`](../docs/fava-frontend-transplant-plan.md).
 
@@ -51,10 +51,11 @@ npm --prefix web run check:reference-output
 
 Reference screenshots are candidate-only files under
 `testdata/visual-candidates/fava-reference/`; they never update
-`testdata/visual-baselines/`. The current transplant output is staged under `web/staging/` and copied to
-`internal/web/assets/transplanted/` by `npm --prefix web run build:embedded`; it
-is still opt-in and is not an approved visual baseline.
+`testdata/visual-baselines/`. `npm --prefix web run build:embedded` builds the shell into
+`web/staging/` and copies it into `internal/web/assets/transplanted/`; that
+command is the only way to refresh the embedded UI, and re-running it on
+unchanged sources produces byte-identical files.
 
 ## Route cutover rule
 
-A route remains wholly legacy until the transplanted version passes contract/semantics, behavior/safety, visual/structural, and release-quality gates. A route never mixes legacy and transplanted component trees. After the final standard route passes, the legacy UI, prototype shell and migration flag are deleted.
+A route counts as complete only when the transplanted version passes contract/semantics, behavior/safety, visual/structural, and release-quality gates. A route never mixes component trees. The legacy UI, the prototype shell and the migration flag are deleted; `go run ./tools/favagates` verifies that they stay deleted.

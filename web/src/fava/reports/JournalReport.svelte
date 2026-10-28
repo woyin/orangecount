@@ -115,6 +115,11 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
     return `/account/${encodeURIComponent(account)}`;
   }
 
+  /** Fava's statement link: the entry hash plus the metadata key, never a path. */
+  function statementHref(entry: JournalEntry, key: string): string {
+    return `/__orangecount/fava/statement?entry_hash=${encodeURIComponent(entry.entry_hash ?? "")}&key=${encodeURIComponent(key)}`;
+  }
+
   /** The description cell differs per directive type, the way Fava's does. */
   function describe(entry: JournalEntry): string {
     switch (entry.type) {
@@ -317,10 +322,10 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
         <dl class="metadata">
           {#each entry.metadata as meta (meta.key)}
             <dt>{meta.key}:</dt>
-            <!-- Fava links document metadata to its statement view; the shell
-                 has no statement route, so a document key links to the
-                 document file served by /documents/ instead. -->
-            <dd>{#if meta.key.startsWith("document")}<a class="filename" data-remote target="_blank" rel="noopener noreferrer" href={`/documents/${encodeURIComponent(meta.value.replace(/^"|"$/g, ""))}`}>{meta.value.replace(/^"|"$/g, "")}</a>{:else}{meta.value}{/if}</dd>
+            <!-- Mirrors Fava's _journal_table.html: a document key links to
+                 the statement endpoint, which resolves (entry hash, key) to a
+                 document beneath the configured document roots. -->
+            <dd>{#if meta.key.startsWith("document")}<a class="filename" data-remote target="_blank" rel="noopener noreferrer" href={statementHref(entry, meta.key)}>{meta.value.replace(/^"|"$/g, "")}</a>{:else}{meta.value}{/if}</dd>
           {/each}
         </dl>
       {/if}

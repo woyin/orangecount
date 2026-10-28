@@ -10,6 +10,7 @@
   import EditorReport from "../reports/EditorReport.svelte";
   import DocumentsReport from "../reports/DocumentsReport.svelte";
   import ErrorsReport from "../reports/ErrorsReport.svelte";
+  import CommoditiesReport from "../reports/CommoditiesReport.svelte";
   import EventsReport from "../reports/EventsReport.svelte";
   import TreeReport from "../reports/TreeReport.svelte";
   import UtilityReport from "../reports/UtilityReport.svelte";
@@ -31,6 +32,12 @@
  export let accountDetails: Record<string, { balance_string: string; close_date?: string; uptodate_status?: string; last_entry?: string }> = {};
  export let onLocale: (value: string) => void = () => {};
  export let onTheme: (value: string) => void = () => {};
+ // Conversion and interval belong to the chart control bar in Fava
+ // (ConversionAndInterval inside Chart.svelte), not to the page header.
+ export let conversion = "at_cost";
+ export let interval = "month";
+ export let onConversion: (value: string) => void = () => {};
+ export let onInterval: (value: string) => void = () => {};
 
   let loadedKey = "";
   let loading = false;
@@ -39,6 +46,7 @@
   let table: TableReport | null = null;
   let journal: JournalReportData | null = null;
   let statistics: { entriesByType: [string, number][]; postings: TableReport; updateActivity: { account: string; last_entry_date: string; entry_hash: string; balances: Record<string, string> }[] } | null = null;
+  let commodityPrices: TableReport | null = null;
 
   function reportQuery(name: string, value: Record<string, string>): Record<string, string> {
     if (!["holdings", "holdings_by_account", "holdings_by_currency", "holdings_by_cost_currency", "holdings_by_root_account", "holdings_by_commodity", "commodities", "events", "documents", "statistics"].includes(name)) return value;
@@ -55,6 +63,12 @@
     void load(requestKey);
   }
 
+  // Fava's commodities page shows the price history chart per base/quote
+  // pair on top of the commodity table. The adapter keeps those as two
+  // separate reports, so the commodities route loads both and hands the
+  // price rows to CommoditiesReport.
+  type PriceBook = { prices: TableReport | null };
+
   async function load(key: string) {
     loading = true;
     error = null;
@@ -67,7 +81,10 @@
       return;
     }
     try {
-      const payload = await adapter.load(route, reportQuery(route, query));
+      const [payload, prices] = await Promise.all([
+        adapter.load(route, reportQuery(route, query)),
+        route === "commodities" ? adapter.load("prices", reportQuery(route, query)).catch(() => null) : null,
+      ]);
       if (key !== requestKey) return;
       if (["income_statement", "balance_sheet", "trial_balance"].includes(route)) {
         report = parseTreeReport(payload);
@@ -79,6 +96,8 @@
         statistics = { entriesByType, postings: parseTableReport(composite.postings_per_account), updateActivity: composite.update_activity ?? [] };
       } else {
         table = parseTableReport(payload);
+        if (route === "commodities" && prices) commodityPrices = parseTableReport(prices);
+        else commodityPrices = null;
       }
     } catch (value) {
       if (key !== requestKey) return;
@@ -109,13 +128,15 @@
 {:else if route === "planning"}
   <PlanningReport {adapter} {locale} />
 {:else if report}
- <TreeReport {report} {locale} {operatingCurrencies} {renderCommas} />
+ <TreeReport {report} {locale} {operatingCurrencies} {renderCommas} {conversion} {interval} {onConversion} {onInterval} singleColumn={route === "trial_balance"} />
 {:else if journal}
   <JournalReport report={journal} {renderCommas} />
 {:else if statistics}
   <StatisticsReport entriesByType={statistics.entriesByType} postings={statistics.postings} updateActivity={statistics.updateActivity} {locale} {renderCommas} />
 {:else if table && (route === "holdings" || route.startsWith("holdings_by_"))}
   <HoldingsReport report={table} {route} {locale} {renderCommas} />
+{:else if table && route === "commodities"}
+  <CommoditiesReport report={table} prices={commodityPrices} {locale} {renderCommas} />
 {:else if table && route === "events"}
   <EventsReport report={table} {locale} />
 {:else if table && route === "documents"}

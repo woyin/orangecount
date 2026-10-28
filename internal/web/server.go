@@ -24,11 +24,12 @@ import (
 	"orangecount/internal/source"
 )
 
-// assets contains the compiled, dependency-free browser bundle. Keeping the
-// files inside this package makes the released binary independent of Node or
-// a runtime CDN.
+// assets contains the transplanted Fava shell: index.html, app.js and app.css
+// under assets/transplanted. Keeping the compiled bundle inside this package
+// makes the released binary independent of Node or a runtime CDN, and no
+// environment flag or build tag selects a different UI tree.
 //
-//go:embed assets/*
+//go:embed all:assets/transplanted
 var assets embed.FS
 
 // Config wires a Server: the snapshot store, document roots for attachments,

@@ -66,6 +66,7 @@ var favaAdapterRoutes = map[string]favaHandler{
 	"journal":                   (*Server).favaJournal,
 	"download-journal":          (*Server).favaDownloadJournal,
 	"entry-context":             (*Server).favaEntryContext,
+	"statement":                 (*Server).favaStatement,
 	"add-entries":               (*Server).favaAddEntries,
 	"quick-preview":             (*Server).handleQuickPreview,
 	"quick-commit":              (*Server).handleQuickCommit,

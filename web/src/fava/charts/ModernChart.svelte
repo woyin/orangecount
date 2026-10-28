@@ -68,7 +68,9 @@
   // is always rendered so the observer keeps a stable target.
   let containerEl: HTMLElement;
   let width = 0;
-  const height = 280;
+  // Fava's pinned Chart.svelte renders time-series plots at 250px; matching it
+  // keeps the following table rows at the same vertical offset.
+  const height = 250;
   const margin = { top: 16, right: 24, bottom: 32, left: 60 };
   let resizeObserver: ResizeObserver | null = null;
   onMount(() => {
@@ -285,8 +287,8 @@
   .modern-chart-card { position: relative; margin-bottom: 1rem; }
   .modern-chart-header { display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.25rem; }
   .modern-chart-header h3 { margin: 0; }
-  .modern-chart-wrap { width: 100%; min-height: 280px; }
-  .modern-chart { display: block; width: 100%; height: 280px; background: var(--background-darker); border: 1px solid var(--border); }
+  .modern-chart-wrap { width: 100%; min-height: 250px; }
+  .modern-chart { display: block; width: 100%; height: 250px; background: var(--background-darker); border: 1px solid var(--border); }
  .y-tick, .x-tick { font-size: 11px; fill: var(--text-color-lighter); font-variant-numeric: tabular-nums; }
  .grid-line { stroke: var(--border); stroke-width: 1px; opacity: 0.15; }
   .zero-baseline { stroke: var(--chart-axis, var(--text-color-lightest)); stroke-width: 1px; opacity: 0.4; }

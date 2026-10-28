@@ -198,6 +198,10 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
          onLocale={setLocale}
           onTheme={setTheme}
           query={{ ...current.query, ...(current.account ? { account: current.account } : {}) }}
+          conversion={current.query.conversion || "at_cost"}
+          interval={current.query.interval || "month"}
+          onConversion={setConversion}
+          onInterval={setInterval}
         />
       {/key}
     </ErrorBoundary>

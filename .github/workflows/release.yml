@@ -1,7 +1,10 @@
 # Build and publish release binaries when a version tag (v*) is pushed.
-# The Go binary embeds the committed web assets via go:embed, so the build only
-# needs Go (no Node toolchain). Cross-compiled with CGO disabled for portable,
-# static binaries; the release tag is injected into orangecount's version var.
+# The Go binary embeds the transplanted web assets
+# (internal/web/assets/transplanted) via go:embed, so the build only needs Go:
+# no Node toolchain and no frontend build step run here. To update the embedded
+# UI, run `make web-build-embedded` locally and commit the result.
+# Cross-compiled with CGO disabled for portable, static binaries; the release tag
+# is injected into orangecount's version var.
 name: release
 
 on:

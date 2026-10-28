@@ -28,6 +28,9 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
   import { formatAmount, type HierarchyNode, type ReportChart } from "../reports/types";
 
   export let chart: ReportChart;
+  // Currencies switched off in the shared control bar. The control bar owns the
+  // legend now, so the plot reads the same list instead of its own copy.
+  export let hiddenCurrencies: string[] = [];
   export let locale = "en";
 
   $: catalog = translations[(locale === "zh-CN" ? "zh-CN" : "en") as Locale];
@@ -85,7 +88,7 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
   // toggles that series out of the plot (and back in). Hidden labels live here;
   // the value extent below re-derives from whatever stays visible so the
   // y-scale re-fits.
-  let hidden: string[] = [];
+  $: hidden = hiddenCurrencies;
   function toggleSeries(seriesLabel: string) {
     hidden = hidden.includes(seriesLabel) ? hidden.filter((value) => value !== seriesLabel) : [...hidden, seriesLabel];
   }
@@ -408,9 +411,12 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
 </script>
 
 <section class="chart-card" aria-label={chart.title}>
- <h3>{chart.title}</h3>
+   <!-- Fava's Chart.svelte has no title or mode switch inside the plot area: the
+        title is the aria-label and the switcher lives in the control bar above.
+        Keeping the plot bare is what makes its 250px box line up with the
+        baseline instead of being pushed down by ~110px of chrome. -->
    {#if showBarMode}
-     <span class="mode-switch">
+     <span class="mode-switch plot-mode-switch">
        <label class="button" class:muted={barMode !== "stacked"}>
          <input type="radio" name={"bar-mode-" + chart.title} value="stacked" checked={barMode === "stacked"} on:change={() => setBarMode("stacked")} />
          {label("stackedBars")}
@@ -518,16 +524,22 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
       {/each}
     </svg>
   {/if}
-  <p class="chart-meta">{chart.interval} · {chart.valuation}{chart.currency ? ` · ${chart.currency}` : ""}</p>
-  {#each chart.series as series (series.label)}
-    <button
-      type="button"
-      class="legend"
-      class:inactive={hidden.includes(series.label)}
-      aria-pressed={!hidden.includes(series.label)}
-      on:click={() => toggleSeries(series.label)}
-    ><i style={`background:${colorFor(series.label)}`}></i><span>{series.label}</span></button>
-  {/each}
+  <!-- Fava keeps the series legend and the interval/valuation note below the
+       chart box, as their own row, rather than inside the plot card. -->
+  <div class="chart-legend-row">
+    {#each chart.series as series (series.label)}
+      <button
+        type="button"
+        class="legend"
+        class:inactive={hidden.includes(series.label)}
+        aria-pressed={!hidden.includes(series.label)}
+        on:click={() => toggleSeries(series.label)}
+      ><i style={`background:${colorFor(series.label)}`}></i><span>{series.label}</span></button>
+    {/each}
+  </div>
+  <!-- Fava has no interval/valuation text line under the plot: those two values
+       are the select comboboxes in the control bar. Keeping the line pushed the
+       report table 21px lower than the baseline. -->
   {#if availabilityText}
     <p class="chart-availability">{availabilityText}</p>
   {/if}
@@ -568,6 +580,9 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
 
 <style>
   .chart-card { position: relative; margin-bottom: 1rem; }
+  /* The plot-area mode switch is a compact inline control, not a page header. */
+  .plot-mode-switch { display: inline-flex; gap: 0.125rem; margin-bottom: 0.25rem; }
+  .plot-mode-switch .button { padding: 0 0.35em; font-size: 0.85em; }
   .chart-tooltip { position: absolute; z-index: 10; pointer-events: none; max-width: 20rem; padding: .3rem .5rem; background: var(--background-darker); border: 1px solid var(--border); color: var(--text-color-lighter); font-size: .8rem; line-height: 1.35; white-space: pre-line; box-shadow: 0 1px 3px rgb(0 0 0 / .25); }
   .hierarchy-picker { margin-bottom: .5rem; color: var(--text-color-lightest); text-align: center; }
   .hierarchy-picker button { padding: 0 .5em; }
@@ -577,13 +592,20 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
   .chart-data { margin-top: .5rem; }
   .chart-data summary { color: var(--text-color-lightest); cursor: pointer; }
   .chart-scroll { overflow-x: auto; max-height: 22rem; overflow-y: auto; }
-  .report-chart { display: block; width: min(100%, 52rem); height: 14rem; margin-bottom: .5rem; background: var(--background-darker); border: 1px solid var(--border); }
+  /* Fava's Chart.svelte renders the plot area at 250px; matching it keeps the
+     bar heights, axis positions and the following rows aligned with the baseline. */
+  .report-chart { display: block; width: min(100%, 52rem); height: 250px; margin-bottom: .5rem; background: var(--background-darker); border: 1px solid var(--border); }
+  /* Fava's HierarchyContainer sizes treemap/icicle as min(width / 2.5, 400px);
+     the 250px time-series height would squash the hierarchy views. */
+  .report-hierarchy-chart { height: auto; max-height: 400px; aspect-ratio: 2.5; }
+  .report-sunburst-chart { height: 500px; max-height: 500px; aspect-ratio: 1; width: auto; max-width: 100%; margin-inline: auto; }
   .report-sunburst-chart { width: 14rem; }
   .report-hierarchy-chart a { cursor: pointer; }
   .report-chart path { fill: none; stroke-width: .8; vector-effect: non-scaling-stroke; }
   .chart-axis { stroke: var(--chart-axis); stroke-width: .25; vector-effect: non-scaling-stroke; }
   .chart-grid { stroke: var(--border); stroke-width: .2; vector-effect: non-scaling-stroke; opacity: .5; }
   .chart-tick { font-size: 2.6px; fill: var(--text-color-lighter); }
+  .chart-legend-row { display: flex; flex-wrap: wrap; gap: 0 0.75rem; margin-bottom: 0.25rem; }
   .legend { display: inline-flex; gap: .3rem; align-items: center; margin: 0 .75rem .5rem 0; background: none; border: none; padding: 0; font: inherit; color: inherit; cursor: pointer; }
   .legend i { display: inline-block; width: .7rem; height: .7rem; border-radius: 50%; }
   .legend.inactive span { text-decoration: line-through; }

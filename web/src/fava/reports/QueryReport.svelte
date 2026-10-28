@@ -119,6 +119,11 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
     return NaN;
   }
 
+  /** One query export URL; the backend writes all three formats from one result. */
+  function downloadHref(format: "csv" | "xlsx" | "ods"): string {
+    return `/api/v1/query?q=${encodeURIComponent(queryText)}&format=${format}`;
+  }
+
   function displayValue(value: unknown): string {
     if (value && typeof value === "object" && !Array.isArray(value)) {
       const wire = value as DecimalWire;
@@ -156,7 +161,12 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
 {#if error}
   <p class="error-panel" role="alert">{error}</p>
 {:else if result}
-  <p><a class="button" href={`/api/v1/query?q=${encodeURIComponent(queryText)}&format=csv`}>Export CSV</a></p>
+  <!-- Fava's QueryLinks: one "Download as" sentence with CSV, XLSX, and ODS.
+       The shell always supports the spreadsheet formats, so the upstream
+       HAVE_EXCEL condition has no counterpart here. -->
+  <p class="query-links">
+    <span>Download as <a class="button" data-remote href={downloadHref("csv")}>CSV</a>, <a class="button" data-remote href={downloadHref("xlsx")}>XLSX</a>, or <a class="button" data-remote href={downloadHref("ods")}>ODS</a></span>
+  </p>
   {#if chartPoints.length}
     <div class="flex-row">
       <span class="spacer"></span>

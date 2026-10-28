@@ -143,6 +143,24 @@ No other deviations are currently approved. Existing differences in the prototyp
 | Expiry condition | a Fava upgrade that changes the importer date contract, or a product-owner decision to accept rolling week-date behavior |
 | Baseline impact | alternate expectation for import date parsing; no visual baseline impact |
 
+### FD-0011 — Functional parity, not pixel parity, is the acceptance bar
+
+| Field | Value |
+| --- | --- |
+| Status | approved |
+| Route and state | all standard routes (R-/G-/M-/D-) visual layer |
+| Fava baseline | Fava 1.30.12 renders the same ledger with its own chart geometry, table column widths, form spacing and hierarchy layout. Measured against OrangeCount on the same fixture and browser, 76 screenshot pairs differ by a median of 31.9% of pixels (0 pairs under 5%). Full data: `docs/evidence/visual-parity-2026-10-28.txt`. |
+| OrangeCount behavior | The shipped interface reproduces Fava's information architecture, controls, workflows and outcomes, but not its exact pixel composition. Chrome, palette, typography, sidebar and main-column boxes already match exactly (topbar `rgb(0,101,163)`, body `rgb(242,242,242)`, `Fira Sans` 14px, sidebar `160x748`, main `1120x748`); the remaining differences sit inside charts, tables and forms. |
+| Category | presentation preference |
+| Reason | The product owner decided that functional consistency is the acceptance bar and pixel-level identity is not required ("到也不用1:1，大差不差功能保持一致即可", 2026-10-28). Chasing the remaining structural differences is dozens of per-route frontend slices with no user-facing gain. |
+| Scope | every route's visual layer. The Fava reference baselines stay in `testdata/visual-baselines/` as the rendering authority and regression reference; they are no longer a pixel-equality gate. Functional evidence (component presence, controls, data outcomes, workflows) remains mandatory for acceptance. |
+| Tests | `web/scripts/compare-to-reference.mjs` measures the remaining difference and is reported, not gated. Functional route coverage: `web/tests/visual/fava-transplanted.spec.mjs` (156 passing cases across four cells). |
+| Owner | implementing agent (Francis Chen / OrangeCount maintainer) |
+| Approver | user (product owner) only |
+| Approved evidence | approved by product owner 2026-10-28 in session ("我觉得到也不用1:1，大差不差功能保持一致即可") |
+| Expiry condition | a product-owner decision to require pixel parity, or a Fava upgrade that changes the standard surface |
+| Baseline impact | the Fava reference baselines remain valid evidence of what was compared; they are not a pixel-equality gate |
+
 ## Entry template
 
 ```markdown

@@ -418,18 +418,24 @@ func (s *Server) handleQuery(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	result = redactQueryPaths(result, current.Graph())
-	if strings.EqualFold(r.URL.Query().Get("format"), "csv") {
+	format := strings.ToLower(strings.TrimSpace(r.URL.Query().Get("format")))
+	switch format {
+	case "csv":
 		w.Header().Set("Content-Type", "text/csv; charset=utf-8")
 		if err := result.WriteCSV(w); err != nil {
 			return
 		}
 		return
-	}
-	if format := strings.TrimSpace(r.URL.Query().Get("format")); format != "" && !strings.EqualFold(format, "json") {
-		writeAPIError(w, http.StatusBadRequest, "format must be json or csv")
+	case "xlsx", "ods":
+		writeQuerySpreadsheet(w, format, result, text)
+		return
+	case "", "json":
+		writeJSON(w, result)
+		return
+	default:
+		writeAPIError(w, http.StatusBadRequest, "format must be json, csv, xlsx, or ods")
 		return
 	}
-	writeJSON(w, result)
 }
 
 func redactQueryPaths(result query.Result, graph *source.Graph) query.Result {

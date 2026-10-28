@@ -29,6 +29,11 @@ await rm(staging, { recursive: true, force: true });
 await mkdir(staging, { recursive: true });
 await build({
   entryPoints: [path.join(webRoot, "src", "fava", "main.ts")],
+  // Pin the working directory so module comments and relative resolution do
+  // not depend on where the caller invoked the script from; otherwise
+  // `node web/build.mjs` and `npm --prefix web run build` produce different
+  // bytes and the embedded-asset sync would look like a spurious change.
+  absWorkingDir: webRoot,
   bundle: true,
   format: "esm",
   target: "es2022",

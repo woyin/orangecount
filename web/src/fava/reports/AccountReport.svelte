@@ -93,6 +93,12 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
 
   // The account route returns a chart alongside the balance table; render it
   // above the balance tree the way Fava shows the account chart.
+  // The modern layer is opt-in (see ChartView): it carries the OrangeCount
+  // extension charts that Fava's standard account page does not show.
+  $: modernLayer =
+    typeof window !== "undefined" &&
+    new URLSearchParams(window.location.search).get("chart_layer") === "modern";
+
   $: chart = balance?.chart ?? null;
   $: averageCostChart = balance?.average_cost_chart ?? null;
   $: currentAverageCosts = averageCostChart?.series
@@ -153,15 +159,21 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
   {#if reportType === "changes" || reportType === "balances"}
     {#if intervals}<GenericReport report={intervals} title={`${reportType === "changes" ? t("changes") : t("balances")} (${intervalLabel})`} {locale} {renderCommas} />{/if}
   {:else if balance}
-   {#if chart}<ChartView {chart} {locale} />{/if}
-    {#if currentAverageCosts.length}
+    {#if chart}<ChartView {chart} {locale} />{/if}
+    <!-- Average cost is an OrangeCount extension (ADR-0042), so it stays behind
+         the modern layer: the standard route keeps Fava's single chart so the
+         account page has the same vertical composition as the baseline. -->
+    {#if modernLayer && currentAverageCosts.length}
       <section class="average-cost-current" aria-label={t("currentAverageCost")}>
         <h3>{t("currentAverageCost")}</h3>
         <ul>{#each currentAverageCosts as series}<li>{series.label}: {formatAmount(series.value, renderCommas)}</li>{/each}</ul>
       </section>
     {/if}
-    {#if averageCostChart}<ChartView chart={averageCostChart} {locale} />{/if}
-    <GenericReport report={balance} title="Balance" {locale} {renderCommas} />
+    {#if modernLayer && averageCostChart}<ChartView chart={averageCostChart} {locale} />{/if}
+    <!-- The chart above already comes from balance.chart; passing it again makes
+         GenericReport render a second identical chart, which is what doubled the
+         account page height against the Fava baseline. -->
+    <GenericReport report={{ ...balance, chart: null }} title="Balance" {locale} {renderCommas} />
   {/if}
   {#if journal}<JournalReport report={journal} {renderCommas} accountFilter={account} />{/if}
 {/if}

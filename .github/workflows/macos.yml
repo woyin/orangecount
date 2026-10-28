@@ -19,16 +19,16 @@ jobs:
       - name: Record selected toolchain
         run: |
           go version
-          xcrun swiftc --version
-          xcrun --show-sdk-version
-      - name: Core and native gates
-        run: make fmt vet test race license build mac-check
+          # The native desktop clients are retired, so no Swift toolchain is
+          # required; the release artifact is the Go binary with the
+          # transplanted web UI embedded.
+          uname -m
+      - name: Core gates (no Node required)
+        run: make fmt vet test race license build
       - name: Strict pinned v3 accounting comparison and AVERAGE extension
         run: make parity-full
-      - name: Assemble development package
-        run: make mac-package
       - uses: actions/upload-artifact@v4
         with:
           name: OrangeCount-arm64-development
-          path: dist/macos/
+          path: bin/orangecount
           if-no-files-found: error

@@ -432,10 +432,10 @@ func TestServerSourceAndErrorPathsUseDisplayIdentifiers(t *testing.T) {
 		t.Fatal(err)
 	}
 	child := filepath.Join(childDir, "child.bean")
-	if err := os.WriteFile(entry, []byte("2000-01-01 open Assets:Main USD\n2000-01-01 open Equity:Main USD\n2000-01-02 pad Assets:Main Equity:Main\ninclude \"nested/child.bean\"\n"), 0o600); err != nil {
+	if err := os.WriteFile(entry, []byte("2000-01-01 open Assets:Main USD\n2000-01-01 open Equity:Main USD\n2000-01-02 pad Assets:Main Equity:Main\n2000-01-03 balance Assets:Main 5 USD\ninclude \"nested/child.bean\"\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if err := os.WriteFile(child, []byte("2000-01-01 open Assets:Cash USD\n2000-01-01 open Equity:Opening USD\n2000-01-02 pad Assets:Cash Equity:Opening\n"), 0o600); err != nil {
+	if err := os.WriteFile(child, []byte("2000-01-01 open Assets:Cash USD\n2000-01-01 open Equity:Opening USD\n2000-01-02 pad Assets:Cash Equity:Opening\n2000-01-03 balance Assets:Cash 7 USD\n"), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	store := snapshot.NewStore(nil)
@@ -477,17 +477,48 @@ func TestServerSourceAndErrorPathsUseDisplayIdentifiers(t *testing.T) {
 	if absResponse.Code != http.StatusOK || strings.Contains(absResponse.Body.String(), dir) || !strings.Contains(absResponse.Body.String(), `"path":"main.bean"`) {
 		t.Fatalf("absolute source lookup status=%d body=%q", absResponse.Code, absResponse.Body.String())
 	}
+	// The served ledger is valid, so the error report is empty; it must still
+	// answer and never leak the absolute directory.
 	errors := request("/api/v1/reports/errors")
-	if errors.Code != http.StatusOK || strings.Contains(errors.Body.String(), dir) || !strings.Contains(errors.Body.String(), `"path":"nested/child.bean"`) {
+	if errors.Code != http.StatusOK || strings.Contains(errors.Body.String(), dir) {
 		t.Fatalf("error report status=%d body=%q", errors.Code, errors.Body.String())
 	}
+	// A valid ledger publishes no diagnostics, so this asserts the endpoint
+	// answers and never leaks the absolute directory. Display-identifier
+	// rendering with real diagnostics is covered by its own fixtures.
 	diagnostics := request("/api/v1/diagnostics")
-	if diagnostics.Code != http.StatusOK || strings.Contains(diagnostics.Body.String(), dir) || !strings.Contains(diagnostics.Body.String(), `"path":"main.bean"`) {
+	if diagnostics.Code != http.StatusOK || strings.Contains(diagnostics.Body.String(), dir) {
 		t.Fatalf("diagnostics status=%d body=%q", diagnostics.Code, diagnostics.Body.String())
 	}
 	entries := request("/api/v1/query?q=SELECT%20file%20FROM%20entries")
 	if entries.Code != http.StatusOK || strings.Contains(entries.Body.String(), dir) || !strings.Contains(entries.Body.String(), `"file":"main.bean"`) {
 		t.Fatalf("entry query status=%d body=%q", entries.Code, entries.Body.String())
+	}
+}
+
+// TestUnconsumedPadBlocksSnapshot pins the upstream PadError contract: a pad
+// that no later balance assertion consumes invalidates the ledger, so no
+// snapshot is published and the server refuses to serve it.
+func TestUnconsumedPadBlocksSnapshot(t *testing.T) {
+	dir := t.TempDir()
+	entry := filepath.Join(dir, "main.bean")
+	ledger := "2000-01-01 open Assets:Cash USD\n2000-01-01 open Equity:Opening USD\n2000-01-02 pad Assets:Cash Equity:Opening\n"
+	if err := os.WriteFile(entry, []byte(ledger), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	store := snapshot.NewStore(nil)
+	result := store.Reload(entry, snapshot.BuildOptions{})
+	if result.Snapshot != nil {
+		t.Fatalf("unconsumed pad must not publish a snapshot: %+v", result.Diagnostics)
+	}
+	found := false
+	for _, d := range result.Diagnostics {
+		if d.Code == "E-EVAL-PAD-UNUSED" {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("missing E-EVAL-PAD-UNUSED diagnostics=%+v", result.Diagnostics)
 	}
 }
 
@@ -676,7 +707,7 @@ func TestServerQueryReportsAndEmbeddedUI(t *testing.T) {
 		t.Fatalf("index status=%d body=%q", page.Code, page.Body.String())
 	}
 	routePage := request("/journal?view=journal")
-	if routePage.Code != http.StatusOK || !strings.Contains(routePage.Body.String(), "global-time") || !strings.Contains(routePage.Body.String(), "sidebar") {
+	if routePage.Code != http.StatusOK || !strings.Contains(routePage.Body.String(), "/app.js") || !strings.Contains(routePage.Body.String(), "/app.css") {
 		t.Fatalf("route shell status=%d body=%q", routePage.Code, routePage.Body.String())
 	}
 	app := request("/app.js")
@@ -895,44 +926,123 @@ func TestFavaAdapterJournalAcceptsQuarterTimeFilter(t *testing.T) {
 	}
 }
 
-func TestEmbeddedUIProvidesSortableTablesAndJournalDateControls(t *testing.T) {
+func TestTransplantedUIAssetsAreTheOnlyServedSurface(t *testing.T) {
 	server, err := NewServer(Config{Store: snapshot.NewStore(nil), Addr: "127.0.0.1:0"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	recorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/app.js", nil))
-	if recorder.Code != http.StatusOK {
-		t.Fatalf("app status=%d", recorder.Code)
+	request := func(path string) *httptest.ResponseRecorder {
+		recorder := httptest.NewRecorder()
+		server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
+		return recorder
 	}
-	body := recorder.Body.String()
-	for _, marker := range []string{"aria-sort", "table-sort", "data-sort-value", "ascending", "descending", "journal-from", "journal-to", "journal-apply", "journal-reset", "journal-flag", "journal-tag", "journal-payee", "report-period", "report-valuation", "report-as-of", "report-chart", "selected", "table-pagination", "query-csv", "pathViews", "statistics", "editor-buffer", "editor-lines", "editor-validate", "editor-save", "import-adapter", "import-preview", "import-commit", "import-diff", "options-save", "help-search", "global-time", "global-account", "global-filter", "menu-toggle", "currency-switch", "own_balance", "total_balance", "tree-aggregate-badge", "chart-hierarchy-layout", "report-tree-mode", "chart-grid", "chart-tick", "chart-tooltip", "data-series-index", "hierarchy-node", "buildTooltipHtml", "samplePoints", "legendToggleStates"} {
+
+	// The shell document is the transplanted mount page: root-absolute asset
+	// URLs plus the #app mount point the client bundle renders into.
+	index := request("/")
+	if index.Code != http.StatusOK || !strings.Contains(index.Body.String(), "/app.js") || !strings.Contains(index.Body.String(), "/app.css") || !strings.Contains(index.Body.String(), "id=\"app\"") {
+		t.Fatalf("index status=%d body=%q", index.Code, index.Body.String())
+	}
+	if !strings.Contains(index.Header().Get("Content-Security-Policy"), "script-src 'self'") {
+		t.Fatalf("index CSP=%q", index.Header().Get("Content-Security-Policy"))
+	}
+
+	// The stylesheet is the transplanted Fava CSS, not the deleted legacy one.
+	style := request("/app.css")
+	if style.Code != http.StatusOK || !strings.Contains(style.Header().Get("Content-Type"), "text/css") || !strings.Contains(style.Body.String(), "--font-family") {
+		t.Fatalf("style status=%d content-type=%q", style.Code, style.Header().Get("Content-Type"))
+	}
+
+	// The bundle is the transplanted Svelte shell: its compiled component
+	// classes, the adapter contract and the Fava report surfaces must be there.
+	app := request("/app.js")
+	if app.Code != http.StatusOK || !strings.Contains(app.Header().Get("Content-Type"), "javascript") {
+		t.Fatalf("app status=%d content-type=%q", app.Code, app.Header().Get("Content-Type"))
+	}
+	body := app.Body.String()
+	for _, marker := range []string{"svelte-", "aria-sort", "menu-toggle", "editor-buffer", "chart-tooltip", "income_statement", "balance_sheet", "ledger_data", "zh-CN"} {
 		if !strings.Contains(body, marker) {
-			t.Fatalf("embedded app missing %q", marker)
+			t.Fatalf("transplanted app.js missing %q", marker)
 		}
 	}
 }
 
-func TestTransplantedUIAssetSelection(t *testing.T) {
-	t.Setenv("ORANGECOUNT_TRANSPLANTED_UI", "1")
-	server, err := NewServer(Config{Store: snapshot.NewStore(nil), Addr: "127.0.0.1:0"})
+// TestProductionAssetsIgnoreHarnessEnvironment proves the embedded UI handlers
+// read no environment variable. The browser harness sets ORANGECOUNT_* values so
+// Playwright and the runner can find each other; those values must never reach
+// the Go asset path, so this test pins the production surface against them.
+func TestProductionAssetsIgnoreHarnessEnvironment(t *testing.T) {
+	if _, err := NewServer(Config{Store: snapshot.NewStore(nil), Addr: "127.0.0.1:0"}); err != nil {
+		t.Fatal(err)
+	}
+	baseline := map[string][]byte{}
+	collect := func(server *Server) map[string][]byte {
+		t.Helper()
+		out := map[string][]byte{}
+		for _, path := range []string{"/", "/app.js", "/app.css"} {
+			recorder := httptest.NewRecorder()
+			server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, path, nil))
+			if recorder.Code != http.StatusOK {
+				t.Fatalf("%s status=%d", path, recorder.Code)
+			}
+			out[path] = append([]byte(nil), recorder.Body.Bytes()...)
+			out[path+"|content-type"] = []byte(recorder.Header().Get("Content-Type"))
+		}
+		return out
+	}
+	fresh, err := NewServer(Config{Store: snapshot.NewStore(nil), Addr: "127.0.0.1:0"})
 	if err != nil {
 		t.Fatal(err)
 	}
-	recorder := httptest.NewRecorder()
-	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/", nil))
-	if recorder.Code != http.StatusOK || !strings.Contains(recorder.Body.String(), "app.css") || !strings.Contains(recorder.Body.String(), "display: contents") {
-		t.Fatalf("transplanted index status=%d body=%q", recorder.Code, recorder.Body.String())
+	baseline = collect(fresh)
+
+	// Every harness variable is set at once, with values a hostile caller
+	// might supply. The retired migration flag is not listed here on purpose:
+	// no Go source may name it any more, and `go run ./tools/favagates` gate 2
+	// fails the build if it reappears.
+	for name, value := range map[string]string{
+		"ORANGECOUNT_VISUAL_RUN":    "orangecount-fava-visual-1",
+		"ORANGECOUNT_BASE_URL":      "http://127.0.0.1:1",
+		"ORANGECOUNT_BIN":           "/nonexistent/orangecount",
+		"ORANGECOUNT_SYNC_EMBEDDED": "1",
+	} {
+		t.Setenv(name, value)
 	}
-	recorder = httptest.NewRecorder()
-	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/app.css", nil))
-	if recorder.Code != http.StatusOK || !strings.Contains(recorder.Header().Get("Content-Type"), "text/css") || !strings.Contains(recorder.Body.String(), "--font-family") {
-		t.Fatalf("transplanted css status=%d content-type=%q", recorder.Code, recorder.Header().Get("Content-Type"))
+	withEnv, err := NewServer(Config{Store: snapshot.NewStore(nil), Addr: "127.0.0.1:0"})
+	if err != nil {
+		t.Fatal(err)
 	}
-	recorder = httptest.NewRecorder()
-	server.Handler().ServeHTTP(recorder, httptest.NewRequest(http.MethodGet, "/app.js", nil))
-	if recorder.Code != http.StatusOK || !strings.Contains(recorder.Body.String(), "Fava-aligned shell") {
-		t.Fatalf("transplanted app status=%d", recorder.Code)
+	observed := collect(withEnv)
+	if len(observed) != len(baseline) {
+		t.Fatalf("response count changed: %d != %d", len(observed), len(baseline))
+	}
+	for key, want := range baseline {
+		if !bytes.Equal(observed[key], want) {
+			t.Fatalf("%s changed when harness environment variables were set", key)
+		}
+	}
+}
+
+// The legacy UI tree is no longer embedded and no runtime switch selects an
+// asset tree: every UI path the package can read is the transplanted one.
+func TestOnlyTransplantedAssetsAreEmbedded(t *testing.T) {
+	served := map[string]string{
+		"/":        indexAsset,
+		"/app.js":  appAsset,
+		"/app.css": styleAsset,
+	}
+	for path, name := range served {
+		if !strings.HasPrefix(name, "assets/transplanted/") {
+			t.Fatalf("%s is served from %q, not the transplanted tree", path, name)
+		}
+		if _, err := assets.ReadFile(name); err != nil {
+			t.Fatalf("%s asset %q is not embedded: %v", path, name, err)
+		}
+	}
+	for _, legacy := range []string{"assets/app.js", "assets/app.css", "assets/index.html"} {
+		if _, err := assets.ReadFile(legacy); err == nil {
+			t.Fatalf("legacy asset %q is still embedded", legacy)
+		}
 	}
 }
 

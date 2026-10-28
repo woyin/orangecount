@@ -53,12 +53,15 @@ web/provenance-manifest.json. The MIT notice is reproduced here:
 <ol class="flex-table tree-table-new" data-tree-table data-end={end ?? undefined}>
   <li class="head">
     <p>
-      <span class="account-cell">{tree.account || "Accounts"}</span>
+      <!-- Fava's AccountCellHeader renders only the "Expand all" control, no
+           account label, so the root tree's header cell is empty. The "Other"
+           column is a numeric column and carries the same .num class. -->
+      <span class="account-cell">{tree.account || ""}</span>
       {#each columns as currency (currency)}
         <span class="num" title={currency}>{currency}</span>
       {/each}
       {#if other.length}
-        <span class="other">Other</span>
+        <span class="num other">Other</span>
       {/if}
     </p>
   </li>
