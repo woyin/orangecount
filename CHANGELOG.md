@@ -2,19 +2,72 @@
 
 All notable changes to OrangeCount are documented in this file.
 
-## [Unreleased]
+## [0.3.8] - 2026-10-28
+
+This release publishes the generation of OrangeCount that was developed after
+0.3.7 but never shipped. It changes the CLI surface: `check`, `query`,
+`serve` and `export` now take `--semantics legacy|v3`, and `query` gains the
+`typed-json`/`typed-csv` formats. Every flag 0.3.7 accepted is still accepted,
+so a script written against 0.3.7 keeps running.
+
+### Breaking
+
+- A ledger whose account root is not one of the five configured account types
+  is now rejected with `E-EVAL-ACCOUNT`; 0.3.7 accepted such an account and
+  then silently omitted it from every report. A name such as `Acme:Cash`
+  therefore changes from "loads with missing numbers" to "does not load". This
+  matches upstream Beancount v3, which rejects the same name while parsing.
+  Fix by moving the account under a configured root, declaring the root with
+  the matching `name_*` option, or selecting a localized scheme.
 
 ### Added
 
+- `--semantics legacy|v3` on `check`, `query`, `serve` and `export`, and the
+  `compare-semantics` subcommand that reports every accounting difference
+  between the two profiles (`--details` for the full list, `--fail-on-change`
+  for use in a pipeline). The default profile stays `legacy`.
+- Typed query formats `--format typed-json|typed-csv` over the declared
+  BeanQuery subset, alongside the existing `json`/`csv` compatible formats.
+  The two engines expose different column sets on `accounts`: the typed table
+  has only `account`, the compatible one has `account`, `currency`,
+  `balance` and `opened`.
+- `option "account_root_scheme"` selects a localized root vocabulary.
+  `zh-Hans` (资产/负债/权益/收入/支出), `zh-Hant` (資產/負債/權益/收入/支出),
+  `ja` (資産/負債/純資産/収益/費用) and `ko` (자산/부채/자본/수익/비용) each make
+  the localized names exact equivalents of the English roots, and the English
+  names stay accepted under every scheme. A localized root outside `global` is
+  a dialect extension, so `export` refuses such a ledger.
+- The five `name_*` options now actually rename the root types that statements,
+  charts and account-type queries classify against. Previously the values were
+  stored and ignored, which let a renamed ledger load and then disappear from
+  every report; an account whose root is not a configured type now reports
+  `E-EVAL-ACCOUNT` instead.
+- `E-EVAL-ACCOUNT` diagnostic with bilingual repair guidance.
+- Project skills under `.agents/skills` (`orangecount-ledger`,
+  `orangecount-authoring`, `orangecount-workbench`) and
+  [docs/user-guide.md](docs/user-guide.md), a task-ordered manual.
+- `--locale zh-CN` is accepted by `check`, `query`, `serve` and `help`.
+
+### Changed
+
+- Account names with UTF-8 components are accepted end to end, including the
+  authoring and quick-entry write paths. A UTF-8 root name is accepted only
+  under a localized scheme and is registered as the `utf8-account-root`
+  dialect extension.
+- A `custom` directive value such as `资产:钱包` is now typed as an account
+  rather than a currency, so consumers that expect an account stop dropping it.
+- The five `name_*` options join the export option policy. A colliding
+  `name_*` value or a duplicate root spelling is `E-EVAL-OPTION` instead of a
+  silent preference for one type.
+- `option "account_root_scheme" "global"` is dropped from an exported snapshot
+  because upstream rejects an unknown option key, and the reload fingerprint
+  normalizes it out so the removal is not reported as an accounting change.
 - Dialect transpilation now completes on a mixed real-world ledger:
   `orangecount dialectize` and `orangecount export` handle aggregated and
   per-leg postings, same-date entries and a display-only option.
 - `render_commas` is accepted by the export gate as a proven display-only
   option, recorded in an explicit option policy table instead of a flat
   allow-list; unproven options stay refused.
-
-### Changed
-
 - The source-export fingerprint compares accounting identity rather than leg
   layout: same-account legs merge by summing their units (ADR-0045 allows an
   aggregated line to split back into its per-leg components), and entries
@@ -22,6 +75,14 @@ All notable changes to OrangeCount are documented in this file.
   rewrites source line numbers. The cross-date entry sequence, the
   account/price/option sets and every posting value stay sensitive, so a
   genuine accounting change still fails `E-EXPORT-RELOAD`.
+- Number-expression parsing merged into the directive dispatch parser while
+  keeping single-literal amounts' source text in `Number.Raw`; `note`
+  directives retain tags and links.
+- `SELECT DISTINCT` now enforces a unique-key budget on both the typed and the
+  legacy entry points. Dense `PIVOT BY` memoizes row and column identities;
+  behavior is unchanged.
+- The native desktop clients are retired; the released artifact is the Go
+  binary with the transplanted web UI embedded.
 
 ### Fixed
 
@@ -32,6 +93,35 @@ All notable changes to OrangeCount are documented in this file.
   `filename: "override.bean"`) as portable literals. The gate previously
   hard-coded the developer checkout path into golden data and failed 6 of 321
   checks on any other clone.
+- Fixed a merged planning bug: expense-occurrence scanning now accepts both
+  transaction entry forms, so the review page finds occurrences again.
+- Planning preview retention now evicts deterministically (oldest insertion)
+  with insertion-order tiebreaking, matching the quick-entry preview store's
+  contract.
+- An unconsumed pad directive is an error (`E-EVAL-PAD-UNUSED`), matching the
+  upstream `PadError`; it was previously a warning, which let a ledger that
+  Beancount rejects look valid here.
+
+### Validated
+
+- All 366 inventoried upstream capabilities are verified, enforced by six
+  machine gates in `tools/paritygates` (`-gate all`), including a generative
+  differential against the pinned Beancount v3 oracle.
+- The Fava cutover is gated by five machine gates in `tools/favagates`: every
+  standard route passes its four-layer gate, the transplanted UI is the only
+  standard surface, the legacy UI is gone, no unapproved visual difference
+  remains, and the visual baseline is committed (80 reference screenshots at
+  four viewports).
+- FD-0011 is registered as the approved deviation for the visual gap; the
+  measured pixel difference is retained as evidence, not as a gate.
+- FD-0010 approved in `docs/fava-approved-deviations.md` (strict week-date
+  rejection instead of strptime rolling).
+- The private reference ledger validates with zero diagnostics under both
+  OrangeCount and Beancount v3 (differential harness: 2,708 entries, no error
+  classes), and every built-in report route was walked against it in both
+  web interfaces. The option-boundary note in the syntax coverage audit
+  documents `inferred_tolerance_default`/`inferred_tolerance_multiplier` as
+  recorded-but-inert.
 
 ### Quality
 
@@ -41,54 +131,8 @@ All notable changes to OrangeCount are documented in this file.
 - Raised statement coverage from 89.0% to 92.3% with new branch tests across
   web handlers, planning, ledger parsing/evaluation, query errors, dialect
   round trips, authoring writes, reports/charts, and the benchmark tools.
-- Fixed a merged planning bug: expense-occurrence scanning now accepts both
-  transaction entry forms, so the review page finds occurrences again.
-- Planning preview retention now evicts deterministically (oldest insertion)
-  with insertion-order tiebreaking, matching the quick-entry preview store's
-  contract.
-
-### Added
-
-- Financial planning superset feature (merged from `feature/financial-planning`):
-  ledger-embedded planning profiles via versioned `custom` directives
-  (ADR-0047), liquidity planning with safe-to-spend scenarios and timeline
-  (ADR-0048), planning adapter routes with reviewed writes published through
-  the centralized authoring writer, and a transplanted-UI Planning report
-  page.
-- The ledger's `render_commas` option now groups thousands in every displayed
-  amount of the built-in web interface (tables, journal postings, running
-  balances, pivot cells, chart tooltips). Exact ledger values, sorting, CSV
-  exports, and query results are unaffected.
-- Standard BQL forms `DISTINCT`, `GROUP BY ... HAVING`, derived-table
-  subqueries, and `GROUP BY ... PIVOT BY` in the typed engine, with typed/NULL
-  preservation and enforced budget and cancellation.
-- Strict strftime week-date parsing in `internal/datefmt` (%G/%V, %U/%W with
-  weekday), rejecting invalid weeks, conflicting fields, and missing fields
-  without a partial result, plus the optional csv-adapter `date_layout`
-  parameter on `POST /api/v1/import/preview` (default ISO behavior unchanged,
-  all-or-nothing per batch).
-- Standard-forms differential corpus (37 oracle-verified cases), registered in
-  `tools/queryparity` together with the pinned oracle check.
-
-### Changed
-
-- Number-expression parsing merged into the directive dispatch parser while
-  keeping single-literal amounts' source text in `Number.Raw`; `note`
-  directives retain tags and links.
-- `SELECT DISTINCT` now enforces a unique-key budget on both the typed and the
-  legacy entry points.
-- Dense `PIVOT BY` memoizes row and column identities; behavior is unchanged.
-
-### Validated
-
-- FD-0010 approved in `docs/fava-approved-deviations.md` (strict week-date
-  rejection instead of strptime rolling).
-- The private reference ledger validates with zero diagnostics under both
-  OrangeCount and Beancount v3 (differential harness: 2,708 entries, no error
-  classes), and every built-in report route was walked against it in both
-  web interfaces. The option-boundary note in the syntax coverage audit
-  documents `inferred_tolerance_default`/`inferred_tolerance_multiplier` as
-  recorded-but-inert.
+- Removed 23 duplicate Claude Code skill symlinks and renamed `CLAUDE.md` to
+  `AGENTS.md`.
 
 ## [0.1.3] - 2026-08-10
 

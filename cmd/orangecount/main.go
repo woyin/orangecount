@@ -12,7 +12,11 @@ import (
 	"orangecount/internal/snapshot"
 )
 
-var version = "0.1.3-dev"
+// version is the release version. A release build overrides it through
+// -ldflags "-X main.version=$TAG", so a tagged binary reports its tag; a
+// working-tree build keeps this value so the number never claims a release the
+// checkout is not.
+var version = "0.3.8-dev"
 
 const defaultServeAddr = "127.0.0.1:5000"
 
