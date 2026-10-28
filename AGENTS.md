@@ -1,4 +1,4 @@
-# CLAUDE.md — OrangeCount
+# AGENTS.md — OrangeCount
 
 ## Project Constraints
 

@@ -16,7 +16,7 @@
   每个问题点标注三类判读：
   - **避免型**：上游踩过的坑，OC 应在实现层显式规避或自查；
   - **机会型**：上游多年未解决的空白，可转化为 OC 路线图机会（注意与
-    Beancount 兼容契约的偏差需按 CLAUDE.md 登记 `docs/fava-approved-deviations.md`
+    Beancount 兼容契约的偏差需按 AGENTS.md 登记 `docs/fava-approved-deviations.md`
     或走 ADR）；
   - **观察型**：与 OC 现状相关但暂无行动必要，保持跟踪。
 - 风格对齐 [docs/fava-transplant-gap-analysis.md](fava-transplant-gap-analysis.md)。
