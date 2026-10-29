@@ -367,3 +367,104 @@ func TestSavedAttachmentInodeStaysProtectedAfterDeclarationPathMoves(t *testing.
 		t.Fatal("moved attachment changed")
 	}
 }
+
+// Replacement must not unlink the previous inode. On macOS a Finder alias is an
+// ordinary file whose alias record lives in an extended attribute, so a build
+// without cgo cannot recognize one. Moving the old file aside removes the need
+// to recognize anything: whatever occupied the name keeps existing under the
+// backup path.
+func TestReplacementKeepsPreviousFileAsBackup(t *testing.T) {
+	plan, err := Prepare(entry(t, cash), Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	target := filepath.Join(dir, "book.bean")
+	if err := os.WriteFile(target, []byte("old bytes"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err = plan.Write(target); err != nil {
+		t.Fatal(err)
+	}
+	if b, _ := os.ReadFile(target + ".orangecount.bak"); string(b) != "old bytes" {
+		t.Fatalf("previous file not preserved: %q", b)
+	}
+	if b, _ := os.ReadFile(target); !strings.Contains(string(b), "Assets:Cash") {
+		t.Fatalf("new file not published: %q", b)
+	}
+}
+
+func TestFailedPublicationRestoresPreviousFile(t *testing.T) {
+	plan, err := Prepare(entry(t, cash), Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	target := filepath.Join(dir, "book.bean")
+	if err := os.WriteFile(target, []byte("old bytes"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	err = plan.write(target, func(stage, path string) error {
+		if stage == "replaced" {
+			return fmt.Errorf("injected %s failure", stage)
+		}
+		return nil
+	})
+	if err == nil {
+		t.Fatal("fault ignored")
+	}
+	if b, _ := os.ReadFile(target); string(b) != "old bytes" {
+		t.Fatalf("previous file not restored: %q", b)
+	}
+	if _, err := os.Lstat(target + ".orangecount.bak"); !os.IsNotExist(err) {
+		t.Fatal("backup left behind")
+	}
+	if files, _ := os.ReadDir(dir); len(files) != 1 {
+		t.Fatal("staging output leaked")
+	}
+}
+
+func TestReplacementRefusesTargetsItCannotPreserve(t *testing.T) {
+	dir := t.TempDir()
+	real := filepath.Join(dir, "real.bean")
+	if err := os.WriteFile(real, []byte("keep me"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	link := filepath.Join(dir, "link.bean")
+	if err := os.Symlink(real, link); err != nil {
+		t.Fatal(err)
+	}
+	hard := filepath.Join(dir, "hard.bean")
+	if err := os.Link(real, hard); err != nil {
+		t.Fatal(err)
+	}
+	// A backup slot that is not an ordinary file is never overwritten either.
+	occupied := filepath.Join(dir, "occupied.bean")
+	if err := os.WriteFile(occupied, []byte("old bytes"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Symlink(real, occupied+".orangecount.bak"); err != nil {
+		t.Fatal(err)
+	}
+	for _, target := range []string{link, hard, occupied} {
+		plan, err := Prepare(entry(t, cash), Options{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err = plan.Write(target); err == nil {
+			t.Fatalf("%s accepted", filepath.Base(target))
+		}
+	}
+	if b, _ := os.ReadFile(real); string(b) != "keep me" {
+		t.Fatal("linked destination content changed")
+	}
+	if info, err := os.Lstat(link); err != nil || info.Mode()&os.ModeSymlink == 0 {
+		t.Fatal("symlink target replaced")
+	}
+	if info, err := os.Lstat(occupied + ".orangecount.bak"); err != nil || info.Mode()&os.ModeSymlink == 0 {
+		t.Fatal("backup slot replaced")
+	}
+	if b, _ := os.ReadFile(occupied); string(b) != "old bytes" {
+		t.Fatal("refused target modified")
+	}
+}

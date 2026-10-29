@@ -54,9 +54,6 @@ func (p *Plan) write(target string, fault func(stage, path string) error) error 
 		if len(p.files) > 1 || !before.Mode().IsRegular() || linkCount(before) > 1 {
 			return fmt.Errorf("E-EXPORT-TARGET: requires ordinary file or new tree")
 		}
-		if err = checkAlias(destination); err != nil {
-			return err
-		}
 	}
 	stage, err := os.MkdirTemp(realParent, ".orangecount-export-")
 	if err != nil {
@@ -178,13 +175,8 @@ func (p *Plan) write(target string, fault func(stage, path string) error) error 
 	if (before == nil) != (after == nil) || (before != nil && (!os.SameFile(before, after) || before.Size() != after.Size() || !before.ModTime().Equal(after.ModTime()))) {
 		return fmt.Errorf("E-EXPORT-TARGET: target changed")
 	}
-	if before != nil {
-		if err = checkAlias(destination); err != nil {
-			return err
-		}
-		if linkCount(after) > 1 {
-			return fmt.Errorf("E-EXPORT-TARGET: target became hardlink")
-		}
+	if before != nil && linkCount(after) > 1 {
+		return fmt.Errorf("E-EXPORT-TARGET: target became hardlink")
 	}
 	if err = event("rename", destination); err != nil {
 		return err
@@ -192,7 +184,51 @@ func (p *Plan) write(target string, fault func(stage, path string) error) error 
 	if len(p.files) > 1 {
 		return publishNewTree(parentHandle, filepath.Base(stage), filepath.Base(destination))
 	}
-	return publishFile(parentHandle, filepath.Join(filepath.Base(stage), p.entry), filepath.Base(destination), before == nil)
+	staged := filepath.Join(filepath.Base(stage), p.entry)
+	if before == nil {
+		return publishFile(parentHandle, staged, filepath.Base(destination), true)
+	}
+	return replaceFile(parentHandle, staged, destination, event)
+}
+
+// replaceFile publishes over an existing ordinary file without destroying it.
+//
+// Replacement by rename unlinks the old inode, and no pre-publication check can
+// tell whether that inode is a Finder alias: the alias record lives in an
+// extended attribute that only a cgo build can read, and any check is separated
+// from the rename by a window in which the target can change. Moving the old
+// file aside removes the question: the previous inode keeps a name under the
+// backup path, so an alias, or anything else the user placed there, survives.
+// This is the same <file>.orangecount.bak convention the ledger writer uses.
+func replaceFile(parent *os.File, staged, destination string, event func(kind, path string) error) error {
+	backup := destination + ".orangecount.bak"
+	if info, err := os.Lstat(backup); err == nil {
+		// The backup slot belongs to this tool, but never destroy a name that is
+		// not an ordinary single-link file.
+		if !info.Mode().IsRegular() || linkCount(info) > 1 {
+			return fmt.Errorf("E-EXPORT-TARGET: move %q aside first; it is not an ordinary file", backup)
+		}
+	} else if !os.IsNotExist(err) {
+		return err
+	}
+	if err := os.Rename(destination, backup); err != nil {
+		return err
+	}
+	// The event seam sits between the move and the publish so that the recovery
+	// path below is exercised by a test instead of only by production failures.
+	if err := event("replaced", destination); err != nil {
+		if restoreErr := os.Rename(backup, destination); restoreErr != nil {
+			return fmt.Errorf("%w (the previous file is kept at %q)", err, backup)
+		}
+		return err
+	}
+	if err := publishFile(parent, staged, filepath.Base(destination), true); err != nil {
+		if restoreErr := os.Rename(backup, destination); restoreErr != nil {
+			return fmt.Errorf("%w (the previous file is kept at %q)", err, backup)
+		}
+		return err
+	}
+	return nil
 }
 func (p *Plan) protect(literal, target string) error {
 	if p.graph.ChangedOnDisk() {

@@ -370,6 +370,7 @@ orangecount export --semantics v3 -out /path/outside/the/ledger/book.bean main.b
 ```
 
 - 输出目录必须在账本入口目录**之外**。单文件可替换已有普通文件；有 include 的账本要输出到一个尚不存在的目录。
+- 替换单文件时旧文件保留为 `<文件名>.orangecount.bak`，不会被删除。这样目标处无论是普通文件还是 Finder 替身，原内容都还在。
 - 拒绝无法在 v3 表达的账本：AVERAGE booking、Python plugin、未登记 option、list/map 元数据、本地化根名方案。
 - 发布前会把输出重新加载一遍并比对会计结果，所以拒绝时目标文件保持原样。
 - `option "account_root_scheme" "global"` 这一行会从快照里删掉，因为上游不认这个键。

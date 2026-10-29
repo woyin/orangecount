@@ -2,6 +2,36 @@
 
 All notable changes to OrangeCount are documented in this file.
 
+## [0.3.10] - 2026-10-29
+
+0.3.9 made export work from a build without cgo, but it still had to guess
+whether a destination was safe to replace. A Finder alias is an ordinary file
+whose alias record lives in an extended attribute, and only a cgo build can read
+that attribute, so a build without cgo cannot recognize one. The guess that
+shipped in 0.3.9 replaced an alias silently.
+
+Replacement no longer guesses. The previous file is renamed to
+`<target>.orangecount.bak` and the new file is linked into the freed name; if the
+link fails, the backup is renamed back. Nothing inspects metadata, so an alias,
+or anything else that occupied the name, survives. This is the same backup name
+the web editor already uses for ledger writes.
+
+Because the safety property no longer depends on a cgo-only primitive, the
+package has one implementation. The cgo and build-tag variants, including the
+macOS alias probe, are deleted, so a local build and a release binary run the
+same code on every platform.
+
+### Changed
+
+- Replacing an existing single file leaves the previous file at
+  `<target>.orangecount.bak` instead of deleting it.
+- The backup slot is never overwritten when it is a symlink, a hardlink or not an
+  ordinary file.
+
+### Fixed
+
+- A Finder alias at the export target is preserved instead of being replaced.
+
 ## [0.3.9] - 2026-10-29
 
 Every binary the release workflow publishes is built with CGO_ENABLED=0, and

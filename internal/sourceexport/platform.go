@@ -1,7 +1,5 @@
 // Copyright 2026 OrangeCount contributors
 // Licensed under the Apache License, Version 2.0.
-//go:build (!darwin && !linux) || !cgo
-
 package sourceexport
 
 import (
@@ -10,24 +8,25 @@ import (
 	"path/filepath"
 )
 
-// The cgo builds publish through the directory descriptor with
-// renameatx_np(RENAME_EXCL) and linkat, which combine "create or fail" with a
-// single visible step. Go 1.22 has no portable equivalent, so these builds
-// reproduce both properties from the standard library:
+// Publication uses only the standard library on every platform and with any
+// CGO_ENABLED setting, so an exported tree behaves the same for a developer
+// build and for a release binary.
 //
-//   - mkdir(2) creates the name or fails with EEXIST, which is the no-replace
-//     guarantee;
+// Two properties matter:
+//
+//   - mkdir(2) or link(2) create a name or fail with EEXIST, which is the
+//     no-replace guarantee;
 //   - rename(2) onto an empty directory is permitted by POSIX, so the staged
 //     tree still becomes visible in one step and no partial tree is exposed.
 //
-// The residual difference is a brief window in which an empty destination
-// directory exists. A crash inside that window leaves an empty directory, which
-// the next export reports as an existing target instead of overwriting it.
+// The residual difference from an exclusive rename is a brief window in which
+// an empty destination directory exists. A crash inside that window leaves an
+// empty directory, which the next export reports as an existing target instead
+// of overwriting it.
 
 // publishParentPath confirms the held directory descriptor still names the path
 // recorded for it, so a concurrent rename of the parent cannot redirect the
-// publication. The cgo builds operate from the descriptor and need no such
-// check.
+// publication.
 func publishParentPath(parent *os.File) (string, error) {
 	name := parent.Name()
 	if name == "" {
@@ -68,8 +67,9 @@ func publishNewTree(parent *os.File, from, to string) error {
 	return os.Rename(filepath.Join(dir, from), target)
 }
 
-func checkAlias(path string) error { return platformAliasCheck(path) }
-
+// publishFile links the staged entry into place. Callers pass exclusive=true
+// whenever the destination name is expected to be free; the link then fails
+// with EEXIST instead of replacing whatever appeared there in the meantime.
 func publishFile(parent *os.File, from, to string, exclusive bool) error {
 	dir, err := publishParentPath(parent)
 	if err != nil {

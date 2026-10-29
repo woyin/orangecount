@@ -14,7 +14,7 @@
 | F01.7 | 本批退出，嵌套GUI仍属完整N04 | 上述全部 | Go全量/race首轮通过；最终原生检查通过 | 7种主页面保存/reader及取消已验；嵌套子入口GUI待补 | 280881c / 0.1.2 | 无 |
 | F02.1–F02.3 | 策略/协议4/bookmark/设置/广播已实现 | 临时公开ledger与外部receipts | 全量/race及真实C/Swift双窗口、恢复/替换通过 | 授权、实际Open与撤销禁用通过；按钮辅助功能修订已入包 | 4d49e1a/0.1.3；b9d0992回归补充 | 旧系统未验 |
 | F03.0–F03.7 | 已实施，明确排除项见矩阵 | 16语料/215查询 | 固定oracle、全量/race/native通过 | balance保存、错误定位、sum通过；完整N04未关闭 | b0817ef / clean 0.1.4，解包已验 | f03-query-longtail证据 |
-| F04.1–F04.4 | 兼容门/冻结Plan/事务发布已实现 | 35往返、71逐交易库存截点、6拒绝 | 固定Python与保护/事务故障通过 | CLI范围 | 5f4fc4c / clean 0.1.5 App与CLI，解包已验 | Linux运行未验；非cgo多文件拒绝 |
+| F04.1–F04.4 | 兼容门/冻结Plan/事务发布已实现 | 35往返、71逐交易库存截点、6拒绝 | 固定Python与保护/事务故障通过 | CLI范围 | 5f4fc4c / clean 0.1.5 App与CLI，解包已验 | Linux运行未验；多文件发布已改为无 cgo 唯一实现（0.3.10） |
 
 首批实际GUI：独立org.orangecount.desktop.reportqa读取公开cashflow.bean，资产负债表导出菜单→系统sheet→build/report-public-gui-20261002.ocanalysis，界面显示保存成功；analysisverify输出format_version2、balance_sheet、2行/12列、未截断。该QA为首批构建，不代表之后新增全部Adapter的最终GUI验收。
 
