@@ -13,6 +13,7 @@ import datetime
 import decimal
 import hashlib
 import json
+import re
 from pathlib import Path
 
 import os
@@ -28,6 +29,12 @@ from beancount.core import position as position_module
 from beanquery import types
 
 REPO = Path(__file__).resolve().parents[2]
+
+# Query functions whose result depends on the wall clock, mapped to the dynamic
+# marker the Go comparator understands. A clock function without a rule here is
+# rejected by TestClockDependentGoldensCarryDynamicMarkers instead of being
+# compared literally, so adding one cannot silently reintroduce a stale golden.
+CLOCK_FUNCTION_RULES = {'today': 'today'}
 INVENTORY = REPO / 'docs/compatibility/upstream-inventory.json'
 OUT = REPO / 'testdata/golden/inventory'
 OPTIONS_FIXTURE = OUT / 'options.bean'
@@ -605,11 +612,15 @@ def main():
             'loader_errors': [{'class': type(error).__name__, 'message': error.message} for error in item_context['errors']],
         }
         try:
-            if item['id'] == 'function.today.0':
-                # today() cannot be frozen: the oracle records today's date, so a
-                # plain comparison would fail the next day. Mark the golden as
-                # dynamic so the Go side checks the rule instead of the value.
-                record['dynamic'] = 'today'
+            # A query that reads the wall clock cannot be frozen: the oracle
+            # records today's date, so a literal comparison would fail the next
+            # day. The marker is derived from the query text, so a new clock
+            # function cannot be added without one; the Go guard test fails when
+            # a clock query reaches the comparator unmarked.
+            for clock_name, clock_rule in CLOCK_FUNCTION_RULES.items():
+                if re.search(r'\b' + clock_name + r'\s*\(', record['query'] or ''):
+                    record['dynamic'] = clock_rule
+                    break
             if item['id'] == 'syntax.Node':
                 observation = probe_ast_nodes(record['query'])
                 # Node has no value of its own; the Go side compares the node

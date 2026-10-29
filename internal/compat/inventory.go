@@ -56,6 +56,24 @@ type inventoryIndex struct {
 	} `json:"items"`
 }
 
+// dynamicRule describes how the Go side compares a golden whose value cannot be
+// frozen. An unknown marker is a hard failure rather than a fall-through to a
+// literal comparison: that fall-through is exactly how a clock-dependent golden
+// passed on its capture day and failed every day after.
+type dynamicRule struct {
+	description string
+	clock       bool
+}
+
+var dynamicRules = map[string]dynamicRule{
+	"today":    {"the value must be a date equal to the current UTC date", true},
+	"ast-node": {"the value is an AST node-kind fingerprint compared structurally", false},
+}
+
+// clockFunctions are the query functions whose result depends on the wall clock.
+// A golden that calls one of them must carry a clock dynamic marker.
+var clockFunctions = []string{"today", "now"}
+
 type inventoryGolden struct {
 	SchemaVersion int             `json:"schema_version"`
 	ID            string          `json:"id"`
@@ -154,6 +172,15 @@ func CheckInventoryGolden(root string) (InventoryParity, error) {
 		}
 		if golden.SchemaVersion != 1 || golden.ID != item.ID {
 			return report, fmt.Errorf("%s: invalid inventory golden identity", item.ID)
+		}
+		if golden.Dynamic != "" {
+			if _, known := dynamicRules[golden.Dynamic]; !known {
+				report.Failed++
+				result.Reason = "unknown-dynamic-marker"
+				report.Results = append(report.Results, result)
+				report.Failures = append(report.Failures, InventoryFailure{ID: item.ID, Reason: result.Reason, Detail: "unrecognized dynamic marker " + golden.Dynamic})
+				continue
+			}
 		}
 		fixtureData, err := os.ReadFile(filepath.Join(root, golden.Fixture))
 		if err != nil {
