@@ -5,9 +5,21 @@ package main
 
 import (
 	"os"
+	"os/exec"
 	"path/filepath"
 	"testing"
 )
+
+// requireOracleToolchain skips a test when the pinned Python oracle is not
+// installed. The oracle is a development dependency: `make build` and
+// `make test` must pass with Go alone, so an absent `uv` is a skip rather than
+// a failure. CI has no `uv`, and treating that as a failure turned main red.
+func requireOracleToolchain(t *testing.T) {
+	t.Helper()
+	if _, err := exec.LookPath("uv"); err != nil {
+		t.Skip("uv is not installed; run the oracle differential with go run ./tools/genprediff -promote-all where it exists")
+	}
+}
 
 // TestDivergenceIsDetectedEndToEnd runs the whole pipeline for one fixture: the
 // oracle sees the pristine ledger and the Go engine sees a ledger with one extra
@@ -28,6 +40,7 @@ func TestDivergenceIsDetectedEndToEnd(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(work, "424242-plain.bean"), original, 0o644); err != nil {
 		t.Fatal(err)
 	}
+	requireOracleToolchain(t)
 	runOracle(root, work, filepath.Join(work, "oracle.json"))
 	encoded, err := os.ReadFile(filepath.Join(work, "oracle.json"))
 	if err != nil {

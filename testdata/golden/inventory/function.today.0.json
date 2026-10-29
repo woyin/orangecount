@@ -1,5 +1,6 @@
 {
   "declared_type_consistent": true,
+  "dynamic": "today",
   "fixture": "testdata/golden/inventory/fixture.bean",
   "fixture_sha256": "e1481a647a86bcaa40e76f3f1c0965c688d26eef2a0e6fe1922086b96d6a803a",
   "id": "function.today.0",
@@ -14,7 +15,7 @@
   "rows": [
     {
       "type": "date",
-      "value": "2026-10-28"
+      "value": "2026-10-29"
     }
   ],
   "schema_version": 1,

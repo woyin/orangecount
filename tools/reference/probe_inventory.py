@@ -605,6 +605,11 @@ def main():
             'loader_errors': [{'class': type(error).__name__, 'message': error.message} for error in item_context['errors']],
         }
         try:
+            if item['id'] == 'function.today.0':
+                # today() cannot be frozen: the oracle records today's date, so a
+                # plain comparison would fail the next day. Mark the golden as
+                # dynamic so the Go side checks the rule instead of the value.
+                record['dynamic'] = 'today'
             if item['id'] == 'syntax.Node':
                 observation = probe_ast_nodes(record['query'])
                 # Node has no value of its own; the Go side compares the node
