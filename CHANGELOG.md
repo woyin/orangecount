@@ -2,6 +2,30 @@
 
 All notable changes to OrangeCount are documented in this file.
 
+## [0.3.11] - 2026-10-29
+
+0.3.10 preserved the file it replaced, but the single backup slot was reused by
+every later export: replacing the same target a second time moved the previous
+export over the slot and destroyed the Finder alias kept there.
+
+The tool now records what it publishes. `<target>.orangecount.published` holds the
+SHA-256 of the bytes written there, so a target that still matches that record is
+recognized as this tool's own previous output and is replaced directly. Only
+content the tool did not write is preserved, and the backup slot is never
+overwritten: when an earlier version already occupies it, the export stops and
+names the path. Repeated exports therefore leave one record and at most one
+backup, and a preserved alias survives them.
+
+### Changed
+
+- Replacing a file this tool wrote no longer creates a backup.
+- An occupied backup slot stops the export instead of being overwritten.
+
+### Fixed
+
+- A second export to the same path destroyed the Finder alias that the first
+  export had preserved.
+
 ## [0.3.10] - 2026-10-29
 
 0.3.9 made export work from a build without cgo, but it still had to guess

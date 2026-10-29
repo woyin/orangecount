@@ -54,7 +54,7 @@ orangecount serve --semantics v3 --locale zh-CN --addr 127.0.0.1:5100 main.bean
 ## 4. 账本怎么组织
 
 - **入口文件**：含 `include` 的那个 `.bean`。所有命令都传它，工具自己顺着 include 走。
-- **备份**：网页写入会留 `<文件名>.orangecount.bak`。把这个模式加进 `.gitignore`，别提交。
+- **备份**：网页写入会留 `<文件名>.orangecount.bak`；导出替换非本工具生成的文件时也会留同名备份，并写一份 `<文件名>.orangecount.published` 发布记录。把 `*.orangecount.*` 加进 `.gitignore`，别提交。
 - **只读保证**：`check`、`query`、`serve` 都不写账本文件。只有你在网页里保存、提交快速录入、导入时才写。
 
 ---
@@ -370,7 +370,8 @@ orangecount export --semantics v3 -out /path/outside/the/ledger/book.bean main.b
 ```
 
 - 输出目录必须在账本入口目录**之外**。单文件可替换已有普通文件；有 include 的账本要输出到一个尚不存在的目录。
-- 替换单文件时旧文件保留为 `<文件名>.orangecount.bak`，不会被删除。这样目标处无论是普通文件还是 Finder 替身，原内容都还在。
+- 替换单文件时，如果目标处不是上一次导出的产物，旧文件保留为 `<文件名>.orangecount.bak`，不会被删除。这样目标处无论是普通文件还是 Finder 替身，原内容都还在。
+- 重复导出到同一路径不会覆盖该备份：工具按 `<文件名>.orangecount.published` 判断目标是否仍是自己上次的输出。备份槽已被占用、又需要保留新的非导出内容时，导出会停止并提示你移走备份，而不是覆盖任何一方。
 - 拒绝无法在 v3 表达的账本：AVERAGE booking、Python plugin、未登记 option、list/map 元数据、本地化根名方案。
 - 发布前会把输出重新加载一遍并比对会计结果，所以拒绝时目标文件保持原样。
 - `option "account_root_scheme" "global"` 这一行会从快照里删掉，因为上游不认这个键。

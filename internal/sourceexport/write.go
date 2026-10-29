@@ -3,6 +3,8 @@
 package sourceexport
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"orangecount/internal/documents"
 	"orangecount/internal/ledger"
@@ -11,6 +13,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"strings"
 )
 
 // Write publishes one file or a complete tree in an existing target parent.
@@ -185,10 +188,26 @@ func (p *Plan) write(target string, fault func(stage, path string) error) error 
 		return publishNewTree(parentHandle, filepath.Base(stage), filepath.Base(destination))
 	}
 	staged := filepath.Join(filepath.Base(stage), p.entry)
-	if before == nil {
-		return publishFile(parentHandle, staged, filepath.Base(destination), true)
+	// Record what this run publishes before publishing it. A record that outlives
+	// a failed publication only makes the next run take the conservative path,
+	// while the reverse would let a later run discard a file it did not write.
+	record := destination + ".orangecount.published"
+	hash, err := contentHash(filepath.Join(stage, p.entry))
+	if err != nil {
+		return err
 	}
-	return replaceFile(parentHandle, staged, destination, event)
+	if err = os.WriteFile(record, []byte(hash+lineEnding), 0600); err != nil {
+		return err
+	}
+	if before == nil {
+		err = publishFile(parentHandle, staged, filepath.Base(destination), true)
+	} else {
+		err = replaceFile(parentHandle, staged, destination, event)
+	}
+	if err != nil {
+		_ = os.Remove(record)
+	}
+	return err
 }
 
 // replaceFile publishes over an existing ordinary file without destroying it.
@@ -200,14 +219,22 @@ func (p *Plan) write(target string, fault func(stage, path string) error) error 
 // file aside removes the question: the previous inode keeps a name under the
 // backup path, so an alias, or anything else the user placed there, survives.
 // This is the same <file>.orangecount.bak convention the ledger writer uses.
+//
+// The tool decides with a fact it owns: the record of what it published. A
+// target that still matches that record holds this tool's own previous output,
+// so replacing it discards nothing of the user's. Anything else is preserved.
 func replaceFile(parent *os.File, staged, destination string, event func(kind, path string) error) error {
+	if ownPublication(destination) {
+		return publishFile(parent, staged, filepath.Base(destination), false)
+	}
 	backup := destination + ".orangecount.bak"
 	if info, err := os.Lstat(backup); err == nil {
-		// The backup slot belongs to this tool, but never destroy a name that is
-		// not an ordinary single-link file.
+		// The slot is occupied. Overwriting it would discard an older version this
+		// run did not produce, so the export stops and names the file instead.
 		if !info.Mode().IsRegular() || linkCount(info) > 1 {
-			return fmt.Errorf("E-EXPORT-TARGET: move %q aside first; it is not an ordinary file", backup)
+			return fmt.Errorf("E-EXPORT-TARGET: %q is not an ordinary file; move it aside first", backup)
 		}
+		return fmt.Errorf("E-EXPORT-TARGET: %q holds an earlier version of the target; move it aside first", backup)
 	} else if !os.IsNotExist(err) {
 		return err
 	}
@@ -230,6 +257,34 @@ func replaceFile(parent *os.File, staged, destination string, event func(kind, p
 	}
 	return nil
 }
+
+// ownPublication reports whether destination still holds the bytes this tool
+// last published there. A missing or unreadable record means "not ours", which
+// only ever adds preservation.
+func ownPublication(destination string) bool {
+	record, err := os.ReadFile(destination + ".orangecount.published")
+	if err != nil {
+		return false
+	}
+	hash, err := contentHash(destination)
+	if err != nil {
+		return false
+	}
+	return strings.TrimSpace(string(record)) == hash
+}
+
+// lineEnding terminates the publication record so that it stays a text file.
+const lineEnding = "\n"
+
+func contentHash(path string) (string, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+	sum := sha256.Sum256(data)
+	return hex.EncodeToString(sum[:]), nil
+}
+
 func (p *Plan) protect(literal, target string) error {
 	if p.graph.ChangedOnDisk() {
 		return fmt.Errorf("E-EXPORT-STALE: source changed after preparation")

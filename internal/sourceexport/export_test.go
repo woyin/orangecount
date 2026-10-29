@@ -468,3 +468,85 @@ func TestReplacementRefusesTargetsItCannotPreserve(t *testing.T) {
 		t.Fatal("refused target modified")
 	}
 }
+
+// A target that still matches the publication record is this tool's own output,
+// so replacing it is not a loss. The backup slot then stays untouched, which is
+// what keeps a preserved Finder alias safe across repeated exports.
+func TestRepeatedPublicationReplacesItsOwnOutput(t *testing.T) {
+	plan, err := Prepare(entry(t, cash), Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	target := filepath.Join(dir, "book.bean")
+	if err := os.WriteFile(target+".orangecount.bak", []byte("preserved original"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < 3; i++ {
+		if err = plan.Write(target); err != nil {
+			t.Fatalf("publication %d: %v", i+1, err)
+		}
+	}
+	if b, _ := os.ReadFile(target + ".orangecount.bak"); string(b) != "preserved original" {
+		t.Fatalf("repeat publication changed the backup slot: %q", b)
+	}
+	if b, _ := os.ReadFile(target); !strings.Contains(string(b), "Assets:Cash") {
+		t.Fatal("target not published")
+	}
+}
+
+// A target edited after the last publication no longer matches the record, so it
+// is preserved instead of overwritten.
+func TestEditedTargetIsPreservedNotOverwritten(t *testing.T) {
+	plan, err := Prepare(entry(t, cash), Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	target := filepath.Join(t.TempDir(), "book.bean")
+	if err = plan.Write(target); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(target, []byte("hand edited"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err = plan.Write(target); err != nil {
+		t.Fatal(err)
+	}
+	if b, _ := os.ReadFile(target + ".orangecount.bak"); string(b) != "hand edited" {
+		t.Fatalf("edited target not preserved: %q", b)
+	}
+	// The next publication is again this tool's own output, so the preserved edit
+	// must survive it.
+	if err = plan.Write(target); err != nil {
+		t.Fatal(err)
+	}
+	if b, _ := os.ReadFile(target + ".orangecount.bak"); string(b) != "hand edited" {
+		t.Fatalf("later publication discarded the preserved edit: %q", b)
+	}
+}
+
+func TestOccupiedBackupSlotStopsTheExport(t *testing.T) {
+	plan, err := Prepare(entry(t, cash), Options{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	dir := t.TempDir()
+	target := filepath.Join(dir, "book.bean")
+	if err := os.WriteFile(target, []byte("user content"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(target+".orangecount.bak", []byte("earlier version"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	if err = plan.Write(target); err == nil {
+		t.Fatal("occupied backup slot ignored")
+	}
+	for path, want := range map[string]string{
+		target:                      "user content",
+		target + ".orangecount.bak": "earlier version",
+	} {
+		if b, _ := os.ReadFile(path); string(b) != want {
+			t.Fatalf("%s changed: %q", filepath.Base(path), b)
+		}
+	}
+}
