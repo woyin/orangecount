@@ -38,6 +38,10 @@ type Config struct {
 	Store         *snapshot.Store
 	DocumentRoots source.DocumentRoots
 	Addr          string
+	// Version is the build version the process runs. The status endpoint
+	// reports it so a reader can tell which binary is answering; a hardcoded
+	// default here would keep reporting a number the CLI no longer produces.
+	Version string
 }
 
 // Server is the Fava-parity web UI: an HTTP mux over the snapshot store
@@ -50,6 +54,7 @@ type Server struct {
 	store            *snapshot.Store
 	roots            source.DocumentRoots
 	addr             string
+	version          string
 	http             *http.Server
 	bound            string
 	ready            chan struct{}
@@ -80,7 +85,11 @@ func NewServer(config Config) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	server := &Server{store: config.Store, authoring: writer, roots: config.DocumentRoots, addr: addr, ready: make(chan struct{}), options: make(map[string]string), previews: newImportPreviewStore(), quickPreviews: newQuickPreviewStore(), planningPreviews: newPlanningPreviewStore()}
+	version := config.Version
+	if version == "" {
+		version = "dev"
+	}
+	server := &Server{store: config.Store, authoring: writer, roots: config.DocumentRoots, addr: addr, version: version, ready: make(chan struct{}), options: make(map[string]string), previews: newImportPreviewStore(), quickPreviews: newQuickPreviewStore(), planningPreviews: newPlanningPreviewStore()}
 	server.http = &http.Server{Handler: server.Handler(), ReadHeaderTimeout: 5 * time.Second}
 	return server, nil
 }
@@ -211,7 +220,7 @@ func (s *Server) handleStatus(w http.ResponseWriter, r *http.Request) {
 		AccountCount    int    `json:"account_count"`
 		DiagnosticCount int    `json:"diagnostic_count"`
 		PublishedAt     string `json:"published_at,omitempty"`
-	}{Version: "0.1.0-dev", DiagnosticCount: len(s.store.Diagnostics())}
+	}{Version: s.version, DiagnosticCount: len(s.store.Diagnostics())}
 	if current != nil {
 		evaluation := current.Evaluation()
 		response.SnapshotID = current.ID

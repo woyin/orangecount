@@ -96,7 +96,7 @@ func watchLedger(ctx context.Context, store *snapshot.Store, entry string, pollI
 
 func startServeLoop(ctx context.Context, store *snapshot.Store, roots source.DocumentRoots, addr string, stdin io.Reader, stderr io.Writer) (*web.Server, <-chan error, int) {
 	for {
-		candidate, err := web.NewServer(web.Config{Store: store, DocumentRoots: roots, Addr: addr})
+		candidate, err := web.NewServer(web.Config{Store: store, DocumentRoots: roots, Addr: addr, Version: version})
 		if err != nil {
 			fmt.Fprintln(stderr, err)
 			return nil, nil, 2
