@@ -2,6 +2,37 @@
 
 All notable changes to OrangeCount are documented in this file.
 
+## [0.3.9] - 2026-10-29
+
+Every binary the release workflow publishes is built with CGO_ENABLED=0, and
+those binaries refused to export an include graph: they answered every export
+with "exclusive tree publication requires the macOS or Linux cgo build". The
+export feature therefore did not work on any shipped artifact.
+
+### Fixed
+
+- `orangecount export` now publishes an include tree from builds without cgo.
+  The named target is refused when it already exists, then the staged tree is
+  moved into place with `rename(2)`, which keeps publication all-or-nothing.
+  The check and the rename are separate operations; that boundary is the same
+  one `docs/source-export.md` already records for concurrent processes.
+- macOS without cgo refused every single-file replacement because the Finder
+  alias check needs cgo. It now refuses the targets the standard library can
+  identify (symbolic links and non-regular files). A Finder alias is a regular
+  file with an xattr, so it cannot be detected there; the gap is recorded in
+  `docs/source-export.md` instead of being implied.
+- `/api/v1/status` reported a hardcoded `0.1.0-dev` while the CLI reported the
+  build version. The endpoint now reports the version the process runs.
+
+### Quality
+
+- `go test ./...` no longer needs the Python oracle: the genprediff end-to-end
+  test skips when `uv` is absent, which is what made CI red on every push.
+- `function.today.0` compared a frozen date and failed the day after capture.
+  The generator now derives the dynamic marker from the query text, the
+  comparator rejects an unrecognized marker instead of comparing literally, and
+  a guard test pairs clock queries with their markers.
+
 ## [0.3.8] - 2026-10-28
 
 This release publishes the generation of OrangeCount that was developed after
